@@ -257,21 +257,21 @@ export function useSupabaseSync({
             }
           }
         }
-        // Force refresh local groups state
-        setGroups((prev) => [...prev]);
+        // Force refresh local groups state by triggering cloud refetch
+        setLoadTrigger((prev) => prev + 1);
       })
       .on('postgres_changes', { event: '*', schema: 'public', table: 'expenses' }, () => {
         // Refresh expenses list on any db writes (additions, edits, deletions)
-        setGroups((prev) => [...prev]);
+        setLoadTrigger((prev) => prev + 1);
       })
       .on('postgres_changes', { event: '*', schema: 'public', table: 'groups' }, () => {
         // Refresh groups settings (like simplify_debts changes) instantly
-        setGroups((prev) => [...prev]);
+        setLoadTrigger((prev) => prev + 1);
       })
       .subscribe();
 
     return () => { supabase.removeChannel(channel); };
-  }, [isAuthenticated, setGroups, setMatchPrompt]);
+  }, [isAuthenticated, setGroups, setMatchPrompt, setLoadTrigger]);
 
   // Sync groups to Supabase in real-time
   useEffect(() => {
