@@ -929,6 +929,40 @@ function App() {
               })
               .eq('id', matchLeftMember.id);
 
+            // Set local identity parameters so the device is logged in as this member
+            localStorage.setItem('divido_username', rejoinName);
+            localStorage.setItem('divido_authenticated', 'true');
+            localStorage.setItem(`divido_identity_${joinGroupId}`, rejoinName);
+            setUserName(rejoinName);
+            setIsAuthenticated(true);
+
+            // Notify other members
+            try {
+              const { data: activeMems } = await supabase
+                .from('group_members')
+                .select('user_email')
+                .eq('group_id', joinGroupId)
+                .not('user_email', 'is', null);
+              
+              if (activeMems && activeMems.length > 0) {
+                const { pushNotification } = await import('./lib/notifications');
+                for (const mem of activeMems) {
+                  if (mem.user_email && mem.user_email !== myEmail) {
+                    await pushNotification({
+                      recipientEmail: mem.user_email,
+                      type: 'join',
+                      title: `🚪 ${rejoinName} rejoined the group`,
+                      body: `${rejoinName} is back in the group.`,
+                      fromName: rejoinName,
+                      groupId: joinGroupId,
+                    });
+                  }
+                }
+              }
+            } catch (e) {
+              console.error('Rejoin notification push failed:', e);
+            }
+
             // 2. Insert system notification of rejoin
             await supabase
               .from('expenses')
