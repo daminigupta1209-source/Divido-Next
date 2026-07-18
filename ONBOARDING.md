@@ -25,7 +25,7 @@ A React + TypeScript + Vite bill-splitting app (like Splitwise), with a Supabase
 - `src/lib/notifications.ts` — notification fetch/push/subscribe helpers.
 - `src/hooks/useSupabaseSync.ts` — reconciles local state ↔ Supabase.
 
-## ⚠️ Pending Supabase SQL (features are built but won't persist until these run)
+## ✅ Supabase SQL — DONE (all four blocks below have been run in the SQL Editor)
 ```sql
 -- 1) Notifications bell (reminders, settlements, added-to-group, rename requests)
 create table if not exists notifications (
@@ -67,5 +67,18 @@ alter table groups add column if not exists created_date date;
 - Keep it clean and mature — not "childish"; avoid loud colors/emoji clutter.
 - Make small, iterative tweaks; they'll refine spacing/size/color by eye.
 
+## Quality pass (this session)
+- **Fixed crash:** `GroupMemberList.tsx` called `useState` after an early `return null` → toggling the members list changed the hook count and crashed React. Hooks hoisted above the early return.
+- **Fixed multi-currency bug:** `simplifyMultiCurrencyDebts` encoded transactions as `"from-to"` and split on `-`, mangling hyphenated names (e.g. "Jean-Paul"). Now uses a `\x1f` delimiter.
+- **Refactor:** extracted the 420-line inline UPI IIFE in `Profile.tsx` (a rules-of-hooks violation) into a proper `<UpiSection>` component (`src/components/UpiSection.tsx`).
+- **Cleanup:** removed dead `calculateNetBalances` / `simplifyDebts` from `calculations.ts` (unused by app + tests); applied safe `prefer-const` autofix.
+- **Investigated but intentionally left alone:** the remaining eslint `set-state-in-effect` / `exhaustive-deps` / ref-in-render warnings are deliberate, working patterns (guarded lazy-init in `useSupabaseSync`, mount-only effects, narrow-dep form resets). "Fixing" them per the linter would cause regressions.
+- Verified via `tsc` (clean) + `npx vitest run` (7/7). The app is behind Google sign-in, so UI changes still need a manual visual check.
+
+## ⚠️ Environment note
+- The project lives inside **OneDrive**, which syncs the `.git` folder. This caused git history to shift mid-session. Consider moving the repo outside OneDrive for a stable git setup.
+
 ## Next up
 <!-- Describe the next task here when starting the new session -->
+- (open) Optional: manually confirm Profile UPI flow + group members list render correctly after the refactor.
+- (open) Consider a real test for `calculateNextOccurrenceDate` edge cases / recurring-expense generation if that feature grows.
