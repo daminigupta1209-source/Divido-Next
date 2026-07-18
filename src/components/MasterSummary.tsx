@@ -673,7 +673,7 @@ export const MasterSummary: React.FC<MasterSummaryProps> = ({
                 const nonGroupEntries = Object.entries(nonGroupBal).filter(([_, v]) => Math.abs(v) > 0.01);
                 return (
                   <span style={{ fontSize: '13px', fontWeight: 600, fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", sans-serif', whiteSpace: 'nowrap' }}>
-                    {nonGroupEntries.slice(0, 3).map(([curr, val], idx, shown) => {
+                    {nonGroupEntries.slice(0, 2).map(([curr, val], idx, shown) => {
                       const isOwed = val > 0.01;
                       const isLast = idx === shown.length - 1;
                       return (
@@ -683,7 +683,7 @@ export const MasterSummary: React.FC<MasterSummaryProps> = ({
                         </span>
                       );
                     })}
-                    {nonGroupEntries.length > 3 && <span style={{ color: '#94A3B8' }}>…</span>}
+                    {nonGroupEntries.length > 2 && <span style={{ color: '#94A3B8' }}>…</span>}
                   </span>
                 );
               })()

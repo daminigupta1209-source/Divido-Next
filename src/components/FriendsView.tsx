@@ -505,7 +505,7 @@ export const FriendsView: React.FC<FriendsViewProps> = ({
           const joinAmts = (entries: [string, number][]) => {
             const fmt = ([curr, val]: [string, number]) => `${curr}${Math.abs(val).toFixed(0)}`;
             if (entries.length <= 2) return entries.map(fmt).join(', ');
-            return `${fmt(entries[0])} +${entries.length - 1} more`;
+            return `${fmt(entries[0])}, ${fmt(entries[1])}…`;
           };
 
           const AV_COLORS = ['#B39DDB', '#F48FB1', '#80CBC4', '#FFB74D', '#9FA8DA', '#A5D6A7', '#EF9A9A', '#7FC8CE'];
