@@ -32,6 +32,11 @@ export const GroupMemberList: React.FC<GroupMemberListProps> = ({
   onRemindMember,
   onRemoveMember,
 }) => {
+  // Hooks must run unconditionally, before any early return, so React sees a
+  // stable hook order across renders (toggling showFriendsList otherwise crashes).
+  const [editingMemberName, setEditingMemberName] = React.useState<string | null>(null);
+  const [inlineRenameVal, setInlineRenameVal] = React.useState<string>('');
+
   if (selectedId === 'STANDALONE' || !showFriendsList) return null;
 
   const getMemberBalance = (name: string) => {
@@ -58,9 +63,6 @@ export const GroupMemberList: React.FC<GroupMemberListProps> = ({
 
   const activeMembers = selectedGroup.members.filter((m) => !m.endsWith(' (Left)'));
   const isAdmin = activeMembers[0] === me;
-
-  const [editingMemberName, setEditingMemberName] = React.useState<string | null>(null);
-  const [inlineRenameVal, setInlineRenameVal] = React.useState<string>('');
 
   const handleInlineSave = (oldName: string) => {
     const trimmed = inlineRenameVal.trim();

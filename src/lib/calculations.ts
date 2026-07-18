@@ -1,82 +1,7 @@
 /**
  * Divido Calculation Engine
- * Handles net balance calculation and debt simplification.
+ * Handles multi-currency debt simplification and recurrence date math.
  */
-
-export interface Member {
-  id: string;
-  name: string;
-}
-
-export interface Expense {
-  id: string;
-  title: string;
-  amount: number;
-  paid_by: string;
-  split_with: string[];
-}
-
-export const calculateNetBalances = (members: Member[], expenses: Expense[]) => {
-  const balances: Record<string, number> = {};
-  members.forEach(m => balances[m.id] = 0);
-
-  expenses.forEach(exp => {
-    const share = exp.amount / exp.split_with.length;
-    
-    // Creditor (who paid)
-    balances[exp.paid_by] = (balances[exp.paid_by] || 0) + exp.amount;
-    
-    // Debtors (who share the cost)
-    exp.split_with.forEach(memberId => {
-      balances[memberId] = (balances[memberId] || 0) - share;
-    });
-  });
-
-  return balances;
-};
-
-/**
- * Simplifies debts between members to minimize transactions.
- */
-export const simplifyDebts = (balances: Record<string, number>, members: Member[]) => {
-  const creditors: (Member & { amount: number })[] = [];
-  const debtors: (Member & { amount: number })[] = [];
-
-  Object.keys(balances).forEach(id => {
-    const balance = balances[id];
-    const member = members.find(m => m.id === id);
-    if (member) {
-      if (balance > 1) creditors.push({ ...member, amount: balance });
-      else if (balance < -1) debtors.push({ ...member, amount: Math.abs(balance) });
-    }
-  });
-
-  const transactions = [];
-  let c = 0;
-  let d = 0;
-
-  while (c < creditors.length && d < debtors.length) {
-    const creditor = creditors[c];
-    const debtor = debtors[d];
-    const amount = Math.min(creditor.amount, debtor.amount);
-
-    transactions.push({
-      from: debtor.name,
-      from_id: debtor.id,
-      to: creditor.name,
-      to_id: creditor.id,
-      amount: Math.round(amount)
-    });
-
-    creditor.amount -= amount;
-    debtor.amount -= amount;
-
-    if (creditor.amount < 1) c++;
-    if (debtor.amount < 1) d++;
-  }
-
-  return transactions;
-};
 
 import { Expense as GroupExpense } from './types';
 
@@ -154,7 +79,9 @@ export const simplifyMultiCurrencyDebts = (
       const amount = Math.min(creditor.amount, debtor.amount);
 
       if (amount > 0.01) {
-        const key = `${debtor.name}-${creditor.name}`;
+        // Use a control-char delimiter that cannot occur in a member name, so
+        // names containing '-' (e.g. "Jean-Paul") survive the round-trip below.
+        const key = `${debtor.name}\x1f${creditor.name}`;
         if (!combinedTransactions[key]) combinedTransactions[key] = {};
         combinedTransactions[key][c] = (combinedTransactions[key][c] || 0) + amount;
       }
@@ -170,7 +97,7 @@ export const simplifyMultiCurrencyDebts = (
   // Convert combinedTransactions map to SimplifiedTransaction array
   const transactionsList: SimplifiedTransaction[] = [];
   Object.entries(combinedTransactions).forEach(([key, balRecord]) => {
-    const [from, to] = key.split('-');
+    const [from, to] = key.split('\x1f');
     // Filter out very small balances to keep it clean
     const cleanBalances: Record<string, number> = {};
     let hasValue = false;
