@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 60 40" fill="none">
+  <rect width="60" height="40" rx="10" fill="#FFFFFF" stroke="#E2E8F0" strokeWidth="1"/>
+  <g transform="translate(14, 5)">
+    <path d="M12 25l12-12h-9l7-9L8 16h9l-7 9z" fill="#FF9933"/>
+    <path d="M8 16h9l-7 9 3-2.5L17 16h-9z" fill="#138808"/>
+    <text x="-4" y="32" fill="#002E6E" fontSize="9" fontWeight="900" fontFamily="sans-serif">BHIM</text>
+  </g>
+</svg>

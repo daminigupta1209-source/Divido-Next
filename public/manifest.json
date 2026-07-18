@@ -1,0 +1,17 @@
+{
+  "name": "Divido Split",
+  "short_name": "Divido",
+  "description": "Premium group expense sharing and settlements.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#FDF2F8",
+  "theme_color": "#DB2777",
+  "icons": [
+    {
+      "src": "/divido_laughing_cat_mascot_1778063273427.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}

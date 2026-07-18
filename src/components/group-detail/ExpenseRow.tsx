@@ -1,0 +1,506 @@
+import React from 'react';
+import { Group, Expense } from '../../lib/types';
+import { formatDate, getEmoji, getExactTime } from '../../lib/utils';
+
+interface ExpenseRowProps {
+  e: Expense;
+  me: string;
+  selectedGroup: Group;
+  selectedId: string | number | null;
+  openExpId: string | number | null;
+  setOpenExpId: (id: string | number | null) => void;
+  setEditingExpense: (exp: Expense | null) => void;
+  setShowExpModal: (b: boolean) => void;
+  setEditingSettle: (exp: Expense | null) => void;
+  setShowSettleModal: (b: boolean) => void;
+  setShowConvertModalId: (id: string | number | null) => void;
+  setExpenses: React.Dispatch<React.SetStateAction<Expense[]>>;
+  setGroups: React.Dispatch<React.SetStateAction<Group[]>>;
+  groups: Group[];
+  deleteExpense: (id: string | number) => void;
+}
+
+export const ExpenseRow: React.FC<ExpenseRowProps> = ({
+  e,
+  me,
+  selectedGroup,
+  selectedId,
+  openExpId,
+  setOpenExpId,
+  setEditingExpense,
+  setShowExpModal,
+  setEditingSettle,
+  setShowSettleModal,
+  setShowConvertModalId,
+  setExpenses,
+  setGroups,
+  groups,
+  deleteExpense,
+}) => {
+  if (e.paid === 'SYSTEM') {
+    return (
+      <div
+        style={{
+          display: 'flex',
+          justifyContent: 'center',
+          alignItems: 'center',
+          padding: '6px 12px',
+          background: 'rgba(241, 245, 249, 0.7)',
+          borderRadius: '20px',
+          border: '1px solid rgba(226, 232, 240, 0.8)',
+          fontSize: '11px',
+          fontWeight: 800,
+          color: '#64748B',
+          margin: '4px auto 12px auto',
+          maxWidth: 'fit-content',
+          fontFamily: 'Nunito',
+          boxShadow: '0 1px 3px rgba(0,0,0,0.02)',
+        }}
+      >
+        {e.title}
+        <span style={{ fontSize: '9px', fontWeight: 600, color: '#94A3B8', marginLeft: '6px' }}>
+          • {formatDate(e.date)}
+        </span>
+      </div>
+    );
+  }
+
+  const isSettlement = e.title.includes('🤝 Settlement');
+  const splitters = e.splitters || selectedGroup?.members || [];
+  const isConversion = e.isConversion;
+
+  if (isConversion) {
+    const rateMap = e.ratesUsed ? JSON.parse(e.ratesUsed) : { [e.fromCurr || '']: 1 };
+    const rateStrings = Object.entries(rateMap)
+      .filter(([src]) => src !== e.toCurr)
+      .map(([src, r]) => `${src}➔${e.toCurr} @ ${r}`);
+
+    return (
+      <div
+        className="card hover-bright"
+        style={{
+          position: 'relative',
+          padding: '14px 16px',
+          background: '#FFFFFF',
+          border: '0.5px solid #EFE7DC',
+          boxShadow: '0 2px 10px rgba(0,0,0,0.03)',
+          borderRadius: '20px',
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          transition: '0.2s all',
+          marginBottom: '8px',
+        }}
+      >
+        <div
+          onClick={() => setShowConvertModalId(selectedId)}
+          style={{ display: 'flex', alignItems: 'center', gap: '12px', cursor: 'pointer', flex: 1 }}
+        >
+          <div
+            style={{
+              width: '40px',
+              height: '40px',
+              background: '#F5F3FF',
+              borderRadius: '50%',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              fontSize: '18px',
+              color: '#6D28D9',
+              flexShrink: 0,
+            }}
+          >
+            💱
+          </div>
+          <div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+              <h3 className="nunito" style={{ fontSize: '14px', fontWeight: 800, color: '#6D28D9', margin: 0 }}>
+                Currency Conversion <span style={{ fontSize: '10px', opacity: 0.3 }}>✏️</span>
+              </h3>
+              <span
+                style={{
+                  fontSize: '9px',
+                  fontWeight: 700,
+                  color: '#6D28D9',
+                  opacity: 0.5,
+                  background: '#F5F3FF',
+                  padding: '1px 4px',
+                  borderRadius: '3px',
+                }}
+              >
+                {formatDate(e.date)}
+              </span>
+            </div>
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '3px', marginTop: '4px' }}>
+              {rateStrings.map((rs) => (
+                <span
+                  key={rs}
+                  style={{
+                    fontSize: '8px',
+                    fontWeight: 700,
+                    background: '#F5F3FF',
+                    color: '#6D28D9',
+                    padding: '0.5px 4px',
+                    borderRadius: '3px',
+                    border: '1px solid #EAE5FF',
+                  }}
+                >
+                  {rs}
+                </span>
+              ))}
+            </div>
+          </div>
+        </div>
+        <div
+          style={{ display: 'flex', alignItems: 'center', gap: '12px', position: 'relative', zIndex: 10 }}
+          onClick={(ev) => ev.stopPropagation()}
+        >
+          <div
+            className="dropdown"
+            style={{ position: 'relative', cursor: 'pointer', fontSize: '16px', padding: '6px', color: 'var(--g)' }}
+            onClick={(ev) => {
+              ev.stopPropagation();
+              setOpenExpId(openExpId === e.id ? null : e.id);
+            }}
+          >
+            ⋮
+            <div
+              className="dropdown-content"
+              style={{ display: openExpId === e.id ? 'block' : 'none', right: 0, top: '100%', minWidth: '160px', zIndex: 100 }}
+            >
+              <div
+                onClick={(ev) => {
+                  ev.stopPropagation();
+                  setShowConvertModalId(selectedId);
+                  setOpenExpId(null);
+                }}
+              >
+                ⚙️ Adjust Conversion
+              </div>
+              <div
+                style={{ color: '#DB2777' }}
+                onClick={(ev) => {
+                  ev.stopPropagation();
+                  if (
+                    confirm(
+                      `Undo this conversion? 🔄\n\nThis will restore the exact state before this conversion.`
+                    )
+                  ) {
+                    const snapshotArr: any[] = e.snapshot ? JSON.parse(e.snapshot) : [];
+                    const snapMap: Record<string, any> = {};
+                    snapshotArr.forEach((s) => {
+                      snapMap[s.id] = s;
+                    });
+
+                    setExpenses((prev) =>
+                      prev
+                        .map((x) => {
+                          if (snapMap[x.id]) {
+                            const s = snapMap[x.id];
+                            return { ...x, amt: s.amt, currency: s.currency, shares: s.shares };
+                          }
+                          return x;
+                        })
+                        .filter((x) => x.id !== e.id)
+                    );
+
+                    const restoredCurr = e.fromCurr || snapshotArr[0]?.currency || '₹';
+                    setGroups(
+                      groups.map((g) =>
+                        String(g.id) === String(selectedId)
+                          ? { ...g, currency: restoredCurr }
+                          : g
+                      )
+                    );
+                  } else if (confirm('Just delete the log entry without undoing?')) {
+                    setExpenses((prev) => prev.filter((x) => x.id !== e.id));
+                  }
+                  setOpenExpId(null);
+                }}
+              >
+                🗑️ Delete Activity
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (isSettlement) {
+    const timeStr = getExactTime(e.id);
+    return (
+      <div
+        onClick={() => {
+          setEditingSettle(e);
+          setShowSettleModal(true);
+        }}
+        style={{
+          position: 'relative',
+          padding: '14px 16px',
+          background: '#FFFFFF',
+          border: '0.5px solid #EFE7DC',
+          boxShadow: '0 2px 10px rgba(0,0,0,0.03)',
+          borderRadius: '20px',
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          cursor: 'pointer',
+          transition: '0.2s all',
+          marginBottom: '8px',
+        }}
+      >
+        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+          <div
+            style={{
+              width: '40px',
+              height: '40px',
+              background: '#F0FDF4',
+              borderRadius: '50%',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              fontSize: '18px',
+              color: '#15803D',
+              flexShrink: 0,
+            }}
+          >
+            🤝
+          </div>
+          <div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+              <h3 className="nunito" style={{ fontSize: '14px', color: '#15803D', margin: 0, fontWeight: 800 }}>
+                Payment Recorded
+              </h3>
+              <span
+                style={{
+                  fontSize: '9px',
+                  fontWeight: 700,
+                  color: '#15803D',
+                  opacity: 0.5,
+                  background: '#F0FDF4',
+                  padding: '1px 4px',
+                  borderRadius: '3px',
+                }}
+              >
+                {formatDate(e.date)}
+                {timeStr ? ` at ${timeStr}` : ''}
+              </span>
+            </div>
+            <p style={{ fontSize: '11px', fontWeight: 600, color: '#64748B', margin: '3px 0 0 0' }}>
+              {e.paid === me ? 'You' : e.paid} paid {e.splitters?.[0] === me ? 'You' : e.splitters?.[0]}
+            </p>
+            {e.notes && e.notes !== 'Granular Global Clearance' && (
+              <p
+                style={{
+                  fontSize: '9px',
+                  fontStyle: 'italic',
+                  color: '#15803D',
+                  marginTop: '2px',
+                  background: '#F0FDF4',
+                  padding: '1px 4px',
+                  borderRadius: '4px',
+                  display: 'inline-block',
+                  margin: '2px 0 0 0',
+                }}
+              >
+                "{e.notes}"
+              </p>
+            )}
+          </div>
+        </div>
+        <div
+          style={{ display: 'flex', alignItems: 'center', gap: '12px' }}
+          onClick={(ev) => ev.stopPropagation()}
+        >
+          <div style={{ textAlign: 'right' }}>
+            <p style={{ fontSize: '14px', fontWeight: 800, color: '#000000', margin: 0 }}>
+              {e.currency || selectedGroup.currency || '₹'}
+              {(parseFloat(e.amt.toString()) || 0).toLocaleString(undefined, {
+                minimumFractionDigits: 0,
+                maximumFractionDigits: 2,
+              })}
+            </p>
+            <p style={{ fontSize: '8px', fontWeight: 700, color: '#15803D', textTransform: 'uppercase', opacity: 0.6, margin: 0 }}>
+              Cleared <span style={{ color: '#16A34A' }}>✔️</span>
+            </p>
+          </div>
+          <div
+            className="dropdown"
+            style={{ position: 'relative', cursor: 'pointer', fontSize: '16px', padding: '2px', color: 'var(--g)' }}
+            onClick={(ev) => {
+              ev.stopPropagation();
+              setOpenExpId(openExpId === e.id ? null : e.id);
+            }}
+          >
+            ⋮
+            <div
+              className="dropdown-content"
+              style={{ display: openExpId === e.id ? 'block' : 'none', right: 0, top: '100%', minWidth: '90px', zIndex: 100 }}
+            >
+              <div
+                onClick={() => {
+                  setEditingSettle(e);
+                  setShowSettleModal(true);
+                  setOpenExpId(null);
+                }}
+              >
+                ✏️ Edit
+              </div>
+              <div
+                style={{ color: '#DB2777' }}
+                onClick={() => {
+                  deleteExpense(e.id);
+                  setOpenExpId(null);
+                }}
+              >
+                🗑️ Delete
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Curated pastel avatar colors matching the homepage style
+  const avatarColors = ['#E0F2FE', '#F0FDF4', '#FEF2F2', '#FFFBEB', '#F5F3FF', '#FFF1F2'];
+  const textColors = ['#0369A1', '#15803D', '#B91C1C', '#B45309', '#6D28D9', '#BE123C'];
+  const colIdx = (e.title.charCodeAt(0) + (e.title.charCodeAt(1) || 0)) % avatarColors.length;
+
+  return (
+    <div
+      tabIndex={0}
+      className="card hover-bright"
+      onClick={() => {
+        setEditingExpense(e);
+        setShowExpModal(true);
+      }}
+      style={{
+        position: 'relative',
+        padding: '14px 16px',
+        background: '#FFFFFF',
+        border: '0.5px solid #EFE7DC',
+        boxShadow: '0 2px 10px rgba(0,0,0,0.03)',
+        borderRadius: '20px',
+        display: 'flex',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        cursor: 'pointer',
+        transition: '0.2s all',
+        marginBottom: '8px',
+        minHeight: '70px',
+        boxSizing: 'border-box',
+      }}
+    >
+      <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flex: 1, minWidth: 0 }}>
+        <div
+          style={{
+            width: '40px',
+            height: '40px',
+            background: avatarColors[colIdx],
+            color: textColors[colIdx],
+            borderRadius: '50%',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            fontSize: '18px',
+            fontWeight: 900,
+            flexShrink: 0,
+          }}
+        >
+          {getEmoji(e.title) || '⚡'}
+        </div>
+        <div style={{ minWidth: 0, flex: 1, marginRight: '16px' }}>
+          <h3 className="nunito" style={{ fontSize: '15px', color: 'var(--t)', margin: 0, fontWeight: 800, display: 'flex', alignItems: 'center', gap: '4px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+            {e.title}
+          </h3>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '11px', color: '#94A3B8', marginTop: '6px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+            <span style={{ color: e.paid === me ? '#16A34A' : '#DE7093', fontWeight: 700 }}>{e.paid === me ? 'You paid' : `${e.paid} paid`}</span>
+            <span>•</span>
+            <span>{formatDate(e.date)}</span>
+            {e.tags && e.tags.length > 0 && (
+              <>
+                <span>•</span>
+                <span style={{ color: '#0284C7', fontWeight: 650 }}>{e.tags.map(t => `#${t}`).join(' ')}</span>
+              </>
+            )}
+            {e.isRecurring && (
+              <>
+                <span>•</span>
+                <span title={`Next occurrence: ${e.nextOccurrence || 'N/A'}`} style={{ color: '#0F766E', fontWeight: 650 }}>
+                  🔁 {e.recurrence ? e.recurrence.charAt(0).toUpperCase() + e.recurrence.slice(1) : 'Recurring'}
+                </span>
+              </>
+            )}
+          </div>
+          {e.notes && e.notes !== 'Granular Global Clearance' && (
+            <p
+              style={{
+                fontSize: '9px',
+                fontStyle: 'italic',
+                color: '#64748B',
+                margin: '4px 0 0 0',
+                background: 'rgba(250, 244, 236, 0.4)',
+                padding: '3px 6px',
+                borderRadius: '4px',
+                display: 'inline-block',
+                border: '0.5px solid #EFE7DC',
+                whiteSpace: 'pre-wrap',
+                maxWidth: '200px',
+                lineHeight: '1.2',
+              }}
+            >
+              📝 {e.notes}
+            </p>
+          )}
+        </div>
+      </div>
+
+      <div
+        style={{ display: 'flex', alignItems: 'center', gap: '10px' }}
+        onClick={(ev) => ev.stopPropagation()}
+      >
+        <div style={{ textAlign: 'right', display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '2px' }}>
+          <span style={{ fontSize: '14px', fontWeight: 800, color: 'var(--t)', fontFamily: '"Nunito", sans-serif' }}>
+            {e.currency || selectedGroup.currency || '₹'} {e.amt.toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 2 })}
+          </span>
+        </div>
+
+        <div
+          className="dropdown"
+          style={{ position: 'relative', cursor: 'pointer', fontSize: '16px', padding: '2px', color: 'var(--g)' }}
+          onClick={(ev) => {
+            ev.stopPropagation();
+            setOpenExpId(openExpId === e.id ? null : e.id);
+          }}
+        >
+          ⋮
+          <div
+            className="dropdown-content"
+            style={{ display: openExpId === e.id ? 'block' : 'none', right: 0, top: '100%', minWidth: '90px', zIndex: 100 }}
+          >
+            <div
+              onClick={() => {
+                setEditingExpense(e);
+                setShowExpModal(true);
+                setOpenExpId(null);
+              }}
+            >
+              ✏️ Edit
+            </div>
+            <div
+              style={{ color: '#DB2777' }}
+              onClick={() => {
+                deleteExpense(e.id);
+                setOpenExpId(null);
+              }}
+            >
+              🗑️ Delete
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
