@@ -1813,6 +1813,33 @@ function App() {
                           .update({ is_pending: false })
                           .eq('id', p.id);
 
+                        // Notify other members
+                        try {
+                          const { data: activeMems } = await supabase
+                            .from('group_members')
+                            .select('user_email')
+                            .eq('group_id', linkRequestGroup.id)
+                            .not('user_email', 'is', null);
+                          
+                          if (activeMems && activeMems.length > 0) {
+                            const { pushNotification } = await import('./lib/notifications');
+                            for (const mem of activeMems) {
+                              if (mem.user_email) {
+                                await pushNotification({
+                                  recipientEmail: mem.user_email,
+                                  type: 'join',
+                                  title: `👥 ${p.name} joined ${linkRequestGroup.name}`,
+                                  body: `${p.name} claimed their profile and is now active.`,
+                                  fromName: p.name,
+                                  groupId: linkRequestGroup.id,
+                                });
+                              }
+                            }
+                          }
+                        } catch (e) {
+                          console.error('Guest claim notification push failed:', e);
+                        }
+
                         // 2. Save settings locally
                         localStorage.setItem('divido_username', p.name);
                         localStorage.setItem('divido_authenticated', 'true');
@@ -1880,6 +1907,33 @@ function App() {
                           name: trimmed,
                           is_pending: false
                         });
+
+                        // Notify other members
+                        try {
+                          const { data: activeMems } = await supabase
+                            .from('group_members')
+                            .select('user_email')
+                            .eq('group_id', linkRequestGroup.id)
+                            .not('user_email', 'is', null);
+                          
+                          if (activeMems && activeMems.length > 0) {
+                            const { pushNotification } = await import('./lib/notifications');
+                            for (const mem of activeMems) {
+                              if (mem.user_email) {
+                                await pushNotification({
+                                  recipientEmail: mem.user_email,
+                                  type: 'join',
+                                  title: `👥 ${trimmed} joined ${linkRequestGroup.name}`,
+                                  body: `${trimmed} joined the group as a new member.`,
+                                  fromName: trimmed,
+                                  groupId: linkRequestGroup.id,
+                                });
+                              }
+                            }
+                          }
+                        } catch (e) {
+                          console.error('New guest member notification push failed:', e);
+                        }
 
                         // 2. Save settings locally
                         localStorage.setItem('divido_username', trimmed);
