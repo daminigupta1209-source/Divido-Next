@@ -118,13 +118,6 @@ function App() {
     return userName.split(' ')[0];
   })();
 
-  useEffect(() => {
-    if (view !== 'analytics') {
-      setAnalyticsGroupId(null);
-    }
-    setShowInfo(false);
-  }, [view, selectedId]);
-
   const [headerRenaming, setHeaderRenaming] = useState(false);
   const [headerNewName, setHeaderNewName] = useState('');
   const [headerNameError, setHeaderNameError] = useState('');
@@ -139,6 +132,13 @@ function App() {
   const [isHeaderSearchActive, setIsHeaderSearchActive] = useState(false);
   const mainContentRef = useRef<HTMLElement>(null);
   const [headerHidden, setHeaderHidden] = useState(false);
+
+  useEffect(() => {
+    if (view !== 'analytics') {
+      setAnalyticsGroupId(null);
+    }
+    setShowInfo(false);
+  }, [view, selectedId]);
 
   // Hide the header on scroll-down, reveal it the moment you scroll up (MakeMyTrip-style).
   useEffect(() => {
