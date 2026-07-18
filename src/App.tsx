@@ -1069,36 +1069,100 @@ function App() {
     }
   };
 
-  const getMemberBalance = (groupId: string | number | null, memberName: string) => {
-    const isStandalone = String(groupId) === 'STANDALONE';
-    const g = isStandalone
-      ? { id: 'STANDALONE', name: 'Non-Group Expenses', members: [] as string[], currency: '₹' }
-      : groups.find((x) => String(x.id) === String(groupId));
-    if (!g) return {};
+  const allGroupBalances = React.useMemo(() => {
+    const map: Record<string, Record<string, Record<string, number>>> = {};
 
-    const groupExps = expenses.filter((e) => String(e.gId) === String(groupId));
-    const balances: Record<string, number> = {};
-    groupExps.forEach((e) => {
-      const c = e.currency || g.currency || '₹';
-      if (!balances[c]) balances[c] = 0;
+    // Pre-group expenses by their gId to avoid filtering inside inner loops
+    const expensesByGroup: Record<string, Expense[]> = {};
+    expenses.forEach((e) => {
+      if (!e) return;
+      const gId = String(e.gId);
+      if (!expensesByGroup[gId]) expensesByGroup[gId] = [];
+      expensesByGroup[gId].push(e);
+    });
 
+    // Populate balances for all groups (including groups with no expenses yet)
+    groups.forEach((g) => {
+      if (!g) return;
+      const gId = String(g.id);
+      const groupExps = expensesByGroup[gId] || [];
+      const gMembers = g.members || [];
+      const defaultCurr = g.currency || '₹';
+
+      const balances: Record<string, Record<string, number>> = {};
+      
+      // Initialize balance records for each member
+      gMembers.forEach((m) => {
+        balances[m] = {};
+      });
+
+      groupExps.forEach((e) => {
+        const c = e.currency || defaultCurr;
+        const amount = parseFloat(e.amt as any) || 0;
+        const splitters = e.splitters || gMembers || [];
+
+        // Add payment to payer
+        const payer = e.paid;
+        if (payer) {
+          if (!balances[payer]) balances[payer] = {};
+          balances[payer][c] = (balances[payer][c] || 0) + amount;
+        }
+
+        // Deduct split shares
+        splitters.forEach((s) => {
+          if (!balances[s]) balances[s] = {};
+          const share =
+            !e.mode || e.mode === 'Equally'
+              ? amount / (splitters.length || 1)
+              : e.mode === 'Unequally'
+              ? parseFloat(e.shares?.[s] as any) || 0
+              : (amount * (parseFloat(e.shares?.[s] as any) || 0)) / 100;
+          balances[s][c] = (balances[s][c] || 0) - share;
+        });
+      });
+
+      map[gId] = balances;
+    });
+
+    // Handle STANDALONE (Non-Group Expenses)
+    const standaloneId = 'STANDALONE';
+    const standaloneExps = expensesByGroup[standaloneId] || [];
+    const standaloneBalances: Record<string, Record<string, number>> = {};
+
+    standaloneExps.forEach((e) => {
+      const c = e.currency || '₹';
       const amount = parseFloat(e.amt as any) || 0;
-      const splitters = e.splitters || (isStandalone ? [] : g.members) || [];
+      const splitters = e.splitters || [];
 
-      if (e.paid === memberName) balances[c] += amount;
+      // Payer gets credit
+      const payer = e.paid;
+      if (payer) {
+        if (!standaloneBalances[payer]) standaloneBalances[payer] = {};
+        standaloneBalances[payer][c] = (standaloneBalances[payer][c] || 0) + amount;
+      }
 
-      if (splitters.includes(memberName)) {
+      // Splitters get debits
+      splitters.forEach((s) => {
+        if (!standaloneBalances[s]) standaloneBalances[s] = {};
         const share =
           !e.mode || e.mode === 'Equally'
-            ? amount / splitters.length
+            ? amount / (splitters.length || 1)
             : e.mode === 'Unequally'
-            ? parseFloat(e.shares?.[memberName] as any) || 0
-            : (amount * (parseFloat(e.shares?.[memberName] as any) || 0)) / 100;
-        balances[c] -= share;
-      }
+            ? parseFloat(e.shares?.[s] as any) || 0
+            : (amount * (parseFloat(e.shares?.[s] as any) || 0)) / 100;
+        standaloneBalances[s][c] = (standaloneBalances[s][c] || 0) - share;
+      });
     });
-    return balances;
-  };
+
+    map[standaloneId] = standaloneBalances;
+
+    return map;
+  }, [groups, expenses]);
+
+  const getMemberBalance = React.useCallback((groupId: string | number | null, memberName: string) => {
+    const gId = String(groupId || 'STANDALONE');
+    return allGroupBalances[gId]?.[memberName] || {};
+  }, [allGroupBalances]);
 
   const selectedGroup = selectedId === 'STANDALONE'
     ? {
