@@ -943,7 +943,7 @@ function App() {
               });
 
             setSelectedId(joinGroupId);
-            setView('group');
+            setView('detail');
 
             // Clean URL parameters
             const cleanUrl = window.location.protocol + '//' + window.location.host + window.location.pathname;
@@ -958,7 +958,7 @@ function App() {
           const alreadyMember = existingMembers.some((m: any) => m.user_email === session.user.email);
           if (alreadyMember) {
             setSelectedId(joinGroupId);
-            setView('group');
+            setView('detail');
             // Clean URL parameters
             const cleanUrl = window.location.protocol + '//' + window.location.host + window.location.pathname;
             window.history.replaceState({}, document.title, cleanUrl);
@@ -1824,7 +1824,7 @@ function App() {
                       }
                       
                       setSelectedId(linkRequestGroup.id);
-                      setView('group');
+                      setView('detail');
                       setLinkRequestGroup(null);
                     } catch (err) {
                       console.error(err);
@@ -1892,7 +1892,7 @@ function App() {
                       }
                     }
                     setSelectedId(linkRequestGroup.id);
-                    setView('group');
+                    setView('detail');
                     setLinkRequestGroup(null);
                   } catch (err) {
                     console.error(err);
