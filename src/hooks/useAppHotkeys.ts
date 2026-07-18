@@ -69,10 +69,10 @@ export function useAppHotkeys({
         const existingIds = elements.filter((id) => document.getElementById(id));
 
         if (activeEl) {
-          let idx = existingIds.indexOf(activeEl.id);
+          const idx = existingIds.indexOf(activeEl.id);
           if (idx !== -1) {
             e.preventDefault();
-            let isNext = e.key === 'ArrowDown' || e.key === 'ArrowRight';
+            const isNext = e.key === 'ArrowDown' || e.key === 'ArrowRight';
             let nextIdx = isNext ? idx + 1 : idx - 1;
             if (nextIdx < 0) nextIdx = existingIds.length - 1;
             if (nextIdx >= existingIds.length) nextIdx = 0;
@@ -125,10 +125,10 @@ export function useAppHotkeys({
         const existingIds = elements.filter((id) => document.getElementById(id));
 
         if (activeEl) {
-          let idx = existingIds.indexOf(activeEl.id);
+          const idx = existingIds.indexOf(activeEl.id);
           if (idx !== -1) {
             e.preventDefault();
-            let isNext = e.key === 'ArrowDown' || e.key === 'ArrowRight';
+            const isNext = e.key === 'ArrowDown' || e.key === 'ArrowRight';
             let nextIdx = isNext ? idx + 1 : idx - 1;
             if (nextIdx < 0) nextIdx = existingIds.length - 1;
             if (nextIdx >= existingIds.length) nextIdx = 0;
@@ -268,13 +268,13 @@ export function useAppHotkeys({
           document.querySelectorAll('.nav-btn, .group-item, .card[tabindex="0"], .btn-green, .btn-yellow, .btn-red')
         ) as HTMLElement[];
         if (focusables.length > 0) {
-          let idx = focusables.indexOf(activeEl as HTMLElement);
+          const idx = focusables.indexOf(activeEl as HTMLElement);
           e.preventDefault();
           let nextIdx;
           if (idx === -1) {
             nextIdx = 0;
           } else {
-            let isNext = e.key === 'ArrowDown' || e.key === 'ArrowRight';
+            const isNext = e.key === 'ArrowDown' || e.key === 'ArrowRight';
             nextIdx = isNext ? idx + 1 : idx - 1;
             if (nextIdx < 0) nextIdx = focusables.length - 1;
             if (nextIdx >= focusables.length) nextIdx = 0;

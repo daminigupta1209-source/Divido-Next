@@ -305,7 +305,7 @@ export function useSupabaseSync({
 
         // 2. Find inserted or updated groups
         let localStateUpdated = false;
-        let nextGroups = [...curr];
+        const nextGroups = [...curr];
         let nextExpenses = [...expenses];
         let nextSelectedId = selectedId;
 
@@ -453,7 +453,7 @@ export function useSupabaseSync({
 
         // 2. Find inserted or updated expenses
         let localStateUpdated = false;
-        let nextExpenses = [...curr];
+        const nextExpenses = [...curr];
 
         for (let i = 0; i < nextExpenses.length; i++) {
           const e = nextExpenses[i];
