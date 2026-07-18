@@ -77,6 +77,26 @@ function App() {
   const [toastMsg, setToastMsg] = useState<string | null>(null);
   const [isSidebarOpen, setIsSidebarOpen] = useState<boolean>(false);
 
+  const setShowExpModalSecure = (show: boolean) => {
+    if (show && !userEmail) {
+      alert('Secure Google Sign-In is required to add or edit expenses. Redirecting you to the Profile page to sign in securely!');
+      sessionStorage.setItem('divido_highlight_signin', 'true');
+      setView('profile');
+      return;
+    }
+    setShowExpModal(show);
+  };
+
+  const setEditingExpenseSecure = (exp: Expense | null) => {
+    if (exp && !userEmail) {
+      alert('Secure Google Sign-In is required to add or edit expenses. Redirecting you to the Profile page to sign in securely!');
+      sessionStorage.setItem('divido_highlight_signin', 'true');
+      setView('profile');
+      return;
+    }
+    setEditingExpense(exp);
+  };
+
   const [isAuthenticated, setIsAuthenticated] = useState<boolean>(() => {
     const savedAuth = localStorage.getItem('divido_authenticated');
     if (savedAuth === 'true') return true;
@@ -1315,8 +1335,8 @@ function App() {
             handleRenameGroup={handleRenameGroup}
             handleDeleteGroup={handleDeleteGroup}
             me={me}
-            setShowExpModal={setShowExpModal}
-            setEditingExpense={setEditingExpense}
+            setShowExpModal={setShowExpModalSecure}
+            setEditingExpense={setEditingExpenseSecure}
             globalSettleData={globalSettleData}
             setGlobalSettleData={setGlobalSettleData}
             userMetadata={userMetadata}
@@ -1372,8 +1392,8 @@ function App() {
             expenses={expenses}
             groups={groups}
             setExpenses={setExpenses}
-            setEditingExpense={setEditingExpense}
-            setShowExpModal={setShowExpModal}
+            setEditingExpense={setEditingExpenseSecure}
+            setShowExpModal={setShowExpModalSecure}
             setEditingSettle={setEditingSettle}
             setShowSettleModal={setShowSettleModal}
             me={me}
@@ -1412,8 +1432,8 @@ function App() {
             getMemberBalance={getMemberBalance}
             setView={setView}
             setGroups={setGroups}
-            setShowExpModal={setShowExpModal}
-            setEditingExpense={setEditingExpense}
+            setShowExpModal={setShowExpModalSecure}
+            setEditingExpense={setEditingExpenseSecure}
             setExpenses={setExpenses}
             setShowAddFriendModal={setShowAddFriendModal}
             setShowMembersHealth={setShowMembersHealth}
@@ -1645,9 +1665,9 @@ function App() {
         view={view}
         setView={setView}
         setSelectedId={setSelectedId}
-        setEditingExpense={setEditingExpense}
+        setEditingExpense={setEditingExpenseSecure}
         setAutoOpenScanner={setAutoOpenScanner}
-        setShowExpModal={setShowExpModal}
+        setShowExpModal={setShowExpModalSecure}
         groups={groups}
         setGroups={setGroups}
         me={me}
