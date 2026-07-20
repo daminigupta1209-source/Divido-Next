@@ -529,7 +529,7 @@ export const GroupDetail: React.FC<GroupDetailProps> = ({
                       style={{ ...segStyle, background: PINK }}
                       onClick={() => setActiveTab('balances')}
                     >
-                      <span style={{ overflow: 'hidden', textOverflow: 'ellipsis' }}>{primaryAmt(payBacks)} to pay</span>
+                      <span style={{ overflow: 'hidden', textOverflow: 'ellipsis' }}>{primaryAmt(payBacks)}{payBacks.length > 1 ? '…' : ''} to pay</span>
                     </div>
                   )}
                   {getBacks.length > 0 && (
@@ -537,7 +537,7 @@ export const GroupDetail: React.FC<GroupDetailProps> = ({
                       style={{ ...segStyle, background: GREEN }}
                       onClick={() => setActiveTab('balances')}
                     >
-                      <span style={{ overflow: 'hidden', textOverflow: 'ellipsis' }}>{primaryAmt(getBacks)} to collect</span>
+                      <span style={{ overflow: 'hidden', textOverflow: 'ellipsis' }}>{primaryAmt(getBacks)}{getBacks.length > 1 ? '…' : ''} to collect</span>
                     </div>
                   )}
                 </>

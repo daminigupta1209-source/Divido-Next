@@ -504,7 +504,7 @@ export const MasterSummary: React.FC<MasterSummaryProps> = ({
                       style={{ ...segStyle, background: PINK }}
                       onClick={() => setView('friends')}
                     >
-                      <span style={{ overflow: 'hidden', textOverflow: 'ellipsis' }}>{primaryAmt(payBacks)} to pay</span>
+                      <span style={{ overflow: 'hidden', textOverflow: 'ellipsis' }}>{primaryAmt(payBacks)}{payBacks.length > 1 ? '…' : ''} to pay</span>
                     </div>
                   )}
                   {getBacks.length > 0 && (
@@ -512,7 +512,7 @@ export const MasterSummary: React.FC<MasterSummaryProps> = ({
                       style={{ ...segStyle, background: GREEN }}
                       onClick={() => setView('friends')}
                     >
-                      <span style={{ overflow: 'hidden', textOverflow: 'ellipsis' }}>{primaryAmt(getBacks)} to collect</span>
+                      <span style={{ overflow: 'hidden', textOverflow: 'ellipsis' }}>{primaryAmt(getBacks)}{getBacks.length > 1 ? '…' : ''} to collect</span>
                     </div>
                   )}
                 </>

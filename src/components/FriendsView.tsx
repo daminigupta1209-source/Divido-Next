@@ -446,7 +446,7 @@ export const FriendsView: React.FC<FriendsViewProps> = ({
               const entries = Object.entries(totalPayable);
               if (entries.length === 0) return 'Nothing to pay';
               const [c, v] = entries[0];
-              return `${c}${formatCompactAmount(v)} to pay`;
+              return `${c}${formatCompactAmount(v)}${entries.length > 1 ? '…' : ''} to pay`;
             })()}
           </div>
           {/* Right section: to collect */}
@@ -478,7 +478,7 @@ export const FriendsView: React.FC<FriendsViewProps> = ({
               const entries = Object.entries(totalReceivable);
               if (entries.length === 0) return 'Nothing to collect';
               const [c, v] = entries[0];
-              return `${c}${formatCompactAmount(v)} to collect`;
+              return `${c}${formatCompactAmount(v)}${entries.length > 1 ? '…' : ''} to collect`;
             })()}
           </div>
         </div>
