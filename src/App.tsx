@@ -31,7 +31,7 @@ import { useExportCSV } from './hooks/useExportCSV';
 import QRCode from 'qrcode';
 
 import { Group, Expense, PendingMatchPrompt } from './lib/types';
-import { AppNotification, fetchNotifications, markAllNotificationsRead, subscribeNotifications } from './lib/notifications';
+import { AppNotification, fetchNotifications, markAllNotificationsRead, subscribeNotifications, clearAllNotifications } from './lib/notifications';
 import { calculateNextOccurrenceDate, simplifyMultiCurrencyDebts } from './lib/calculations';
 
 const pageDescriptions: Record<string, string> = {
@@ -108,7 +108,12 @@ function App() {
     return false;
   });
   const [showDeleteAccountModal, setShowDeleteAccountModal] = useState<boolean>(false);
-  const [userEmail, setUserEmail] = useState<string>('');
+  const [userEmail, setUserEmail] = useState<string>(() => {
+    if (localStorage.getItem('divido_e2e_testing') === 'true') {
+      return 'e2e-test-guest@divido.app';
+    }
+    return '';
+  });
   const [feedback, setFeedback] = useState<string>('');
   
   // Link request modal state
@@ -144,6 +149,7 @@ function App() {
   const [showInfo, setShowInfo] = useState(false);
   const [showGlobalAddMenu, setShowGlobalAddMenu] = useState(false);
   const [activeReminderName, setActiveReminderName] = useState<string | null>(null);
+  const [activeRejoinLink, setActiveRejoinLink] = useState<string | null>(null);
   const [mobileShowGroupOptionsMenu, setMobileShowGroupOptionsMenu] = useState(false);
   const [notifications, setNotifications] = useState<AppNotification[]>([]);
   const [showNotifPanel, setShowNotifPanel] = useState(false);
@@ -217,6 +223,14 @@ function App() {
       setNotifications((prev) => prev.map((n) => ({ ...n, isRead: true })));
     }
   };
+
+  const handleClearNotifications = async () => {
+    if (userEmail) {
+      await clearAllNotifications(userEmail);
+      setNotifications([]);
+    }
+  };
+
 
   const handleNotificationClick = (n: AppNotification) => {
     setShowNotifPanel(false);
@@ -511,9 +525,14 @@ function App() {
         const userFullName = session.user?.user_metadata?.full_name || session.user?.email?.split('@')[0] || session.user?.phone || 'User';
         updateUserName(userFullName);
       } else {
-        setIsAuthenticated(false);
-        setUserEmail('');
-        localStorage.removeItem('divido_authenticated');
+        if (localStorage.getItem('divido_e2e_testing') === 'true') {
+          setIsAuthenticated(true);
+          setUserEmail('e2e-test-guest@divido.app');
+        } else {
+          setIsAuthenticated(false);
+          setUserEmail('');
+          localStorage.removeItem('divido_authenticated');
+        }
       }
     });
 
@@ -525,6 +544,9 @@ function App() {
         setUserEmail(session.user?.email || '');
         const userFullName = session.user?.user_metadata?.full_name || session.user?.email?.split('@')[0] || session.user?.phone || 'User';
         updateUserName(userFullName);
+      } else if (localStorage.getItem('divido_e2e_testing') === 'true') {
+        setIsAuthenticated(true);
+        setUserEmail('e2e-test-guest@divido.app');
       }
     });
 
@@ -914,74 +936,13 @@ function App() {
 
         const rejoinName = urlParams.get('rejoinName');
         if (rejoinName) {
-          const matchLeftMember = existingMembers.find((m: any) => m.name === rejoinName + ' (Left)');
+          const matchLeftMember = existingMembers.find((m: any) => 
+            m.name.toLowerCase() === (rejoinName + ' (Left)').toLowerCase() ||
+            (m.name.toLowerCase() === rejoinName.toLowerCase() && m.is_pending)
+          );
           if (matchLeftMember) {
-            const { data: { session } } = await supabase.auth.getSession();
-            const myEmail = session?.user?.email || null;
-
-            // 1. Reactivate the left member row
-            await supabase
-              .from('group_members')
-              .update({
-                name: rejoinName,
-                user_email: myEmail,
-                is_pending: false
-              })
-              .eq('id', matchLeftMember.id);
-
-            // Set local identity parameters so the device is logged in as this member
-            localStorage.setItem('divido_username', rejoinName);
-            localStorage.setItem('divido_authenticated', 'true');
-            localStorage.setItem(`divido_identity_${joinGroupId}`, rejoinName);
-            setUserName(rejoinName);
-            setIsAuthenticated(true);
-
-            // Notify other members
-            try {
-              const { data: activeMems } = await supabase
-                .from('group_members')
-                .select('user_email')
-                .eq('group_id', joinGroupId)
-                .not('user_email', 'is', null);
-              
-              if (activeMems && activeMems.length > 0) {
-                const { pushNotification } = await import('./lib/notifications');
-                for (const mem of activeMems) {
-                  if (mem.user_email && mem.user_email !== myEmail) {
-                    await pushNotification({
-                      recipientEmail: mem.user_email,
-                      type: 'join',
-                      title: `🚪 ${rejoinName} rejoined the group`,
-                      body: `${rejoinName} is back in the group.`,
-                      fromName: rejoinName,
-                      groupId: joinGroupId,
-                    });
-                  }
-                }
-              }
-            } catch (e) {
-              console.error('Rejoin notification push failed:', e);
-            }
-
-            // 2. Insert system notification of rejoin
-            await supabase
-              .from('expenses')
-              .insert({
-                group_id: joinGroupId,
-                title: `🚪 ${rejoinName} rejoined the group`,
-                amt: 0,
-                paid: 'SYSTEM',
-                date: new Date().toISOString().split('T')[0],
-                mode: 'Equally',
-                splitters: []
-              });
-
-            setSelectedId(joinGroupId);
-            setView('detail');
-
-            // Clean URL parameters
-            const cleanUrl = window.location.protocol + '//' + window.location.host + window.location.pathname;
-            window.history.replaceState({}, document.title, cleanUrl);
+            setLinkRequestGroup(groupData);
+            setLinkRequestPlaceholders([matchLeftMember]);
             return;
           }
         }
@@ -1044,12 +1005,12 @@ function App() {
           if (!checkIfDemoMode() && isAuthenticated) {
             try {
               if (hasOthers) {
-                // 1. Rename membership row to preserve history, remove email so it disappears for leaving user
+                // 1. Rename membership row to preserve history, keep email, set is_pending = true
                 await supabase
                   .from('group_members')
                   .update({
                     name: me + ' (Left)',
-                    user_email: null
+                    is_pending: true
                   })
                   .eq('group_id', id)
                   .eq('name', me);
@@ -1066,6 +1027,38 @@ function App() {
                     mode: 'Equally',
                     splitters: []
                   });
+
+                // 3. Admin handoff: the next active member becomes admin (admin is
+                // the first non-left member). If the leaver was the admin, let the
+                // new admin know they've been promoted.
+                const activeMembers = (g.members || []).filter((m) => !m.endsWith(' (Left)'));
+                const iWasAdmin = activeMembers[0] === me || activeMembers[0] === 'You';
+                const newAdminName = activeMembers.find((m) => m !== me);
+                if (iWasAdmin && newAdminName) {
+                  try {
+                    const { data: rows } = await supabase
+                      .from('group_members')
+                      .select('user_email')
+                      .eq('group_id', id)
+                      .eq('name', newAdminName)
+                      .not('user_email', 'is', null)
+                      .limit(1);
+                    const newAdminEmail = rows?.[0]?.user_email;
+                    if (newAdminEmail) {
+                      const { pushNotification } = await import('./lib/notifications');
+                      await pushNotification({
+                        recipientEmail: newAdminEmail,
+                        type: 'admin_transfer',
+                        title: `You're now the admin of ${g.name}`,
+                        body: `${me} left the group, so you're the new group admin. You can invite members and approve rejoin requests.`,
+                        fromName: me,
+                        groupId: id,
+                      });
+                    }
+                  } catch (err) {
+                    console.error('Failed to notify new admin of handoff:', err);
+                  }
+                }
               } else {
                 // 3. Delete group globally since no other members are left
                 await supabase.from('groups').delete().eq('id', id);
@@ -1074,7 +1067,7 @@ function App() {
               console.error('Failed to leave/delete group on Supabase:', err);
             }
           }
-          // Remove from local groups state
+          // Update local groups state
           setGroups(
             groups
               .map((x) =>
@@ -1082,7 +1075,8 @@ function App() {
                   ? { ...x, members: x.members.map((m) => (m === me ? me + ' (Left)' : m)) }
                   : x
               )
-              .filter((x) => String(x.id) !== String(id))
+              // Only filter it out if we actually deleted it globally because no other members were in it
+              .filter((x) => hasOthers || String(x.id) !== String(id))
           );
         } else {
           setExpenses(expenses.filter((e) => String(e.gId) !== String(id)));
@@ -1345,6 +1339,7 @@ function App() {
           showNotifPanel={showNotifPanel}
           setShowNotifPanel={setShowNotifPanel}
           onOpenNotifications={handleOpenNotifications}
+          onClearNotifications={handleClearNotifications}
           onNotificationClick={handleNotificationClick}
           onHeaderSearch={() => { setView('summary'); setHomeSearchNonce((n) => n + 1); }}
           onAcceptRename={handleAcceptRename}
@@ -1502,19 +1497,18 @@ function App() {
                   .single();
 
                 if (mem && mem.link_request_email) {
-                  // If it's a request to link with a placeholder
-                  if (mem.user_email === null) {
-                    await supabase
-                      .from('group_members')
-                      .update({
-                        user_email: mem.link_request_email,
-                        name: mem.link_request_name || mem.name,
-                        is_pending: false,
-                        link_request_email: null,
-                        link_request_name: null,
-                      })
-                      .eq('id', memberRecordId);
-                  }
+                  // Link/Reactivate the member
+                  const cleanName = mem.name.replace(/\s*\(Left\)$/i, '');
+                  await supabase
+                    .from('group_members')
+                    .update({
+                      user_email: mem.link_request_email,
+                      name: cleanName,
+                      is_pending: false,
+                      link_request_email: null,
+                      link_request_name: null,
+                    })
+                    .eq('id', memberRecordId);
                   
                   // Notify the newly-approved member that they were added
                   try {
@@ -1539,6 +1533,83 @@ function App() {
                 }
               } catch (err) {
                 console.error(err);
+              }
+            }}
+            onRequestRejoin={async () => {
+              if (selectedId && selectedId !== 'STANDALONE') {
+                try {
+                  const { data: { session } } = await supabase.auth.getSession();
+                  const myEmail = session?.user?.email;
+
+                  const searchName = me + ' (Left)';
+                  const { data: matched } = await supabase
+                    .from('group_members')
+                    .select('id')
+                    .eq('group_id', selectedId)
+                    .ilike('name', searchName)
+                    .maybeSingle();
+
+                  if (matched) {
+                    if (!myEmail) {
+                      // Guest user rejoining directly without email requirement
+                      await supabase
+                        .from('group_members')
+                        .update({
+                          name: me,
+                          is_pending: false,
+                          user_email: null,
+                          link_request_email: null,
+                          link_request_name: null,
+                        })
+                        .eq('id', matched.id);
+
+                      alert(`Welcome back to the group, ${me}! 🎉`);
+                      setGroups((prev) => [...prev]);
+                      return;
+                    }
+                    await supabase
+                      .from('group_members')
+                      .update({
+                        link_request_email: myEmail,
+                        link_request_name: me,
+                        is_pending: true
+                      })
+                      .eq('id', matched.id);
+
+                    // Notify group admin/members
+                    try {
+                      const { data: activeMems } = await supabase
+                        .from('group_members')
+                        .select('user_email')
+                        .eq('group_id', selectedId)
+                        .not('user_email', 'is', null);
+
+                      if (activeMems && activeMems.length > 0) {
+                        const { pushNotification } = await import('./lib/notifications');
+                        const grp = groups.find((g) => String(g.id) === String(selectedId));
+                        for (const mem of activeMems) {
+                          if (mem.user_email && mem.user_email !== myEmail) {
+                            await pushNotification({
+                              recipientEmail: mem.user_email,
+                              type: 'join',
+                              title: `${me} requested to rejoin ${grp?.name || 'group'}`,
+                              body: `${me} wants to join back the group. Approve them from the Members list.`,
+                              fromName: me,
+                              groupId: selectedId,
+                            });
+                          }
+                        }
+                      }
+                    } catch (e) {
+                      console.error('Rejoin request notification failed:', e);
+                    }
+
+                    alert('Rejoin request sent successfully! Waiting for group admin approval. ⏳');
+                    setGroups((prev) => [...prev]);
+                  }
+                } catch (err) {
+                  console.error('Failed to send rejoin request:', err);
+                }
               }
             }}
             onDeclineLinkRequest={async (memberRecordId) => {
@@ -1627,32 +1698,85 @@ function App() {
                 groupId: selectedId,
               });
             }}
+            onReinviteMember={async (memberName, inviteUrl) => {
+              if (selectedId && selectedId !== 'STANDALONE') {
+                try {
+                  const searchName = memberName + ' (Left)';
+                  const { data: matched } = await supabase
+                    .from('group_members')
+                    .select('id')
+                    .eq('group_id', selectedId)
+                    .ilike('name', searchName)
+                    .maybeSingle();
+
+                  if (matched) {
+                    await supabase
+                      .from('group_members')
+                      .update({
+                        name: memberName,
+                        is_pending: true
+                      })
+                      .eq('id', matched.id);
+                  }
+                } catch (err) {
+                  console.error('Failed to shift member to pending:', err);
+                }
+              }
+              // Update local state to reflect reinvite immediately
+              setGroups(
+                groups.map((g) =>
+                  String(g.id) === String(selectedId)
+                    ? {
+                        ...g,
+                        members: g.members.map((m) => {
+                          const cleanM = m.replace(/\s*\(Left\)$/i, '');
+                          return cleanM.toLowerCase() === memberName.toLowerCase() ? memberName : m;
+                        }),
+                        pendingMembers: Array.from(new Set([...(g.pendingMembers || []), memberName]))
+                      }
+                    : g
+                )
+              );
+              setActiveReminderName(memberName);
+              setActiveRejoinLink(inviteUrl);
+              setShowAddFriendModal(true);
+            }}
             onRemoveMember={async (memberName) => {
               if (!selectedId || selectedId === 'STANDALONE') return;
+              const isPastMember = memberName.endsWith(' (Left)');
               if (!checkIfDemoMode() && isAuthenticated) {
                 try {
-                  // 1. Rename membership row to preserve history, remove email so it disappears for leaving user
-                  await supabase
-                    .from('group_members')
-                    .update({
-                      name: memberName + ' (Left)',
-                      user_email: null
-                    })
-                    .eq('group_id', selectedId)
-                    .eq('name', memberName);
+                  if (isPastMember) {
+                    // Permanently delete from group_members table
+                    await supabase
+                      .from('group_members')
+                      .delete()
+                      .eq('group_id', selectedId)
+                      .eq('name', memberName);
+                  } else {
+                    // 1. Rename membership row to preserve history, keep email, set is_pending: true
+                    await supabase
+                      .from('group_members')
+                      .update({
+                        name: memberName + ' (Left)',
+                        is_pending: true
+                      })
+                      .eq('group_id', selectedId)
+                      .eq('name', memberName);
 
-                  // 2. Insert system notification of departure
-                  await supabase
-                    .from('expenses')
-                    .insert({
-                      group_id: selectedId,
-                      title: `🚪 ${memberName} left the group`,
-                      amt: 0,
-                      paid: 'SYSTEM',
-                      date: new Date().toISOString().split('T')[0],
-                      mode: 'Equally',
-                      splitters: []
-                    });
+                    // 2. Insert system notification of departure
+                    await supabase
+                      .from('expenses')
+                      .insert({
+                        group_id: selectedId,
+                        title: `🚪 ${memberName} left the group`,
+                        amt: 0,
+                        paid: 'SYSTEM',
+                        date: new Date().toISOString().split('T')[0],
+                        mode: 'Equally',
+                        splitters: []
+                      });
+                  }
                 } catch (err) {
                   console.error('Failed to remove member on Supabase:', err);
                 }
@@ -1663,7 +1787,9 @@ function App() {
                   String(g.id) === String(selectedId)
                     ? {
                         ...g,
-                        members: g.members.map((m) => (m === memberName ? memberName + ' (Left)' : m)),
+                        members: isPastMember
+                          ? g.members.filter((m) => m !== memberName)
+                          : g.members.map((m) => (m === memberName ? memberName + ' (Left)' : m)),
                         pendingMembers: g.pendingMembers?.filter((m) => m !== memberName)
                       }
                     : g
@@ -1760,33 +1886,35 @@ function App() {
           currentSplitters={activeSplitters}
           userMetadata={userMetadata}
           setUserMetadata={setUserMetadata}
-          targetReminderName={activeReminderName}
-          onAdd={(names) => {
-            if (selectedId === 'STANDALONE') {
-              setNewlyAddedFriends(names);
-            } else if (selectedId) {
-              const g = groups.find((x) => x.id == selectedId);
-              if (g) {
-                const newMembers = Array.from(new Set([...g.members, ...names]));
-                const newPending = Array.from(new Set([...(g.pendingMembers || []), ...names]));
-                setGroups(groups.map((x) => (x.id == selectedId ? { ...x, members: newMembers, pendingMembers: newPending } : x)));
-              }
-              setNewlyAddedFriends(names);
-            } else {
-              const name = prompt('Ledger Name:', 'Quick Splits ⚡');
-              if (name) {
-                const id = Date.now();
-                setGroups([...groups, { id, name, members: [me, ...names], currency: myDefaultCurrency }]);
-                setSelectedId(id);
-              }
-            }
-          }}
-          setShowAddFriendModal={(show) => {
-            setShowAddFriendModal(show);
-            if (!show) {
-              setActiveReminderName(null);
-            }
-          }}
+           targetReminderName={activeReminderName}
+           customRejoinLink={activeRejoinLink}
+           onAdd={(names) => {
+             if (selectedId === 'STANDALONE') {
+               setNewlyAddedFriends(names);
+             } else if (selectedId) {
+               const g = groups.find((x) => x.id == selectedId);
+               if (g) {
+                 const newMembers = Array.from(new Set([...g.members, ...names]));
+                 const newPending = Array.from(new Set([...(g.pendingMembers || []), ...names]));
+                 setGroups(groups.map((x) => (x.id == selectedId ? { ...x, members: newMembers, pendingMembers: newPending } : x)));
+               }
+               setNewlyAddedFriends(names);
+             } else {
+               const name = prompt('Ledger Name:', 'Quick Splits ⚡');
+               if (name) {
+                 const id = Date.now();
+                 setGroups([...groups, { id, name, members: [me, ...names], currency: myDefaultCurrency }]);
+                 setSelectedId(id);
+               }
+             }
+           }}
+           setShowAddFriendModal={(show) => {
+             setShowAddFriendModal(show);
+             if (!show) {
+               setActiveReminderName(null);
+               setActiveRejoinLink(null);
+             }
+           }}
         />
       )}
 
@@ -1829,23 +1957,30 @@ function App() {
                     setSubmittingLinkRequest(true);
                     try {
                       const { data: { session } } = await supabase.auth.getSession();
-                      if (session?.user?.email) {
-                        // User is signed in: Request linking from the admin
+                      const myEmail = session?.user?.email || null;
+                      const isRejoin = p.name.endsWith(' (Left)') ||
+                        !!new URLSearchParams(window.location.search).get('rejoinName') ||
+                        (localStorage.getItem('divido_username') && p.name.toLowerCase() === localStorage.getItem('divido_username')?.toLowerCase()) ||
+                        (localStorage.getItem(`divido_identity_${linkRequestGroup.id}`) && p.name.toLowerCase() === localStorage.getItem(`divido_identity_${linkRequestGroup.id}`)?.toLowerCase());
+                      const cleanName = isRejoin ? p.name.replace(' (Left)', '') : p.name;
+
+                      if (isRejoin) {
+                        // 1. Reactivate the left member row
                         await supabase
                           .from('group_members')
                           .update({
-                            link_request_email: session.user.email,
-                            link_request_name: session.user.user_metadata?.full_name || session.user.email.split('@')[0],
+                            name: cleanName,
+                            user_email: myEmail,
+                            is_pending: false
                           })
                           .eq('id', p.id);
-                        alert(`Join request sent! Waiting for group admin approval. ⏳`);
-                      } else {
-                        // Guest/Cookie claim (Tricount-style)
-                        // 1. Mark as locally active in Supabase so others see they have joined
-                        await supabase
-                          .from('group_members')
-                          .update({ is_pending: false })
-                          .eq('id', p.id);
+
+                        // 2. Local identity setup
+                        localStorage.setItem('divido_username', cleanName);
+                        localStorage.setItem('divido_authenticated', 'true');
+                        localStorage.setItem(`divido_identity_${linkRequestGroup.id}`, cleanName);
+                        setUserName(cleanName);
+                        setIsAuthenticated(true);
 
                         // Notify other members
                         try {
@@ -1858,30 +1993,92 @@ function App() {
                           if (activeMems && activeMems.length > 0) {
                             const { pushNotification } = await import('./lib/notifications');
                             for (const mem of activeMems) {
-                              if (mem.user_email) {
+                              if (mem.user_email && mem.user_email !== myEmail) {
                                 await pushNotification({
                                   recipientEmail: mem.user_email,
                                   type: 'join',
-                                  title: `👥 ${p.name} joined ${linkRequestGroup.name}`,
-                                  body: `${p.name} claimed their profile and is now active.`,
-                                  fromName: p.name,
+                                  title: `${cleanName} rejoined ${linkRequestGroup.name}`,
+                                  body: `${cleanName} is back in the group.`,
+                                  fromName: cleanName,
                                   groupId: linkRequestGroup.id,
                                 });
                               }
                             }
                           }
                         } catch (e) {
-                          console.error('Guest claim notification push failed:', e);
+                          console.error('Rejoin notification push failed:', e);
                         }
 
-                        // 2. Save settings locally
-                        localStorage.setItem('divido_username', p.name);
-                        localStorage.setItem('divido_authenticated', 'true');
-                        localStorage.setItem(`divido_identity_${linkRequestGroup.id}`, p.name);
-                        setUserName(p.name);
-                        setIsAuthenticated(true);
-                        
-                        alert(`Welcome, ${p.name}! You have successfully claimed this profile. 🎉`);
+                        // 3. Insert system notification of rejoin
+                        await supabase
+                          .from('expenses')
+                          .insert({
+                            group_id: linkRequestGroup.id,
+                            title: `🚪 ${cleanName} rejoined the group`,
+                            amt: 0,
+                            paid: 'SYSTEM',
+                            date: new Date().toISOString().split('T')[0],
+                            mode: 'Equally',
+                            splitters: []
+                          });
+
+                        alert(`Welcome back to "${linkRequestGroup.name}"! You have successfully rejoined as "${cleanName}". 🎉`);
+                      } else {
+                        // Normal claim flow
+                        if (session?.user?.email) {
+                          // User is signed in: Request linking from the admin
+                          await supabase
+                            .from('group_members')
+                            .update({
+                              link_request_email: session.user.email,
+                              link_request_name: session.user.user_metadata?.full_name || session.user.email.split('@')[0],
+                            })
+                            .eq('id', p.id);
+                          alert(`Join request sent! Waiting for group admin approval. ⏳`);
+                        } else {
+                          // Guest/Cookie claim (Tricount-style)
+                          // 1. Mark as locally active in Supabase so others see they have joined
+                          await supabase
+                            .from('group_members')
+                            .update({ is_pending: false })
+                            .eq('id', p.id);
+
+                          // Notify other members
+                          try {
+                            const { data: activeMems } = await supabase
+                              .from('group_members')
+                              .select('user_email')
+                              .eq('group_id', linkRequestGroup.id)
+                              .not('user_email', 'is', null);
+                            
+                            if (activeMems && activeMems.length > 0) {
+                              const { pushNotification } = await import('./lib/notifications');
+                              for (const mem of activeMems) {
+                                if (mem.user_email) {
+                                  await pushNotification({
+                                    recipientEmail: mem.user_email,
+                                    type: 'join',
+                                    title: `${p.name} joined ${linkRequestGroup.name}`,
+                                    body: `${p.name} claimed their profile and is now active.`,
+                                    fromName: p.name,
+                                    groupId: linkRequestGroup.id,
+                                  });
+                                }
+                              }
+                            }
+                          } catch (e) {
+                            console.error('Guest claim notification push failed:', e);
+                          }
+
+                          // 2. Save settings locally
+                          localStorage.setItem('divido_username', p.name);
+                          localStorage.setItem('divido_authenticated', 'true');
+                          localStorage.setItem(`divido_identity_${linkRequestGroup.id}`, p.name);
+                          setUserName(p.name);
+                          setIsAuthenticated(true);
+                          
+                          alert(`Welcome, ${p.name}! You have successfully claimed this profile. 🎉`);
+                        }
                       }
                       
                       setSelectedId(linkRequestGroup.id);
@@ -1909,7 +2106,10 @@ function App() {
                     textAlign: 'left',
                   }}
                 >
-                  🎭 Claim "{p.name}"
+                  {p.name.endsWith(' (Left)') ||
+                  !!new URLSearchParams(window.location.search).get('rejoinName') ||
+                  (localStorage.getItem('divido_username') && p.name.toLowerCase() === localStorage.getItem('divido_username')?.toLowerCase()) ||
+                  (localStorage.getItem(`divido_identity_${linkRequestGroup.id}`) && p.name.toLowerCase() === localStorage.getItem(`divido_identity_${linkRequestGroup.id}`)?.toLowerCase()) ? `🚪 Rejoin as "${p.name.replace(' (Left)', '')}"` : `🎭 Claim "${p.name}"`}
                 </button>
               ))}
 
@@ -1957,7 +2157,7 @@ function App() {
                                 await pushNotification({
                                   recipientEmail: mem.user_email,
                                   type: 'join',
-                                  title: `👥 ${trimmed} joined ${linkRequestGroup.name}`,
+                                  title: `${trimmed} joined ${linkRequestGroup.name}`,
                                   body: `${trimmed} joined the group as a new member.`,
                                   fromName: trimmed,
                                   groupId: linkRequestGroup.id,

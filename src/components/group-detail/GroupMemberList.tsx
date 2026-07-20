@@ -15,6 +15,7 @@ interface GroupMemberListProps {
   onRenameMember?: (oldName: string, newName: string) => void;
   onRemindMember?: (memberName: string) => void;
   onRemoveMember?: (memberName: string) => void;
+  onReinviteMember?: (memberName: string, inviteUrl: string) => void;
 }
 
 export const GroupMemberList: React.FC<GroupMemberListProps> = ({
@@ -31,6 +32,7 @@ export const GroupMemberList: React.FC<GroupMemberListProps> = ({
   onRenameMember,
   onRemindMember,
   onRemoveMember,
+  onReinviteMember,
 }) => {
   // Hooks must run unconditionally, before any early return, so React sees a
   // stable hook order across renders (toggling showFriendsList otherwise crashes).
@@ -62,7 +64,7 @@ export const GroupMemberList: React.FC<GroupMemberListProps> = ({
   };
 
   const activeMembers = selectedGroup.members.filter((m) => !m.endsWith(' (Left)'));
-  const isAdmin = activeMembers[0] === me;
+  const isAdmin = activeMembers[0] === me || activeMembers[0] === 'You';
 
   const handleInlineSave = (oldName: string) => {
     const trimmed = inlineRenameVal.trim();
@@ -213,16 +215,14 @@ export const GroupMemberList: React.FC<GroupMemberListProps> = ({
                           </span>
                         )}
                         
-                        {isAdmin && m !== me && (
+                        {(isAdmin || m === me) && (
                           <span
                             onClick={async (e) => {
                               e.stopPropagation();
-                              const bal = getMemberBalance(m);
-                              if (Math.abs(bal) > 0.01) {
-                                alert(`Cannot remove "${m}" because they still have outstanding balances in this group. 💳`);
-                                return;
-                              }
-                              if (confirm(`Remove "${m}" from the group? This will shift them to Left Members and keep past history.`)) {
+                              const promptMsg = m === me 
+                                ? `Are you sure you want to leave this group? Your transaction history will be preserved.`
+                                : `Remove "${m}" from the group? This will shift them to Past Members and keep past history.`;
+                              if (confirm(promptMsg)) {
                                 if (onRemoveMember) {
                                   onRemoveMember(m);
                                 }
@@ -235,7 +235,7 @@ export const GroupMemberList: React.FC<GroupMemberListProps> = ({
                               fontWeight: 'bold',
                               padding: '0 4px',
                             }}
-                            title="Remove member"
+                            title={m === me ? "Leave group" : "Remove member"}
                           >✕</span>
                         )}
                       </div>
@@ -339,26 +339,26 @@ export const GroupMemberList: React.FC<GroupMemberListProps> = ({
                       >
                         Remind
                       </button>
-                      {selectedId !== 'STANDALONE' && (
+                      {selectedId !== 'STANDALONE' && (isAdmin || m === me) && (
                         <span
                           style={{ cursor: 'pointer', opacity: 0.6, fontSize: '13px', color: '#EF4444', fontWeight: 'bold' }}
                           onClick={(e) => {
                             e.stopPropagation();
-                            const isActive = expenses.some(
-                              (exp) =>
-                                String(exp.gId) === String(selectedId) &&
-                                (exp.paid === m || (exp.splitters ? exp.splitters.includes(m) : true))
-                            );
-                            if (isActive) {
-                              alert(`Cannot remove ${m}! 🛑\n\nThey have active expenses in this group.`);
-                            } else if (confirm(`Remove ${m} from this group?`)) {
-                              setGroups(
-                                groups.map((g) =>
-                                  String(g.id) === String(selectedId)
-                                    ? { ...g, members: g.members.filter((mem) => mem !== m), pendingMembers: g.pendingMembers?.filter((mem) => mem !== m) }
-                                    : g
-                                )
-                              );
+                            const promptMsg = m === me 
+                              ? `Are you sure you want to leave this group? Your transaction history will be preserved.`
+                              : `Remove "${m}" from the group? This will shift them to Past Members and keep past history.`;
+                            if (confirm(promptMsg)) {
+                              if (onRemoveMember) {
+                                onRemoveMember(m);
+                              } else {
+                                setGroups(
+                                  groups.map((g) =>
+                                    String(g.id) === String(selectedId)
+                                      ? { ...g, members: g.members.map((mem) => (mem === m ? m + ' (Left)' : mem)), pendingMembers: g.pendingMembers?.filter((mem) => mem !== m) }
+                                      : g
+                                  )
+                                );
+                              }
                             }
                           }}
                         >
@@ -379,7 +379,7 @@ export const GroupMemberList: React.FC<GroupMemberListProps> = ({
             return (
               <div style={{ marginTop: '24px' }}>
                 <h4 style={{ margin: '0 0 8px 0', fontSize: '12px', fontWeight: 800, color: '#475569', textTransform: 'uppercase', letterSpacing: '0.5px', textAlign: 'left' }}>
-                  Left Members ({left.length})
+                  Past Members ({left.length})
                 </h4>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
                   {left.map((m) => {
@@ -402,29 +402,52 @@ export const GroupMemberList: React.FC<GroupMemberListProps> = ({
                           {cleanName}
                         </span>
                         
-                        <button
-                          onClick={async (e) => {
-                            e.stopPropagation();
-                            const inviteUrl = `${window.location.origin}/?joinGroupId=${selectedGroup.id}&rejoinName=${encodeURIComponent(cleanName)}`;
-                            await navigator.clipboard.writeText(inviteUrl);
-                            alert(`Rejoin invite link for "${cleanName}" copied to clipboard! 📋\nSend this to them to rejoin: \n\n${inviteUrl}`);
-                          }}
-                          style={{
-                            background: 'rgba(99, 102, 241, 0.1)',
-                            border: 'none',
-                            borderRadius: '8px',
-                            padding: '4px 8px',
-                            color: '#4F46E6',
-                            fontSize: '10px',
-                            fontWeight: 800,
-                            cursor: 'pointer',
-                            transition: '0.15s all ease',
-                          }}
-                          onMouseEnter={(e) => { e.currentTarget.style.background = 'rgba(99, 102, 241, 0.2)'; }}
-                          onMouseLeave={(e) => { e.currentTarget.style.background = 'rgba(99, 102, 241, 0.1)'; }}
-                        >
-                          🔗 Copy Rejoin Link
-                        </button>
+                        {isAdmin && (
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                            <button
+                              onClick={async (e) => {
+                                e.stopPropagation();
+                                const inviteUrl = `${window.location.origin}/?joinGroupId=${selectedGroup.id}&rejoinName=${encodeURIComponent(cleanName)}`;
+                                if (onReinviteMember) {
+                                  onReinviteMember(cleanName, inviteUrl);
+                                } else {
+                                  await navigator.clipboard.writeText(inviteUrl);
+                                  alert(`Rejoin invite link for "${cleanName}" copied to clipboard! 📋\nSend this to them to rejoin: \n\n${inviteUrl}`);
+                                }
+                              }}
+                              style={{
+                                background: 'rgba(99, 102, 241, 0.1)',
+                                border: 'none',
+                                borderRadius: '8px',
+                                padding: '4px 8px',
+                                color: '#4F46E6',
+                                fontSize: '10px',
+                                fontWeight: 800,
+                                cursor: 'pointer',
+                                transition: '0.15s all ease',
+                              }}
+                              onMouseEnter={(e) => { e.currentTarget.style.background = 'rgba(99, 102, 241, 0.2)'; }}
+                              onMouseLeave={(e) => { e.currentTarget.style.background = 'rgba(99, 102, 241, 0.1)'; }}
+                            >
+                              🔗 Invite again
+                            </button>
+
+                            <span
+                              title="Delete past member"
+                              onClick={(e) => {
+                                  e.stopPropagation();
+                                  if (confirm(`Permanently remove "${cleanName}" from the group's history?`)) {
+                                    if (onRemoveMember) {
+                                      onRemoveMember(m);
+                                    }
+                                  }
+                              }}
+                              style={{ cursor: 'pointer', opacity: 0.9, fontSize: '13px', color: '#EF4444', fontWeight: 'bold', marginLeft: '6px' }}
+                            >
+                              ✕
+                            </span>
+                          </div>
+                        )}
                       </div>
                     );
                   })}
@@ -446,20 +469,19 @@ export const GroupMemberList: React.FC<GroupMemberListProps> = ({
               alignItems: 'center',
               justifyContent: 'center',
               gap: '6px',
-              background: 'linear-gradient(135deg, #7C3AED, #6366F1)',
-              color: '#FFFFFF',
-              border: 'none',
+              background: 'transparent',
+              color: '#6366F1',
+              border: '1.5px solid #6366F1',
               cursor: 'pointer',
-              boxShadow: '0 3px 10px rgba(99, 102, 241, 0.25)',
               transition: '0.2s all ease',
             }}
             onMouseEnter={(e) => {
               e.currentTarget.style.transform = 'scale(1.03)';
-              e.currentTarget.style.boxShadow = '0 5px 15px rgba(99, 102, 241, 0.35)';
+              e.currentTarget.style.background = 'rgba(99, 102, 241, 0.04)';
             }}
             onMouseLeave={(e) => {
               e.currentTarget.style.transform = 'scale(1)';
-              e.currentTarget.style.boxShadow = '0 3px 10px rgba(99, 102, 241, 0.25)';
+              e.currentTarget.style.background = 'transparent';
             }}
             onClick={() => {
               setShowFriendsList(false);

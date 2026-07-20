@@ -2,7 +2,7 @@ import React from 'react';
 import { SettleModal } from './SettleModal';
 import { BalanceDisplay } from './BalanceDisplay';
 import { Group, Expense, UserMetadata } from '../lib/types';
-import { GROUP_COLORS } from '../lib/utils';
+import { GROUP_COLORS, formatCompactAmount } from '../lib/utils';
 import { useGroupDetailForm } from '../hooks/useGroupDetailForm';
 
 // Subcomponents
@@ -46,6 +46,8 @@ interface GroupDetailProps {
   onRemindMember?: (memberName: string) => void;
   onDeleteGroup?: (id: string | number) => void;
   onRemoveMember?: (memberName: string) => void;
+  onReinviteMember?: (memberName: string, inviteUrl: string) => void;
+  onRequestRejoin?: () => Promise<void>;
 }
 
 export const GroupDetail: React.FC<GroupDetailProps> = ({
@@ -83,6 +85,8 @@ export const GroupDetail: React.FC<GroupDetailProps> = ({
   onRemindMember,
   onDeleteGroup,
   onRemoveMember,
+  onReinviteMember,
+  onRequestRejoin,
 }) => {
   const {
     currentId,
@@ -142,6 +146,9 @@ export const GroupDetail: React.FC<GroupDetailProps> = ({
     me,
   });
 
+  const activeMembers = selectedGroup ? selectedGroup.members.filter((m) => !m.endsWith(' (Left)')) : [];
+  const isAdmin = selectedGroup ? (activeMembers[0] === me || activeMembers[0] === 'You') : false;
+
   const [showDetailFriendsMenu, setShowDetailFriendsMenu] = React.useState(false);
   const [showDetailBalancesMenu, setShowDetailBalancesMenu] = React.useState(false);
   const [showBalancesFilters, setShowBalancesFilters] = React.useState(false);
@@ -194,8 +201,62 @@ export const GroupDetail: React.FC<GroupDetailProps> = ({
         onDeleteGroup={onDeleteGroup}
       />
 
+      {/* Past Member Rejoin Banner */}
+      {(() => {
+        const isPastMember = selectedGroup.members.some(m => m.toLowerCase() === (me + ' (Left)').toLowerCase());
+        if (!isPastMember) return null;
+        return (
+          <div
+            style={{
+              background: '#FFFBEB',
+              border: '1.5px solid #FCD34D',
+              borderRadius: '16px',
+              padding: '12px 16px',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              gap: '12px',
+              marginBottom: '16px',
+              boxShadow: '0 4px 6px -1px rgba(245, 158, 11, 0.08)',
+            }}
+          >
+            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+              <span style={{ fontSize: '20px' }}>🚪</span>
+              <div style={{ textAlign: 'left' }}>
+                <h4 style={{ margin: 0, fontSize: '13px', fontWeight: 900, color: '#92400E' }}>
+                  You are no longer active in this group
+                </h4>
+                <p style={{ margin: '2px 0 0 0', fontSize: '11px', color: '#B45309', fontWeight: 700 }}>
+                  You can view the group details and history, but you are read-only.
+                </p>
+              </div>
+            </div>
+            <button
+              onClick={async () => {
+                if (onRequestRejoin) {
+                  await onRequestRejoin();
+                }
+              }}
+              className="btn-green hover-up-mini"
+              style={{
+                padding: '6px 12px',
+                fontSize: '11px',
+                fontWeight: 900,
+                borderRadius: '10px',
+                cursor: 'pointer',
+                background: '#D97706',
+                border: 'none',
+                color: 'white',
+              }}
+            >
+              Request to Rejoin 🔁
+            </button>
+          </div>
+        );
+      })()}
+
       {/* Pending link requests approval banner */}
-      {selectedGroup.pendingLinkRequests && selectedGroup.pendingLinkRequests.length > 0 && (
+      {isAdmin && selectedGroup.pendingLinkRequests && selectedGroup.pendingLinkRequests.length > 0 && (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', marginBottom: '16px' }}>
           {selectedGroup.pendingLinkRequests.map((req) => (
             <div
@@ -366,8 +427,8 @@ export const GroupDetail: React.FC<GroupDetailProps> = ({
                 }}
                 style={{
                   background: 'transparent',
-                  color: '#86C5A9',
-                  border: '1.5px solid #86C5A9',
+                  color: '#6366F1',
+                  border: '1.5px solid #6366F1',
                   padding: '5px 13px',
                   borderRadius: '999px',
                   fontWeight: 800,
@@ -395,12 +456,13 @@ export const GroupDetail: React.FC<GroupDetailProps> = ({
           userMetadata={userMetadata}
           expenses={expenses}
           setGroups={setGroups}
-          groups={groups}
+              groups={groups}
           onRenameMember={onRenameMember}
           onRemindMember={(name) => {
             if (onRemindMember) onRemindMember(name);
           }}
           onRemoveMember={onRemoveMember}
+          onReinviteMember={onReinviteMember}
         />
       </div>
 
@@ -422,27 +484,33 @@ export const GroupDetail: React.FC<GroupDetailProps> = ({
         const payBacks = Object.entries(groupBalForCard).filter(([_, v]) => v < -0.01);
         const hasActiveBalancesForCard = getBacks.length > 0 || payBacks.length > 0;
 
-        const joinAmts = (entries: [string, number][]) => {
-          const shown = entries.slice(0, 2).map(([curr, val]) => `${curr}${Math.abs(val).toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 0 })}`);
-          return shown.join(', ') + (entries.length > 2 ? '…' : '');
+        // Only the primary currency's amount is shown in the pill; the small label
+        // above it carries a "+N" when more currencies exist (full detail on tap).
+        const primaryAmt = (entries: [string, number][]) => {
+          const [curr, val] = entries[0];
+          return `${curr}${formatCompactAmount(val)}`;
         };
 
         const PINK = '#DE7093';
         const GREEN = '#6FC7A4';
 
+        // Stacked layout: a small uppercase label above a bold amount, so a big
+        // number never shares one line with its label. Matches the home card.
         const segStyle: React.CSSProperties = {
-          flex: 1,
+          flex: '1 1 auto',
+          minWidth: 0,
           display: 'flex',
+          flexDirection: 'column',
           alignItems: 'center',
           justifyContent: 'center',
-          gap: '5px',
+          gap: '1px',
           color: '#FFFFFF',
-          fontSize: '14px',
-          fontWeight: 500,
-          whiteSpace: 'nowrap',
+          padding: '0 10px',
           overflow: 'hidden',
           cursor: 'pointer',
         };
+        const labelStyle: React.CSSProperties = { fontSize: '9px', fontWeight: 800, letterSpacing: '0.7px', textTransform: 'uppercase', opacity: 0.85, lineHeight: 1, whiteSpace: 'nowrap' };
+        const amtStyle: React.CSSProperties = { fontSize: '15px', fontWeight: 800, lineHeight: 1.15, maxWidth: '100%', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' };
 
         return (
           <div style={{ marginBottom: '22px', marginTop: '4px' }}>
@@ -450,9 +518,9 @@ export const GroupDetail: React.FC<GroupDetailProps> = ({
               Net Balance
             </div>
 
-            <div style={{ display: 'flex', height: '36px', borderRadius: '999px', overflow: 'hidden', boxShadow: '0 6px 16px rgba(0,0,0,0.06)' }}>
+            <div style={{ display: 'flex', height: '48px', borderRadius: '999px', overflow: 'hidden', boxShadow: '0 6px 16px rgba(0,0,0,0.06)' }}>
               {!hasActiveBalancesForCard ? (
-                <div style={{ ...segStyle, background: GREEN, cursor: 'default' }}>All settled up</div>
+                <div style={{ ...segStyle, background: GREEN, cursor: 'default', fontSize: '14px', fontWeight: 500 }}>All settled up</div>
               ) : (
                 <>
                   {payBacks.length > 0 && (
@@ -460,7 +528,8 @@ export const GroupDetail: React.FC<GroupDetailProps> = ({
                       style={{ ...segStyle, background: PINK }}
                       onClick={() => setActiveTab('balances')}
                     >
-                      {joinAmts(payBacks)} to pay
+                      <span style={labelStyle}>To pay{payBacks.length > 1 ? ` +${payBacks.length - 1}` : ''}</span>
+                      <span style={amtStyle}>{primaryAmt(payBacks)}</span>
                     </div>
                   )}
                   {getBacks.length > 0 && (
@@ -468,7 +537,8 @@ export const GroupDetail: React.FC<GroupDetailProps> = ({
                       style={{ ...segStyle, background: GREEN }}
                       onClick={() => setActiveTab('balances')}
                     >
-                      {joinAmts(getBacks)} to collect
+                      <span style={labelStyle}>To collect{getBacks.length > 1 ? ` +${getBacks.length - 1}` : ''}</span>
+                      <span style={amtStyle}>{primaryAmt(getBacks)}</span>
                     </div>
                   )}
                 </>

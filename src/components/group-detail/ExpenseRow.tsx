@@ -1,6 +1,6 @@
 import React from 'react';
 import { Group, Expense } from '../../lib/types';
-import { formatDate, getEmoji, getExactTime } from '../../lib/utils';
+import { formatDate, getEmoji, getExactTime, formatCompactAmount } from '../../lib/utils';
 
 interface ExpenseRowProps {
   e: Expense;
@@ -316,10 +316,7 @@ export const ExpenseRow: React.FC<ExpenseRowProps> = ({
           <div style={{ textAlign: 'right' }}>
             <p style={{ fontSize: '14px', fontWeight: 800, color: '#000000', margin: 0 }}>
               {e.currency || selectedGroup.currency || '₹'}
-              {(parseFloat(e.amt.toString()) || 0).toLocaleString(undefined, {
-                minimumFractionDigits: 0,
-                maximumFractionDigits: 2,
-              })}
+              {formatCompactAmount(parseFloat(e.amt.toString()) || 0)}
             </p>
             <p style={{ fontSize: '8px', fontWeight: 700, color: '#15803D', textTransform: 'uppercase', opacity: 0.6, margin: 0 }}>
               Cleared <span style={{ color: '#16A34A' }}>✔️</span>
@@ -463,7 +460,7 @@ export const ExpenseRow: React.FC<ExpenseRowProps> = ({
       >
         <div style={{ textAlign: 'right', display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '2px' }}>
           <span style={{ fontSize: '14px', fontWeight: 800, color: 'var(--t)', fontFamily: '"Nunito", sans-serif' }}>
-            {e.currency || selectedGroup.currency || '₹'} {e.amt.toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 2 })}
+            {e.currency || selectedGroup.currency || '₹'} {formatCompactAmount(e.amt)}
           </span>
         </div>
 

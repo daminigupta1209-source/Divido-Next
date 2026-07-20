@@ -281,7 +281,7 @@ export const GroupHeader: React.FC<GroupHeaderProps> = ({
                       { emoji: '💱', label: 'Convert Currency', onClick: () => { setShowGroupOptionsMenu(false); setShowConvertModalId(selectedId); } },
                       { emoji: '📤', label: 'Export Data', onClick: () => { setShowGroupOptionsMenu(false); setShowExportMenu(true); } },
                       { emoji: '📊', label: 'Analytics Breakdown', onClick: () => { setShowGroupOptionsMenu(false); onOpenAnalytics && onOpenAnalytics(selectedId || 'ALL'); } },
-                      { emoji: '🗑️', label: 'Delete Group', onClick: () => { setShowGroupOptionsMenu(false); onDeleteGroup && onDeleteGroup(selectedId || ''); }, danger: true },
+                      { emoji: (selectedId !== 'STANDALONE' && (selectedGroup?.members?.length ?? 0) > 1) ? '🚪' : '🗑️', label: (selectedId !== 'STANDALONE' && (selectedGroup?.members?.length ?? 0) > 1) ? 'Leave Group' : 'Delete Group', onClick: () => { setShowGroupOptionsMenu(false); onDeleteGroup && onDeleteGroup(selectedId || ''); }, danger: true },
                     ].map((item) => (
                       <button
                         key={item.label}

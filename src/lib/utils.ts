@@ -246,6 +246,25 @@ export const formatDate = (dateStr: string): string => {
   return `${d.getDate().toString().padStart(2, '0')} ${months[d.getMonth()]} ${d.getFullYear()}`;
 };
 
+/**
+ * Compact money formatter for display in tight UI (net-balance pill, group cards,
+ * settle cards, activity rows). Large values are abbreviated with K/M/B so they
+ * never overflow; values under 100,000 keep full comma grouping. Returns only the
+ * number part — callers prepend the currency symbol/code. The exact full value is
+ * still available in detail views (tap-through, modals, CSV export).
+ *   1500000 -> "1.5M"   450000000 -> "450M"   75000 -> "75K"   9999 -> "9,999"
+ */
+export const formatCompactAmount = (value: number): string => {
+  const abs = Math.abs(value);
+  // Pin to 'en-US' so the notation is always K/M/B — leaving the locale undefined
+  // would render Lakh/Crore on en-IN systems, etc. Abbreviate from 10K up so
+  // amounts like 75,000 read as "75K"; keep smaller amounts exact for precision.
+  if (abs >= 10000) {
+    return abs.toLocaleString('en-US', { notation: 'compact', maximumFractionDigits: 1 });
+  }
+  return abs.toLocaleString('en-US', { maximumFractionDigits: 0 });
+};
+
 export const getExactTime = (id: string | number): string | null => {
   const timestamp = Number(id);
   if (!isNaN(timestamp) && timestamp > 1000000000000) {

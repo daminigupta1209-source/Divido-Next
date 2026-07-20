@@ -6,7 +6,8 @@ export type NotificationType =
   | 'payment_request'
   | 'link_request'
   | 'join'
-  | 'rename_request';
+  | 'rename_request'
+  | 'admin_transfer';
 
 export interface AppNotification {
   id: string | number;
@@ -63,6 +64,15 @@ export const markAllNotificationsRead = async (email: string): Promise<void> => 
     .eq('recipient_email', email)
     .eq('is_read', false);
   if (error) console.error('Failed to mark notifications read:', error);
+};
+// Delete all notifications for this user.
+export const clearAllNotifications = async (email: string): Promise<void> => {
+  if (!email) return;
+  const { error } = await supabase
+    .from('notifications')
+    .delete()
+    .eq('recipient_email', email);
+  if (error) console.error('Failed to clear notifications:', error);
 };
 
 // Insert a notification for another user. Fails softly so senders never break.

@@ -3,8 +3,13 @@ import { BalanceDisplay } from './BalanceDisplay';
 
 import { Group, Expense, UserMetadata } from '../lib/types';
 import { simplifyMultiCurrencyDebts } from '../lib/calculations';
-import { worldCurrencies } from '../lib/utils';
+import { worldCurrencies, formatCompactAmount } from '../lib/utils';
 import { SearchableCurrencyPicker } from './SearchableCurrencyPicker';
+
+// Shared styles for the stacked Net Balance pill (small label above bold amount),
+// matching the Home and Group net-balance cards.
+const netLabelStyle: React.CSSProperties = { fontSize: '9px', fontWeight: 800, letterSpacing: '0.7px', textTransform: 'uppercase', opacity: 0.85, lineHeight: 1, whiteSpace: 'nowrap' };
+const netAmtStyle: React.CSSProperties = { fontSize: '15px', fontWeight: 800, lineHeight: 1.15, maxWidth: '100%', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' };
 
 interface FriendsViewProps {
   groups: Group[];
@@ -416,25 +421,24 @@ export const FriendsView: React.FC<FriendsViewProps> = ({
         <span style={{ fontSize: '11px', fontWeight: 700, letterSpacing: '1.5px', textTransform: 'uppercase', color: '#B0A79C', marginBottom: '10px', marginLeft: '2px', display: 'block' }}>
           Net Balance
         </span>
-        <div style={{ display: 'flex', borderRadius: '999px', overflow: 'hidden', height: '36px', width: '100%', boxShadow: '0 6px 16px rgba(0,0,0,0.06)' }}>
+        <div style={{ display: 'flex', borderRadius: '999px', overflow: 'hidden', height: '48px', width: '100%', boxShadow: '0 6px 16px rgba(0,0,0,0.06)' }}>
           {/* Left section: to pay */}
           <div
             onClick={() => setBalanceFilter('owe')}
             style={{
-              flex: 1,
+              flex: '1 1 auto',
+              minWidth: 0,
               background: '#DE7093',
               color: '#FFFFFF',
               display: 'flex',
+              flexDirection: 'column',
               alignItems: 'center',
               justifyContent: 'center',
-              fontSize: '14px',
-              fontWeight: 500,
+              gap: '1px',
               cursor: 'pointer',
               transition: 'opacity 0.2s',
               userSelect: 'none',
-              padding: '0 8px',
-              textAlign: 'center',
-              whiteSpace: 'nowrap',
+              padding: '0 10px',
               overflow: 'hidden',
             }}
             title="Filter by Payables"
@@ -443,29 +447,32 @@ export const FriendsView: React.FC<FriendsViewProps> = ({
           >
             {(() => {
               const entries = Object.entries(totalPayable);
-              if (entries.length === 0) return 'Nothing to pay';
-              const shown = entries.slice(0, 2).map(([c, v]) => `${c}${v.toFixed(0)}`);
-              return shown.join(', ') + (entries.length > 2 ? '… to pay' : ' to pay');
+              if (entries.length === 0) return <span style={{ fontSize: '14px', fontWeight: 500 }}>Nothing to pay</span>;
+              const [c, v] = entries[0];
+              const extra = entries.length - 1;
+              return (<>
+                <span style={netLabelStyle}>To pay{extra > 0 ? ` +${extra}` : ''}</span>
+                <span style={netAmtStyle}>{c}{formatCompactAmount(v)}</span>
+              </>);
             })()}
           </div>
           {/* Right section: to collect */}
           <div
             onClick={() => setBalanceFilter('owed')}
             style={{
-              flex: 1,
+              flex: '1 1 auto',
+              minWidth: 0,
               background: '#6FC7A4',
               color: '#FFFFFF',
               display: 'flex',
+              flexDirection: 'column',
               alignItems: 'center',
               justifyContent: 'center',
-              fontSize: '14px',
-              fontWeight: 500,
+              gap: '1px',
               cursor: 'pointer',
               transition: 'opacity 0.2s',
               userSelect: 'none',
-              padding: '0 8px',
-              textAlign: 'center',
-              whiteSpace: 'nowrap',
+              padding: '0 10px',
               overflow: 'hidden',
             }}
             title="Filter by Receivables"
@@ -474,9 +481,13 @@ export const FriendsView: React.FC<FriendsViewProps> = ({
           >
             {(() => {
               const entries = Object.entries(totalReceivable);
-              if (entries.length === 0) return 'Nothing to collect';
-              const shown = entries.slice(0, 2).map(([c, v]) => `${c}${v.toFixed(0)}`);
-              return shown.join(', ') + (entries.length > 2 ? '… to collect' : ' to collect');
+              if (entries.length === 0) return <span style={{ fontSize: '14px', fontWeight: 500 }}>Nothing to collect</span>;
+              const [c, v] = entries[0];
+              const extra = entries.length - 1;
+              return (<>
+                <span style={netLabelStyle}>To collect{extra > 0 ? ` +${extra}` : ''}</span>
+                <span style={netAmtStyle}>{c}{formatCompactAmount(v)}</span>
+              </>);
             })()}
           </div>
         </div>
@@ -503,9 +514,11 @@ export const FriendsView: React.FC<FriendsViewProps> = ({
           const payList = balEntries.filter(([_, v]) => v < -0.01);
           const collectList = balEntries.filter(([_, v]) => v > 0.01);
           const joinAmts = (entries: [string, number][]) => {
-            const fmt = ([curr, val]: [string, number]) => `${curr}${Math.abs(val).toFixed(0)}`;
-            if (entries.length <= 2) return entries.map(fmt).join(', ');
-            return `${fmt(entries[0])}, ${fmt(entries[1])}…`;
+            if (entries.length === 0) return '';
+            const [curr, val] = entries[0];
+            const first = `${curr}${formatCompactAmount(val)}`;
+            const extra = entries.length - 1;
+            return extra > 0 ? `${first} & ${extra} more` : first;
           };
 
           const AV_COLORS = ['#B39DDB', '#F48FB1', '#80CBC4', '#FFB74D', '#9FA8DA', '#A5D6A7', '#EF9A9A', '#7FC8CE'];

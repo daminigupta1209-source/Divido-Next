@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { BalanceDisplay } from './BalanceDisplay';
-import { getEmoji, GROUP_COLORS } from '../lib/utils';
+import { getEmoji, GROUP_COLORS, formatCompactAmount } from '../lib/utils';
 import { simplifyMultiCurrencyDebts } from '../lib/calculations';
 
 import { Group, Expense, UserMetadata } from '../lib/types';
@@ -459,27 +459,34 @@ export const MasterSummary: React.FC<MasterSummaryProps> = ({
         const getBacks = netEntries.filter(([_, v]) => v > 0.01);
         const payBacks = netEntries.filter(([_, v]) => v < -0.01);
 
-        const joinAmts = (entries: [string, number][]) => {
-          const shown = entries.slice(0, 2).map(([curr, val]) => `${curr}${Math.abs(val).toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 0 })}`);
-          return shown.join(', ') + (entries.length > 2 ? '…' : '');
+        // Only the primary currency's amount is shown in the pill; the small label
+        // above it carries a "+N" when more currencies exist (full detail on tap).
+        const primaryAmt = (entries: [string, number][]) => {
+          const [curr, val] = entries[0];
+          return `${curr}${formatCompactAmount(val)}`;
         };
 
         const PINK = '#DE7093';
         const GREEN = '#6FC7A4';
 
+        // Stacked layout: a small uppercase label sits above a bold amount, so a
+        // big number never has to share one line with its label. Segments size to
+        // content; ellipsis is the safety net for an extreme single amount.
         const segStyle: React.CSSProperties = {
-          flex: 1,
+          flex: '1 1 auto',
+          minWidth: 0,
           display: 'flex',
+          flexDirection: 'column',
           alignItems: 'center',
           justifyContent: 'center',
-          gap: '5px',
+          gap: '1px',
           color: '#FFFFFF',
-          fontSize: '14px',
-          fontWeight: 500,
-          whiteSpace: 'nowrap',
+          padding: '0 10px',
           overflow: 'hidden',
           cursor: 'pointer',
         };
+        const labelStyle: React.CSSProperties = { fontSize: '9px', fontWeight: 800, letterSpacing: '0.7px', textTransform: 'uppercase', opacity: 0.85, lineHeight: 1, whiteSpace: 'nowrap' };
+        const amtStyle: React.CSSProperties = { fontSize: '15px', fontWeight: 800, lineHeight: 1.15, maxWidth: '100%', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' };
 
         return (
           <div style={{ marginBottom: '22px' }}>
@@ -487,9 +494,9 @@ export const MasterSummary: React.FC<MasterSummaryProps> = ({
               Net Balance
             </div>
 
-            <div style={{ display: 'flex', height: '36px', borderRadius: '999px', overflow: 'hidden', boxShadow: '0 6px 16px rgba(0,0,0,0.06)' }}>
+            <div style={{ display: 'flex', height: '48px', borderRadius: '999px', overflow: 'hidden', boxShadow: '0 6px 16px rgba(0,0,0,0.06)' }}>
               {!hasActiveBalancesForCard ? (
-                <div style={{ ...segStyle, background: GREEN, cursor: 'default' }}>All settled up</div>
+                <div style={{ ...segStyle, background: GREEN, cursor: 'default', fontSize: '14px', fontWeight: 500 }}>All settled up</div>
               ) : (
                 <>
                   {payBacks.length > 0 && (
@@ -497,7 +504,8 @@ export const MasterSummary: React.FC<MasterSummaryProps> = ({
                       style={{ ...segStyle, background: PINK }}
                       onClick={() => setView('friends')}
                     >
-                      {joinAmts(payBacks)} to pay
+                      <span style={labelStyle}>To pay{payBacks.length > 1 ? ` +${payBacks.length - 1}` : ''}</span>
+                      <span style={amtStyle}>{primaryAmt(payBacks)}</span>
                     </div>
                   )}
                   {getBacks.length > 0 && (
@@ -505,7 +513,8 @@ export const MasterSummary: React.FC<MasterSummaryProps> = ({
                       style={{ ...segStyle, background: GREEN }}
                       onClick={() => setView('friends')}
                     >
-                      {joinAmts(getBacks)} to collect
+                      <span style={labelStyle}>To collect{getBacks.length > 1 ? ` +${getBacks.length - 1}` : ''}</span>
+                      <span style={amtStyle}>{primaryAmt(getBacks)}</span>
                     </div>
                   )}
                 </>
@@ -738,9 +747,11 @@ export const MasterSummary: React.FC<MasterSummaryProps> = ({
           const payList = balEntries.filter(([_, v]) => v < -0.01);
           const collectList = balEntries.filter(([_, v]) => v > 0.01);
           const joinGroupAmts = (entries: [string, number][]) => {
-            const fmt = ([curr, val]: [string, number]) => `${curr}${Math.abs(val).toFixed(0)}`;
-            const shown = entries.slice(0, 2).map(fmt).join(', ');
-            return shown + (entries.length > 2 ? '…' : '');
+            if (entries.length === 0) return '';
+            const [curr, val] = entries[0];
+            const first = `${curr}${formatCompactAmount(val)}`;
+            const extra = entries.length - 1;
+            return extra > 0 ? `${first} & ${extra} more` : first;
           };
           const pillBase: React.CSSProperties = {
             padding: '2px 4px',
