@@ -515,15 +515,47 @@ function App() {
     localStorage.setItem('divido_username', cleanNew);
   };
 
+  // When a user signs in after having claimed a guest identity, adopt those
+  // unlinked guest membership rows into their account so the groups load by email
+  // (across reloads and devices). Idempotent: once linked, the rows have an email
+  // and are skipped. Runs before setIsAuthenticated so the first load sees them.
+  const linkGuestIdentities = async (email: string) => {
+    try {
+      for (let i = 0; i < localStorage.length; i++) {
+        const key = localStorage.key(i);
+        if (!key || !key.startsWith('divido_identity_')) continue;
+        const groupId = key.replace('divido_identity_', '');
+        const claimedName = localStorage.getItem(key);
+        if (!groupId || groupId === 'STANDALONE' || !claimedName) continue;
+        const { data: rows } = await supabase
+          .from('group_members')
+          .select('id')
+          .eq('group_id', groupId)
+          .ilike('name', claimedName)
+          .is('user_email', null)
+          .limit(1);
+        if (rows && rows[0]) {
+          await supabase
+            .from('group_members')
+            .update({ user_email: email, is_pending: false })
+            .eq('id', rows[0].id);
+        }
+      }
+    } catch (e) {
+      console.error('Failed to link guest identities to account:', e);
+    }
+  };
+
   useEffect(() => {
     // Listen to changes in auth state from Supabase
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
       if (session) {
-        setIsAuthenticated(true);
-        localStorage.setItem('divido_authenticated', 'true');
         setUserEmail(session.user?.email || '');
         const userFullName = session.user?.user_metadata?.full_name || session.user?.email?.split('@')[0] || session.user?.phone || 'User';
         updateUserName(userFullName);
+        if (session.user?.email) await linkGuestIdentities(session.user.email);
+        setIsAuthenticated(true);
+        localStorage.setItem('divido_authenticated', 'true');
       } else {
         if (localStorage.getItem('divido_e2e_testing') === 'true') {
           setIsAuthenticated(true);
@@ -537,13 +569,14 @@ function App() {
     });
 
     // Check current session once on mount
-    supabase.auth.getSession().then(({ data: { session } }) => {
+    supabase.auth.getSession().then(async ({ data: { session } }) => {
       if (session) {
-        setIsAuthenticated(true);
-        localStorage.setItem('divido_authenticated', 'true');
         setUserEmail(session.user?.email || '');
         const userFullName = session.user?.user_metadata?.full_name || session.user?.email?.split('@')[0] || session.user?.phone || 'User';
         updateUserName(userFullName);
+        if (session.user?.email) await linkGuestIdentities(session.user.email);
+        setIsAuthenticated(true);
+        localStorage.setItem('divido_authenticated', 'true');
       } else if (localStorage.getItem('divido_e2e_testing') === 'true') {
         setIsAuthenticated(true);
         setUserEmail('e2e-test-guest@divido.app');
@@ -955,6 +988,23 @@ function App() {
             setSelectedId(joinGroupId);
             setView('detail');
             // Clean URL parameters
+            const cleanUrl = window.location.protocol + '//' + window.location.host + window.location.pathname;
+            window.history.replaceState({}, document.title, cleanUrl);
+            return;
+          }
+        }
+
+        // If this device has already claimed an identity in this group, don't show
+        // the claim list again — just open the group as that identity. Prevents a
+        // guest from re-opening the invite link and claiming someone else's name.
+        const claimedIdentity = localStorage.getItem(`divido_identity_${joinGroupId}`);
+        if (claimedIdentity) {
+          const stillActive = existingMembers.some(
+            (m: any) => m.name.toLowerCase() === claimedIdentity.toLowerCase() && !m.is_pending
+          );
+          if (stillActive) {
+            setSelectedId(joinGroupId);
+            setView('detail');
             const cleanUrl = window.location.protocol + '//' + window.location.host + window.location.pathname;
             window.history.replaceState({}, document.title, cleanUrl);
             return;
