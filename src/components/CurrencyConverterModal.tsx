@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { worldCurrencies } from '../lib/utils';
 import { SearchableCurrencyPicker } from './SearchableCurrencyPicker';
+import { StyledDropdown } from './StyledDropdown';
 
 import { Group, Expense } from '../lib/types';
 
@@ -339,36 +340,13 @@ export const CurrencyConverterModal: React.FC<CurrencyConverterModalProps> = ({
             <span style={{ fontSize: '10px', fontWeight: 700, color: '#64748B', textTransform: 'uppercase', display: 'block', marginBottom: '4px', letterSpacing: '0.5px' }}>
               From
             </span>
-            <div style={{ position: 'relative', display: 'inline-block' }}>
-              <select
-                value={sourceCurr}
-                onChange={(e) => setSourceCurr(e.target.value)}
-                style={{
-                  fontSize: '14px',
-                  fontWeight: 800,
-                  color: '#475569',
-                  background: '#FFFFFF',
-                  border: '1.5px solid #E2E8F0',
-                  borderRadius: '12px',
-                  padding: '6px 20px 6px 10px',
-                  cursor: 'pointer',
-                  minWidth: '60px',
-                  appearance: 'none',
-                  outline: 'none',
-                  textAlign: 'center',
-                }}
-              >
-                <option value="ALL">All</option>
-                {detectedCurrs.map((c) => (
-                  <option key={c} value={c}>
-                    {c}
-                  </option>
-                ))}
-              </select>
-              <span style={{ position: 'absolute', right: '6px', top: '50%', transform: 'translateY(-50%)', fontSize: '8px', opacity: 0.5, pointerEvents: 'none' }}>
-                ▼
-              </span>
-            </div>
+            <StyledDropdown
+              ariaLabel="Convert from currency"
+              value={sourceCurr}
+              onChange={(v) => setSourceCurr(v)}
+              buttonStyle={{ fontSize: '14px', fontWeight: 800, color: '#475569', border: '1.5px solid #E2E8F0', boxShadow: 'none', minWidth: '60px', padding: '6px 10px' }}
+              options={[{ value: 'ALL', label: 'All' }, ...detectedCurrs.map((c) => ({ value: c, label: c }))]}
+            />
           </div>
 
           {/* Connection arrow with live rate */}

@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { StyledDropdown } from '../StyledDropdown';
 
 interface SplitSelectorProps {
   showSharesPopup: boolean;
@@ -147,11 +148,17 @@ export const SplitSelector: React.FC<SplitSelectorProps> = ({
               Split Mode ⚖️
             </label>
             <div style={{ position: 'relative', height: '38px', display: 'flex', alignItems: 'center', marginTop: '2px' }}>
-              <select
+              <StyledDropdown
                 id="shares-split-mode-select"
+                fullWidth
+                ariaLabel="Split mode"
                 value={splitMode}
-                onChange={(e) => {
-                  const mode = e.target.value;
+                options={[
+                  { value: 'Equally', label: 'Equally' },
+                  { value: 'Unequally', label: 'Unequally' },
+                  { value: 'Percentage', label: 'Percentage' },
+                ]}
+                onChange={(mode) => {
                   setSplitMode(mode);
                   setShares({});
                   setManualEdits(new Set());
@@ -159,39 +166,15 @@ export const SplitSelector: React.FC<SplitSelectorProps> = ({
                     setShowSharesPopup(false);
                   }
                 }}
-                style={{
-                  width: '100%',
-                  height: '100%',
-                  padding: '8px 24px 8px 10px',
+                buttonStyle={{
+                  height: '38px',
                   fontSize: '13px',
                   fontWeight: 900,
-                  borderRadius: '12px',
                   border: '2.5px solid #F1F5F9',
-                  background: 'var(--w)',
                   color: '#0F172A',
-                  cursor: 'pointer',
-                  appearance: 'none',
-                  outline: 'none',
                   boxShadow: '0 4px 10px rgba(0,0,0,0.03)',
                 }}
-              >
-                <option value="Equally">Equally</option>
-                <option value="Unequally">Unequally</option>
-                <option value="Percentage">Percentage</option>
-              </select>
-              <div
-                style={{
-                  position: 'absolute',
-                  right: '12px',
-                  top: '50%',
-                  transform: 'translateY(-50%)',
-                  pointerEvents: 'none',
-                  fontSize: '10px',
-                  opacity: 0.5,
-                }}
-              >
-                ▼
-              </div>
+              />
             </div>
           </div>
         </div>

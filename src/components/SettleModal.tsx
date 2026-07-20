@@ -4,6 +4,9 @@ import { SearchableCurrencyPicker } from './SearchableCurrencyPicker';
 import { Group, Expense, UserMetadata } from '../lib/types';
 import { escManager } from '../lib/escManager';
 import { formatCompactAmount } from '../lib/utils';
+import { StyledDropdown } from './StyledDropdown';
+
+const settleBtnStyle: React.CSSProperties = { padding: '12px', borderRadius: '14px', border: '2px solid #F1F1F1', fontSize: '14px', fontWeight: 700, background: 'var(--w, #fff)', marginTop: '4px', boxShadow: 'none', color: '#1E293B' };
 
 interface SettleModalProps {
   show: boolean;
@@ -488,11 +491,12 @@ export const SettleModal: React.FC<SettleModalProps> = ({
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
             <div>
               <label style={{ fontSize: '10px', fontWeight: 900, color: 'var(--g)', textTransform: 'uppercase' }}>From</label>
-              <select
+              <StyledDropdown
                 id="settle-from-select"
+                fullWidth
+                ariaLabel="Settle from"
                 value={settleFrom}
-                onChange={(e) => {
-                  const val = e.target.value;
+                onChange={(val) => {
                   setSettleFrom(val);
                   if (val !== me) {
                     setSettleTo(me);
@@ -500,56 +504,23 @@ export const SettleModal: React.FC<SettleModalProps> = ({
                     setSettleTo('');
                   }
                 }}
-                style={{
-                  width: '100%',
-                  padding: '12px',
-                  borderRadius: '14px',
-                  border: '2px solid #F1F1F1',
-                  fontSize: '14px',
-                  fontWeight: 700,
-                  background: 'var(--w)',
-                  marginTop: '4px',
-                }}
-              >
-                {settleGroup.members.map((m) => (
-                  <option key={m} value={m}>
-                    {m === me ? '👤 You' : m}
-                  </option>
-                ))}
-              </select>
+                buttonStyle={settleBtnStyle}
+                options={settleGroup.members.map((m) => ({ value: m, label: m === me ? '👤 You' : m }))}
+              />
             </div>
             <div>
               <label style={{ fontSize: '10px', fontWeight: 900, color: 'var(--g)', textTransform: 'uppercase' }}>To</label>
-              <select
+              <StyledDropdown
                 id="settle-to-select"
+                fullWidth
+                ariaLabel="Settle to"
                 value={settleTo}
-                onChange={(e) => setSettleTo(e.target.value)}
-                style={{
-                  width: '100%',
-                  padding: '12px',
-                  borderRadius: '14px',
-                  border: '2px solid #F1F1F1',
-                  fontSize: '14px',
-                  fontWeight: 700,
-                  background: 'var(--w)',
-                  marginTop: '4px',
-                  }}
-                >
-                {settleFrom !== me ? (
-                  <option value={me}>You</option>
-                ) : (
-                  <>
-                    <option value="">Select receiver...</option>
-                    {settleGroup.members
-                      .filter((m) => m !== me)
-                      .map((m) => (
-                        <option key={m} value={m}>
-                          {m}
-                        </option>
-                      ))}
-                  </>
-                )}
-              </select>
+                onChange={(v) => setSettleTo(v)}
+                buttonStyle={settleBtnStyle}
+                options={settleFrom !== me
+                  ? [{ value: me, label: 'You' }]
+                  : [{ value: '', label: 'Select receiver...' }, ...settleGroup.members.filter((m) => m !== me).map((m) => ({ value: m, label: m }))]}
+              />
             </div>
           </div>
 

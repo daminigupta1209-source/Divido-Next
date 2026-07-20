@@ -1,6 +1,9 @@
 import React, { useState } from 'react';
 import { Group, Expense } from '../../lib/types';
 import { ExpenseRow } from './ExpenseRow';
+import { StyledDropdown } from '../StyledDropdown';
+
+const elFilterBtnStyle: React.CSSProperties = { padding: '6px 12px', borderRadius: '20px', border: '1.5px solid #E2E8F0', fontSize: '12px', fontWeight: 800, background: 'var(--w, #fff)', color: '#475569', boxShadow: '0 1px 4px rgba(0,0,0,0.04)' };
 
 interface ExpenseListProps {
   filtered: Expense[];
@@ -170,76 +173,41 @@ export const ExpenseList: React.FC<ExpenseListProps> = ({
         {showFilters && (
           <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', animation: 'fadeIn 0.2s ease-out' }}>
             <div style={{ display: 'flex', gap: '8px' }}>
-              <select
-                style={{
-                  padding: '6px 12px',
-                  borderRadius: '20px',
-                  border: '1.5px solid #E2E8F0',
-                  outline: 'none',
-                  fontSize: '12px',
-                  fontWeight: 800,
-                  background: 'var(--w)',
-                  color: '#475569',
-                  flex: '1',
-                  cursor: 'pointer',
-                  boxShadow: '0 1px 4px rgba(0,0,0,0.04)',
-                }}
-                onChange={(e) => setDateRange(e.target.value)}
+              <StyledDropdown
+                fullWidth
+                ariaLabel="Filter by date"
                 value={dateRange}
-              >
-                <option value="all">Any Time</option>
-                <option value="7d">Last 7 Days</option>
-                <option value="30d">Last 30 Days</option>
-              </select>
-              <select
-                style={{
-                  padding: '6px 12px',
-                  borderRadius: '20px',
-                  border: '1.5px solid #E2E8F0',
-                  outline: 'none',
-                  fontSize: '12px',
-                  fontWeight: 800,
-                  background: 'var(--w)',
-                  color: '#475569',
-                  flex: '1',
-                  cursor: 'pointer',
-                  boxShadow: '0 1px 4px rgba(0,0,0,0.04)',
-                }}
-                onChange={(e) => setFilter(e.target.value)}
+                onChange={setDateRange}
+                buttonStyle={elFilterBtnStyle}
+                options={[
+                  { value: 'all', label: 'Any Time' },
+                  { value: '7d', label: 'Last 7 Days' },
+                  { value: '30d', label: 'Last 30 Days' },
+                ]}
+              />
+              <StyledDropdown
+                fullWidth
+                ariaLabel="Filter by member"
                 value={filter}
-              >
-                <option value="all">All Members</option>
-                {(selectedGroup.members || []).map((m) => (
-                  <option key={m} value={m}>
-                    {m}
-                  </option>
-                ))}
-              </select>
+                onChange={setFilter}
+                buttonStyle={elFilterBtnStyle}
+                options={[
+                  { value: 'all', label: 'All Members' },
+                  ...(selectedGroup.members || []).map((m) => ({ value: m, label: m })),
+                ]}
+              />
               {groupUniqueTags.length > 0 && (
-                <select
-                  style={{
-                    padding: '6px 12px',
-                    borderRadius: '20px',
-                    border: '1.5px solid #E2E8F0',
-                    outline: 'none',
-                    fontSize: '12px',
-                    fontWeight: 800,
-                    background: 'var(--w)',
-                    color: '#475569',
-                    flex: '1',
-                    cursor: 'pointer',
-                    boxShadow: '0 1px 4px rgba(0,0,0,0.04)',
-                  }}
-                  onChange={(e) => setSelectedTag(e.target.value)}
+                <StyledDropdown
+                  fullWidth
+                  ariaLabel="Filter by tag"
                   value={selectedTag}
-                >
-                  <option value="all">All Tags</option>
-                  {groupUniqueTags.map((tag) => (
-                    <option key={tag} value={tag}>
-                      #{tag}
-                    </option>
-                  ))}
-                </select>
+                  onChange={setSelectedTag}
+                  buttonStyle={elFilterBtnStyle}
+                  options={[
+                    { value: 'all', label: 'All Tags' },
+                    ...groupUniqueTags.map((tag) => ({ value: tag, label: `#${tag}` })),
+                  ]}
+                />
               )}
             </div>
           </div>

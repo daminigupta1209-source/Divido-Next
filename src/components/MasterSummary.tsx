@@ -1,6 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { BalanceDisplay } from './BalanceDisplay';
 import { getEmoji, GROUP_COLORS, formatCompactAmount } from '../lib/utils';
+import { StyledDropdown } from './StyledDropdown';
+
+// Pill-style trigger for the compact filter dropdowns (matches the old selects).
+const filterBtnStyle: React.CSSProperties = { padding: '6px 12px', borderRadius: '20px', border: '1px solid #E2E8F0', fontSize: '12px', fontWeight: 600, background: '#F1F5F9', color: '#475569', boxShadow: 'none' };
 import { simplifyMultiCurrencyDebts } from '../lib/calculations';
 
 import { Group, Expense, UserMetadata } from '../lib/types';
@@ -567,47 +571,31 @@ export const MasterSummary: React.FC<MasterSummaryProps> = ({
           <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', animation: 'fadeIn 0.2s ease-out', marginBottom: '4px' }}>
 
             <div style={{ display: 'flex', gap: '8px' }}>
-            <select
-              style={{
-                padding: '6px 12px',
-                borderRadius: '20px',
-                border: '1px solid #E2E8F0',
-                outline: 'none',
-                fontSize: '12px',
-                fontWeight: 600,
-                background: '#F1F5F9',
-                color: '#475569',
-                flex: '1',
-                cursor: 'pointer',
-              }}
-              onChange={(e) => setTimeFilter(e.target.value as any)}
+            <StyledDropdown
+              fullWidth
+              ariaLabel="Filter by time"
               value={timeFilter}
-            >
-              <option value="all">Any Time</option>
-              <option value="7days">Last 7 Days</option>
-              <option value="30days">Last 30 Days</option>
-            </select>
-            <select
-              style={{
-                padding: '6px 12px',
-                borderRadius: '20px',
-                border: '1px solid #E2E8F0',
-                outline: 'none',
-                fontSize: '12px',
-                fontWeight: 600,
-                background: '#F1F5F9',
-                color: '#475569',
-                flex: '1',
-                cursor: 'pointer',
-              }}
-              onChange={(e) => setBalanceFilter(e.target.value as any)}
+              onChange={(v) => setTimeFilter(v as any)}
+              buttonStyle={filterBtnStyle}
+              options={[
+                { value: 'all', label: 'Any Time' },
+                { value: '7days', label: 'Last 7 Days' },
+                { value: '30days', label: 'Last 30 Days' },
+              ]}
+            />
+            <StyledDropdown
+              fullWidth
+              ariaLabel="Filter by balance"
               value={balanceFilter}
-            >
-              <option value="all">All Balances</option>
-              <option value="owed">You Get Back</option>
-              <option value="owe">You Pay Back</option>
-              <option value="settled">Settled Up</option>
-            </select>
+              onChange={(v) => setBalanceFilter(v as any)}
+              buttonStyle={filterBtnStyle}
+              options={[
+                { value: 'all', label: 'All Balances' },
+                { value: 'owed', label: 'You Get Back' },
+                { value: 'owe', label: 'You Pay Back' },
+                { value: 'settled', label: 'Settled Up' },
+              ]}
+            />
             </div>
           </div>
         )}

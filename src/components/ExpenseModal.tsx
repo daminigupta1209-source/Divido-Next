@@ -6,6 +6,10 @@ import { BillScanner } from './expense-modal/BillScanner';
 import { SplitSelector } from './expense-modal/SplitSelector';
 import { RecurrenceSelector } from './expense-modal/RecurrenceSelector';
 import { useExpenseForm } from '../hooks/useExpenseForm';
+import { StyledDropdown } from './StyledDropdown';
+
+// Borderless trigger — the wrapping div already provides the pill/border/shadow.
+const emInlineBtnStyle: React.CSSProperties = { border: 'none', background: 'transparent', boxShadow: 'none', borderRadius: '19px', height: '100%', fontSize: '12px', fontWeight: 800, color: '#1E293B', padding: '6px 16px' };
 
 interface ExpenseModalProps {
   setShowExpModal: (show: boolean) => void;
@@ -1227,43 +1231,18 @@ export const ExpenseModal: React.FC<ExpenseModalProps> = ({
                   transition: '0.2s all ease',
                 }}
               >
-                <select
+                <StyledDropdown
                   id="payer-select"
+                  fullWidth
+                  ariaLabel="Paid by"
                   value={payer}
-                  onChange={(e) => setPayer(e.target.value)}
-                  style={{
-                    width: '100%',
-                    height: '100%',
-                    padding: '6px 32px 6px 16px',
-                    fontSize: '12px',
-                    fontWeight: 800,
-                    border: 'none',
-                    background: 'transparent',
-                    color: '#1E293B',
-                    cursor: 'pointer',
-                    appearance: 'none',
-                    outline: 'none',
-                  }}
-                >
-                  {payerOptions.map((option) => (
-                    <option key={option} value={option}>
-                      {option === me ? (userName === 'You' ? 'You' : `You (${userName})`) : option}
-                    </option>
-                  ))}
-                </select>
-                <div
-                  style={{
-                    position: 'absolute',
-                    right: '15px',
-                    top: '50%',
-                    transform: 'translateY(-50%)',
-                    pointerEvents: 'none',
-                    fontSize: '11px',
-                    opacity: 0.6,
-                  }}
-                >
-                  ▼
-                </div>
+                  onChange={(v) => setPayer(v)}
+                  buttonStyle={emInlineBtnStyle}
+                  options={payerOptions.map((option) => ({
+                    value: option,
+                    label: option === me ? (userName === 'You' ? 'You' : `You (${userName})`) : option,
+                  }))}
+                />
               </div>
             </div>
 
@@ -1294,11 +1273,12 @@ export const ExpenseModal: React.FC<ExpenseModalProps> = ({
                   transition: '0.2s all ease',
                 }}
               >
-                <select
+                <StyledDropdown
                   id="split-mode-select"
+                  fullWidth
+                  ariaLabel="Split mode"
                   value={splitMode}
-                  onChange={(e) => {
-                    const mode = e.target.value;
+                  onChange={(mode) => {
                     setSplitMode(mode);
                     setShares({});
                     setManualEdits(new Set());
@@ -1311,37 +1291,13 @@ export const ExpenseModal: React.FC<ExpenseModalProps> = ({
                       }, 50);
                     }
                   }}
-                  style={{
-                    width: '100%',
-                    height: '100%',
-                    padding: '6px 32px 6px 20px',
-                    fontSize: '12px',
-                    fontWeight: 800,
-                    border: 'none',
-                    background: 'transparent',
-                    color: '#1E293B',
-                    cursor: 'pointer',
-                    appearance: 'none',
-                    outline: 'none',
-                  }}
-                >
-                  <option value="Equally">Equally</option>
-                  <option value="Unequally">Unequally</option>
-                  <option value="Percentage">Percentage</option>
-                </select>
-                <div
-                  style={{
-                    position: 'absolute',
-                    right: '15px',
-                    top: '50%',
-                    transform: 'translateY(-50%)',
-                    pointerEvents: 'none',
-                    fontSize: '11px',
-                    opacity: 0.6,
-                  }}
-                >
-                  ▼
-                </div>
+                  buttonStyle={emInlineBtnStyle}
+                  options={[
+                    { value: 'Equally', label: 'Equally' },
+                    { value: 'Unequally', label: 'Unequally' },
+                    { value: 'Percentage', label: 'Percentage' },
+                  ]}
+                />
               </div>
             </div>
           </div>
@@ -1713,6 +1669,9 @@ export const ExpenseModal: React.FC<ExpenseModalProps> = ({
         onSelect={(selectedCurrency) => {
           setCurr(selectedCurrency);
           localStorage.setItem('divido_last_used_currency', selectedCurrency);
+          if (localGId) {
+            localStorage.setItem(`divido_last_used_currency_${localGId}`, selectedCurrency);
+          }
           setShowCurrPickerId(null);
         }}
         current={curr}

@@ -3,6 +3,9 @@ import { BalanceDisplay } from './BalanceDisplay';
 import { getEmoji, formatDate, getExactTime, getMonthYearKey } from '../lib/utils';
 import { Group, Expense } from '../lib/types';
 import { useActivityStudio } from '../hooks/useActivityStudio';
+import { StyledDropdown } from './StyledDropdown';
+
+const asFilterBtnStyle: React.CSSProperties = { padding: '6px 12px', borderRadius: '20px', border: '1.5px solid #E2E8F0', fontSize: '12px', fontWeight: 800, background: 'var(--w, #fff)', color: '#475569', boxShadow: '0 1px 4px rgba(0,0,0,0.04)' };
 
 interface ActivityStudioProps {
   expenses: Expense[];
@@ -169,75 +172,44 @@ export const ActivityStudio: React.FC<ActivityStudioProps> = ({
       {/* Filter Pills */}
       {showFilters && (
         <div style={{ display: 'flex', gap: '8px', animation: 'fadeIn 0.2s ease-out', marginBottom: '16px' }}>
-          <select
-            style={{
-              padding: '6px 12px',
-              borderRadius: '20px',
-              border: '1.5px solid #E2E8F0',
-              outline: 'none',
-              fontSize: '12px',
-              fontWeight: 800,
-              background: 'var(--w)',
-              color: '#475569',
-              flex: '1',
-              cursor: 'pointer',
-              boxShadow: '0 1px 4px rgba(0,0,0,0.04)',
-            }}
-            onChange={(e) => setFilterType(e.target.value)}
+          <StyledDropdown
+            fullWidth
+            ariaLabel="Filter by type"
             value={filterType}
-          >
-            <option value="all">All Activities</option>
-            <option value="expenses">Expenses</option>
-            <option value="settlements">Settlements</option>
-          </select>
-          <select
-            style={{
-              padding: '6px 12px',
-              borderRadius: '20px',
-              border: '1.5px solid #E2E8F0',
-              outline: 'none',
-              fontSize: '12px',
-              fontWeight: 800,
-              background: 'var(--w)',
-              color: '#475569',
-              flex: '1',
-              cursor: 'pointer',
-              boxShadow: '0 1px 4px rgba(0,0,0,0.04)',
-            }}
-            onChange={(e) => setDateFilter(e.target.value)}
+            onChange={setFilterType}
+            buttonStyle={asFilterBtnStyle}
+            options={[
+              { value: 'all', label: 'All Activities' },
+              { value: 'expenses', label: 'Expenses' },
+              { value: 'settlements', label: 'Settlements' },
+            ]}
+          />
+          <StyledDropdown
+            fullWidth
+            ariaLabel="Filter by date"
             value={dateFilter}
-          >
-            <option value="all">Any Time</option>
-            <option value="today">Today</option>
-            <option value="week">Last 7 Days</option>
-            <option value="month">Last 30 Days</option>
-            <option value="custom">Custom Range</option>
-          </select>
+            onChange={setDateFilter}
+            buttonStyle={asFilterBtnStyle}
+            options={[
+              { value: 'all', label: 'Any Time' },
+              { value: 'today', label: 'Today' },
+              { value: 'week', label: 'Last 7 Days' },
+              { value: 'month', label: 'Last 30 Days' },
+              { value: 'custom', label: 'Custom Range' },
+            ]}
+          />
           {allUniqueTags.length > 0 && (
-            <select
-              style={{
-                padding: '6px 12px',
-                borderRadius: '20px',
-                border: '1.5px solid #E2E8F0',
-                outline: 'none',
-                fontSize: '12px',
-                fontWeight: 800,
-                background: 'var(--w)',
-                color: '#475569',
-                flex: '1',
-                cursor: 'pointer',
-                boxShadow: '0 1px 4px rgba(0,0,0,0.04)',
-              }}
-              onChange={(e) => setSelectedTag(e.target.value)}
+            <StyledDropdown
+              fullWidth
+              ariaLabel="Filter by tag"
               value={selectedTag}
-            >
-              <option value="all">All Tags</option>
-              {allUniqueTags.map((tag) => (
-                <option key={tag} value={tag}>
-                  #{tag}
-                </option>
-              ))}
-            </select>
+              onChange={setSelectedTag}
+              buttonStyle={asFilterBtnStyle}
+              options={[
+                { value: 'all', label: 'All Tags' },
+                ...allUniqueTags.map((tag) => ({ value: tag, label: `#${tag}` })),
+              ]}
+            />
           )}
         </div>
       )}
