@@ -27,4 +27,10 @@ dist-ssr
 .gemini/
 .claude/
 .codex/
+.agents/
+
+# Scratch / debug scripts and test artifacts
+scratch/
+test-results/
+playwright-report/
 
