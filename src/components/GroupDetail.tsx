@@ -512,6 +512,8 @@ export const GroupDetail: React.FC<GroupDetailProps> = ({
           padding: '0 10px',
           cursor: 'pointer',
         };
+        // Small translucent count chip for extra currencies (e.g. "+1").
+        const chipStyle: React.CSSProperties = { background: 'rgba(255,255,255,0.28)', borderRadius: '999px', padding: '1px 7px', fontSize: '11px', fontWeight: 700, flexShrink: 0 };
 
         return (
           <div style={{ marginBottom: '22px', marginTop: '4px' }}>
@@ -529,7 +531,8 @@ export const GroupDetail: React.FC<GroupDetailProps> = ({
                       style={{ ...segStyle, background: PINK }}
                       onClick={() => setActiveTab('balances')}
                     >
-                      <span style={{ overflow: 'hidden', textOverflow: 'ellipsis' }}>{primaryAmt(payBacks)}{payBacks.length > 1 ? '…' : ''} to pay</span>
+                      <span style={{ overflow: 'hidden', textOverflow: 'ellipsis' }}>{primaryAmt(payBacks)} to pay</span>
+                      {payBacks.length > 1 && <span style={chipStyle}>+{payBacks.length - 1}</span>}
                     </div>
                   )}
                   {getBacks.length > 0 && (
@@ -537,7 +540,8 @@ export const GroupDetail: React.FC<GroupDetailProps> = ({
                       style={{ ...segStyle, background: GREEN }}
                       onClick={() => setActiveTab('balances')}
                     >
-                      <span style={{ overflow: 'hidden', textOverflow: 'ellipsis' }}>{primaryAmt(getBacks)}{getBacks.length > 1 ? '…' : ''} to collect</span>
+                      <span style={{ overflow: 'hidden', textOverflow: 'ellipsis' }}>{primaryAmt(getBacks)} to collect</span>
+                      {getBacks.length > 1 && <span style={chipStyle}>+{getBacks.length - 1}</span>}
                     </div>
                   )}
                 </>

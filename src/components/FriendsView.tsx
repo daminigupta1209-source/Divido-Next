@@ -6,6 +6,9 @@ import { simplifyMultiCurrencyDebts } from '../lib/calculations';
 import { worldCurrencies, formatCompactAmount } from '../lib/utils';
 import { SearchableCurrencyPicker } from './SearchableCurrencyPicker';
 
+// Small translucent count chip for extra currencies in the Net Balance pill.
+const pillChipStyle: React.CSSProperties = { background: 'rgba(255,255,255,0.28)', borderRadius: '999px', padding: '1px 7px', fontSize: '11px', fontWeight: 700, flexShrink: 0 };
+
 interface FriendsViewProps {
   groups: Group[];
   expenses: Expense[];
@@ -430,13 +433,13 @@ export const FriendsView: React.FC<FriendsViewProps> = ({
               justifyContent: 'center',
               fontSize: '14px',
               fontWeight: 500,
+              gap: '6px',
               cursor: 'pointer',
               transition: 'opacity 0.2s',
               userSelect: 'none',
               padding: '0 10px',
               whiteSpace: 'nowrap',
               overflow: 'hidden',
-              textOverflow: 'ellipsis',
             }}
             title="Filter by Payables"
             onMouseEnter={(e) => { e.currentTarget.style.opacity = '0.9'; }}
@@ -446,7 +449,10 @@ export const FriendsView: React.FC<FriendsViewProps> = ({
               const entries = Object.entries(totalPayable);
               if (entries.length === 0) return 'Nothing to pay';
               const [c, v] = entries[0];
-              return `${c}${formatCompactAmount(v)}${entries.length > 1 ? '…' : ''} to pay`;
+              return (<>
+                <span style={{ overflow: 'hidden', textOverflow: 'ellipsis' }}>{c}{formatCompactAmount(v)} to pay</span>
+                {entries.length > 1 && <span style={pillChipStyle}>+{entries.length - 1}</span>}
+              </>);
             })()}
           </div>
           {/* Right section: to collect */}
@@ -462,13 +468,13 @@ export const FriendsView: React.FC<FriendsViewProps> = ({
               justifyContent: 'center',
               fontSize: '14px',
               fontWeight: 500,
+              gap: '6px',
               cursor: 'pointer',
               transition: 'opacity 0.2s',
               userSelect: 'none',
               padding: '0 10px',
               whiteSpace: 'nowrap',
               overflow: 'hidden',
-              textOverflow: 'ellipsis',
             }}
             title="Filter by Receivables"
             onMouseEnter={(e) => { e.currentTarget.style.opacity = '0.9'; }}
@@ -478,7 +484,10 @@ export const FriendsView: React.FC<FriendsViewProps> = ({
               const entries = Object.entries(totalReceivable);
               if (entries.length === 0) return 'Nothing to collect';
               const [c, v] = entries[0];
-              return `${c}${formatCompactAmount(v)}${entries.length > 1 ? '…' : ''} to collect`;
+              return (<>
+                <span style={{ overflow: 'hidden', textOverflow: 'ellipsis' }}>{c}{formatCompactAmount(v)} to collect</span>
+                {entries.length > 1 && <span style={pillChipStyle}>+{entries.length - 1}</span>}
+              </>);
             })()}
           </div>
         </div>
@@ -504,12 +513,10 @@ export const FriendsView: React.FC<FriendsViewProps> = ({
           const balEntries = Object.entries(activeBals).filter(([_, v]) => Math.abs(v) > 0.01);
           const payList = balEntries.filter(([_, v]) => v < -0.01);
           const collectList = balEntries.filter(([_, v]) => v > 0.01);
-          const joinAmts = (entries: [string, number][]) => {
+          const joinPrimary = (entries: [string, number][]) => {
             if (entries.length === 0) return '';
             const [curr, val] = entries[0];
-            const first = `${curr}${formatCompactAmount(val)}`;
-            const extra = entries.length - 1;
-            return extra > 0 ? `${first} & ${extra} more` : first;
+            return `${curr}${formatCompactAmount(val)}`;
           };
 
           const AV_COLORS = ['#B39DDB', '#F48FB1', '#80CBC4', '#FFB74D', '#9FA8DA', '#A5D6A7', '#EF9A9A', '#7FC8CE'];
@@ -523,6 +530,7 @@ export const FriendsView: React.FC<FriendsViewProps> = ({
             whiteSpace: 'nowrap',
             fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", sans-serif',
           };
+          const cardChip: React.CSSProperties = { background: '#F1EFE8', borderRadius: '999px', padding: '0 6px', fontSize: '10px', fontWeight: 800, lineHeight: '16px' };
 
           return (
             <div
@@ -560,10 +568,16 @@ export const FriendsView: React.FC<FriendsViewProps> = ({
                 ) : (
                   <>
                     {payList.length > 0 && (
-                      <span style={{ ...pillBase, color: '#D8608A' }}>{joinAmts(payList)} to pay</span>
+                      <span style={{ ...pillBase, color: '#D8608A', display: 'inline-flex', alignItems: 'center', justifyContent: 'flex-end', gap: '5px' }}>
+                        {joinPrimary(payList)} to pay
+                        {payList.length > 1 && <span style={cardChip}>+{payList.length - 1}</span>}
+                      </span>
                     )}
                     {collectList.length > 0 && (
-                      <span style={{ ...pillBase, color: '#3FA97C' }}>{joinAmts(collectList)} to collect</span>
+                      <span style={{ ...pillBase, color: '#3FA97C', display: 'inline-flex', alignItems: 'center', justifyContent: 'flex-end', gap: '5px' }}>
+                        {joinPrimary(collectList)} to collect
+                        {collectList.length > 1 && <span style={cardChip}>+{collectList.length - 1}</span>}
+                      </span>
                     )}
                   </>
                 )}

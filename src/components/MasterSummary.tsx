@@ -487,6 +487,8 @@ export const MasterSummary: React.FC<MasterSummaryProps> = ({
           padding: '0 10px',
           cursor: 'pointer',
         };
+        // Small translucent count chip for extra currencies (e.g. "+1").
+        const chipStyle: React.CSSProperties = { background: 'rgba(255,255,255,0.28)', borderRadius: '999px', padding: '1px 7px', fontSize: '11px', fontWeight: 700, flexShrink: 0 };
 
         return (
           <div style={{ marginBottom: '22px' }}>
@@ -504,7 +506,8 @@ export const MasterSummary: React.FC<MasterSummaryProps> = ({
                       style={{ ...segStyle, background: PINK }}
                       onClick={() => setView('friends')}
                     >
-                      <span style={{ overflow: 'hidden', textOverflow: 'ellipsis' }}>{primaryAmt(payBacks)}{payBacks.length > 1 ? '…' : ''} to pay</span>
+                      <span style={{ overflow: 'hidden', textOverflow: 'ellipsis' }}>{primaryAmt(payBacks)} to pay</span>
+                      {payBacks.length > 1 && <span style={chipStyle}>+{payBacks.length - 1}</span>}
                     </div>
                   )}
                   {getBacks.length > 0 && (
@@ -512,7 +515,8 @@ export const MasterSummary: React.FC<MasterSummaryProps> = ({
                       style={{ ...segStyle, background: GREEN }}
                       onClick={() => setView('friends')}
                     >
-                      <span style={{ overflow: 'hidden', textOverflow: 'ellipsis' }}>{primaryAmt(getBacks)}{getBacks.length > 1 ? '…' : ''} to collect</span>
+                      <span style={{ overflow: 'hidden', textOverflow: 'ellipsis' }}>{primaryAmt(getBacks)} to collect</span>
+                      {getBacks.length > 1 && <span style={chipStyle}>+{getBacks.length - 1}</span>}
                     </div>
                   )}
                 </>
@@ -744,12 +748,10 @@ export const MasterSummary: React.FC<MasterSummaryProps> = ({
           const balEntries = Object.entries(bal).filter(([_, v]) => Math.abs(v) > 0.01);
           const payList = balEntries.filter(([_, v]) => v < -0.01);
           const collectList = balEntries.filter(([_, v]) => v > 0.01);
-          const joinGroupAmts = (entries: [string, number][]) => {
+          const joinGroupPrimary = (entries: [string, number][]) => {
             if (entries.length === 0) return '';
             const [curr, val] = entries[0];
-            const first = `${curr}${formatCompactAmount(val)}`;
-            const extra = entries.length - 1;
-            return extra > 0 ? `${first} & ${extra} more` : first;
+            return `${curr}${formatCompactAmount(val)}`;
           };
           const pillBase: React.CSSProperties = {
             padding: '2px 4px',
@@ -760,6 +762,8 @@ export const MasterSummary: React.FC<MasterSummaryProps> = ({
             textAlign: 'right',
             fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", sans-serif',
           };
+          // Count chip for extra currencies on white cards (text colour inherited).
+          const cardChip: React.CSSProperties = { background: '#F1EFE8', borderRadius: '999px', padding: '0 6px', fontSize: '10px', fontWeight: 800, lineHeight: '16px' };
 
           return (
             <div
@@ -829,10 +833,16 @@ export const MasterSummary: React.FC<MasterSummaryProps> = ({
                 ) : (
                   <>
                     {payList.length > 0 && (
-                      <span style={{ ...pillBase, color: '#D8608A' }}>{joinGroupAmts(payList)} to pay</span>
+                      <span style={{ ...pillBase, color: '#D8608A', display: 'inline-flex', alignItems: 'center', justifyContent: 'flex-end', gap: '5px' }}>
+                        {joinGroupPrimary(payList)} to pay
+                        {payList.length > 1 && <span style={cardChip}>+{payList.length - 1}</span>}
+                      </span>
                     )}
                     {collectList.length > 0 && (
-                      <span style={{ ...pillBase, color: '#3FA97C' }}>{joinGroupAmts(collectList)} to collect</span>
+                      <span style={{ ...pillBase, color: '#3FA97C', display: 'inline-flex', alignItems: 'center', justifyContent: 'flex-end', gap: '5px' }}>
+                        {joinGroupPrimary(collectList)} to collect
+                        {collectList.length > 1 && <span style={cardChip}>+{collectList.length - 1}</span>}
+                      </span>
                     )}
                   </>
                 )}
