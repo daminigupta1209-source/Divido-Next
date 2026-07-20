@@ -469,24 +469,24 @@ export const MasterSummary: React.FC<MasterSummaryProps> = ({
         const PINK = '#DE7093';
         const GREEN = '#6FC7A4';
 
-        // Stacked layout: a small uppercase label sits above a bold amount, so a
-        // big number never has to share one line with its label. Segments size to
-        // content; ellipsis is the safety net for an extreme single amount.
+        // Original single-line look (regular weight, no uppercase). Segments size
+        // to content so the longer side gets room; ellipsis is the safety net.
         const segStyle: React.CSSProperties = {
           flex: '1 1 auto',
           minWidth: 0,
           display: 'flex',
-          flexDirection: 'column',
           alignItems: 'center',
           justifyContent: 'center',
-          gap: '1px',
+          gap: '5px',
           color: '#FFFFFF',
-          padding: '0 10px',
+          fontSize: '14px',
+          fontWeight: 500,
+          whiteSpace: 'nowrap',
           overflow: 'hidden',
+          textOverflow: 'ellipsis',
+          padding: '0 10px',
           cursor: 'pointer',
         };
-        const labelStyle: React.CSSProperties = { fontSize: '9px', fontWeight: 800, letterSpacing: '0.7px', textTransform: 'uppercase', opacity: 0.85, lineHeight: 1, whiteSpace: 'nowrap' };
-        const amtStyle: React.CSSProperties = { fontSize: '15px', fontWeight: 800, lineHeight: 1.15, maxWidth: '100%', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' };
 
         return (
           <div style={{ marginBottom: '22px' }}>
@@ -494,9 +494,9 @@ export const MasterSummary: React.FC<MasterSummaryProps> = ({
               Net Balance
             </div>
 
-            <div style={{ display: 'flex', height: '48px', borderRadius: '999px', overflow: 'hidden', boxShadow: '0 6px 16px rgba(0,0,0,0.06)' }}>
+            <div style={{ display: 'flex', height: '36px', borderRadius: '999px', overflow: 'hidden', boxShadow: '0 6px 16px rgba(0,0,0,0.06)' }}>
               {!hasActiveBalancesForCard ? (
-                <div style={{ ...segStyle, background: GREEN, cursor: 'default', fontSize: '14px', fontWeight: 500 }}>All settled up</div>
+                <div style={{ ...segStyle, background: GREEN, cursor: 'default' }}>All settled up</div>
               ) : (
                 <>
                   {payBacks.length > 0 && (
@@ -504,8 +504,7 @@ export const MasterSummary: React.FC<MasterSummaryProps> = ({
                       style={{ ...segStyle, background: PINK }}
                       onClick={() => setView('friends')}
                     >
-                      <span style={labelStyle}>To pay{payBacks.length > 1 ? ` +${payBacks.length - 1}` : ''}</span>
-                      <span style={amtStyle}>{primaryAmt(payBacks)}</span>
+                      <span style={{ overflow: 'hidden', textOverflow: 'ellipsis' }}>{primaryAmt(payBacks)} to pay</span>
                     </div>
                   )}
                   {getBacks.length > 0 && (
@@ -513,8 +512,7 @@ export const MasterSummary: React.FC<MasterSummaryProps> = ({
                       style={{ ...segStyle, background: GREEN }}
                       onClick={() => setView('friends')}
                     >
-                      <span style={labelStyle}>To collect{getBacks.length > 1 ? ` +${getBacks.length - 1}` : ''}</span>
-                      <span style={amtStyle}>{primaryAmt(getBacks)}</span>
+                      <span style={{ overflow: 'hidden', textOverflow: 'ellipsis' }}>{primaryAmt(getBacks)} to collect</span>
                     </div>
                   )}
                 </>

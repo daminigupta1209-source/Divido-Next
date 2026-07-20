@@ -992,15 +992,9 @@ function App() {
       type: 'danger',
       onConfirm: async () => {
         if (!isStandalone) {
-          if (hasOthers) {
-            const bal = getMemberBalance(id, me);
-            const hasOutstanding = Object.values(bal).some((val) => Math.abs(val) > 0.01);
-            if (hasOutstanding) {
-              alert("You cannot leave this group because you still have outstanding balances. Please settle up first! 💳");
-              setConfirmState({ show: false });
-              return;
-            }
-          }
+          // Leaving is always allowed, even with an outstanding balance. The
+          // member's row is kept as "(Left)" so their expenses/balances stay
+          // intact for everyone, and they can be re-invited or request to rejoin.
 
           if (!checkIfDemoMode() && isAuthenticated) {
             try {
