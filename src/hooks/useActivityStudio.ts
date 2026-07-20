@@ -60,6 +60,7 @@ export function useActivityStudio({
 
   const filteredExpenses = useMemo(() => {
     return expenses.filter((e) => {
+      if (e.paid === 'SYSTEM') return false;
       if (searchQuery) {
         const q = searchQuery.toLowerCase();
         const titleMatch = e.title?.toLowerCase().includes(q);

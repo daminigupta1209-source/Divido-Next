@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { getEmoji, GROUP_COLORS } from '../lib/utils';
+import { getEmoji, GROUP_COLORS, formatCompactAmount } from '../lib/utils';
 import { Group, Expense } from '../lib/types';
 import { BalanceDisplay } from './BalanceDisplay';
 import { simplifyMultiCurrencyDebts } from '../lib/calculations';
@@ -376,7 +376,7 @@ export const GroupsView: React.FC<GroupsViewProps> = ({
                       const isLast = idx === shown.length - 1;
                       return (
                         <span key={curr} style={{ color: isOwed ? '#16A34A' : '#EF4444' }}>
-                          {isOwed ? '+' : '-'}{curr}{Math.abs(val).toFixed(0)}
+                          {isOwed ? '+' : '-'}{curr}{formatCompactAmount(val)}
                           {!isLast && <span style={{ color: '#94A3B8' }}>, </span>}
                         </span>
                       );
@@ -498,7 +498,7 @@ export const GroupsView: React.FC<GroupsViewProps> = ({
                           const isLast = idx === shown.length - 1;
                           return (
                             <span key={curr} style={{ color: isOwed ? '#16A34A' : '#EF4444' }}>
-                              {isOwed ? '+' : '-'}{curr}{Math.abs(val).toFixed(0)}
+                              {isOwed ? '+' : '-'}{curr}{formatCompactAmount(val)}
                               {!isLast && <span style={{ color: '#94A3B8' }}>, </span>}
                             </span>
                           );

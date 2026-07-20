@@ -1,4 +1,5 @@
 import React from 'react';
+import { formatCompactAmount } from '../lib/utils';
 
 interface BalanceDisplayProps {
   balances: Record<string, number> | null | undefined;
@@ -79,10 +80,7 @@ export const BalanceDisplay: React.FC<BalanceDisplayProps> = ({
               {curr}
             </span>
             <span>
-              {Math.abs(val).toLocaleString(undefined, {
-                minimumFractionDigits: 0,
-                maximumFractionDigits: 2,
-              })}
+              {formatCompactAmount(val)}
             </span>
           </div>
         </div>

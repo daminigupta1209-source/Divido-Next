@@ -3,6 +3,7 @@ import { SearchableCurrencyPicker } from './SearchableCurrencyPicker';
 
 import { Group, Expense, UserMetadata } from '../lib/types';
 import { escManager } from '../lib/escManager';
+import { formatCompactAmount } from '../lib/utils';
 
 interface SettleModalProps {
   show: boolean;
@@ -431,7 +432,7 @@ export const SettleModal: React.FC<SettleModalProps> = ({
                         </p>
                         <p style={{ fontSize: '18px', fontWeight: 950, color: '#0F172A' }}>
                           {t.currency}
-                          {t.amount.toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 2 })}
+                          {formatCompactAmount(t.amount)}
                         </p>
                       </div>
                       <div style={{ display: 'flex', gap: '8px' }}>

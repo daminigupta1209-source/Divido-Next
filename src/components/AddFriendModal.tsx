@@ -15,6 +15,7 @@ interface AddFriendModalProps {
   userMetadata: Record<string, UserMetadata>;
   setUserMetadata: (meta: Record<string, UserMetadata>) => void;
   targetReminderName?: string | null;
+  customRejoinLink?: string | null;
 }
 
 export const AddFriendModal: React.FC<AddFriendModalProps> = ({
@@ -26,6 +27,7 @@ export const AddFriendModal: React.FC<AddFriendModalProps> = ({
   me,
   onAdd,
   targetReminderName,
+  customRejoinLink,
 }) => {
   const [name, setName] = useState('');
   const [pending, setPending] = useState<string[]>([]);
@@ -34,10 +36,14 @@ export const AddFriendModal: React.FC<AddFriendModalProps> = ({
   const inputRef = useRef<HTMLInputElement>(null);
 
   const getInviteLink = () =>
-    `${window.location.origin}/?joinGroupId=${selectedId || 'STANDALONE'}`;
+    customRejoinLink || `${window.location.origin}/?joinGroupId=${selectedId || 'STANDALONE'}`;
 
-  const getInviteMessage = () =>
-    `Hey! Join ${selectedGroup ? `"${selectedGroup.name}"` : 'my group'} on Divido to split expenses 💸\n${getInviteLink()}`;
+  const getInviteMessage = () => {
+    if (customRejoinLink) {
+      return `Hey! Rejoin the group ${selectedGroup ? `"${selectedGroup.name}"` : 'our group'} on Divido 💸\n${customRejoinLink}`;
+    }
+    return `Hey! Join ${selectedGroup ? `"${selectedGroup.name}"` : 'my group'} on Divido to split expenses 💸\n${getInviteLink()}`;
+  };
 
   const handleAddName = async () => {
     const trimmed = name.trim();
@@ -53,6 +59,12 @@ export const AddFriendModal: React.FC<AddFriendModalProps> = ({
     // Check if name already exists as an active member in the group
     if (selectedGroup && selectedGroup.members.some(m => m.toLowerCase() === trimmed.toLowerCase())) {
       setError(`👥 "${trimmed}" is already in the group! Try adding a surname.`);
+      return;
+    }
+
+    // Check if name matches a past member
+    if (selectedGroup && selectedGroup.members.some(m => m.toLowerCase() === (trimmed + ' (Left)').toLowerCase())) {
+      setError(`⏳ "${trimmed}" is a past member! Reinvite them using the 'Invite again' button in Past Members.`);
       return;
     }
 
@@ -310,7 +322,7 @@ export const AddFriendModal: React.FC<AddFriendModalProps> = ({
           <>
             <div>
               <p style={{ margin: '0 0 4px 0', fontSize: '13px', fontWeight: 800, color: '#10B981', textAlign: 'center' }}>
-                🎉 {confirmedNames.join(', ')} Added!
+                🎉 {customRejoinLink ? `${confirmedNames.join(', ')} Invited!` : `${confirmedNames.join(', ')} Added!`}
               </p>
               <p style={{ margin: '0 0 16px 0', fontSize: '11px', fontWeight: 700, color: '#94A3B8', textTransform: 'uppercase', letterSpacing: '0.5px', textAlign: 'center' }}>
                 Send them the invite link to join
