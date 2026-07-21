@@ -833,12 +833,17 @@ export const GroupDetail: React.FC<GroupDetailProps> = ({
                 const myTransList = filtered.filter(t => t.isMyTrans);
                 const otherTransList = filtered.filter(t => !t.isMyTrans);
 
+                const AV_COLORS = ['#B39DDB', '#F48FB1', '#80CBC4', '#FFB74D', '#9FA8DA', '#A5D6A7', '#EF9A9A', '#7FC8CE'];
+                const balPillBase: React.CSSProperties = { padding: '2px 4px', borderRadius: '999px', fontSize: '13px', fontWeight: 600, whiteSpace: 'nowrap', display: 'inline-flex', alignItems: 'center', justifyContent: 'flex-end', gap: '5px' };
+                const balCardChip: React.CSSProperties = { background: '#F1EFE8', borderRadius: '999px', padding: '0 6px', fontSize: '10px', fontWeight: 800, lineHeight: '16px' };
+                const balPrimary = (list: [string, number][]) => { const [c, v] = list[0]; return `${c}${formatCompactAmount(v)}`; };
+
                 return (
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
                     {myTransList.map((t) => {
                       const m = t.from === me ? t.to : t.from;
                       const isOwed = t.to === me;
-                      
+
                       let displayBalances: Record<string, number> = {};
                       if (isOwed) {
                         displayBalances = t.balances;
@@ -848,6 +853,11 @@ export const GroupDetail: React.FC<GroupDetailProps> = ({
                         });
                       }
 
+                      const balEntries = Object.entries(displayBalances).filter(([_, v]) => Math.abs(v) > 0.01);
+                      const collectList = balEntries.filter(([_, v]) => v > 0.01);
+                      const payList = balEntries.filter(([_, v]) => v < -0.01);
+                      const avBg = AV_COLORS[(m.charCodeAt(0) || 0) % AV_COLORS.length];
+
                       return (
                         <div
                           key={`my-${m}`}
@@ -856,69 +866,43 @@ export const GroupDetail: React.FC<GroupDetailProps> = ({
                             setGlobalSettleData({ name: m, gId: selectedId });
                           }}
                           style={{
-                            padding: '12px 14px',
+                            padding: '14px 16px',
                             background: '#FFFFFF',
                             border: '1.5px solid #F1F5F9',
                             display: 'flex',
                             alignItems: 'center',
-                            justifyContent: 'space-between',
-                            gap: '12px',
-                            borderRadius: '16px',
+                            gap: '14px',
+                            borderRadius: '18px',
                             cursor: 'pointer',
                             minHeight: '64px',
                             boxSizing: 'border-box',
                           }}
                         >
-                          <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flex: 1, minWidth: 0 }}>
-                            <div
-                              style={{
-                                width: '38px',
-                                height: '38px',
-                                borderRadius: '12px',
-                                background: isOwed ? '#ECFDF5' : '#FFF1F2',
-                                display: 'flex',
-                                alignItems: 'center',
-                                justifyContent: 'center',
-                                fontSize: '16px',
-                                flexShrink: 0,
-                              }}
-                            >
-                              {isOwed ? '📈' : '📉'}
-                            </div>
-                            <div style={{ minWidth: 0 }}>
-                              <div style={{ display: 'flex', alignItems: 'center', gap: '4px', flexWrap: 'wrap' }}>
-                                <h4 className="nunito" style={{ fontSize: '15px', fontWeight: 800, color: '#0F172A', margin: 0, textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap' }}>
-                                  {m}
-                                </h4>
-                                {userMetadata[m]?.upiId && <span title="Payment Linked" style={{ fontSize: '13px', cursor: 'help' }}>💳</span>}
-                              </div>
-                            </div>
+                          <div style={{ width: '46px', height: '46px', borderRadius: '50%', background: avBg, color: '#FFFFFF', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '18px', fontWeight: 900, flexShrink: 0 }}>
+                            {m.charAt(0).toUpperCase()}
                           </div>
 
-                          <div style={{ display: 'flex', alignItems: 'center', gap: '18px', flexShrink: 0 }}>
-                            <BalanceDisplay balances={displayBalances} align="right" style={{ fontSize: '13px', fontWeight: 800 }} />
-                            <button
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                setGlobalSettleData({ name: m, gId: selectedId });
-                              }}
-                              className="btn-green hover-up-mini"
-                              style={{
-                                padding: '6px 12px',
-                                fontSize: '11px',
-                                borderRadius: '20px',
-                                fontWeight: 800,
-                                boxShadow: '0 4px 10px rgba(16, 185, 129, 0.1)',
-                                whiteSpace: 'nowrap',
-                                display: 'inline-flex',
-                                alignItems: 'center',
-                                justifyContent: 'center',
-                                minWidth: '60px',
-                              }}
-                            >
-                              Settle
-                            </button>
+                          <div style={{ minWidth: 0, flex: 1, display: 'flex', alignItems: 'center', gap: '6px' }}>
+                            <h3 className="nunito" style={{ fontSize: '17px', fontWeight: 800, color: '#2E2A25', margin: 0, textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap' }}>{m}</h3>
+                            {userMetadata[m]?.upiId && <span title="Payment Linked" style={{ fontSize: '13px', cursor: 'help' }}>💳</span>}
                           </div>
+
+                          <div style={{ display: 'flex', flexDirection: 'column', gap: '2px', alignItems: 'flex-end', flexShrink: 0 }}>
+                            {payList.length > 0 && (
+                              <span style={{ ...balPillBase, color: '#D8608A' }}>
+                                {balPrimary(payList)} to pay
+                                {payList.length > 1 && <span style={balCardChip}>+{payList.length - 1}</span>}
+                              </span>
+                            )}
+                            {collectList.length > 0 && (
+                              <span style={{ ...balPillBase, color: '#3FA97C' }}>
+                                {balPrimary(collectList)} to collect
+                                {collectList.length > 1 && <span style={balCardChip}>+{collectList.length - 1}</span>}
+                              </span>
+                            )}
+                          </div>
+
+                          <span style={{ fontSize: '18px', color: '#C9BEB2', fontWeight: 900, lineHeight: 1, flexShrink: 0 }}>›</span>
                         </div>
                       );
                     })}
