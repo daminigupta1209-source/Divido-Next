@@ -56,6 +56,8 @@ function App() {
   const [autoOpenScanner, setAutoOpenScanner] = useState<boolean>(false);
   const [editingExpense, setEditingExpense] = useState<Expense | null>(null);
   const [showAddFriendModal, setShowAddFriendModal] = useState<boolean>(false);
+  const [addFriendShareOnly, setAddFriendShareOnly] = useState<boolean>(false);
+  const openGroupShareLink = () => { setAddFriendShareOnly(true); setShowAddFriendModal(true); };
   const [matchPrompt, setMatchPrompt] = useState<PendingMatchPrompt | null>(null);
   const [showMembersHealth, setShowMembersHealth] = useState<boolean>(false);
   const [globalSettleData, setGlobalSettleData] = useState<{ name: string; gId?: string | number | null } | null>(null);
@@ -1388,7 +1390,7 @@ function App() {
           onHeaderSearch={() => { setView('summary'); setHomeSearchNonce((n) => n + 1); }}
           onAcceptRename={handleAcceptRename}
           onRejectRename={handleRejectRename}
-          onInviteFriend={() => setShowAddFriendModal(true)}
+          onInviteFriend={openGroupShareLink}
           searchQuery={globalSearchQuery}
           setSearchQuery={setGlobalSearchQuery}
           isHeaderSearchActive={isHeaderSearchActive}
@@ -1500,6 +1502,7 @@ function App() {
           />
         ) : (
           <GroupDetail
+            onShareGroupLink={openGroupShareLink}
             selectedId={selectedId}
             groups={groups}
             expenses={expenses}
@@ -1933,6 +1936,7 @@ function App() {
           setUserMetadata={setUserMetadata}
            targetReminderName={activeReminderName}
            customRejoinLink={activeRejoinLink}
+           shareOnly={addFriendShareOnly}
            onAdd={(names) => {
              if (selectedId === 'STANDALONE') {
                setNewlyAddedFriends(names);
@@ -1958,6 +1962,7 @@ function App() {
              if (!show) {
                setActiveReminderName(null);
                setActiveRejoinLink(null);
+               setAddFriendShareOnly(false);
              }
            }}
         />

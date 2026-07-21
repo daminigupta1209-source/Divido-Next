@@ -22,6 +22,7 @@ interface GroupDetailProps {
   setEditingExpense: (exp: Expense | null) => void;
   setExpenses: React.Dispatch<React.SetStateAction<Expense[]>>;
   setShowAddFriendModal: (b: boolean) => void;
+  onShareGroupLink?: () => void;
   setShowMembersHealth: (b: boolean) => void;
   setShowCurrPickerId: (id: string | null) => void;
   showCurrPickerId: string | null;
@@ -61,6 +62,7 @@ export const GroupDetail: React.FC<GroupDetailProps> = ({
   setEditingExpense,
   setExpenses,
   setShowAddFriendModal,
+  onShareGroupLink,
   setShowMembersHealth,
   setShowCurrPickerId,
   showCurrPickerId,
@@ -189,7 +191,7 @@ export const GroupDetail: React.FC<GroupDetailProps> = ({
         showInfo={showInfo}
         setShowInfo={setShowInfo}
         setIsSidebarOpen={setIsSidebarOpen}
-        onShareShortcut={() => setShowAddFriendModal(true)}
+        onShareShortcut={onShareGroupLink || (() => setShowAddFriendModal(true))}
         showGroupOptionsMenu={showGroupOptionsMenu}
         setShowGroupOptionsMenu={setShowGroupOptionsMenu}
         setGroups={setGroups}

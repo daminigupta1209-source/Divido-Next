@@ -16,6 +16,7 @@ interface AddFriendModalProps {
   setUserMetadata: (meta: Record<string, UserMetadata>) => void;
   targetReminderName?: string | null;
   customRejoinLink?: string | null;
+  shareOnly?: boolean;
 }
 
 export const AddFriendModal: React.FC<AddFriendModalProps> = ({
@@ -28,6 +29,7 @@ export const AddFriendModal: React.FC<AddFriendModalProps> = ({
   onAdd,
   targetReminderName,
   customRejoinLink,
+  shareOnly,
 }) => {
   const [name, setName] = useState('');
   const [pending, setPending] = useState<string[]>([]);
@@ -160,7 +162,7 @@ export const AddFriendModal: React.FC<AddFriendModalProps> = ({
     },
   ];
 
-  const [invited, setInvited] = useState(false);
+  const [invited, setInvited] = useState(!!shareOnly);
   const [confirmedNames, setConfirmedNames] = useState<string[]>([]);
 
   useEffect(() => {
@@ -322,10 +324,12 @@ export const AddFriendModal: React.FC<AddFriendModalProps> = ({
           <>
             <div>
               <p style={{ margin: '0 0 4px 0', fontSize: '13px', fontWeight: 800, color: '#10B981', textAlign: 'center' }}>
-                🎉 {customRejoinLink ? `${confirmedNames.join(', ')} Invited!` : `${confirmedNames.join(', ')} Added!`}
+                {confirmedNames.length === 0
+                  ? `🔗 Share ${selectedGroup ? `"${selectedGroup.name}"` : 'group'} link`
+                  : customRejoinLink ? `🎉 ${confirmedNames.join(', ')} Invited!` : `🎉 ${confirmedNames.join(', ')} Added!`}
               </p>
               <p style={{ margin: '0 0 16px 0', fontSize: '11px', fontWeight: 700, color: '#94A3B8', textTransform: 'uppercase', letterSpacing: '0.5px', textAlign: 'center' }}>
-                Send them the invite link to join
+                {confirmedNames.length === 0 ? 'Friends join by claiming their name' : 'Send them the invite link to join'}
               </p>
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', rowGap: '14px', margin: '10px 0' }}>
                 {shareApps.map((app) => (
