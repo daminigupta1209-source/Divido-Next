@@ -90,8 +90,8 @@ export const NetReceivableModal: React.FC<NetReceivableModalProps> = ({
       <div
         className="card shadow-xl"
         style={{
-          width: '420px',
-          padding: '28px',
+          width: '340px',
+          padding: '20px',
           position: 'relative',
           background: 'var(--w)',
           textAlign: 'center',
@@ -117,10 +117,10 @@ export const NetReceivableModal: React.FC<NetReceivableModalProps> = ({
           ✕
         </div>
         
-        <h3 className="nunito" style={{ fontSize: '20px', fontWeight: 950, marginBottom: '4px' }}>
+        <h3 className="nunito" style={{ fontSize: '17px', fontWeight: 950, marginBottom: '3px' }}>
           Send Reminder to {popupData.friendName} 🔔
         </h3>
-        <p style={{ fontSize: '11px', color: 'var(--g)', fontWeight: 800, marginBottom: '18px' }}>
+        <p style={{ fontSize: '10.5px', color: 'var(--g)', fontWeight: 800, marginBottom: '12px' }}>
           Share the reminder, or show your QR to scan in person.
         </p>
 
@@ -164,7 +164,7 @@ export const NetReceivableModal: React.FC<NetReceivableModalProps> = ({
             {/* Secondary: reveal QR + editable message on demand */}
             <button
               onClick={() => setShowQr((s) => !s)}
-              style={{ background: 'none', border: 'none', color: 'var(--g)', fontSize: '11px', fontWeight: 900, cursor: 'pointer', marginBottom: showQr ? '12px' : '18px', textDecoration: 'underline' }}
+              style={{ background: 'none', border: 'none', color: 'var(--g)', fontSize: '11px', fontWeight: 900, cursor: 'pointer', marginBottom: showQr ? '10px' : '14px', textDecoration: 'underline' }}
             >
               {showQr ? 'Hide QR & message' : 'Show QR & message'}
             </button>
@@ -196,7 +196,7 @@ export const NetReceivableModal: React.FC<NetReceivableModalProps> = ({
               onFinalSettle();
               onClose();
             }}
-            style={{ padding: '14px', fontSize: '14px', borderRadius: '14px', width: '100%', fontWeight: 950 }}
+            style={{ padding: '12px', fontSize: '13px', borderRadius: '14px', width: '100%', fontWeight: 950 }}
           >
             Mark as Settled & Record 💸
           </button>
