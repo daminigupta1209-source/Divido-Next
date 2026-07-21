@@ -2509,7 +2509,7 @@ function App() {
                         style={{
                           background: 'none',
                           border: 'none',
-                          color: isSelected ? '#0D9488' : '#94A3B8',
+                          color: !isSelected ? '#94A3B8' : (isPayable ? '#E11D48' : '#0D9488'),
                           textDecoration: 'underline',
                           fontSize: '11.5px',
                           fontWeight: 700,
