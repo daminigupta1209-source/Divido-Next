@@ -418,10 +418,11 @@ export const FriendsView: React.FC<FriendsViewProps> = ({
       {/* Universal Net Balance Card */}
       <div style={{ marginBottom: '22px', width: '100%', animation: 'fadeIn 0.25s ease-out' }}>
         <span style={{ fontSize: '11px', fontWeight: 700, letterSpacing: '1.5px', textTransform: 'uppercase', color: '#B0A79C', marginBottom: '10px', marginLeft: '2px', display: 'block' }}>
-          Net Balance
+          {balanceFilter === 'owe' ? 'Net Payable' : balanceFilter === 'owed' ? 'Net Receivable' : 'Net Balance'}
         </span>
         <div style={{ display: 'flex', borderRadius: '999px', overflow: 'hidden', height: '36px', width: '100%', boxShadow: '0 6px 16px rgba(0,0,0,0.06)' }}>
           {/* Left section: to pay */}
+          {balanceFilter !== 'owed' && (
           <div
             onClick={() => setBalanceFilter('owe')}
             style={{
@@ -456,7 +457,9 @@ export const FriendsView: React.FC<FriendsViewProps> = ({
               </>);
             })()}
           </div>
+          )}
           {/* Right section: to collect */}
+          {balanceFilter !== 'owe' && (
           <div
             onClick={() => setBalanceFilter('owed')}
             style={{
@@ -491,6 +494,7 @@ export const FriendsView: React.FC<FriendsViewProps> = ({
               </>);
             })()}
           </div>
+          )}
         </div>
         <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '10px', marginRight: '2px' }}>
           <span
