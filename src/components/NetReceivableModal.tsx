@@ -23,6 +23,7 @@ export const NetReceivableModal: React.FC<NetReceivableModalProps> = ({
   const [remPopupEditing, setRemPopupEditing] = useState(false);
   const [reminderText, setReminderText] = useState('');
   const [copiedReminder, setCopiedReminder] = useState(false);
+  const [showQr, setShowQr] = useState(false);
   const reminderCanvasRef = useRef<HTMLCanvasElement | null>(null);
 
   useEffect(() => {
@@ -36,7 +37,10 @@ export const NetReceivableModal: React.FC<NetReceivableModalProps> = ({
   useEffect(() => {
     if (popupData) {
       const myUpi = remPopupUpi.trim();
-      const msg = `Hey ${popupData.friendName}, just a quick reminder to settle our net balance of ${popupData.curr}${popupData.amt.toFixed(2)} on Divido. You can scan my QR code or pay me at my UPI ID: ${myUpi || '[Link your UPI ID]'}. Thank you! 🌸`;
+      const upiLink = myUpi
+        ? `upi://pay?pa=${myUpi}&pn=${encodeURIComponent(me)}&am=${popupData.amt.toFixed(2)}&cu=INR&tn=Divido Settle`
+        : '';
+      const msg = `Hey ${popupData.friendName}, just a quick reminder to settle our net balance of ${popupData.curr}${popupData.amt.toFixed(2)} on Divido.${myUpi ? ` You can pay me instantly here: ${upiLink} (UPI ID: ${myUpi})` : ''} Thank you! 🌸`;
       setReminderText(msg);
     }
   }, [remPopupUpi, popupData]);
@@ -65,7 +69,7 @@ export const NetReceivableModal: React.FC<NetReceivableModalProps> = ({
         }
       );
     }
-  }, [popupData, remPopupUpi, remPopupEditing, me]);
+  }, [popupData, remPopupUpi, remPopupEditing, me, showQr]);
 
   useEffect(() => {
     if (!popupData) return;
@@ -116,131 +120,87 @@ export const NetReceivableModal: React.FC<NetReceivableModalProps> = ({
         <h3 className="nunito" style={{ fontSize: '20px', fontWeight: 950, marginBottom: '4px' }}>
           Send Reminder to {popupData.friendName} 🔔
         </h3>
-        <p style={{ fontSize: '11px', color: 'var(--g)', fontWeight: 800, marginBottom: '20px' }}>
-          Let {popupData.friendName} scan this QR code or copy the reminder text below.
+        <p style={{ fontSize: '11px', color: 'var(--g)', fontWeight: 800, marginBottom: '18px' }}>
+          Share the reminder, or show your QR to scan in person.
         </p>
 
-        {/* QR Canvas section */}
-        <div
-          style={{
-            background: 'var(--bg)',
-            padding: '16px',
-            borderRadius: '24px',
-            display: 'inline-flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            marginBottom: '16px',
-            border: '2px dashed var(--b)',
-            minHeight: '192px',
-            minWidth: '192px',
-          }}
-        >
-          {remPopupEditing ? (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', width: '200px' }}>
-              <span style={{ fontSize: '24px' }}>💳</span>
-              <span style={{ fontSize: '12px', fontWeight: 900, color: 'var(--t)' }}>
-                Link your UPI ID to receive payments:
-              </span>
-              <input
-                type="text"
-                name="upiId"
-                id="my-upi-input"
-                placeholder="e.g. name@okaxis"
-                value={remPopupUpi}
-                onChange={(e) => setRemPopupUpi(e.target.value)}
-                autoComplete="on"
-                style={{
-                  padding: '10px 12px',
-                  fontSize: '13px',
-                  fontWeight: 800,
-                  borderRadius: '10px',
-                  border: '1.5px solid #CBD5E1',
-                  background: 'white',
-                  textAlign: 'center',
-                  outline: 'none',
-                }}
-              />
-              <button
-                className="btn-green"
-                onClick={() => {
-                  const trimmed = remPopupUpi.trim();
-                  if (!trimmed || !trimmed.includes('@')) {
-                    alert('Please enter a valid UPI ID (e.g. yourname@okaxis)!');
-                    return;
-                  }
-                  setUserMetadata((prev) => ({
-                    ...prev,
-                    [me]: {
-                      ...prev[me],
-                      upiId: trimmed,
-                    },
-                  }));
-                  setRemPopupEditing(false);
-                }}
-                style={{ padding: '10px', fontSize: '12px', borderRadius: '10px' }}
-              >
-                Link & Generate QR
-              </button>
+        {remPopupEditing ? (
+          /* Link UPI first (needed for pay link + QR) */
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', marginBottom: '18px', background: 'var(--bg)', padding: '16px', borderRadius: '16px', border: '2px dashed var(--b)' }}>
+            <span style={{ fontSize: '12px', fontWeight: 900, color: 'var(--t)' }}>
+              💳 Link your UPI ID to receive payments
+            </span>
+            <input
+              type="text"
+              name="upiId"
+              id="my-upi-input"
+              placeholder="e.g. name@okaxis"
+              value={remPopupUpi}
+              onChange={(e) => setRemPopupUpi(e.target.value)}
+              autoComplete="on"
+              style={{ padding: '10px 12px', fontSize: '13px', fontWeight: 800, borderRadius: '10px', border: '1.5px solid #CBD5E1', background: 'white', textAlign: 'center', outline: 'none' }}
+            />
+            <button
+              className="btn-green"
+              onClick={() => {
+                const trimmed = remPopupUpi.trim();
+                if (!trimmed || !trimmed.includes('@')) {
+                  alert('Please enter a valid UPI ID (e.g. yourname@okaxis)!');
+                  return;
+                }
+                setUserMetadata((prev) => ({ ...prev, [me]: { ...prev[me], upiId: trimmed } }));
+                setRemPopupEditing(false);
+              }}
+              style={{ padding: '10px', fontSize: '12px', borderRadius: '10px' }}
+            >
+              Link UPI ID
+            </button>
+          </div>
+        ) : (
+          <>
+            {/* Primary: share the reminder via apps */}
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '10px', marginBottom: '14px' }}>
+              {[
+                { label: 'WhatsApp', bg: '#25D366', action: () => window.open(`https://wa.me/?text=${encodeURIComponent(reminderText)}`, '_blank') },
+                { label: 'Telegram', bg: '#29B6F6', action: () => window.open(`https://t.me/share/url?url=${encodeURIComponent('https://divido.app')}&text=${encodeURIComponent(reminderText)}`, '_blank') },
+                { label: 'SMS', bg: '#4CAF50', action: () => window.open(`sms:?body=${encodeURIComponent(reminderText)}`, '_blank') },
+                { label: copiedReminder ? 'Copied!' : 'Copy', bg: copiedReminder ? '#10B981' : '#94A3B8', action: () => { navigator.clipboard.writeText(reminderText); setCopiedReminder(true); setTimeout(() => setCopiedReminder(false), 2000); } },
+              ].map((app) => (
+                <div key={app.label} onClick={app.action} className="hover-up" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '6px', cursor: 'pointer' }}>
+                  <div style={{ width: '48px', height: '48px', borderRadius: '14px', background: app.bg, display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white', fontSize: '13px', fontWeight: 900 }}>
+                    {app.label === 'Copy' || app.label === 'Copied!' ? '📋' : app.label[0]}
+                  </div>
+                  <span style={{ fontSize: '10px', fontWeight: 700, color: '#64748B' }}>{app.label}</span>
+                </div>
+              ))}
             </div>
-          ) : (
-            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-              <canvas ref={reminderCanvasRef} style={{ borderRadius: '12px', background: 'white' }} />
-              <div style={{ fontSize: '11px', fontWeight: 800, color: 'var(--g)', marginTop: '8px', display: 'flex', alignItems: 'center', gap: '4px' }}>
-                <span>Your UPI: <strong>{remPopupUpi}</strong></span>
-                <span onClick={() => setRemPopupEditing(true)} style={{ cursor: 'pointer', fontSize: '12px' }} title="Edit UPI ID">✏️</span>
-              </div>
-            </div>
-          )}
-        </div>
 
-        {/* Editable Reminder Text Area */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginBottom: '20px', textAlign: 'left' }}>
-          <label style={{ fontSize: '10px', fontWeight: 900, color: 'var(--g)', textTransform: 'uppercase', letterSpacing: '1px' }}>
-            Reminder Message
-          </label>
-          <textarea
-            value={reminderText}
-            onChange={(e) => setReminderText(e.target.value)}
-            style={{
-              width: '100%',
-              height: '80px',
-              padding: '10px 12px',
-              fontSize: '12px',
-              fontWeight: 700,
-              borderRadius: '12px',
-              border: '1.5px solid #CBD5E1',
-              background: 'var(--bg)',
-              color: 'var(--t)',
-              outline: 'none',
-              resize: 'none',
-              boxSizing: 'border-box',
-            }}
-          />
-          <button
-            onClick={() => {
-              navigator.clipboard.writeText(reminderText);
-              setCopiedReminder(true);
-              setTimeout(() => setCopiedReminder(false), 2000);
-            }}
-            style={{
-              padding: '10px',
-              fontSize: '11px',
-              fontWeight: 900,
-              borderRadius: '10px',
-              border: '1.5px solid var(--accent)',
-              background: 'white',
-              color: 'var(--accent)',
-              cursor: 'pointer',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              gap: '6px',
-            }}
-            className="hover-up"
-          >
-            <span>📋 {copiedReminder ? 'Copied!' : 'Copy Reminder Message'}</span>
-          </button>
-        </div>
+            {/* Secondary: reveal QR + editable message on demand */}
+            <button
+              onClick={() => setShowQr((s) => !s)}
+              style={{ background: 'none', border: 'none', color: 'var(--g)', fontSize: '11px', fontWeight: 900, cursor: 'pointer', marginBottom: showQr ? '12px' : '18px', textDecoration: 'underline' }}
+            >
+              {showQr ? 'Hide QR & message' : 'Show QR & message'}
+            </button>
+
+            {showQr && (
+              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '12px', marginBottom: '18px' }}>
+                <div style={{ background: 'var(--bg)', padding: '14px', borderRadius: '20px', border: '2px dashed var(--b)', display: 'inline-flex', flexDirection: 'column', alignItems: 'center' }}>
+                  <canvas ref={reminderCanvasRef} style={{ borderRadius: '12px', background: 'white' }} />
+                  <div style={{ fontSize: '11px', fontWeight: 800, color: 'var(--g)', marginTop: '8px', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                    <span>Your UPI: <strong>{remPopupUpi}</strong></span>
+                    <span onClick={() => setRemPopupEditing(true)} style={{ cursor: 'pointer', fontSize: '12px' }} title="Edit UPI ID">✏️</span>
+                  </div>
+                </div>
+                <textarea
+                  value={reminderText}
+                  onChange={(e) => setReminderText(e.target.value)}
+                  style={{ width: '100%', height: '80px', padding: '10px 12px', fontSize: '12px', fontWeight: 700, borderRadius: '12px', border: '1.5px solid #CBD5E1', background: 'var(--bg)', color: 'var(--t)', outline: 'none', resize: 'none', boxSizing: 'border-box' }}
+                />
+              </div>
+            )}
+          </>
+        )}
 
         {/* Actions */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
