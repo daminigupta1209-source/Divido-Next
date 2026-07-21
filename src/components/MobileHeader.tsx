@@ -19,6 +19,7 @@ interface MobileHeaderProps {
   headerNameError: string;
   setHeaderNameError: (s: string) => void;
   handleHeaderRename: () => void;
+  onInviteFriend?: () => void;
   showInfo: boolean;
   setShowInfo: (b: boolean) => void;
   mobileShowGroupOptionsMenu: boolean;
@@ -61,6 +62,7 @@ export const MobileHeader: React.FC<MobileHeaderProps> = ({
   headerNameError,
   setHeaderNameError,
   handleHeaderRename,
+  onInviteFriend,
   showInfo,
   setShowInfo,
   mobileShowGroupOptionsMenu,
@@ -243,9 +245,9 @@ export const MobileHeader: React.FC<MobileHeaderProps> = ({
                   title="Group options"
                 >
                   <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ color: '#475569' }}>
+                    <circle cx="12" cy="5" r="1.5" fill="currentColor" stroke="none" />
                     <circle cx="12" cy="12" r="1.5" fill="currentColor" stroke="none" />
-                    <circle cx="19" cy="12" r="1.5" fill="currentColor" stroke="none" />
-                    <circle cx="5" cy="12" r="1.5" fill="currentColor" stroke="none" />
+                    <circle cx="12" cy="19" r="1.5" fill="currentColor" stroke="none" />
                   </svg>
                 </button>
                 {mobileShowGroupOptionsMenu && (
@@ -315,6 +317,7 @@ export const MobileHeader: React.FC<MobileHeaderProps> = ({
 
                     {/* Action Buttons */}
                     {[
+                      ...(selectedId !== 'STANDALONE' ? [{ emoji: '🔗', label: 'Invite Friend', onClick: () => { setMobileShowGroupOptionsMenu(false); onInviteFriend && onInviteFriend(); } }] : []),
                       { emoji: '💱', label: 'Convert Currency', onClick: () => { setMobileShowGroupOptionsMenu(false); setShowConvertModalId(selectedId); } },
                       { emoji: '📤', label: 'Export Data', onClick: () => { setMobileShowGroupOptionsMenu(false); handleMobileExportCSV(); } },
                       { emoji: '📊', label: 'Analytics', onClick: () => { setMobileShowGroupOptionsMenu(false); setAnalyticsGroupId(selectedId); setView('analytics'); } },

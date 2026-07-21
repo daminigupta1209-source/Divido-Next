@@ -204,9 +204,9 @@ export const GroupHeader: React.FC<GroupHeaderProps> = ({
                   title="Group options"
                 >
                   <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ color: '#475569' }}>
+                    <circle cx="12" cy="5" r="1.5" fill="currentColor" stroke="none" />
                     <circle cx="12" cy="12" r="1.5" fill="currentColor" stroke="none" />
-                    <circle cx="19" cy="12" r="1.5" fill="currentColor" stroke="none" />
-                    <circle cx="5" cy="12" r="1.5" fill="currentColor" stroke="none" />
+                    <circle cx="12" cy="19" r="1.5" fill="currentColor" stroke="none" />
                   </svg>
                 </button>
 
@@ -278,6 +278,7 @@ export const GroupHeader: React.FC<GroupHeaderProps> = ({
 
                     {/* Action Buttons */}
                     {[
+                      ...(selectedId !== 'STANDALONE' ? [{ emoji: '🔗', label: 'Invite Friend', onClick: () => { setShowGroupOptionsMenu(false); onShareShortcut && onShareShortcut(); } }] : []),
                       { emoji: '💱', label: 'Convert Currency', onClick: () => { setShowGroupOptionsMenu(false); setShowConvertModalId(selectedId); } },
                       { emoji: '📤', label: 'Export Data', onClick: () => { setShowGroupOptionsMenu(false); setShowExportMenu(true); } },
                       { emoji: '📊', label: 'Analytics Breakdown', onClick: () => { setShowGroupOptionsMenu(false); onOpenAnalytics && onOpenAnalytics(selectedId || 'ALL'); } },

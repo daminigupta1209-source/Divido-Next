@@ -1388,6 +1388,7 @@ function App() {
           onHeaderSearch={() => { setView('summary'); setHomeSearchNonce((n) => n + 1); }}
           onAcceptRename={handleAcceptRename}
           onRejectRename={handleRejectRename}
+          onInviteFriend={() => setShowAddFriendModal(true)}
           searchQuery={globalSearchQuery}
           setSearchQuery={setGlobalSearchQuery}
           isHeaderSearchActive={isHeaderSearchActive}
