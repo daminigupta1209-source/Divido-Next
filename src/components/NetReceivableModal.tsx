@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import QRCode from 'qrcode';
 import { escManager } from '../lib/escManager';
+import { ShareGrid } from './ShareGrid';
 
 interface NetReceivableModalProps {
   popupData: { friendName: string; amt: number; curr: string } | null;
@@ -22,7 +23,6 @@ export const NetReceivableModal: React.FC<NetReceivableModalProps> = ({
   const [remPopupUpi, setRemPopupUpi] = useState('');
   const [remPopupEditing, setRemPopupEditing] = useState(false);
   const [reminderText, setReminderText] = useState('');
-  const [copiedReminder, setCopiedReminder] = useState(false);
   const [showQr, setShowQr] = useState(false);
   const reminderCanvasRef = useRef<HTMLCanvasElement | null>(null);
 
@@ -158,22 +158,8 @@ export const NetReceivableModal: React.FC<NetReceivableModalProps> = ({
           </div>
         ) : (
           <>
-            {/* Primary: share the reminder via apps */}
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '10px', marginBottom: '14px' }}>
-              {[
-                { label: 'WhatsApp', bg: '#25D366', action: () => window.open(`https://wa.me/?text=${encodeURIComponent(reminderText)}`, '_blank') },
-                { label: 'Telegram', bg: '#29B6F6', action: () => window.open(`https://t.me/share/url?url=${encodeURIComponent('https://divido.app')}&text=${encodeURIComponent(reminderText)}`, '_blank') },
-                { label: 'SMS', bg: '#4CAF50', action: () => window.open(`sms:?body=${encodeURIComponent(reminderText)}`, '_blank') },
-                { label: copiedReminder ? 'Copied!' : 'Copy', bg: copiedReminder ? '#10B981' : '#94A3B8', action: () => { navigator.clipboard.writeText(reminderText); setCopiedReminder(true); setTimeout(() => setCopiedReminder(false), 2000); } },
-              ].map((app) => (
-                <div key={app.label} onClick={app.action} className="hover-up" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '6px', cursor: 'pointer' }}>
-                  <div style={{ width: '48px', height: '48px', borderRadius: '14px', background: app.bg, display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white', fontSize: '13px', fontWeight: 900 }}>
-                    {app.label === 'Copy' || app.label === 'Copied!' ? '📋' : app.label[0]}
-                  </div>
-                  <span style={{ fontSize: '10px', fontWeight: 700, color: '#64748B' }}>{app.label}</span>
-                </div>
-              ))}
-            </div>
+            {/* Primary: share the reminder via apps (same grid as the invite modal) */}
+            <ShareGrid message={reminderText} copyValue={reminderText} />
 
             {/* Secondary: reveal QR + editable message on demand */}
             <button
