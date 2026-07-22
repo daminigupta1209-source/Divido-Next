@@ -172,23 +172,21 @@ export const NetReceivableModal: React.FC<NetReceivableModalProps> = ({
               onClick={() => setShowQr((s) => !s)}
               style={{ background: 'none', border: 'none', color: 'var(--g)', fontSize: '11px', fontWeight: 900, cursor: 'pointer', marginBottom: showQr ? '10px' : '14px', textDecoration: 'underline' }}
             >
-              {showQr ? 'Hide QR & message' : 'Show QR & message'}
+              {showQr ? 'Hide QR code' : 'Show QR code'}
             </button>
 
             {showQr && (
-              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '10px', marginBottom: '16px' }}>
-                <div style={{ background: '#F8FAFC', padding: '12px', borderRadius: '16px', border: '1px solid #EEF2F6', display: 'inline-flex', flexDirection: 'column', alignItems: 'center', gap: '6px' }}>
+              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', marginBottom: '16px' }}>
+                <div style={{ background: '#F8FAFC', padding: '14px 16px', borderRadius: '16px', border: '1px solid #EEF2F6', display: 'inline-flex', flexDirection: 'column', alignItems: 'center', gap: '8px' }}>
                   <canvas ref={reminderCanvasRef} style={{ borderRadius: '10px', background: 'white' }} />
+                  <div style={{ fontSize: '12px', fontWeight: 900, color: 'var(--t)' }}>
+                    Scan to pay {popupData.curr}{popupData.amt.toFixed(2)}
+                  </div>
                   <div style={{ fontSize: '10.5px', fontWeight: 800, color: 'var(--g)', display: 'flex', alignItems: 'center', gap: '4px' }}>
                     <span>{remPopupUpi}</span>
                     <span onClick={() => setRemPopupEditing(true)} style={{ cursor: 'pointer', fontSize: '11px' }} title="Edit UPI ID">✏️</span>
                   </div>
                 </div>
-                <textarea
-                  value={reminderText}
-                  onChange={(e) => setReminderText(e.target.value)}
-                  style={{ width: '100%', height: '58px', padding: '9px 11px', fontSize: '11.5px', fontWeight: 700, borderRadius: '12px', border: '1px solid #E2E8F0', background: '#F8FAFC', color: 'var(--t)', outline: 'none', resize: 'none', boxSizing: 'border-box' }}
-                />
               </div>
             )}
           </>
