@@ -73,11 +73,8 @@ export const NetPayableModal: React.FC<NetPayableModalProps> = ({
           ✕
         </div>
         
-        <h3 className="nunito" style={{ fontSize: '17px', fontWeight: 950, marginBottom: '3px' }}>
-          Confirm Payment ⚡
-        </h3>
-        <p style={{ fontSize: '13px', fontWeight: 700, color: 'var(--g)', marginBottom: '16px' }}>
-          Paying <strong style={{ color: 'var(--accent)', fontSize: '17px' }}>{popupData.curr}{popupData.amt.toFixed(2)}</strong> to {popupData.friendName}
+        <p style={{ fontSize: '14px', fontWeight: 700, color: 'var(--g)', margin: '2px 0 16px' }}>
+          Paying <strong style={{ color: 'var(--accent)', fontSize: '18px' }}>{popupData.curr}{popupData.amt.toFixed(2)}</strong> to {popupData.friendName}
         </p>
 
         <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
@@ -86,6 +83,15 @@ export const NetPayableModal: React.FC<NetPayableModalProps> = ({
               <label style={{ fontSize: '11px', fontWeight: 900, color: 'var(--g)', textTransform: 'uppercase' }}>
                 Link {popupData.friendName}'s UPI ID
               </label>
+              <style>{`
+                #payee-upi-input::placeholder { color: #CBD5E1; font-weight: 600; }
+                #payee-upi-input:-webkit-autofill,
+                #payee-upi-input:-webkit-autofill:focus {
+                  -webkit-text-fill-color: #94A3B8;
+                  -webkit-box-shadow: 0 0 0 1000px #FAFAFA inset;
+                  caret-color: #94A3B8;
+                }
+              `}</style>
               <input
                 type="text"
                 name="upiId"
@@ -97,10 +103,11 @@ export const NetPayableModal: React.FC<NetPayableModalProps> = ({
                 style={{
                   padding: '10px 12px',
                   fontSize: '13px',
-                  fontWeight: 800,
+                  fontWeight: 700,
                   borderRadius: '10px',
-                  border: '1.5px solid #CBD5E1',
-                  background: 'white',
+                  border: '1px solid #EEF2F6',
+                  background: '#FAFAFA',
+                  color: '#94A3B8',
                   textAlign: 'center',
                   outline: 'none',
                 }}
