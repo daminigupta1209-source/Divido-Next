@@ -523,7 +523,7 @@ export const GroupDetail: React.FC<GroupDetailProps> = ({
               Net Balance
             </div>
 
-            <div style={{ display: 'flex', height: '36px', borderRadius: '999px', overflow: 'hidden', boxShadow: '0 6px 16px rgba(0,0,0,0.06)' }}>
+            <div onClick={() => hasActiveBalancesForCard && setActiveTab('balances')} style={{ position: 'relative', display: 'flex', height: '36px', borderRadius: '999px', overflow: 'hidden', boxShadow: '0 6px 16px rgba(0,0,0,0.06)', cursor: hasActiveBalancesForCard ? 'pointer' : 'default' }}>
               {!hasActiveBalancesForCard ? (
                 <div style={{ ...segStyle, background: GREEN, cursor: 'default' }}>All settled up</div>
               ) : (
@@ -548,10 +548,9 @@ export const GroupDetail: React.FC<GroupDetailProps> = ({
                   )}
                 </>
               )}
-            </div>
-
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', marginTop: '10px', marginRight: '2px', fontSize: '12px', fontWeight: 400 }}>
-              <span onClick={() => setActiveTab('balances')} style={{ color: '#C7607F', fontWeight: 500, cursor: 'pointer' }}>Tap to settle →</span>
+              {hasActiveBalancesForCard && (
+                <span style={{ position: 'absolute', right: '14px', top: '50%', transform: 'translateY(-50%)', color: '#FFFFFF', fontSize: '20px', fontWeight: 900, lineHeight: 1, pointerEvents: 'none', opacity: 0.9 }}>›</span>
+              )}
             </div>
           </div>
         );

@@ -420,7 +420,7 @@ export const FriendsView: React.FC<FriendsViewProps> = ({
         <span style={{ fontSize: '11px', fontWeight: 700, letterSpacing: '1.5px', textTransform: 'uppercase', color: '#B0A79C', marginBottom: '10px', marginLeft: '2px', display: 'block' }}>
           {balanceFilter === 'owe' ? 'Net Payable' : balanceFilter === 'owed' ? 'Net Receivable' : 'Net Balance'}
         </span>
-        <div style={{ display: 'flex', borderRadius: '999px', overflow: 'hidden', height: '36px', width: '100%', boxShadow: '0 6px 16px rgba(0,0,0,0.06)' }}>
+        <div style={{ position: 'relative', display: 'flex', borderRadius: '999px', overflow: 'hidden', height: '36px', width: '100%', boxShadow: '0 6px 16px rgba(0,0,0,0.06)' }}>
           {/* Left section: to pay */}
           {balanceFilter !== 'owed' && (
           <div
@@ -495,16 +495,9 @@ export const FriendsView: React.FC<FriendsViewProps> = ({
             })()}
           </div>
           )}
-        </div>
-        <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '10px', marginRight: '2px' }}>
-          <span
-            onClick={() => {
-              setBalanceFilter('all');
-            }}
-            style={{ fontSize: '12px', fontWeight: 500, color: '#C7607F', cursor: 'pointer', userSelect: 'none' }}
-          >
-            Tap to settle →
-          </span>
+          {(Object.keys(totalPayable).length > 0 || Object.keys(totalReceivable).length > 0) && (
+            <span style={{ position: 'absolute', right: '14px', top: '50%', transform: 'translateY(-50%)', color: '#FFFFFF', fontSize: '20px', fontWeight: 900, lineHeight: 1, pointerEvents: 'none', opacity: 0.9 }}>›</span>
+          )}
         </div>
       </div>
 
