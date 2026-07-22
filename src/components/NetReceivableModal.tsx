@@ -37,10 +37,9 @@ export const NetReceivableModal: React.FC<NetReceivableModalProps> = ({
   useEffect(() => {
     if (popupData) {
       const myUpi = remPopupUpi.trim();
-      const upiLink = myUpi
-        ? `upi://pay?pa=${myUpi}&pn=${encodeURIComponent(me)}&am=${popupData.amt.toFixed(2)}&cu=INR&tn=Divido Settle`
-        : '';
-      const msg = `Hey ${popupData.friendName}, just a quick reminder to settle our net balance of ${popupData.curr}${popupData.amt.toFixed(2)} on Divido.${myUpi ? ` You can pay me instantly here: ${upiLink} (UPI ID: ${myUpi})` : ''} Thank you! 🌸`;
+      // Keep the visible message clean and human-readable; the tappable pay link
+      // is attached only to the shared payload (see shareMessage below).
+      const msg = `Hey ${popupData.friendName}, just a quick reminder to settle our net balance of ${popupData.curr}${popupData.amt.toFixed(2)} on Divido.${myUpi ? ` Pay me at UPI: ${myUpi}` : ''} Thank you! 🌸`;
       setReminderText(msg);
     }
   }, [remPopupUpi, popupData]);
@@ -57,7 +56,7 @@ export const NetReceivableModal: React.FC<NetReceivableModalProps> = ({
         canvas,
         upiLink,
         {
-          width: 160,
+          width: 132,
           margin: 1,
           color: {
             dark: '#1E293B',
@@ -80,6 +79,13 @@ export const NetReceivableModal: React.FC<NetReceivableModalProps> = ({
   }, [popupData, onClose]);
 
   if (!popupData) return null;
+
+  // The shared payload = clean message + a tappable UPI pay link (amount
+  // pre-filled). Kept separate so the raw link never clutters the visible text.
+  const upiLink = remPopupUpi.trim()
+    ? `upi://pay?pa=${remPopupUpi.trim()}&pn=${encodeURIComponent(me)}&am=${popupData.amt.toFixed(2)}&cu=INR&tn=Divido Settle`
+    : '';
+  const shareMessage = upiLink ? `${reminderText}\n\nPay instantly: ${upiLink}` : reminderText;
 
   return (
     <div
@@ -159,7 +165,7 @@ export const NetReceivableModal: React.FC<NetReceivableModalProps> = ({
         ) : (
           <>
             {/* Primary: share the reminder via apps (same grid as the invite modal) */}
-            <ShareGrid message={reminderText} copyValue={reminderText} />
+            <ShareGrid message={shareMessage} copyValue={shareMessage} />
 
             {/* Secondary: reveal QR + editable message on demand */}
             <button
@@ -170,18 +176,18 @@ export const NetReceivableModal: React.FC<NetReceivableModalProps> = ({
             </button>
 
             {showQr && (
-              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '12px', marginBottom: '18px' }}>
-                <div style={{ background: 'var(--bg)', padding: '14px', borderRadius: '20px', border: '2px dashed var(--b)', display: 'inline-flex', flexDirection: 'column', alignItems: 'center' }}>
-                  <canvas ref={reminderCanvasRef} style={{ borderRadius: '12px', background: 'white' }} />
-                  <div style={{ fontSize: '11px', fontWeight: 800, color: 'var(--g)', marginTop: '8px', display: 'flex', alignItems: 'center', gap: '4px' }}>
-                    <span>Your UPI: <strong>{remPopupUpi}</strong></span>
-                    <span onClick={() => setRemPopupEditing(true)} style={{ cursor: 'pointer', fontSize: '12px' }} title="Edit UPI ID">✏️</span>
+              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '10px', marginBottom: '16px' }}>
+                <div style={{ background: '#F8FAFC', padding: '12px', borderRadius: '16px', border: '1px solid #EEF2F6', display: 'inline-flex', flexDirection: 'column', alignItems: 'center', gap: '6px' }}>
+                  <canvas ref={reminderCanvasRef} style={{ borderRadius: '10px', background: 'white' }} />
+                  <div style={{ fontSize: '10.5px', fontWeight: 800, color: 'var(--g)', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                    <span>{remPopupUpi}</span>
+                    <span onClick={() => setRemPopupEditing(true)} style={{ cursor: 'pointer', fontSize: '11px' }} title="Edit UPI ID">✏️</span>
                   </div>
                 </div>
                 <textarea
                   value={reminderText}
                   onChange={(e) => setReminderText(e.target.value)}
-                  style={{ width: '100%', height: '80px', padding: '10px 12px', fontSize: '12px', fontWeight: 700, borderRadius: '12px', border: '1.5px solid #CBD5E1', background: 'var(--bg)', color: 'var(--t)', outline: 'none', resize: 'none', boxSizing: 'border-box' }}
+                  style={{ width: '100%', height: '58px', padding: '9px 11px', fontSize: '11.5px', fontWeight: 700, borderRadius: '12px', border: '1px solid #E2E8F0', background: '#F8FAFC', color: 'var(--t)', outline: 'none', resize: 'none', boxSizing: 'border-box' }}
                 />
               </div>
             )}
