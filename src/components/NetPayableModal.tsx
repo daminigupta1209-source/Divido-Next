@@ -46,8 +46,8 @@ export const NetPayableModal: React.FC<NetPayableModalProps> = ({
       <div
         className="card shadow-xl"
         style={{
-          width: '400px',
-          padding: '28px',
+          width: '340px',
+          padding: '20px',
           position: 'relative',
           background: 'var(--w)',
           textAlign: 'center',
@@ -73,18 +73,14 @@ export const NetPayableModal: React.FC<NetPayableModalProps> = ({
           ✕
         </div>
         
-        <h3 className="nunito" style={{ fontSize: '20px', fontWeight: 950, marginBottom: '4px' }}>
-          Confirm Payment Details ⚡
+        <h3 className="nunito" style={{ fontSize: '17px', fontWeight: 950, marginBottom: '3px' }}>
+          Confirm Payment ⚡
         </h3>
-        <p style={{ fontSize: '11px', color: 'var(--g)', fontWeight: 800, marginBottom: '8px' }}>
-          Let's pay via UPI app or record it manually.
-        </p>
-        
-        <p style={{ fontSize: '13px', fontWeight: 700, color: 'var(--g)', lineHeight: 1.5, marginBottom: '20px' }}>
-          You are paying a net amount of <strong style={{ color: 'var(--accent)', fontSize: '18px' }}>{popupData.curr}{popupData.amt.toFixed(2)}</strong> to {popupData.friendName}.
+        <p style={{ fontSize: '13px', fontWeight: 700, color: 'var(--g)', marginBottom: '16px' }}>
+          Paying <strong style={{ color: 'var(--accent)', fontSize: '17px' }}>{popupData.curr}{popupData.amt.toFixed(2)}</strong> to {popupData.friendName}
         </p>
 
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
           {payPopupEditing ? (
             <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', background: 'var(--bg)', padding: '12px', borderRadius: '16px' }}>
               <label style={{ fontSize: '11px', fontWeight: 900, color: 'var(--g)', textTransform: 'uppercase' }}>
@@ -142,7 +138,7 @@ export const NetPayableModal: React.FC<NetPayableModalProps> = ({
                 onFinalSettle();
                 onClose();
               }}
-              style={{ padding: '14px', fontSize: '14px', borderRadius: '14px', width: '100%', fontWeight: 950 }}
+              style={{ padding: '12px', fontSize: '13px', borderRadius: '14px', width: '100%', fontWeight: 950 }}
             >
               Proceed to Pay ⚡
             </button>
