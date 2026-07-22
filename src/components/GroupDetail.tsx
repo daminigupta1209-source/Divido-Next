@@ -764,30 +764,6 @@ export const GroupDetail: React.FC<GroupDetailProps> = ({
                     )}
                   </div>
 
-                  {/* Convert currency */}
-                  <button
-                    title="Convert currencies"
-                    onClick={(e) => { e.stopPropagation(); setShowConvertModalId(selectedGroup.id); }}
-                      style={{
-                        background: 'none',
-                        border: 'none',
-                        padding: '0 4px',
-                        display: 'flex',
-                        flexDirection: 'column',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        gap: '4px',
-                        cursor: 'pointer',
-                        color: '#64748B',
-                        flexShrink: 0,
-                        transition: '0.2s all ease',
-                      }}
-                    >
-                      <span style={{ fontSize: '20px', lineHeight: 1, filter: 'grayscale(1) opacity(0.7)' }}>💱</span>
-                      <span style={{ fontSize: '9px', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.5px', color: '#64748B' }}>
-                        Convert
-                      </span>
-                    </button>
                 </div>
               );
             })()}
