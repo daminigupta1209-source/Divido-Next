@@ -78,7 +78,21 @@ alter table groups add column if not exists created_date date;
 ## ⚠️ Environment note
 - The project lives inside **OneDrive**, which syncs the `.git` folder. This caused git history to shift mid-session. Consider moving the repo outside OneDrive for a stable git setup.
 
+## Built this session (2026-07 — UI polish + flows)
+- **Amounts:** shared `formatCompactAmount()` in `lib/utils` (K/M/B from 10K up; exact below) used across net-balance, group/settle cards, activity rows, `BalanceDisplay`. Unit tests in `lib/utils.test.ts`.
+- **Net Balance card (Home/Group/Settle All):** shows primary compact amount + a translucent `+N` currency chip; removed the "Tap to settle" text and put a `›` arrow on the pill (pill itself tappable on Home/Group). Settle All heading switches to "Net Payable"/"Net Receivable" by filter.
+- **Dropdowns:** new reusable `StyledDropdown` replaced ALL native `<select>`s (split mode, paid-by, settle from/to, every filter). Full 150-currency pickers still use `SearchableCurrencyPicker`.
+- **"+ Friend" buttons:** unified indigo `#6366F1`.
+- **Group menu (⋮):** vertical dots; added **"Share Group Link"** (opens Add Friend in share-only mode via `shareOnly` prop). Removed the redundant Convert button from the Balances tab (still in ⋮).
+- **Group Balances cards:** restyled to match Settle All friend cards (avatar + stacked pills + chevron).
+- **Leave/rejoin:** dynamic "Leave Group" vs "Delete Group" label; leaving allowed even with outstanding balance; on admin leave, next member notified via new `admin_transfer` notification. Guest-identity guards: re-claim guard in invite landing + `linkGuestIdentities()` adopts guest rows on sign-in (non-blocking — see commit 500fe38).
+- **Share modals:** extracted `ShareGrid` (branded WhatsApp/Telegram/Instagram/SMS/Email/Copy) used by invite + reminder. Reminder modal (`NetReceivableModal`) is share-first + compact; QR panel is a self-contained "Scan to pay <amt>" unit; message stays clean, `upi://pay` link only in the shared payload. Payable modal (`NetPayableModal`) compact, no title, light UPI input.
+
+## ⚠️ Open item — cross-currency settle (discussed, not built)
+User converted ₹→$ on Settle All but pay/reminder correctly stays in ₹ (Convert is **display-only**). Real issue: you can't pay cross-currency (UPI=INR-only; same per country). **Agreed direction = Option A** (low effort, not yet built): mark converted totals as approximate `≈`, add "overview only — settle in each currency" hint, and a "settled in original currency" line in the Settle modal. Options B (settle-in-chosen-currency, record-only) / C (group settlement currency) are bigger, deferred.
+
 ## Next up
 <!-- Describe the next task here when starting the new session -->
-- (open) Optional: manually confirm Profile UPI flow + group members list render correctly after the refactor.
-- (open) Consider a real test for `calculateNextOccurrenceDate` edge cases / recurring-expense generation if that feature grows.
+- (open) Implement **Option A** currency-convert clarity (see Open item above).
+- (open) Optionally restyle the Settle All **Convert** control into a matching pill (grey "Convert" → green "In ₹" active); mockup already shown, user picked Option 1 + 3.
+- (open) Verify new flows manually behind Google login (dropdowns, reminder/payable modals, net-balance arrow, guest sign-in linking).
