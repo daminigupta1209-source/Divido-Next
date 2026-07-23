@@ -2,6 +2,7 @@ import { useEffect, useRef, useState, useMemo } from 'react';
 import { supabase } from '../lib/supabaseClient';
 import { Group, Expense } from '../lib/types';
 import { checkIfDemoMode } from '../lib/demoMode';
+import { ensureArray, ensureObject } from '../lib/utils';
 
 interface UseSupabaseSyncProps {
   groups: Group[];
@@ -202,8 +203,8 @@ export function useSupabaseSync({
           paid: e.paid,
           date: e.date,
           mode: e.mode,
-          splitters: e.splitters || [],
-          shares: e.shares || {},
+          splitters: ensureArray(e.splitters),
+          shares: ensureObject(e.shares),
           category: e.category,
           currency: e.currency,
           notes: e.notes,

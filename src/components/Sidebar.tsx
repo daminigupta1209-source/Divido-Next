@@ -81,6 +81,66 @@ export const Sidebar: React.FC<SidebarProps> = ({
   };
 
   const syncState = getSyncState();
+
+  // Line-style nav icons matching the bottom navigation bar (stroke + currentColor
+  // so they follow the active/inactive text color automatically).
+  const navIcon = (id: string) => {
+    const common = {
+      viewBox: '0 0 24 24',
+      fill: 'none',
+      stroke: 'currentColor',
+      strokeWidth: 1.8,
+      strokeLinecap: 'round' as const,
+      strokeLinejoin: 'round' as const,
+      style: { width: '20px', height: '20px', display: 'block' } as React.CSSProperties,
+    };
+    switch (id) {
+      case 'summary': // Home — house
+        return (
+          <svg {...common}>
+            <path d="M3 10.5 12 3l9 7.5" />
+            <path d="M5 9.5V20h14V9.5" />
+            <path d="M9.5 20v-6h5v6" />
+          </svg>
+        );
+      case 'groups': // Your Groups — people
+        return (
+          <svg {...common}>
+            <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
+            <circle cx="9" cy="7" r="3.5" />
+            <path d="M22 21v-2a4 4 0 0 0-3-3.87" />
+            <path d="M16 3.5a3.5 3.5 0 0 1 0 7" />
+          </svg>
+        );
+      case 'friends': // Settle All — swap arrows
+        return (
+          <svg {...common}>
+            <path d="M4 8h13" />
+            <path d="m14 5 3 3-3 3" />
+            <path d="M20 16H7" />
+            <path d="m10 13-3 3 3 3" />
+          </svg>
+        );
+      case 'activity': // All Activities — clock/history
+        return (
+          <svg {...common}>
+            <path d="M12 8v4l2.5 2" />
+            <path d="M3.5 9a9 9 0 1 1-.5 5" />
+            <path d="M3 5v4h4" />
+          </svg>
+        );
+      case 'analytics': // Analytics — line chart
+        return (
+          <svg {...common}>
+            <path d="M3 3v18h18" />
+            <path d="m7 14 4-4 3 3 5-6" />
+          </svg>
+        );
+      default:
+        return null;
+    }
+  };
+
   return (
     <aside
       className={`sidebar ${isSidebarOpen ? 'open' : ''}`}
@@ -213,11 +273,12 @@ export const Sidebar: React.FC<SidebarProps> = ({
               >
                 <span
                   style={{
-                    fontSize: '18px',
-                    filter: isActive ? 'brightness(0) invert(1)' : 'none',
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
                   }}
                 >
-                  {it.e}
+                  {navIcon(it.id)}
                 </span>
                 <span>{it.n}</span>
                 {isActive && (
@@ -264,7 +325,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
               onClick={() => setIsGroupsExpanded(!isGroupsExpanded)}
             >
               <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                <span style={{ fontSize: '18px' }}>🏘️</span> Your Groups
+                <span style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}>{navIcon('groups')}</span> Your Groups
               </div>
               <span
                 style={{
@@ -456,11 +517,12 @@ export const Sidebar: React.FC<SidebarProps> = ({
               >
                 <span
                   style={{
-                    fontSize: '18px',
-                    filter: isActive ? 'brightness(0) invert(1)' : 'none',
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
                   }}
                 >
-                  {it.e}
+                  {navIcon(it.id)}
                 </span>
                 <span>{it.n}</span>
                 {isActive && (
@@ -501,7 +563,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
           }}
           onClick={handleLogout}
         >
-          🚪 Logout
+          Logout
         </div>
       </div>
     </aside>

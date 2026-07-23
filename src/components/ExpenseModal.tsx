@@ -7,6 +7,7 @@ import { SplitSelector } from './expense-modal/SplitSelector';
 import { RecurrenceSelector } from './expense-modal/RecurrenceSelector';
 import { useExpenseForm } from '../hooks/useExpenseForm';
 import { StyledDropdown } from './StyledDropdown';
+import { CameraCaptureModal } from './CameraCaptureModal';
 
 // Borderless trigger — the wrapping div already provides the pill/border/shadow.
 const emInlineBtnStyle: React.CSSProperties = { border: 'none', background: 'transparent', boxShadow: 'none', borderRadius: '19px', height: '100%', fontSize: '12px', fontWeight: 800, color: '#1E293B', padding: '6px 16px' };
@@ -165,6 +166,25 @@ export const ExpenseModal: React.FC<ExpenseModalProps> = ({
     autoOpenScanner,
   });
 
+  // Header attachment button: save a photo/file as a receipt attachment (no OCR).
+  const uploadInputRef = React.useRef<HTMLInputElement>(null);
+  const [showAttachMenu, setShowAttachMenu] = React.useState(false);
+  const [showCameraCapture, setShowCameraCapture] = React.useState(false);
+  const addAttachmentDataUrl = (dataUrl: string) => {
+    const newIndex = attachments.length;
+    setAttachments([...attachments, dataUrl]);
+    setActiveAttachmentIndex(newIndex);
+    setShowAttachmentsPreview(true);
+  };
+  const handlePhotoCapture = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = () => addAttachmentDataUrl(reader.result as string);
+    reader.readAsDataURL(file);
+    e.target.value = ''; // allow selecting the same file again
+  };
+
   return (
     <div
       className="modal-overlay"
@@ -316,9 +336,14 @@ export const ExpenseModal: React.FC<ExpenseModalProps> = ({
           }
 
            /* Focus styling for input, select, and custom focusable elements */
-          #exp-title:focus, #exp-amt:focus, #payer-select:focus, #split-mode-select:focus, #shares-amt-input:focus, #shares-split-mode-select:focus, .splitter-scroll input:focus {
+          #payer-select:focus, #split-mode-select:focus, #shares-amt-input:focus, #shares-split-mode-select:focus, .splitter-scroll input:focus {
             border-color: #CBD5E1 !important;
             box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05) !important;
+            outline: none !important;
+          }
+          #exp-title:focus, #exp-amt:focus {
+            border-color: #CBD5E1 !important;
+            box-shadow: none !important;
             outline: none !important;
           }
           [id^="friend-pill-"]:focus, #add-friend-btn:focus, #expense-date-btn:focus, #expense-notes-btn:focus, #expense-scan-btn:focus, #expense-recurrence-btn:focus, #shares-done-btn:focus, [id^="attachment-btn-"]:focus, #save-expense-btn:focus {
@@ -375,7 +400,7 @@ export const ExpenseModal: React.FC<ExpenseModalProps> = ({
             display: 'grid',
             gridTemplateColumns: '40px 1fr 80px',
             alignItems: 'center',
-            background: '#FFFFFF',
+            background: '#F8FAFC',
             padding: '18px 16px',
             margin: '-16px -20px 12px -20px',
             borderBottom: '1px solid #E2E8F0',
@@ -414,18 +439,18 @@ export const ExpenseModal: React.FC<ExpenseModalProps> = ({
                   display: 'flex', alignItems: 'center', gap: '8px',
                   padding: '10px 20px 10px 16px',
                   borderRadius: '24px',
-                  border: '1.5px solid #FED7AA',
-                  background: '#FFF7ED',
+                  border: '1.5px solid #E2E8F0',
+                  background: '#FFFFFF',
                   cursor: 'pointer',
-                  fontSize: '16px', fontWeight: 950, color: '#C2410C',
-                  boxShadow: '0 1px 4px rgba(249,115,22,0.12)',
+                  fontSize: '16px', fontWeight: 950, color: '#475569',
+                  boxShadow: '0 1px 4px rgba(0,0,0,0.06)',
                   whiteSpace: 'nowrap',
                   minWidth: '180px',
                   justifyContent: 'center',
                   letterSpacing: '-0.3px',
                 }}
               >
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" style={{ flexShrink: 0, color: '#F97316' }}>
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" style={{ flexShrink: 0, color: '#475569' }}>
                   <circle cx="9" cy="7" r="3.5" stroke="currentColor" strokeWidth="2"/>
                   <path d="M2 20c0-3.314 3.134-6 7-6s7 2.686 7 6" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
                   <circle cx="17" cy="7" r="2.5" stroke="currentColor" strokeWidth="1.8"/>
@@ -434,7 +459,7 @@ export const ExpenseModal: React.FC<ExpenseModalProps> = ({
                 <span style={{ overflow: 'hidden', textOverflow: 'ellipsis' }}>
                   {localGId === 'STANDALONE' ? 'Non-Group Split' : (activeGroup?.name || 'Select Group')}
                 </span>
-                <span style={{ fontSize: '11px', color: '#F97316', marginLeft: '2px', transition: 'transform 0.2s', display: 'inline-block', transform: showGroupDropdown ? 'rotate(180deg)' : 'rotate(0deg)' }}>▼</span>
+                <span style={{ fontSize: '11px', color: '#94A3B8', marginLeft: '2px', transition: 'transform 0.2s', display: 'inline-block', transform: showGroupDropdown ? 'rotate(180deg)' : 'rotate(0deg)' }}>▼</span>
               </button>
 
               {/* Custom dropdown panel */}
@@ -538,8 +563,15 @@ export const ExpenseModal: React.FC<ExpenseModalProps> = ({
           </div>
 
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: '14px' }}>
+            <input
+              ref={uploadInputRef}
+              type="file"
+              accept="image/*"
+              style={{ display: 'none' }}
+              onChange={handlePhotoCapture}
+            />
             <button
-              onClick={openScanner}
+              onClick={() => setShowAttachMenu(true)}
               style={{
                 border: 'none',
                 background: 'transparent',
@@ -549,13 +581,84 @@ export const ExpenseModal: React.FC<ExpenseModalProps> = ({
                 alignItems: 'center',
                 justifyContent: 'center',
               }}
-              title={isScanning ? 'Scanning...' : 'Scan Receipt'}
+              title="Add attachment"
             >
-              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" style={{ color: '#475569' }}>
-                <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z" />
-                <circle cx="12" cy="13" r="4" />
+              <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ color: '#94A3B8' }}>
+                <path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48" />
               </svg>
             </button>
+            {showAttachMenu && (
+              <div
+                className="modal-overlay"
+                onClick={() => setShowAttachMenu(false)}
+                style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 3000 }}
+              >
+                <div
+                  className="card shadow-xl"
+                  onClick={(e) => e.stopPropagation()}
+                  style={{
+                    width: '260px',
+                    background: 'var(--w)',
+                    borderRadius: '20px',
+                    padding: '10px',
+                    position: 'relative',
+                    animation: 'pop 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275)',
+                    boxSizing: 'border-box',
+                  }}
+                >
+                  <div
+                    onClick={() => setShowAttachMenu(false)}
+                    style={{
+                      position: 'absolute',
+                      top: '10px',
+                      right: '12px',
+                      cursor: 'pointer',
+                      fontSize: '16px',
+                      lineHeight: 1,
+                      color: 'var(--g)',
+                      opacity: 0.3,
+                      transition: '0.2s all',
+                    }}
+                    onMouseEnter={(e) => (e.currentTarget.style.opacity = '0.8')}
+                    onMouseLeave={(e) => (e.currentTarget.style.opacity = '0.3')}
+                  >
+                    ✕
+                  </div>
+                  <p style={{ fontSize: '11px', fontWeight: 900, color: 'var(--g)', textTransform: 'uppercase', letterSpacing: '1px', textAlign: 'center', margin: '6px 0 10px' }}>
+                    Add Attachment
+                  </p>
+                  <div
+                    onClick={() => {
+                      setShowAttachMenu(false);
+                      setShowCameraCapture(true);
+                    }}
+                    className="hover-bg"
+                    style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '12px', borderRadius: '12px', cursor: 'pointer' }}
+                  >
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#64748B" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z" />
+                      <circle cx="12" cy="13" r="4" />
+                    </svg>
+                    <span style={{ fontSize: '14px', fontWeight: 800, color: 'var(--t)' }}>Camera</span>
+                  </div>
+                  <div
+                    onClick={() => {
+                      setShowAttachMenu(false);
+                      uploadInputRef.current?.click();
+                    }}
+                    className="hover-bg"
+                    style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '12px', borderRadius: '12px', cursor: 'pointer' }}
+                  >
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#64748B" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                      <polyline points="17 8 12 3 7 8" />
+                      <line x1="12" y1="3" x2="12" y2="15" />
+                    </svg>
+                    <span style={{ fontSize: '14px', fontWeight: 800, color: 'var(--t)' }}>Upload photo or file</span>
+                  </div>
+                </div>
+              </div>
+            )}
             
             <button
               style={{
@@ -1239,7 +1342,7 @@ export const ExpenseModal: React.FC<ExpenseModalProps> = ({
                   onChange={(v) => setPayer(v)}
                   buttonStyle={emInlineBtnStyle}
                   options={payerOptions.map((option) => ({
-                    value: option,
+                    value: option.replace(' (Left)', ''),
                     label: option === me ? (userName === 'You' ? 'You' : `You (${userName})`) : option,
                   }))}
                 />
@@ -1303,7 +1406,7 @@ export const ExpenseModal: React.FC<ExpenseModalProps> = ({
           </div>
 
           {/* MEMBER LIST WITH TICK/UNTICK */}
-          {payerOptions.length > 0 && (
+          {friendsToSelect.length > 0 && (
             <div className="step-container" style={{ gap: '6px' }}>
               <label
                 style={{
@@ -1317,20 +1420,21 @@ export const ExpenseModal: React.FC<ExpenseModalProps> = ({
               >
                 Paid For
               </label>
-              {payerOptions.map((member) => {
-                const isSelected = selectedSplitters.includes(member);
+              {friendsToSelect.map((member) => {
+                const cleanMember = member.replace(' (Left)', '');
+                const isSelected = selectedSplitters.includes(cleanMember);
                 const share = splitMode === 'Equally'
                   ? selectedSplitters.length > 0 ? (parseFloat(amt) || 0) / selectedSplitters.length : 0
-                  : shares[member] || 0;
+                  : shares[cleanMember] || 0;
                 const displayName = member === me ? (userName === 'You' ? 'You' : `You (${userName})`) : member;
                 return (
                   <div
                     key={member}
                     onClick={() => {
                       if (isSelected) {
-                        if (selectedSplitters.length > 1) setSelectedSplitters(selectedSplitters.filter(m => m !== member));
+                        if (selectedSplitters.length > 1) setSelectedSplitters(selectedSplitters.filter(m => m !== cleanMember));
                       } else {
-                        setSelectedSplitters([...selectedSplitters, member]);
+                        setSelectedSplitters([...selectedSplitters, cleanMember]);
                       }
                     }}
                     style={{
@@ -1339,7 +1443,7 @@ export const ExpenseModal: React.FC<ExpenseModalProps> = ({
                       justifyContent: 'space-between',
                       padding: '10px 12px',
                       borderRadius: '10px',
-                      background: isSelected ? '#F0FDF4' : '#F8FAFC',
+                      background: '#FFFFFF',
                       border: `1.5px solid ${isSelected ? '#86EFAC' : '#E2E8F0'}`,
                       cursor: 'pointer',
                       transition: 'all 0.15s',
@@ -1881,6 +1985,12 @@ export const ExpenseModal: React.FC<ExpenseModalProps> = ({
         onScanComplete={handleScanComplete}
       />
 
+      <CameraCaptureModal
+        show={showCameraCapture}
+        onClose={() => setShowCameraCapture(false)}
+        onCapture={addAttachmentDataUrl}
+      />
+
       {/* Attachments Preview Modal */}
       {showAttachmentsPreview && attachments.length > 0 && (
         <div
@@ -1963,6 +2073,46 @@ export const ExpenseModal: React.FC<ExpenseModalProps> = ({
                 </div>
               )}
 
+              {/* Delete this photo — top-right overlay */}
+              <button
+                type="button"
+                title="Delete this photo"
+                onClick={() => {
+                  if (confirm('Remove this photo?')) {
+                    const newList = attachments.filter((_, idx) => idx !== activeAttachmentIndex);
+                    setAttachments(newList);
+                    if (newList.length === 0) {
+                      setShowAttachmentsPreview(false);
+                    } else {
+                      setActiveAttachmentIndex(Math.max(0, activeAttachmentIndex - 1));
+                    }
+                  }
+                }}
+                style={{
+                  position: 'absolute',
+                  top: '10px',
+                  right: '10px',
+                  width: '32px',
+                  height: '32px',
+                  borderRadius: '50%',
+                  background: 'rgba(255,255,255,0.92)',
+                  border: '1px solid #FECACA',
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  boxShadow: '0 2px 6px rgba(0,0,0,0.12)',
+                  zIndex: 3,
+                }}
+              >
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#DC2626" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <polyline points="3 6 5 6 21 6" />
+                  <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6" />
+                  <path d="M10 11v6M14 11v6" />
+                  <path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2" />
+                </svg>
+              </button>
+
               {attachments.length > 1 && (
                 <>
                   <button
@@ -2021,50 +2171,49 @@ export const ExpenseModal: React.FC<ExpenseModalProps> = ({
               )}
             </div>
 
-            <div style={{ display: 'flex', gap: '8px', justifyContent: 'space-between', marginTop: '4px' }}>
+            <div style={{ display: 'flex', gap: '10px', alignItems: 'center', marginTop: '4px' }}>
               <button
                 type="button"
-                onClick={() => {
-                  if (confirm('Are you sure you want to remove this receipt attachment? 🗑️')) {
-                    const newAttachmentsList = attachments.filter((_, idx) => idx !== activeAttachmentIndex);
-                    setAttachments(newAttachmentsList);
-                    if (newAttachmentsList.length === 0) {
-                      setShowAttachmentsPreview(false);
-                    } else {
-                      setActiveAttachmentIndex(Math.max(0, activeAttachmentIndex - 1));
-                    }
-                  }
-                }}
+                onClick={() => setShowAttachMenu(true)}
+                title="Attach another photo"
                 style={{
-                  padding: '8px 14px',
-                  background: '#FEE2E2',
-                  color: '#991B1B',
-                  border: 'none',
-                  borderRadius: '10px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '6px',
+                  padding: '10px 14px',
+                  background: 'var(--w)',
+                  color: '#475569',
+                  border: '1.5px solid #E2E8F0',
+                  borderRadius: '12px',
                   fontSize: '12px',
                   fontWeight: 900,
                   cursor: 'pointer',
                 }}
                 className="hover-up-mini"
               >
-                🗑️ Delete Selected
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
+                  <line x1="12" y1="5" x2="12" y2="19" />
+                  <line x1="5" y1="12" x2="19" y2="12" />
+                </svg>
+                Add more
               </button>
               <button
                 type="button"
                 onClick={() => setShowAttachmentsPreview(false)}
                 style={{
-                  padding: '8px 14px',
+                  flex: 1,
+                  padding: '10px 14px',
                   background: '#10B981',
                   color: 'white',
                   border: 'none',
-                  borderRadius: '10px',
-                  fontSize: '12px',
+                  borderRadius: '12px',
+                  fontSize: '13px',
                   fontWeight: 900,
                   cursor: 'pointer',
                 }}
                 className="hover-up-mini"
               >
-                Close
+                Confirm
               </button>
             </div>
           </div>

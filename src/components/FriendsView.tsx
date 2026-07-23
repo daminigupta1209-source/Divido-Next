@@ -20,6 +20,7 @@ interface FriendsViewProps {
   userMetadata: Record<string, UserMetadata>;
   setUserMetadata: (meta: Record<string, UserMetadata>) => void;
   searchQuery?: string;
+  showFilters?: boolean;
 }
 
 export const FriendsView: React.FC<FriendsViewProps> = ({
@@ -31,6 +32,7 @@ export const FriendsView: React.FC<FriendsViewProps> = ({
   setGlobalSettleData,
   userMetadata,
   searchQuery = '',
+  showFilters = false,
 }) => {
   const [showInfo, setShowInfo] = useState(false);
   const [showDetails, setShowDetails] = useState(false);
@@ -48,6 +50,9 @@ export const FriendsView: React.FC<FriendsViewProps> = ({
   const [sourceCurr, setSourceCurr] = useState<string>('ALL');
 
   const masterBal: Record<string, Record<string, number>> = {};
+  // Everyone you share expenses with, regardless of whether a balance is outstanding.
+  // Lets us tell "all settled up" apart from "genuinely no friends".
+  const allSharedMembers = new Set<string>();
 
   // Calculate friends' net balances by using the simplified transaction plans from each group.
   // This ensures that FriendsView perfectly syncs with simplified group balances.
@@ -63,6 +68,13 @@ export const FriendsView: React.FC<FriendsViewProps> = ({
         return acc;
       }, new Set<string>())
     ]));
+
+    effectiveMembers.forEach((m) => { if (m !== me) allSharedMembers.add(m); });
+    // Group roster members count as friends too, even with no expenses yet.
+    (g.members || []).forEach((m) => {
+      const name = m.replace(' (Left)', '');
+      if (name && name !== me) allSharedMembers.add(name);
+    });
 
     // Determine if we should simplify debts for this group (standalone is never simplified)
     const useSimplify = g.id !== 'STANDALONE' && !!g.simplifyDebts;
@@ -159,6 +171,7 @@ export const FriendsView: React.FC<FriendsViewProps> = ({
     me,
     ...standaloneExps.flatMap((e) => [e.paid, ...(e.splitters || [])])
   ]));
+  standaloneMembers.forEach((m) => { if (m && m !== me) allSharedMembers.add(m); });
 
   standaloneExps.forEach((e) => {
     const c = e.currency || '₹';
@@ -324,6 +337,8 @@ export const FriendsView: React.FC<FriendsViewProps> = ({
       {/* Title + filters on same row */}
       <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '24px', animation: 'fadeSlideIn 0.5s ease-out', flexWrap: 'nowrap' }}>
         <span onClick={() => setView('summary')} style={{ fontSize: '22px', cursor: 'pointer', opacity: 0.4, lineHeight: 1, flexShrink: 0 }}>←</span>
+        {showFilters && (
+        <>
         {/* Friends filter */}
         <div style={dropdownStyle}>
           <button style={btnStyle} onClick={(e) => { e.stopPropagation(); setShowFriendsDropdown(!showFriendsDropdown); setShowBalanceDropdown(false); }}>
@@ -386,6 +401,8 @@ export const FriendsView: React.FC<FriendsViewProps> = ({
             </>
           )}
         </div>
+        </>
+        )}
 
         {/* Convert currency — only when 2+ currencies exist */}
         {distinctCurrencies.length > 1 && (
@@ -414,6 +431,28 @@ export const FriendsView: React.FC<FriendsViewProps> = ({
           </button>
         )}
       </div>
+
+      {convertTo && (
+        <div
+          style={{
+            background: '#EFF6FF',
+            border: '1.5px solid #BFDBFE',
+            borderRadius: '16px',
+            padding: '10px 14px',
+            fontSize: '11px',
+            fontWeight: 800,
+            color: '#1E40AF',
+            marginBottom: '16px',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '8px',
+            textAlign: 'left'
+          }}
+        >
+          <span>💡</span>
+          <span>Converted balances are live estimates. Settlements and reminders remain in their original currencies.</span>
+        </div>
+      )}
 
       {/* Universal Net Balance Card */}
       <div style={{ marginBottom: '22px', width: '100%', animation: 'fadeIn 0.25s ease-out' }}>
@@ -514,7 +553,8 @@ export const FriendsView: React.FC<FriendsViewProps> = ({
           const joinPrimary = (entries: [string, number][]) => {
             if (entries.length === 0) return '';
             const [curr, val] = entries[0];
-            return `${curr}${formatCompactAmount(val)}`;
+            const prefix = convertTo ? '≈ ' : '';
+            return `${prefix}${curr}${formatCompactAmount(val)}`;
           };
 
           const AV_COLORS = ['#B39DDB', '#F48FB1', '#80CBC4', '#FFB74D', '#9FA8DA', '#A5D6A7', '#EF9A9A', '#7FC8CE'];
@@ -587,8 +627,10 @@ export const FriendsView: React.FC<FriendsViewProps> = ({
         })}
         {filteredFriends.length === 0 && (
           <div className="card" style={{ gridColumn: '1/-1', padding: '60px', textAlign: 'center', background: 'var(--bg)', border: '2px dashed #E2E8F0' }}>
-            <p style={{ color: 'var(--g)', fontWeight: 800 }}>
-              {friends.length === 0 ? 'Your circle is quiet right now... Add some friends to get started! 🌈' : 'No friends match the selected filters.'}
+            <p style={{ color: '#94A3B8', fontWeight: 600, opacity: 0.7 }}>
+              {friends.length === 0
+                ? (allSharedMembers.size > 0 ? 'All settled up.' : 'No friends yet.')
+                : 'No matches.'}
             </p>
           </div>
         )}

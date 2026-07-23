@@ -647,7 +647,7 @@ export const MasterSummary: React.FC<MasterSummaryProps> = ({
                 style={{
                   fontSize: '15px',
                   color: '#2E2A25',
-                  fontWeight: 700,
+                  fontWeight: 800,
                   margin: 0,
                   lineHeight: 1.2,
                   textOverflow: 'ellipsis',

@@ -166,6 +166,17 @@ export const worldCurrencies: Currency[] = [
   { s: 'ZMW', n: 'Zambian Kwacha', c: 'ZMW' }
 ];
 
+/**
+ * Resolve a stored currency value (which may be a symbol like '$'/'₹' or an ISO
+ * code like 'USD'/'AZN') to its ISO 4217 code, for use with FX-rate APIs that
+ * only accept codes. Falls back to the input uppercased if unknown.
+ */
+export const toCurrencyCode = (currency: string): string => {
+  if (!currency) return 'INR';
+  const match = worldCurrencies.find((c) => c.s === currency || c.c === currency);
+  return match ? match.c : currency.toUpperCase();
+};
+
 export const getEmoji = (t: string): string | null => {
   const text = t.toLowerCase();
   
@@ -308,3 +319,38 @@ export const GROUP_COLORS: GroupColor[] = [
   { bg: '#F3E8FF', text: '#6D28D9', border: '#E9D5FF' }, // Lavender
   { bg: '#FFE4E6', text: '#BE185D', border: '#FECDD3' }  // Pink
 ];
+
+export const ensureArray = (val: any): string[] => {
+  if (!val) return [];
+  if (Array.isArray(val)) return val.map(String);
+  if (typeof val === 'string') {
+    const trimmed = val.trim();
+    if (trimmed.startsWith('{') && trimmed.endsWith('}')) {
+      return trimmed.slice(1, -1).split(',').map(s => s.trim().replace(/^"|"$/g, '')).filter(Boolean);
+    }
+    if (trimmed.startsWith('[') && trimmed.endsWith(']')) {
+      try {
+        const parsed = JSON.parse(trimmed);
+        if (Array.isArray(parsed)) return parsed.map(String);
+      } catch {
+        // Fallback
+      }
+    }
+    return [trimmed];
+  }
+  return [String(val)];
+};
+
+export const ensureObject = (val: any): Record<string, number> => {
+  if (!val) return {};
+  if (typeof val === 'object' && !Array.isArray(val)) return val;
+  if (typeof val === 'string') {
+    try {
+      const parsed = JSON.parse(val);
+      if (typeof parsed === 'object' && parsed !== null) return parsed;
+    } catch {
+      // Fallback
+    }
+  }
+  return {};
+};

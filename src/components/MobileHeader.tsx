@@ -43,6 +43,8 @@ interface MobileHeaderProps {
   setSearchQuery?: (val: string) => void;
   isHeaderSearchActive?: boolean;
   setIsHeaderSearchActive?: (val: boolean) => void;
+  showFriendsFilters?: boolean;
+  onToggleFriendsFilters?: () => void;
   headerHidden?: boolean;
 }
 
@@ -86,6 +88,8 @@ export const MobileHeader: React.FC<MobileHeaderProps> = ({
   setSearchQuery = () => {},
   isHeaderSearchActive = false,
   setIsHeaderSearchActive = () => {},
+  showFriendsFilters = false,
+  onToggleFriendsFilters = () => {},
   headerHidden = false,
 }) => {
   const [editingDate, setEditingDate] = React.useState(false);
@@ -361,9 +365,9 @@ export const MobileHeader: React.FC<MobileHeaderProps> = ({
           </div>
         ) : (
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: '100%', position: 'relative', height: '100%' }}>
-            {view === 'profile' ? (
+            {(view === 'profile' || view === 'gallery') ? (
               <span
-                onClick={() => setView('summary')}
+                onClick={() => setView(view === 'gallery' ? 'detail' : 'summary')}
                 style={{
                   position: 'absolute',
                   left: '4px',
@@ -402,6 +406,7 @@ export const MobileHeader: React.FC<MobileHeaderProps> = ({
                   {view === 'activity' && 'All Activities'}
                   {view === 'analytics' && 'Analytics'}
                   {view === 'profile' && 'Profile'}
+                  {view === 'gallery' && 'Gallery'}
                 </span>
                 <span
                   className="home-page-info"
@@ -477,6 +482,20 @@ export const MobileHeader: React.FC<MobileHeaderProps> = ({
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.1" strokeLinecap="round">
                       <circle cx="10.8" cy="10.8" r="6.6" />
                       <path d="m16 16 4.2 4.2" />
+                    </svg>
+                  </button>
+                )}
+                {view === 'friends' && (
+                  <button
+                    type="button"
+                    className="home-header-icon"
+                    aria-label="Filters"
+                    title="Filters"
+                    style={{ position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'center', color: showFriendsFilters ? 'var(--purple-text)' : undefined }}
+                    onClick={(e) => { e.stopPropagation(); onToggleFriendsFilters(); }}
+                  >
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M22 3H2L10 12.46V19L14 21V12.46L22 3Z" />
                     </svg>
                   </button>
                 )}
@@ -648,6 +667,22 @@ export const MobileHeader: React.FC<MobileHeaderProps> = ({
               })() : '—'}
             </span>
           )}
+        </div>
+      )}
+      {view === 'gallery' && selectedGroup && (
+        <div style={{ display: 'flex', justifyContent: 'center', marginTop: '-12px' }}>
+          <span
+            className="nunito"
+            style={{
+              fontSize: '12px',
+              fontWeight: 800,
+              color: '#64748B',
+              letterSpacing: '0.3px',
+              textTransform: 'capitalize',
+            }}
+          >
+            {selectedGroup.name}
+          </span>
         </div>
       )}
       {showInfo && (

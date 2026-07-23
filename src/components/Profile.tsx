@@ -8,7 +8,6 @@ import { worldCurrencies } from '../lib/utils';
 interface ProfileProps {
   groups: Group[];
   expenses: any[];
-  handleHardReset: () => void;
   currentTheme: 'lavender' | 'sunset';
   onThemeChange: (t: 'lavender' | 'sunset') => void;
   userName: string;
@@ -24,7 +23,6 @@ interface ProfileProps {
 export const Profile: React.FC<ProfileProps> = ({
   groups,
   expenses,
-  handleHardReset,
   currentTheme,
   onThemeChange,
   userName,
@@ -460,54 +458,36 @@ export const Profile: React.FC<ProfileProps> = ({
               className="hover-up-mini"
               style={{
                 width: '100%',
-                background: '#F8FAFC',
-                color: '#475569',
-                border: '1px solid #E2E8F0',
+                background: 'linear-gradient(135deg, #FDBA74 0%, #F97316 100%)',
+                color: 'white',
+                border: 'none',
                 padding: '10px',
                 borderRadius: '12px',
-                fontWeight: 800,
+                fontWeight: 950,
                 fontSize: '13px',
                 cursor: 'pointer',
-                transition: 'background-color 0.2s',
+                boxShadow: '0 10px 15px -3px rgba(249, 115, 22, 0.2)',
               }}
-              onMouseEnter={(e) => e.currentTarget.style.background = '#F1F5F9'}
-              onMouseLeave={(e) => e.currentTarget.style.background = '#F8FAFC'}
             >
               Logout
-            </button>
-            <button
-              onClick={handleHardReset}
-              className="hover-up-mini"
-              style={{
-                width: '100%',
-                background: '#FEF2F2',
-                color: '#EF4444',
-                border: '1px solid #FCA5A5',
-                padding: '10px',
-                borderRadius: '12px',
-                fontWeight: 800,
-                fontSize: '13px',
-                cursor: 'pointer',
-              }}
-            >
-              🚨 Hard Reset Data
             </button>
             <button
               onClick={() => setShowDeleteAccountModal(true)}
               className="hover-up-mini"
               style={{
                 width: '100%',
-                background: '#FFFFFF',
-                color: '#EF4444',
-                border: '1px solid #FEE2E2',
+                background: 'linear-gradient(135deg, #F87171 0%, #EF4444 100%)',
+                color: 'white',
+                border: 'none',
                 padding: '10px',
                 borderRadius: '12px',
-                fontWeight: 800,
+                fontWeight: 950,
                 fontSize: '13px',
                 cursor: 'pointer',
+                boxShadow: '0 10px 15px -3px rgba(239, 68, 68, 0.2)',
               }}
             >
-              🗑️ Delete Account
+              Delete Account
             </button>
           </div>
         </div>

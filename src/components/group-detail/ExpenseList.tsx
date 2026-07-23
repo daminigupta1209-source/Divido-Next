@@ -6,6 +6,7 @@ import { StyledDropdown } from '../StyledDropdown';
 const elFilterBtnStyle: React.CSSProperties = { padding: '6px 12px', borderRadius: '20px', border: '1.5px solid #E2E8F0', fontSize: '12px', fontWeight: 800, background: 'var(--w, #fff)', color: '#475569', boxShadow: '0 1px 4px rgba(0,0,0,0.04)' };
 
 interface ExpenseListProps {
+  setView: (v: any) => void;
   filtered: Expense[];
   me: string;
   selectedGroup: Group;
@@ -16,7 +17,6 @@ interface ExpenseListProps {
   setFilter: (s: string) => void;
   searchQuery: string;
   setSearchQuery: (s: string) => void;
-  handleClearAll: () => void;
   openExpId: string | number | null;
   setOpenExpId: (id: string | number | null) => void;
   setEditingExpense: (exp: Expense | null) => void;
@@ -34,6 +34,7 @@ interface ExpenseListProps {
 }
 
 export const ExpenseList: React.FC<ExpenseListProps> = ({
+  setView,
   filtered,
   me,
   selectedGroup,
@@ -44,7 +45,6 @@ export const ExpenseList: React.FC<ExpenseListProps> = ({
   setFilter,
   searchQuery,
   setSearchQuery,
-  handleClearAll,
   openExpId,
   setOpenExpId,
   setEditingExpense,
@@ -61,6 +61,15 @@ export const ExpenseList: React.FC<ExpenseListProps> = ({
   groupUniqueTags,
 }) => {
   const [showFilters, setShowFilters] = useState(false);
+
+  const groupPhotos = filtered
+    .filter((e) => e.attachments && e.attachments.length > 0)
+    .flatMap((e) =>
+      (e.attachments || []).map((url) => ({
+        url,
+        expense: e,
+      }))
+    );
 
   const sorted = [...filtered].sort(
     (a, b) => b.date.localeCompare(a.date) || Number(b.id) - Number(a.id)
@@ -142,31 +151,56 @@ export const ExpenseList: React.FC<ExpenseListProps> = ({
               </svg>
             </button>
 
-            <button
-              onClick={handleClearAll}
-              title="Clear All Activity"
-              style={{
-                background: 'none',
-                border: 'none',
-                cursor: 'pointer',
-                width: '38px',
-                height: '38px',
-                padding: 0,
-                color: '#EF4444',
-                opacity: 0.7,
-                transition: '0.2s all',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                flexShrink: 0,
-              }}
-              onMouseOver={(e) => (e.currentTarget.style.opacity = '1')}
-              onMouseOut={(e) => (e.currentTarget.style.opacity = '0.7')}
-            >
-              <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" style={{ width: '18px', height: '18px' }}>
-                <path d="M19 7L18.1327 19.1425C18.0579 20.1891 17.187 21 16.1378 21H7.86224C6.81296 21 5.94208 20.1891 5.86732 19.1425L5 7M10 11V17M14 11V17M4 7H20M9 7V4C9 3.44772 9.44772 3 10 3H14C14.5523 3 15 3.44772 15 4V7" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-              </svg>
-            </button>
+             <button
+               onClick={() => setView('gallery')}
+               title="Photo Gallery"
+               style={{
+                 background: 'none',
+                 border: 'none',
+                 cursor: 'pointer',
+                 width: '38px',
+                 height: '38px',
+                 padding: 0,
+                 color: '#475569',
+                 opacity: 0.7,
+                 transition: '0.2s all',
+                 display: 'flex',
+                 alignItems: 'center',
+                 justifyContent: 'center',
+                 flexShrink: 0,
+                 position: 'relative',
+               }}
+               onMouseOver={(e) => (e.currentTarget.style.opacity = '1')}
+               onMouseOut={(e) => (e.currentTarget.style.opacity = '0.7')}
+             >
+               <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" style={{ width: '18px', height: '18px' }}>
+                 <rect x="3" y="3" width="18" height="18" rx="4" stroke="currentColor" strokeWidth="2" strokeLinejoin="round" />
+                 <circle cx="8.5" cy="8.5" r="1.5" fill="currentColor" stroke="currentColor" strokeWidth="1" />
+                 <path d="M21 15L16 10L5 21" stroke="currentColor" strokeWidth="2" strokeLinejoin="round" strokeLinecap="round" />
+               </svg>
+               {groupPhotos.length > 0 && (
+                 <span
+                   style={{
+                     position: 'absolute',
+                     top: '2px',
+                     right: '2px',
+                     background: '#6366F1',
+                     color: '#FFF',
+                     fontSize: '8px',
+                     fontWeight: 900,
+                     borderRadius: '50%',
+                     width: '14px',
+                     height: '14px',
+                     display: 'flex',
+                     alignItems: 'center',
+                     justifyContent: 'center',
+                     boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
+                   }}
+                 >
+                   {groupPhotos.length}
+                 </span>
+               )}
+             </button>
           </div>
         </div>
 
@@ -245,6 +279,8 @@ export const ExpenseList: React.FC<ExpenseListProps> = ({
           </div>
         )}
       </div>
+
+
     </div>
   );
 };

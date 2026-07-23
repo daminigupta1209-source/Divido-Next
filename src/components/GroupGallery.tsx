@@ -1,0 +1,454 @@
+import React, { useState } from 'react';
+import { Group, Expense } from '../lib/types';
+import { StyledDropdown } from './StyledDropdown';
+
+interface GroupGalleryProps {
+  selectedId: string | number | null;
+  groups: Group[];
+  expenses: Expense[];
+  me: string;
+  setView: (v: any) => void;
+  setEditingExpense: (exp: Expense | null) => void;
+  setShowExpModal: (b: boolean) => void;
+  setEditingSettle: (exp: Expense | null) => void;
+  setShowSettleModal: (b: boolean) => void;
+}
+
+const galleryFilterBtnStyle: React.CSSProperties = {
+  padding: '6px 12px',
+  borderRadius: '20px',
+  border: '1.5px solid #E2E8F0',
+  fontSize: '12px',
+  fontWeight: 800,
+  background: 'var(--w, #fff)',
+  color: '#475569',
+  boxShadow: '0 1px 4px rgba(0,0,0,0.04)',
+};
+
+export const GroupGallery: React.FC<GroupGalleryProps> = ({
+  selectedId,
+  groups,
+  expenses,
+  me,
+  setView,
+  setEditingExpense,
+  setShowExpModal,
+  setEditingSettle,
+  setShowSettleModal,
+}) => {
+  const [activePhotoIndex, setActivePhotoIndex] = useState<number | null>(null);
+
+  // Filter states
+  const [searchQuery, setSearchQuery] = useState('');
+  const [showFilters, setShowFilters] = useState(false);
+  const [filterType, setFilterType] = useState('all'); // 'all', 'expenses', 'settlements'
+  const [dateFilter, setDateFilter] = useState('all'); // 'all', 'today', 'week', 'month', 'custom'
+  const [customStartDate, setCustomStartDate] = useState('');
+  const [customEndDate, setCustomEndDate] = useState('');
+  const [selectedTag, setSelectedTag] = useState('all');
+
+  const activeGroup = groups.find((g) => String(g.id) === String(selectedId));
+  const groupName = activeGroup ? activeGroup.name : 'Unknown Group';
+
+  // Extract unique tags for this group's expenses
+  const groupExpenses = expenses.filter((e) => String(e.gId) === String(selectedId));
+  const uniqueTags = Array.from(new Set(groupExpenses.flatMap((e) => e.tags || [])));
+
+  // Filtered photos
+  const filteredPhotos = groupExpenses
+    .filter((e) => {
+      if (e.paid === 'SYSTEM') return false;
+      if (!e.attachments || e.attachments.length === 0) return false;
+
+      // 1. Search filter
+      if (searchQuery) {
+        const q = searchQuery.toLowerCase();
+        const titleMatch = e.title?.toLowerCase().includes(q);
+        const paidMatch = e.paid?.toLowerCase().includes(q);
+        const tagMatch = e.tags?.some((t) => t.toLowerCase().includes(q));
+        if (!titleMatch && !paidMatch && tagMatch === false) return false;
+      }
+
+      // 2. Type filter
+      const isSettlement = e.category === '🤝' || e.title?.includes('🤝 Settlement') || e.title?.toLowerCase().includes('settlement');
+      if (filterType === 'expenses' && isSettlement) return false;
+      if (filterType === 'settlements' && !isSettlement) return false;
+
+      // 3. Date filter
+      if (dateFilter !== 'all') {
+        const expDate = new Date(e.date);
+        const now = new Date();
+        now.setHours(0, 0, 0, 0);
+
+        if (dateFilter === 'today') {
+          const todayStr = now.toISOString().split('T')[0];
+          if (e.date !== todayStr) return false;
+        } else if (dateFilter === 'week') {
+          const oneWeekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+          if (expDate < oneWeekAgo) return false;
+        } else if (dateFilter === 'month') {
+          const oneMonthAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+          if (expDate < oneMonthAgo) return false;
+        } else if (dateFilter === 'custom') {
+          if (customStartDate) {
+            const start = new Date(customStartDate);
+            start.setHours(0, 0, 0, 0);
+            if (expDate < start) return false;
+          }
+          if (customEndDate) {
+            const end = new Date(customEndDate);
+            end.setHours(23, 59, 59, 999);
+            if (expDate > end) return false;
+          }
+        }
+      }
+
+      // 4. Tag filter
+      if (selectedTag !== 'all') {
+        if (!e.tags || !e.tags.includes(selectedTag)) return false;
+      }
+
+      return true;
+    })
+    .flatMap((e) =>
+      (e.attachments || []).map((url) => ({
+        url,
+        expense: e,
+      }))
+    );
+
+  const handleViewExpense = (e: Expense) => {
+    setActivePhotoIndex(null);
+    if (e.category === '🤝') {
+      setEditingSettle(e);
+      setShowSettleModal(true);
+    } else {
+      setEditingExpense(e);
+      setShowExpModal(true);
+    }
+  };
+
+  return (
+    <div className="home-view" style={{ padding: '0 20px 24px 20px', maxWidth: '640px', margin: '0 auto', minHeight: '100vh', boxSizing: 'border-box' }}>
+      
+      {/* Search bar & Filter funnel icon */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '16px', position: 'relative' }}>
+        <div style={{ flex: 1, position: 'relative' }}>
+          <svg
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2.5"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            style={{
+              position: 'absolute',
+              left: '12px',
+              top: '50%',
+              transform: 'translateY(-50%)',
+              width: '13px',
+              height: '13px',
+              opacity: 0.4,
+              pointerEvents: 'none',
+              color: '#64748B',
+              zIndex: 2,
+            }}
+          >
+            <circle cx="11" cy="11" r="8" />
+            <line x1="21" y1="21" x2="16.65" y2="16.65" />
+          </svg>
+          <input
+            type="text"
+            placeholder="Search photos..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            style={{
+              display: 'block',
+              width: '100%',
+              height: '38px',
+              lineHeight: 'normal',
+              fontSize: '13px',
+              margin: 0,
+              padding: '0 12px 0 34px',
+              borderRadius: '24px',
+              border: '2px solid #F1F5F9',
+              outline: 'none',
+              fontWeight: 600,
+              background: 'var(--w)',
+              color: '#475569',
+              boxSizing: 'border-box',
+              verticalAlign: 'top',
+            }}
+          />
+        </div>
+
+        <button
+          onClick={(e) => { e.stopPropagation(); setShowFilters(!showFilters); }}
+          title="Filters"
+          style={{
+            background: 'none',
+            border: 'none',
+            cursor: 'pointer',
+            width: '38px',
+            height: '38px',
+            padding: 0,
+            opacity: showFilters || filterType !== 'all' || dateFilter !== 'all' || selectedTag !== 'all' ? 1 : 0.55,
+            transition: '0.2s all',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            color: filterType !== 'all' || dateFilter !== 'all' || selectedTag !== 'all' ? '#F59E0B' : '#475569',
+            flexShrink: 0,
+          }}
+        >
+          <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" style={{ width: '18px', height: '18px' }}>
+            <path d="M22 3H2L10 12.46V19L14 21V12.46L22 3Z" stroke="currentColor" strokeWidth="2" strokeLinejoin="round" strokeLinecap="round" />
+          </svg>
+        </button>
+      </div>
+
+      {/* Filter dropdown pills */}
+      {showFilters && (
+        <div style={{ display: 'flex', gap: '8px', animation: 'fadeIn 0.2s ease-out', marginBottom: '16px', flexWrap: 'wrap' }}>
+          <StyledDropdown
+            fullWidth
+            ariaLabel="Filter by type"
+            value={filterType}
+            onChange={setFilterType}
+            buttonStyle={galleryFilterBtnStyle}
+            options={[
+              { value: 'all', label: 'All Photos' },
+              { value: 'expenses', label: 'Expenses Only' },
+              { value: 'settlements', label: 'Settlements Only' },
+            ]}
+          />
+          <StyledDropdown
+            fullWidth
+            ariaLabel="Filter by date"
+            value={dateFilter}
+            onChange={setDateFilter}
+            buttonStyle={galleryFilterBtnStyle}
+            options={[
+              { value: 'all', label: 'Any Time' },
+              { value: 'today', label: 'Today' },
+              { value: 'week', label: 'Last 7 Days' },
+              { value: 'month', label: 'Last 30 Days' },
+              { value: 'custom', label: 'Custom Range' },
+            ]}
+          />
+          {uniqueTags.length > 0 && (
+            <StyledDropdown
+              fullWidth
+              ariaLabel="Filter by tag"
+              value={selectedTag}
+              onChange={setSelectedTag}
+              buttonStyle={galleryFilterBtnStyle}
+              options={[
+                { value: 'all', label: 'All Tags' },
+                ...uniqueTags.map((tag) => ({ value: tag, label: `#${tag}` })),
+              ]}
+            />
+          )}
+        </div>
+      )}
+
+      {/* Custom Date Range Picker */}
+      {showFilters && dateFilter === 'custom' && (
+        <div
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: '8px',
+            background: '#F8FAFC',
+            padding: '12px 16px',
+            borderRadius: '16px',
+            border: '1.5px dashed #E2E8F0',
+            flexWrap: 'wrap',
+            marginBottom: '16px',
+          }}
+        >
+          <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+            <span style={{ fontSize: '11px', fontWeight: 900, color: '#64748B' }}>From</span>
+            <input
+              type="date"
+              value={customStartDate}
+              onChange={(e) => setCustomStartDate(e.target.value)}
+              style={{
+                padding: '6px 10px',
+                borderRadius: '10px',
+                border: '1.5px solid #E2E8F0',
+                outline: 'none',
+                fontSize: '12px',
+                fontWeight: 900,
+                color: '#1E293B',
+                background: '#FFFFFF',
+              }}
+            />
+          </div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+            <span style={{ fontSize: '11px', fontWeight: 900, color: '#64748B' }}>To</span>
+            <input
+              type="date"
+              value={customEndDate}
+              onChange={(e) => setCustomEndDate(e.target.value)}
+              style={{
+                padding: '6px 10px',
+                borderRadius: '10px',
+                border: '1.5px solid #E2E8F0',
+                outline: 'none',
+                fontSize: '12px',
+                fontWeight: 900,
+                color: '#1E293B',
+                background: '#FFFFFF',
+              }}
+            />
+          </div>
+          {(customStartDate || customEndDate) && (
+            <button
+              onClick={() => {
+                setCustomStartDate('');
+                setCustomEndDate('');
+              }}
+              style={{
+                background: 'none',
+                border: 'none',
+                color: '#EF4444',
+                fontSize: '11px',
+                fontWeight: 900,
+                cursor: 'pointer',
+                padding: '4px 8px',
+              }}
+            >
+              Reset
+            </button>
+          )}
+        </div>
+      )}
+
+      {/* Grid gallery content */}
+      <div style={{ flex: 1 }}>
+        {filteredPhotos.length === 0 ? (
+          <div style={{ textAlign: 'center', padding: '80px 20px', background: 'var(--w)', borderRadius: '24px', border: '1.5px solid #F1F5F9' }}>
+            <div style={{ fontSize: '56px', marginBottom: '16px' }}>📸</div>
+            <h3 className="nunito" style={{ margin: 0, fontSize: '16px', fontWeight: 800, color: 'var(--t)' }}>No photos found</h3>
+            <p style={{ margin: '6px 0 0 0', fontSize: '12px', color: '#94A3B8', fontWeight: 600, lineHeight: 1.4 }}>
+              Try adjusting your search queries or filter choices.
+            </p>
+          </div>
+        ) : (
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '8px' }}>
+            {filteredPhotos.map((photo, idx) => (
+              <div
+                key={idx}
+                onClick={() => setActivePhotoIndex(idx)}
+                style={{
+                  aspectRatio: '1',
+                  borderRadius: '12px',
+                  overflow: 'hidden',
+                  cursor: 'pointer',
+                  border: '1.5px solid #EFE7DC',
+                  background: '#F8FAFC',
+                  position: 'relative',
+                  transition: 'all 0.2s ease',
+                  boxShadow: '0 2px 8px rgba(0,0,0,0.02)',
+                }}
+                className="hover-up"
+              >
+                <img
+                  src={photo.url}
+                  alt={photo.expense.title}
+                  style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                />
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+
+      {/* Fullscreen Lightbox / Viewer */}
+      {activePhotoIndex !== null && filteredPhotos[activePhotoIndex] && (
+        <div
+          style={{
+            position: 'fixed',
+            top: 0, right: 0, bottom: 0, left: 0,
+            background: 'rgba(0, 0, 0, 0.96)',
+            zIndex: 1000,
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            justifyContent: 'center',
+            padding: '24px',
+            animation: 'fadeIn 0.2s ease-out',
+          }}
+          onClick={() => setActivePhotoIndex(null)}
+        >
+          <button
+            onClick={() => setActivePhotoIndex(null)}
+            style={{
+              position: 'absolute', top: '24px', right: '24px',
+              background: 'rgba(255,255,255,0.15)', border: 'none', color: '#FFF', fontSize: '20px', cursor: 'pointer',
+              width: '40px', height: '40px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center',
+              backdropFilter: 'blur(4px)',
+            }}
+          >
+            ✕
+          </button>
+
+          <div
+            style={{
+              maxWidth: '95%', maxHeight: '72vh', display: 'flex', alignItems: 'center', justifyContent: 'center'
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <img
+              src={filteredPhotos[activePhotoIndex].url}
+              alt="fullscreen attachment"
+              style={{ maxWidth: '100%', maxHeight: '72vh', objectFit: 'contain', borderRadius: '12px', boxShadow: '0 10px 30px rgba(0,0,0,0.5)' }}
+            />
+          </div>
+
+          <div
+            style={{
+              color: '#FFF', marginTop: '24px', textAlign: 'center', maxWidth: '420px', padding: '0 16px'
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <h4 style={{ margin: '0 0 4px 0', fontSize: '18px', fontWeight: 800 }}>
+              {filteredPhotos[activePhotoIndex].expense.title}
+            </h4>
+            <p style={{ margin: '0 0 20px 0', fontSize: '13px', color: '#94A3B8', fontWeight: 600 }}>
+              Paid by {filteredPhotos[activePhotoIndex].expense.paid} • {filteredPhotos[activePhotoIndex].expense.currency || '₹'}{filteredPhotos[activePhotoIndex].expense.amt}
+            </p>
+            <button
+              className="btn-indigo"
+              onClick={() => handleViewExpense(filteredPhotos[activePhotoIndex].expense)}
+              style={{
+                padding: '10px 20px', borderRadius: '12px', fontSize: '13px', fontWeight: 900, border: 'none', cursor: 'pointer',
+                boxShadow: '0 4px 12px rgba(99, 102, 241, 0.3)',
+              }}
+            >
+              🔎 View Expense Details
+            </button>
+          </div>
+
+          {filteredPhotos.length > 1 && (
+            <div style={{ display: 'flex', gap: '20px', marginTop: '24px' }} onClick={(e) => e.stopPropagation()}>
+              <button
+                onClick={() => setActivePhotoIndex((prev) => (prev === 0 ? filteredPhotos.length - 1 : prev! - 1))}
+                style={{ background: 'rgba(255,255,255,0.12)', color: '#FFF', border: 'none', borderRadius: '50%', width: '44px', height: '44px', cursor: 'pointer', fontSize: '20px', fontWeight: 900, display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+              >
+                ←
+              </button>
+              <button
+                onClick={() => setActivePhotoIndex((prev) => (prev === filteredPhotos.length - 1 ? 0 : prev! + 1))}
+                style={{ background: 'rgba(255,255,255,0.12)', color: '#FFF', border: 'none', borderRadius: '50%', width: '44px', height: '44px', cursor: 'pointer', fontSize: '20px', fontWeight: 900, display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+              >
+                →
+              </button>
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  );
+};

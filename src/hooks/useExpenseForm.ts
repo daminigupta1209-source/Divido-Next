@@ -165,9 +165,11 @@ export function useExpenseForm({
     [expenses, localGId]
   );
 
-  const defaultCurr = latestExpInGroup
+  const lastUsedGroupCurrency = localGId ? localStorage.getItem(`divido_last_used_currency_${localGId}`) : null;
+
+  const defaultCurr = lastUsedGroupCurrency || (latestExpInGroup
     ? latestExpInGroup.currency || localStorage.getItem('divido_last_used_currency') || defaultCurrency
-    : activeGroup?.currency || localStorage.getItem('divido_last_used_currency') || defaultCurrency;
+    : activeGroup?.currency || localStorage.getItem('divido_last_used_currency') || defaultCurrency);
 
   const [curr, setCurr] = useState<string>(editingExpense?.currency || defaultCurr);
   const [manualEdits, setManualEdits] = useState<Set<string>>(new Set());
@@ -226,7 +228,10 @@ export function useExpenseForm({
   const friendsToSelect = useMemo(() => {
     if (localGId !== 'STANDALONE') {
       const raw = activeGroup ? Array.from(new Set(activeGroup.members)) : [me];
-      return raw.filter((m) => !m.endsWith(' (Left)'));
+      return raw.filter((m) => {
+        const cleanName = m.replace(' (Left)', '');
+        return !m.endsWith(' (Left)') || selectedSplitters.includes(cleanName) || selectedSplitters.includes(m);
+      });
     }
     return Array.from(new Set([me, ...selectedSplitters]));
   }, [localGId, activeGroup, selectedSplitters, me]);
@@ -234,7 +239,10 @@ export function useExpenseForm({
   const payerOptions = useMemo(() => {
     if (localGId !== 'STANDALONE') {
       const raw = activeGroup ? Array.from(new Set(activeGroup.members)) : [me];
-      return raw.filter((m) => m === payer || !m.endsWith(' (Left)'));
+      return raw.filter((m) => {
+        const cleanName = m.replace(' (Left)', '');
+        return m === payer || cleanName === payer || !m.endsWith(' (Left)');
+      });
     }
     return friendsToSelect;
   }, [localGId, activeGroup, friendsToSelect, payer, me]);
@@ -315,7 +323,8 @@ export function useExpenseForm({
       setShares({});
       setManualEdits(new Set());
     }
-    setCurr(activeGroup.currency || defaultCurrency);
+    const lastUsedGroupCurrency = localGId ? localStorage.getItem(`divido_last_used_currency_${localGId}`) : null;
+    setCurr(lastUsedGroupCurrency || activeGroup.currency || defaultCurrency);
     setPayer(me);
   }, [localGId]);
 
@@ -409,6 +418,20 @@ export function useExpenseForm({
       triggerShake();
     }
   };
+  // Reset unequal splits to Equal split if the total amount is modified from the saved/default amount
+  useEffect(() => {
+    if (splitMode === 'Unequally') {
+      const parsedAmt = parseFloat(amt) || 0;
+      const originalAmt = editingExpense?.amt || 0;
+      
+      // If the user changed the amount from the original value
+      if (Math.abs(parsedAmt - originalAmt) > 0.01) {
+        setSplitMode('Equally');
+        setShares({});
+        setManualEdits(new Set());
+      }
+    }
+  }, [amt]);
 
   useEffect(() => {
     const unedited = selectedSplitters.filter((m) => !manualEdits.has(m));

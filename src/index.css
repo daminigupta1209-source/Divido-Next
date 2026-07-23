@@ -1203,3 +1203,8 @@ input[type=number] { -moz-appearance: textfield; }
 .pulse-dot {
     animation: pulseDot 2s infinite ease-in-out;
 }
+
+.clickable-group-name:hover {
+    text-decoration: underline;
+    opacity: 0.85;
+}

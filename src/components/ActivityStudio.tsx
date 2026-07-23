@@ -556,8 +556,8 @@ export const ActivityStudio: React.FC<ActivityStudioProps> = ({
                       </div>
                       <div style={{ minWidth: 0, flex: 1, marginRight: '16px' }}>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '6px', whiteSpace: 'nowrap', overflow: 'hidden', minWidth: 0 }}>
-                          <h3 className="nunito" style={{ fontSize: '15px', color: 'var(--t)', margin: 0, fontWeight: 700, display: 'flex', alignItems: 'center', gap: '4px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                            {e.title}
+                          <h3 className="nunito" style={{ fontSize: isSettlement ? '13px' : '15px', color: 'var(--t)', margin: 0, fontWeight: 700, display: 'flex', alignItems: 'center', gap: '4px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', flexShrink: 0 }}>
+                            {isSettlement ? 'Payment Recorded' : e.title}
                           </h3>
                           {e.gId !== 'STANDALONE' && (
                             <span
@@ -584,7 +584,13 @@ export const ActivityStudio: React.FC<ActivityStudioProps> = ({
                           )}
                         </div>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '11px', color: '#64748B', marginTop: '6px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                          <span style={{ color: e.paid === me ? '#16A34A' : '#DC2626' }}>{e.paid === me ? 'You paid' : `${e.paid} paid`}</span>
+                          {isSettlement ? (
+                            <span style={{ color: '#16A34A', fontWeight: 700 }}>
+                              {e.paid === me ? 'You' : e.paid} paid {e.splitters?.[0] === me ? 'you' : e.splitters?.[0]}
+                            </span>
+                          ) : (
+                            <span style={{ color: e.paid === me ? '#16A34A' : '#DC2626' }}>{e.paid === me ? 'You paid' : `${e.paid} paid`}</span>
+                          )}
                           <span>•</span>
                           <span>{formatDate(e.date)}{timeStr ? ` at ${timeStr}` : ''}</span>
                           {e.tags && e.tags.length > 0 && (

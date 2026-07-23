@@ -280,7 +280,7 @@ export const SplitSelector: React.FC<SplitSelectorProps> = ({
                   }}
                 >
                   {splitMode === 'Unequally' && (
-                    <span style={{ fontSize: '13px', fontWeight: 800, color: '#64748B', marginRight: '8px', userSelect: 'none' }}>{curr}</span>
+                    <span style={{ fontSize: '10px', fontWeight: 800, color: '#64748B', marginRight: '8px', userSelect: 'none' }}>{curr}</span>
                   )}
                   <input
                     id={`share-input-${friend}`}
@@ -325,7 +325,7 @@ export const SplitSelector: React.FC<SplitSelectorProps> = ({
                       width: '60px',
                       height: '24px',
                       lineHeight: '24px',
-                      fontSize: '15px',
+                      fontSize: '17.5px',
                       textAlign: 'left',
                       background: 'transparent',
                       border: 'none',
@@ -355,7 +355,7 @@ export const SplitSelector: React.FC<SplitSelectorProps> = ({
                 {splitMode !== 'Unequally' && (
                   <span
                     style={{
-                      fontSize: '12px',
+                      fontSize: '10px',
                       fontWeight: 900,
                       color: '#64748B',
                       minWidth: '55px',

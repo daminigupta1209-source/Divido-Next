@@ -21,7 +21,10 @@ import { UPIQRModal } from './components/UPIQRModal';
 import { SettleModal } from './components/SettleModal';
 import { NetPayableModal } from './components/NetPayableModal';
 import { NetReceivableModal } from './components/NetReceivableModal';
+import { CurrencySetupModal } from './components/CurrencySetupModal';
+import { GroupGallery } from './components/GroupGallery';
 import { checkIfDemoMode } from './lib/demoMode';
+import { ensureArray, ensureObject } from './lib/utils';
 import { useSupabaseSync } from './hooks/useSupabaseSync';
 import { useAppHotkeys } from './hooks/useAppHotkeys';
 import { useUndoStack } from './hooks/useUndoStack';
@@ -158,6 +161,7 @@ function App() {
   const [homeSearchNonce, setHomeSearchNonce] = useState(0);
   const [globalSearchQuery, setGlobalSearchQuery] = useState('');
   const [isHeaderSearchActive, setIsHeaderSearchActive] = useState(false);
+  const [showFriendsFilters, setShowFriendsFilters] = useState(false);
   const mainContentRef = useRef<HTMLElement>(null);
   const [headerHidden, setHeaderHidden] = useState(false);
 
@@ -419,6 +423,9 @@ function App() {
   const [netPayablePopup, setNetPayablePopup] = useState<{ friendName: string; amt: number; curr: string } | null>(null);
   const [netReceivablePopup, setNetReceivablePopup] = useState<{ friendName: string; amt: number; curr: string } | null>(null);
 
+  // First-run currency setup (Rec 1): ask once, then persist so we never guess.
+  const [currencySetupDismissed, setCurrencySetupDismissed] = useState(false);
+
   const handleOpenPayablePopup = (friendName: string, amt: number, curr: string) => {
     setNetPayablePopup({ friendName, amt, curr });
   };
@@ -461,8 +468,9 @@ function App() {
       const saved = localStorage.getItem('divido_expenses');
       const parsed = saved && saved !== 'undefined' ? JSON.parse(saved) : [];
       return parsed.map((e: any) => {
-        const splitters = Array.isArray(e.splitters) ? e.splitters : [e.paid || me];
-        return { ...e, splitters, amt: parseFloat(e.amt) || 0 };
+        const splitters = ensureArray(e.splitters);
+        const shares = ensureObject(e.shares);
+        return { ...e, splitters, shares, amt: parseFloat(e.amt) || 0 };
       });
     } catch (e) {
       return [];
@@ -1397,6 +1405,8 @@ function App() {
           setSearchQuery={setGlobalSearchQuery}
           isHeaderSearchActive={isHeaderSearchActive}
           setIsHeaderSearchActive={setIsHeaderSearchActive}
+          showFriendsFilters={showFriendsFilters}
+          onToggleFriendsFilters={() => setShowFriendsFilters((p) => !p)}
         />
 
         {view === 'summary' ? (
@@ -1447,6 +1457,7 @@ function App() {
             userMetadata={userMetadata}
             setUserMetadata={setUserMetadata}
             searchQuery={globalSearchQuery}
+            showFilters={showFriendsFilters}
           />
         ) : view === 'analytics' ? (
           <Analytics
@@ -1485,12 +1496,6 @@ function App() {
           <Profile
             groups={groups}
             expenses={expenses}
-            handleHardReset={() => {
-              if (confirm('Hard Reset?')) {
-                localStorage.clear();
-                window.location.reload();
-              }
-            }}
             currentTheme={theme}
             onThemeChange={setTheme}
             userName={userName}
@@ -1501,6 +1506,18 @@ function App() {
             setUserMetadata={setUserMetadata}
             handleLogout={handleLogout}
             userEmail={userEmail}
+          />
+        ) : view === 'gallery' ? (
+          <GroupGallery
+            selectedId={selectedId}
+            groups={groups}
+            expenses={expenses}
+            me={me}
+            setView={setView}
+            setEditingExpense={setEditingExpenseSecure}
+            setShowExpModal={setShowExpModalSecure}
+            setEditingSettle={setEditingSettle}
+            setShowSettleModal={setShowSettleModal}
           />
         ) : (
           <GroupDetail
@@ -2452,7 +2469,27 @@ function App() {
                       >
                         {isSelected && '✓'}
                       </div>
-                      <span style={{ fontSize: '13px', fontWeight: 700, color: '#1E293B', textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap' }}>
+                      <span
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          if (item.gId) {
+                            setSelectedId(item.gId === 'STANDALONE' ? 'STANDALONE' : item.gId);
+                            setView('detail');
+                            setGlobalSettleData(null);
+                          }
+                        }}
+                        className="clickable-group-name"
+                        style={{
+                          fontSize: '13px',
+                          fontWeight: 700,
+                          color: '#2563EB',
+                          textOverflow: 'ellipsis',
+                          overflow: 'hidden',
+                          whiteSpace: 'nowrap',
+                          cursor: 'pointer',
+                        }}
+                        title={`Go to ${item.gName}`}
+                      >
                         {item.gName}
                       </span>
                     </div>
@@ -2846,9 +2883,32 @@ function App() {
         />
       )}
 
+      <CurrencySetupModal
+        show={
+          !currencySetupDismissed &&
+          !userMetadata[me]?.defaultCurrency &&
+          !localStorage.getItem('divido_currency_setup_seen_' + me) &&
+          localStorage.getItem('divido_e2e_testing') !== 'true'
+        }
+        suggested={myDefaultCurrency}
+        onConfirm={(symbol) => {
+          setUserMetadata({
+            ...userMetadata,
+            [me]: { ...userMetadata[me], defaultCurrency: symbol },
+          });
+          localStorage.setItem('divido_currency_setup_seen_' + me, '1');
+          setCurrencySetupDismissed(true);
+        }}
+        onSkip={() => {
+          localStorage.setItem('divido_currency_setup_seen_' + me, '1');
+          setCurrencySetupDismissed(true);
+        }}
+      />
+
       <NetPayableModal
         popupData={netPayablePopup}
         onClose={() => setNetPayablePopup(null)}
+        me={me}
         userMetadata={userMetadata}
         setUserMetadata={setUserMetadata}
         onFinalSettle={handleFinalGlobalSettle}
@@ -2871,40 +2931,58 @@ function App() {
         >
           <div
             className="card shadow-xl"
-            style={{ width: '400px', padding: '32px', position: 'relative', animation: 'slideUp 0.3s ease-out', textAlign: 'center', boxSizing: 'border-box' }}
+            style={{ width: '340px', padding: '24px', position: 'relative', animation: 'slideUp 0.3s ease-out', textAlign: 'center', boxSizing: 'border-box' }}
             onClick={(e) => e.stopPropagation()}
           >
-            <div style={{ fontSize: '48px', marginBottom: '16px' }}>🥺</div>
-            <h3 className="nunito" style={{ fontSize: '22px', fontWeight: 950, color: '#1F2937', marginBottom: '12px' }}>
-              Improve me, don't leave me
+            <div
+              onClick={() => {
+                setShowDeleteAccountModal(false);
+                setFeedback('');
+              }}
+              style={{
+                position: 'absolute',
+                top: '14px',
+                right: '16px',
+                cursor: 'pointer',
+                fontSize: '20px',
+                lineHeight: 1,
+                color: 'var(--g)',
+                opacity: 0.3,
+                transition: '0.2s all',
+              }}
+              onMouseEnter={(e) => (e.currentTarget.style.opacity = '0.8')}
+              onMouseLeave={(e) => (e.currentTarget.style.opacity = '0.3')}
+            >
+              ✕
+            </div>
+            <div style={{ fontSize: '34px', marginBottom: '8px' }}>🥺</div>
+            <h3 className="nunito" style={{ fontSize: '18px', fontWeight: 950, color: '#1F2937', marginBottom: '14px' }}>
+              Sorry to see you go
             </h3>
-            <p style={{ fontSize: '13px', fontWeight: 700, color: 'var(--g)', marginBottom: '20px', lineHeight: 1.5 }}>
-              We're sad to see you go. If there's something we can improve, please let us know below.
-            </p>
             <textarea
               id="delete-feedback-textarea"
-              placeholder="How can we make Divido better for you?"
+              placeholder="Anything we could do better? (optional)"
               value={feedback}
               onChange={(e) => setFeedback(e.target.value)}
               style={{
                 width: '100%',
-                height: '100px',
-                padding: '12px 16px',
-                borderRadius: '16px',
+                height: '64px',
+                padding: '10px 14px',
+                borderRadius: '14px',
                 border: '2px solid #E2E8F0',
                 background: 'var(--bg)',
                 fontFamily: 'inherit',
-                fontSize: '14px',
+                fontSize: '13px',
                 outline: 'none',
                 resize: 'none',
-                marginBottom: '24px',
+                marginBottom: '16px',
                 transition: 'border-color 0.2s',
                 boxSizing: 'border-box',
               }}
               onFocus={(e) => (e.target.style.borderColor = 'var(--accent)')}
               onBlur={(e) => (e.target.style.borderColor = '#E2E8F0')}
             />
-            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '16px' }}>
+            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '12px' }}>
               <button
                 id="delete-cancel-btn"
                 onClick={() => {
@@ -2913,20 +2991,20 @@ function App() {
                 }}
                 style={{
                   width: '100%',
-                  padding: '16px',
-                  borderRadius: '16px',
+                  padding: '13px',
+                  borderRadius: '14px',
                   border: 'none',
-                  background: 'linear-gradient(135deg, var(--accent) 0%, var(--purple-text) 100%)',
+                  background: 'linear-gradient(135deg, #34D399 0%, #059669 100%)',
                   color: 'white',
                   fontWeight: 950,
-                  fontSize: '15px',
+                  fontSize: '14px',
                   cursor: 'pointer',
-                  boxShadow: '0 10px 15px -3px rgba(219, 39, 119, 0.2)',
+                  boxShadow: '0 10px 15px -3px rgba(5, 150, 105, 0.2)',
                   transition: '0.2s all',
                 }}
                 className="hover-up"
               >
-                Nevermind, I'll stay!
+                I'll stay!
               </button>
               <button
                 id="delete-confirm-btn"
@@ -2951,15 +3029,15 @@ function App() {
                 style={{
                   background: 'none',
                   border: 'none',
-                  color: '#94A3B8',
+                  color: '#EF4444',
                   fontWeight: 800,
                   fontSize: '12px',
                   cursor: 'pointer',
                   textDecoration: 'underline',
                   transition: 'color 0.2s',
                 }}
-                onMouseEnter={(e) => ((e.target as HTMLElement).style.color = '#EF4444')}
-                onMouseLeave={(e) => ((e.target as HTMLElement).style.color = '#94A3B8')}
+                onMouseEnter={(e) => ((e.target as HTMLElement).style.color = '#B91C1C')}
+                onMouseLeave={(e) => ((e.target as HTMLElement).style.color = '#EF4444')}
               >
                 Confirm Deletion
               </button>

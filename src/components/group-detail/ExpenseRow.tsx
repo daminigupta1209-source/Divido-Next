@@ -250,7 +250,7 @@ export const ExpenseRow: React.FC<ExpenseRowProps> = ({
           marginBottom: '8px',
         }}
       >
-        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flex: 1, minWidth: 0 }}>
           <div
             style={{
               width: '40px',
@@ -267,41 +267,30 @@ export const ExpenseRow: React.FC<ExpenseRowProps> = ({
           >
             🤝
           </div>
-          <div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-              <h3 className="nunito" style={{ fontSize: '14px', color: '#15803D', margin: 0, fontWeight: 800 }}>
-                Payment Recorded
-              </h3>
-              <span
-                style={{
-                  fontSize: '9px',
-                  fontWeight: 700,
-                  color: '#15803D',
-                  opacity: 0.5,
-                  background: '#F0FDF4',
-                  padding: '1px 4px',
-                  borderRadius: '3px',
-                }}
-              >
-                {formatDate(e.date)}
-                {timeStr ? ` at ${timeStr}` : ''}
+          <div style={{ minWidth: 0, flex: 1, marginRight: '16px' }}>
+            <h3 className="nunito" style={{ fontSize: '15px', color: 'var(--t)', margin: 0, fontWeight: 800, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+              Payment Recorded
+            </h3>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '11px', color: '#94A3B8', marginTop: '6px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+              <span style={{ color: '#16A34A', fontWeight: 700 }}>
+                {e.paid === me ? 'You' : e.paid} paid {e.splitters?.[0] === me ? 'you' : e.splitters?.[0]}
               </span>
+              <span>•</span>
+              <span>{formatDate(e.date)}{timeStr ? ` at ${timeStr}` : ''}</span>
             </div>
-            <p style={{ fontSize: '11px', fontWeight: 600, color: '#64748B', margin: '3px 0 0 0' }}>
-              {e.paid === me ? 'You' : e.paid} paid {e.splitters?.[0] === me ? 'You' : e.splitters?.[0]}
-            </p>
             {e.notes && e.notes !== 'Granular Global Clearance' && (
               <p
                 style={{
                   fontSize: '9px',
                   fontStyle: 'italic',
-                  color: '#15803D',
-                  marginTop: '2px',
-                  background: '#F0FDF4',
-                  padding: '1px 4px',
+                  color: '#64748B',
+                  margin: '4px 0 0 0',
+                  background: 'rgba(240, 253, 244, 0.5)',
+                  padding: '3px 6px',
                   borderRadius: '4px',
                   display: 'inline-block',
-                  margin: '2px 0 0 0',
+                  border: '0.5px solid #DCFCE7',
+                  lineHeight: '1.2',
                 }}
               >
                 "{e.notes}"
@@ -310,17 +299,13 @@ export const ExpenseRow: React.FC<ExpenseRowProps> = ({
           </div>
         </div>
         <div
-          style={{ display: 'flex', alignItems: 'center', gap: '12px' }}
+          style={{ display: 'flex', alignItems: 'center', gap: '10px' }}
           onClick={(ev) => ev.stopPropagation()}
         >
           <div style={{ textAlign: 'right' }}>
-            <p style={{ fontSize: '14px', fontWeight: 800, color: '#000000', margin: 0 }}>
-              {e.currency || selectedGroup.currency || '₹'}
-              {formatCompactAmount(parseFloat(e.amt.toString()) || 0)}
-            </p>
-            <p style={{ fontSize: '8px', fontWeight: 700, color: '#15803D', textTransform: 'uppercase', opacity: 0.6, margin: 0 }}>
-              Cleared <span style={{ color: '#16A34A' }}>✔️</span>
-            </p>
+            <span style={{ fontSize: '14px', fontWeight: 800, color: 'var(--t)', fontFamily: '"Nunito", sans-serif' }}>
+              {e.currency || selectedGroup.currency || '₹'} {formatCompactAmount(parseFloat(e.amt.toString()) || 0)}
+            </span>
           </div>
           <div
             className="dropdown"

@@ -129,7 +129,6 @@ export const GroupDetail: React.FC<GroupDetailProps> = ({
     handleExportPDF,
     handleCancel,
     handleRename,
-    handleClearAll,
     filtered,
     savedTransCount,
     myTrans,
@@ -1059,6 +1058,7 @@ export const GroupDetail: React.FC<GroupDetailProps> = ({
 
       {hasExpenses && activeTab === 'expenses' && (
         <ExpenseList
+          setView={setView}
           filtered={filtered}
           me={me}
           selectedGroup={selectedGroup}
@@ -1069,7 +1069,6 @@ export const GroupDetail: React.FC<GroupDetailProps> = ({
           setFilter={setFilter}
           searchQuery={searchQuery}
           setSearchQuery={setSearchQuery}
-          handleClearAll={handleClearAll}
           openExpId={openExpId}
           setOpenExpId={setOpenExpId}
           setEditingExpense={setEditingExpense}

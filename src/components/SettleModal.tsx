@@ -74,6 +74,49 @@ export const SettleModal: React.FC<SettleModalProps> = ({
   const [settleNotes, setSettleNotes] = useState('');
   const [settleCurr, setSettleCurr] = useState(settleGroup?.currency || localStorage.getItem('divido_last_used_currency') || '₹');
   const [showSettleNotes, setShowSettleNotes] = useState(false);
+  const [rates, setRates] = useState<Record<string, number>>({});
+  const [loadingRates, setLoadingRates] = useState(false);
+
+  // Helper to detect user's primary currency based on Profile, then Browser Locale
+  const getPrimaryCurrency = () => {
+    const profileDefault = userMetadata[me]?.defaultCurrency;
+    if (profileDefault) return profileDefault;
+
+    try {
+      const locale = Intl.NumberFormat().resolvedOptions().locale;
+      if (locale.includes('IN')) return '₹';
+      if (locale.includes('US')) return '$';
+      if (locale.includes('GB')) return '£';
+      if (locale.includes('FR') || locale.includes('DE') || locale.includes('ES') || locale.includes('IT')) return '€';
+    } catch (e) {
+      console.error('Locale detection failed:', e);
+    }
+    return '₹';
+  };
+
+  const primaryCurrency = getPrimaryCurrency();
+
+  // Fetch exchange rates based on primary currency as base
+  useEffect(() => {
+    if (!show) return;
+    const fetchRates = async () => {
+      setLoadingRates(true);
+      try {
+        const cleanBase = primaryCurrency === '?' ? 'INR' : primaryCurrency;
+        const res = await fetch(`https://open.er-api.com/v6/latest/${cleanBase}`);
+        if (res.ok) {
+          const data = await res.json();
+          if (data && data.rates) {
+            setRates(data.rates);
+          }
+        }
+      } catch (err) {
+        console.error('Failed to fetch rates in SettleModal:', err);
+      }
+      setLoadingRates(false);
+    };
+    fetchRates();
+  }, [show, primaryCurrency]);
 
   const settleFromRef = useRef(settleFrom);
   const settleToRef = useRef(settleTo);
@@ -96,8 +139,8 @@ export const SettleModal: React.FC<SettleModalProps> = ({
 
   useEffect(() => {
     if (editingSettle) {
-      setSettleFrom(editingSettle.paid || me);
-      setSettleTo(editingSettle.splitters?.[0] || '');
+      setSettleFrom((editingSettle.paid || me).replace(' (Left)', ''));
+      setSettleTo(editingSettle.splitters?.[0]?.replace(' (Left)', '') || '');
       setSettleAmt(editingSettle.amt.toString() || '');
       setSettleDate(editingSettle.date || new Date().toISOString().split('T')[0]);
       setSettleNotes(editingSettle.notes || '');
@@ -437,27 +480,35 @@ export const SettleModal: React.FC<SettleModalProps> = ({
                           {t.currency}
                           {formatCompactAmount(t.amount)}
                         </p>
+                        {t.currency !== primaryCurrency && rates[t.currency] && (
+                          <p style={{ fontSize: '11px', fontWeight: 700, color: '#16A34A', margin: '2px 0 0 0', textAlign: 'left' }}>
+                            ≈ {primaryCurrency}{(t.amount / rates[t.currency]).toFixed(2)}
+                          </p>
+                        )}
                       </div>
                       <div style={{ display: 'flex', gap: '8px' }}>
-                        {t.from === me && upi && (
-                          <a
-                            href={`upi://pay?pa=${upi}&pn=${t.to}&am=${t.amount.toFixed(2)}&cu=${
-                              t.currency === '₹' ? 'INR' : 'USD'
-                            }`}
-                            style={{
-                              padding: '10px 14px',
-                              background: '#F0F9FF',
-                              color: '#0284C7',
-                              borderRadius: '12px',
-                              fontSize: '11px',
-                              fontWeight: 900,
-                              textDecoration: 'none',
-                              border: '1.5px solid #B0E5FC',
-                            }}
-                          >
-                            ⚡ Pay
-                          </a>
-                        )}
+                        {t.from === me && upi && (t.currency === '₹' || (primaryCurrency === '₹' && rates[t.currency])) && (() => {
+                          const isDirectINR = t.currency === '₹';
+                          const finalUpiAmt = isDirectINR ? t.amount : (t.amount / rates[t.currency]);
+                          return (
+                            <a
+                              href={`upi://pay?pa=${upi}&pn=${t.to}&am=${finalUpiAmt.toFixed(2)}&cu=INR`}
+                              style={{
+                                padding: '10px 14px',
+                                background: '#F0F9FF',
+                                color: '#0284C7',
+                                borderRadius: '12px',
+                                fontSize: '11px',
+                                fontWeight: 900,
+                                textDecoration: 'none',
+                                border: '1.5px solid #B0E5FC',
+                              }}
+                              title={isDirectINR ? undefined : `Converted from ${t.currency}${t.amount.toFixed(2)}`}
+                            >
+                              ⚡ Pay (≈ ₹{finalUpiAmt.toFixed(2)})
+                            </a>
+                          );
+                        })()}
                         <button
                           onClick={() => {
                             setSettleFrom(t.from);
@@ -505,7 +556,13 @@ export const SettleModal: React.FC<SettleModalProps> = ({
                   }
                 }}
                 buttonStyle={settleBtnStyle}
-                options={settleGroup.members.map((m) => ({ value: m, label: m === me ? '👤 You' : m }))}
+                options={(() => {
+                  const opts = settleGroup.members.map((m) => ({ value: m.replace(' (Left)', ''), label: m === me ? '👤 You' : m }));
+                  if (settleFrom && !opts.some((o) => o.value === settleFrom)) {
+                    opts.unshift({ value: settleFrom, label: settleFrom === me ? '👤 You' : settleFrom });
+                  }
+                  return opts;
+                })()}
               />
             </div>
             <div>
@@ -517,9 +574,17 @@ export const SettleModal: React.FC<SettleModalProps> = ({
                 value={settleTo}
                 onChange={(v) => setSettleTo(v)}
                 buttonStyle={settleBtnStyle}
-                options={settleFrom !== me
-                  ? [{ value: me, label: 'You' }]
-                  : [{ value: '', label: 'Select receiver...' }, ...settleGroup.members.filter((m) => m !== me).map((m) => ({ value: m, label: m }))]}
+                options={(() => {
+                  if (settleFrom !== me) return [{ value: me, label: 'You' }];
+                  const opts = [
+                    { value: '', label: 'Select receiver...' },
+                    ...settleGroup.members.filter((m) => m !== me).map((m) => ({ value: m.replace(' (Left)', ''), label: m })),
+                  ];
+                  if (settleTo && !opts.some((o) => o.value === settleTo)) {
+                    opts.push({ value: settleTo, label: settleTo });
+                  }
+                  return opts;
+                })()}
               />
             </div>
           </div>
@@ -604,6 +669,11 @@ export const SettleModal: React.FC<SettleModalProps> = ({
                 }}
               />
             </div>
+            {settleCurr !== primaryCurrency && rates[settleCurr] && (
+              <p style={{ fontSize: '11px', fontWeight: 800, color: '#16A34A', margin: '2px 0 0 2px', textAlign: 'left' }}>
+                ≈ {primaryCurrency}{((parseFloat(settleAmt) || 0) / rates[settleCurr]).toFixed(2)} in your primary currency
+              </p>
+            )}
           </div>
 
           {(showSettleNotes || settleNotes) && (
