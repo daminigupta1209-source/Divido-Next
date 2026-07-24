@@ -1,4 +1,5 @@
 import React from 'react';
+import { createPortal } from 'react-dom';
 import { Group, Expense } from '../../lib/types';
 import { getEmoji, formatDate } from '../../lib/utils';
 import { CameraCaptureModal } from '../CameraCaptureModal';
@@ -509,7 +510,7 @@ export const GroupHeader: React.FC<GroupHeaderProps> = ({
         </div>
       )}
 
-      {showDecisionModal && selectedPhoto && (
+      {showDecisionModal && selectedPhoto && createPortal(
         <div
           onClick={() => { setShowDecisionModal(false); setSelectedPhoto(null); }}
           style={{
@@ -546,7 +547,7 @@ export const GroupHeader: React.FC<GroupHeaderProps> = ({
           >
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
               <h3 style={{ margin: 0, fontSize: '18px', fontWeight: 900, color: '#1E293B', fontFamily: 'Nunito', letterSpacing: '-0.3px' }}>
-                Process Attachment 📎
+                Process Attachment
               </h3>
               <button
                 onClick={() => { setShowDecisionModal(false); setSelectedPhoto(null); }}
@@ -592,8 +593,8 @@ export const GroupHeader: React.FC<GroupHeaderProps> = ({
 
             {/* Optional Caption/Title input */}
             <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-              <label style={{ fontSize: '10px', fontWeight: 900, color: '#94A3B8', textTransform: 'uppercase', letterSpacing: '1px' }}>
-                Caption / Description (Optional)
+              <label style={{ fontSize: '11px', fontWeight: 900, color: '#94A3B8', fontFamily: 'Nunito' }}>
+                Caption (optional)
               </label>
               <input
                 type="text"
@@ -641,7 +642,7 @@ export const GroupHeader: React.FC<GroupHeaderProps> = ({
                 }}
                 className="hover-up-mini"
               >
-                💸 Create Split Expense
+                Split Expense
               </button>
 
               <button
@@ -664,14 +665,15 @@ export const GroupHeader: React.FC<GroupHeaderProps> = ({
                 }}
                 className="hover-up-mini"
               >
-                🖼️ Save to Gallery Only
+                Save to Gallery
               </button>
             </div>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
 
-      {showAttachMenu && (
+      {showAttachMenu && createPortal(
         <div
           className="modal-overlay"
           onClick={() => setShowAttachMenu(false)}
@@ -772,14 +774,18 @@ export const GroupHeader: React.FC<GroupHeaderProps> = ({
               <span style={{ fontSize: '14px', fontWeight: 800, color: '#334155' }}>Upload photo or file</span>
             </div>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
 
-      <CameraCaptureModal
-        show={showCameraCapture}
-        onClose={() => setShowCameraCapture(false)}
-        onCapture={addAttachmentDataUrl}
-      />
+      {showCameraCapture && createPortal(
+        <CameraCaptureModal
+          show={showCameraCapture}
+          onClose={() => setShowCameraCapture(false)}
+          onCapture={addAttachmentDataUrl}
+        />,
+        document.body
+      )}
     </>
   );
 };

@@ -312,14 +312,16 @@ export const FriendsView: React.FC<FriendsViewProps> = ({
 
   const dropdownStyle: React.CSSProperties = {
     position: 'relative',
-    display: 'inline-block',
+    flex: 1,
+    minWidth: 0,
   };
 
   const btnStyle: React.CSSProperties = {
-    display: 'flex', alignItems: 'center', gap: '5px',
-    padding: '10px 14px', borderRadius: '20px',
+    display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '5px',
+    width: '100%', boxSizing: 'border-box',
+    padding: '6px 12px', borderRadius: '20px',
     border: '1.5px solid #E2E8F0', background: 'var(--w)',
-    fontSize: '13px', fontWeight: 800, color: '#475569',
+    fontSize: '12px', fontWeight: 800, color: '#475569',
     cursor: 'pointer', whiteSpace: 'nowrap',
     boxShadow: '0 1px 4px rgba(0,0,0,0.04)',
   };
@@ -370,7 +372,7 @@ export const FriendsView: React.FC<FriendsViewProps> = ({
         <button
           onClick={(e) => { e.stopPropagation(); setShowFilters(!showFilters); }}
           title="Filters"
-          style={{ background: 'none', border: 'none', cursor: 'pointer', width: '38px', height: '38px', padding: 0, opacity: showFilters || selectedFriends.length > 0 || balanceFilter !== 'all' ? 1 : 0.55, transition: '0.2s all', display: 'flex', alignItems: 'center', justifyContent: 'center', color: selectedFriends.length > 0 || balanceFilter !== 'all' ? '#F59E0B' : '#475569', flexShrink: 0 }}
+          style={{ background: 'none', border: 'none', cursor: 'pointer', width: '44px', height: '44px', padding: 0, opacity: showFilters || selectedFriends.length > 0 || balanceFilter !== 'all' ? 1 : 0.55, transition: '0.2s all', display: 'flex', alignItems: 'center', justifyContent: 'center', color: selectedFriends.length > 0 || balanceFilter !== 'all' ? '#F59E0B' : '#475569', flexShrink: 0 }}
         >
           <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" style={{ width: '18px', height: '18px' }}>
             <path d="M22 3H2L10 12.46V19L14 21V12.46L22 3Z" stroke="currentColor" strokeWidth="2" strokeLinejoin="round" strokeLinecap="round" />
@@ -610,8 +612,7 @@ export const FriendsView: React.FC<FriendsViewProps> = ({
 
               {/* Name */}
               <div style={{ minWidth: 0, flex: 1, display: 'flex', alignItems: 'center', gap: '6px' }}>
-                <h3 className="nunito" style={{ fontSize: '17px', fontWeight: 800, color: '#2E2A25', margin: 0, textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap' }}>{f.name}</h3>
-                {userMetadata[f.name]?.upiId && <span title="Payment Linked" style={{ fontSize: '13px', cursor: 'help' }}>💳</span>}
+                <h3 className="nunito" style={{ fontSize: '17px', fontWeight: 800, color: '#2E2A25', margin: 0, textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap', textTransform: 'capitalize' }}>{f.name}</h3>
               </div>
 
               {/* Balance pills */}

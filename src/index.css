@@ -649,18 +649,18 @@ input[type=number] { -moz-appearance: textfield; }
 
     .home-header-actions {
         position: absolute;
-        right: 0;
+        right: -8px;
         top: 50%;
         transform: translateY(-50%);
         display: flex;
         align-items: center;
-        gap: 12px;
+        gap: 2px;
     }
 
     .home-header-icon {
-        width: 30px;
-        height: 30px;
-        padding: 5px;
+        width: 44px;
+        height: 44px;
+        padding: 0;
         border: 0;
         border-radius: 50%;
         background: transparent;
@@ -676,13 +676,13 @@ input[type=number] { -moz-appearance: textfield; }
 
     .home-header-icon svg {
         display: block;
-        width: 100%;
-        height: 100%;
+        width: 20px;
+        height: 20px;
     }
     
     .menu-burger-btn {
-        width: 30px;
-        height: 30px;
+        width: 44px;
+        height: 44px;
         border-radius: 50%;
         border: none;
         background: transparent;
