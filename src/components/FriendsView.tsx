@@ -20,7 +20,8 @@ interface FriendsViewProps {
   userMetadata: Record<string, UserMetadata>;
   setUserMetadata: (meta: Record<string, UserMetadata>) => void;
   searchQuery?: string;
-  showFilters?: boolean;
+  showConvertModal?: boolean;
+  setShowConvertModal?: (b: boolean) => void;
 }
 
 export const FriendsView: React.FC<FriendsViewProps> = ({
@@ -32,10 +33,13 @@ export const FriendsView: React.FC<FriendsViewProps> = ({
   setGlobalSettleData,
   userMetadata,
   searchQuery = '',
-  showFilters = false,
+  showConvertModal = false,
+  setShowConvertModal = () => {},
 }) => {
   const [showInfo, setShowInfo] = useState(false);
   const [showDetails, setShowDetails] = useState(false);
+  const [showFilters, setShowFilters] = useState(false);
+  const [search, setSearch] = useState('');
   const [showFriendsDropdown, setShowFriendsDropdown] = useState(false);
   const [showBalanceDropdown, setShowBalanceDropdown] = useState(false);
   const [selectedFriends, setSelectedFriends] = useState<string[]>([]);
@@ -43,7 +47,6 @@ export const FriendsView: React.FC<FriendsViewProps> = ({
   const [convertTo, setConvertTo] = useState<string | null>(null);
   const [rateMap, setRateMap] = useState<Record<string, number>>({});
   const [isConverting, setIsConverting] = useState(false);
-  const [showConvertModal, setShowConvertModal] = useState(false);
   const [convertTarget, setConvertTarget] = useState<string>('');
   const [showConvertPicker, setShowConvertPicker] = useState(false);
   const [manualRates, setManualRates] = useState(false);
@@ -247,7 +250,10 @@ export const FriendsView: React.FC<FriendsViewProps> = ({
 
   useEffect(() => {
     if (showConvertModal && !convertTarget) {
-      setConvertTarget(convertTo || distinctCurrencies[0] || '₹');
+      // Prefer the user's home currency as the default target so converting a
+      // single-currency balance still yields a useful estimate (e.g. $ → ₹).
+      const homeCurrency = userMetadata[me]?.defaultCurrency;
+      setConvertTarget(convertTo || homeCurrency || distinctCurrencies[0] || '₹');
     }
   }, [showConvertModal]);
 
@@ -287,7 +293,8 @@ export const FriendsView: React.FC<FriendsViewProps> = ({
   const filteredFriends = friends.filter((f) => {
     const isOwed = Object.values(f.bals).some((v) => v > 0.01);
     const isOwe = Object.values(f.bals).some((v) => v < -0.01);
-    if (searchQuery.trim() && !f.name.toLowerCase().includes(searchQuery.trim().toLowerCase())) return false;
+    const q = (search || searchQuery || '').trim().toLowerCase();
+    if (q && !f.name.toLowerCase().includes(q)) return false;
     if (selectedFriends.length > 0 && !selectedFriends.includes(f.name)) return false;
     if (balanceFilter === 'owed' && !isOwed) return false;
     if (balanceFilter === 'owe' && !isOwe) return false;
@@ -334,8 +341,44 @@ export const FriendsView: React.FC<FriendsViewProps> = ({
 
   return (
     <div className="content-width-limit">
-      {/* Title + filters on same row */}
-      {/* Title + filters on same row */}
+      {/* Back + search + funnel row (mirrors the All Activities page) */}
+      <div style={{ display: 'flex', gap: '10px', alignItems: 'center', marginBottom: '16px', width: '100%' }}>
+        <span
+          onClick={() => setView('summary')}
+          style={{ fontSize: '22px', cursor: 'pointer', opacity: 0.4, display: 'flex', alignItems: 'center', justifyContent: 'center', height: '38px', width: '24px', flexShrink: 0 }}
+        >
+          ←
+        </span>
+
+        <div style={{ position: 'relative', flex: 1, lineHeight: 0, fontSize: 0 }}>
+          <svg
+            viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"
+            style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', width: '13px', height: '13px', opacity: 0.4, pointerEvents: 'none', color: '#64748B', zIndex: 2 }}
+          >
+            <circle cx="11" cy="11" r="8" />
+            <line x1="21" y1="21" x2="16.65" y2="16.65" />
+          </svg>
+          <input
+            type="text"
+            placeholder="Search friends..."
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            style={{ display: 'block', width: '100%', height: '38px', lineHeight: 'normal', fontSize: '13px', margin: 0, padding: '0 12px 0 34px', borderRadius: '24px', border: '2px solid #F1F5F9', outline: 'none', fontWeight: 600, background: 'var(--w)', color: '#475569', boxSizing: 'border-box', verticalAlign: 'top' }}
+          />
+        </div>
+
+        <button
+          onClick={(e) => { e.stopPropagation(); setShowFilters(!showFilters); }}
+          title="Filters"
+          style={{ background: 'none', border: 'none', cursor: 'pointer', width: '38px', height: '38px', padding: 0, opacity: showFilters || selectedFriends.length > 0 || balanceFilter !== 'all' ? 1 : 0.55, transition: '0.2s all', display: 'flex', alignItems: 'center', justifyContent: 'center', color: selectedFriends.length > 0 || balanceFilter !== 'all' ? '#F59E0B' : '#475569', flexShrink: 0 }}
+        >
+          <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" style={{ width: '18px', height: '18px' }}>
+            <path d="M22 3H2L10 12.46V19L14 21V12.46L22 3Z" stroke="currentColor" strokeWidth="2" strokeLinejoin="round" strokeLinecap="round" />
+          </svg>
+        </button>
+      </div>
+
+      {/* Filter dropdowns — revealed by the funnel */}
       {showFilters && (
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '24px', animation: 'fadeSlideIn 0.5s ease-out', flexWrap: 'nowrap' }}>
           {/* Friends filter */}
@@ -401,31 +444,6 @@ export const FriendsView: React.FC<FriendsViewProps> = ({
             )}
           </div>
 
-          {/* Convert currency button */}
-          <button
-            title="Convert currencies"
-            onClick={(e) => { e.stopPropagation(); setShowConvertModal(true); }}
-            style={{
-              background: 'none',
-              border: 'none',
-              padding: '0 4px',
-              display: 'flex',
-              flexDirection: 'column',
-              alignItems: 'center',
-              justifyContent: 'center',
-              gap: '4px',
-              cursor: 'pointer',
-              color: convertTo ? '#16A34A' : '#64748B',
-              flexShrink: 0,
-              transition: '0.2s all ease',
-              marginLeft: 'auto',
-            }}
-          >
-            <span style={{ fontSize: '20px', lineHeight: 1, filter: convertTo ? 'none' : 'grayscale(1) opacity(0.7)' }}>💱</span>
-            <span style={{ fontSize: '9px', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.5px', color: convertTo ? '#16A34A' : '#64748B' }}>
-              {convertTo ? convertTo : 'Convert'}
-            </span>
-          </button>
         </div>
       )}
 

@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Group, Expense } from '../lib/types';
 import { StyledDropdown } from './StyledDropdown';
+import { formatDate } from '../lib/utils';
 
 interface GroupGalleryProps {
   selectedId: string | number | null;
@@ -127,6 +128,20 @@ export const GroupGallery: React.FC<GroupGalleryProps> = ({
       setShowExpModal(true);
     }
   };
+
+  // Keep each photo's flat index (the lightbox navigates over the flat list),
+  // then group by date so the grid reads as dated sections rather than a scatter.
+  const indexedPhotos = filteredPhotos.map((p, idx) => ({ ...p, idx }));
+  const photosByDate = Array.from(
+    indexedPhotos
+      .reduce((map, p) => {
+        const key = p.expense.date || '';
+        if (!map.has(key)) map.set(key, []);
+        map.get(key)!.push(p);
+        return map;
+      }, new Map<string, typeof indexedPhotos>())
+      .entries()
+  ).sort((a, b) => b[0].localeCompare(a[0]));
 
   return (
     <div className="home-view" style={{ padding: '0 20px 24px 20px', maxWidth: '640px', margin: '0 auto', minHeight: '100vh', boxSizing: 'border-box' }}>
@@ -325,7 +340,14 @@ export const GroupGallery: React.FC<GroupGalleryProps> = ({
         </div>
       )}
 
-      {/* Grid gallery content */}
+      {/* Photo count summary */}
+      {filteredPhotos.length > 0 && (
+        <p style={{ fontSize: '11px', fontWeight: 800, color: '#94A3B8', textTransform: 'uppercase', letterSpacing: '0.5px', margin: '0 0 14px 2px' }}>
+          {filteredPhotos.length} photo{filteredPhotos.length > 1 ? 's' : ''}
+        </p>
+      )}
+
+      {/* Grid gallery content — grouped by date, captioned tiles */}
       <div style={{ flex: 1 }}>
         {filteredPhotos.length === 0 ? (
           <div style={{ textAlign: 'center', padding: '80px 20px', background: 'var(--w)', borderRadius: '24px', border: '1.5px solid #F1F5F9' }}>
@@ -336,29 +358,61 @@ export const GroupGallery: React.FC<GroupGalleryProps> = ({
             </p>
           </div>
         ) : (
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '8px' }}>
-            {filteredPhotos.map((photo, idx) => (
-              <div
-                key={idx}
-                onClick={() => setActivePhotoIndex(idx)}
-                style={{
-                  aspectRatio: '1',
-                  borderRadius: '12px',
-                  overflow: 'hidden',
-                  cursor: 'pointer',
-                  border: '1.5px solid #EFE7DC',
-                  background: '#F8FAFC',
-                  position: 'relative',
-                  transition: 'all 0.2s ease',
-                  boxShadow: '0 2px 8px rgba(0,0,0,0.02)',
-                }}
-                className="hover-up"
-              >
-                <img
-                  src={photo.url}
-                  alt={photo.expense.title}
-                  style={{ width: '100%', height: '100%', objectFit: 'cover' }}
-                />
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '22px' }}>
+            {photosByDate.map(([date, photos]) => (
+              <div key={date || 'undated'}>
+                {/* Date section header */}
+                <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '10px', marginLeft: '2px' }}>
+                  <span style={{ fontSize: '12px', fontWeight: 900, color: '#64748B', whiteSpace: 'nowrap' }}>
+                    {date ? formatDate(date) : 'Undated'}
+                  </span>
+                  <span style={{ height: '1px', flex: 1, background: '#F1F5F9' }} />
+                  <span style={{ fontSize: '10px', fontWeight: 800, color: '#B0A79C' }}>{photos.length}</span>
+                </div>
+
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '10px' }}>
+                  {photos.map((photo) => (
+                    <div
+                      key={photo.idx}
+                      onClick={() => setActivePhotoIndex(photo.idx)}
+                      style={{
+                        aspectRatio: '1',
+                        borderRadius: '14px',
+                        overflow: 'hidden',
+                        cursor: 'pointer',
+                        position: 'relative',
+                        background: '#F8FAFC',
+                        boxShadow: '0 2px 10px rgba(0,0,0,0.06)',
+                      }}
+                      className="hover-up-mini"
+                    >
+                      <img
+                        src={photo.url}
+                        alt={photo.expense.title}
+                        style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                      />
+                      {/* Caption overlay */}
+                      <div
+                        style={{
+                          position: 'absolute',
+                          left: 0,
+                          right: 0,
+                          bottom: 0,
+                          padding: '16px 8px 6px',
+                          background: 'linear-gradient(to top, rgba(0,0,0,0.65), rgba(0,0,0,0))',
+                          color: '#fff',
+                        }}
+                      >
+                        <div style={{ fontSize: '10px', fontWeight: 800, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                          {photo.expense.title}
+                        </div>
+                        <div style={{ fontSize: '9px', fontWeight: 700, opacity: 0.85 }}>
+                          {photo.expense.currency || '₹'}{photo.expense.amt}
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
               </div>
             ))}
           </div>

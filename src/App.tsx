@@ -161,7 +161,6 @@ function App() {
   const [homeSearchNonce, setHomeSearchNonce] = useState(0);
   const [globalSearchQuery, setGlobalSearchQuery] = useState('');
   const [isHeaderSearchActive, setIsHeaderSearchActive] = useState(false);
-  const [showFriendsFilters, setShowFriendsFilters] = useState(false);
   const mainContentRef = useRef<HTMLElement>(null);
   const [headerHidden, setHeaderHidden] = useState(false);
 
@@ -425,6 +424,8 @@ function App() {
 
   // First-run currency setup (Rec 1): ask once, then persist so we never guess.
   const [currencySetupDismissed, setCurrencySetupDismissed] = useState(false);
+  // Convert-currency modal on the Settle All page, triggered from the header icon.
+  const [showFriendsConvert, setShowFriendsConvert] = useState(false);
 
   const handleOpenPayablePopup = (friendName: string, amt: number, curr: string) => {
     setNetPayablePopup({ friendName, amt, curr });
@@ -1405,8 +1406,11 @@ function App() {
           setSearchQuery={setGlobalSearchQuery}
           isHeaderSearchActive={isHeaderSearchActive}
           setIsHeaderSearchActive={setIsHeaderSearchActive}
-          showFriendsFilters={showFriendsFilters}
-          onToggleFriendsFilters={() => setShowFriendsFilters((p) => !p)}
+          onOpenConvert={() => setShowFriendsConvert(true)}
+          expenses={expenses}
+          setExpenses={setExpenses}
+          setShowExpModal={setShowExpModalSecure}
+          setEditingExpense={setEditingExpenseSecure}
         />
 
         {view === 'summary' ? (
@@ -1457,7 +1461,8 @@ function App() {
             userMetadata={userMetadata}
             setUserMetadata={setUserMetadata}
             searchQuery={globalSearchQuery}
-            showFilters={showFriendsFilters}
+            showConvertModal={showFriendsConvert}
+            setShowConvertModal={setShowFriendsConvert}
           />
         ) : view === 'analytics' ? (
           <Analytics

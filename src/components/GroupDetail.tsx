@@ -200,6 +200,11 @@ export const GroupDetail: React.FC<GroupDetailProps> = ({
         onOpenAnalytics={onOpenAnalytics}
         setShowGroupSettleList={setShowGroupSettleList}
         onDeleteGroup={onDeleteGroup}
+        me={me}
+        expenses={expenses}
+        setExpenses={setExpenses}
+        setShowExpModal={setShowExpModal}
+        setEditingExpense={setEditingExpense}
       />
 
       {/* Past Member Rejoin Banner */}

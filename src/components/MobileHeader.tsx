@@ -1,7 +1,8 @@
 import React from 'react';
-import { Group } from '../lib/types';
+import { Group, Expense } from '../lib/types';
 import { formatDate } from '../lib/utils';
 import { AppNotification } from '../lib/notifications';
+import { CameraCaptureModal } from './CameraCaptureModal';
 
 interface MobileHeaderProps {
   view: string;
@@ -43,9 +44,12 @@ interface MobileHeaderProps {
   setSearchQuery?: (val: string) => void;
   isHeaderSearchActive?: boolean;
   setIsHeaderSearchActive?: (val: boolean) => void;
-  showFriendsFilters?: boolean;
-  onToggleFriendsFilters?: () => void;
+  onOpenConvert?: () => void;
   headerHidden?: boolean;
+  expenses?: Expense[];
+  setExpenses?: React.Dispatch<React.SetStateAction<Expense[]>>;
+  setShowExpModal?: (b: boolean) => void;
+  setEditingExpense?: (exp: Expense | null) => void;
 }
 
 export const MobileHeader: React.FC<MobileHeaderProps> = ({
@@ -88,11 +92,83 @@ export const MobileHeader: React.FC<MobileHeaderProps> = ({
   setSearchQuery = () => {},
   isHeaderSearchActive = false,
   setIsHeaderSearchActive = () => {},
-  showFriendsFilters = false,
-  onToggleFriendsFilters = () => {},
+  onOpenConvert = () => {},
   headerHidden = false,
+  expenses = [],
+  setExpenses = () => {},
+  setShowExpModal = () => {},
+  setEditingExpense = () => {},
 }) => {
   const [editingDate, setEditingDate] = React.useState(false);
+  const uploadInputRef = React.useRef<HTMLInputElement>(null);
+  const [selectedPhoto, setSelectedPhoto] = React.useState<string | null>(null);
+  const [showDecisionModal, setShowDecisionModal] = React.useState(false);
+  const [photoCaption, setPhotoCaption] = React.useState('');
+  const [showAttachMenu, setShowAttachMenu] = React.useState(false);
+  const [showCameraCapture, setShowCameraCapture] = React.useState(false);
+
+  const addAttachmentDataUrl = (dataUrl: string) => {
+    setSelectedPhoto(dataUrl);
+    setPhotoCaption('');
+    setShowDecisionModal(true);
+    setShowCameraCapture(false);
+  };
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = () => {
+      setSelectedPhoto(reader.result as string);
+      setPhotoCaption('');
+      setShowDecisionModal(true);
+    };
+    reader.readAsDataURL(file);
+    e.target.value = '';
+  };
+
+  const handleSaveToGalleryOnly = () => {
+    if (!selectedPhoto || !selectedGroup) return;
+    const newPhotoExpense: Expense = {
+      id: 'photo-' + Date.now(),
+      gId: selectedGroup.id,
+      title: photoCaption.trim() || 'Gallery Photo',
+      amt: 0,
+      currency: selectedGroup.currency || '₹',
+      paid: me,
+      date: new Date().toISOString().split('T')[0],
+      category: '🖼️',
+      attachments: [selectedPhoto],
+      tags: ['Gallery'],
+      mode: 'Equally',
+      shares: {}
+    };
+    setExpenses((prev) => [newPhotoExpense, ...prev]);
+    setShowDecisionModal(false);
+    setSelectedPhoto(null);
+  };
+
+  const handleCreateSplitExpense = () => {
+    if (!selectedPhoto || !selectedGroup) return;
+    const tempExpense: Expense = {
+      id: 'temp-' + Date.now(),
+      gId: selectedGroup.id,
+      title: photoCaption.trim() || 'Split Expense',
+      amt: 0,
+      currency: selectedGroup.currency || '₹',
+      paid: me,
+      date: new Date().toISOString().split('T')[0],
+      category: '🛒',
+      attachments: [selectedPhoto],
+      tags: [],
+      mode: 'Equally',
+      shares: {}
+    };
+    setEditingExpense(tempExpense);
+    setShowExpModal(true);
+    setShowDecisionModal(false);
+    setSelectedPhoto(null);
+  };
   const isHomeStyle = true;
 
   const relTime = (dateStr: string) => {
@@ -226,6 +302,41 @@ export const MobileHeader: React.FC<MobileHeaderProps> = ({
             {/* ⋮ Vertical three-dots button — positioned absolutely at the rightmost edge */}
             {selectedGroup && (
               <div style={{ position: 'absolute', right: 0, top: '50%', transform: 'translateY(-50%)', zIndex: 9999, display: 'inline-flex', alignItems: 'center' }}>
+                {/* Mobile Attachment Paperclip Button */}
+                <input
+                  ref={uploadInputRef}
+                  type="file"
+                  accept="image/*"
+                  style={{ display: 'none' }}
+                  onChange={handleFileChange}
+                />
+                <button
+                  onClick={() => setShowAttachMenu(true)}
+                  style={{
+                    background: 'none',
+                    border: 'none',
+                    cursor: 'pointer',
+                    color: '#94A3B8',
+                    width: '36px',
+                    height: '36px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    flexShrink: 0,
+                    padding: 0,
+                    borderRadius: '8px',
+                    transition: '0.15s all',
+                    marginRight: '2px',
+                  }}
+                  onMouseEnter={(e) => { e.currentTarget.style.background = 'rgba(0,0,0,0.05)'; }}
+                  onMouseLeave={(e) => { e.currentTarget.style.background = 'none'; }}
+                  title="Add attachment"
+                >
+                  <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ color: '#94A3B8' }}>
+                    <path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48" />
+                  </svg>
+                </button>
+
                 <button
                   onClick={(e) => {
                     e.stopPropagation();
@@ -398,7 +509,13 @@ export const MobileHeader: React.FC<MobileHeaderProps> = ({
             )}
             
             {!(isHomeStyle && isHeaderSearchActive) && (
-              <h1 className={`nunito ${isHomeStyle ? 'home-header-title' : ''}`} style={{ fontSize: '22px', fontWeight: 950, letterSpacing: '-0.5px', color: 'var(--t)', margin: 0, display: 'flex', alignItems: 'center', gap: '6px' }}>
+              <h1
+                className={`nunito ${isHomeStyle && view !== 'gallery' ? 'home-header-title' : ''}`}
+                style={{
+                  fontSize: '22px', fontWeight: 950, letterSpacing: '-0.5px', color: 'var(--t)', margin: 0, display: 'flex', alignItems: 'center', gap: '6px',
+                  ...(view === 'gallery' ? { position: 'absolute', left: '50%', transform: 'translateX(-50%)', whiteSpace: 'nowrap' } : {}),
+                }}
+              >
                 <span>
                   {view === 'summary' && `Hi ${me}!`}
                   {view === 'groups' && 'Your Groups'}
@@ -408,26 +525,28 @@ export const MobileHeader: React.FC<MobileHeaderProps> = ({
                   {view === 'profile' && 'Profile'}
                   {view === 'gallery' && 'Gallery'}
                 </span>
-                <span
-                  className="home-page-info"
-                  style={{ fontSize: '16px', color: 'var(--g)', cursor: 'pointer', opacity: 0.6, userSelect: 'none' }}
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    setShowInfo(!showInfo);
-                  }}
-                  title="What is this page?"
-                >
-                  ⓘ
-                </span>
+                {view !== 'gallery' && (
+                  <span
+                    className="home-page-info"
+                    style={{ fontSize: '16px', color: 'var(--g)', cursor: 'pointer', opacity: 0.6, userSelect: 'none' }}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setShowInfo(!showInfo);
+                    }}
+                    title="What is this page?"
+                  >
+                    ⓘ
+                  </span>
+                )}
               </h1>
             )}
 
             {isHomeStyle && (
               <div className="home-header-actions" aria-label="Home actions" onClick={(e) => e.stopPropagation()} style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', flex: 1, marginLeft: isHeaderSearchActive ? '40px' : '0px', minWidth: 0 }}>
-                {isHeaderSearchActive && (view === 'summary' || view === 'friends') && (
+                {isHeaderSearchActive && view === 'summary' && (
                   <input
                     type="text"
-                    placeholder={view === 'friends' ? 'Search friends...' : 'Search groups...'}
+                    placeholder="Search groups..."
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
                     onKeyDown={(e) => {
@@ -463,7 +582,7 @@ export const MobileHeader: React.FC<MobileHeaderProps> = ({
                     autoFocus
                   />
                 )}
-                {(view === 'summary' || view === 'friends') && (
+                {view === 'summary' && (
                   <button
                     type="button"
                     className="home-header-icon"
@@ -489,14 +608,12 @@ export const MobileHeader: React.FC<MobileHeaderProps> = ({
                   <button
                     type="button"
                     className="home-header-icon"
-                    aria-label="Filters"
-                    title="Filters"
-                    style={{ position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'center', color: showFriendsFilters ? 'var(--purple-text)' : undefined }}
-                    onClick={(e) => { e.stopPropagation(); onToggleFriendsFilters(); }}
+                    aria-label="Convert currency"
+                    title="Convert currency"
+                    style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                    onClick={(e) => { e.stopPropagation(); onOpenConvert(); }}
                   >
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                      <path d="M22 3H2L10 12.46V19L14 21V12.46L22 3Z" />
-                    </svg>
+                    <span style={{ fontSize: '17px', lineHeight: 1 }}>💱</span>
                   </button>
                 )}
                 <button type="button" className="home-header-icon" aria-label="Notifications" style={{ position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'center' }} onClick={(e) => { e.stopPropagation(); onOpenNotifications(); }}>
@@ -705,6 +822,278 @@ export const MobileHeader: React.FC<MobileHeaderProps> = ({
           <span style={{ lineHeight: 1.3 }}>{pageDescriptions[view === 'detail' ? 'detail' : view] || ''}</span>
         </div>
       )}
+
+      {showDecisionModal && selectedPhoto && (
+        <div
+          onClick={() => { setShowDecisionModal(false); setSelectedPhoto(null); }}
+          style={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            background: 'rgba(15, 23, 42, 0.5)',
+            backdropFilter: 'blur(8px)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 99999,
+            padding: '20px',
+            boxSizing: 'border-box',
+          }}
+        >
+          <div
+            onClick={(e) => e.stopPropagation()}
+            style={{
+              background: '#FFFFFF',
+              borderRadius: '24px',
+              width: '100%',
+              maxWidth: '380px',
+              padding: '24px',
+              boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)',
+              boxSizing: 'border-box',
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '18px',
+              animation: 'fadeIn 0.2s ease-out',
+            }}
+          >
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <h3 style={{ margin: 0, fontSize: '18px', fontWeight: 900, color: '#1E293B', fontFamily: 'Nunito', letterSpacing: '-0.3px' }}>
+                Process Attachment 📎
+              </h3>
+              <button
+                onClick={() => { setShowDecisionModal(false); setSelectedPhoto(null); }}
+                style={{
+                  border: 'none',
+                  background: 'none',
+                  fontSize: '18px',
+                  cursor: 'pointer',
+                  padding: '4px',
+                  color: '#94A3B8',
+                  lineHeight: 1,
+                }}
+              >
+                ✕
+              </button>
+            </div>
+
+            {/* Image Preview */}
+            <div
+              style={{
+                width: '100%',
+                maxHeight: '180px',
+                borderRadius: '16px',
+                overflow: 'hidden',
+                background: '#F8FAFC',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                border: '1.5px solid #F1F5F9',
+                boxShadow: 'inset 0 2px 4px rgba(0,0,0,0.02)',
+              }}
+            >
+              <img
+                src={selectedPhoto}
+                alt="Selected preview"
+                style={{
+                  maxWidth: '100%',
+                  maxHeight: '180px',
+                  objectFit: 'contain',
+                }}
+              />
+            </div>
+
+            {/* Optional Caption/Title input */}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+              <label style={{ fontSize: '10px', fontWeight: 900, color: '#94A3B8', textTransform: 'uppercase', letterSpacing: '1px' }}>
+                Caption / Description (Optional)
+              </label>
+              <input
+                type="text"
+                placeholder="e.g. Dinner receipt, Event photo..."
+                value={photoCaption}
+                onChange={(e) => setPhotoCaption(e.target.value)}
+                style={{
+                  width: '100%',
+                  padding: '10px 14px',
+                  borderRadius: '12px',
+                  border: '1.5px solid #E2E8F0',
+                  fontSize: '13px',
+                  fontWeight: 700,
+                  outline: 'none',
+                  fontFamily: 'Nunito',
+                  color: '#334155',
+                  boxSizing: 'border-box',
+                  transition: 'border-color 0.2s',
+                }}
+                onFocus={(e) => e.target.style.borderColor = '#10B981'}
+                onBlur={(e) => e.target.style.borderColor = '#E2E8F0'}
+              />
+            </div>
+
+            {/* Actions */}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', marginTop: '4px' }}>
+              <button
+                onClick={handleCreateSplitExpense}
+                style={{
+                  width: '100%',
+                  padding: '12px',
+                  borderRadius: '14px',
+                  background: '#10B981',
+                  color: '#FFFFFF',
+                  border: 'none',
+                  fontSize: '13px',
+                  fontWeight: 900,
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: '6px',
+                  boxShadow: '0 4px 12px rgba(16, 185, 129, 0.2)',
+                  transition: 'all 0.2s',
+                }}
+                className="hover-up-mini"
+              >
+                💸 Create Split Expense
+              </button>
+
+              <button
+                onClick={handleSaveToGalleryOnly}
+                style={{
+                  width: '100%',
+                  padding: '12px',
+                  borderRadius: '14px',
+                  background: '#FFFFFF',
+                  color: '#475569',
+                  border: '1.5px solid #E2E8F0',
+                  fontSize: '13px',
+                  fontWeight: 900,
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: '6px',
+                  transition: 'all 0.2s',
+                }}
+                className="hover-up-mini"
+              >
+                🖼️ Save to Gallery Only
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {showAttachMenu && (
+        <div
+          className="modal-overlay"
+          onClick={() => setShowAttachMenu(false)}
+          style={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            background: 'rgba(15, 23, 42, 0.4)',
+            backdropFilter: 'blur(4px)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 99999,
+          }}
+        >
+          <div
+            className="card shadow-xl"
+            onClick={(e) => e.stopPropagation()}
+            style={{
+              width: '280px',
+              background: '#FFFFFF',
+              borderRadius: '24px',
+              padding: '20px 16px',
+              position: 'relative',
+              boxSizing: 'border-box',
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '6px',
+              animation: 'fadeIn 0.2s ease-out',
+            }}
+          >
+            <div
+              onClick={() => setShowAttachMenu(false)}
+              style={{
+                position: 'absolute',
+                top: '12px',
+                right: '16px',
+                cursor: 'pointer',
+                fontSize: '18px',
+                lineHeight: 1,
+                color: '#94A3B8',
+                opacity: 0.7,
+                transition: '0.2s all',
+              }}
+            >
+              ✕
+            </div>
+            <p style={{ fontSize: '11px', fontWeight: 900, color: '#94A3B8', textTransform: 'uppercase', letterSpacing: '1px', textAlign: 'center', margin: '4px 0 14px' }}>
+              Add Attachment
+            </p>
+            
+            <div
+              onClick={() => {
+                setShowAttachMenu(false);
+                setShowCameraCapture(true);
+              }}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '12px',
+                padding: '12px 14px',
+                borderRadius: '14px',
+                cursor: 'pointer',
+                transition: 'all 0.2s',
+              }}
+              className="hover-bg"
+            >
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#64748B" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z" />
+                <circle cx="12" cy="13" r="4" />
+              </svg>
+              <span style={{ fontSize: '14px', fontWeight: 800, color: '#334155' }}>Camera</span>
+            </div>
+
+            <div
+              onClick={() => {
+                setShowAttachMenu(false);
+                uploadInputRef.current?.click();
+              }}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '12px',
+                padding: '12px 14px',
+                borderRadius: '14px',
+                cursor: 'pointer',
+                transition: 'all 0.2s',
+              }}
+              className="hover-bg"
+            >
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#64748B" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                <polyline points="17 8 12 3 7 8" />
+                <line x1="12" y1="3" x2="12" y2="15" />
+              </svg>
+              <span style={{ fontSize: '14px', fontWeight: 800, color: '#334155' }}>Upload photo or file</span>
+            </div>
+          </div>
+        </div>
+      )}
+
+      <CameraCaptureModal
+        show={showCameraCapture}
+        onClose={() => setShowCameraCapture(false)}
+        onCapture={addAttachmentDataUrl}
+      />
     </div>
   );
 };
