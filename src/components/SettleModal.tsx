@@ -3,7 +3,7 @@ import { SearchableCurrencyPicker } from './SearchableCurrencyPicker';
 
 import { Group, Expense, UserMetadata } from '../lib/types';
 import { escManager } from '../lib/escManager';
-import { formatCompactAmount } from '../lib/utils';
+import { formatCompactAmount, toCurrencyCode } from '../lib/utils';
 import { StyledDropdown } from './StyledDropdown';
 
 const settleBtnStyle: React.CSSProperties = { padding: '12px', borderRadius: '14px', border: '2px solid #F1F1F1', fontSize: '14px', fontWeight: 700, background: 'var(--w, #fff)', marginTop: '4px', boxShadow: 'none', color: '#1E293B' };
@@ -102,7 +102,7 @@ export const SettleModal: React.FC<SettleModalProps> = ({
     const fetchRates = async () => {
       setLoadingRates(true);
       try {
-        const cleanBase = primaryCurrency === '?' ? 'INR' : primaryCurrency;
+        const cleanBase = toCurrencyCode(primaryCurrency);
         const res = await fetch(`https://open.er-api.com/v6/latest/${cleanBase}`);
         if (res.ok) {
           const data = await res.json();
@@ -480,16 +480,16 @@ export const SettleModal: React.FC<SettleModalProps> = ({
                           {t.currency}
                           {formatCompactAmount(t.amount)}
                         </p>
-                        {t.currency !== primaryCurrency && rates[t.currency] && (
+                        {t.currency !== primaryCurrency && rates[toCurrencyCode(t.currency)] && (
                           <p style={{ fontSize: '11px', fontWeight: 700, color: '#16A34A', margin: '2px 0 0 0', textAlign: 'left' }}>
-                            ≈ {primaryCurrency}{(t.amount / rates[t.currency]).toFixed(2)}
+                            ≈ {primaryCurrency}{(t.amount / rates[toCurrencyCode(t.currency)]).toFixed(2)}
                           </p>
                         )}
                       </div>
                       <div style={{ display: 'flex', gap: '8px' }}>
-                        {t.from === me && upi && (t.currency === '₹' || (primaryCurrency === '₹' && rates[t.currency])) && (() => {
-                          const isDirectINR = t.currency === '₹';
-                          const finalUpiAmt = isDirectINR ? t.amount : (t.amount / rates[t.currency]);
+                        {t.from === me && upi && (toCurrencyCode(t.currency) === 'INR' || (toCurrencyCode(primaryCurrency) === 'INR' && rates[toCurrencyCode(t.currency)])) && (() => {
+                          const isDirectINR = toCurrencyCode(t.currency) === 'INR';
+                          const finalUpiAmt = isDirectINR ? t.amount : (t.amount / rates[toCurrencyCode(t.currency)]);
                           return (
                             <a
                               href={`upi://pay?pa=${upi}&pn=${t.to}&am=${finalUpiAmt.toFixed(2)}&cu=INR`}
@@ -669,9 +669,9 @@ export const SettleModal: React.FC<SettleModalProps> = ({
                 }}
               />
             </div>
-            {settleCurr !== primaryCurrency && rates[settleCurr] && (
+            {settleCurr !== primaryCurrency && rates[toCurrencyCode(settleCurr)] && (
               <p style={{ fontSize: '11px', fontWeight: 800, color: '#16A34A', margin: '2px 0 0 2px', textAlign: 'left' }}>
-                ≈ {primaryCurrency}{((parseFloat(settleAmt) || 0) / rates[settleCurr]).toFixed(2)} in your primary currency
+                ≈ {primaryCurrency}{((parseFloat(settleAmt) || 0) / rates[toCurrencyCode(settleCurr)]).toFixed(2)} in your primary currency
               </p>
             )}
           </div>

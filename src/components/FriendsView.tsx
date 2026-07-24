@@ -335,77 +335,73 @@ export const FriendsView: React.FC<FriendsViewProps> = ({
   return (
     <div className="content-width-limit">
       {/* Title + filters on same row */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '24px', animation: 'fadeSlideIn 0.5s ease-out', flexWrap: 'nowrap' }}>
-        <span onClick={() => setView('summary')} style={{ fontSize: '22px', cursor: 'pointer', opacity: 0.4, lineHeight: 1, flexShrink: 0 }}>←</span>
-        {showFilters && (
-        <>
-        {/* Friends filter */}
-        <div style={dropdownStyle}>
-          <button style={btnStyle} onClick={(e) => { e.stopPropagation(); setShowFriendsDropdown(!showFriendsDropdown); setShowBalanceDropdown(false); }}>
-            <span>{friendsLabel}</span><span style={{ fontSize: '9px', marginLeft: '2px' }}>▼</span>
-          </button>
-          {showFriendsDropdown && (
-            <>
-              <div onClick={() => setShowFriendsDropdown(false)} style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, zIndex: 199 }} />
-              <div style={popupStyle}>
-                <div style={optionStyle(selectedFriends.length === 0)} onClick={() => { setSelectedFriends([]); setShowFriendsDropdown(false); }}>
-                  <div style={{ width: '16px', height: '16px', borderRadius: '4px', border: `2px solid ${selectedFriends.length === 0 ? '#16A34A' : '#CBD5E1'}`, background: selectedFriends.length === 0 ? '#16A34A' : '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                    {selectedFriends.length === 0 && <span style={{ color: '#fff', fontSize: '10px', fontWeight: 900 }}>✓</span>}
-                  </div>
-                  <span>All Friends</span>
-                </div>
-                {friends.map((f) => (
-                  <div key={f.name} style={optionStyle(selectedFriends.includes(f.name))} onClick={() => toggleFriend(f.name)}>
-                    <div style={{ width: '16px', height: '16px', borderRadius: '4px', border: `2px solid ${selectedFriends.includes(f.name) ? '#16A34A' : '#CBD5E1'}`, background: selectedFriends.includes(f.name) ? '#16A34A' : '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                      {selectedFriends.includes(f.name) && <span style={{ color: '#fff', fontSize: '10px', fontWeight: 900 }}>✓</span>}
+      {/* Title + filters on same row */}
+      {showFilters && (
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '24px', animation: 'fadeSlideIn 0.5s ease-out', flexWrap: 'nowrap' }}>
+          {/* Friends filter */}
+          <div style={dropdownStyle}>
+            <button style={btnStyle} onClick={(e) => { e.stopPropagation(); setShowFriendsDropdown(!showFriendsDropdown); setShowBalanceDropdown(false); }}>
+              <span>{friendsLabel}</span><span style={{ fontSize: '9px', marginLeft: '2px' }}>▼</span>
+            </button>
+            {showFriendsDropdown && (
+              <>
+                <div onClick={() => setShowFriendsDropdown(false)} style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, zIndex: 199 }} />
+                <div style={popupStyle}>
+                  <div style={optionStyle(selectedFriends.length === 0)} onClick={() => { setSelectedFriends([]); setShowFriendsDropdown(false); }}>
+                    <div style={{ width: '16px', height: '16px', borderRadius: '4px', border: `2px solid ${selectedFriends.length === 0 ? '#16A34A' : '#CBD5E1'}`, background: selectedFriends.length === 0 ? '#16A34A' : '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                      {selectedFriends.length === 0 && <span style={{ color: '#fff', fontSize: '10px', fontWeight: 900 }}>✓</span>}
                     </div>
-                    {f.name}
+                    <span>All Friends</span>
                   </div>
-                ))}
-              </div>
-            </>
-          )}
-        </div>
+                  {friends.map((f) => (
+                    <div key={f.name} style={optionStyle(selectedFriends.includes(f.name))} onClick={() => toggleFriend(f.name)}>
+                      <div style={{ width: '16px', height: '16px', borderRadius: '4px', border: `2px solid ${selectedFriends.includes(f.name) ? '#16A34A' : '#CBD5E1'}`, background: selectedFriends.includes(f.name) ? '#16A34A' : '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                        {selectedFriends.includes(f.name) && <span style={{ color: '#fff', fontSize: '10px', fontWeight: 900 }}>✓</span>}
+                      </div>
+                      {f.name}
+                    </div>
+                  ))}
+                </div>
+              </>
+            )}
+          </div>
 
-        {/* Balance filter */}
-        <div style={dropdownStyle}>
-          <button style={btnStyle} onClick={(e) => { e.stopPropagation(); setShowBalanceDropdown(!showBalanceDropdown); setShowFriendsDropdown(false); }}>
-            <span>{balanceLabel}</span><span style={{ fontSize: '9px', marginLeft: '2px' }}>▼</span>
-          </button>
-          {showBalanceDropdown && (
-            <>
-              <div onClick={() => setShowBalanceDropdown(false)} style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, zIndex: 199 }} />
-              <div style={popupStyle}>
-                {(['all', 'owed', 'owe'] as const).map((opt) => (
-                  <div
-                    key={opt}
-                    onClick={() => {
-                      setBalanceFilter(opt);
-                      setShowBalanceDropdown(false);
-                    }}
-                    style={{
-                      padding: '8px 12px',
-                      borderRadius: '8px',
-                      fontSize: '12px',
-                      fontWeight: balanceFilter === opt ? 800 : 600,
-                      cursor: 'pointer',
-                      color: '#1E293B',
-                      background: balanceFilter === opt ? '#F1F5F9' : 'transparent',
-                      textAlign: 'left',
-                    }}
-                  >
-                    {opt === 'all' ? 'All Balances' : opt === 'owed' ? 'To Collect' : 'To Pay'}
-                  </div>
-                ))}
-              </div>
-            </>
-          )}
-        </div>
-        </>
-        )}
+          {/* Balance filter */}
+          <div style={dropdownStyle}>
+            <button style={btnStyle} onClick={(e) => { e.stopPropagation(); setShowBalanceDropdown(!showBalanceDropdown); setShowFriendsDropdown(false); }}>
+              <span>{balanceLabel}</span><span style={{ fontSize: '9px', marginLeft: '2px' }}>▼</span>
+            </button>
+            {showBalanceDropdown && (
+              <>
+                <div onClick={() => setShowBalanceDropdown(false)} style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, zIndex: 199 }} />
+                <div style={popupStyle}>
+                  {(['all', 'owed', 'owe'] as const).map((opt) => (
+                    <div
+                      key={opt}
+                      onClick={() => {
+                        setBalanceFilter(opt);
+                        setShowBalanceDropdown(false);
+                      }}
+                      style={{
+                        padding: '8px 12px',
+                        borderRadius: '8px',
+                        fontSize: '12px',
+                        fontWeight: balanceFilter === opt ? 800 : 600,
+                        cursor: 'pointer',
+                        color: '#1E293B',
+                        background: balanceFilter === opt ? '#F1F5F9' : 'transparent',
+                        textAlign: 'left',
+                      }}
+                    >
+                      {opt === 'all' ? 'All Balances' : opt === 'owed' ? 'To Collect' : 'To Pay'}
+                    </div>
+                  ))}
+                </div>
+              </>
+            )}
+          </div>
 
-        {/* Convert currency — only when 2+ currencies exist */}
-        {distinctCurrencies.length > 1 && (
+          {/* Convert currency button */}
           <button
             title="Convert currencies"
             onClick={(e) => { e.stopPropagation(); setShowConvertModal(true); }}
@@ -422,6 +418,7 @@ export const FriendsView: React.FC<FriendsViewProps> = ({
               color: convertTo ? '#16A34A' : '#64748B',
               flexShrink: 0,
               transition: '0.2s all ease',
+              marginLeft: 'auto',
             }}
           >
             <span style={{ fontSize: '20px', lineHeight: 1, filter: convertTo ? 'none' : 'grayscale(1) opacity(0.7)' }}>💱</span>
@@ -429,8 +426,8 @@ export const FriendsView: React.FC<FriendsViewProps> = ({
               {convertTo ? convertTo : 'Convert'}
             </span>
           </button>
-        )}
-      </div>
+        </div>
+      )}
 
       {convertTo && (
         <div

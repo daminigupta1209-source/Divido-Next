@@ -356,7 +356,7 @@ export const GroupDetail: React.FC<GroupDetailProps> = ({
           {selectedGroup && (
             <div
               style={{
-                flex: 1,
+                flex: '0 1 380px',
                 background: '#FFFFFF',
                 borderRadius: '20px',
                 padding: '12px 16px',

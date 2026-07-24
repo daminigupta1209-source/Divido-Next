@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import QRCode from 'qrcode';
 import { escManager } from '../lib/escManager';
 import { ShareGrid } from './ShareGrid';
+import { toCurrencyCode } from '../lib/utils';
 
 interface NetReceivableModalProps {
   popupData: { friendName: string; amt: number; curr: string } | null;
@@ -24,7 +25,23 @@ export const NetReceivableModal: React.FC<NetReceivableModalProps> = ({
   const [remPopupEditing, setRemPopupEditing] = useState(false);
   const [reminderText, setReminderText] = useState('');
   const [showQr, setShowQr] = useState(false);
+  const [rates, setRates] = useState<Record<string, number>>({});
   const reminderCanvasRef = useRef<HTMLCanvasElement | null>(null);
+
+  // UPI is an INR-only rail. For a non-INR debt, convert to the INR equivalent
+  // (rates fetched with INR base, so rates[CODE] = units of CODE per 1 INR).
+  const debtCode = popupData ? toCurrencyCode(popupData.curr) : 'INR';
+  const debtIsINR = debtCode === 'INR';
+  const inrRate = rates[debtCode];
+  const inrEquivalent = !popupData
+    ? null
+    : debtIsINR
+    ? popupData.amt
+    : inrRate
+    ? popupData.amt / inrRate
+    : null;
+  const upiAmt = (inrEquivalent != null ? inrEquivalent : popupData ? popupData.amt : 0).toFixed(2);
+  const inrNote = !debtIsINR && inrEquivalent != null ? ` (≈ ₹${inrEquivalent.toFixed(2)})` : '';
 
   useEffect(() => {
     if (popupData) {
@@ -34,15 +51,35 @@ export const NetReceivableModal: React.FC<NetReceivableModalProps> = ({
     }
   }, [popupData, userMetadata, me]);
 
+  // Fetch live INR-based rates when a non-INR debt popup opens.
+  useEffect(() => {
+    if (!popupData || debtIsINR) return;
+    let cancelled = false;
+    (async () => {
+      try {
+        const res = await fetch('https://open.er-api.com/v6/latest/INR');
+        if (res.ok) {
+          const data = await res.json();
+          if (!cancelled && data && data.rates) setRates(data.rates);
+        }
+      } catch (err) {
+        console.error('Failed to fetch rates in NetReceivableModal:', err);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [popupData, debtIsINR]);
+
   useEffect(() => {
     if (popupData) {
       const myUpi = remPopupUpi.trim();
       // Keep the visible message clean and human-readable; the tappable pay link
       // is attached only to the shared payload (see shareMessage below).
-      const msg = `Hey ${popupData.friendName}, just a quick reminder to settle our net balance of ${popupData.curr}${popupData.amt.toFixed(2)} on Divido.${myUpi ? ` Pay me at UPI: ${myUpi}` : ''} Thank you! 🌸`;
+      const msg = `Hey ${popupData.friendName}, just a quick reminder to settle our net balance of ${popupData.curr}${popupData.amt.toFixed(2)}${inrNote} on Divido.${myUpi ? ` Pay me at UPI: ${myUpi}` : ''} Thank you! 🌸`;
       setReminderText(msg);
     }
-  }, [remPopupUpi, popupData]);
+  }, [remPopupUpi, popupData, inrNote]);
 
   useEffect(() => {
     if (!popupData || !remPopupUpi || remPopupEditing) return;
@@ -50,7 +87,7 @@ export const NetReceivableModal: React.FC<NetReceivableModalProps> = ({
     if (canvas) {
       const upiLink = `upi://pay?pa=${remPopupUpi.trim()}&pn=${encodeURIComponent(
         me
-      )}&am=${popupData.amt.toFixed(2)}&cu=INR&tn=Divido Settle`;
+      )}&am=${upiAmt}&cu=INR&tn=Divido Settle`;
 
       QRCode.toCanvas(
         canvas,
@@ -68,7 +105,7 @@ export const NetReceivableModal: React.FC<NetReceivableModalProps> = ({
         }
       );
     }
-  }, [popupData, remPopupUpi, remPopupEditing, me, showQr]);
+  }, [popupData, remPopupUpi, remPopupEditing, me, showQr, upiAmt]);
 
   useEffect(() => {
     if (!popupData) return;
@@ -83,7 +120,7 @@ export const NetReceivableModal: React.FC<NetReceivableModalProps> = ({
   // The shared payload = clean message + a tappable UPI pay link (amount
   // pre-filled). Kept separate so the raw link never clutters the visible text.
   const upiLink = remPopupUpi.trim()
-    ? `upi://pay?pa=${remPopupUpi.trim()}&pn=${encodeURIComponent(me)}&am=${popupData.amt.toFixed(2)}&cu=INR&tn=Divido Settle`
+    ? `upi://pay?pa=${remPopupUpi.trim()}&pn=${encodeURIComponent(me)}&am=${upiAmt}&cu=INR&tn=Divido Settle`
     : '';
   const shareMessage = upiLink ? `${reminderText}\n\nPay instantly: ${upiLink}` : reminderText;
 
@@ -180,7 +217,7 @@ export const NetReceivableModal: React.FC<NetReceivableModalProps> = ({
                 <div style={{ background: '#F8FAFC', padding: '14px 16px', borderRadius: '16px', border: '1px solid #EEF2F6', display: 'inline-flex', flexDirection: 'column', alignItems: 'center', gap: '8px' }}>
                   <canvas ref={reminderCanvasRef} style={{ borderRadius: '10px', background: 'white' }} />
                   <div style={{ fontSize: '12px', fontWeight: 900, color: 'var(--t)' }}>
-                    Scan to pay {popupData.curr}{popupData.amt.toFixed(2)}
+                    Scan to pay ₹{upiAmt}{!debtIsINR ? ` (${popupData.curr}${popupData.amt.toFixed(2)})` : ''}
                   </div>
                   <div style={{ fontSize: '10.5px', fontWeight: 800, color: 'var(--g)', display: 'flex', alignItems: 'center', gap: '4px' }}>
                     <span>{remPopupUpi}</span>

@@ -342,6 +342,7 @@ export const GroupMemberList: React.FC<GroupMemberListProps> = ({
                       {selectedId !== 'STANDALONE' && (isAdmin || m === me) && (
                         <span
                           style={{ cursor: 'pointer', opacity: 0.6, fontSize: '13px', color: '#EF4444', fontWeight: 'bold' }}
+                          title="Remove member"
                           onClick={(e) => {
                             e.stopPropagation();
                             const promptMsg = m === me 
