@@ -846,7 +846,7 @@ export const GroupDetail: React.FC<GroupDetailProps> = ({
                             setGlobalSettleData({ name: m, gId: selectedId });
                           }}
                           style={{
-                            padding: '14px 16px',
+                            padding: '10px 16px',
                             background: '#FFFFFF',
                             border: '1.5px solid #F1F5F9',
                             display: 'flex',
@@ -854,11 +854,11 @@ export const GroupDetail: React.FC<GroupDetailProps> = ({
                             gap: '14px',
                             borderRadius: '18px',
                             cursor: 'pointer',
-                            minHeight: '64px',
+                            minHeight: '56px',
                             boxSizing: 'border-box',
                           }}
                         >
-                          <div style={{ width: '46px', height: '46px', borderRadius: '50%', background: avBg, color: '#FFFFFF', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '18px', fontWeight: 900, flexShrink: 0 }}>
+                          <div style={{ width: '40px', height: '40px', borderRadius: '50%', background: avBg, color: '#FFFFFF', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '16px', fontWeight: 900, flexShrink: 0 }}>
                             {m.charAt(0).toUpperCase()}
                           </div>
 

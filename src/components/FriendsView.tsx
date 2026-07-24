@@ -593,7 +593,7 @@ export const FriendsView: React.FC<FriendsViewProps> = ({
               className="hover-up-mini"
               onClick={() => { if (active) setGlobalSettleData({ name: f.name, balances: activeBals }); }}
               style={{
-                padding: '14px 16px',
+                padding: '10px 16px',
                 background: '#FFFFFF',
                 border: '0.5px solid #EFE7DC',
                 display: 'flex',
@@ -606,7 +606,7 @@ export const FriendsView: React.FC<FriendsViewProps> = ({
               }}
             >
               {/* Avatar */}
-              <div style={{ width: '46px', height: '46px', borderRadius: '50%', background: avBg, color: '#FFFFFF', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '18px', fontWeight: 900, flexShrink: 0 }}>
+              <div style={{ width: '40px', height: '40px', borderRadius: '50%', background: avBg, color: '#FFFFFF', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '16px', fontWeight: 900, flexShrink: 0 }}>
                 {f.name.charAt(0).toUpperCase()}
               </div>
 
