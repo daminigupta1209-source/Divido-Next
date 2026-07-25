@@ -209,8 +209,9 @@ export const GroupDetail: React.FC<GroupDetailProps> = ({
 
       {/* Past Member Rejoin Banner */}
       {(() => {
+        const isActiveMember = selectedGroup.members.some(m => m.toLowerCase() === me.toLowerCase());
         const isPastMember = selectedGroup.members.some(m => m.toLowerCase() === (me + ' (Left)').toLowerCase());
-        if (!isPastMember) return null;
+        if (isActiveMember || !isPastMember) return null;
         return (
           <div
             style={{
