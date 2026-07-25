@@ -185,7 +185,7 @@ export const Login: React.FC<LoginProps> = ({ onLoginSuccess, currentTheme }) =>
 
         <h2 className="suno-title">Welcome to Divido</h2>
         <p style={{ fontSize: '14px', color: '#64748B', marginBottom: '32px', lineHeight: '1.5' }}>
-          Sign in with your Google account to manage groups, split expenses, and track balances.
+          Manage groups, split expenses, and track balances.
         </p>
 
         {errorMsg && (
@@ -246,9 +246,6 @@ export const Login: React.FC<LoginProps> = ({ onLoginSuccess, currentTheme }) =>
           Continue as Guest
         </button>
 
-        <p style={{ fontSize: '11px', fontWeight: 700, color: '#64748B', opacity: 0.85, marginTop: '12px', lineHeight: '1.4' }}>
-          New to Divido? Your account will be created automatically on your first login! 🚀
-        </p>
 
         <p style={{ fontSize: '11px', color: '#64748B', lineHeight: '1.5', marginTop: '36px' }}>
           By continuing, you accept our <span style={{ textDecoration: 'underline', cursor: 'pointer' }}>Privacy Policy</span> and <span style={{ textDecoration: 'underline', cursor: 'pointer' }}>Terms of Use</span>.
