@@ -20,6 +20,9 @@ export const MatchPromptModal: React.FC<Props> = ({ prompt, onMatch, onDismiss }
           flexDirection: 'column',
           gap: '16px',
           boxShadow: '0 20px 40px -10px rgba(0,0,0,0.15)',
+          maxHeight: '85vh',
+          overflowY: 'auto',
+          boxSizing: 'border-box'
         }}
       >
         {/* Header */}
