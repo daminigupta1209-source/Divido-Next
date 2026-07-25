@@ -56,8 +56,8 @@ export const Login: React.FC<LoginProps> = ({ onLoginSuccess, currentTheme }) =>
     }
   };
 
-  const handleDevelopmentLogin = () => {
-    const guestName = 'Demo User';
+  const handleGuestLogin = () => {
+    const guestName = 'Guest';
     localStorage.setItem('divido_authenticated', 'true');
     localStorage.setItem('divido_username', guestName);
     onLoginSuccess(guestName);
@@ -227,25 +227,24 @@ export const Login: React.FC<LoginProps> = ({ onLoginSuccess, currentTheme }) =>
           {loading ? 'Signing in...' : 'Continue with Google'}
         </button>
 
-        {import.meta.env.DEV && (
-          <button
-            type="button"
-            onClick={handleDevelopmentLogin}
-            disabled={loading}
-            style={{
-              width: '100%',
-              padding: '10px',
-              border: 'none',
-              background: 'transparent',
-              color: '#64748B',
-              fontWeight: 700,
-              fontSize: '12px',
-              cursor: 'pointer',
-            }}
-          >
-            Continue as demo user
-          </button>
-        )}
+        <button
+          type="button"
+          onClick={handleGuestLogin}
+          disabled={loading}
+          style={{
+            width: '100%',
+            padding: '10px',
+            border: 'none',
+            background: 'transparent',
+            color: '#64748B',
+            fontWeight: 700,
+            fontSize: '13px',
+            cursor: 'pointer',
+            marginTop: '8px'
+          }}
+        >
+          Continue as Guest
+        </button>
 
         <p style={{ fontSize: '11px', fontWeight: 700, color: '#64748B', opacity: 0.85, marginTop: '12px', lineHeight: '1.4' }}>
           New to Divido? Your account will be created automatically on your first login! 🚀
