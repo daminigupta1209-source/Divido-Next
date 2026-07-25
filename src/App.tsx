@@ -1038,20 +1038,36 @@ function App() {
   const handleDeleteGroup = (id: string | number) => {
     const isStandalone = String(id) === 'STANDALONE';
     const g = isStandalone
-      ? { name: 'Non-Group Expenses ⚡', members: [] }
+      ? { name: 'Non-Group Expenses', members: [] as string[] }
       : groups.find((x) => String(x.id) === String(id));
     if (!g) return;
 
+    const isPastMember = !isStandalone && g.members.some(m => m.toLowerCase() === (me + ' (Left)').toLowerCase());
     const hasOthers = !isStandalone && g.members && g.members.length > 1;
+
+    if (isPastMember) {
+      setConfirmState({
+        show: true,
+        title: 'Remove Group?',
+        desc: `Are you sure you want to remove "${g.name}" from your dashboard? You will no longer see this group or its history.`,
+        type: 'danger',
+        onConfirm: () => {
+          setGroups(groups.filter((x) => String(x.id) !== String(id)));
+          if (String(selectedId) === String(id)) setView('summary');
+          setConfirmState({ show: false });
+        }
+      });
+      return;
+    }
 
     setConfirmState({
       show: true,
-      title: isStandalone ? 'Clear Non-Group History?' : hasOthers ? 'Leave Group?' : 'Delete Group?',
+      title: isStandalone ? 'Clear History?' : hasOthers ? 'Leave Group?' : 'Delete Group?',
       desc: isStandalone
-        ? `Permanently clear "${g.name}" activity and balances?`
+        ? `Are you sure you want to clear all non-group expenses?`
         : hasOthers
-        ? `Leave "${g.name}"? Other members will keep history.`
-        : `Delete "${g.name}" permanently?`,
+        ? `Are you sure you want to leave this group?`
+        : `Are you sure you want to delete this group?`,
       type: 'danger',
       onConfirm: async () => {
         if (!isStandalone) {
