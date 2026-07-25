@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState, useMemo } from 'react';
-import { supabase } from '../lib/supabaseClient';
+import { supabase, uploadAttachment } from '../lib/supabaseClient';
 import { Group, Expense } from '../lib/types';
 import { checkIfDemoMode } from '../lib/demoMode';
 import { ensureArray, ensureObject } from '../lib/utils';
@@ -478,34 +478,55 @@ export function useSupabaseSync({
             }
             continue;
           }
-          const old = prev.find(p => p.id === e.id);
+
+          // Upload any local data URL attachments to Supabase Storage first
+          let attachmentsUpdated = false;
+          const updatedAttachments = e.attachments ? [...e.attachments] : [];
+          for (let j = 0; j < updatedAttachments.length; j++) {
+            if (updatedAttachments[j] && updatedAttachments[j].startsWith('data:')) {
+              const publicUrl = await uploadAttachment(updatedAttachments[j]);
+              if (publicUrl !== updatedAttachments[j]) {
+                updatedAttachments[j] = publicUrl;
+                attachmentsUpdated = true;
+              }
+            }
+          }
+
+          let updatedExpense = e;
+          if (attachmentsUpdated) {
+            updatedExpense = { ...e, attachments: updatedAttachments };
+            nextExpenses[i] = updatedExpense;
+            localStateUpdated = true;
+          }
+
+          const old = prev.find(p => p.id === updatedExpense.id);
           if (!old || old.gId === 'STANDALONE') {
             // Insert new expense (also covers a Non-Group expense moved into a group — it has no cloud row yet)
             // If the group ID is still a temporary ID (too large), skip it until the group syncs and updates the ID
-            if (typeof e.gId === 'number' && e.gId > 2147483647) {
+            if (typeof updatedExpense.gId === 'number' && updatedExpense.gId > 2147483647) {
               continue;
             }
 
-            const insertId = typeof e.id === 'number' && e.id < 2147483647 ? e.id : undefined;
+            const insertId = typeof updatedExpense.id === 'number' && updatedExpense.id < 2147483647 ? updatedExpense.id : undefined;
             const { data, error } = await supabase
               .from('expenses')
               .insert({
                 id: insertId,
-                group_id: e.gId,
-                title: e.title,
-                amt: e.amt,
-                paid: e.paid,
-                date: e.date,
-                mode: e.mode || 'Equally',
-                splitters: e.splitters,
-                shares: e.shares,
-                category: e.category,
-                currency: e.currency,
-                notes: e.notes,
-                attachments: e.attachments || [],
-                is_recurring: e.isRecurring || false,
-                recurrence: e.recurrence || 'none',
-                next_occurrence: e.nextOccurrence
+                group_id: updatedExpense.gId,
+                title: updatedExpense.title,
+                amt: updatedExpense.amt,
+                paid: updatedExpense.paid,
+                date: updatedExpense.date,
+                mode: updatedExpense.mode || 'Equally',
+                splitters: updatedExpense.splitters,
+                shares: updatedExpense.shares,
+                category: updatedExpense.category,
+                currency: updatedExpense.currency,
+                notes: updatedExpense.notes,
+                attachments: updatedExpense.attachments || [],
+                is_recurring: updatedExpense.isRecurring || false,
+                recurrence: updatedExpense.recurrence || 'none',
+                next_occurrence: updatedExpense.nextOccurrence
               })
               .select();
 
@@ -513,46 +534,47 @@ export function useSupabaseSync({
 
             if (data && data[0]) {
               const newExpId = data[0].id;
-              nextExpenses[i] = { ...e, id: newExpId };
+              nextExpenses[i] = { ...updatedExpense, id: newExpId };
               localStateUpdated = true;
             }
           } else if (
-            String(old.gId) !== String(e.gId) ||
-            old.title !== e.title ||
-            old.amt !== e.amt ||
-            old.paid !== e.paid ||
-            old.date !== e.date ||
-            old.mode !== e.mode ||
-            JSON.stringify(old.splitters) !== JSON.stringify(e.splitters) ||
-            JSON.stringify(old.shares) !== JSON.stringify(e.shares) ||
-            old.category !== e.category ||
-            old.currency !== e.currency ||
-            old.notes !== e.notes ||
-            old.isRecurring !== e.isRecurring ||
-            old.recurrence !== e.recurrence ||
-            old.nextOccurrence !== e.nextOccurrence
+            String(old.gId) !== String(updatedExpense.gId) ||
+            old.title !== updatedExpense.title ||
+            old.amt !== updatedExpense.amt ||
+            old.paid !== updatedExpense.paid ||
+            old.date !== updatedExpense.date ||
+            old.mode !== updatedExpense.mode ||
+            JSON.stringify(old.splitters) !== JSON.stringify(updatedExpense.splitters) ||
+            JSON.stringify(old.shares) !== JSON.stringify(updatedExpense.shares) ||
+            old.category !== updatedExpense.category ||
+            old.currency !== updatedExpense.currency ||
+            old.notes !== updatedExpense.notes ||
+            JSON.stringify(old.attachments) !== JSON.stringify(updatedExpense.attachments) ||
+            old.isRecurring !== updatedExpense.isRecurring ||
+            old.recurrence !== updatedExpense.recurrence ||
+            old.nextOccurrence !== updatedExpense.nextOccurrence
           ) {
             // Update existing expense
             const { error } = await supabase
               .from('expenses')
               .update({
-                group_id: e.gId,
-                title: e.title,
-                amt: e.amt,
-                paid: e.paid,
-                date: e.date,
-                mode: e.mode || 'Equally',
-                splitters: e.splitters,
-                shares: e.shares,
-                category: e.category,
-                currency: e.currency,
-                notes: e.notes,
-                attachments: e.attachments || [],
-                is_recurring: e.isRecurring || false,
-                recurrence: e.recurrence || 'none',
-                next_occurrence: e.nextOccurrence
+                group_id: updatedExpense.gId,
+                title: updatedExpense.title,
+                amt: updatedExpense.amt,
+                paid: updatedExpense.paid,
+                date: updatedExpense.date,
+                mode: updatedExpense.mode || 'Equally',
+                splitters: updatedExpense.splitters,
+                shares: updatedExpense.shares,
+                category: updatedExpense.category,
+                currency: updatedExpense.currency,
+                notes: updatedExpense.notes,
+                attachments: updatedExpense.attachments || [],
+                is_recurring: updatedExpense.isRecurring || false,
+                recurrence: updatedExpense.recurrence || 'none',
+                next_occurrence: updatedExpense.nextOccurrence
               })
-              .eq('id', e.id);
+              .eq('id', updatedExpense.id);
             if (error) throw error;
           }
         }

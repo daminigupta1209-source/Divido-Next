@@ -18,6 +18,7 @@ interface SplitSelectorProps {
   handleShareChange: (name: string, val: string) => void;
   totalShares: number;
   getShareAmt: (m: string) => number;
+  groupMembers?: string[];
 }
 
 export const SplitSelector: React.FC<SplitSelectorProps> = ({
@@ -37,6 +38,7 @@ export const SplitSelector: React.FC<SplitSelectorProps> = ({
   handleShareChange,
   totalShares,
   getShareAmt,
+  groupMembers,
 }) => {
   const [shakingFriend, setShakingFriend] = useState<string | null>(null);
 
@@ -194,39 +196,45 @@ export const SplitSelector: React.FC<SplitSelectorProps> = ({
             border: '1px dashed #CBD5E1',
           }}
         >
-          {selectedSplitters.map((friend) => (
-            <div
-              key={friend}
-              style={{
-                display: 'flex',
-                justifyContent: 'space-between',
-                alignItems: 'center',
-                padding: '6px 10px',
-                background: 'var(--w)',
-                borderRadius: '10px',
-                border: '1.5px solid #F8FAFC',
-              }}
-            >
-              <span
+          {selectedSplitters.map((friend) => {
+            const isLeft = groupMembers?.some(
+              (m) =>
+                m.endsWith(' (Left)') &&
+                m.replace(' (Left)', '').toLowerCase() === friend.toLowerCase()
+            );
+            return (
+              <div
+                key={friend}
                 style={{
-                  fontSize: '11px',
-                  fontWeight: 800,
-                  color: '#1E293B',
                   display: 'flex',
+                  justifyContent: 'space-between',
                   alignItems: 'center',
-                  gap: '6px',
+                  padding: '6px 10px',
+                  background: 'var(--w)',
+                  borderRadius: '10px',
+                  border: '1.5px solid #F8FAFC',
                 }}
               >
-                {friend === me ? (
-                  <img
-                    src="/divido_laughing_cat_mascot_1778063273427.png"
-                    style={{ width: '16px', height: '16px', borderRadius: '50%' }}
-                    alt="cat avatar"
-                  />
-                ) : null}
-                {friend === me ? 'You' : friend}
-              </span>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                <span
+                  style={{
+                    fontSize: '11px',
+                    fontWeight: 800,
+                    color: '#1E293B',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '6px',
+                  }}
+                >
+                  {friend === me ? (
+                    <img
+                      src="/divido_laughing_cat_mascot_1778063273427.png"
+                      style={{ width: '16px', height: '16px', borderRadius: '50%' }}
+                      alt="cat avatar"
+                    />
+                  ) : null}
+                  {friend === me ? 'You' : (isLeft ? `${friend} (Left)` : friend)}
+                </span>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
                 <style>{`
                   .placeholder-faded::placeholder {
                     color: #94A3B8 !important;
@@ -371,8 +379,9 @@ export const SplitSelector: React.FC<SplitSelectorProps> = ({
                 )}
               </div>
             </div>
-          ))}
-        </div>
+          );
+        })}
+      </div>
 
         {/* Allocation Status / Validation Box */}
         <div

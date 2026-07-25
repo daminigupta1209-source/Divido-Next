@@ -93,7 +93,12 @@ export function useExpenseForm({
     return [me];
   });
 
-  const [amt, setAmt] = useState<string>(editingExpense ? String(editingExpense.amt) : '');
+  const [amt, setAmt] = useState<string>(() => {
+    if (!editingExpense) return '';
+    const isTemp = editingExpense.id && String(editingExpense.id).startsWith('temp-');
+    if (isTemp || editingExpense.amt === 0) return '';
+    return String(editingExpense.amt);
+  });
   const [payer, setPayer] = useState<string>(
     editingExpense && editingExpense.paid ? editingExpense.paid : me
   );
@@ -241,11 +246,17 @@ export function useExpenseForm({
       const raw = activeGroup ? Array.from(new Set(activeGroup.members)) : [me];
       return raw.filter((m) => {
         const cleanName = m.replace(' (Left)', '');
-        return m === payer || cleanName === payer || !m.endsWith(' (Left)');
+        return (
+          m === payer ||
+          cleanName === payer ||
+          !m.endsWith(' (Left)') ||
+          selectedSplitters.includes(cleanName) ||
+          selectedSplitters.includes(m)
+        );
       });
     }
     return friendsToSelect;
-  }, [localGId, activeGroup, friendsToSelect, payer, me]);
+  }, [localGId, activeGroup, friendsToSelect, payer, me, selectedSplitters]);
 
   const filteredSuggs = suggs;
 
@@ -386,8 +397,9 @@ export function useExpenseForm({
       return;
     }
     if (isValid && localGId) {
+      const isTemporaryNewExpense = editingExpense?.id && String(editingExpense.id).startsWith('temp-');
       const savedExp: Expense = {
-        id: editingExpense?.id || Date.now(),
+        id: (editingExpense && !isTemporaryNewExpense) ? editingExpense.id : Date.now(),
         gId: localGId,
         title,
         amt: parseFloat(amt) || 0,
@@ -407,7 +419,7 @@ export function useExpenseForm({
       };
 
       setExpenses(
-        editingExpense
+        editingExpense && !isTemporaryNewExpense
           ? (prev) => prev.map((e) => (e.id === editingExpense.id ? savedExp : e))
           : (prev) => [savedExp, ...prev]
       );

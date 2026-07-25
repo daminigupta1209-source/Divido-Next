@@ -929,15 +929,16 @@ export const ExpenseModal: React.FC<ExpenseModalProps> = ({
                       {/* Friends list */}
                       <div style={{ maxHeight: '260px', overflowY: 'auto', padding: '0 8px 4px 8px' }}>
                         {friendsToSelect.filter(f => f !== me).map((friend) => {
-                          const isChecked = selectedSplitters.includes(friend);
+                          const cleanFriend = friend.replace(' (Left)', '');
+                          const isChecked = selectedSplitters.includes(cleanFriend);
                           return (
                             <div
                               key={friend}
                               onClick={() => {
                                 setSelectedSplitters(
                                   isChecked
-                                    ? selectedSplitters.filter((s) => s !== friend)
-                                    : [...selectedSplitters, friend]
+                                    ? selectedSplitters.filter((s) => s !== cleanFriend)
+                                    : [...selectedSplitters, cleanFriend]
                                 );
                               }}
                               style={{
@@ -1811,6 +1812,7 @@ export const ExpenseModal: React.FC<ExpenseModalProps> = ({
         handleShareChange={handleShareChange}
         totalShares={totalShares}
         getShareAmt={getShareAmt}
+        groupMembers={friendsToSelect}
       />
 
       {/* Notes Textarea Popup */}

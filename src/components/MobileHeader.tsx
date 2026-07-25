@@ -302,7 +302,7 @@ export const MobileHeader: React.FC<MobileHeaderProps> = ({
 
             {/* ⋮ Vertical three-dots button — positioned absolutely at the rightmost edge */}
             {selectedGroup && (
-              <div style={{ position: 'absolute', right: 0, top: '50%', transform: 'translateY(-50%)', zIndex: 9999, display: 'inline-flex', alignItems: 'center' }}>
+              <div style={{ position: 'absolute', right: '-12px', top: '50%', transform: 'translateY(-50%)', zIndex: 9999, display: 'inline-flex', alignItems: 'center' }}>
                 {/* Mobile Attachment Paperclip Button */}
                 <input
                   ref={uploadInputRef}
@@ -327,7 +327,7 @@ export const MobileHeader: React.FC<MobileHeaderProps> = ({
                     padding: 0,
                     borderRadius: '8px',
                     transition: '0.15s all',
-                    marginRight: '2px',
+                    marginRight: '-6px',
                   }}
                   onMouseEnter={(e) => { e.currentTarget.style.background = 'rgba(0,0,0,0.05)'; }}
                   onMouseLeave={(e) => { e.currentTarget.style.background = 'none'; }}

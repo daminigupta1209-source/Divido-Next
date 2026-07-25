@@ -262,7 +262,7 @@ export const GroupHeader: React.FC<GroupHeaderProps> = ({
 
             {/* RIGHT: Horizontal ellipsis options button */}
             {selectedId !== 'STANDALONE' && (
-              <div style={{ position: 'absolute', right: 0, display: 'inline-flex', alignItems: 'center' }}>
+              <div style={{ position: 'absolute', right: '-12px', display: 'inline-flex', alignItems: 'center' }}>
                 {/* Attachment Paperclip Button */}
                 <input
                   ref={uploadInputRef}
@@ -287,7 +287,7 @@ export const GroupHeader: React.FC<GroupHeaderProps> = ({
                     padding: 0,
                     borderRadius: '8px',
                     transition: '0.15s all',
-                    marginRight: '2px',
+                    marginRight: '-6px',
                   }}
                   onMouseEnter={(e) => { e.currentTarget.style.background = 'rgba(0,0,0,0.05)'; }}
                   onMouseLeave={(e) => { e.currentTarget.style.background = 'none'; }}
