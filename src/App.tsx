@@ -1042,6 +1042,7 @@ function App() {
       : groups.find((x) => String(x.id) === String(id));
     if (!g) return;
 
+    console.log('[DEBUG] handleDeleteGroup:', { id, me, members: g.members });
     const cleanMe = me.replace(/\s*\(Left\)$/i, '').toLowerCase();
     const isPastMember = !isStandalone && g.members.some(m => {
       const cleanM = m.replace(/\s*\(Left\)$/i, '').toLowerCase();
