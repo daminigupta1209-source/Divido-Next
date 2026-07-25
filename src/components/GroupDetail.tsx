@@ -214,8 +214,8 @@ export const GroupDetail: React.FC<GroupDetailProps> = ({
         return (
           <div
             style={{
-              background: '#FFFBEB',
-              border: '1.5px solid #FCD34D',
+              background: '#FFFFFF',
+              border: '1.5px solid #E2E8F0',
               borderRadius: '16px',
               padding: '12px 16px',
               display: 'flex',
@@ -223,17 +223,16 @@ export const GroupDetail: React.FC<GroupDetailProps> = ({
               justifyContent: 'space-between',
               gap: '12px',
               marginBottom: '16px',
-              boxShadow: '0 4px 6px -1px rgba(245, 158, 11, 0.08)',
+              boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.02)',
             }}
           >
             <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-              <span style={{ fontSize: '20px' }}>🚪</span>
               <div style={{ textAlign: 'left' }}>
-                <h4 style={{ margin: 0, fontSize: '13px', fontWeight: 900, color: '#92400E' }}>
-                  You are no longer active in this group
+                <h4 style={{ margin: 0, fontSize: '13px', fontWeight: 900, color: '#1E293B' }}>
+                  Read-Only Mode
                 </h4>
-                <p style={{ margin: '2px 0 0 0', fontSize: '11px', color: '#B45309', fontWeight: 700 }}>
-                  You can view the group details and history, but you are read-only.
+                <p style={{ margin: '2px 0 0 0', fontSize: '11px', color: '#64748B', fontWeight: 700 }}>
+                  You left this group. You can view history but cannot edit.
                 </p>
               </div>
             </div>
@@ -255,7 +254,7 @@ export const GroupDetail: React.FC<GroupDetailProps> = ({
                 color: 'white',
               }}
             >
-              Request to Rejoin 🔁
+              Request to Rejoin
             </button>
           </div>
         );
