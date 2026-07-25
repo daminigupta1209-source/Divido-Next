@@ -1152,7 +1152,10 @@ function App() {
       type: 'logout',
       onConfirm: async () => {
         await supabase.auth.signOut();
-        localStorage.setItem('divido_authenticated', 'false');
+        localStorage.removeItem('divido_authenticated');
+        localStorage.removeItem('divido_username');
+        localStorage.removeItem('divido_usermetadata');
+        setUserName('You');
         setIsAuthenticated(false);
         setConfirmState({ show: false });
       },
