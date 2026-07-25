@@ -476,15 +476,15 @@ export const Profile: React.FC<ProfileProps> = ({
               className="hover-up-mini"
               style={{
                 width: '100%',
-                background: 'linear-gradient(135deg, #F87171 0%, #EF4444 100%)',
-                color: 'white',
-                border: 'none',
+                background: 'transparent',
+                color: '#EF4444',
+                border: '2px solid #EF4444',
                 padding: '10px',
                 borderRadius: '12px',
                 fontWeight: 950,
                 fontSize: '13px',
                 cursor: 'pointer',
-                boxShadow: '0 10px 15px -3px rgba(239, 68, 68, 0.2)',
+                boxSizing: 'border-box',
               }}
             >
               Delete Account

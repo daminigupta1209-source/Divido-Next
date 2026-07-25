@@ -26,6 +26,7 @@ interface SidebarProps {
   isSidebarOpen: boolean;
   setIsSidebarOpen: (b: boolean) => void;
   syncStatus?: 'synced' | 'syncing' | 'offline' | 'demo';
+  profilePhoto?: string;
 }
 
 export const Sidebar: React.FC<SidebarProps> = ({
@@ -49,6 +50,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
   isSidebarOpen,
   setIsSidebarOpen,
   syncStatus,
+  profilePhoto,
 }) => {
   const getSyncState = () => {
     switch (syncStatus) {
@@ -210,6 +212,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
         userName={userName}
         setIsSidebarOpen={setIsSidebarOpen}
         syncStatus={syncStatus}
+        profilePhoto={profilePhoto}
       />
 
       <div style={{ width: '100%', marginBottom: '24px' }}>

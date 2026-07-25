@@ -286,7 +286,7 @@ function App() {
     if (!oldName || !newName || oldName === newName) return;
     try {
       // 1. Member row
-      await supabase.from('group_members').update({ name: newName, pending_name: null }).eq('group_id', groupId).eq('name', oldName);
+      await supabase.from('group_members').update({ name: newName, pending_name: null }).eq('group_id', groupId).ilike('name', oldName);
 
       // 2. Historical expenses in this group (DB)
       const { data: exps } = await supabase.from('expenses').select('*').eq('group_id', groupId);
@@ -1358,13 +1358,14 @@ function App() {
         isSidebarOpen={isSidebarOpen}
         setIsSidebarOpen={setIsSidebarOpen}
         syncStatus={syncStatus}
+        profilePhoto={userMetadata[me]?.profilePhoto}
       />
 
       {isSidebarOpen && (
         <div className="sidebar-backdrop" onClick={() => setIsSidebarOpen(false)} />
       )}
 
-      <main ref={mainContentRef} className="main-content" style={{ background: (view === 'summary' || view === 'friends') ? '#FAF4EC' : undefined }}>
+      <main ref={mainContentRef} className="main-content">
         <MobileHeader
           headerHidden={headerHidden}
           view={view}
@@ -1824,7 +1825,7 @@ function App() {
                       .from('group_members')
                       .delete()
                       .eq('group_id', selectedId)
-                      .eq('name', memberName);
+                      .ilike('name', memberName);
                   } else {
                     // 1. Rename membership row to preserve history, keep email, set is_pending: true
                     await supabase
@@ -1834,7 +1835,7 @@ function App() {
                         is_pending: true
                       })
                       .eq('group_id', selectedId)
-                      .eq('name', memberName);
+                      .ilike('name', memberName);
 
                     // 2. Insert system notification of departure
                     await supabase

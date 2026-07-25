@@ -6,6 +6,7 @@ interface SidebarProfileProps {
   userName: string;
   setIsSidebarOpen: (b: boolean) => void;
   syncStatus?: 'synced' | 'syncing' | 'offline' | 'demo';
+  profilePhoto?: string;
 }
 
 export const SidebarProfile: React.FC<SidebarProfileProps> = ({
@@ -13,39 +14,14 @@ export const SidebarProfile: React.FC<SidebarProfileProps> = ({
   setView,
   userName,
   setIsSidebarOpen,
-  syncStatus,
+  profilePhoto,
 }) => {
-  const getSyncState = () => {
-    switch (syncStatus) {
-      case 'offline':
-        return {
-          color: '#64748B', // Grey
-          label: 'Offline Mode',
-          pulse: false,
-        };
-      case 'demo':
-        return {
-          color: '#F59E0B', // Amber
-          label: 'Guest / Demo',
-          pulse: false,
-        };
-      case 'syncing':
-        return {
-          color: '#3B82F6', // Blue
-          label: 'Syncing...',
-          pulse: true,
-        };
-      case 'synced':
-      default:
-        return {
-          color: '#10B981', // Green
-          label: 'Cloud Synced',
-          pulse: true,
-        };
-    }
-  };
-
-  const syncState = getSyncState();
+  const initials = userName
+    .split(' ')
+    .map((n) => n.charAt(0))
+    .join('')
+    .slice(0, 2)
+    .toUpperCase();
 
   return (
     <div
@@ -77,39 +53,24 @@ export const SidebarProfile: React.FC<SidebarProfileProps> = ({
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
-          fontSize: '20px',
+          fontSize: '14px',
+          fontWeight: 900,
+          color: '#16A34A',
           border: '1.5px solid #DCFCE7',
+          overflow: 'hidden',
+          flexShrink: 0,
         }}
       >
-        🐼
+        {profilePhoto ? (
+          <img src={profilePhoto} alt="Profile" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+        ) : (
+          initials
+        )}
       </div>
       <div style={{ flex: 1 }}>
         <h4 className="nunito" style={{ fontSize: '13px', color: '#1E293B' }}>
           {userName.split(' ')[0]}
         </h4>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '5px', marginTop: '2px' }}>
-          <span
-            className={syncState.pulse ? 'pulse-dot' : ''}
-            style={{
-              width: '6px',
-              height: '6px',
-              backgroundColor: syncState.color,
-              borderRadius: '50%',
-              display: 'inline-block',
-            }}
-          />
-          <span
-            style={{
-              fontSize: '9px',
-              fontWeight: 900,
-              color: syncState.color,
-              textTransform: 'uppercase',
-              letterSpacing: '0.3px',
-            }}
-          >
-            {syncState.label}
-          </span>
-        </div>
       </div>
       <div style={{ fontSize: '12px', opacity: 0.3 }}>⚙️</div>
     </div>

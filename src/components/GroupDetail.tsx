@@ -671,14 +671,16 @@ export const GroupDetail: React.FC<GroupDetailProps> = ({
 
         const dropdownStyle: React.CSSProperties = {
           position: 'relative',
-          display: 'inline-block',
+          flex: 1,
+          minWidth: 0,
         };
 
         const btnStyle: React.CSSProperties = {
-          display: 'flex', alignItems: 'center', gap: '5px',
-          padding: '10px 14px', borderRadius: '20px',
+          display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '5px',
+          width: '100%', boxSizing: 'border-box',
+          padding: '6px 12px', borderRadius: '20px',
           border: '1.5px solid #E2E8F0', background: 'var(--w)',
-          fontSize: '13px', fontWeight: 800, color: '#475569',
+          fontSize: '12px', fontWeight: 800, color: '#475569',
           cursor: 'pointer', whiteSpace: 'nowrap',
           boxShadow: '0 1px 4px rgba(0,0,0,0.04)',
         };
