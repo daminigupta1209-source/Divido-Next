@@ -214,47 +214,80 @@ export const GroupDetail: React.FC<GroupDetailProps> = ({
         return (
           <div
             style={{
-              background: '#FFFFFF',
-              border: '1.5px solid #E2E8F0',
-              borderRadius: '16px',
-              padding: '12px 16px',
               display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'space-between',
               gap: '12px',
               marginBottom: '16px',
-              boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.02)',
+              width: '100%'
             }}
           >
-            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-              <div style={{ textAlign: 'left' }}>
-                <h4 style={{ margin: 0, fontSize: '13px', fontWeight: 900, color: '#1E293B' }}>
-                  Read-Only Mode
-                </h4>
-                <p style={{ margin: '2px 0 0 0', fontSize: '11px', color: '#64748B', fontWeight: 700 }}>
-                  You left this group. You can view history but cannot edit.
-                </p>
-              </div>
-            </div>
+            <button
+              onClick={() => {
+                if (onDeleteGroup) {
+                  onDeleteGroup(selectedGroup.id);
+                }
+              }}
+              className="hover-up"
+              style={{
+                flex: 1,
+                height: '38px',
+                padding: '8px 16px',
+                fontSize: '13px',
+                fontWeight: 950,
+                borderRadius: '999px',
+                cursor: 'pointer',
+                background: 'transparent',
+                border: '1.5px solid #EF4444',
+                color: '#EF4444',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                transition: '0.2s all ease',
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.transform = 'scale(1.02)';
+                e.currentTarget.style.background = 'rgba(239, 68, 68, 0.04)';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.transform = 'scale(1)';
+                e.currentTarget.style.background = 'transparent';
+              }}
+            >
+              Delete Group
+            </button>
+
             <button
               onClick={async () => {
                 if (onRequestRejoin) {
                   await onRequestRejoin();
                 }
               }}
-              className="btn-green hover-up-mini"
+              className="hover-up"
               style={{
-                padding: '6px 12px',
-                fontSize: '11px',
-                fontWeight: 900,
-                borderRadius: '10px',
+                flex: 1,
+                height: '38px',
+                padding: '8px 16px',
+                fontSize: '13px',
+                fontWeight: 950,
+                borderRadius: '999px',
                 cursor: 'pointer',
-                background: '#D97706',
-                border: 'none',
-                color: 'white',
+                background: 'transparent',
+                border: '1.5px solid #D97706',
+                color: '#D97706',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                transition: '0.2s all ease',
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.transform = 'scale(1.02)';
+                e.currentTarget.style.background = 'rgba(217, 119, 6, 0.04)';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.transform = 'scale(1)';
+                e.currentTarget.style.background = 'transparent';
               }}
             >
-              Request to Rejoin
+              Rejoin
             </button>
           </div>
         );
