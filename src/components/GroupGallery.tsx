@@ -144,7 +144,7 @@ export const GroupGallery: React.FC<GroupGalleryProps> = ({
   ).sort((a, b) => b[0].localeCompare(a[0]));
 
   return (
-    <div className="home-view" style={{ padding: '0 20px 24px 20px', maxWidth: '640px', margin: '0 auto', minHeight: '100vh', boxSizing: 'border-box' }}>
+    <div className="content-width-limit" style={{ paddingBottom: '24px', boxSizing: 'border-box' }}>
       
       {/* Search bar & Filter funnel icon */}
       <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '16px', position: 'relative' }}>
@@ -370,7 +370,7 @@ export const GroupGallery: React.FC<GroupGalleryProps> = ({
                   <span style={{ fontSize: '10px', fontWeight: 800, color: '#B0A79C' }}>{photos.length}</span>
                 </div>
 
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '10px' }}>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(72px, 1fr))', gap: '8px' }}>
                   {photos.map((photo) => (
                     <div
                       key={photo.idx}

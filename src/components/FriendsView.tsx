@@ -583,7 +583,6 @@ export const FriendsView: React.FC<FriendsViewProps> = ({
             fontSize: '13px',
             fontWeight: 600,
             whiteSpace: 'nowrap',
-            fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", sans-serif',
           };
           const cardChip: React.CSSProperties = { background: '#F1EFE8', borderRadius: '999px', padding: '0 6px', fontSize: '10px', fontWeight: 800, lineHeight: '16px' };
 

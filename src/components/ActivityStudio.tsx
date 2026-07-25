@@ -1,6 +1,6 @@
 import React from 'react';
 import { BalanceDisplay } from './BalanceDisplay';
-import { getEmoji, formatDate, getExactTime, getMonthYearKey } from '../lib/utils';
+import { getEmoji, formatDate, getExactTime, getMonthYearKey, formatCompactAmount } from '../lib/utils';
 import { Group, Expense } from '../lib/types';
 import { useActivityStudio } from '../hooks/useActivityStudio';
 import { StyledDropdown } from './StyledDropdown';
@@ -633,7 +633,7 @@ export const ActivityStudio: React.FC<ActivityStudioProps> = ({
                     <div style={{ display: 'flex', alignItems: 'center', gap: '16px', flexShrink: 0 }}>
                       <div style={{ textAlign: 'right' }}>
                         <span style={{ fontSize: '14px', fontWeight: 800, color: 'var(--t)', fontFamily: '"Nunito", sans-serif' }}>
-                          {e.currency || '₹'} {(parseFloat(e.amt.toString()) || 0).toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 2 })}
+                          {e.currency || '₹'} {formatCompactAmount(parseFloat(e.amt.toString()) || 0)}
                         </span>
                       </div>
                       <div className="dropdown" style={{ position: 'relative' }} onClick={(ev) => ev.stopPropagation()}>

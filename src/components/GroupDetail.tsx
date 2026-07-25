@@ -863,8 +863,7 @@ export const GroupDetail: React.FC<GroupDetailProps> = ({
                           </div>
 
                           <div style={{ minWidth: 0, flex: 1, display: 'flex', alignItems: 'center', gap: '6px' }}>
-                            <h3 className="nunito" style={{ fontSize: '17px', fontWeight: 800, color: '#2E2A25', margin: 0, textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap' }}>{m}</h3>
-                            {userMetadata[m]?.upiId && <span title="Payment Linked" style={{ fontSize: '13px', cursor: 'help' }}>💳</span>}
+                            <h3 className="nunito" style={{ fontSize: '17px', fontWeight: 800, color: '#2E2A25', margin: 0, textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap', textTransform: 'capitalize' }}>{m}</h3>
                           </div>
 
                           <div style={{ display: 'flex', flexDirection: 'column', gap: '2px', alignItems: 'flex-end', flexShrink: 0 }}>
@@ -1213,10 +1212,9 @@ export const GroupDetail: React.FC<GroupDetailProps> = ({
                           </div>
                           <div style={{ minWidth: 0 }}>
                             <div style={{ display: 'flex', alignItems: 'center', gap: '4px', flexWrap: 'wrap' }}>
-                              <h4 className="nunito" style={{ fontSize: '13px', fontWeight: 800, margin: 0, textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap' }}>
+                              <h4 className="nunito" style={{ fontSize: '13px', fontWeight: 800, margin: 0, textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap', textTransform: 'capitalize' }}>
                                 {m}
                               </h4>
-                              {userMetadata[m]?.upiId && <span title="Payment Linked" style={{ fontSize: '11px', cursor: 'help' }}>💳</span>}
                             </div>
                           </div>
                         </div>

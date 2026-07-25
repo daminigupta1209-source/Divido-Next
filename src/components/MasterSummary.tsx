@@ -664,14 +664,14 @@ export const MasterSummary: React.FC<MasterSummaryProps> = ({
           {/* Balance / Status block */}
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexShrink: 0 }}>
             {nonGroupRels.length === 0 ? (
-              <span style={{ fontSize: '13px', fontWeight: 600, color: '#16A34A', fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", sans-serif' }}>
+              <span style={{ fontSize: '13px', fontWeight: 600, color: '#16A34A' }}>
                 Settled Up
               </span>
             ) : (
               (() => {
                 const nonGroupEntries = Object.entries(nonGroupBal).filter(([_, v]) => Math.abs(v) > 0.01);
                 return (
-                  <span style={{ fontSize: '13px', fontWeight: 600, fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", sans-serif', whiteSpace: 'nowrap' }}>
+                  <span style={{ fontSize: '13px', fontWeight: 600, whiteSpace: 'nowrap' }}>
                     {nonGroupEntries.slice(0, 2).map(([curr, val], idx, shown) => {
                       const isOwed = val > 0.01;
                       const isLast = idx === shown.length - 1;
@@ -748,7 +748,6 @@ export const MasterSummary: React.FC<MasterSummaryProps> = ({
             fontWeight: 600,
             whiteSpace: 'nowrap',
             textAlign: 'right',
-            fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", sans-serif',
           };
           // Count chip for extra currencies on white cards (text colour inherited).
           const cardChip: React.CSSProperties = { background: '#F1EFE8', borderRadius: '999px', padding: '0 6px', fontSize: '10px', fontWeight: 800, lineHeight: '16px' };
