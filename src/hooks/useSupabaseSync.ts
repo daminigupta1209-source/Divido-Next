@@ -366,8 +366,8 @@ export function useSupabaseSync({
               const oldGroupId = g.id;
 
               // Link creator and other group members
-              const memberInserts = g.members.map(m => {
-                const isMe = m === me;
+              const memberInserts = g.members.map((m, idx) => {
+                const isMe = m.toLowerCase() === me.toLowerCase() || idx === 0;
                 return {
                   group_id: newGroupId,
                   name: m,

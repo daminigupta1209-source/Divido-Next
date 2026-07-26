@@ -69,6 +69,12 @@ export const GroupMemberList: React.FC<GroupMemberListProps> = ({
   const cleanAdmin = adminName?.replace(/\s*\(me\)$/i, '').replace(/\s*\(Left\)$/i, '').toLowerCase();
 
   const checkIsMe = (name: string) => {
+    // If we are a guest and have not claimed an identity in this group yet,
+    // we do not match any member of this group.
+    const hasClaim = selectedId && localStorage.getItem(`divido_identity_${selectedId}`);
+    if (!hasClaim && cleanMe === 'you') {
+      return false;
+    }
     const cleanN = name.replace(/\s*\(me\)$/i, '').replace(/\s*\(Left\)$/i, '').toLowerCase();
     return cleanN === cleanMe;
   };
