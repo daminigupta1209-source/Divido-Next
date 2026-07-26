@@ -394,23 +394,17 @@ export const GroupHeader: React.FC<GroupHeaderProps> = ({
 
                     {(() => {
                       const cleanMe = me.replace(/\s*\(me\)$/i, '').replace(/\s*\(Left\)$/i, '').toLowerCase();
-                      const activeMembers = selectedGroup?.members?.filter(m => !m.endsWith(' (Left)')) || [];
-                      const adminName = activeMembers[0] || selectedGroup?.members?.[0];
-                      const cleanAdmin = adminName?.replace(/\s*\(me\)$/i, '').replace(/\s*\(Left\)$/i, '').toLowerCase();
-                      
                       const isActiveMember = selectedGroup?.members?.some(m => {
                         const cleanM = m.replace(/\s*\(me\)$/i, '').replace(/\s*\(Left\)$/i, '').toLowerCase();
                         return cleanM === cleanMe && !m.toLowerCase().endsWith(' (left)');
                       });
-                      
-                      const isUserAdmin = selectedId === 'STANDALONE' || (cleanAdmin === cleanMe && isActiveMember);
 
                       const actionItems = [
                         ...(selectedId !== 'STANDALONE' ? [{ emoji: '🔗', label: 'Share Group Link', onClick: () => { setShowGroupOptionsMenu(false); onShareShortcut && onShareShortcut(); } }] : []),
                         { emoji: '💱', label: 'Convert Currency', onClick: () => { setShowGroupOptionsMenu(false); setShowConvertModalId(selectedId); } },
                         { emoji: '📤', label: 'Export Data', onClick: () => { setShowGroupOptionsMenu(false); setShowExportMenu(true); } },
                         { emoji: '📊', label: 'Analytics Breakdown', onClick: () => { setShowGroupOptionsMenu(false); onOpenAnalytics && onOpenAnalytics(selectedId || 'ALL'); } },
-                        ...(isUserAdmin ? [{ emoji: '🗑️', label: 'Delete Group', onClick: () => { setShowGroupOptionsMenu(false); onDeleteGroup && onDeleteGroup(selectedId || ''); }, danger: true }] : []),
+                        ...(isActiveMember && selectedId !== 'STANDALONE' ? [{ emoji: '🚪', label: 'Leave Group', onClick: () => { setShowGroupOptionsMenu(false); onDeleteGroup && onDeleteGroup(selectedId || ''); }, danger: true }] : []),
                       ];
                       return actionItems.map((item) => (
                         <button
