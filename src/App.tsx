@@ -83,7 +83,8 @@ function App() {
   const [isSidebarOpen, setIsSidebarOpen] = useState<boolean>(false);
 
   const setShowExpModalSecure = (show: boolean) => {
-    if (show && !userEmail) {
+    const hasClaimedIdentity = selectedId && localStorage.getItem(`divido_identity_${selectedId}`);
+    if (show && !userEmail && !hasClaimedIdentity) {
       alert('Secure Google Sign-In is required to add or edit expenses. Redirecting you to the Profile page to sign in securely!');
       sessionStorage.setItem('divido_highlight_signin', 'true');
       setView('profile');
@@ -93,7 +94,8 @@ function App() {
   };
 
   const setEditingExpenseSecure = (exp: Expense | null) => {
-    if (exp && !userEmail) {
+    const hasClaimedIdentity = selectedId && localStorage.getItem(`divido_identity_${selectedId}`);
+    if (exp && !userEmail && !hasClaimedIdentity) {
       alert('Secure Google Sign-In is required to add or edit expenses. Redirecting you to the Profile page to sign in securely!');
       sessionStorage.setItem('divido_highlight_signin', 'true');
       setView('profile');
@@ -2206,15 +2208,22 @@ function App() {
                       } else {
                         // Normal claim flow
                         if (session?.user?.email) {
-                          // User is signed in: Request linking from the admin
+                          // User is signed in: Claim and activate immediately so RLS allows access
                           await supabase
                             .from('group_members')
                             .update({
-                              link_request_email: session.user.email,
-                              link_request_name: session.user.user_metadata?.full_name || session.user.email.split('@')[0],
+                              user_email: session.user.email,
+                              is_pending: false,
                             })
                             .eq('id', p.id);
-                          alert(`Join request sent! Waiting for group admin approval. ⏳`);
+                          
+                          localStorage.setItem('divido_username', p.name);
+                          localStorage.setItem('divido_authenticated', 'true');
+                          localStorage.setItem(`divido_identity_${linkRequestGroup.id}`, p.name);
+                          setUserName(p.name);
+                          setIsAuthenticated(true);
+                          
+                          alert(`Welcome, ${p.name}! You have successfully joined the group. 🎉`);
                         } else {
                           // Guest/Cookie claim (Tricount-style)
                           // 1. Mark as locally active in Supabase so others see they have joined

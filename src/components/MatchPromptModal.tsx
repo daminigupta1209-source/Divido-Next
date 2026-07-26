@@ -26,54 +26,50 @@ export const MatchPromptModal: React.FC<Props> = ({ prompt, onMatch, onDismiss }
         }}
       >
         {/* Header */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-          <div style={{ fontSize: '28px', textAlign: 'center' }}>🎉</div>
-          <h2 className="nunito" style={{ fontSize: '17px', fontWeight: 900, color: '#0F172A', margin: 0, textAlign: 'center' }}>
-            {prompt.newMemberName} just joined!
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', alignItems: 'center' }}>
+          <div style={{ fontSize: '32px' }}>✨</div>
+          <h2 className="nunito" style={{ fontSize: '18px', fontWeight: 900, color: '#0F172A', margin: '4px 0 0 0', textAlign: 'center' }}>
+            {prompt.newMemberName} joined!
           </h2>
-          <p style={{ margin: 0, fontSize: '13px', color: '#64748B', fontWeight: 600, textAlign: 'center', lineHeight: 1.5 }}>
-            Is this someone you were already tracking? Match them to a placeholder so their expenses link up correctly.
+          <p style={{ margin: 0, fontSize: '12px', color: '#64748B', fontWeight: 600, textAlign: 'center', lineHeight: 1.4 }}>
+            Link them to one of your pending placeholders to merge their expenses correctly.
           </p>
         </div>
 
         {/* Placeholder options */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-          <p style={{ margin: 0, fontSize: '11px', fontWeight: 700, color: '#94A3B8', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
-            Your pending friends
-          </p>
           {prompt.pendingPlaceholders.map((p) => (
             <button
               key={p.id}
               onClick={() => onMatch(prompt.newMemberRecordId, p.id)}
               style={{
                 width: '100%',
-                padding: '12px 16px',
+                padding: '10px 14px',
                 borderRadius: '12px',
-                border: '1.5px solid #E2E8F0',
+                border: '1.5px solid #F1F5F9',
                 background: '#F8FAFC',
                 display: 'flex',
                 alignItems: 'center',
                 gap: '10px',
                 cursor: 'pointer',
-                transition: 'all 0.15s',
+                transition: 'all 0.2s',
                 textAlign: 'left',
               }}
-              onMouseEnter={(e) => { e.currentTarget.style.borderColor = '#6366F1'; e.currentTarget.style.background = '#EEF2FF'; }}
-              onMouseLeave={(e) => { e.currentTarget.style.borderColor = '#E2E8F0'; e.currentTarget.style.background = '#F8FAFC'; }}
+              onMouseEnter={(e) => { e.currentTarget.style.borderColor = '#7C3AED'; e.currentTarget.style.background = '#F5F3FF'; }}
+              onMouseLeave={(e) => { e.currentTarget.style.borderColor = '#F1F5F9'; e.currentTarget.style.background = '#F8FAFC'; }}
             >
               <div style={{
-                width: '34px', height: '34px', borderRadius: '10px',
+                width: '30px', height: '30px', borderRadius: '8px',
                 background: '#EEF2FF', display: 'flex', alignItems: 'center',
-                justifyContent: 'center', fontSize: '16px', flexShrink: 0,
+                justifyContent: 'center', fontSize: '14px', flexShrink: 0,
               }}>
-                ⏳
+                👤
               </div>
-              <div>
-                <div style={{ fontSize: '14px', fontWeight: 800, color: '#0F172A' }}>{p.name}</div>
-                <div style={{ fontSize: '11px', color: '#94A3B8', fontWeight: 600 }}>Pending placeholder</div>
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div style={{ fontSize: '13px', fontWeight: 800, color: '#0F172A', textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap' }}>{p.name}</div>
               </div>
-              <div style={{ marginLeft: 'auto', fontSize: '11px', fontWeight: 700, color: '#6366F1' }}>
-                Yes, this is them →
+              <div style={{ fontSize: '11px', fontWeight: 800, color: '#7C3AED', flexShrink: 0 }}>
+                Link →
               </div>
             </button>
           ))}
@@ -83,23 +79,23 @@ export const MatchPromptModal: React.FC<Props> = ({ prompt, onMatch, onDismiss }
         <button
           onClick={() => onMatch(prompt.newMemberRecordId, null)}
           style={{
-            width: '100%', padding: '11px', borderRadius: '12px',
+            width: '100%', padding: '10px', borderRadius: '12px',
             border: '1.5px solid #E2E8F0', background: '#fff',
-            fontSize: '13px', fontWeight: 700, color: '#64748B',
+            fontSize: '12px', fontWeight: 800, color: '#64748B',
             cursor: 'pointer',
           }}
         >
-          No — {prompt.newMemberName} is a new person
+          No, they are a new person
         </button>
 
         <button
           onClick={onDismiss}
           style={{
-            background: 'none', border: 'none', fontSize: '12px',
-            color: '#94A3B8', cursor: 'pointer', fontWeight: 600,
+            background: 'none', border: 'none', fontSize: '11px',
+            color: '#94A3B8', cursor: 'pointer', fontWeight: 700,
           }}
         >
-          Remind me later
+          Close
         </button>
       </div>
     </div>
