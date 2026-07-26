@@ -107,6 +107,15 @@ export const MobileHeader: React.FC<MobileHeaderProps> = ({
   const [photoCaption, setPhotoCaption] = React.useState('');
   const [showAttachMenu, setShowAttachMenu] = React.useState(false);
   const [showCameraCapture, setShowCameraCapture] = React.useState(false);
+  const [showMobileBellMenu, setShowMobileBellMenu] = React.useState(false);
+
+  React.useEffect(() => {
+    const handleGlobalClick = () => {
+      setShowMobileBellMenu(false);
+    };
+    window.addEventListener('click', handleGlobalClick);
+    return () => window.removeEventListener('click', handleGlobalClick);
+  }, []);
 
   const addAttachmentDataUrl = (dataUrl: string) => {
     setSelectedPhoto(dataUrl);
@@ -337,6 +346,141 @@ export const MobileHeader: React.FC<MobileHeaderProps> = ({
                     <path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48" />
                   </svg>
                 </button>
+
+                <button
+                  onClick={(e) => { e.stopPropagation(); setShowMobileBellMenu(!showMobileBellMenu); }}
+                  style={{
+                    background: 'none',
+                    border: 'none',
+                    cursor: 'pointer',
+                    color: '#94A3B8',
+                    width: '44px',
+                    height: '44px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    flexShrink: 0,
+                    padding: 0,
+                    borderRadius: '8px',
+                    transition: '0.15s all',
+                    position: 'relative',
+                    marginRight: '-4px',
+                  }}
+                  onMouseEnter={(e) => { e.currentTarget.style.background = 'rgba(0,0,0,0.05)'; }}
+                  onMouseLeave={(e) => { e.currentTarget.style.background = 'none'; }}
+                  title="Group notifications"
+                >
+                  <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ color: '#94A3B8' }}>
+                    <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" />
+                    <path d="M13.73 21a2 2 0 0 1-3.46 0" />
+                  </svg>
+                  {(() => {
+                    const systemLogs = expenses.filter(e => String(e.gId) === String(selectedId) && e.paid === 'SYSTEM');
+                    if (systemLogs.length > 0) {
+                      return (
+                        <span
+                          style={{
+                            position: 'absolute',
+                            top: '5px',
+                            right: '5px',
+                            minWidth: '16px',
+                            height: '16px',
+                            borderRadius: '50%',
+                            background: '#FF4B4B',
+                            color: '#FFFFFF',
+                            fontSize: '9px',
+                            fontWeight: 900,
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            padding: '0 3px',
+                            border: '1.5px solid #FDFBF7',
+                            boxSizing: 'border-box',
+                            lineHeight: 1,
+                          }}
+                        >
+                          {systemLogs.length}
+                        </span>
+                      );
+                    }
+                    return null;
+                  })()}
+                </button>
+
+                {/* Mobile Group Notifications Dropdown */}
+                {showMobileBellMenu && (() => {
+                  const systemLogs = expenses.filter(e => String(e.gId) === String(selectedId) && e.paid === 'SYSTEM');
+                  const getSystemTitle = (title: string) => {
+                    const cleanMe = me.replace(/\s*\(me\)$/i, '').replace(/\s*\(Left\)$/i, '').toLowerCase();
+                    const leftMatch = `${cleanMe} left`;
+                    const removedMatch = `${cleanMe} was removed`;
+                    const rejoinedMatch = `${cleanMe} rejoined`;
+                    const lowerTitle = title.toLowerCase();
+
+                    if (lowerTitle.startsWith(leftMatch)) return '🚪 You left';
+                    if (lowerTitle.startsWith(removedMatch)) return '🚫 You were removed';
+                    if (lowerTitle.startsWith(rejoinedMatch)) return '🎉 You rejoined';
+
+                    if (lowerTitle.endsWith(' left')) return `🚪 ${title}`;
+                    if (lowerTitle.endsWith(' was removed')) return `🚫 ${title}`;
+                    if (lowerTitle.endsWith(' rejoined')) return `🎉 ${title}`;
+                    return title;
+                  };
+                  const formatDateMobile = (dStr: string) => {
+                    const parts = dStr.split('-');
+                    if (parts.length === 3) {
+                      const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+                      const day = parseInt(parts[2], 10);
+                      const month = months[parseInt(parts[1], 10) - 1];
+                      const year = parts[0];
+                      return `${day} ${month} ${year}`;
+                    }
+                    return dStr;
+                  };
+
+                  return (
+                    <div
+                      className="card shadow-lg"
+                      onClick={(e) => e.stopPropagation()}
+                      style={{
+                        position: 'absolute',
+                        right: '12px',
+                        top: 'calc(100% + 4px)',
+                        padding: '12px',
+                        borderRadius: '16px',
+                        background: '#FFFFFF',
+                        border: '1px solid #E2E8F0',
+                        boxShadow: '0 10px 25px -5px rgba(0, 0, 0, 0.08), 0 8px 10px -6px rgba(0, 0, 0, 0.08)',
+                        zIndex: 99999,
+                        width: '230px',
+                        maxHeight: '260px',
+                        overflowY: 'auto',
+                      }}
+                    >
+                      <div style={{ fontSize: '11px', fontWeight: 800, color: '#475569', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '8px', borderBottom: '1px solid #F1F5F9', paddingBottom: '6px', textAlign: 'left' }}>
+                        Updates Log 🔔
+                      </div>
+                      {systemLogs.length === 0 ? (
+                        <div style={{ padding: '16px 8px', fontSize: '12px', color: '#94A3B8', textAlign: 'center' }}>
+                          No recent updates
+                        </div>
+                      ) : (
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                          {systemLogs.slice().reverse().map((log, idx) => (
+                            <div key={idx} style={{ display: 'flex', flexDirection: 'column', gap: '2px', padding: '6px 8px', borderRadius: '8px', background: '#F8FAFC', border: '1px solid #F1F5F9', textAlign: 'left' }}>
+                              <div style={{ fontSize: '11px', color: '#334155', fontWeight: 700 }}>
+                                {getSystemTitle(log.title)}
+                              </div>
+                              <div style={{ fontSize: '8.5px', color: '#94A3B8', textAlign: 'right' }}>
+                                {formatDateMobile(log.date)}
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  );
+                })()}
 
                 <button
                   onClick={(e) => {

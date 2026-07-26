@@ -333,20 +333,37 @@ export const GroupHeader: React.FC<GroupHeaderProps> = ({
                     <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" />
                     <path d="M13.73 21a2 2 0 0 1-3.46 0" />
                   </svg>
-                  {expenses.some(e => String(e.gId) === String(selectedId) && e.paid === 'SYSTEM') && (
-                    <span
-                      style={{
-                        position: 'absolute',
-                        top: '8px',
-                        right: '8px',
-                        width: '8px',
-                        height: '8px',
-                        borderRadius: '50%',
-                        background: '#EF4444',
-                        border: '1.5px solid #FFFFFF',
-                      }}
-                    />
-                  )}
+                  {(() => {
+                    const systemLogs = expenses.filter(e => String(e.gId) === String(selectedId) && e.paid === 'SYSTEM');
+                    if (systemLogs.length > 0) {
+                      return (
+                        <span
+                          style={{
+                            position: 'absolute',
+                            top: '4px',
+                            right: '4px',
+                            minWidth: '16px',
+                            height: '16px',
+                            borderRadius: '50%',
+                            background: '#FF4B4B',
+                            color: '#FFFFFF',
+                            fontSize: '9px',
+                            fontWeight: 900,
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            padding: '0 3px',
+                            border: '1.5px solid #FFFFFF',
+                            boxSizing: 'border-box',
+                            lineHeight: 1,
+                          }}
+                        >
+                          {systemLogs.length}
+                        </span>
+                      );
+                    }
+                    return null;
+                  })()}
                 </button>
 
                 {/* Group Notifications Dropdown */}

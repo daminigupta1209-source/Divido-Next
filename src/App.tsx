@@ -1506,6 +1506,7 @@ function App() {
           selectedGroup={selectedGroup}
           me={me}
           groups={groups}
+          expenses={expenses}
           setGroups={setGroups}
           setIsSidebarOpen={setIsSidebarOpen}
           setView={setView}
@@ -1541,7 +1542,6 @@ function App() {
           isHeaderSearchActive={isHeaderSearchActive}
           setIsHeaderSearchActive={setIsHeaderSearchActive}
           onOpenConvert={() => setShowFriendsConvert(true)}
-          expenses={expenses}
           setExpenses={setExpenses}
           setShowExpModal={setShowExpModalSecure}
           setEditingExpense={setEditingExpenseSecure}
