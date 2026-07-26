@@ -50,7 +50,17 @@ export function useSupabaseSync({
   const syncStatus = useMemo<'synced' | 'syncing' | 'offline' | 'demo'>(() => {
     if (checkIfDemoMode()) return 'demo';
     if (!isOnline) return 'offline';
-    const hasUnsyncedGroups = JSON.stringify(groups) !== JSON.stringify(prevGroupsRef.current);
+    const normalize = (arr: Group[]) =>
+      arr.map(g => ({
+        id: g.id,
+        name: g.name,
+        currency: g.currency,
+        emoji: g.emoji,
+        simplifyDebts: g.simplifyDebts,
+        members: [...(g.members || [])].sort()
+      }));
+    const nonDraft = groups.filter(g => g.name.trim() !== '' && typeof g.id === 'number' && g.id <= 2147483647);
+    const hasUnsyncedGroups = JSON.stringify(normalize(nonDraft)) !== JSON.stringify(normalize(prevGroupsRef.current));
     const hasUnsyncedExpenses = JSON.stringify(expenses) !== JSON.stringify(prevExpensesRef.current);
     return (hasUnsyncedGroups || hasUnsyncedExpenses) ? 'syncing' : 'synced';
   }, [groups, expenses, isOnline]);
@@ -81,8 +91,18 @@ export function useSupabaseSync({
           console.log('Offline. Skipping cloud load.');
           return;
         }
-        const nonDraftGroups = groups.filter(g => g.name.trim() !== '' || (typeof g.id === 'number' && g.id <= 2147483647));
-        const hasUnsyncedGroups = JSON.stringify(nonDraftGroups) !== JSON.stringify(prevGroupsRef.current);
+        const normalizeGroupsForDiff = (arr: Group[]) =>
+          arr.map(g => ({
+            id: g.id,
+            name: g.name,
+            currency: g.currency,
+            emoji: g.emoji,
+            simplifyDebts: g.simplifyDebts,
+            members: [...(g.members || [])].sort()
+          }));
+
+        const nonDraftGroups = groups.filter(g => g.name.trim() !== '' && typeof g.id === 'number' && g.id <= 2147483647);
+        const hasUnsyncedGroups = JSON.stringify(normalizeGroupsForDiff(nonDraftGroups)) !== JSON.stringify(normalizeGroupsForDiff(prevGroupsRef.current));
         const hasUnsyncedExpenses = JSON.stringify(expenses) !== JSON.stringify(prevExpensesRef.current);
         if (hasUnsyncedGroups || hasUnsyncedExpenses) {
           console.log('Unsynced offline changes detected. Skipping load until sync is complete.', 'groups mismatch:', hasUnsyncedGroups, 'expenses mismatch:', hasUnsyncedExpenses);
