@@ -506,6 +506,7 @@ export function useGroupDetailForm({
 
   const filtered = expenses.filter((e) => {
     if (String(e.gId) !== String(selectedId)) return false;
+    if (e.paid === 'SYSTEM') return false;
     const splitters = e.splitters || selectedGroup?.members || [];
     if (filter !== 'all' && e.paid !== filter && !splitters.includes(filter)) return false;
     if (dateRange !== 'all') {
@@ -612,7 +613,7 @@ export function useGroupDetailForm({
     };
   }, [selectedId, expenses, selectedGroup, me]);
 
-  const hasExpenses = expenses.some((e) => String(e.gId) === String(selectedId));
+  const hasExpenses = expenses.some((e) => String(e.gId) === String(selectedId) && e.paid !== 'SYSTEM');
   const groupUniqueTags = useMemo(() => Array.from(new Set(expenses.filter(e => String(e.gId) === String(selectedId)).flatMap(e => e.tags || []))), [expenses, selectedId]);
 
   return {
