@@ -433,11 +433,17 @@ export const MobileHeader: React.FC<MobileHeaderProps> = ({
 
                     {/* Action Buttons */}
                     {(() => {
-                      const cleanMe = me.replace(/\s*\(Left\)$/i, '').toLowerCase();
+                      const cleanMe = me.replace(/\s*\(me\)$/i, '').replace(/\s*\(Left\)$/i, '').toLowerCase();
                       const activeMembers = selectedGroup?.members?.filter(m => !m.endsWith(' (Left)')) || [];
                       const adminName = activeMembers[0] || selectedGroup?.members?.[0];
                       const cleanAdmin = adminName?.replace(/\s*\(me\)$/i, '').replace(/\s*\(Left\)$/i, '').toLowerCase();
-                      const isUserAdmin = selectedId === 'STANDALONE' || cleanAdmin === cleanMe;
+                      
+                      const isActiveMember = selectedGroup?.members?.some(m => {
+                        const cleanM = m.replace(/\s*\(me\)$/i, '').replace(/\s*\(Left\)$/i, '').toLowerCase();
+                        return cleanM === cleanMe && !m.toLowerCase().endsWith(' (left)');
+                      });
+                      
+                      const isUserAdmin = selectedId === 'STANDALONE' || (cleanAdmin === cleanMe && isActiveMember);
 
                       const actionItems = [
                         ...(selectedId !== 'STANDALONE' ? [{ emoji: '🔗', label: 'Share Group Link', onClick: () => { setMobileShowGroupOptionsMenu(false); onInviteFriend && onInviteFriend(); } }] : []),

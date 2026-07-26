@@ -209,8 +209,15 @@ export const GroupDetail: React.FC<GroupDetailProps> = ({
 
       {/* Past Member Rejoin Banner */}
       {(() => {
-        const isActiveMember = selectedGroup.members.some(m => m.toLowerCase() === me.toLowerCase());
-        const isPastMember = selectedGroup.members.some(m => m.toLowerCase() === (me + ' (Left)').toLowerCase());
+        const cleanMe = me.replace(/\s*\(me\)$/i, '').replace(/\s*\(Left\)$/i, '').toLowerCase();
+        const isActiveMember = selectedGroup.members.some(m => {
+          const cleanM = m.replace(/\s*\(me\)$/i, '').replace(/\s*\(Left\)$/i, '').toLowerCase();
+          return cleanM === cleanMe && !m.toLowerCase().endsWith(' (left)');
+        });
+        const isPastMember = selectedGroup.members.some(m => {
+          const cleanM = m.replace(/\s*\(me\)$/i, '').replace(/\s*\(Left\)$/i, '').toLowerCase();
+          return cleanM === cleanMe && m.toLowerCase().endsWith(' (left)');
+        });
         if (isActiveMember || !isPastMember) return null;
         return (
           <div
