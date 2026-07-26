@@ -1137,7 +1137,19 @@ function App() {
         title: 'Remove Group?',
         desc: `Are you sure you want to remove "${g.name}" from your dashboard? You will no longer see this group or its history.`,
         type: 'danger',
-        onConfirm: () => {
+        onConfirm: async () => {
+          if (!checkIfDemoMode() && isAuthenticated) {
+            try {
+              // Delete our group_members row on Supabase
+              await supabase
+                .from('group_members')
+                .delete()
+                .eq('group_id', id)
+                .ilike('name', me + ' (Left)');
+            } catch (err) {
+              console.error('Failed to delete left member row from Supabase:', err);
+            }
+          }
           setGroups(groups.filter((x) => String(x.id) !== String(id)));
           if (String(selectedId) === String(id)) setView('summary');
           setConfirmState({ show: false });
@@ -1719,7 +1731,7 @@ function App() {
               if (selectedId && selectedId !== 'STANDALONE') {
                 try {
                   const { data: { session } } = await supabase.auth.getSession();
-                  const myEmail = session?.user?.email;
+                  const myEmail = session?.user?.email || null;
 
                   const searchName = me + ' (Left)';
                   const { data: matched } = await supabase
@@ -1730,65 +1742,49 @@ function App() {
                     .maybeSingle();
 
                   if (matched) {
-                    if (!myEmail) {
-                      // Guest user rejoining directly without email requirement
-                      await supabase
-                        .from('group_members')
-                        .update({
-                          name: me,
-                          is_pending: false,
-                          user_email: null,
-                          link_request_email: null,
-                          link_request_name: null,
-                        })
-                        .eq('id', matched.id);
-
-                      alert(`Welcome back to the group, ${me}! 🎉`);
-                      setGroups((prev) => [...prev]);
-                      return;
-                    }
                     await supabase
                       .from('group_members')
                       .update({
-                        link_request_email: myEmail,
-                        link_request_name: me,
-                        is_pending: true
+                        name: me,
+                        is_pending: false,
+                        user_email: myEmail,
+                        link_request_email: null,
+                        link_request_name: null,
                       })
                       .eq('id', matched.id);
 
-                    // Notify group admin/members
+                    // Insert system notification of rejoin
                     try {
-                      const { data: activeMems } = await supabase
-                        .from('group_members')
-                        .select('user_email')
-                        .eq('group_id', selectedId)
-                        .not('user_email', 'is', null);
-
-                      if (activeMems && activeMems.length > 0) {
-                        const { pushNotification } = await import('./lib/notifications');
-                        const grp = groups.find((g) => String(g.id) === String(selectedId));
-                        for (const mem of activeMems) {
-                          if (mem.user_email && mem.user_email !== myEmail) {
-                            await pushNotification({
-                              recipientEmail: mem.user_email,
-                              type: 'join',
-                              title: `${me} requested to rejoin ${grp?.name || 'group'}`,
-                              body: `${me} wants to join back the group. Approve them from the Members list.`,
-                              fromName: me,
-                              groupId: selectedId,
-                            });
-                          }
-                        }
-                      }
+                      await supabase
+                        .from('expenses')
+                        .insert({
+                          group_id: selectedId,
+                          title: `${me} rejoined`,
+                          amt: 0,
+                          paid: 'SYSTEM',
+                          date: new Date().toISOString().split('T')[0],
+                          mode: 'Equally',
+                          splitters: []
+                        });
                     } catch (e) {
-                      console.error('Rejoin request notification failed:', e);
+                      console.error('Failed to log rejoin activity:', e);
                     }
 
-                    alert('Rejoin request sent successfully! Waiting for group admin approval. ⏳');
-                    setGroups((prev) => [...prev]);
+                    alert(`Welcome back to the group, ${me}! 🎉`);
+
+                    // Update local groups state immediately
+                    setGroups(groups.map((g) => {
+                      if (String(g.id) === String(selectedId)) {
+                        return {
+                          ...g,
+                          members: g.members.map((m) => (m.toLowerCase() === searchName.toLowerCase() ? me : m))
+                        };
+                      }
+                      return g;
+                    }));
                   }
                 } catch (err) {
-                  console.error('Failed to send rejoin request:', err);
+                  console.error('Failed to rejoin group:', err);
                 }
               }
             }}
