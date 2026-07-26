@@ -240,7 +240,11 @@ function App() {
     }
 
     if (window.location.hash !== targetHash) {
-      window.history.pushState(null, '', targetHash);
+      if (targetHash === '#/' && window.location.hash === '') {
+        window.history.replaceState(null, '', targetHash);
+      } else {
+        window.location.hash = targetHash;
+      }
     }
   }, [view, selectedId]);
 
