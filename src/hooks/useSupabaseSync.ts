@@ -245,7 +245,7 @@ export function useSupabaseSync({
         // If it was a new user requesting to match a placeholder, trigger matching popup
         if (payload.eventType === 'INSERT') {
           const newRow = payload.new as any;
-          if (newRow.is_pending) {
+          if (newRow.is_pending && !newRow.name.toLowerCase().endsWith(' (left)')) {
             const { data: { session } } = await supabase.auth.getSession();
             if (session?.user?.email && newRow.user_email !== session.user.email) {
               const myGroup = groupsRef.current.find(g => String(g.id) === String(newRow.group_id));
