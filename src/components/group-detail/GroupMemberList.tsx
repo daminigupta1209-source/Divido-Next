@@ -65,7 +65,21 @@ export const GroupMemberList: React.FC<GroupMemberListProps> = ({
 
   const activeMembers = selectedGroup.members.filter((m) => !m.endsWith(' (Left)'));
   const adminName = activeMembers[0] || selectedGroup.members[0];
-  const isAdmin = adminName === me || adminName === 'You';
+  const cleanMe = me.replace(/\s*\(me\)$/i, '').replace(/\s*\(Left\)$/i, '').toLowerCase();
+  const cleanAdmin = adminName?.replace(/\s*\(me\)$/i, '').replace(/\s*\(Left\)$/i, '').toLowerCase();
+
+  const checkIsMe = (name: string) => {
+    const cleanN = name.replace(/\s*\(me\)$/i, '').replace(/\s*\(Left\)$/i, '').toLowerCase();
+    return cleanN === cleanMe;
+  };
+
+  const checkIsAdmin = (name: string) => {
+    if (!cleanAdmin) return false;
+    const cleanN = name.replace(/\s*\(me\)$/i, '').replace(/\s*\(Left\)$/i, '').toLowerCase();
+    return cleanN === cleanAdmin;
+  };
+
+  const isAdmin = checkIsMe(adminName || '');
 
   const handleInlineSave = (oldName: string) => {
     const trimmed = inlineRenameVal.trim();
@@ -187,16 +201,16 @@ export const GroupMemberList: React.FC<GroupMemberListProps> = ({
                         />
                       ) : (
                         <span
-                          title={m === me ? "Click to edit name ✏️" : undefined}
+                          title={checkIsMe(m) ? "Click to edit name ✏️" : undefined}
                           style={{
                             fontWeight: 'bold',
                             fontSize: '12px',
                             color: '#334155',
-                            cursor: m === me ? 'pointer' : 'default',
-                            textDecoration: m === me ? 'underline dotted rgba(0,0,0,0.1)' : 'none',
+                            cursor: checkIsMe(m) ? 'pointer' : 'default',
+                            textDecoration: checkIsMe(m) ? 'underline dotted rgba(0,0,0,0.1)' : 'none',
                           }}
                           onClick={(e) => {
-                            if (m !== me) {
+                            if (!checkIsMe(m)) {
                               alert("Only this member can rename themselves.");
                               return;
                             }
@@ -205,7 +219,7 @@ export const GroupMemberList: React.FC<GroupMemberListProps> = ({
                             setInlineRenameVal(m);
                           }}
                         >
-                          {m === me ? 'You' : m} {m === adminName && <span style={{ fontSize: '10px', fontWeight: 800, color: '#7C3AED', background: '#F5F3FF', padding: '1px 6px', borderRadius: '4px', marginLeft: '6px' }}>Admin</span>} {m === me && <span style={{ fontSize: '11px', marginLeft: '8px', opacity: 0.6 }}>✏️</span>}
+                          {checkIsMe(m) ? 'You' : m.replace(/\s*\(me\)$/i, '')} {checkIsAdmin(m) && <span style={{ fontSize: '10px', fontWeight: 800, color: '#7C3AED', background: '#F5F3FF', padding: '1px 6px', borderRadius: '4px', marginLeft: '6px' }}>Admin</span>} {checkIsMe(m) && <span style={{ fontSize: '11px', marginLeft: '8px', opacity: 0.6 }}>✏️</span>}
                         </span>
                       )}
                       
@@ -216,11 +230,11 @@ export const GroupMemberList: React.FC<GroupMemberListProps> = ({
                           </span>
                         )}
                         
-                        {(isAdmin || m === me) && (
+                        {(isAdmin || checkIsMe(m)) && (
                           <span
                             onClick={async (e) => {
                               e.stopPropagation();
-                              const promptMsg = m === me 
+                              const promptMsg = checkIsMe(m) 
                                 ? `Are you sure you want to leave this group? Your transaction history will be preserved.`
                                 : `Remove "${m}" from the group? This will shift them to Past Members and keep past history.`;
                               if (confirm(promptMsg)) {
@@ -236,7 +250,7 @@ export const GroupMemberList: React.FC<GroupMemberListProps> = ({
                               fontWeight: 'bold',
                               padding: '0 4px',
                             }}
-                            title={m === me ? "Leave group" : "Remove member"}
+                            title={checkIsMe(m) ? "Leave group" : "Remove member"}
                           >✕</span>
                         )}
                       </div>
@@ -307,7 +321,7 @@ export const GroupMemberList: React.FC<GroupMemberListProps> = ({
                             setInlineRenameVal(m);
                           }}
                         >
-                          {m === me ? 'You' : m} {m === adminName && <span style={{ fontSize: '10px', fontWeight: 800, color: '#7C3AED', background: '#F5F3FF', padding: '1px 6px', borderRadius: '4px', marginLeft: '6px' }}>Admin</span>} <span style={{ fontSize: '11px', marginLeft: '8px', opacity: 0.6 }}>✏️</span>
+                          {checkIsMe(m) ? 'You' : m.replace(/\s*\(me\)$/i, '')} {checkIsAdmin(m) && <span style={{ fontSize: '10px', fontWeight: 800, color: '#7C3AED', background: '#F5F3FF', padding: '1px 6px', borderRadius: '4px', marginLeft: '6px' }}>Admin</span>} <span style={{ fontSize: '11px', marginLeft: '8px', opacity: 0.6 }}>✏️</span>
                         </span>
                       )}
                     </div>
@@ -340,13 +354,13 @@ export const GroupMemberList: React.FC<GroupMemberListProps> = ({
                       >
                         Remind
                       </button>
-                      {selectedId !== 'STANDALONE' && (isAdmin || m === me) && (
+                      {selectedId !== 'STANDALONE' && (isAdmin || checkIsMe(m)) && (
                         <span
                           style={{ cursor: 'pointer', opacity: 0.6, fontSize: '13px', color: '#EF4444', fontWeight: 'bold' }}
                           title="Remove member"
                           onClick={(e) => {
                             e.stopPropagation();
-                            const promptMsg = m === me 
+                            const promptMsg = checkIsMe(m) 
                               ? `Are you sure you want to leave this group? Your transaction history will be preserved.`
                               : `Remove "${m}" from the group? This will shift them to Past Members and keep past history.`;
                             if (confirm(promptMsg)) {
@@ -401,7 +415,7 @@ export const GroupMemberList: React.FC<GroupMemberListProps> = ({
                         }}
                       >
                         <span style={{ fontWeight: 'bold', fontSize: '12px', color: '#64748B', textDecoration: 'line-through' }}>
-                           {cleanName === me ? 'You' : cleanName} {cleanName === adminName?.replace(' (Left)', '') && <span style={{ fontSize: '10px', fontWeight: 800, color: '#7C3AED', background: '#F5F3FF', padding: '1px 6px', borderRadius: '4px', marginLeft: '6px' }}>Admin</span>}
+                           {checkIsMe(cleanName) ? 'You' : cleanName} {checkIsAdmin(cleanName) && <span style={{ fontSize: '10px', fontWeight: 800, color: '#7C3AED', background: '#F5F3FF', padding: '1px 6px', borderRadius: '4px', marginLeft: '6px' }}>Admin</span>}
                         </span>
                         
                         {isAdmin && (
