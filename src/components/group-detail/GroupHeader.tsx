@@ -393,19 +393,18 @@ export const GroupHeader: React.FC<GroupHeaderProps> = ({
                     </div>
 
                     {(() => {
-                      const isActiveMember = selectedId !== 'STANDALONE' && selectedGroup?.members?.some(m => m.toLowerCase() === me.toLowerCase());
                       const cleanMe = me.replace(/\s*\(Left\)$/i, '').toLowerCase();
-                      const isPastMember = selectedId !== 'STANDALONE' && !isActiveMember && selectedGroup?.members?.some(m => {
-                        const cleanM = m.replace(/\s*\(Left\)$/i, '').toLowerCase();
-                        return (cleanM === cleanMe || cleanM.startsWith(cleanMe) || cleanMe.startsWith(cleanM)) && m.toLowerCase().endsWith(' (left)');
-                      });
-                      console.log('[DEBUG] GroupHeader isPastMember:', { isPastMember, me, cleanMe, members: selectedGroup?.members });
+                      const activeMembers = selectedGroup?.members?.filter(m => !m.endsWith(' (Left)')) || [];
+                      const adminName = activeMembers[0] || selectedGroup?.members?.[0];
+                      const cleanAdmin = adminName?.replace(/\s*\(me\)$/i, '').replace(/\s*\(Left\)$/i, '').toLowerCase();
+                      const isUserAdmin = selectedId === 'STANDALONE' || cleanAdmin === cleanMe;
+
                       const actionItems = [
                         ...(selectedId !== 'STANDALONE' ? [{ emoji: '🔗', label: 'Share Group Link', onClick: () => { setShowGroupOptionsMenu(false); onShareShortcut && onShareShortcut(); } }] : []),
                         { emoji: '💱', label: 'Convert Currency', onClick: () => { setShowGroupOptionsMenu(false); setShowConvertModalId(selectedId); } },
                         { emoji: '📤', label: 'Export Data', onClick: () => { setShowGroupOptionsMenu(false); setShowExportMenu(true); } },
                         { emoji: '📊', label: 'Analytics Breakdown', onClick: () => { setShowGroupOptionsMenu(false); onOpenAnalytics && onOpenAnalytics(selectedId || 'ALL'); } },
-                        { emoji: (selectedId !== 'STANDALONE' && (selectedGroup?.members?.length ?? 0) > 1 && !isPastMember) ? '🚪' : '🗑️', label: (selectedId !== 'STANDALONE' && (selectedGroup?.members?.length ?? 0) > 1 && !isPastMember) ? 'Leave Group' : 'Delete Group', onClick: () => { setShowGroupOptionsMenu(false); onDeleteGroup && onDeleteGroup(selectedId || ''); }, danger: true },
+                        ...(isUserAdmin ? [{ emoji: '🗑️', label: 'Delete Group', onClick: () => { setShowGroupOptionsMenu(false); onDeleteGroup && onDeleteGroup(selectedId || ''); }, danger: true }] : []),
                       ];
                       return actionItems.map((item) => (
                         <button
