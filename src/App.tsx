@@ -1285,14 +1285,31 @@ function App() {
     setConfirmState({
       show: true,
       title: 'Logout?',
-      desc: 'Are you sure you want to log out? Your groups and expenses will remain saved safely on this device.',
+      desc: 'Are you sure you want to log out? This will clear all data from this device.',
       type: 'logout',
       onConfirm: async () => {
         await supabase.auth.signOut();
+        // Clear local storage completely for app data
         localStorage.removeItem('divido_authenticated');
         localStorage.removeItem('divido_username');
         localStorage.removeItem('divido_usermetadata');
+        localStorage.removeItem('divido_groups');
+        localStorage.removeItem('divido_expenses');
+        localStorage.removeItem('divido_last_synced_groups');
+        localStorage.removeItem('divido_last_synced_expenses');
+        
+        // Remove all group identity claims keys
+        for (let i = localStorage.length - 1; i >= 0; i--) {
+          const key = localStorage.key(i);
+          if (key && key.startsWith('divido_identity_')) {
+            localStorage.removeItem(key);
+          }
+        }
+
+        // Reset React state to clean slate
         setUserName('You');
+        setGroups([{ id: 'STANDALONE', name: 'Non-Group Expenses', members: [] as string[], currency: '₹' }]);
+        setExpenses([]);
         setIsAuthenticated(false);
         setConfirmState({ show: false });
       },
