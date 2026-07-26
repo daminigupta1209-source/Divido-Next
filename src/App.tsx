@@ -199,23 +199,38 @@ function App() {
   // We keep a ref flag so the popstate listener and the state-pusher don't fight.
   const navFromPop = React.useRef(false);
 
+  // Collect all overlay/popup open states into one flag for the router.
+  const anyOverlayOpen = showExpModal || showSettleModal || showAddFriendModal
+    || confirmState.show || !!qrModalData || !!showConvertModalId || !!matchPrompt
+    || !!linkRequestGroup || showDeleteAccountModal || showNotifPanel
+    || mobileShowGroupOptionsMenu || showGlobalAddMenu;
+
   // 1. Listen for the browser "back" / "forward" events.
   useEffect(() => {
     const onPopState = (e: PopStateEvent) => {
       const st = e.state;
 
-      // First priority: if any modal is open, close it instead of navigating.
+      // First priority: if any overlay is open, close it instead of navigating.
       if (showExpModal) { setShowExpModal(false); return; }
       if (showSettleModal) { setShowSettleModal(false); return; }
       if (showAddFriendModal) { setShowAddFriendModal(false); return; }
+      if (confirmState.show) { setConfirmState({ show: false }); return; }
+      if (qrModalData) { setQrModalData(null); return; }
+      if (showConvertModalId) { setShowConvertModalId(null); return; }
+      if (matchPrompt) { setMatchPrompt(null); return; }
+      if (linkRequestGroup) { setLinkRequestGroup(null); return; }
+      if (showDeleteAccountModal) { setShowDeleteAccountModal(false); return; }
+      if (showNotifPanel) { setShowNotifPanel(false); return; }
+      if (mobileShowGroupOptionsMenu) { setMobileShowGroupOptionsMenu(false); return; }
+      if (showGlobalAddMenu) { setShowGlobalAddMenu(false); return; }
+
 
       if (st && st._divido) {
         navFromPop.current = true;
         setView(st.view || 'summary');
         setSelectedId(st.selectedId ?? null);
       } else {
-        // No Divido state – user is about to leave the app. Push current state back
-        // so the next swipe-back can still navigate within the app.
+        // No Divido state – prevent leaving the app entirely.
         window.history.pushState({ _divido: true, view, selectedId }, '');
       }
     };
@@ -227,7 +242,11 @@ function App() {
     }
 
     return () => window.removeEventListener('popstate', onPopState);
-  }, [showExpModal, showSettleModal, showAddFriendModal, view, selectedId]);
+  }, [anyOverlayOpen, showExpModal, showSettleModal, showAddFriendModal,
+      confirmState.show, qrModalData, showConvertModalId, matchPrompt,
+      linkRequestGroup, showDeleteAccountModal, showNotifPanel,
+      mobileShowGroupOptionsMenu, showGlobalAddMenu,
+      view, selectedId]);
 
   // 2. Push a new history entry whenever the app navigates internally.
   useEffect(() => {
@@ -242,12 +261,12 @@ function App() {
     window.history.pushState({ _divido: true, view, selectedId }, '');
   }, [view, selectedId]);
 
-  // 3. Push a history entry when modals open so back-button can close them.
+  // 3. Push a history entry when any overlay opens so back-button can close it.
   useEffect(() => {
-    if (showExpModal || showSettleModal || showAddFriendModal) {
+    if (anyOverlayOpen) {
       window.history.pushState({ _divido: true, view, selectedId, modal: true }, '');
     }
-  }, [showExpModal, showSettleModal, showAddFriendModal]);
+  }, [anyOverlayOpen]);
 
   // Header search should never linger — close it when leaving the home / settle pages.
   useEffect(() => {
