@@ -234,7 +234,6 @@ export const GroupDetail: React.FC<GroupDetailProps> = ({
                   onDeleteGroup(selectedGroup.id);
                 }
               }}
-              className="hover-up"
               style={{
                 flex: 1,
                 height: '38px',
@@ -249,15 +248,21 @@ export const GroupDetail: React.FC<GroupDetailProps> = ({
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                transition: '0.2s all ease',
+                transition: '0.15s all ease',
               }}
               onMouseEnter={(e) => {
                 e.currentTarget.style.transform = 'scale(1.02)';
-                e.currentTarget.style.background = 'rgba(239, 68, 68, 0.04)';
+                e.currentTarget.style.background = 'rgba(239, 68, 68, 0.05)';
               }}
               onMouseLeave={(e) => {
                 e.currentTarget.style.transform = 'scale(1)';
                 e.currentTarget.style.background = 'transparent';
+              }}
+              onMouseDown={(e) => {
+                e.currentTarget.style.transform = 'scale(0.96)';
+              }}
+              onMouseUp={(e) => {
+                e.currentTarget.style.transform = 'scale(1.02)';
               }}
             >
               Delete Group
@@ -269,7 +274,6 @@ export const GroupDetail: React.FC<GroupDetailProps> = ({
                   await onRequestRejoin();
                 }
               }}
-              className="hover-up"
               style={{
                 flex: 1,
                 height: '38px',
@@ -284,15 +288,21 @@ export const GroupDetail: React.FC<GroupDetailProps> = ({
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                transition: '0.2s all ease',
+                transition: '0.15s all ease',
               }}
               onMouseEnter={(e) => {
                 e.currentTarget.style.transform = 'scale(1.02)';
-                e.currentTarget.style.background = 'rgba(217, 119, 6, 0.04)';
+                e.currentTarget.style.background = 'rgba(217, 119, 6, 0.05)';
               }}
               onMouseLeave={(e) => {
                 e.currentTarget.style.transform = 'scale(1)';
                 e.currentTarget.style.background = 'transparent';
+              }}
+              onMouseDown={(e) => {
+                e.currentTarget.style.transform = 'scale(0.96)';
+              }}
+              onMouseUp={(e) => {
+                e.currentTarget.style.transform = 'scale(1.02)';
               }}
             >
               Rejoin
