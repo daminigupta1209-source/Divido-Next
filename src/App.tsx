@@ -1046,7 +1046,7 @@ function App() {
     const cleanMe = me.replace(/\s*\(Left\)$/i, '').toLowerCase();
     const isPastMember = !isStandalone && g.members.some(m => {
       const cleanM = m.replace(/\s*\(Left\)$/i, '').toLowerCase();
-      return cleanM === cleanMe && m.toLowerCase().endsWith(' (left)');
+      return (cleanM === cleanMe || cleanM.startsWith(cleanMe) || cleanMe.startsWith(cleanM)) && m.toLowerCase().endsWith(' (left)');
     });
     const hasOthers = !isStandalone && g.members && g.members.length > 1;
 

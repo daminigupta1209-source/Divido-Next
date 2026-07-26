@@ -396,7 +396,7 @@ export const GroupHeader: React.FC<GroupHeaderProps> = ({
                       const cleanMe = me.replace(/\s*\(Left\)$/i, '').toLowerCase();
                       const isPastMember = selectedId !== 'STANDALONE' && selectedGroup?.members?.some(m => {
                         const cleanM = m.replace(/\s*\(Left\)$/i, '').toLowerCase();
-                        return cleanM === cleanMe && m.toLowerCase().endsWith(' (left)');
+                        return (cleanM === cleanMe || cleanM.startsWith(cleanMe) || cleanMe.startsWith(cleanM)) && m.toLowerCase().endsWith(' (left)');
                       });
                       console.log('[DEBUG] GroupHeader isPastMember:', { isPastMember, me, cleanMe, members: selectedGroup?.members });
                       const actionItems = [
