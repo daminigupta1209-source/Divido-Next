@@ -432,16 +432,25 @@ export const MobileHeader: React.FC<MobileHeaderProps> = ({
                     </div>
 
                     {/* Action Buttons */}
-                    {[
-                      ...(selectedId !== 'STANDALONE' ? [{ emoji: '🔗', label: 'Share Group Link', onClick: () => { setMobileShowGroupOptionsMenu(false); onInviteFriend && onInviteFriend(); } }] : []),
-                      { emoji: '💱', label: 'Convert Currency', onClick: () => { setMobileShowGroupOptionsMenu(false); setShowConvertModalId(selectedId); } },
-                      { emoji: '📤', label: 'Export Data', onClick: () => { setMobileShowGroupOptionsMenu(false); handleMobileExportCSV(); } },
-                      { emoji: '📊', label: 'Analytics', onClick: () => { setMobileShowGroupOptionsMenu(false); setAnalyticsGroupId(selectedId); setView('analytics'); } },
-                      ...(selectedId !== 'STANDALONE' ? [{ emoji: (selectedGroup?.members?.length ?? 0) > 1 ? '🚪' : '🗑️', label: (selectedGroup?.members?.length ?? 0) > 1 ? 'Leave Group' : 'Delete Group', onClick: () => { setMobileShowGroupOptionsMenu(false); handleDeleteGroup(selectedId || ''); }, danger: true }] : []),
-                    ].map((item) => (
-                      <button
-                        key={item.label}
-                        onClick={item.onClick}
+                    {(() => {
+                      const cleanMe = me.replace(/\s*\(Left\)$/i, '').toLowerCase();
+                      const activeMembers = selectedGroup?.members?.filter(m => !m.endsWith(' (Left)')) || [];
+                      const adminName = activeMembers[0] || selectedGroup?.members?.[0];
+                      const cleanAdmin = adminName?.replace(/\s*\(me\)$/i, '').replace(/\s*\(Left\)$/i, '').toLowerCase();
+                      const isUserAdmin = selectedId === 'STANDALONE' || cleanAdmin === cleanMe;
+
+                      const actionItems = [
+                        ...(selectedId !== 'STANDALONE' ? [{ emoji: '🔗', label: 'Share Group Link', onClick: () => { setMobileShowGroupOptionsMenu(false); onInviteFriend && onInviteFriend(); } }] : []),
+                        { emoji: '💱', label: 'Convert Currency', onClick: () => { setMobileShowGroupOptionsMenu(false); setShowConvertModalId(selectedId); } },
+                        { emoji: '📤', label: 'Export Data', onClick: () => { setMobileShowGroupOptionsMenu(false); handleMobileExportCSV(); } },
+                        { emoji: '📊', label: 'Analytics', onClick: () => { setMobileShowGroupOptionsMenu(false); setAnalyticsGroupId(selectedId); setView('analytics'); } },
+                        ...(isUserAdmin ? [{ emoji: '🗑️', label: 'Delete Group', onClick: () => { setMobileShowGroupOptionsMenu(false); handleDeleteGroup(selectedId || ''); }, danger: true }] : []),
+                      ];
+
+                      return actionItems.map((item) => (
+                        <button
+                          key={item.label}
+                          onClick={item.onClick}
                         style={{
                           display: 'flex',
                           alignItems: 'center',
@@ -469,7 +478,7 @@ export const MobileHeader: React.FC<MobileHeaderProps> = ({
                       >
                         <span style={{ fontSize: '13px' }}>{item.emoji}</span> {item.label}
                       </button>
-                    ))}
+                    ))})()}
                   </div>
                 )}
               </div>
