@@ -195,57 +195,42 @@ function App() {
     if (scrollEl) scrollEl.scrollTop = 0;
   }, [view, selectedId]);
 
-  // Handle URL Hash Navigation for Android Back Button support
+  // ── Browser History Router (Android back-button / swipe-back support) ──
+  // We keep a ref flag so the popstate listener and the state-pusher don't fight.
+  const navFromPop = React.useRef(false);
+
+  // 1. Listen for the browser "back" / "forward" events.
   useEffect(() => {
-    const handleHashChange = () => {
-      const hash = window.location.hash || '#/';
-      if (hash.startsWith('#/group/')) {
-        const groupId = hash.substring(8);
-        if (groupId) {
-          setSelectedId(groupId);
-          setView('detail');
-        }
-      } else if (hash === '#/profile') {
-        setView('profile');
-      } else if (hash === '#/friends') {
-        setView('friends');
-      } else if (hash === '#/analytics') {
-        setView('analytics');
-      } else if (hash === '#/activity') {
-        setView('activity');
-      } else if (hash === '#/gallery') {
-        setView('gallery');
-      } else if (hash === '#/groups') {
-        setView('groups');
-      } else {
-        setView('summary');
-        setSelectedId(null);
+    const onPopState = (e: PopStateEvent) => {
+      const st = e.state;
+      if (st && st._divido) {
+        navFromPop.current = true;
+        setView(st.view || 'summary');
+        setSelectedId(st.selectedId ?? null);
+        // The state-pusher effect will see the flag and skip pushing.
       }
     };
+    window.addEventListener('popstate', onPopState);
 
-    window.addEventListener('hashchange', handleHashChange);
-    // Parse initial hash on mount
-    handleHashChange();
+    // Seed the very first history entry so we always have something to go back to.
+    if (!window.history.state?._divido) {
+      window.history.replaceState({ _divido: true, view, selectedId }, '');
+    }
 
-    return () => window.removeEventListener('hashchange', handleHashChange);
-  }, []);
+    return () => window.removeEventListener('popstate', onPopState);
+  }, []); // mount-only
 
-  // Update hash when view or selectedId changes internally
+  // 2. Push a new history entry whenever the app navigates internally.
   useEffect(() => {
-    let targetHash = '#/';
-    if (view === 'detail' && selectedId) {
-      targetHash = `#/group/${selectedId}`;
-    } else if (view !== 'summary') {
-      targetHash = `#/${view}`;
+    if (navFromPop.current) {
+      // This render was triggered by popstate – don't push, or we'd break "back".
+      navFromPop.current = false;
+      return;
     }
-
-    if (window.location.hash !== targetHash) {
-      if (targetHash === '#/' && window.location.hash === '') {
-        window.history.replaceState(null, '', targetHash);
-      } else {
-        window.location.hash = targetHash;
-      }
-    }
+    const cur = window.history.state;
+    // Avoid pushing a duplicate of the current state.
+    if (cur?._divido && cur.view === view && String(cur.selectedId) === String(selectedId)) return;
+    window.history.pushState({ _divido: true, view, selectedId }, '');
   }, [view, selectedId]);
 
   // Header search should never linger — close it when leaving the home / settle pages.
