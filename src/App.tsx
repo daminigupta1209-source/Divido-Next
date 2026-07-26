@@ -191,7 +191,7 @@ function App() {
   useEffect(() => {
     setHeaderHidden(false);
     window.scrollTo(0, 0);
-    const scrollEl = document.querySelector('.main-content-scroll');
+    const scrollEl = document.querySelector('.main-content');
     if (scrollEl) scrollEl.scrollTop = 0;
   }, [view, selectedId]);
 
