@@ -42,12 +42,11 @@ export const CurrencySetupModal: React.FC<CurrencySetupModalProps> = ({
           boxSizing: 'border-box',
         }}
       >
-        <div style={{ fontSize: '34px', marginBottom: '8px' }}>💰</div>
         <h2 className="nunito" style={{ fontSize: '19px', fontWeight: 900, color: 'var(--t)', margin: '0 0 6px' }}>
           Which currency do you use?
         </h2>
         <p style={{ fontSize: '12.5px', fontWeight: 600, color: 'var(--g)', margin: '0 0 18px', lineHeight: 1.5 }}>
-          We'll use this for payments — like generating UPI in ₹ even for foreign trips. You can change it anytime in Profile.
+          Choose your default currency for splits and payments.
         </p>
 
         <button
