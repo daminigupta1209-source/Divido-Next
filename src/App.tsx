@@ -1071,8 +1071,8 @@ function App() {
       desc: isStandalone
         ? `Are you sure you want to clear all non-group expenses?`
         : hasOthers
-        ? `Are you sure you want to leave this group?`
-        : `Are you sure you want to delete this group?`,
+        ? `Leave this group? You will keep read-only access to view the history, but cannot add new expenses.`
+        : `Are you sure you want to delete this group permanently?`,
       type: 'danger',
       onConfirm: async () => {
         if (!isStandalone) {
