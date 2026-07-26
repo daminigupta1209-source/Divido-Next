@@ -38,6 +38,39 @@ export const ExpenseRow: React.FC<ExpenseRowProps> = ({
   deleteExpense,
 }) => {
   if (e.paid === 'SYSTEM') {
+    const getSystemTitle = (title: string) => {
+      const cleanMe = me.replace(/\s*\(me\)$/i, '').replace(/\s*\(Left\)$/i, '').toLowerCase();
+      
+      const leftMatch = `${cleanMe} left`;
+      const removedMatch = `${cleanMe} was removed`;
+      const rejoinedMatch = `${cleanMe} rejoined`;
+
+      const lowerTitle = title.toLowerCase();
+
+      if (lowerTitle.startsWith(leftMatch)) {
+        return '🚪 You left';
+      }
+      if (lowerTitle.startsWith(removedMatch)) {
+        return '🚫 You were removed';
+      }
+      if (lowerTitle.startsWith(rejoinedMatch)) {
+        return '🎉 You rejoined';
+      }
+
+      // Add visual emojis to other system messages for clarity
+      if (lowerTitle.endsWith(' left')) {
+        return `🚪 ${title}`;
+      }
+      if (lowerTitle.endsWith(' was removed')) {
+        return `🚫 ${title}`;
+      }
+      if (lowerTitle.endsWith(' rejoined')) {
+        return `🎉 ${title}`;
+      }
+
+      return title;
+    };
+
     return (
       <div
         style={{
@@ -57,7 +90,7 @@ export const ExpenseRow: React.FC<ExpenseRowProps> = ({
           boxShadow: '0 1px 3px rgba(0,0,0,0.02)',
         }}
       >
-        {e.title}
+        {getSystemTitle(e.title)}
         <span style={{ fontSize: '9px', fontWeight: 600, color: '#94A3B8', marginLeft: '6px' }}>
           • {formatDate(e.date)}
         </span>

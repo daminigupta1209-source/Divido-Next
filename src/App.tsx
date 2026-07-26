@@ -1955,7 +1955,7 @@ function App() {
                       .from('expenses')
                       .insert({
                         group_id: selectedId,
-                        title: `${memberName} left`,
+                        title: `${memberName} was removed`,
                         amt: 0,
                         paid: 'SYSTEM',
                         date: new Date().toISOString().split('T')[0],
