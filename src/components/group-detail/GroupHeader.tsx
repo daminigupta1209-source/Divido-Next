@@ -398,6 +398,7 @@ export const GroupHeader: React.FC<GroupHeaderProps> = ({
                         const cleanM = m.replace(/\s*\(Left\)$/i, '').toLowerCase();
                         return cleanM === cleanMe && m.toLowerCase().endsWith(' (left)');
                       });
+                      console.log('[DEBUG] GroupHeader isPastMember:', { isPastMember, me, cleanMe, members: selectedGroup?.members });
                       const actionItems = [
                         ...(selectedId !== 'STANDALONE' ? [{ emoji: '🔗', label: 'Share Group Link', onClick: () => { setShowGroupOptionsMenu(false); onShareShortcut && onShareShortcut(); } }] : []),
                         { emoji: '💱', label: 'Convert Currency', onClick: () => { setShowGroupOptionsMenu(false); setShowConvertModalId(selectedId); } },
