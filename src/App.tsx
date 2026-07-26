@@ -187,8 +187,13 @@ function App() {
     return () => el.removeEventListener('scroll', onScroll);
   }, [isAuthenticated]);
 
-  // Always reveal the header when switching pages.
-  useEffect(() => { setHeaderHidden(false); }, [view]);
+  // Always reveal the header and reset scroll position when switching pages or groups.
+  useEffect(() => {
+    setHeaderHidden(false);
+    window.scrollTo(0, 0);
+    const scrollEl = document.querySelector('.main-content-scroll');
+    if (scrollEl) scrollEl.scrollTop = 0;
+  }, [view, selectedId]);
 
   // Header search should never linger — close it when leaving the home / settle pages.
   useEffect(() => {
