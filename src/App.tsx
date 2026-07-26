@@ -1285,7 +1285,7 @@ function App() {
     setConfirmState({
       show: true,
       title: 'Logout?',
-      desc: 'Are you sure you want to log out? This will clear all data from this device.',
+      desc: 'Are you sure you want to sign out?',
       type: 'logout',
       onConfirm: async () => {
         await supabase.auth.signOut();
