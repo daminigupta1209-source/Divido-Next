@@ -625,9 +625,7 @@ input[type=number] { -moz-appearance: textfield; }
     }
 
     .mobile-header-bar--home {
-        background: rgba(250, 244, 236, 0.72);
-        backdrop-filter: blur(8px);
-        -webkit-backdrop-filter: blur(8px);
+        background: #FAF4EC;
         border-bottom: 0.5px solid rgba(0, 0, 0, 0.05);
         height: 64px;
         margin-bottom: 12px;
