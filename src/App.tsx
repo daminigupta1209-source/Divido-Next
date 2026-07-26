@@ -473,12 +473,19 @@ function App() {
   }, []);
 
   // Derive the user's preferred default currency from their metadata
-  // On first use, auto-detect from browser locale (e.g. en-AE → AED, en-NG → NGN)
+  // On first use, auto-detect from timezone or browser locale (e.g. en-AE → AED, en-NG → NGN)
   const myDefaultCurrency = (() => {
     const saved = userMetadata[me]?.defaultCurrency;
     if (saved) return saved;
-    // Auto-detect from browser locale on first launch
+    // Auto-detect on first launch
     try {
+      // 1. Timezone detection (high confidence for India)
+      const tz = Intl.DateTimeFormat().resolvedOptions().timeZone;
+      if (tz && (tz.toLowerCase().includes('kolkata') || tz.toLowerCase().includes('calcutta') || tz.toLowerCase().includes('india'))) {
+        return '₹';
+      }
+
+      // 2. Fallback to browser locale
       const locale = navigator.language || navigator.languages?.[0] || 'en-IN';
       const region = locale.split('-')[1]?.toUpperCase() || 'IN';
       const regionToCurrency: Record<string, string> = {
