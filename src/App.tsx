@@ -1134,8 +1134,8 @@ function App() {
     if (isPastMember) {
       setConfirmState({
         show: true,
-        title: 'Remove Group?',
-        desc: `Are you sure you want to remove "${g.name}" from your dashboard? You will no longer see this group or its history.`,
+        title: 'Delete Group?',
+        desc: 'You will no longer see this group or its history.',
         type: 'danger',
         onConfirm: async () => {
           if (!checkIfDemoMode() && isAuthenticated) {
