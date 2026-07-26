@@ -220,9 +220,21 @@ export const MobileHeader: React.FC<MobileHeaderProps> = ({
               <span className="burger-line"></span>
             </button>
             
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', overflow: 'hidden', maxWidth: '70%', zIndex: 1 }}>
+            <div style={{
+              position: 'absolute',
+              left: '48px',
+              top: '50%',
+              transform: 'translateY(-50%)',
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'flex-start',
+              justifyContent: 'center',
+              zIndex: 1,
+              maxWidth: '52%',
+              overflow: 'hidden'
+            }}>
               {headerRenaming ? (
-                <div style={{ display: 'flex', flexDirection: 'column', width: '100%', alignItems: 'center' }}>
+                <div style={{ display: 'flex', flexDirection: 'column', width: '100%', alignItems: 'flex-start' }}>
                   <input
                     autoFocus
                     value={headerNewName}
@@ -240,7 +252,7 @@ export const MobileHeader: React.FC<MobileHeaderProps> = ({
                     }}
                     className="nunito"
                     style={{
-                      fontSize: '22px',
+                      fontSize: '20px',
                       fontWeight: 950,
                       letterSpacing: '-0.5px',
                       border: 'none',
@@ -250,7 +262,7 @@ export const MobileHeader: React.FC<MobileHeaderProps> = ({
                       padding: 0,
                       margin: 0,
                       width: '100%',
-                      textAlign: 'center'
+                      textAlign: 'left'
                     }}
                   />
                   {headerNameError && (
@@ -260,52 +272,112 @@ export const MobileHeader: React.FC<MobileHeaderProps> = ({
                   )}
                 </div>
               ) : (
-                <h1
-                  className="nunito"
-                  style={{
-                    fontSize: selectedId === 'STANDALONE' ? '18px' : '22px',
-                    fontWeight: 950,
-                    letterSpacing: '-0.5px',
-                    cursor: selectedId === 'STANDALONE' ? 'default' : 'pointer',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    gap: '6px',
-                    margin: 0,
-                    color: 'var(--t)',
-                  }}
-                  onClick={() => {
-                    if (selectedId === 'STANDALONE') return;
-                    setHeaderNewName(selectedGroup?.name || '');
-                    setHeaderRenaming(true);
-                  }}
-                >
-                  <span style={{
-                    position: 'relative',
-                    whiteSpace: 'nowrap',
-                    overflow: 'visible',
-                    textOverflow: 'ellipsis',
-                    maxWidth: selectedId === 'STANDALONE' ? '220px' : '180px'
-                  }}>
-                    {selectedGroup?.name || 'Untitled Group'}
-                    {selectedId !== 'STANDALONE' && (
-                      <span
-                        className="edit-pencil"
-                        style={{
-                          position: 'absolute',
-                          right: '-22px',
-                          top: '50%',
-                          transform: 'translateY(-50%)',
-                          fontSize: '13px',
-                          opacity: 0.5,
-                          lineHeight: 1,
-                        }}
-                      >
-                        ✏️
-                      </span>
-                    )}
-                  </span>
-                </h1>
+                <>
+                  <h1
+                    className="nunito"
+                    style={{
+                      fontSize: selectedId === 'STANDALONE' ? '18px' : '20px',
+                      fontWeight: 950,
+                      letterSpacing: '-0.5px',
+                      cursor: selectedId === 'STANDALONE' ? 'default' : 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '6px',
+                      margin: 0,
+                      color: 'var(--t)',
+                      lineHeight: 1.1,
+                      textAlign: 'left'
+                    }}
+                    onClick={() => {
+                      if (selectedId === 'STANDALONE') return;
+                      setHeaderNewName(selectedGroup?.name || '');
+                      setHeaderRenaming(true);
+                    }}
+                  >
+                    <span style={{
+                      position: 'relative',
+                      whiteSpace: 'nowrap',
+                      overflow: 'hidden',
+                      textOverflow: 'ellipsis',
+                      maxWidth: '170px',
+                      display: 'inline-block'
+                    }}>
+                      {selectedGroup?.name || 'Untitled Group'}
+                      {selectedId !== 'STANDALONE' && (
+                        <span
+                          className="edit-pencil"
+                          style={{
+                            position: 'absolute',
+                            right: '-22px',
+                            top: '50%',
+                            transform: 'translateY(-50%)',
+                            fontSize: '12px',
+                            opacity: 0.5,
+                            lineHeight: 1,
+                          }}
+                        >
+                          ✏️
+                        </span>
+                      )}
+                    </span>
+                  </h1>
+
+                  {/* Since date, placed directly below the title */}
+                  {selectedId !== 'STANDALONE' && (
+                    <div style={{ display: 'flex', alignItems: 'center', marginTop: '2px' }}>
+                      {editingDate ? (
+                        <input
+                          type="date"
+                          autoFocus
+                          value={selectedGroup.createdDate || ''}
+                          max={new Date().toISOString().split('T')[0]}
+                          onChange={(e) => {
+                            const v = e.target.value;
+                            if (!v) return;
+                            setGroups(groups.map((g) => (String(g.id) === String(selectedId) ? { ...g, createdDate: v } : g)));
+                          }}
+                          onBlur={() => setEditingDate(false)}
+                          onKeyDown={(e) => {
+                            if (e.key === 'Enter' || e.key === 'Escape') {
+                              e.preventDefault();
+                              e.stopPropagation();
+                              setEditingDate(false);
+                            }
+                          }}
+                          style={{
+                            fontSize: '10px',
+                            fontWeight: 700,
+                            color: '#64748B',
+                            border: '1.5px solid #E2E8F0',
+                            borderRadius: '6px',
+                            padding: '1px 6px',
+                            outline: 'none',
+                            background: 'var(--w)',
+                          }}
+                        />
+                      ) : (
+                        <span
+                          onClick={() => setEditingDate(true)}
+                          title="Tap to edit"
+                          style={{
+                            fontSize: '10px',
+                            fontWeight: 650,
+                            color: '#94A3B8',
+                            cursor: 'pointer',
+                            userSelect: 'none',
+                            letterSpacing: '0.2px',
+                          }}
+                        >
+                          Since · {selectedGroup.createdDate ? (() => {
+                            const d = new Date(selectedGroup.createdDate);
+                            const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+                            return `${months[d.getMonth()]} ${d.getFullYear()}`;
+                          })() : '—'}
+                        </span>
+                      )}
+                    </div>
+                  )}
+                </>
               )}
             </div>
 
@@ -885,61 +957,7 @@ export const MobileHeader: React.FC<MobileHeaderProps> = ({
         </>
       )}
 
-      {/* Formed-on date, small and editable */}
-      {view === 'detail' && selectedGroup && selectedId !== 'STANDALONE' && !headerRenaming && (
-        <div style={{ display: 'flex', justifyContent: 'center', marginTop: '-12px' }}>
-          {editingDate ? (
-            <input
-              type="date"
-              autoFocus
-              value={selectedGroup.createdDate || ''}
-              max={new Date().toISOString().split('T')[0]}
-              onChange={(e) => {
-                const v = e.target.value;
-                if (!v) return;
-                setGroups(groups.map((g) => (String(g.id) === String(selectedId) ? { ...g, createdDate: v } : g)));
-              }}
-              onBlur={() => setEditingDate(false)}
-              onKeyDown={(e) => {
-                if (e.key === 'Enter' || e.key === 'Escape') {
-                  e.preventDefault();
-                  e.stopPropagation();
-                  setEditingDate(false);
-                }
-              }}
-              style={{
-                fontSize: '11px',
-                fontWeight: 700,
-                color: '#64748B',
-                border: '1.5px solid #E2E8F0',
-                borderRadius: '8px',
-                padding: '2px 8px',
-                outline: 'none',
-                background: 'var(--w)',
-              }}
-            />
-          ) : (
-            <span
-              onClick={() => setEditingDate(true)}
-              title="Tap to edit"
-              style={{
-                fontSize: '11px',
-                fontWeight: 650,
-                color: '#94A3B8',
-                cursor: 'pointer',
-                userSelect: 'none',
-                letterSpacing: '0.2px',
-              }}
-            >
-              Since · {selectedGroup.createdDate ? (() => {
-                const d = new Date(selectedGroup.createdDate);
-                const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-                return `${months[d.getMonth()]} ${d.getFullYear()}`;
-              })() : '—'}
-            </span>
-          )}
-        </div>
-      )}
+
       {view === 'gallery' && selectedGroup && (
         <div style={{ display: 'flex', justifyContent: 'center', marginTop: '-12px' }}>
           <span
