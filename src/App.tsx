@@ -203,11 +203,20 @@ function App() {
   useEffect(() => {
     const onPopState = (e: PopStateEvent) => {
       const st = e.state;
+
+      // First priority: if any modal is open, close it instead of navigating.
+      if (showExpModal) { setShowExpModal(false); return; }
+      if (showSettleModal) { setShowSettleModal(false); return; }
+      if (showAddFriendModal) { setShowAddFriendModal(false); return; }
+
       if (st && st._divido) {
         navFromPop.current = true;
         setView(st.view || 'summary');
         setSelectedId(st.selectedId ?? null);
-        // The state-pusher effect will see the flag and skip pushing.
+      } else {
+        // No Divido state – user is about to leave the app. Push current state back
+        // so the next swipe-back can still navigate within the app.
+        window.history.pushState({ _divido: true, view, selectedId }, '');
       }
     };
     window.addEventListener('popstate', onPopState);
@@ -218,7 +227,7 @@ function App() {
     }
 
     return () => window.removeEventListener('popstate', onPopState);
-  }, []); // mount-only
+  }, [showExpModal, showSettleModal, showAddFriendModal, view, selectedId]);
 
   // 2. Push a new history entry whenever the app navigates internally.
   useEffect(() => {
@@ -232,6 +241,13 @@ function App() {
     if (cur?._divido && cur.view === view && String(cur.selectedId) === String(selectedId)) return;
     window.history.pushState({ _divido: true, view, selectedId }, '');
   }, [view, selectedId]);
+
+  // 3. Push a history entry when modals open so back-button can close them.
+  useEffect(() => {
+    if (showExpModal || showSettleModal || showAddFriendModal) {
+      window.history.pushState({ _divido: true, view, selectedId, modal: true }, '');
+    }
+  }, [showExpModal, showSettleModal, showAddFriendModal]);
 
   // Header search should never linger — close it when leaving the home / settle pages.
   useEffect(() => {
