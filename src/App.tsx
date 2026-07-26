@@ -1140,14 +1140,18 @@ function App() {
         onConfirm: async () => {
           if (!checkIfDemoMode() && isAuthenticated) {
             try {
-              // Delete our group_members row on Supabase
+              // Delete ALL membership rows for this user in the group on Supabase to prevent duplicates from restoring it
+              const { data: { session } } = await supabase.auth.getSession();
+              const myEmail = session?.user?.email || null;
+              const emailFilter = myEmail ? `user_email.eq.${myEmail},` : '';
+              
               await supabase
                 .from('group_members')
                 .delete()
                 .eq('group_id', id)
-                .ilike('name', me + ' (Left)');
+                .or(`${emailFilter}name.ilike.${me},name.ilike.${me} (Left)`);
             } catch (err) {
-              console.error('Failed to delete left member row from Supabase:', err);
+              console.error('Failed to delete member rows from Supabase:', err);
             }
           }
           setGroups(groups.filter((x) => String(x.id) !== String(id)));
