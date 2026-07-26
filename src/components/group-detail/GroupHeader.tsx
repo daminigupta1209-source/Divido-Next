@@ -392,39 +392,42 @@ export const GroupHeader: React.FC<GroupHeaderProps> = ({
                       </div>
                     </div>
 
-                    {/* Action Buttons */}
-                    {[
-                      ...(selectedId !== 'STANDALONE' ? [{ emoji: '🔗', label: 'Share Group Link', onClick: () => { setShowGroupOptionsMenu(false); onShareShortcut && onShareShortcut(); } }] : []),
-                      { emoji: '💱', label: 'Convert Currency', onClick: () => { setShowGroupOptionsMenu(false); setShowConvertModalId(selectedId); } },
-                      { emoji: '📤', label: 'Export Data', onClick: () => { setShowGroupOptionsMenu(false); setShowExportMenu(true); } },
-                      { emoji: '📊', label: 'Analytics Breakdown', onClick: () => { setShowGroupOptionsMenu(false); onOpenAnalytics && onOpenAnalytics(selectedId || 'ALL'); } },
-                      { emoji: (selectedId !== 'STANDALONE' && (selectedGroup?.members?.length ?? 0) > 1) ? '🚪' : '🗑️', label: (selectedId !== 'STANDALONE' && (selectedGroup?.members?.length ?? 0) > 1) ? 'Leave Group' : 'Delete Group', onClick: () => { setShowGroupOptionsMenu(false); onDeleteGroup && onDeleteGroup(selectedId || ''); }, danger: true },
-                    ].map((item) => (
-                      <button
-                        key={item.label}
-                        onClick={item.onClick}
-                        style={{ 
-                          display: 'flex', 
-                          alignItems: 'center', 
-                          gap: '10px', 
-                          padding: '9px 12px', 
-                          border: 'none', 
-                          background: 'none', 
-                          width: '100%', 
-                          textAlign: 'left', 
-                          cursor: 'pointer', 
-                          borderRadius: '10px', 
-                          fontSize: '12px', 
-                          fontWeight: 800, 
-                          color: item.danger ? '#DC2626' : '#374151', 
-                          transition: '0.15s all' 
-                        }}
-                        onMouseEnter={(e) => { e.currentTarget.style.background = item.danger ? '#FEF2F2' : '#F9FAFB'; e.currentTarget.style.color = item.danger ? '#B91C1C' : '#111827'; }}
-                        onMouseLeave={(e) => { e.currentTarget.style.background = 'none'; e.currentTarget.style.color = item.danger ? '#DC2626' : '#374151'; }}
-                      >
-                        <span style={{ fontSize: '14px' }}>{item.emoji}</span> {item.label}
-                      </button>
-                    ))}
+                    {(() => {
+                      const isPastMember = selectedId !== 'STANDALONE' && selectedGroup?.members?.some(m => m.toLowerCase() === (me + ' (Left)').toLowerCase());
+                      const actionItems = [
+                        ...(selectedId !== 'STANDALONE' ? [{ emoji: '🔗', label: 'Share Group Link', onClick: () => { setShowGroupOptionsMenu(false); onShareShortcut && onShareShortcut(); } }] : []),
+                        { emoji: '💱', label: 'Convert Currency', onClick: () => { setShowGroupOptionsMenu(false); setShowConvertModalId(selectedId); } },
+                        { emoji: '📤', label: 'Export Data', onClick: () => { setShowGroupOptionsMenu(false); setShowExportMenu(true); } },
+                        { emoji: '📊', label: 'Analytics Breakdown', onClick: () => { setShowGroupOptionsMenu(false); onOpenAnalytics && onOpenAnalytics(selectedId || 'ALL'); } },
+                        { emoji: (selectedId !== 'STANDALONE' && (selectedGroup?.members?.length ?? 0) > 1 && !isPastMember) ? '🚪' : '🗑️', label: (selectedId !== 'STANDALONE' && (selectedGroup?.members?.length ?? 0) > 1 && !isPastMember) ? 'Leave Group' : 'Delete Group', onClick: () => { setShowGroupOptionsMenu(false); onDeleteGroup && onDeleteGroup(selectedId || ''); }, danger: true },
+                      ];
+                      return actionItems.map((item) => (
+                        <button
+                          key={item.label}
+                          onClick={item.onClick}
+                          style={{ 
+                            display: 'flex', 
+                            alignItems: 'center', 
+                            gap: '10px', 
+                            padding: '9px 12px', 
+                            border: 'none', 
+                            background: 'none', 
+                            width: '100%', 
+                            textAlign: 'left', 
+                            cursor: 'pointer', 
+                            borderRadius: '10px', 
+                            fontSize: '12px', 
+                            fontWeight: 800, 
+                            color: item.danger ? '#DC2626' : '#374151', 
+                            transition: '0.15s all' 
+                          }}
+                          onMouseEnter={(e) => { e.currentTarget.style.background = item.danger ? '#FEF2F2' : '#F9FAFB'; e.currentTarget.style.color = item.danger ? '#B91C1C' : '#111827'; }}
+                          onMouseLeave={(e) => { e.currentTarget.style.background = 'none'; e.currentTarget.style.color = item.danger ? '#DC2626' : '#374151'; }}
+                        >
+                          <span style={{ fontSize: '14px' }}>{item.emoji}</span> {item.label}
+                        </button>
+                      ));
+                    })()}
                   </div>
                 )}
               </div>
