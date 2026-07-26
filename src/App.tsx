@@ -1179,7 +1179,7 @@ function App() {
                   .from('expenses')
                   .insert({
                     group_id: id,
-                    title: `🚪 ${me} left the group`,
+                    title: `${me} left`,
                     amt: 0,
                     paid: 'SYSTEM',
                     date: new Date().toISOString().split('T')[0],
@@ -1949,7 +1949,7 @@ function App() {
                       .from('expenses')
                       .insert({
                         group_id: selectedId,
-                        title: `🚪 ${memberName} left the group`,
+                        title: `${memberName} left`,
                         amt: 0,
                         paid: 'SYSTEM',
                         date: new Date().toISOString().split('T')[0],
@@ -2196,7 +2196,7 @@ function App() {
                           .from('expenses')
                           .insert({
                             group_id: linkRequestGroup.id,
-                            title: `🚪 ${cleanName} rejoined the group`,
+                            title: `${cleanName} rejoined`,
                             amt: 0,
                             paid: 'SYSTEM',
                             date: new Date().toISOString().split('T')[0],
