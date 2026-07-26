@@ -185,12 +185,25 @@ export function useSupabaseSync({
           }
         });
 
+        const currentEmail = session?.user?.email?.toLowerCase() || '';
         idToGroup.forEach((group: any) => {
           const groupMems = allMembers.filter((m: any) => m.group_id === group.id);
           const activeMems = groupMems.filter((m: any) => !m.link_request_email || !m.is_pending);
           
           const members = Array.from(new Set(activeMems.map((m: any) => m.name)));
-          const pendingMembers = Array.from(new Set(activeMems.filter((m: any) => m.is_pending && !m.name.endsWith(' (Left)')).map((m: any) => m.name)));
+          // A member is truly pending only if:
+          // 1. DB says is_pending AND
+          // 2. They have NOT been linked to any user_email (no one claimed them) AND
+          // 3. They are NOT the currently logged-in user AND
+          // 4. They are not a "(Left)" member
+          const pendingMembers = Array.from(new Set(activeMems.filter((m: any) => {
+            if (!m.is_pending || m.name.endsWith(' (Left)')) return false;
+            // If this member has user_email set, they've been claimed — not pending
+            if (m.user_email) return false;
+            // If this member's name matches the current user (me), not pending
+            if (currentEmail && m.user_email?.toLowerCase() === currentEmail) return false;
+            return true;
+          }).map((m: any) => m.name)));
 
           const pendingLinkRequests = groupMems
             .filter((m: any) => m.link_request_email && m.is_pending)
@@ -212,6 +225,12 @@ export function useSupabaseSync({
             pendingMembers,
             pendingLinkRequests,
           });
+
+          // Auto-heal: fix any members that have user_email set but are still marked pending
+          const staleMembers = groupMems.filter((m: any) => m.is_pending && m.user_email && !m.link_request_email);
+          for (const stale of staleMembers) {
+            supabase.from('group_members').update({ is_pending: false }).eq('id', stale.id).then(() => {});
+          }
         });
 
         // 5. Map expenses
