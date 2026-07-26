@@ -1308,7 +1308,7 @@ function App() {
 
         // Reset React state to clean slate
         setUserName('You');
-        setGroups([{ id: 'STANDALONE', name: 'Non-Group Expenses', members: [] as string[], currency: '₹' }]);
+        setGroups([]);
         setExpenses([]);
         setIsAuthenticated(false);
         setConfirmState({ show: false });
