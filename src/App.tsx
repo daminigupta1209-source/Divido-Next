@@ -647,10 +647,12 @@ function App() {
           const userFullName = session.user?.user_metadata?.full_name || session.user?.email?.split('@')[0] || session.user?.phone || 'User';
           updateUserName(userFullName);
         }
+        // Await background linking so database has user_email set before sync fetches
+        if (session.user?.email) {
+          await linkGuestIdentities(session.user.email);
+        }
         setIsAuthenticated(true);
         localStorage.setItem('divido_authenticated', 'true');
-        // Best-effort background linking — must NOT block login.
-        if (session.user?.email) linkGuestIdentities(session.user.email);
       } else {
         if (localStorage.getItem('divido_e2e_testing') === 'true') {
           setIsAuthenticated(true);
@@ -664,7 +666,7 @@ function App() {
     });
 
     // Check current session once on mount
-    supabase.auth.getSession().then(({ data: { session } }) => {
+    supabase.auth.getSession().then(async ({ data: { session } }) => {
       if (session) {
         setUserEmail(session.user?.email || '');
         const saved = localStorage.getItem('divido_username');
@@ -672,10 +674,12 @@ function App() {
           const userFullName = session.user?.user_metadata?.full_name || session.user?.email?.split('@')[0] || session.user?.phone || 'User';
           updateUserName(userFullName);
         }
+        // Await background linking so database has user_email set before sync fetches
+        if (session.user?.email) {
+          await linkGuestIdentities(session.user.email);
+        }
         setIsAuthenticated(true);
         localStorage.setItem('divido_authenticated', 'true');
-        // Best-effort background linking — must NOT block login.
-        if (session.user?.email) linkGuestIdentities(session.user.email);
       } else if (localStorage.getItem('divido_e2e_testing') === 'true') {
         setIsAuthenticated(true);
         setUserEmail('e2e-test-guest@divido.app');
