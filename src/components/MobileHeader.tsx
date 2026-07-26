@@ -399,8 +399,8 @@ export const MobileHeader: React.FC<MobileHeaderProps> = ({
                     border: 'none',
                     cursor: 'pointer',
                     color: '#94A3B8',
-                    width: '44px',
-                    height: '44px',
+                    width: '36px',
+                    height: '36px',
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
@@ -408,13 +408,13 @@ export const MobileHeader: React.FC<MobileHeaderProps> = ({
                     padding: 0,
                     borderRadius: '8px',
                     transition: '0.15s all',
-                    marginRight: '-6px',
+                    marginRight: '-2px',
                   }}
                   onMouseEnter={(e) => { e.currentTarget.style.background = 'rgba(0,0,0,0.05)'; }}
                   onMouseLeave={(e) => { e.currentTarget.style.background = 'none'; }}
                   title="Add attachment"
                 >
-                  <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ color: '#94A3B8' }}>
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ color: '#94A3B8' }}>
                     <path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48" />
                   </svg>
                 </button>
@@ -426,8 +426,8 @@ export const MobileHeader: React.FC<MobileHeaderProps> = ({
                     border: 'none',
                     cursor: 'pointer',
                     color: '#94A3B8',
-                    width: '44px',
-                    height: '44px',
+                    width: '36px',
+                    height: '36px',
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
@@ -436,13 +436,13 @@ export const MobileHeader: React.FC<MobileHeaderProps> = ({
                     borderRadius: '8px',
                     transition: '0.15s all',
                     position: 'relative',
-                    marginRight: '-4px',
+                    marginRight: '0px',
                   }}
                   onMouseEnter={(e) => { e.currentTarget.style.background = 'rgba(0,0,0,0.05)'; }}
                   onMouseLeave={(e) => { e.currentTarget.style.background = 'none'; }}
                   title="Group notifications"
                 >
-                  <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ color: '#94A3B8' }}>
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ color: '#94A3B8' }}>
                     <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" />
                     <path d="M13.73 21a2 2 0 0 1-3.46 0" />
                   </svg>
@@ -453,20 +453,20 @@ export const MobileHeader: React.FC<MobileHeaderProps> = ({
                         <span
                           style={{
                             position: 'absolute',
-                            top: '5px',
-                            right: '5px',
-                            minWidth: '16px',
-                            height: '16px',
+                            top: '1px',
+                            right: '1px',
+                            minWidth: '15px',
+                            height: '15px',
                             borderRadius: '50%',
                             background: '#FF4B4B',
                             color: '#FFFFFF',
-                            fontSize: '9px',
+                            fontSize: '8px',
                             fontWeight: 900,
                             display: 'flex',
                             alignItems: 'center',
                             justifyContent: 'center',
-                            padding: '0 3px',
-                            border: '1.5px solid #FDFBF7',
+                            padding: '0 2px',
+                            border: '1px solid #FDFBF7',
                             boxSizing: 'border-box',
                             lineHeight: 1,
                           }}
@@ -564,8 +564,8 @@ export const MobileHeader: React.FC<MobileHeaderProps> = ({
                     border: 'none',
                     cursor: 'pointer',
                     color: '#475569',
-                    width: '44px',
-                    height: '44px',
+                    width: '36px',
+                    height: '36px',
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
@@ -576,7 +576,7 @@ export const MobileHeader: React.FC<MobileHeaderProps> = ({
                   }}
                   title="Group options"
                 >
-                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ color: '#475569' }}>
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ color: '#475569' }}>
                     <circle cx="12" cy="5" r="1.5" fill="currentColor" stroke="none" />
                     <circle cx="12" cy="12" r="1.5" fill="currentColor" stroke="none" />
                     <circle cx="12" cy="19" r="1.5" fill="currentColor" stroke="none" />
