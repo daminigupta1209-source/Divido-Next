@@ -64,7 +64,8 @@ export const GroupMemberList: React.FC<GroupMemberListProps> = ({
   };
 
   const activeMembers = selectedGroup.members.filter((m) => !m.endsWith(' (Left)'));
-  const isAdmin = activeMembers[0] === me || activeMembers[0] === 'You';
+  const adminName = activeMembers[0] || selectedGroup.members[0];
+  const isAdmin = adminName === me || adminName === 'You';
 
   const handleInlineSave = (oldName: string) => {
     const trimmed = inlineRenameVal.trim();
@@ -204,7 +205,7 @@ export const GroupMemberList: React.FC<GroupMemberListProps> = ({
                             setInlineRenameVal(m);
                           }}
                         >
-                          {m} {m === me && '(me)'} {m === me && <span style={{ fontSize: '11px', marginLeft: '8px', opacity: 0.6 }}>✏️</span>}
+                          {m === me ? 'You' : m} {m === adminName && <span style={{ fontSize: '10px', fontWeight: 800, color: '#7C3AED', background: '#F5F3FF', padding: '1px 6px', borderRadius: '4px', marginLeft: '6px' }}>Admin</span>} {m === me && <span style={{ fontSize: '11px', marginLeft: '8px', opacity: 0.6 }}>✏️</span>}
                         </span>
                       )}
                       
@@ -306,7 +307,7 @@ export const GroupMemberList: React.FC<GroupMemberListProps> = ({
                             setInlineRenameVal(m);
                           }}
                         >
-                          {m} {m === me && '(me)'} <span style={{ fontSize: '11px', marginLeft: '8px', opacity: 0.6 }}>✏️</span>
+                          {m === me ? 'You' : m} {m === adminName && <span style={{ fontSize: '10px', fontWeight: 800, color: '#7C3AED', background: '#F5F3FF', padding: '1px 6px', borderRadius: '4px', marginLeft: '6px' }}>Admin</span>} <span style={{ fontSize: '11px', marginLeft: '8px', opacity: 0.6 }}>✏️</span>
                         </span>
                       )}
                     </div>
@@ -400,7 +401,7 @@ export const GroupMemberList: React.FC<GroupMemberListProps> = ({
                         }}
                       >
                         <span style={{ fontWeight: 'bold', fontSize: '12px', color: '#64748B', textDecoration: 'line-through' }}>
-                          {cleanName}
+                           {cleanName === me ? 'You' : cleanName} {cleanName === adminName?.replace(' (Left)', '') && <span style={{ fontSize: '10px', fontWeight: 800, color: '#7C3AED', background: '#F5F3FF', padding: '1px 6px', borderRadius: '4px', marginLeft: '6px' }}>Admin</span>}
                         </span>
                         
                         {isAdmin && (
