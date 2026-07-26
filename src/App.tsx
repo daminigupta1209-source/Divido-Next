@@ -1160,7 +1160,9 @@ function App() {
         } else {
           setExpenses(expenses.filter((e) => String(e.gId) !== String(id)));
         }
-        if (String(selectedId) === String(id)) setView('summary');
+        if (String(selectedId) === String(id) && (!hasOthers || isStandalone)) {
+          setView('summary');
+        }
         setConfirmState({ show: false });
       },
     });
