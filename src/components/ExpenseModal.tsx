@@ -203,13 +203,13 @@ export const ExpenseModal: React.FC<ExpenseModalProps> = ({
         onClick={(e) => e.stopPropagation()}
         style={{
           width: '100vw',
-          height: '100vh',
+          height: '100dvh',
           borderRadius: 0,
           border: 'none',
           background: '#F8FAFC',
           boxShadow: 'none',
           boxSizing: 'border-box',
-          maxHeight: '100vh',
+          maxHeight: '100dvh',
           display: 'flex',
           flexDirection: 'column',
           overflow: 'hidden',
@@ -698,6 +698,7 @@ export const ExpenseModal: React.FC<ExpenseModalProps> = ({
             flexDirection: 'column',
             gap: '10px',
             paddingRight: '6px',
+            paddingBottom: '80px',
             margin: '4px 0',
           }}
         >
