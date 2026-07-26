@@ -555,6 +555,8 @@ export const GroupDetail: React.FC<GroupDetailProps> = ({
         // Small translucent count chip for extra currencies (e.g. "+1").
         const chipStyle: React.CSSProperties = { background: 'rgba(255,255,255,0.28)', borderRadius: '999px', padding: '1px 7px', fontSize: '11px', fontWeight: 700, flexShrink: 0 };
 
+        if (!hasExpenses) return null;
+
         return (
           <div style={{ marginBottom: '22px', marginTop: '4px' }}>
             <div style={{ fontSize: '11px', fontWeight: 700, letterSpacing: '1.5px', textTransform: 'uppercase', color: '#B0A79C', marginBottom: '10px', marginLeft: '2px' }}>
