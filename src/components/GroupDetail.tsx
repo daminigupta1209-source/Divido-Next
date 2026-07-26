@@ -1404,7 +1404,7 @@ export const GroupDetail: React.FC<GroupDetailProps> = ({
             title="Add Expense"
           >
             <div
-              style={{ width: '50px', height: '50px', borderRadius: '50%', background: '#60C9A5', boxShadow: '0 4px 14px rgba(96, 201, 165, 0.4)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#FFFFFF', fontSize: '32px', fontWeight: 300, zIndex: 1600, transform: 'translateY(-18px)', transition: 'all 0.15s ease-in-out', lineHeight: 1 }}
+              style={{ width: '50px', height: '50px', borderRadius: '50%', background: '#059669', boxShadow: '0 4px 14px rgba(5, 150, 105, 0.4)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#FFFFFF', fontSize: '24px', fontWeight: 700, zIndex: 1600, transform: 'translateY(-18px)', transition: 'all 0.15s ease-in-out', lineHeight: 1 }}
               className="hover-up"
             >
               +
