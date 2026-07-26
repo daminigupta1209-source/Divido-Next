@@ -195,6 +195,55 @@ function App() {
     if (scrollEl) scrollEl.scrollTop = 0;
   }, [view, selectedId]);
 
+  // Handle URL Hash Navigation for Android Back Button support
+  useEffect(() => {
+    const handleHashChange = () => {
+      const hash = window.location.hash || '#/';
+      if (hash.startsWith('#/group/')) {
+        const groupId = hash.substring(8);
+        if (groupId) {
+          setSelectedId(groupId);
+          setView('detail');
+        }
+      } else if (hash === '#/profile') {
+        setView('profile');
+      } else if (hash === '#/friends') {
+        setView('friends');
+      } else if (hash === '#/analytics') {
+        setView('analytics');
+      } else if (hash === '#/activity') {
+        setView('activity');
+      } else if (hash === '#/gallery') {
+        setView('gallery');
+      } else if (hash === '#/groups') {
+        setView('groups');
+      } else {
+        setView('summary');
+        setSelectedId(null);
+      }
+    };
+
+    window.addEventListener('hashchange', handleHashChange);
+    // Parse initial hash on mount
+    handleHashChange();
+
+    return () => window.removeEventListener('hashchange', handleHashChange);
+  }, []);
+
+  // Update hash when view or selectedId changes internally
+  useEffect(() => {
+    let targetHash = '#/';
+    if (view === 'detail' && selectedId) {
+      targetHash = `#/group/${selectedId}`;
+    } else if (view !== 'summary') {
+      targetHash = `#/${view}`;
+    }
+
+    if (window.location.hash !== targetHash) {
+      window.history.pushState(null, '', targetHash);
+    }
+  }, [view, selectedId]);
+
   // Header search should never linger — close it when leaving the home / settle pages.
   useEffect(() => {
     if (view !== 'summary' && view !== 'friends' && isHeaderSearchActive) {
