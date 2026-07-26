@@ -387,10 +387,10 @@ function App() {
         : g)));
 
       // 4. Local identity (if this device is the renamed person)
-      if (localStorage.getItem(`divido_identity_${groupId}`) === oldName) {
+      const cleanMe = me.replace(/\s*\(me\)$/i, '').replace(/\s*\(Left\)$/i, '').toLowerCase();
+      const cleanOld = oldName.replace(/\s*\(me\)$/i, '').replace(/\s*\(Left\)$/i, '').toLowerCase();
+      if (cleanOld === cleanMe || localStorage.getItem(`divido_identity_${groupId}`) === oldName) {
         localStorage.setItem(`divido_identity_${groupId}`, newName);
-      }
-      if (userName.split(' ')[0] === oldName) {
         localStorage.setItem('divido_username', newName);
         setUserName(newName);
       }
@@ -642,8 +642,11 @@ function App() {
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
       if (session) {
         setUserEmail(session.user?.email || '');
-        const userFullName = session.user?.user_metadata?.full_name || session.user?.email?.split('@')[0] || session.user?.phone || 'User';
-        updateUserName(userFullName);
+        const saved = localStorage.getItem('divido_username');
+        if (!saved || saved === 'You' || saved === 'undefined') {
+          const userFullName = session.user?.user_metadata?.full_name || session.user?.email?.split('@')[0] || session.user?.phone || 'User';
+          updateUserName(userFullName);
+        }
         setIsAuthenticated(true);
         localStorage.setItem('divido_authenticated', 'true');
         // Best-effort background linking — must NOT block login.
@@ -664,8 +667,11 @@ function App() {
     supabase.auth.getSession().then(({ data: { session } }) => {
       if (session) {
         setUserEmail(session.user?.email || '');
-        const userFullName = session.user?.user_metadata?.full_name || session.user?.email?.split('@')[0] || session.user?.phone || 'User';
-        updateUserName(userFullName);
+        const saved = localStorage.getItem('divido_username');
+        if (!saved || saved === 'You' || saved === 'undefined') {
+          const userFullName = session.user?.user_metadata?.full_name || session.user?.email?.split('@')[0] || session.user?.phone || 'User';
+          updateUserName(userFullName);
+        }
         setIsAuthenticated(true);
         localStorage.setItem('divido_authenticated', 'true');
         // Best-effort background linking — must NOT block login.
