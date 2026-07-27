@@ -253,8 +253,29 @@ export function useSupabaseSync({
           nextOccurrence: e.next_occurrence
         }));
 
+        // Safety: backup current local data before overwriting with cloud data
+        try {
+          const localGroups = localStorage.getItem('divido_groups');
+          const localExpenses = localStorage.getItem('divido_expenses');
+          if (localGroups) localStorage.setItem('divido_backup_groups', localGroups);
+          if (localExpenses) localStorage.setItem('divido_backup_expenses', localExpenses);
+        } catch (e) { /* quota exceeded — ignore */ }
+
         const unsynced = groups.filter(g => typeof g.id === 'number' && g.id > 2147483647);
         const mergedGroups = [...unsynced, ...loadedGroups];
+
+        // Merge: keep any local expenses that are NOT in the cloud yet (pending upload)
+        // These have temporary IDs (timestamp-based, > 2147483647) or belong to unsynced groups
+        const cloudExpenseIds = new Set(loadedExpenses.map((e: any) => String(e.id)));
+        const localOnlyExpenses = expenses.filter(e => {
+          // Keep if this expense doesn't exist in cloud AND belongs to a valid group
+          if (cloudExpenseIds.has(String(e.id))) return false; // already in cloud
+          if (e.gId === 'STANDALONE') return true; // standalone expenses are local-only
+          // Check if it belongs to an unsynced group (temp ID) or a synced group
+          const belongsToSyncedGroup = mergedGroups.some(g => String(g.id) === String(e.gId));
+          return belongsToSyncedGroup;
+        });
+        const mergedExpenses = [...loadedExpenses, ...localOnlyExpenses];
 
         prevGroupsRef.current = loadedGroups;
         localStorage.setItem('divido_last_synced_groups', JSON.stringify(loadedGroups));
@@ -262,7 +283,7 @@ export function useSupabaseSync({
         localStorage.setItem('divido_last_synced_expenses', JSON.stringify(loadedExpenses));
 
         setGroups(mergedGroups);
-        setExpenses(loadedExpenses);
+        setExpenses(mergedExpenses);
         initialLoadDoneRef.current = true;
       } catch (err) {
         console.error('Failed to load cloud database:', err);
@@ -497,9 +518,20 @@ export function useSupabaseSync({
 
         // 1. Find deleted expenses
         const deleted = prev.filter(p => !curr.some(c => c.id === p.id));
-        for (const e of deleted) {
-          const { error } = await supabase.from('expenses').delete().eq('id', e.id);
-          if (error) throw error;
+
+        // Safety: refuse to mass-delete if too many expenses disappear at once.
+        // This protects against accidental state resets wiping the database.
+        // Legitimate bulk deletions (e.g. deleting a group) are handled separately.
+        if (deleted.length > 3 && deleted.length > prev.length * 0.5) {
+          console.warn(`Safety: blocked mass-deletion of ${deleted.length} expenses. This looks like a state reset, not intentional deletion.`);
+        } else {
+          for (const e of deleted) {
+            // Only delete from DB if it has a valid DB id (not a local temp id)
+            if (typeof e.id === 'number' && e.id <= 2147483647) {
+              const { error } = await supabase.from('expenses').delete().eq('id', e.id);
+              if (error) throw error;
+            }
+          }
         }
 
         // 2. Find inserted or updated expenses
