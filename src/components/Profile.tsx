@@ -35,7 +35,9 @@ export const Profile: React.FC<ProfileProps> = ({
   userEmail,
 }) => {
   const [localName, setLocalName] = useState(userName);
-  const [localUpi, setLocalUpi] = useState(userMetadata[me]?.upiId || '');
+  const [localUpi, setLocalUpi] = useState(() => {
+    return localStorage.getItem('divido_global_upi_id') || userMetadata[me]?.upiId || '';
+  });
   const [showCurrencyPicker, setShowCurrencyPicker] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
   const [manualRates, setManualRates] = useState(false);

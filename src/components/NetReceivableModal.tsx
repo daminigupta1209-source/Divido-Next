@@ -23,6 +23,7 @@ export const NetReceivableModal: React.FC<NetReceivableModalProps> = ({
 }) => {
   const [remPopupUpi, setRemPopupUpi] = useState('');
   const [remPopupEditing, setRemPopupEditing] = useState(false);
+  const [showOnboarding, setShowOnboarding] = useState(false);
   const [reminderText, setReminderText] = useState('');
   const [showQr, setShowQr] = useState(false);
   const [rates, setRates] = useState<Record<string, number>>({});
@@ -45,9 +46,18 @@ export const NetReceivableModal: React.FC<NetReceivableModalProps> = ({
 
   useEffect(() => {
     if (popupData) {
-      const myUpi = userMetadata[me]?.upiId || '';
+      const globalUpi = localStorage.getItem('divido_global_upi_id') || '';
+      const myUpi = globalUpi || userMetadata[me]?.upiId || '';
       setRemPopupUpi(myUpi);
-      setRemPopupEditing(!myUpi);
+      
+      const hasSkippedBefore = localStorage.getItem('divido_upi_prompt_skipped') === 'true';
+      if (!myUpi && !hasSkippedBefore) {
+        setShowOnboarding(true);
+        setRemPopupEditing(false);
+      } else {
+        setShowOnboarding(false);
+        setRemPopupEditing(false);
+      }
     }
   }, [popupData, userMetadata, me]);
 
@@ -76,7 +86,7 @@ export const NetReceivableModal: React.FC<NetReceivableModalProps> = ({
       const myUpi = remPopupUpi.trim();
       // Keep the visible message clean and human-readable; the tappable pay link
       // is attached only to the shared payload (see shareMessage below).
-      const msg = `Hey ${popupData.friendName}, just a quick reminder to settle our net balance of ${popupData.curr}${popupData.amt.toFixed(2)}${inrNote} on Divido.${myUpi ? ` Pay me at UPI: ${myUpi}` : ''} Thank you! 🌸`;
+      const msg = `Hey ${popupData.friendName}, just a quick reminder to settle our net balance of ${popupData.curr}${popupData.amt.toFixed(2)}${inrNote} on Divido.${myUpi ? ` Pay me at UPI: ${myUpi}` : ''} Thank you!`;
       setReminderText(msg);
     }
   }, [remPopupUpi, popupData, inrNote]);
@@ -167,7 +177,45 @@ export const NetReceivableModal: React.FC<NetReceivableModalProps> = ({
           Share the reminder, or show your QR to scan in person.
         </p>
 
-        {remPopupEditing ? (
+        {showOnboarding ? (
+          /* One-time Onboarding/Awareness Screen */
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '14px', marginBottom: '18px', background: '#F8FAFC', padding: '18px', borderRadius: '18px', border: '1px solid #E2E8F0', textAlign: 'left' }}>
+            <span style={{ fontSize: '12px', fontWeight: 800, color: '#475569', lineHeight: 1.4, textAlign: 'center', display: 'block', margin: '4px 0' }}>
+              "Linking your UPI ID lets friends pay you instantly via links or QR codes. Would you like to add it?"
+            </span>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginTop: '4px' }}>
+              <button
+                className="btn-green"
+                onClick={() => {
+                  setShowOnboarding(false);
+                  setRemPopupEditing(true); // Open the input form
+                }}
+                style={{ padding: '12px', fontSize: '12px', borderRadius: '12px', cursor: 'pointer', fontWeight: 800 }}
+              >
+                Yes, Link UPI ID
+              </button>
+              <button
+                onClick={() => {
+                  localStorage.setItem('divido_upi_prompt_skipped', 'true');
+                  setShowOnboarding(false);
+                }}
+                style={{
+                  padding: '12px',
+                  borderRadius: '12px',
+                  border: '1px solid #CBD5E1',
+                  background: 'white',
+                  color: '#64748B',
+                  fontWeight: 800,
+                  fontSize: '12px',
+                  cursor: 'pointer',
+                  textAlign: 'center'
+                }}
+              >
+                No, Skip & Share Text Only
+              </button>
+            </div>
+          </div>
+        ) : remPopupEditing ? (
           /* Link UPI first (needed for pay link + QR) */
           <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', marginBottom: '18px', background: 'var(--bg)', padding: '16px', borderRadius: '16px', border: '2px dashed var(--b)' }}>
             <span style={{ fontSize: '12px', fontWeight: 900, color: 'var(--t)' }}>
@@ -191,12 +239,32 @@ export const NetReceivableModal: React.FC<NetReceivableModalProps> = ({
                   alert('Please enter a valid UPI ID (e.g. yourname@okaxis)!');
                   return;
                 }
+                localStorage.setItem('divido_global_upi_id', trimmed);
                 setUserMetadata((prev) => ({ ...prev, [me]: { ...prev[me], upiId: trimmed } }));
                 setRemPopupEditing(false);
               }}
-              style={{ padding: '10px', fontSize: '12px', borderRadius: '10px' }}
+              style={{ padding: '10px', fontSize: '12px', borderRadius: '10px', cursor: 'pointer' }}
             >
               Link UPI ID
+            </button>
+            <button
+              onClick={() => {
+                localStorage.setItem('divido_upi_prompt_skipped', 'true');
+                setRemPopupUpi('');
+                setRemPopupEditing(false);
+              }}
+              style={{
+                background: 'none',
+                border: 'none',
+                color: '#64748B',
+                fontSize: '11px',
+                fontWeight: 700,
+                cursor: 'pointer',
+                textDecoration: 'underline',
+                marginTop: '4px'
+              }}
+            >
+              Skip & Share Text Only
             </button>
           </div>
         ) : (
@@ -204,13 +272,21 @@ export const NetReceivableModal: React.FC<NetReceivableModalProps> = ({
             {/* Primary: share the reminder via apps (same grid as the invite modal) */}
             <ShareGrid message={shareMessage} copyValue={shareMessage} />
 
-            {/* Secondary: reveal QR + editable message on demand */}
-            <button
-              onClick={() => setShowQr((s) => !s)}
-              style={{ background: 'none', border: 'none', color: 'var(--g)', fontSize: '11px', fontWeight: 900, cursor: 'pointer', marginBottom: showQr ? '10px' : '14px', textDecoration: 'underline' }}
-            >
-              {showQr ? 'Hide QR code' : 'Show QR code'}
-            </button>
+             {remPopupUpi ? (
+              <button
+                onClick={() => setShowQr((s) => !s)}
+                style={{ background: 'none', border: 'none', color: 'var(--g)', fontSize: '11px', fontWeight: 900, cursor: 'pointer', marginBottom: showQr ? '10px' : '14px', textDecoration: 'underline' }}
+              >
+                {showQr ? 'Hide QR code' : 'Show QR code'}
+              </button>
+            ) : (
+              <button
+                onClick={() => setRemPopupEditing(true)}
+                style={{ background: 'none', border: 'none', color: '#64748B', fontSize: '11px', fontWeight: 700, cursor: 'pointer', marginBottom: '14px', textDecoration: 'underline' }}
+              >
+                🔗 Link UPI ID to enable QR payments
+              </button>
+            )}
 
             {showQr && (
               <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', marginBottom: '16px' }}>
