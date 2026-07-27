@@ -185,13 +185,25 @@ export const AddFriendModal: React.FC<AddFriendModalProps> = ({
   }, [targetReminderName]);
 
   const handleConfirmedAdd = () => {
-    if (pending.length === 0) return;
-    setConfirmedNames(pending);
+    let finalPending = [...pending];
+    const trimmed = name.trim();
+    if (trimmed) {
+      const isDuplicatePending = pending.some(p => p.toLowerCase() === trimmed.toLowerCase());
+      const isDuplicateActive = selectedGroup && selectedGroup.members.some(m => m.toLowerCase() === trimmed.toLowerCase());
+      const isDuplicateLeft = selectedGroup && selectedGroup.members.some(m => m.toLowerCase() === (trimmed + ' (Left)').toLowerCase());
+      
+      if (!isDuplicatePending && !isDuplicateActive && !isDuplicateLeft) {
+        finalPending.push(trimmed);
+      }
+    }
+
+    if (finalPending.length === 0) return;
+    setConfirmedNames(finalPending);
     if (onAdd) {
-      onAdd(pending);
+      onAdd(finalPending);
     } else if (selectedGroup) {
       const newMembers = [...selectedGroup.members];
-      pending.forEach((n) => { if (!newMembers.includes(n)) newMembers.push(n); });
+      finalPending.forEach((n) => { if (!newMembers.includes(n)) newMembers.push(n); });
       setGroups(groups.map((g) => (g.id === selectedGroup.id ? { ...g, members: newMembers } : g)));
     }
     setInvited(true);
@@ -308,16 +320,22 @@ export const AddFriendModal: React.FC<AddFriendModalProps> = ({
             {/* Add button */}
             <button
               onClick={handleConfirmedAdd}
-              disabled={pending.length === 0}
+              disabled={pending.length === 0 && name.trim().length === 0}
               style={{
                 width: '100%', padding: '13px', borderRadius: '14px', border: 'none',
-                background: pending.length === 0 ? '#CBD5E1' : '#6366F1',
+                background: (pending.length === 0 && name.trim().length === 0) ? '#CBD5E1' : '#6366F1',
                 color: 'white', fontSize: '14px', fontWeight: 800,
-                cursor: pending.length === 0 ? 'not-allowed' : 'pointer',
+                cursor: (pending.length === 0 && name.trim().length === 0) ? 'not-allowed' : 'pointer',
                 transition: '0.2s all',
               }}
             >
-              {pending.length > 0 ? `Add ${pending.length} Friend${pending.length > 1 ? 's' : ''} ✓` : 'Add Friends'}
+              {pending.length > 0 && name.trim().length > 0
+                ? 'Add Friends ✓'
+                : pending.length > 0
+                ? `Add ${pending.length} Friend${pending.length > 1 ? 's' : ''} ✓`
+                : name.trim().length > 0
+                ? 'Add Friend ✓'
+                : 'Add Friends'}
             </button>
           </>
         ) : (
