@@ -214,17 +214,23 @@ export function useSupabaseSync({
               requestEmail: m.link_request_email,
             }));
 
-          loadedGroups.push({
-            id: group.id,
-            name: group.name,
-            currency: group.currency || '₹',
-            emoji: group.emoji || undefined,
-            simplifyDebts: group.simplify_debts || false,
-            createdDate: group.created_date || (group.created_at ? String(group.created_at).split('T')[0] : undefined),
-            members,
-            pendingMembers,
-            pendingLinkRequests,
-          });
+          const isDuplicate = loadedGroups.some(g => 
+            g.name.trim().toLowerCase() === group.name.trim().toLowerCase() &&
+            JSON.stringify([...g.members].sort()) === JSON.stringify([...members].sort())
+          );
+          if (!isDuplicate) {
+            loadedGroups.push({
+              id: group.id,
+              name: group.name,
+              currency: group.currency || '₹',
+              emoji: group.emoji || undefined,
+              simplifyDebts: group.simplify_debts || false,
+              createdDate: group.created_date || (group.created_at ? String(group.created_at).split('T')[0] : undefined),
+              members,
+              pendingMembers,
+              pendingLinkRequests,
+            });
+          }
 
           // Auto-heal: fix any members that have user_email set but are still marked pending
           const staleMembers = groupMems.filter((m: any) => m.is_pending && m.user_email && !m.link_request_email);
