@@ -176,23 +176,22 @@ export const NetReceivableModal: React.FC<NetReceivableModalProps> = ({
         <p style={{ fontSize: '10.5px', color: 'var(--g)', fontWeight: 800, marginBottom: '12px' }}>
           Share the reminder, or show your QR to scan in person.
         </p>
-
         {showOnboarding ? (
           /* One-time Onboarding/Awareness Screen */
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '14px', marginBottom: '18px', background: '#F8FAFC', padding: '18px', borderRadius: '18px', border: '1px solid #E2E8F0', textAlign: 'left' }}>
-            <span style={{ fontSize: '12px', fontWeight: 800, color: '#475569', lineHeight: 1.4, textAlign: 'center', display: 'block', margin: '4px 0' }}>
-              "Linking your UPI ID lets friends pay you instantly via links or QR codes. Would you like to add it?"
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', marginBottom: '16px', background: '#F8FAFC', padding: '16px', borderRadius: '16px', border: '1px solid #E2E8F0', textAlign: 'center' }}>
+            <span style={{ fontSize: '13px', fontWeight: 800, color: '#334155', lineHeight: 1.4 }}>
+              Enable UPI payments (link or QR code)?
             </span>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginTop: '4px' }}>
+            <div style={{ display: 'flex', gap: '8px' }}>
               <button
                 className="btn-green"
                 onClick={() => {
                   setShowOnboarding(false);
                   setRemPopupEditing(true); // Open the input form
                 }}
-                style={{ padding: '12px', fontSize: '12px', borderRadius: '12px', cursor: 'pointer', fontWeight: 800 }}
+                style={{ flex: 1, padding: '10px', fontSize: '12px', borderRadius: '10px', cursor: 'pointer', fontWeight: 900 }}
               >
-                Yes, Link UPI ID
+                Add UPI
               </button>
               <button
                 onClick={() => {
@@ -200,18 +199,19 @@ export const NetReceivableModal: React.FC<NetReceivableModalProps> = ({
                   setShowOnboarding(false);
                 }}
                 style={{
-                  padding: '12px',
-                  borderRadius: '12px',
-                  border: '1px solid #CBD5E1',
+                  flex: 1,
+                  padding: '10px',
+                  borderRadius: '10px',
+                  border: '1.5px solid #CBD5E1',
                   background: 'white',
                   color: '#64748B',
-                  fontWeight: 800,
+                  fontWeight: 900,
                   fontSize: '12px',
                   cursor: 'pointer',
                   textAlign: 'center'
                 }}
               >
-                No, Skip & Share Text Only
+                Skip
               </button>
             </div>
           </div>
