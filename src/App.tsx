@@ -537,7 +537,17 @@ function App() {
       const dName = savedName && savedName !== 'undefined' ? savedName : 'You';
       const myFirstName = dName.split(' ')[0];
       const parsed = saved && saved !== 'undefined' ? JSON.parse(saved) : [];
-      return parsed.map((g: any) => {
+      const seenIds = new Set<any>();
+      const uniqueParsed = parsed.filter((g: any) => {
+        if (!g.id) return false;
+        // If it's a valid DB ID, ensure it is unique
+        if (typeof g.id === 'number' && g.id <= 2147483647) {
+          if (seenIds.has(g.id)) return false;
+          seenIds.add(g.id);
+        }
+        return true;
+      });
+      return uniqueParsed.map((g: any) => {
         const members = Array.isArray(g.members) ? Array.from(new Set(g.members)) : [myFirstName || 'You'];
         return { 
           ...g, 

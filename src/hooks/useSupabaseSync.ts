@@ -262,7 +262,15 @@ export function useSupabaseSync({
         } catch (e) { /* quota exceeded — ignore */ }
 
         const unsynced = groups.filter(g => typeof g.id === 'number' && g.id > 2147483647);
-        const mergedGroups = [...unsynced, ...loadedGroups];
+        // Deduplicate: if a local temp group has the same name as a group fetched from the database,
+        // it means the sync succeeded. Remove the local temp copy so it doesn't double-render.
+        const cleanUnsynced = unsynced.filter(u => {
+          const alreadySynced = loadedGroups.some(l => 
+            l.name.trim().toLowerCase() === u.name.trim().toLowerCase()
+          );
+          return !alreadySynced;
+        });
+        const mergedGroups = [...cleanUnsynced, ...loadedGroups];
 
         // Merge: keep any local expenses that are NOT in the cloud yet (pending upload)
         // These have temporary IDs (timestamp-based, > 2147483647) or belong to unsynced groups
@@ -473,14 +481,25 @@ export function useSupabaseSync({
         }
 
         if (localStateUpdated) {
-          const syncedGroups = nextGroups.filter(g => typeof g.id === 'number' && g.id <= 2147483647);
+          // Deduplicate nextGroups to prevent temporary copies from remaining alongside synced copies
+          const uniqueNextGroups: Group[] = [];
+          const seenGroupIds = new Set<any>();
+          for (const g of nextGroups) {
+            if (g.id) {
+              if (seenGroupIds.has(g.id)) continue;
+              seenGroupIds.add(g.id);
+            }
+            uniqueNextGroups.push(g);
+          }
+
+          const syncedGroups = uniqueNextGroups.filter(g => typeof g.id === 'number' && g.id <= 2147483647);
           prevGroupsRef.current = syncedGroups;
           localStorage.setItem('divido_last_synced_groups', JSON.stringify(syncedGroups));
 
           prevExpensesRef.current = nextExpenses;
           localStorage.setItem('divido_last_synced_expenses', JSON.stringify(nextExpenses));
 
-          setGroups(nextGroups);
+          setGroups(uniqueNextGroups);
           setExpenses(nextExpenses);
           setSelectedId(nextSelectedId);
         } else {
