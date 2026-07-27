@@ -400,23 +400,39 @@ export function useSupabaseSync({
             if (!g.name || g.name.trim() === '') {
               continue;
             }
-            // Insert new group
-            const insertId = typeof g.id === 'number' && g.id < 2147483647 ? g.id : undefined;
-            const { data, error } = await supabase
-              .from('groups')
-              .insert({
-                id: insertId,
-                name: g.name,
-                currency: g.currency,
-                emoji: g.emoji,
-                simplify_debts: g.simplifyDebts
-              })
-              .select();
 
-            if (error) throw error;
+            // Sync Lock: skip if this temporary group is already uploading in another active task
+            const lockKey = `divido_syncing_${g.id}`;
+            if (sessionStorage.getItem(lockKey) === 'true') {
+              console.log(`Group ${g.name} (temp ID: ${g.id}) is already syncing. Skipping duplicate request.`);
+              continue;
+            }
 
-            if (data && data[0]) {
-              const newGroupId = data[0].id;
+            // Set the sync lock
+            sessionStorage.setItem(lockKey, 'true');
+
+            try {
+              // Insert new group
+              const insertId = typeof g.id === 'number' && g.id < 2147483647 ? g.id : undefined;
+              const { data, error } = await supabase
+                .from('groups')
+                .insert({
+                  id: insertId,
+                  name: g.name,
+                  currency: g.currency,
+                  emoji: g.emoji,
+                  simplify_debts: g.simplifyDebts
+                })
+                .select();
+
+              if (error) {
+                sessionStorage.removeItem(lockKey); // release lock on failure
+                throw error;
+              }
+
+              if (data && data[0]) {
+                sessionStorage.removeItem(lockKey); // release lock on success
+                const newGroupId = data[0].id;
               const oldGroupId = g.id;
 
               // Link creator and other group members
@@ -444,9 +460,12 @@ export function useSupabaseSync({
               if (String(nextSelectedId) === String(oldGroupId)) {
                 nextSelectedId = newGroupId;
               }
-
               localStateUpdated = true;
             }
+          } catch (err) {
+            sessionStorage.removeItem(lockKey);
+            throw err;
+          }
           } else {
             if (old.name !== g.name || old.currency !== g.currency || old.emoji !== g.emoji || old.simplifyDebts !== g.simplifyDebts) {
               // Update existing group
