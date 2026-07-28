@@ -58,7 +58,7 @@ export const NetPayableModal: React.FC<NetPayableModalProps> = ({
     : null;
 
   // UPI is an INR-only rail. Offer it only when the payer's primary currency is INR.
-  const canPayViaUpi = primaryIsINR && (debtIsINR || inrEquivalent !== null);
+  const canPayViaUpi = (debtIsINR || inrEquivalent !== null);
 
   useEffect(() => {
     if (popupData) {
@@ -149,7 +149,7 @@ export const NetPayableModal: React.FC<NetPayableModalProps> = ({
           Paying <strong style={{ color: 'var(--accent)', fontSize: '18px' }}>{popupData.curr}{popupData.amt.toFixed(2)}</strong> to {popupData.friendName}
         </p>
         {/* Cross-currency equivalent line */}
-        {!debtIsINR && primaryIsINR && (
+        {!debtIsINR && (
           <p style={{ fontSize: '12px', fontWeight: 700, color: 'var(--g)', margin: '0 0 14px', opacity: 0.85 }}>
             {inrDisplay ? (
               <>≈ <strong style={{ color: 'var(--t)' }}>{inrDisplay}</strong> via UPI</>
@@ -164,7 +164,7 @@ export const NetPayableModal: React.FC<NetPayableModalProps> = ({
 
         <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
           {/* Non-INR payer: UPI can't be used at all. */}
-          {!primaryIsINR ? (
+          {!canPayViaUpi ? (
             <div style={{ fontSize: '12px', fontWeight: 700, color: 'var(--g)', background: 'var(--bg)', padding: '12px', borderRadius: '16px', lineHeight: 1.5 }}>
               UPI only supports ₹. Pay {popupData.friendName} {popupData.curr}{popupData.amt.toFixed(2)} using your usual method, then record it below.
             </div>
