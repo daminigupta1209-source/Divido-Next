@@ -660,7 +660,7 @@ function App() {
       if (session) {
         setUserEmail(session.user?.email || '');
         const saved = localStorage.getItem('divido_username');
-        if (!saved || saved === 'You' || saved === 'undefined') {
+        if (!saved || saved === 'You' || saved === 'undefined' || saved === 'Guest') {
           const userFullName = session.user?.user_metadata?.full_name || session.user?.email?.split('@')[0] || session.user?.phone || 'User';
           updateUserName(userFullName);
         }
@@ -687,7 +687,7 @@ function App() {
       if (session) {
         setUserEmail(session.user?.email || '');
         const saved = localStorage.getItem('divido_username');
-        if (!saved || saved === 'You' || saved === 'undefined') {
+        if (!saved || saved === 'You' || saved === 'undefined' || saved === 'Guest') {
           const userFullName = session.user?.user_metadata?.full_name || session.user?.email?.split('@')[0] || session.user?.phone || 'User';
           updateUserName(userFullName);
         }
