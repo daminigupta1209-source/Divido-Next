@@ -1005,6 +1005,24 @@ function App() {
     }
   }, [groups, expenses]);
 
+  // Repair duplicate group IDs. If two groups share the same id, the app can't tell
+  // them apart, so renaming/deleting one would affect both. Give later duplicates a
+  // fresh unique id so every group is independent again.
+  useEffect(() => {
+    const seen = new Set<string>();
+    let changed = false;
+    const repaired = groups.map((g) => {
+      const key = String(g.id);
+      if (g.id !== 'STANDALONE' && seen.has(key)) {
+        changed = true;
+        return { ...g, id: Date.now() + Math.random() };
+      }
+      seen.add(key);
+      return g;
+    });
+    if (changed) setGroups(repaired);
+  }, [groups]);
+
   useEffect(() => {
     localStorage.setItem('divido_usermetadata', JSON.stringify(userMetadata));
   }, [userMetadata]);
@@ -1032,6 +1050,7 @@ function App() {
     isAuthenticated,
     me,
     setMatchPrompt,
+    userEmail,
   });
 
   useAppHotkeys({
@@ -2127,7 +2146,11 @@ function App() {
              } else {
                const name = prompt('Ledger Name:', 'Quick Splits ⚡');
                if (name) {
-                 const id = Date.now();
+                 if (groups.some((g) => g.name.trim().toLowerCase() === name.trim().toLowerCase())) {
+                   alert('A group with that name already exists. Please pick a different name.');
+                   return;
+                 }
+                 const id = Date.now() + Math.random();
                  setGroups([...groups, { id, name, members: [me, ...names], currency: myDefaultCurrency }]);
                  setSelectedId(id);
                }

@@ -441,7 +441,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
                 })}
                 <button
                   onClick={() => {
-                    const id = Date.now();
+                    const id = Date.now() + Math.random();
                     setGroups([
                       ...groups,
                       { id, name: '', members: [me], currency: defaultCurrency },

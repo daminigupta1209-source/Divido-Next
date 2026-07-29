@@ -25,9 +25,16 @@ export const FloatingAddMenu: React.FC<FloatingAddMenuProps> = ({
   myDefaultCurrency,
 }) => {
   const containerRef = useRef<HTMLDivElement>(null);
+  const creatingRef = useRef(false);
 
   const createGroup = () => {
-    const id = Date.now();
+    // Guard against accidental double-taps creating two groups at once.
+    if (creatingRef.current) return;
+    creatingRef.current = true;
+    setTimeout(() => { creatingRef.current = false; }, 1000);
+
+    // Fractional id (timestamp + random) so two groups can never collide on the same millisecond.
+    const id = Date.now() + Math.random();
     setGroups([...groups, { id, name: '', members: [me], currency: myDefaultCurrency }]);
     setSelectedId(id);
     setView('detail');

@@ -14,6 +14,7 @@ interface UseSupabaseSyncProps {
   isAuthenticated: boolean;
   me: string;
   setMatchPrompt: React.Dispatch<React.SetStateAction<any>>;
+  userEmail: string;
 }
 
 export function useSupabaseSync({
@@ -26,7 +27,11 @@ export function useSupabaseSync({
   isAuthenticated,
   me,
   setMatchPrompt,
+  userEmail,
 }: UseSupabaseSyncProps) {
+  // A guest (no real signed-in email) is fully local — the cloud-sync engine must
+  // not run for them, or it corrupts their local group list.
+  const hasCloudSession = !!userEmail;
   const prevGroupsRef = useRef<Group[]>([]);
   const prevExpensesRef = useRef<Expense[]>([]);
   const groupsRef = useRef(groups);
@@ -83,7 +88,7 @@ export function useSupabaseSync({
 
   // Load data from Supabase on authentication / guest invite join
   useEffect(() => {
-    if (checkIfDemoMode() || !isAuthenticated) return;
+    if (checkIfDemoMode() || !isAuthenticated || !hasCloudSession) return;
 
     const loadData = async () => {
       try {
@@ -305,11 +310,12 @@ export function useSupabaseSync({
     };
 
     loadData();
-  }, [isAuthenticated, setGroups, setExpenses, selectedId, loadTrigger]);
+  }, [isAuthenticated, hasCloudSession, setGroups, setExpenses, selectedId, loadTrigger]);
 
   // Realtime: detect when a friend joins, updates name, or creates expenses and sync immediately
   useEffect(() => {
     if (checkIfDemoMode()) return;
+    if (!hasCloudSession) return;
     if (!isAuthenticated && typeof selectedId !== 'number') return;
 
     const channel = supabase
@@ -357,11 +363,11 @@ export function useSupabaseSync({
       .subscribe();
 
     return () => { supabase.removeChannel(channel); };
-  }, [isAuthenticated, selectedId, setGroups, setMatchPrompt, setLoadTrigger]);
+  }, [isAuthenticated, hasCloudSession, selectedId, setGroups, setMatchPrompt, setLoadTrigger]);
 
   // Sync groups to Supabase in real-time
   useEffect(() => {
-    if (checkIfDemoMode() || !isAuthenticated) return;
+    if (checkIfDemoMode() || !isAuthenticated || !hasCloudSession) return;
     if (!navigator.onLine) return;
 
     const syncGroups = async () => {
@@ -541,11 +547,11 @@ export function useSupabaseSync({
     };
 
     syncGroups();
-  }, [groups, expenses, selectedId, isAuthenticated, me, setGroups, setExpenses, setSelectedId]);
+  }, [groups, expenses, selectedId, isAuthenticated, hasCloudSession, me, setGroups, setExpenses, setSelectedId]);
 
   // Sync expenses to Supabase in real-time
   useEffect(() => {
-    if (checkIfDemoMode() || !isAuthenticated) return;
+    if (checkIfDemoMode() || !isAuthenticated || !hasCloudSession) return;
     if (!navigator.onLine) return;
 
     const syncExpenses = async () => {
@@ -713,7 +719,7 @@ export function useSupabaseSync({
     };
 
     syncExpenses();
-  }, [expenses, isAuthenticated, setExpenses]);
+  }, [expenses, isAuthenticated, hasCloudSession, setExpenses]);
 
   // Listen for online status to trigger automatic sync queue flush
   useEffect(() => {

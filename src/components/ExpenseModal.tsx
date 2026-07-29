@@ -539,7 +539,11 @@ export const ExpenseModal: React.FC<ExpenseModalProps> = ({
                         setShowGroupDropdown(false);
                         const name = prompt('Ledger Name:', 'New Group 🏡');
                         if (name) {
-                          const id = Date.now();
+                          if (groups.some((g) => g.name.trim().toLowerCase() === name.trim().toLowerCase())) {
+                            alert('A group with that name already exists. Please pick a different name.');
+                            return;
+                          }
+                          const id = Date.now() + Math.random();
                           const newG = { id, name, members: [me], currency: '₹' };
                           setGroups([...groups, newG]);
                           setLocalGId(id);
