@@ -1502,6 +1502,15 @@ function App() {
     setHeaderRenaming(false);
   };
 
+  // Account-first: only signed-in users can create groups. Guests get nudged to sign in.
+  const isSignedIn = !!userEmail;
+  const requireSignInToCreate = (): boolean => {
+    if (isSignedIn) return true;
+    alert('Please sign in to create a group and split with friends.');
+    setView('profile');
+    return false;
+  };
+
 
 
 
@@ -1545,6 +1554,7 @@ function App() {
         setIsSidebarOpen={setIsSidebarOpen}
         syncStatus={syncStatus}
         profilePhoto={userMetadata[me]?.profilePhoto}
+        onRequireSignIn={requireSignInToCreate}
       />
 
       {isSidebarOpen && (
@@ -2075,6 +2085,8 @@ function App() {
         setGroups={setGroups}
         me={me}
         myDefaultCurrency={myDefaultCurrency}
+        isSignedIn={isSignedIn}
+        onRequireSignIn={requireSignInToCreate}
       />
 
 
@@ -2103,6 +2115,7 @@ function App() {
           defaultCurrency={myDefaultCurrency}
           autoOpenScanner={autoOpenScanner}
           setAutoOpenScanner={setAutoOpenScanner}
+          onRequireSignIn={requireSignInToCreate}
         />
       )}
 
@@ -2144,6 +2157,7 @@ function App() {
                }
                setNewlyAddedFriends(names);
              } else {
+               if (!requireSignInToCreate()) return;
                const name = prompt('Ledger Name:', 'Quick Splits ⚡');
                if (name) {
                  if (groups.some((g) => g.name.trim().toLowerCase() === name.trim().toLowerCase())) {

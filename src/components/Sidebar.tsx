@@ -27,6 +27,7 @@ interface SidebarProps {
   setIsSidebarOpen: (b: boolean) => void;
   syncStatus?: 'synced' | 'syncing' | 'offline' | 'demo';
   profilePhoto?: string;
+  onRequireSignIn?: () => boolean;
 }
 
 export const Sidebar: React.FC<SidebarProps> = ({
@@ -51,6 +52,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
   setIsSidebarOpen,
   syncStatus,
   profilePhoto,
+  onRequireSignIn,
 }) => {
   const getSyncState = () => {
     switch (syncStatus) {
@@ -441,6 +443,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
                 })}
                 <button
                   onClick={() => {
+                    if (onRequireSignIn && !onRequireSignIn()) return;
                     const id = Date.now() + Math.random();
                     setGroups([
                       ...groups,

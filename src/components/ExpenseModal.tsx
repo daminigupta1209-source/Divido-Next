@@ -35,6 +35,7 @@ interface ExpenseModalProps {
   defaultCurrency: string;
   autoOpenScanner?: boolean;
   setAutoOpenScanner?: (val: boolean) => void;
+  onRequireSignIn?: () => boolean;
 }
 
 export const ExpenseModal: React.FC<ExpenseModalProps> = ({
@@ -60,6 +61,7 @@ export const ExpenseModal: React.FC<ExpenseModalProps> = ({
   defaultCurrency,
   autoOpenScanner = false,
   setAutoOpenScanner,
+  onRequireSignIn,
 }) => {
   const {
     localGId,
@@ -537,6 +539,7 @@ export const ExpenseModal: React.FC<ExpenseModalProps> = ({
                       onMouseDown={(e) => {
                         e.preventDefault();
                         setShowGroupDropdown(false);
+                        if (onRequireSignIn && !onRequireSignIn()) return;
                         const name = prompt('Ledger Name:', 'New Group 🏡');
                         if (name) {
                           if (groups.some((g) => g.name.trim().toLowerCase() === name.trim().toLowerCase())) {

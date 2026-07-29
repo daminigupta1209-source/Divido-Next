@@ -14,6 +14,8 @@ interface FloatingAddMenuProps {
   setGroups: React.Dispatch<React.SetStateAction<Group[]>>;
   me: string;
   myDefaultCurrency: string;
+  isSignedIn?: boolean;
+  onRequireSignIn?: () => boolean;
 }
 
 export const FloatingAddMenu: React.FC<FloatingAddMenuProps> = ({
@@ -23,11 +25,15 @@ export const FloatingAddMenu: React.FC<FloatingAddMenuProps> = ({
   setGroups,
   me,
   myDefaultCurrency,
+  onRequireSignIn,
 }) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const creatingRef = useRef(false);
 
   const createGroup = () => {
+    // Account-first: guests are nudged to sign in instead of creating a group.
+    if (onRequireSignIn && !onRequireSignIn()) return;
+
     // Guard against accidental double-taps creating two groups at once.
     if (creatingRef.current) return;
     creatingRef.current = true;
