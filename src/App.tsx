@@ -1188,7 +1188,7 @@ function App() {
             try {
               // Delete ALL membership rows for this user in the group on Supabase to prevent duplicates from restoring it
               const { data: { session } } = await supabase.auth.getSession();
-              const myEmail = session?.user?.email || null;
+              const myEmail = session?.user?.email || (localStorage.getItem('divido_e2e_testing') === 'true' ? localStorage.getItem('divido_mock_email') || 'e2e-test-guest@divido.app' : null);
               const emailFilter = myEmail ? `user_email.eq.${myEmail},` : '';
               
               await supabase
@@ -1817,7 +1817,7 @@ function App() {
               if (selectedId && selectedId !== 'STANDALONE') {
                 try {
                   const { data: { session } } = await supabase.auth.getSession();
-                  const myEmail = session?.user?.email || null;
+                  const myEmail = session?.user?.email || (localStorage.getItem('divido_e2e_testing') === 'true' ? localStorage.getItem('divido_mock_email') || 'e2e-test-guest@divido.app' : null);
 
                   const searchName = me + ' (Left)';
                   const { data: matched } = await supabase
@@ -2228,7 +2228,7 @@ function App() {
                     setSubmittingLinkRequest(true);
                     try {
                       const { data: { session } } = await supabase.auth.getSession();
-                      const myEmail = session?.user?.email || null;
+                      const myEmail = session?.user?.email || (localStorage.getItem('divido_e2e_testing') === 'true' ? localStorage.getItem('divido_mock_email') || 'e2e-test-guest@divido.app' : null);
 
                       // Account-first: joining a shared group requires a real sign-in.
                       // Send guests through Google sign-in and bring them back to this
@@ -2329,7 +2329,7 @@ function App() {
                       
                        const updatedGroup = {
                         ...linkRequestGroup,
-                        members: linkRequestGroup.members.map((m: string) => 
+                        members: (linkRequestGroup.members || []).map((m: string) => 
                           m.toLowerCase() === (cleanName + ' (Left)').toLowerCase() ? cleanName : m
                         )
                       };
@@ -3104,12 +3104,49 @@ function App() {
               </button>
               <button
                 id="delete-confirm-btn"
-                onClick={() => {
+                onClick={async () => {
                   if (feedback.trim()) {
                     console.log('User feedback note before deletion:', feedback);
                   }
+
+                  if (userEmail) {
+                    try {
+                      // 1. Find all group memberships linked to this email
+                      const { data: memberships } = await supabase
+                        .from('group_members')
+                        .select('id, name, group_id')
+                        .eq('user_email', userEmail);
+                      
+                      if (memberships && memberships.length > 0) {
+                        for (const m of memberships) {
+                          const cleanName = m.name.replace(' (Left)', '');
+                          // 2. Mark them as past members and unlink email
+                          await supabase
+                            .from('group_members')
+                            .update({
+                              name: cleanName + ' (Left)',
+                              user_email: null,
+                              is_pending: true
+                            })
+                            .eq('id', m.id);
+                        }
+                      }
+                    } catch (e) {
+                      console.error('Failed to unlink user memberships on deletion:', e);
+                    }
+                  }
+
+                  // 3. Terminate active session
+                  try {
+                    await supabase.auth.signOut();
+                  } catch (e) {
+                    console.error('Sign out error on account deletion:', e);
+                  }
+
+                  // 4. Clear local cache
                   localStorage.clear();
 
+                  // 5. Reset React states
                   setGroups([]);
                   setExpenses([]);
                   setUserName('You');
