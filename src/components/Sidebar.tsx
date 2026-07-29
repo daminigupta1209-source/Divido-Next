@@ -65,7 +65,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
       case 'demo':
         return {
           color: '#F59E0B', // Amber
-          label: 'Guest / Demo',
+          label: 'Demo Mode',
           pulse: false,
         };
       case 'syncing':

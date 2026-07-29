@@ -82,12 +82,22 @@ test.describe("Multi-User Real-Time Syncing", () => {
       await dialog.accept();
     });
 
-    // Establish origin first, clear state, set testing flag, then load invite link
+    // Establish origin first, clear state, set testing flag, and mock sign in
     await pageB.goto("/");
     await pageB.evaluate(() => {
       localStorage.clear();
       localStorage.setItem("divido_e2e_testing", "true");
+      localStorage.setItem("divido_mock_email", "e2e-realtime-husky@divido.app");
     });
+    await pageB.reload();
+    await pageB.waitForTimeout(2000);
+
+    const googleBtnB = pageB.getByRole("button", { name: "Continue with Google" });
+    if (await googleBtnB.isVisible()) {
+      await googleBtnB.click();
+      await pageB.waitForTimeout(2000);
+    }
+
     await pageB.goto(inviteLink);
 
     // Wait and print debug info

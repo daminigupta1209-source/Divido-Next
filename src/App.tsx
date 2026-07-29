@@ -116,9 +116,6 @@ function App() {
   });
   const [showDeleteAccountModal, setShowDeleteAccountModal] = useState<boolean>(false);
   const [userEmail, setUserEmail] = useState<string>(() => {
-    if (localStorage.getItem('divido_guest_mode') === 'true') {
-      return '';
-    }
     if (localStorage.getItem('divido_e2e_testing') === 'true' && localStorage.getItem('divido_force_logged_out') !== 'true') {
       return localStorage.getItem('divido_mock_email') || 'e2e-test-guest@divido.app';
     }
@@ -661,8 +658,6 @@ function App() {
     // Listen to changes in auth state from Supabase
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
       if (session) {
-        // A real signed-in session takes over — no longer a guest.
-        localStorage.removeItem('divido_guest_mode');
         setUserEmail(session.user?.email || '');
         const saved = localStorage.getItem('divido_username');
         if (!saved || saved === 'You' || saved === 'undefined' || saved === 'Guest') {
@@ -677,10 +672,7 @@ function App() {
         localStorage.setItem('divido_authenticated', 'true');
       } else {
         setUserEmail('');
-        if (localStorage.getItem('divido_guest_mode') === 'true') {
-          // Guest = local-only session with no cloud account. Stay logged in as guest.
-          setIsAuthenticated(true);
-        } else if (localStorage.getItem('divido_e2e_testing') === 'true' && localStorage.getItem('divido_force_logged_out') !== 'true') {
+        if (localStorage.getItem('divido_e2e_testing') === 'true' && localStorage.getItem('divido_force_logged_out') !== 'true') {
           setIsAuthenticated(true);
           setUserEmail(localStorage.getItem('divido_mock_email') || 'e2e-test-guest@divido.app');
         } else {
@@ -693,8 +685,6 @@ function App() {
     // Check current session once on mount
     supabase.auth.getSession().then(async ({ data: { session } }) => {
       if (session) {
-        // A real signed-in session takes over — no longer a guest.
-        localStorage.removeItem('divido_guest_mode');
         setUserEmail(session.user?.email || '');
         const saved = localStorage.getItem('divido_username');
         if (!saved || saved === 'You' || saved === 'undefined' || saved === 'Guest') {
@@ -707,10 +697,6 @@ function App() {
         }
         setIsAuthenticated(true);
         localStorage.setItem('divido_authenticated', 'true');
-      } else if (localStorage.getItem('divido_guest_mode') === 'true') {
-        // Guest = local-only session with no cloud account. Stay logged in as guest.
-        setIsAuthenticated(true);
-        setUserEmail('');
       } else if (localStorage.getItem('divido_e2e_testing') === 'true' && localStorage.getItem('divido_force_logged_out') !== 'true') {
         setIsAuthenticated(true);
         setUserEmail(localStorage.getItem('divido_mock_email') || 'e2e-test-guest@divido.app');
@@ -1547,9 +1533,6 @@ function App() {
         onLoginSuccess={(name) => {
           updateUserName(name);
           setIsAuthenticated(true);
-          if (localStorage.getItem('divido_guest_mode') === 'true') {
-            setUserEmail('');
-          }
         }}
         currentTheme={theme}
       />
@@ -2327,67 +2310,21 @@ function App() {
                         alert(`Welcome back to "${linkRequestGroup.name}"! You have successfully rejoined as "${cleanName}". 🎉`);
                       } else {
                         // Normal claim flow
-                        if (session?.user?.email) {
-                          // User is signed in: Claim and activate immediately so RLS allows access
-                          await supabase
-                            .from('group_members')
-                            .update({
-                              user_email: session.user.email,
-                              is_pending: false,
-                            })
-                            .eq('id', p.id);
-                          
-                          localStorage.setItem('divido_username', p.name);
-                          localStorage.setItem('divido_authenticated', 'true');
-                          localStorage.setItem(`divido_identity_${linkRequestGroup.id}`, p.name);
-                          setUserName(p.name);
-                          setIsAuthenticated(true);
-                          
-                          alert(`Welcome, ${p.name}! You have successfully joined the group. 🎉`);
-                        } else {
-                          // Guest/Cookie claim (Tricount-style)
-                          // 1. Mark as locally active in Supabase so others see they have joined
-                          await supabase
-                            .from('group_members')
-                            .update({ is_pending: false })
-                            .eq('id', p.id);
-
-                          // Notify other members
-                          try {
-                            const { data: activeMems } = await supabase
-                              .from('group_members')
-                              .select('user_email')
-                              .eq('group_id', linkRequestGroup.id)
-                              .not('user_email', 'is', null);
-                            
-                            if (activeMems && activeMems.length > 0) {
-                              const { pushNotification } = await import('./lib/notifications');
-                              for (const mem of activeMems) {
-                                if (mem.user_email) {
-                                  await pushNotification({
-                                    recipientEmail: mem.user_email,
-                                    type: 'join',
-                                    title: `${p.name} joined ${linkRequestGroup.name}`,
-                                    body: `${p.name} claimed their profile and is now active.`,
-                                    fromName: p.name,
-                                    groupId: linkRequestGroup.id,
-                                  });
-                                }
-                              }
-                            }
-                          } catch (e) {
-                            console.error('Guest claim notification push failed:', e);
-                          }
-
-                          // 2. Save settings locally
-                          localStorage.setItem('divido_username', p.name);
-                          localStorage.setItem('divido_authenticated', 'true');
-                          localStorage.setItem(`divido_identity_${linkRequestGroup.id}`, p.name);
-                          setUserName(p.name);
-                          setIsAuthenticated(true);
-                          
-                          alert(`Welcome, ${p.name}! You have successfully claimed this profile. 🎉`);
-                        }
+                        await supabase
+                          .from('group_members')
+                          .update({
+                            user_email: myEmail,
+                            is_pending: false,
+                          })
+                          .eq('id', p.id);
+                        
+                        localStorage.setItem('divido_username', p.name);
+                        localStorage.setItem('divido_authenticated', 'true');
+                        localStorage.setItem(`divido_identity_${linkRequestGroup.id}`, p.name);
+                        setUserName(p.name);
+                        setIsAuthenticated(true);
+                        
+                        alert(`Welcome, ${p.name}! You have successfully joined the group. 🎉`);
                       }
                       
                        const updatedGroup = {

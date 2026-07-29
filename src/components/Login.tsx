@@ -56,16 +56,7 @@ export const Login: React.FC<LoginProps> = ({ onLoginSuccess, currentTheme }) =>
     }
   };
 
-  const handleGuestLogin = async () => {
-    // A guest must be a genuinely fresh, logged-out user. Clear any lingering
-    // Google session first so the guest isn't secretly linked to a real account.
-    localStorage.setItem('divido_guest_mode', 'true');
-    try { await supabase.auth.signOut(); } catch (e) { /* ignore */ }
-    const guestName = 'Guest';
-    localStorage.setItem('divido_authenticated', 'true');
-    localStorage.setItem('divido_username', guestName);
-    onLoginSuccess(guestName);
-  };
+
 
   return (
     <div
@@ -231,24 +222,7 @@ export const Login: React.FC<LoginProps> = ({ onLoginSuccess, currentTheme }) =>
           {loading ? 'Signing in...' : 'Continue with Google'}
         </button>
 
-        <button
-          type="button"
-          onClick={handleGuestLogin}
-          disabled={loading}
-          style={{
-            width: '100%',
-            padding: '10px',
-            border: 'none',
-            background: 'transparent',
-            color: '#64748B',
-            fontWeight: 700,
-            fontSize: '13px',
-            cursor: 'pointer',
-            marginTop: '8px'
-          }}
-        >
-          Continue as Guest
-        </button>
+
 
 
         <p style={{ fontSize: '11px', color: '#64748B', lineHeight: '1.5', marginTop: '36px' }}>
