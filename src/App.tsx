@@ -2214,12 +2214,11 @@ function App() {
               textAlign: 'center',
             }}
           >
-            <div style={{ fontSize: '32px', marginBottom: '8px' }}>🏘️</div>
             <h3 className="nunito" style={{ fontSize: '18px', fontWeight: 900, color: '#0F172A', margin: '0 0 6px 0' }}>
               Join {linkRequestGroup.name}
             </h3>
             <p style={{ fontSize: '13px', color: '#64748B', fontWeight: 600, margin: '0 0 16px 0', lineHeight: 1.4 }}>
-              Who are you in this group? Claim your nickname to view your balance and split expenses.
+              Select your name to join.
             </p>
 
             <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', maxHeight: '200px', overflowY: 'auto', marginBottom: '16px', paddingRight: '4px' }}>
@@ -2398,13 +2397,13 @@ function App() {
                     fontSize: '13px',
                     cursor: 'pointer',
                     transition: '0.2s all',
-                    textAlign: 'left',
+                    textAlign: 'center',
                   }}
                 >
                   {p.name.endsWith(' (Left)') ||
                   !!new URLSearchParams(window.location.search).get('rejoinName') ||
                   (localStorage.getItem('divido_username') && p.name.toLowerCase() === localStorage.getItem('divido_username')?.toLowerCase()) ||
-                  (localStorage.getItem(`divido_identity_${linkRequestGroup.id}`) && p.name.toLowerCase() === localStorage.getItem(`divido_identity_${linkRequestGroup.id}`)?.toLowerCase()) ? `🚪 Rejoin as "${p.name.replace(' (Left)', '')}"` : `🎭 Claim "${p.name}"`}
+                  (localStorage.getItem(`divido_identity_${linkRequestGroup.id}`) && p.name.toLowerCase() === localStorage.getItem(`divido_identity_${linkRequestGroup.id}`)?.toLowerCase()) ? `Rejoin as "${p.name.replace(' (Left)', '')}"` : `Claim "${p.name}"`}
                 </button>
               ))}
             </div>
@@ -2420,8 +2419,8 @@ function App() {
                 padding: '11px',
                 borderRadius: '12px',
                 border: 'none',
-                background: '#EF4444',
-                color: 'white',
+                background: '#F1F5F9',
+                color: '#64748B',
                 fontWeight: 900,
                 fontSize: '13px',
                 cursor: 'pointer',
