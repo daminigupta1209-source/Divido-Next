@@ -2221,6 +2221,20 @@ function App() {
                     try {
                       const { data: { session } } = await supabase.auth.getSession();
                       const myEmail = session?.user?.email || null;
+
+                      // Account-first: joining a shared group requires a real sign-in.
+                      // Send guests through Google sign-in and bring them back to this
+                      // same invite link, where they can then claim their name.
+                      if (!myEmail) {
+                        alert('Please sign in with Google to join this group. You will come right back here to pick your name.');
+                        await supabase.auth.signInWithOAuth({
+                          provider: 'google',
+                          options: { redirectTo: window.location.href },
+                        });
+                        setSubmittingLinkRequest(false);
+                        return;
+                      }
+
                       const isRejoin = p.name.endsWith(' (Left)') ||
                         !!new URLSearchParams(window.location.search).get('rejoinName') ||
                         (localStorage.getItem('divido_username') && p.name.toLowerCase() === localStorage.getItem('divido_username')?.toLowerCase()) ||
