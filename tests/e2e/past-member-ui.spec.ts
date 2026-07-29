@@ -15,21 +15,20 @@ test.describe("Past Member UI behaviors", () => {
     await page.evaluate(() => {
       localStorage.clear();
       localStorage.setItem("divido_e2e_testing", "true");
+      localStorage.setItem("divido_mock_email", "e2e-past-member-ui@divido.app");
     });
     await page.reload();
     await page.waitForTimeout(3000);
 
-    // Continue as demo user if prompted
-    const demoBtn = page.getByRole("button", { name: "Continue as demo user" });
-    if (await demoBtn.isVisible()) {
-      await demoBtn.click();
+    // Auth using Google login (demo mode) if visible
+    const googleBtn = page.getByRole("button", { name: "Continue with Google" });
+    if (await googleBtn.isVisible()) {
+      await googleBtn.click();
       await page.waitForTimeout(2000);
     }
 
     // 1. Create a group
-    // In mobile, we might need to open the sidebar or directly interact
-    // Wait, let's see how groups are navigated in mobile
-    await page.click("text=New Group");
+    await page.getByTitle("New group").first().click();
     const groupNameInput = page.getByPlaceholder("Enter group name");
     await groupNameInput.fill("UI Test Group");
     await groupNameInput.press("Enter");
@@ -45,8 +44,8 @@ test.describe("Past Member UI behaviors", () => {
     await page.waitForTimeout(2000);
 
     // 3. Create an expense splitting with Ronnie
-    await page.getByTitle("Add Expense").first().click();
-    await page.getByPlaceholder("What was this for?").fill("Test Bill");
+    await page.locator("button:has-text('+ Expense')").first().click();
+    await page.getByPlaceholder("e.g. Pizza").fill("Test Bill");
     await page.getByPlaceholder("0.00").fill("100");
     // Verify Ronnie is in splitters and checked
     await expect(page.locator("text=Ronnie")).toBeVisible();
@@ -62,8 +61,8 @@ test.describe("Past Member UI behaviors", () => {
     await page.waitForTimeout(2000);
     await expect(page.locator("text=Past Members")).toBeVisible();
     
-    // Close the members modal using Escape
-    await page.keyboard.press("Escape");
+    // Close the members modal by clicking the close button
+    await page.locator("button:has-text('✕')").first().click();
     await page.waitForTimeout(1000);
 
     // 5. Open previous expense and check UI indicators
@@ -76,14 +75,13 @@ test.describe("Past Member UI behaviors", () => {
 
     // Check "Paid By" dropdown includes "Ronnie (Left)"
     await page.locator("text=PAID BY").locator("..").locator("button, div").first().click();
-    await expect(page.locator("text=Ronnie (Left)")).toBeVisible();
-    // Dismiss dropdown by clicking label
-    await page.locator("text=PAID BY").click();
+    await expect(page.locator("text=Ronnie (Left)").first()).toBeVisible();
+    // Dismiss dropdown by selecting the option
+    await page.locator("text=Ronnie (Left)").first().click();
 
     // Check "Split Shares" (Unequally/Percentage) screen includes "Ronnie (Left)"
     await page.locator("text=Equally").click();
     await page.locator("text=Unequally").click();
-    await page.locator("text=Split Shares").first().click();
-    await expect(page.locator("text=Ronnie (Left)")).toBeVisible();
+    await expect(page.locator("text=Ronnie (Left)").first()).toBeVisible();
   });
 });

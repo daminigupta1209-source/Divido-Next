@@ -116,8 +116,11 @@ function App() {
   });
   const [showDeleteAccountModal, setShowDeleteAccountModal] = useState<boolean>(false);
   const [userEmail, setUserEmail] = useState<string>(() => {
-    if (localStorage.getItem('divido_e2e_testing') === 'true') {
-      return 'e2e-test-guest@divido.app';
+    if (localStorage.getItem('divido_guest_mode') === 'true') {
+      return '';
+    }
+    if (localStorage.getItem('divido_e2e_testing') === 'true' && localStorage.getItem('divido_force_logged_out') !== 'true') {
+      return localStorage.getItem('divido_mock_email') || 'e2e-test-guest@divido.app';
     }
     return '';
   });
@@ -674,12 +677,12 @@ function App() {
         localStorage.setItem('divido_authenticated', 'true');
       } else {
         setUserEmail('');
-        if (localStorage.getItem('divido_e2e_testing') === 'true') {
-          setIsAuthenticated(true);
-          setUserEmail('e2e-test-guest@divido.app');
-        } else if (localStorage.getItem('divido_guest_mode') === 'true') {
+        if (localStorage.getItem('divido_guest_mode') === 'true') {
           // Guest = local-only session with no cloud account. Stay logged in as guest.
           setIsAuthenticated(true);
+        } else if (localStorage.getItem('divido_e2e_testing') === 'true' && localStorage.getItem('divido_force_logged_out') !== 'true') {
+          setIsAuthenticated(true);
+          setUserEmail(localStorage.getItem('divido_mock_email') || 'e2e-test-guest@divido.app');
         } else {
           setIsAuthenticated(false);
           localStorage.removeItem('divido_authenticated');
@@ -704,12 +707,13 @@ function App() {
         }
         setIsAuthenticated(true);
         localStorage.setItem('divido_authenticated', 'true');
-      } else if (localStorage.getItem('divido_e2e_testing') === 'true') {
-        setIsAuthenticated(true);
-        setUserEmail('e2e-test-guest@divido.app');
       } else if (localStorage.getItem('divido_guest_mode') === 'true') {
         // Guest = local-only session with no cloud account. Stay logged in as guest.
         setIsAuthenticated(true);
+        setUserEmail('');
+      } else if (localStorage.getItem('divido_e2e_testing') === 'true' && localStorage.getItem('divido_force_logged_out') !== 'true') {
+        setIsAuthenticated(true);
+        setUserEmail(localStorage.getItem('divido_mock_email') || 'e2e-test-guest@divido.app');
       }
     });
 
@@ -1538,7 +1542,18 @@ function App() {
   const joinGroupIdParam = urlParams.get('joinGroupId');
 
   if (!isAuthenticated && !joinGroupIdParam) {
-    return <Login onLoginSuccess={(name) => { updateUserName(name); setIsAuthenticated(true); }} currentTheme={theme} />;
+    return (
+      <Login
+        onLoginSuccess={(name) => {
+          updateUserName(name);
+          setIsAuthenticated(true);
+          if (localStorage.getItem('divido_guest_mode') === 'true') {
+            setUserEmail('');
+          }
+        }}
+        currentTheme={theme}
+      />
+    );
   }
 
   return (
@@ -2375,6 +2390,20 @@ function App() {
                         }
                       }
                       
+                       const updatedGroup = {
+                        ...linkRequestGroup,
+                        members: linkRequestGroup.members.map((m: string) => 
+                          m.toLowerCase() === (cleanName + ' (Left)').toLowerCase() ? cleanName : m
+                        )
+                      };
+                      setGroups(prev => {
+                        const exists = prev.some(g => g.id === updatedGroup.id);
+                        if (exists) {
+                          return prev.map(g => g.id === updatedGroup.id ? updatedGroup : g);
+                        }
+                        return [...prev, updatedGroup];
+                      });
+
                       setSelectedId(linkRequestGroup.id);
                       setView('detail');
                       setLinkRequestGroup(null);

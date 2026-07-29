@@ -27,18 +27,17 @@ test.describe("Multi-User Real-Time Syncing", () => {
     // Wait for auth & initial DB load to stabilize
     await pageA.waitForTimeout(3000);
     
-    // Auth using demo login if visible (usually auto-logs in due to the flag)
-    const demoBtn = pageA.getByRole("button", { name: "Continue as demo user" });
-    if (await demoBtn.isVisible()) {
-      await demoBtn.click();
+    // Auth using Google login (demo mode) if visible
+    const googleBtn = pageA.getByRole("button", { name: "Continue with Google" });
+    if (await googleBtn.isVisible()) {
+      await googleBtn.click();
       await pageA.waitForTimeout(2000);
     }
     const homeTab = pageA.locator("aside").getByText("Home").first();
     await expect(homeTab).toBeVisible();
 
     // Create a group
-    await pageA.locator("aside").getByText("Your Groups").click();
-    await pageA.click("text=New Group");
+    await pageA.getByTitle("New group").first().click();
     
     // Enter ledger name in input
     const groupNameInput = pageA.getByPlaceholder("Enter group name");
@@ -100,7 +99,10 @@ test.describe("Multi-User Real-Time Syncing", () => {
     await pageB.waitForTimeout(1000);
 
     // User A adds an expense
-    await pageA.locator("aside").getByText("Sync Test Group").click();
+    if (await pageA.locator("text=Members").first().isHidden()) {
+      await pageA.goto("/");
+      await pageA.locator("text=Sync Test Group").first().click();
+    }
     await pageA.locator("text=+ Expense").first().click();
     
     const expenseTitle = pageA.getByPlaceholder("e.g. Pizza 🍕");
@@ -115,9 +117,10 @@ test.describe("Multi-User Real-Time Syncing", () => {
     await pageA.waitForTimeout(2000);
     await pageB.reload();
     await pageB.waitForTimeout(2000);
-    await pageB.locator("aside").getByText("Your Groups").click();
-    await pageB.waitForTimeout(500);
-    await pageB.locator("aside").getByText("Sync Test Group").click();
+    if (await pageB.locator("text=Members").first().isHidden()) {
+      await pageB.goto("/");
+      await pageB.locator("text=Sync Test Group").first().click();
+    }
     await pageB.waitForTimeout(1000);
 
     // User B (Husky) should see the expense

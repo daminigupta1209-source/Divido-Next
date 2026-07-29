@@ -169,7 +169,8 @@ export function useSupabaseSync({
         const { data: allMembers, error: membersErr } = await supabase
           .from('group_members')
           .select('*')
-          .in('group_id', groupIds);
+          .in('group_id', groupIds)
+          .order('id', { ascending: true });
 
         if (membersErr || !allMembers) return;
 
@@ -389,7 +390,7 @@ export function useSupabaseSync({
         let userEmail = session?.user?.email;
 
         if (!userEmail && localStorage.getItem('divido_e2e_testing') === 'true') {
-          userEmail = 'e2e-test-guest@divido.app';
+          userEmail = localStorage.getItem('divido_mock_email') || 'e2e-test-guest@divido.app';
         }
 
         // If guest (no email) and we have groups, do not try to sync groups (they cannot create groups)

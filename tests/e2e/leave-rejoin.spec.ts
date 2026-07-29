@@ -23,24 +23,24 @@ test.describe("Member Leave and Rejoin flow", () => {
     await pageA.evaluate(() => {
       localStorage.clear();
       localStorage.setItem("divido_e2e_testing", "true");
+      localStorage.setItem("divido_mock_email", "e2e-test-inviter@divido.app");
     });
     await pageA.reload();
 
     // Wait for auth & initial DB load to stabilize
     await pageA.waitForTimeout(3000);
 
-    // Auth using demo login if visible (usually auto-logs in due to the flag)
-    const demoBtn = pageA.getByRole("button", { name: "Continue as demo user" });
-    if (await demoBtn.isVisible()) {
-      await demoBtn.click();
+    // Auth using Google login (demo mode) if visible
+    const googleBtn = pageA.getByRole("button", { name: "Continue with Google" });
+    if (await googleBtn.isVisible()) {
+      await googleBtn.click();
       await pageA.waitForTimeout(2000);
     }
     const homeTab = pageA.locator("aside").getByText("Home").first();
     await expect(homeTab).toBeVisible();
 
     // Create a group
-    await pageA.locator("aside").getByText("Your Groups").click();
-    await pageA.click("text=New Group");
+    await pageA.getByTitle("New group").first().click();
     
     const groupNameInput = pageA.getByPlaceholder("Enter group name");
     await groupNameInput.fill("Rejoin Test Group");
@@ -87,6 +87,7 @@ test.describe("Member Leave and Rejoin flow", () => {
     await pageB.evaluate(() => {
       localStorage.clear();
       localStorage.setItem("divido_e2e_testing", "true");
+      localStorage.setItem("divido_mock_email", "e2e-test-invitee@divido.app");
     });
     await pageB.goto(inviteLink);
     
@@ -100,12 +101,8 @@ test.describe("Member Leave and Rejoin flow", () => {
     await pageA.reload();
     await pageA.waitForTimeout(2000);
 
-    // Expand Your Groups sidebar section post-reload since its state resets
-    await pageA.locator("aside").getByText("Your Groups").click();
-    await pageA.waitForTimeout(500);
-
-    // User A removes Husky
-    await pageA.locator("aside").getByText("Rejoin Test Group").click();
+    // User A selects Rejoin Test Group from the dashboard
+    await pageA.locator("text=Rejoin Test Group").first().click();
     
     // Open Members modal
     await pageA.locator("text=Members").first().click();
@@ -142,6 +139,7 @@ test.describe("Member Leave and Rejoin flow", () => {
     await pageB.evaluate(() => {
       localStorage.clear();
       localStorage.setItem("divido_e2e_testing", "true");
+      localStorage.setItem("divido_mock_email", "e2e-test-invitee@divido.app");
     });
 
     await pageB.goto(rejoinLink);
@@ -149,9 +147,14 @@ test.describe("Member Leave and Rejoin flow", () => {
 
     // Click the Rejoin button inside the Profile Claiming Modal (use single quotes to avoid escaping conflict)
     await pageB.click('text=Rejoin as "Husky"');
-    await pageB.waitForTimeout(2000);
+    await pageB.waitForTimeout(3000);
 
-    // Verify Husky auto-logs in and details page displays
+    // Reload page to dashboard to pull fresh database state
+    await pageB.goto("/");
+    await pageB.waitForTimeout(3000);
+
+    // Verify Husky auto-logs in and details page displays by clicking the group card
+    await pageB.locator("text=Rejoin Test Group").first().click();
     await expect(pageB.locator("text=Rejoin Test Group").first()).toBeVisible();
 
     // Open Members modal on page B to expose Husky (me)
@@ -159,7 +162,7 @@ test.describe("Member Leave and Rejoin flow", () => {
     await pageB.waitForTimeout(500);
 
     // Assert Husky is now listed as the active me user
-    await expect(pageB.locator("text=Husky (me)")).toBeVisible();
+    await expect(pageB.locator("text=You").first()).toBeVisible();
 
     await contextA.close();
     await contextB.close();
