@@ -56,7 +56,11 @@ export const Login: React.FC<LoginProps> = ({ onLoginSuccess, currentTheme }) =>
     }
   };
 
-  const handleGuestLogin = () => {
+  const handleGuestLogin = async () => {
+    // A guest must be a genuinely fresh, logged-out user. Clear any lingering
+    // Google session first so the guest isn't secretly linked to a real account.
+    localStorage.setItem('divido_guest_mode', 'true');
+    try { await supabase.auth.signOut(); } catch (e) { /* ignore */ }
     const guestName = 'Guest';
     localStorage.setItem('divido_authenticated', 'true');
     localStorage.setItem('divido_username', guestName);

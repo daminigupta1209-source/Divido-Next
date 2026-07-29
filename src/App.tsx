@@ -658,6 +658,8 @@ function App() {
     // Listen to changes in auth state from Supabase
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
       if (session) {
+        // A real signed-in session takes over — no longer a guest.
+        localStorage.removeItem('divido_guest_mode');
         setUserEmail(session.user?.email || '');
         const saved = localStorage.getItem('divido_username');
         if (!saved || saved === 'You' || saved === 'undefined' || saved === 'Guest') {
@@ -671,12 +673,15 @@ function App() {
         setIsAuthenticated(true);
         localStorage.setItem('divido_authenticated', 'true');
       } else {
+        setUserEmail('');
         if (localStorage.getItem('divido_e2e_testing') === 'true') {
           setIsAuthenticated(true);
           setUserEmail('e2e-test-guest@divido.app');
+        } else if (localStorage.getItem('divido_guest_mode') === 'true') {
+          // Guest = local-only session with no cloud account. Stay logged in as guest.
+          setIsAuthenticated(true);
         } else {
           setIsAuthenticated(false);
-          setUserEmail('');
           localStorage.removeItem('divido_authenticated');
         }
       }
@@ -685,6 +690,8 @@ function App() {
     // Check current session once on mount
     supabase.auth.getSession().then(async ({ data: { session } }) => {
       if (session) {
+        // A real signed-in session takes over — no longer a guest.
+        localStorage.removeItem('divido_guest_mode');
         setUserEmail(session.user?.email || '');
         const saved = localStorage.getItem('divido_username');
         if (!saved || saved === 'You' || saved === 'undefined' || saved === 'Guest') {
@@ -700,6 +707,9 @@ function App() {
       } else if (localStorage.getItem('divido_e2e_testing') === 'true') {
         setIsAuthenticated(true);
         setUserEmail('e2e-test-guest@divido.app');
+      } else if (localStorage.getItem('divido_guest_mode') === 'true') {
+        // Guest = local-only session with no cloud account. Stay logged in as guest.
+        setIsAuthenticated(true);
       }
     });
 
@@ -1319,6 +1329,7 @@ function App() {
       onConfirm: async () => {
         await supabase.auth.signOut();
         // Clear local storage completely for app data
+        localStorage.removeItem('divido_guest_mode');
         localStorage.removeItem('divido_authenticated');
         localStorage.removeItem('divido_username');
         localStorage.removeItem('divido_usermetadata');
