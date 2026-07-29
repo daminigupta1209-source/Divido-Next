@@ -1041,7 +1041,7 @@ export const GroupDetail: React.FC<GroupDetailProps> = ({
           <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '14px', width: '100%', maxWidth: '240px' }}>
             {/* Add Friend Button matching the top right one's color and design */}
             <button
-              className="add-friend-btn-anim hover-up"
+              className="add-friend-btn-anim"
               onClick={(e) => {
                 e.stopPropagation();
                 setShowAddFriendModal(true);
@@ -1078,7 +1078,6 @@ export const GroupDetail: React.FC<GroupDetailProps> = ({
 
             {/* Circular Add Expense Button lookalike / button matching group's + Add Expense */}
             <button
-              className="hover-up"
               style={{
                 width: '100%',
                 height: '38px',
