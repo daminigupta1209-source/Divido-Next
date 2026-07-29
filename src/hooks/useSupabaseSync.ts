@@ -196,6 +196,16 @@ export function useSupabaseSync({
           const activeMems = groupMems.filter((m: any) => !m.link_request_email || !m.is_pending);
           
           const members = Array.from(new Set(activeMems.map((m: any) => m.name)));
+
+          // Hydrate this device's identity for this group from the account, so a
+          // person's per-group name (e.g. "didi") resolves correctly on ANY device
+          // — not only the one where they first claimed it.
+          if (currentEmail) {
+            const myRow = groupMems.find((m: any) => m.user_email?.toLowerCase() === currentEmail);
+            if (myRow?.name) {
+              localStorage.setItem(`divido_identity_${group.id}`, myRow.name.replace(/\s*\(Left\)$/i, ''));
+            }
+          }
           // A member is truly pending only if:
           // 1. DB says is_pending AND
           // 2. They have NOT been linked to any user_email (no one claimed them) AND
