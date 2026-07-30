@@ -166,22 +166,25 @@ export function useSupabaseSync({
           return;
         }
 
-        // 2. Fetch all members of these groups to reconstruct Group.members array
-        const { data: allMembers, error: membersErr } = await supabase
-          .from('group_members')
-          .select('*')
-          .in('group_id', groupIds)
-          .order('id', { ascending: true });
+        // 2 & 3. Fetch all members and expenses of these groups in parallel
+        const [membersRes, expensesRes] = await Promise.all([
+          supabase
+            .from('group_members')
+            .select('*')
+            .in('group_id', groupIds)
+            .order('id', { ascending: true }),
+          supabase
+            .from('expenses')
+            .select('*')
+            .in('group_id', groupIds)
+        ]);
 
-        if (membersErr || !allMembers) return;
+        const allMembers = membersRes.data;
+        const membersErr = membersRes.error;
+        const expenseRecords = expensesRes.data;
+        const expenseErr = expensesRes.error;
 
-        // 3. Fetch all expenses for these groups
-        const { data: expenseRecords, error: expenseErr } = await supabase
-          .from('expenses')
-          .select('*')
-          .in('group_id', groupIds);
-
-        if (expenseErr || !expenseRecords) return;
+        if (membersErr || !allMembers || expenseErr || !expenseRecords) return;
 
         // 4. Map groups
         const loadedGroups: Group[] = [];
