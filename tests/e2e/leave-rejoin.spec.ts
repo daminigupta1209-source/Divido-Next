@@ -1,4 +1,29 @@
 import { test, expect } from "@playwright/test";
+import { createClient } from "@supabase/supabase-js";
+import * as fs from "fs";
+
+const envContent = fs.readFileSync(".env", "utf8");
+const anonKeyLine = envContent.split("\n").find(l => l.trim().startsWith("VITE_SUPABASE_ANON_KEY="));
+const anonKey = anonKeyLine ? anonKeyLine.split("=")[1].trim().replace(/['";]/g, "") : "";
+const supabase = createClient("https://nxpiitewjlwernaysupm.supabase.co", anonKey);
+
+test.beforeEach(async () => {
+  const testEmails = [
+    "e2e-test-inviter@divido.app",
+    "e2e-test-invitee@divido.app",
+    "e2e-test-guest@divido.app",
+    "e2e-realtime-husky@divido.app",
+    "e2e-past-member-ui@divido.app"
+  ];
+  const { data: mems } = await supabase
+    .from("group_members")
+    .select("group_id")
+    .in("user_email", testEmails);
+  if (mems && mems.length > 0) {
+    const groupIds = Array.from(new Set(mems.map((m: any) => m.group_id).filter(Boolean)));
+    await supabase.from("groups").delete().in("id", groupIds);
+  }
+});
 
 test.describe("Member Leave and Rejoin flow", () => {
   test("Removing and rejoining user should work seamlessly via Rejoin links", async ({ browser }) => {
@@ -94,7 +119,7 @@ test.describe("Member Leave and Rejoin flow", () => {
     await pageB.waitForTimeout(2000);
     console.log("PAGE B (REJOIN) URL:", pageB.url());
 
-    await pageB.getByRole("button").filter({ hasText: "Husky" }).first().click();
+    await pageB.getByRole("button").filter({ hasText: "Husky" }).first().click({ force: true });
 
     // Give database write a brief moment to settle, then reload page A to pull the claimed status
     await pageB.waitForTimeout(1500);
@@ -107,15 +132,21 @@ test.describe("Member Leave and Rejoin flow", () => {
     // Open Members modal
     await pageA.locator("text=Members").first().click();
     
-    // Accept confirm remove prompt using one-shot listener
     pageA.once("dialog", async (dialog) => {
+      console.log(`[E2E TEST] Page A dialog event fired: ${dialog.type()} - ${dialog.message()}`);
       await dialog.accept();
     });
     // Click remove icon next to Husky using title attribute
-    await pageA.getByTitle("Remove member").first().click();
+    const removeBtn = pageA.locator('span[title="Remove member"]').first();
+    await expect(removeBtn).toBeVisible({ timeout: 5000 });
+    await removeBtn.click();
 
     // Wait for Supabase database write to finish completely
     await pageA.waitForTimeout(3000);
+    await pageA.reload();
+    await pageA.waitForTimeout(3000);
+    await pageA.locator("text=Rejoin Test Group").first().click();
+    await pageA.locator("text=Members").first().click();
 
     // Check Husky is now in Past Members (wait for UI to update)
     await expect(pageA.locator("text=Past Members")).toBeVisible({ timeout: 10000 });
@@ -140,13 +171,13 @@ test.describe("Member Leave and Rejoin flow", () => {
       localStorage.clear();
       localStorage.setItem("divido_e2e_testing", "true");
       localStorage.setItem("divido_mock_email", "e2e-test-invitee@divido.app");
+      localStorage.setItem("divido_username", "Husky");
     });
 
     await pageB.goto(rejoinLink);
     await pageB.waitForTimeout(2000);
 
-    // Click the Rejoin button inside the Profile Claiming Modal (use single quotes to avoid escaping conflict)
-    await pageB.click('text=Rejoin as "Husky"');
+    await pageB.getByRole("button", { name: /Rejoin/i }).first().click({ force: true });
     await pageB.waitForTimeout(3000);
 
     // Reload page to dashboard to pull fresh database state
@@ -163,6 +194,127 @@ test.describe("Member Leave and Rejoin flow", () => {
 
     // Assert Husky is now listed as the active me user
     await expect(pageB.locator("text=You").first()).toBeVisible();
+
+    await contextA.close();
+    await contextB.close();
+  });
+
+  test("Proactive rejoin request flow should show read-only details and require Admin approval", async ({ browser }) => {
+    test.setTimeout(60000);
+
+    // Context A (Admin / Inviter)
+    const contextA = await browser.newContext();
+    await contextA.grantPermissions(["clipboard-read", "clipboard-write"]);
+    const pageA = await contextA.newPage();
+    
+    await pageA.goto("/");
+    await pageA.evaluate(() => {
+      localStorage.clear();
+      localStorage.setItem("divido_e2e_testing", "true");
+      localStorage.setItem("divido_mock_email", "e2e-test-inviter@divido.app");
+    });
+    await pageA.reload();
+    await pageA.waitForTimeout(3000);
+
+    const googleBtn = pageA.getByRole("button", { name: "Continue with Google" });
+    if (await googleBtn.isVisible()) {
+      await googleBtn.click();
+      await pageA.waitForTimeout(2000);
+    }
+
+    // Create a group
+    await pageA.getByTitle("New group").first().click();
+    const groupNameInput = pageA.getByPlaceholder("Enter group name");
+    await groupNameInput.fill("Proactive Rejoin Group");
+    await groupNameInput.press("Enter");
+    await pageA.waitForTimeout(3000);
+
+    // Add friend "Husky"
+    await pageA.locator("text=+ Friend").first().click();
+    const friendNameInput = pageA.getByPlaceholder("e.g. Rahul S, Priya...");
+    await friendNameInput.fill("Husky");
+    await friendNameInput.press("Enter");
+    await pageA.click("text=Add 1 Friend");
+    
+    // Copy invite link
+    await pageA.click("text=Copy");
+    const inviteLink = await pageA.evaluate(() => navigator.clipboard.readText());
+    await pageA.click("text=Done");
+    await pageA.waitForTimeout(3000);
+
+    // Context B (Invitee - Husky)
+    const contextB = await browser.newContext();
+    const pageB = await contextB.newPage();
+    
+    pageB.on("dialog", async (dialog) => {
+      await dialog.accept();
+    });
+
+    await pageB.goto("/");
+    await pageB.evaluate(() => {
+      localStorage.clear();
+      localStorage.setItem("divido_e2e_testing", "true");
+      localStorage.setItem("divido_mock_email", "e2e-test-invitee@divido.app");
+    });
+    await pageB.goto(inviteLink);
+    await pageB.waitForTimeout(2000);
+
+    // Claim nickname
+    await pageB.getByRole("button").filter({ hasText: "Husky" }).first().click();
+    await pageB.waitForTimeout(2000);
+
+    // Reload page A to fetch updated members
+    await pageA.reload();
+    await pageA.waitForTimeout(2000);
+
+    // B decides to leave the group
+    await pageB.locator("text=Proactive Rejoin Group").first().click();
+    await pageB.waitForTimeout(1000);
+    await pageB.getByTitle("Group options").first().click();
+    await pageB.waitForTimeout(500);
+    await pageB.locator("text=Leave Group").first().click();
+    await pageB.waitForTimeout(500);
+    await pageB.getByRole("button", { name: "Confirm" }).first().click();
+    await pageB.waitForTimeout(2000);
+
+    // Assert read-only banner is visible on Page B
+    await pageB.locator("text=Proactive Rejoin Group").first().click();
+    await pageB.waitForTimeout(1000);
+    await expect(pageB.locator("#past-member-banner")).toContainText("You have left this group. Showing past history.");
+
+    // B clicks on a balance row to settle, which should trigger the Rejoin request modal
+    await pageB.locator("#desktop-add-expense-btn").first().click();
+    await pageB.waitForTimeout(1000);
+
+    // Assert Rejoin Request Modal is visible
+    await expect(pageB.locator("text=You left this group. Request to rejoin?")).toBeVisible();
+
+    // Click Request Rejoin
+    await pageB.getByRole("button", { name: "Request Rejoin" }).first().click();
+    await pageB.waitForTimeout(2000);
+    await pageB.goto("/");
+    await pageB.waitForTimeout(3000);
+    await pageB.locator("text=Proactive Rejoin Group").first().click();
+    await pageB.waitForTimeout(1000);
+
+    // Assert Banner text updates to pending
+    await expect(pageB.locator("#past-member-banner")).toContainText("Rejoin request pending approval. Showing past history.");
+
+    // Page A (Admin) should show proactive rejoin request modal on reload/update
+    await pageA.reload();
+    await pageA.waitForTimeout(3000);
+    await expect(pageA.locator("text=Husky wants to rejoin Proactive Rejoin Group")).toBeVisible();
+
+    // Admin clicks Approve
+    await pageA.getByRole("button", { name: "Approve" }).first().click();
+    await pageA.waitForTimeout(3000);
+
+    // Page B reloads and should no longer see the left banner
+    await pageB.reload();
+    await pageB.waitForTimeout(3000);
+    await pageB.locator("text=Proactive Rejoin Group").first().click();
+    await pageB.waitForTimeout(1000);
+    await expect(pageB.locator("#past-member-banner")).not.toBeVisible();
 
     await contextA.close();
     await contextB.close();

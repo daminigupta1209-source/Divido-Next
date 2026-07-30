@@ -82,7 +82,34 @@ function App() {
   const [toastMsg, setToastMsg] = useState<string | null>(null);
   const [isSidebarOpen, setIsSidebarOpen] = useState<boolean>(false);
 
+  const [showRejoinRequestModal, setShowRejoinRequestModal] = useState(false);
+  const [adminRejoinRequest, setAdminRejoinRequest] = useState<{
+    id: string;
+    groupId: string | number;
+    groupName: string;
+    placeholderName: string;
+    requestName: string;
+    requestEmail: string;
+  } | null>(null);
+
+  const checkPastMemberAndShowRejoin = (showModal = true) => {
+    if (view === 'detail' && selectedId && selectedId !== 'STANDALONE') {
+      const selectedGroup = groups.find((g) => String(g.id) === String(selectedId));
+      const cleanMe = me.replace(/\s*\(me\)$/i, '').replace(/\s*\(Left\)$/i, '').toLowerCase();
+      const isPastMember = selectedGroup?.members?.some(m => {
+        const cleanM = m.replace(/\s*\(me\)$/i, '').replace(/\s*\(Left\)$/i, '').toLowerCase();
+        return cleanM === cleanMe && m.toLowerCase().endsWith(' (left)');
+      });
+      if (isPastMember) {
+        if (showModal) setShowRejoinRequestModal(true);
+        return true;
+      }
+    }
+    return false;
+  };
+
   const setShowExpModalSecure = (show: boolean) => {
+    if (show && checkPastMemberAndShowRejoin(true)) return;
     const hasClaimedIdentity = selectedId && localStorage.getItem(`divido_identity_${selectedId}`);
     if (show && !userEmail && !hasClaimedIdentity) {
       alert('Secure Google Sign-In is required to add or edit expenses. Redirecting you to the Profile page to sign in securely!');
@@ -94,6 +121,7 @@ function App() {
   };
 
   const setEditingExpenseSecure = (exp: Expense | null) => {
+    if (exp && checkPastMemberAndShowRejoin(true)) return;
     const hasClaimedIdentity = selectedId && localStorage.getItem(`divido_identity_${selectedId}`);
     if (exp && !userEmail && !hasClaimedIdentity) {
       alert('Secure Google Sign-In is required to add or edit expenses. Redirecting you to the Profile page to sign in securely!');
@@ -577,6 +605,10 @@ function App() {
   
   const { handleMobileExportCSV } = useExportCSV({ groups, expenses, selectedId });
   const { undoStack, deleteExpense, performUndo } = useUndoStack({ expenses, setExpenses });
+  const deleteExpenseSecure = (id: string | number) => {
+    if (checkPastMemberAndShowRejoin(true)) return;
+    deleteExpense(id);
+  };
   const [newlyAddedFriends, setNewlyAddedFriends] = useState<string[]>([]);
   const [activeSplitters, setActiveSplitters] = useState<string[]>([]);
 
@@ -1024,6 +1056,38 @@ function App() {
   }, [groups]);
 
   useEffect(() => {
+    // Find a pending rejoin request in groups where the current user is the Admin
+    console.error('REJOIN ADMIN DEBUG: me =', me, 'groups count =', groups.length);
+    for (const g of groups) {
+      if (g.id === 'STANDALONE') continue;
+      const activeMembers = (g.members || []).filter((m) => !m.endsWith(' (Left)'));
+      const cleanMe = me.replace(/\s*\(me\)$/i, '').replace(/\s*\(Left\)$/i, '').toLowerCase();
+      const isPastMemberOfG = (g.members || []).some(m => {
+        const cleanM = m.replace(/\s*\(me\)$/i, '').replace(/\s*\(Left\)$/i, '').toLowerCase();
+        return cleanM === cleanMe && m.toLowerCase().endsWith(' (left)');
+      });
+      const isAdminOfGroup = !isPastMemberOfG && (activeMembers[0] === me || activeMembers[0] === 'You');
+      console.error('REJOIN ADMIN DEBUG: group =', g.name, 'activeMembers =', activeMembers, 'isAdminOfGroup =', isAdminOfGroup, 'pendingLinkRequests =', g.pendingLinkRequests);
+      if (isAdminOfGroup && g.pendingLinkRequests && g.pendingLinkRequests.length > 0) {
+        // Find one where placeholderName ends with ' (Left)'
+        const rejoinReq = g.pendingLinkRequests.find(r => r.placeholderName.endsWith(' (Left)'));
+        console.error('REJOIN ADMIN DEBUG: found rejoinReq =', rejoinReq);
+        if (rejoinReq) {
+          setAdminRejoinRequest({
+            id: String(rejoinReq.id),
+            groupId: g.id,
+            groupName: g.name,
+            placeholderName: rejoinReq.placeholderName,
+            requestName: rejoinReq.requestName,
+            requestEmail: rejoinReq.requestEmail,
+          });
+          break; // Show one at a time
+        }
+      }
+    }
+  }, [groups, me]);
+
+  useEffect(() => {
     localStorage.setItem('divido_usermetadata', JSON.stringify(userMetadata));
   }, [userMetadata]);
   useEffect(() => {
@@ -1180,24 +1244,23 @@ function App() {
     if (isPastMember) {
       setConfirmState({
         show: true,
-        title: 'Delete Group?',
-        desc: 'You will no longer see this group or its history.',
+        title: 'Delete group?',
+        desc: 'Delete group? You will lose access.',
         type: 'danger',
         onConfirm: async () => {
           if (!checkIfDemoMode() && isAuthenticated) {
             try {
-              // Delete ALL membership rows for this user in the group on Supabase to prevent duplicates from restoring it
               const { data: { session } } = await supabase.auth.getSession();
               const myEmail = session?.user?.email || (localStorage.getItem('divido_e2e_testing') === 'true' ? localStorage.getItem('divido_mock_email') || 'e2e-test-guest@divido.app' : null);
-              const emailFilter = myEmail ? `user_email.eq.${myEmail},` : '';
-              
-              await supabase
-                .from('group_members')
-                .delete()
-                .eq('group_id', id)
-                .or(`${emailFilter}name.ilike.${me},name.ilike.${me} (Left)`);
+              if (myEmail) {
+                await supabase
+                  .from('group_members')
+                  .update({ user_email: null })
+                  .eq('group_id', id)
+                  .eq('user_email', myEmail);
+              }
             } catch (err) {
-              console.error('Failed to delete member rows from Supabase:', err);
+              console.error('Failed to unlink user membership on Supabase:', err);
             }
           }
           setGroups(groups.filter((x) => String(x.id) !== String(id)));
@@ -1214,7 +1277,7 @@ function App() {
       desc: isStandalone
         ? `Are you sure you want to clear all non-group expenses?`
         : hasOthers
-        ? `Leave this group? You will keep read-only access to view the history, but cannot add new expenses.`
+        ? `Leave group? You won't see new updates.`
         : `Are you sure you want to delete this group permanently?`,
       type: 'danger',
       onConfirm: async () => {
@@ -1236,23 +1299,32 @@ function App() {
                   .eq('group_id', id)
                   .eq('name', me);
 
-                // 2. Insert system notification of departure
-                await supabase
-                  .from('expenses')
-                  .insert({
-                    group_id: id,
-                    title: `${me} left`,
-                    amt: 0,
-                    paid: 'SYSTEM',
-                    date: new Date().toISOString().split('T')[0],
-                    mode: 'Equally',
-                    splitters: []
-                  });
+                // Send push notification to Admin with only a single text line
+                const activeMembers = (g.members || []).filter((m) => !m.endsWith(' (Left)'));
+                const adminName = activeMembers.find(m => m !== me);
+                if (adminName) {
+                  const { data: adminRows } = await supabase
+                    .from('group_members')
+                    .select('user_email')
+                    .eq('group_id', id)
+                    .eq('name', adminName)
+                    .not('user_email', 'is', null)
+                    .limit(1);
+                  const adminEmail = adminRows?.[0]?.user_email;
+                  if (adminEmail) {
+                    const { pushNotification } = await import('./lib/notifications');
+                    await pushNotification({
+                      recipientEmail: adminEmail,
+                      type: 'admin_transfer',
+                      title: `${me} left ${g.name}`,
+                      groupId: id,
+                    });
+                  }
+                }
 
                 // 3. Admin handoff: the next active member becomes admin (admin is
                 // the first non-left member). If the leaver was the admin, let the
                 // new admin know they've been promoted.
-                const activeMembers = (g.members || []).filter((m) => !m.endsWith(' (Left)'));
                 const iWasAdmin = activeMembers[0] === me || activeMembers[0] === 'You';
                 const newAdminName = activeMembers.find((m) => m !== me);
                 if (iWasAdmin && newAdminName) {
@@ -1699,7 +1771,7 @@ function App() {
             me={me}
             setShowConvertModalId={setShowConvertModalId}
             setGroups={setGroups}
-            deleteExpense={deleteExpense}
+            deleteExpense={deleteExpenseSecure}
             setSelectedId={setSelectedId}
             setView={setView}
           />
@@ -1750,7 +1822,7 @@ function App() {
             setShowConvertModalId={setShowConvertModalId}
             userMetadata={userMetadata}
             setUserMetadata={setUserMetadata}
-            deleteExpense={deleteExpense}
+            deleteExpense={deleteExpenseSecure}
             onDeleteGroup={handleDeleteGroup}
             onShowQR={(payee, amt, curr) => setQrModalData({ payee, amt, currency: curr })}
             setGlobalSettleData={setGlobalSettleData}
@@ -1814,65 +1886,7 @@ function App() {
               }
             }}
             onRequestRejoin={async () => {
-              if (selectedId && selectedId !== 'STANDALONE') {
-                try {
-                  const { data: { session } } = await supabase.auth.getSession();
-                  const myEmail = session?.user?.email || (localStorage.getItem('divido_e2e_testing') === 'true' ? localStorage.getItem('divido_mock_email') || 'e2e-test-guest@divido.app' : null);
-
-                  const searchName = me + ' (Left)';
-                  const { data: matched } = await supabase
-                    .from('group_members')
-                    .select('id')
-                    .eq('group_id', selectedId)
-                    .ilike('name', searchName)
-                    .maybeSingle();
-
-                  if (matched) {
-                    await supabase
-                      .from('group_members')
-                      .update({
-                        name: me,
-                        is_pending: false,
-                        user_email: myEmail,
-                        link_request_email: null,
-                        link_request_name: null,
-                      })
-                      .eq('id', matched.id);
-
-                    // Insert system notification of rejoin
-                    try {
-                      await supabase
-                        .from('expenses')
-                        .insert({
-                          group_id: selectedId,
-                          title: `${me} rejoined`,
-                          amt: 0,
-                          paid: 'SYSTEM',
-                          date: new Date().toISOString().split('T')[0],
-                          mode: 'Equally',
-                          splitters: []
-                        });
-                    } catch (e) {
-                      console.error('Failed to log rejoin activity:', e);
-                    }
-
-                    alert(`Welcome back to the group, ${me}! 🎉`);
-
-                    // Update local groups state immediately
-                    setGroups(groups.map((g) => {
-                      if (String(g.id) === String(selectedId)) {
-                        return {
-                          ...g,
-                          members: g.members.map((m) => (m.toLowerCase() === searchName.toLowerCase() ? me : m))
-                        };
-                      }
-                      return g;
-                    }));
-                  }
-                } catch (err) {
-                  console.error('Failed to rejoin group:', err);
-                }
-              }
+              setShowRejoinRequestModal(true);
             }}
             onDeclineLinkRequest={async (memberRecordId) => {
               try {
@@ -2017,14 +2031,21 @@ function App() {
                       .ilike('name', memberName);
                   } else {
                     // 1. Rename membership row to preserve history, keep email, set is_pending: true
-                    await supabase
+                    const { data: memRows } = await supabase
                       .from('group_members')
-                      .update({
-                        name: memberName + ' (Left)',
-                        is_pending: true
-                      })
+                      .select('id')
                       .eq('group_id', selectedId)
                       .ilike('name', memberName);
+
+                    if (memRows && memRows.length > 0) {
+                      await supabase
+                        .from('group_members')
+                        .update({
+                          name: memberName + ' (Left)',
+                          is_pending: true
+                        })
+                        .eq('id', memRows[0].id);
+                    }
 
                     // 2. Insert system notification of departure
                     await supabase
@@ -3286,6 +3307,282 @@ function App() {
         setShowCurrPickerId={setShowCurrPickerId}
         onShowQR={(payee, amt, curr) => setQrModalData({ payee, amt, currency: curr })}
       />
+
+      {showRejoinRequestModal && (
+        <div className="modal-overlay" style={{ zIndex: 5000, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <div
+            className="card shadow-xl"
+            style={{
+              width: '90%',
+              maxWidth: '340px',
+              padding: '24px 20px',
+              borderRadius: '24px',
+              position: 'relative',
+              animation: 'slideUp 0.3s ease-out',
+              background: '#FFFFFF',
+              border: '1px solid rgba(0,0,0,0.05)',
+              textAlign: 'center',
+            }}
+          >
+            <button
+              onClick={() => setShowRejoinRequestModal(false)}
+              style={{
+                position: 'absolute',
+                top: '16px',
+                right: '18px',
+                border: 'none',
+                background: 'none',
+                fontSize: '18px',
+                cursor: 'pointer',
+                color: '#64748B',
+                opacity: 0.6,
+              }}
+            >
+              ✕
+            </button>
+            <h3 className="nunito" style={{ fontSize: '18px', fontWeight: 900, color: '#0F172A', margin: '0 0 10px 0' }}>
+              Rejoin Group
+            </h3>
+            <p style={{ fontSize: '14px', color: '#64748B', fontWeight: 600, margin: '0 0 20px 0', lineHeight: 1.4 }}>
+              You left this group. Request to rejoin?
+            </p>
+            <button
+              onClick={async () => {
+                setShowRejoinRequestModal(false);
+                if (selectedId && selectedId !== 'STANDALONE') {
+                  try {
+                    const { data: { session } } = await supabase.auth.getSession();
+                    const myEmail = session?.user?.email || (localStorage.getItem('divido_e2e_testing') === 'true' ? localStorage.getItem('divido_mock_email') || 'e2e-test-guest@divido.app' : null);
+
+                    const searchName = me + ' (Left)';
+                    console.error('REJOIN DEBUG: me =', me, 'searchName =', searchName, 'selectedId =', selectedId);
+                    const { data: matched, error: matchErr } = await supabase
+                      .from('group_members')
+                      .select('id, name')
+                      .eq('group_id', selectedId)
+                      .eq('name', searchName)
+                      .maybeSingle();
+                    
+                    console.error('REJOIN DEBUG: matched =', matched, 'error =', matchErr);
+
+                    if (matched) {
+                      const { error: updErr } = await supabase
+                        .from('group_members')
+                        .update({
+                          is_pending: true,
+                          link_request_email: myEmail,
+                          link_request_name: me
+                        })
+                        .eq('id', matched.id);
+                      console.error('REJOIN DEBUG: update error =', updErr);
+
+                      // Find Admin to notify
+                      const selectedGroup = groups.find((g) => String(g.id) === String(selectedId));
+                      if (selectedGroup) {
+                        const activeMembers = (selectedGroup.members || []).filter((m) => !m.endsWith(' (Left)'));
+                        const adminName = activeMembers[0];
+                        if (adminName) {
+                          const { data: adminRows } = await supabase
+                            .from('group_members')
+                            .select('user_email')
+                            .eq('group_id', selectedId)
+                            .eq('name', adminName)
+                            .not('user_email', 'is', null)
+                            .limit(1);
+                          const adminEmail = adminRows?.[0]?.user_email;
+                          if (adminEmail) {
+                            const { pushNotification } = await import('./lib/notifications');
+                            await pushNotification({
+                              recipientEmail: adminEmail,
+                              type: 'link_request',
+                              title: `${me} wants to rejoin ${selectedGroup.name}`,
+                              groupId: selectedId,
+                            });
+                          }
+                        }
+                      }
+
+                      setToastMsg("Request sent to Admin! 🚀");
+                      setTimeout(() => setToastMsg(null), 5000);
+                      
+                      setGroups(groups.map((g) => {
+                        if (String(g.id) === String(selectedId)) {
+                          const existingRequests = g.pendingLinkRequests || [];
+                          const updatedRequests = [
+                            ...existingRequests.filter(r => r.requestEmail !== myEmail),
+                            {
+                              id: String(matched.id),
+                              placeholderName: searchName,
+                              requestName: me,
+                              requestEmail: myEmail || '',
+                            }
+                          ];
+                          return {
+                            ...g,
+                            pendingLinkRequests: updatedRequests
+                          };
+                        }
+                        return g;
+                      }));
+                    }
+                  } catch (err) {
+                    console.error('Failed to request rejoin:', err);
+                  }
+                }
+              }}
+              style={{
+                width: '100%',
+                padding: '12px',
+                borderRadius: '12px',
+                border: 'none',
+                background: '#059669',
+                color: 'white',
+                fontWeight: 800,
+                fontSize: '13px',
+                cursor: 'pointer',
+                transition: '0.2s all',
+                textAlign: 'center',
+                boxShadow: '0 4px 12px rgba(5, 150, 105, 0.2)',
+              }}
+            >
+              Request Rejoin
+            </button>
+          </div>
+        </div>
+      )}
+
+      {adminRejoinRequest && (
+        <div className="modal-overlay" style={{ zIndex: 5000, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <div
+            className="card shadow-xl"
+            style={{
+              width: '90%',
+              maxWidth: '360px',
+              padding: '24px 20px',
+              borderRadius: '24px',
+              position: 'relative',
+              animation: 'slideUp 0.3s ease-out',
+              background: '#FFFFFF',
+              border: '1px solid rgba(0,0,0,0.05)',
+              textAlign: 'center',
+            }}
+          >
+            <button
+              onClick={() => setAdminRejoinRequest(null)}
+              style={{
+                position: 'absolute',
+                top: '16px',
+                right: '18px',
+                border: 'none',
+                background: 'none',
+                fontSize: '18px',
+                cursor: 'pointer',
+                color: '#64748B',
+                opacity: 0.6,
+              }}
+            >
+              ✕
+            </button>
+            <h3 className="nunito" style={{ fontSize: '18px', fontWeight: 900, color: '#0F172A', margin: '0 0 16px 0' }}>
+              Rejoin Request
+            </h3>
+            <p style={{ fontSize: '14px', color: '#64748B', fontWeight: 650, margin: '0 0 20px 0', lineHeight: 1.4 }}>
+              {adminRejoinRequest.requestName} wants to rejoin {adminRejoinRequest.groupName}
+            </p>
+            <div style={{ display: 'flex', gap: '12px', justifyContent: 'center' }}>
+              <button
+                onClick={async () => {
+                  if (!adminRejoinRequest) return;
+                  try {
+                    await supabase
+                      .from('group_members')
+                      .update({
+                        link_request_email: null,
+                        link_request_name: null,
+                      })
+                      .eq('id', adminRejoinRequest.id);
+
+                    alert('Rejoin request declined.');
+                    setAdminRejoinRequest(null);
+                    setGroups((prev) => [...prev]);
+                  } catch (err) {
+                    console.error('Failed to decline rejoin request:', err);
+                  }
+                }}
+                style={{
+                  flex: 1,
+                  padding: '12px',
+                  borderRadius: '12px',
+                  border: 'none',
+                  background: '#64748B',
+                  color: 'white',
+                  fontWeight: 800,
+                  fontSize: '13px',
+                  cursor: 'pointer',
+                  transition: '0.2s all',
+                }}
+              >
+                Decline
+              </button>
+              <button
+                onClick={async () => {
+                  if (!adminRejoinRequest) return;
+                  try {
+                    const cleanName = adminRejoinRequest.placeholderName.replace(/\s*\(Left\)$/i, '');
+                    await supabase
+                      .from('group_members')
+                      .update({
+                        name: cleanName,
+                        user_email: adminRejoinRequest.requestEmail,
+                        is_pending: false,
+                        link_request_email: null,
+                        link_request_name: null,
+                      })
+                      .eq('id', adminRejoinRequest.id);
+
+                    try {
+                      await supabase
+                        .from('expenses')
+                        .insert({
+                          group_id: adminRejoinRequest.groupId,
+                          title: `${cleanName} rejoined`,
+                          amt: 0,
+                          paid: 'SYSTEM',
+                          date: new Date().toISOString().split('T')[0],
+                          mode: 'Equally',
+                          splitters: []
+                        });
+                    } catch (e) {
+                      console.error('Rejoin activity log failed:', e);
+                    }
+
+                    alert('Rejoin request approved! 🎉');
+                    setAdminRejoinRequest(null);
+                    setGroups((prev) => [...prev]);
+                  } catch (err) {
+                    console.error('Failed to approve rejoin request:', err);
+                  }
+                }}
+                style={{
+                  flex: 1,
+                  padding: '12px',
+                  borderRadius: '12px',
+                  border: 'none',
+                  background: '#059669',
+                  color: 'white',
+                  fontWeight: 800,
+                  fontSize: '13px',
+                  cursor: 'pointer',
+                  transition: '0.2s all',
+                  boxShadow: '0 4px 12px rgba(5, 150, 105, 0.2)',
+                }}
+              >
+                Approve
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

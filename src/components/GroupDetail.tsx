@@ -210,103 +210,39 @@ export const GroupDetail: React.FC<GroupDetailProps> = ({
       {/* Past Member Rejoin Banner */}
       {(() => {
         const cleanMe = me.replace(/\s*\(me\)$/i, '').replace(/\s*\(Left\)$/i, '').toLowerCase();
-        const isActiveMember = selectedGroup.members.some(m => {
-          const cleanM = m.replace(/\s*\(me\)$/i, '').replace(/\s*\(Left\)$/i, '').toLowerCase();
-          return cleanM === cleanMe && !m.toLowerCase().endsWith(' (left)');
-        });
         const isPastMember = selectedGroup.members.some(m => {
           const cleanM = m.replace(/\s*\(me\)$/i, '').replace(/\s*\(Left\)$/i, '').toLowerCase();
           return cleanM === cleanMe && m.toLowerCase().endsWith(' (left)');
         });
-        if (isActiveMember || !isPastMember) return null;
+        if (!isPastMember) return null;
+
+        // Check if current user has a pending rejoin request
+        const myRequest = selectedGroup.pendingLinkRequests?.find(
+          (req) => req.placeholderName.replace(/\s*\(Left\)$/i, '').toLowerCase() === cleanMe || req.requestName?.toLowerCase() === cleanMe
+        );
+        const hasPendingRejoin = !!myRequest;
+
+        const bannerText = hasPendingRejoin
+          ? "Rejoin request pending approval. Showing past history."
+          : "You have left this group. Showing past history.";
+
         return (
           <div
+            id="past-member-banner"
             style={{
-              display: 'flex',
-              gap: '12px',
+              background: '#F1F5F9',
+              border: '1.5px solid #CBD5E1',
+              borderRadius: '16px',
+              padding: '12px 16px',
+              fontSize: '13px',
+              fontWeight: 700,
+              color: '#475569',
+              textAlign: 'center',
               marginBottom: '16px',
-              width: '100%'
+              boxShadow: '0 2px 4px rgba(0,0,0,0.02)'
             }}
           >
-            <button
-              onClick={() => {
-                if (onDeleteGroup) {
-                  onDeleteGroup(selectedGroup.id);
-                }
-              }}
-              style={{
-                flex: 1,
-                height: '38px',
-                padding: '8px 16px',
-                fontSize: '13px',
-                fontWeight: 950,
-                borderRadius: '999px',
-                cursor: 'pointer',
-                background: 'transparent',
-                border: '1.5px solid #EF4444',
-                color: '#EF4444',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                transition: '0.15s all ease',
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.transform = 'scale(1.02)';
-                e.currentTarget.style.background = 'rgba(239, 68, 68, 0.05)';
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.transform = 'scale(1)';
-                e.currentTarget.style.background = 'transparent';
-              }}
-              onMouseDown={(e) => {
-                e.currentTarget.style.transform = 'scale(0.96)';
-              }}
-              onMouseUp={(e) => {
-                e.currentTarget.style.transform = 'scale(1.02)';
-              }}
-            >
-              Delete Group
-            </button>
-
-            <button
-              onClick={async () => {
-                if (onRequestRejoin) {
-                  await onRequestRejoin();
-                }
-              }}
-              style={{
-                flex: 1,
-                height: '38px',
-                padding: '8px 16px',
-                fontSize: '13px',
-                fontWeight: 950,
-                borderRadius: '999px',
-                cursor: 'pointer',
-                background: 'transparent',
-                border: '1.5px solid #D97706',
-                color: '#D97706',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                transition: '0.15s all ease',
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.transform = 'scale(1.02)';
-                e.currentTarget.style.background = 'rgba(217, 119, 6, 0.05)';
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.transform = 'scale(1)';
-                e.currentTarget.style.background = 'transparent';
-              }}
-              onMouseDown={(e) => {
-                e.currentTarget.style.transform = 'scale(0.96)';
-              }}
-              onMouseUp={(e) => {
-                e.currentTarget.style.transform = 'scale(1.02)';
-              }}
-            >
-              Rejoin
-            </button>
+            {bannerText}
           </div>
         );
       })()}
@@ -897,7 +833,16 @@ export const GroupDetail: React.FC<GroupDetailProps> = ({
                           key={`my-${m}`}
                           className="card hover-up"
                           onClick={() => {
-                            setGlobalSettleData({ name: m, gId: selectedId });
+                             const cleanMe = me.replace(/\s*\(me\)$/i, '').replace(/\s*\(Left\)$/i, '').toLowerCase();
+                             const isPastMember = selectedGroup.members.some(x => {
+                               const cleanM = x.replace(/\s*\(me\)$/i, '').replace(/\s*\(Left\)$/i, '').toLowerCase();
+                               return cleanM === cleanMe && x.toLowerCase().endsWith(' (left)');
+                             });
+                             if (isPastMember) {
+                               if (onRequestRejoin) onRequestRejoin();
+                             } else {
+                               setGlobalSettleData({ name: m, gId: selectedId });
+                             }
                           }}
                           style={{
                             padding: '10px 16px',
@@ -963,7 +908,16 @@ export const GroupDetail: React.FC<GroupDetailProps> = ({
                           key={`other-${idx}`}
                           className="card hover-up"
                           onClick={() => {
-                            setGlobalSettleData({ name: t.from, gId: selectedId });
+                            const cleanMe = me.replace(/\s*\(me\)$/i, '').replace(/\s*\(Left\)$/i, '').toLowerCase();
+                            const isPastMember = selectedGroup.members.some(x => {
+                              const cleanM = x.replace(/\s*\(me\)$/i, '').replace(/\s*\(Left\)$/i, '').toLowerCase();
+                              return cleanM === cleanMe && x.toLowerCase().endsWith(' (left)');
+                            });
+                            if (isPastMember) {
+                              if (onRequestRejoin) onRequestRejoin();
+                            } else {
+                              setGlobalSettleData({ name: t.from, gId: selectedId });
+                            }
                           }}
                           style={{
                             padding: '12px 14px',
@@ -1078,6 +1032,7 @@ export const GroupDetail: React.FC<GroupDetailProps> = ({
 
             {/* Circular Add Expense Button lookalike / button matching group's + Add Expense */}
             <button
+              id="desktop-add-expense-btn"
               style={{
                 width: '100%',
                 height: '38px',

@@ -654,13 +654,19 @@ export const MobileHeader: React.FC<MobileHeaderProps> = ({
                         const cleanM = m.replace(/\s*\(me\)$/i, '').replace(/\s*\(Left\)$/i, '').toLowerCase();
                         return cleanM === cleanMe && !m.toLowerCase().endsWith(' (left)');
                       });
+                      const activeMembersCount = (selectedGroup?.members || []).filter(m => !m.toLowerCase().endsWith(' (left)')).length;
 
                       const actionItems = [
                         ...(selectedId !== 'STANDALONE' ? [{ emoji: '🔗', label: 'Share Group Link', onClick: () => { setMobileShowGroupOptionsMenu(false); onInviteFriend && onInviteFriend(); } }] : []),
                         { emoji: '💱', label: 'Convert Currency', onClick: () => { setMobileShowGroupOptionsMenu(false); setShowConvertModalId(selectedId); } },
                         { emoji: '📤', label: 'Export Data', onClick: () => { setMobileShowGroupOptionsMenu(false); handleMobileExportCSV(); } },
                         { emoji: '📊', label: 'Analytics', onClick: () => { setMobileShowGroupOptionsMenu(false); setAnalyticsGroupId(selectedId); setView('analytics'); } },
-                        ...(isActiveMember && selectedId !== 'STANDALONE' ? [{ emoji: '🚪', label: 'Leave Group', onClick: () => { setMobileShowGroupOptionsMenu(false); handleDeleteGroup(selectedId || ''); }, danger: true }] : []),
+                        ...(isActiveMember && selectedId !== 'STANDALONE' ? [{ 
+                          emoji: activeMembersCount > 1 ? '🚪' : '🗑️', 
+                          label: activeMembersCount > 1 ? 'Leave Group' : 'Delete Group', 
+                          onClick: () => { setMobileShowGroupOptionsMenu(false); handleDeleteGroup(selectedId || ''); }, 
+                          danger: true 
+                        }] : []),
                       ];
 
                       return actionItems.map((item) => (

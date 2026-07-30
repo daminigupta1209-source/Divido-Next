@@ -530,13 +530,24 @@ export const GroupHeader: React.FC<GroupHeaderProps> = ({
                         const cleanM = m.replace(/\s*\(me\)$/i, '').replace(/\s*\(Left\)$/i, '').toLowerCase();
                         return cleanM === cleanMe && !m.toLowerCase().endsWith(' (left)');
                       });
+                      const isPastMember = selectedGroup?.members?.some(m => {
+                        const cleanM = m.replace(/\s*\(me\)$/i, '').replace(/\s*\(Left\)$/i, '').toLowerCase();
+                        return cleanM === cleanMe && m.toLowerCase().endsWith(' (left)');
+                      });
+                      const activeMembersCount = (selectedGroup?.members || []).filter(m => !m.toLowerCase().endsWith(' (left)')).length;
 
                       const actionItems = [
-                        ...(selectedId !== 'STANDALONE' ? [{ emoji: '🔗', label: 'Share Group Link', onClick: () => { setShowGroupOptionsMenu(false); onShareShortcut && onShareShortcut(); } }] : []),
+                        ...(selectedId !== 'STANDALONE' && isActiveMember ? [{ emoji: '🔗', label: 'Share Group Link', onClick: () => { setShowGroupOptionsMenu(false); onShareShortcut && onShareShortcut(); } }] : []),
                         { emoji: '💱', label: 'Convert Currency', onClick: () => { setShowGroupOptionsMenu(false); setShowConvertModalId(selectedId); } },
                         { emoji: '📤', label: 'Export Data', onClick: () => { setShowGroupOptionsMenu(false); setShowExportMenu(true); } },
                         { emoji: '📊', label: 'Analytics Breakdown', onClick: () => { setShowGroupOptionsMenu(false); onOpenAnalytics && onOpenAnalytics(selectedId || 'ALL'); } },
-                        ...(isActiveMember && selectedId !== 'STANDALONE' ? [{ emoji: '🚪', label: 'Leave Group', onClick: () => { setShowGroupOptionsMenu(false); onDeleteGroup && onDeleteGroup(selectedId || ''); }, danger: true }] : []),
+                        ...(isActiveMember && selectedId !== 'STANDALONE' ? [{ 
+                          emoji: activeMembersCount > 1 ? '🚪' : '🗑️', 
+                          label: activeMembersCount > 1 ? 'Leave Group' : 'Delete Group', 
+                          onClick: () => { setShowGroupOptionsMenu(false); onDeleteGroup && onDeleteGroup(selectedId || ''); }, 
+                          danger: true 
+                        }] : []),
+                        ...(isPastMember && selectedId !== 'STANDALONE' ? [{ emoji: '🗑️', label: 'Delete Group for Me', onClick: () => { setShowGroupOptionsMenu(false); onDeleteGroup && onDeleteGroup(selectedId || ''); }, danger: true }] : []),
                       ];
                       return actionItems.map((item) => (
                         <button
