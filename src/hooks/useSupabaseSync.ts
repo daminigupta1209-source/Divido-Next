@@ -87,6 +87,22 @@ export function useSupabaseSync({
     groupsRef.current = groups;
   }, [groups]);
 
+  // Safety net: the "Syncing ledger..." loader is gated on isInitialLoadDone.
+  // If the cloud load stalls for any reason (slow network, an early-return path,
+  // a diff that never converges), never trap the user on that screen — resolve
+  // the gate after a short timeout so the app falls through to cached data.
+  useEffect(() => {
+    if (!isAuthenticated || !hasCloudSession || isInitialLoadDone) return;
+    const t = setTimeout(() => {
+      if (!initialLoadDoneRef.current) {
+        console.warn('Initial cloud load did not complete in time — rendering cached data.');
+        initialLoadDoneRef.current = true;
+        setIsInitialLoadDone(true);
+      }
+    }, 4000);
+    return () => clearTimeout(t);
+  }, [isAuthenticated, hasCloudSession, isInitialLoadDone]);
+
   // Load data from Supabase on authentication / guest invite join
   useEffect(() => {
     if (checkIfDemoMode() || !isAuthenticated || !hasCloudSession) return;
@@ -95,6 +111,10 @@ export function useSupabaseSync({
       try {
         if (!navigator.onLine) {
           console.log('Offline. Skipping cloud load.');
+          // Resolve the gate so the app renders cached data instead of hanging
+          // on the "Syncing ledger..." loader while offline.
+          initialLoadDoneRef.current = true;
+          setIsInitialLoadDone(true);
           return;
         }
         const normalizeGroupsForDiff = (arr: Group[]) =>
@@ -112,6 +132,11 @@ export function useSupabaseSync({
         const hasUnsyncedExpenses = JSON.stringify(expenses) !== JSON.stringify(prevExpensesRef.current);
         if (hasUnsyncedGroups || hasUnsyncedExpenses) {
           console.log('Unsynced offline changes detected. Skipping load until sync is complete.', 'groups mismatch:', hasUnsyncedGroups, 'expenses mismatch:', hasUnsyncedExpenses);
+          // Render the local (cached) ledger now instead of blocking on the
+          // loader — the sync effects will upload these changes and re-trigger a
+          // fresh load once the queue is caught up.
+          initialLoadDoneRef.current = true;
+          setIsInitialLoadDone(true);
           return;
         }
         const { data: { session } } = await supabase.auth.getSession();
@@ -187,7 +212,13 @@ export function useSupabaseSync({
         const expenseRecords = expensesRes.data;
         const expenseErr = expensesRes.error;
 
-        if (membersErr || !allMembers || expenseErr || !expenseRecords) return;
+        if (membersErr || !allMembers || expenseErr || !expenseRecords) {
+          // Don't leave the user stranded on the loader if a fetch fails —
+          // fall through to whatever cached data we already have.
+          initialLoadDoneRef.current = true;
+          setIsInitialLoadDone(true);
+          return;
+        }
 
         // 4. Map groups
         const loadedGroups: Group[] = [];
@@ -321,6 +352,9 @@ export function useSupabaseSync({
         setIsInitialLoadDone(true);
       } catch (err) {
         console.error('Failed to load cloud database:', err);
+        // Never trap the user on the loader — render cached data on failure.
+        initialLoadDoneRef.current = true;
+        setIsInitialLoadDone(true);
       }
     };
 

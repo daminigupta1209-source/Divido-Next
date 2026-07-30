@@ -1611,7 +1611,12 @@ function App() {
     );
   }
 
-  if (isAuthenticated && userEmail && !isInitialLoadDone) {
+  // Only block on the full-screen loader for a genuine cold start (no cached
+  // ledger yet). When we already have groups/expenses from localStorage, render
+  // them instantly and let the cloud sync happen in the background — otherwise
+  // every refresh flashes this loader while waiting on the network.
+  const hasCachedLedger = groups.length > 0 || expenses.length > 0;
+  if (isAuthenticated && userEmail && !isInitialLoadDone && !hasCachedLedger) {
     return (
       <div 
         style={{
