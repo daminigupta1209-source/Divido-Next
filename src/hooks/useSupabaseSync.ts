@@ -40,6 +40,7 @@ export function useSupabaseSync({
   const initializedRef = useRef(false);
 
   const [isOnline, setIsOnline] = useState(navigator.onLine);
+  const [isInitialLoadDone, setIsInitialLoadDone] = useState(false);
 
   useEffect(() => {
     const handleOnlineStatus = () => setIsOnline(true);
@@ -157,12 +158,14 @@ export function useSupabaseSync({
         if (groupIds.length === 0) {
           if (!resolvedEmail) {
             initialLoadDoneRef.current = true;
+            setIsInitialLoadDone(true);
             return;
           }
           const unsynced = groups.filter(g => typeof g.id === 'number' && g.id > 2147483647);
           setGroups(unsynced);
           setExpenses([]);
           initialLoadDoneRef.current = true;
+          setIsInitialLoadDone(true);
           return;
         }
 
@@ -315,6 +318,7 @@ export function useSupabaseSync({
         setGroups(mergedGroups);
         setExpenses(mergedExpenses);
         initialLoadDoneRef.current = true;
+        setIsInitialLoadDone(true);
       } catch (err) {
         console.error('Failed to load cloud database:', err);
       }
@@ -747,5 +751,5 @@ export function useSupabaseSync({
     };
   }, [setGroups, setExpenses]);
 
-  return { syncStatus };
+  return { syncStatus, isInitialLoadDone };
 }

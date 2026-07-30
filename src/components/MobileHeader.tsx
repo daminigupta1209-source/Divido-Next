@@ -654,6 +654,10 @@ export const MobileHeader: React.FC<MobileHeaderProps> = ({
                         const cleanM = m.replace(/\s*\(me\)$/i, '').replace(/\s*\(Left\)$/i, '').toLowerCase();
                         return cleanM === cleanMe && !m.toLowerCase().endsWith(' (left)');
                       });
+                      const isPastMember = selectedGroup?.members?.some(m => {
+                        const cleanM = m.replace(/\s*\(me\)$/i, '').replace(/\s*\(Left\)$/i, '').toLowerCase();
+                        return cleanM === cleanMe && m.toLowerCase().endsWith(' (left)');
+                      });
                       const activeMembersCount = (selectedGroup?.members || []).filter(m => !m.toLowerCase().endsWith(' (left)')).length;
 
                       const actionItems = [
@@ -667,6 +671,12 @@ export const MobileHeader: React.FC<MobileHeaderProps> = ({
                           onClick: () => { setMobileShowGroupOptionsMenu(false); handleDeleteGroup(selectedId || ''); }, 
                           danger: true 
                         }] : []),
+                        ...(isPastMember && selectedId !== 'STANDALONE' ? [{ 
+                           emoji: '🗑️', 
+                           label: 'Delete Group for Me', 
+                           onClick: () => { setMobileShowGroupOptionsMenu(false); handleDeleteGroup(selectedId || ''); }, 
+                           danger: true 
+                         }] : []),
                       ];
 
                       return actionItems.map((item) => (

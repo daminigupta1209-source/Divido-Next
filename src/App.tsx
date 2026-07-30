@@ -1104,7 +1104,7 @@ function App() {
     localStorage.setItem('divido_expenses', JSON.stringify(expenses));
   }, [expenses]);
 
-  const { syncStatus } = useSupabaseSync({
+  const { syncStatus, isInitialLoadDone } = useSupabaseSync({
     groups,
     setGroups,
     expenses,
@@ -1608,6 +1608,48 @@ function App() {
         }}
         currentTheme={theme}
       />
+    );
+  }
+
+  if (isAuthenticated && userEmail && !isInitialLoadDone) {
+    return (
+      <div 
+        style={{
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          justifyContent: 'center',
+          height: '100vh',
+          width: '100vw',
+          background: theme === 'sunset' ? '#0F172A' : '#FAFAF9',
+          color: theme === 'sunset' ? '#F8FAFC' : '#0F172A',
+          fontFamily: "'Inter', sans-serif",
+        }}
+      >
+        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '20px' }}>
+          <div className="logo nunito" style={{ fontSize: '32px', fontWeight: 900, letterSpacing: '-0.5px', color: '#10B981' }}>
+            🐱 divido
+          </div>
+          <div 
+            style={{
+              width: '40px',
+              height: '40px',
+              borderRadius: '50%',
+              border: '4px solid rgba(16, 185, 129, 0.1)',
+              borderTopColor: '#10B981',
+              animation: 'spin 1s linear infinite',
+            }}
+          />
+          <span style={{ fontSize: '14px', fontWeight: 600, opacity: 0.6, letterSpacing: '0.5px' }}>
+            Syncing ledger...
+          </span>
+        </div>
+        <style>{`
+          @keyframes spin {
+            to { transform: rotate(360deg); }
+          }
+        `}</style>
+      </div>
     );
   }
 
