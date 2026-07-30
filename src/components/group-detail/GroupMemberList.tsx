@@ -235,7 +235,7 @@ export const GroupMemberList: React.FC<GroupMemberListProps> = ({
                             onClick={async (e) => {
                               e.stopPropagation();
                               const promptMsg = checkIsMe(m) 
-                                ? `Are you sure you want to leave this group? Your transaction history will be preserved.`
+                                ? `Leave group? You won't see new updates.`
                                 : `Remove "${m}" from the group? This will shift them to Past Members and keep past history.`;
                               if (confirm(promptMsg)) {
                                 if (onRemoveMember) {
@@ -360,9 +360,9 @@ export const GroupMemberList: React.FC<GroupMemberListProps> = ({
                           title="Remove member"
                           onClick={(e) => {
                             e.stopPropagation();
-                            const promptMsg = checkIsMe(m) 
-                              ? `Are you sure you want to leave this group? Your transaction history will be preserved.`
-                              : `Remove "${m}" from the group? This will shift them to Past Members and keep past history.`;
+                             const promptMsg = checkIsMe(m) 
+                               ? `Leave group? You won't see new updates.`
+                               : `Remove "${m}" from the group? This will shift them to Past Members and keep past history.`;
                             if (confirm(promptMsg)) {
                               if (onRemoveMember) {
                                 onRemoveMember(m);
