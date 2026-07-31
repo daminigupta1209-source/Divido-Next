@@ -1063,7 +1063,6 @@ function App() {
 
   useEffect(() => {
     // Find a pending rejoin request in groups where the current user is the Admin
-    console.error('REJOIN ADMIN DEBUG: me =', me, 'groups count =', groups.length);
     for (const g of groups) {
       if (g.id === 'STANDALONE') continue;
       const activeMembers = (g.members || []).filter((m) => !m.endsWith(' (Left)'));
@@ -1073,11 +1072,9 @@ function App() {
         return cleanM === cleanMe && m.toLowerCase().endsWith(' (left)');
       });
       const isAdminOfGroup = !isPastMemberOfG && (activeMembers[0] === me || activeMembers[0] === 'You');
-      console.error('REJOIN ADMIN DEBUG: group =', g.name, 'activeMembers =', activeMembers, 'isAdminOfGroup =', isAdminOfGroup, 'pendingLinkRequests =', g.pendingLinkRequests);
       if (isAdminOfGroup && g.pendingLinkRequests && g.pendingLinkRequests.length > 0) {
         // Find one where placeholderName ends with ' (Left)'
         const rejoinReq = g.pendingLinkRequests.find(r => r.placeholderName.endsWith(' (Left)'));
-        console.error('REJOIN ADMIN DEBUG: found rejoinReq =', rejoinReq);
         if (rejoinReq) {
           setAdminRejoinRequest({
             id: String(rejoinReq.id),
@@ -3396,11 +3393,21 @@ function App() {
             >
               ✕
             </button>
-            <h3 className="nunito" style={{ fontSize: '18px', fontWeight: 900, color: '#0F172A', margin: '0 0 10px 0' }}>
-              Rejoin Group
+            <div style={{ width: '48px', height: '48px', borderRadius: '50%', background: '#ECFDF5', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 14px' }}>
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#059669" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M9 14 4 9l5-5" /><path d="M4 9h11a4 4 0 0 1 0 8h-1" /></svg>
+            </div>
+            <h3 className="nunito" style={{ fontSize: '18px', fontWeight: 900, color: '#0F172A', margin: '0 0 8px 0' }}>
+              Rejoin this group?
             </h3>
             <p style={{ fontSize: '14px', color: '#64748B', fontWeight: 600, margin: '0 0 20px 0', lineHeight: 1.4 }}>
-              You left this group. Request to rejoin?
+              {(() => {
+                const adminRaw = (selectedGroup?.members || []).filter((m) => !m.toLowerCase().endsWith(' (left)'))[0] || '';
+                const adminName = adminRaw.replace(/\s*\(me\)$/i, '').replace(/\s*\(Left\)$/i, '').trim();
+                const showName = adminName && adminName.toLowerCase() !== 'you';
+                return (
+                  <>The group admin{showName ? <> (<span style={{ color: '#0F172A', fontWeight: 800 }}>{adminName}</span>)</> : ''} needs to approve.</>
+                );
+              })()}
             </p>
             <button
               onClick={async () => {
@@ -3411,18 +3418,15 @@ function App() {
                     const myEmail = session?.user?.email || (localStorage.getItem('divido_e2e_testing') === 'true' ? localStorage.getItem('divido_mock_email') || 'e2e-test-guest@divido.app' : null);
 
                     const searchName = me + ' (Left)';
-                    console.error('REJOIN DEBUG: me =', me, 'searchName =', searchName, 'selectedId =', selectedId);
-                    const { data: matched, error: matchErr } = await supabase
+                    const { data: matched } = await supabase
                       .from('group_members')
                       .select('id, name')
                       .eq('group_id', selectedId)
                       .eq('name', searchName)
                       .maybeSingle();
-                    
-                    console.error('REJOIN DEBUG: matched =', matched, 'error =', matchErr);
 
                     if (matched) {
-                      const { error: updErr } = await supabase
+                      await supabase
                         .from('group_members')
                         .update({
                           is_pending: true,
@@ -3430,7 +3434,6 @@ function App() {
                           link_request_name: me
                         })
                         .eq('id', matched.id);
-                      console.error('REJOIN DEBUG: update error =', updErr);
 
                       // Find Admin to notify
                       const selectedGroup = groups.find((g) => String(g.id) === String(selectedId));
@@ -3501,7 +3504,7 @@ function App() {
                 boxShadow: '0 4px 12px rgba(5, 150, 105, 0.2)',
               }}
             >
-              Request Rejoin
+              Send request
             </button>
           </div>
         </div>
