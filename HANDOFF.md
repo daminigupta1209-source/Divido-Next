@@ -1,39 +1,59 @@
 # Divido-Next — Handoff / Context
 
-> Resume prompt: **"Read HANDOFF.md and continue with the Leave/Rejoin flow debug."**
+> Resume prompt: **"Read HANDOFF.md and the latest git commits, then continue."**
 
-## Status Update — July 30, 2026
+## What this is
+An expense-splitting app (Splitwise/Tricount-style).
+- **Stack:** React + Vite + TypeScript, Supabase (tables: groups, group_members, expenses), vanilla CSS.
+- **Repo:** GitHub `daminigupta1209-source/Divido-Next`, branch `main`.
+- **Deploy:** auto-deploys to Vercel (divido-next.vercel.app) on every push to main.
+- **Owner is not a coder** — explain simply.
 
-We are currently debugging the final failing E2E test case: `Removing and rejoining user should work seamlessly via Rejoin links` in `tests/e2e/leave-rejoin.spec.ts`. 
+## How to work
+- Verify with `npx tsc --noEmit`. E2E via `npx playwright test` (hits live Supabase).
+  Test by driving the app in a browser preview via JS (screenshot tool is unreliable).
+- **Ask before any push** — each push deploys live to real users.
+- Two assistants (Claude Code + Antigravity) may both edit this repo. Only ONE should
+  drive/push at a time; pull latest before editing. Commit narrow (specific files).
+- To catch up: `git log --oneline -20` + read the key files below.
 
-### ✅ What we completed
-1. **Sync Deadlock Fixed**: Fixed the sync load-gating skips on page reload by mapping the correct `divido_groups` and `divido_expenses` storage keys as fallbacks in `useSupabaseSync.ts` (was using stale placeholder keys).
-2. **Sync Renaming Duplicates Resolved**: Prevented left members (`Name (Left)`) from being inserted as duplicate rows in `useSupabaseSync.ts`'s push diff.
-3. **Robust Click Target**: Replaced flakey clicks on the small remove member button `✕` with reliable locator-based clicks and tactical page reloads/group clicks in the E2E tests.
-4. **Restored Lost Usernames**: Ensured Page B's localStorage keeps `"divido_username": "Husky"` so the app identifies the user correctly on navigation.
-5. **Admin Approval spec passing cleanly**: Test case 3 (admin approval/decline modals) is now fully green.
+## Locked design decisions
+- **Account-first.** Guest mode was REMOVED (commit 54de743). Must sign in with Google
+  to use the app — create/join groups, etc.
+- **Duplicate group names are blocked.**
+- Tricount-style "view a group without signing in" = FUTURE v2. Do NOT build now.
 
----
+## Status Update — July 31, 2026 (~01:05)
 
-### 🚨 Current Blocking Issue (Test Case 2)
-In the first leave-rejoin test, Page B (Husky) lands on the rejoin link (`/?joinGroupId=...&rejoinName=Husky`) but the Rejoin modal does not appear, causing the test to time out.
-* **Why**: The rejoin URL parser in `App.tsx` expects to find a row in the database with the name `"Husky (Left)"`. However, the row still has the name `"Husky"`.
-* **Root Cause**: Page A's remove action query (updating `name` to `Husky (Left)`) silently failed to modify the row in the database, despite returning status code `204` (No Content).
+### ✅ Recently completed (this session)
+1. **Account-first migration**: Removed Guest Mode entirely; strictly Google Sign-in (54de743).
+2. **Delete-account logic**: Unlinks memberships, sets past-member `(Left)` status, signs out (9e3d1b9).
+3. **Leave & Rejoin Request Flow**: Fully implemented + E2E tests fixed. This was the
+   previous blocking bug (rejoin modal not appearing / `(Left)` name update) — now RESOLVED (1272e30).
+4. **Conditional Leave/Delete menu labels** updated to match planned user choices (1272e30).
+5. **Perf — fonts**: HTML preconnect + link tags to eliminate FOUT/font lag (4a39e62).
+6. **Perf — load speed**: Manual code splitting in `vite.config.ts` + parallelized Supabase
+   fetches with `Promise.all` in `useSupabaseSync.ts` (0630f29).
+7. **Delete Group for Me**: Added to MobileHeader dropdown for past members (26458d3).
+8. **Leave Group confirmation prompts**: Reworded in GroupMemberList modal (d31e5bf).
 
----
+### 📋 Next up — verify & clean reset
+Working tree is CLEAN as of 01:05; all above is committed (not yet confirmed deployed).
+1. **Verify**: run `npx playwright test` to confirm all specs green post leave/rejoin work.
+2. **Manual 2-person end-to-end** (owner + a friend): create group, add friend BY NAME,
+   share invite link, friend signs in with Google and claims their name, confirm live-sync
+   both ways + survives refresh. Suspect RLS rules first if something breaks.
+3. **Clean reset of scrambled test data** (only BEFORE real users have real data):
+   Supabase SQL Editor →
+   `DELETE FROM public.expenses; DELETE FROM public.group_members; DELETE FROM public.groups;`
 
-### 🛠️ Diagnostic Steps Applied (Ready for next run)
-We have just updated `onRemoveMember` in `App.tsx` (~L2034) to:
-1. Perform a `select` query first to fetch the target member row matching the group and name.
-2. Log the output (`[DEBUG] Found member rows: ...`).
-3. If found, update the row directly by its unique `id` rather than using group-name filters.
-4. Log the update result (`[DEBUG] Supabase update by ID result: ...`).
-
----
-
-### 📋 Next Steps for Claude Code
-1. **Run the test suite**: Execute `npx playwright test` to see if the new select-and-update by ID succeeded, or inspect the logs if it still failed.
-2. **Inspect the terminal output / logs**:
-   * Look for `[DEBUG] Found member rows:` to see if the select matched any rows.
-   * If the select returns empty (`[]`), check if there is an issue with how `selectedId` (string vs number) or `memberName` are parsed.
-3. **Verify clean pass**: Run the full suite to verify all 5 specs are green before making a clean commit and push.
+## Key files
+- `src/hooks/useSupabaseSync.ts` — cloud sync engine (gated on real session via userEmail);
+  now parallelizes fetches via Promise.all.
+- `src/App.tsx` — auth (onAuthStateChange/getSession), `me` identity, handleDeleteGroup,
+  invite-claim/rejoin handler, onRemoveMember (sets `Name (Left)`), delete-group-for-me.
+- `src/components/` — Login.tsx, MobileHeader.tsx (past-member dropdown), Profile.tsx,
+  group-detail/GroupMemberList.tsx (Leave/Delete prompts, member list identity).
+- `vite.config.ts` — manual code-splitting config.
+- `api/supabase_setup.sql` — DB schema + Row Level Security setup.
+- `tests/e2e/` — leave-rejoin, realtime-sync, auth-gating, past-member-ui specs.
