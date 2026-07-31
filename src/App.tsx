@@ -138,6 +138,11 @@ function App() {
     setShowAddFriendModal(show);
   };
 
+  const setShowSettleModalSecure = (show: boolean) => {
+    if (show && checkPastMemberAndShowRejoin(true)) return;
+    setShowSettleModal(show);
+  };
+
   const [isAuthenticated, setIsAuthenticated] = useState<boolean>(() => {
     const savedAuth = localStorage.getItem('divido_authenticated');
     if (savedAuth === 'true') return true;
@@ -1820,7 +1825,7 @@ function App() {
             setEditingExpense={setEditingExpenseSecure}
             setShowExpModal={setShowExpModalSecure}
             setEditingSettle={setEditingSettle}
-            setShowSettleModal={setShowSettleModal}
+            setShowSettleModal={setShowSettleModalSecure}
             me={me}
             setShowConvertModalId={setShowConvertModalId}
             setGroups={setGroups}
@@ -1853,7 +1858,7 @@ function App() {
             setEditingExpense={setEditingExpenseSecure}
             setShowExpModal={setShowExpModalSecure}
             setEditingSettle={setEditingSettle}
-            setShowSettleModal={setShowSettleModal}
+            setShowSettleModal={setShowSettleModalSecure}
           />
         ) : (
           <GroupDetail
@@ -1880,7 +1885,7 @@ function App() {
             onShowQR={(payee, amt, curr) => setQrModalData({ payee, amt, currency: curr })}
             setGlobalSettleData={setGlobalSettleData}
             showSettleModal={showSettleModal}
-            setShowSettleModal={setShowSettleModal}
+            setShowSettleModal={setShowSettleModalSecure}
             editingSettle={editingSettle}
             setEditingSettle={setEditingSettle}
             onOpenAnalytics={(gId) => {
