@@ -35,6 +35,18 @@ export const UpiSection: React.FC<UpiSectionProps> = ({
   };
 
   useEffect(() => {
+    if (sessionStorage.getItem('divido_autofocus_upi') === 'true') {
+      sessionStorage.removeItem('divido_autofocus_upi');
+      setTimeout(() => {
+        if (upiInputRef.current) {
+          upiInputRef.current.focus();
+          upiInputRef.current.select();
+        }
+      }, 350);
+    }
+  }, []);
+
+  useEffect(() => {
     const handleVisibilityChange = () => {
       if (document.visibilityState === 'visible' && verificationStep === 'awaiting_action') {
         setVerificationStep('verifying');
