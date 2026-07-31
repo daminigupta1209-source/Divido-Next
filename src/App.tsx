@@ -3361,7 +3361,17 @@ function App() {
         onShowQR={(payee, amt, curr) => setQrModalData({ payee, amt, currency: curr })}
       />
 
-      {showRejoinRequestModal && (
+      {showRejoinRequestModal && (() => {
+        const adminRaw = (selectedGroup?.members || []).filter((m) => !m.toLowerCase().endsWith(' (left)'))[0] || '';
+        const adminName = adminRaw.replace(/\s*\(me\)$/i, '').replace(/\s*\(Left\)$/i, '').trim();
+        const showAdminName = adminName && adminName.toLowerCase() !== 'you';
+        const adminLabel = showAdminName ? <> (<span style={{ color: '#0F172A', fontWeight: 800 }}>{adminName}</span>)</> : null;
+        const cleanMeName = me.replace(/\s*\(me\)$/i, '').replace(/\s*\(Left\)$/i, '').toLowerCase();
+        const hasPendingRejoin = !!(selectedGroup?.pendingLinkRequests || []).find((req: any) =>
+          (req.placeholderName || '').replace(/\s*\(Left\)$/i, '').toLowerCase() === cleanMeName ||
+          (req.requestName || '').toLowerCase() === cleanMeName
+        );
+        return (
         <div className="modal-overlay" style={{ zIndex: 5000, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
           <div
             className="card shadow-xl"
@@ -3393,22 +3403,29 @@ function App() {
             >
               ✕
             </button>
-            <div style={{ width: '48px', height: '48px', borderRadius: '50%', background: '#ECFDF5', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 14px' }}>
-              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#059669" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M9 14 4 9l5-5" /><path d="M4 9h11a4 4 0 0 1 0 8h-1" /></svg>
+            <div style={{ width: '48px', height: '48px', borderRadius: '50%', background: hasPendingRejoin ? '#FEF3C7' : '#ECFDF5', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 14px' }}>
+              {hasPendingRejoin ? (
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#D97706" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="9" /><path d="M12 7v5l3 2" /></svg>
+              ) : (
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#059669" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M9 14 4 9l5-5" /><path d="M4 9h11a4 4 0 0 1 0 8h-1" /></svg>
+              )}
             </div>
             <h3 className="nunito" style={{ fontSize: '18px', fontWeight: 900, color: '#0F172A', margin: '0 0 8px 0' }}>
-              Rejoin this group?
+              {hasPendingRejoin ? 'Waiting for approval' : 'Rejoin this group?'}
             </h3>
             <p style={{ fontSize: '14px', color: '#64748B', fontWeight: 600, margin: '0 0 20px 0', lineHeight: 1.4 }}>
-              {(() => {
-                const adminRaw = (selectedGroup?.members || []).filter((m) => !m.toLowerCase().endsWith(' (left)'))[0] || '';
-                const adminName = adminRaw.replace(/\s*\(me\)$/i, '').replace(/\s*\(Left\)$/i, '').trim();
-                const showName = adminName && adminName.toLowerCase() !== 'you';
-                return (
-                  <>The group admin{showName ? <> (<span style={{ color: '#0F172A', fontWeight: 800 }}>{adminName}</span>)</> : ''} needs to approve.</>
-                );
-              })()}
+              {hasPendingRejoin
+                ? <>Your request was sent to the group admin{adminLabel}. You'll get access once it's approved.</>
+                : <>The group admin{adminLabel} needs to approve.</>}
             </p>
+            {hasPendingRejoin ? (
+              <button
+                onClick={() => setShowRejoinRequestModal(false)}
+                style={{ width: '100%', padding: '12px', borderRadius: '12px', border: '1px solid #E2E8F0', background: '#F8FAFC', color: '#475569', fontWeight: 800, fontSize: '13px', cursor: 'pointer', textAlign: 'center' }}
+              >
+                Got it
+              </button>
+            ) : (
             <button
               onClick={async () => {
                 setShowRejoinRequestModal(false);
@@ -3506,9 +3523,11 @@ function App() {
             >
               Send request
             </button>
+            )}
           </div>
         </div>
-      )}
+        );
+      })()}
 
       {adminRejoinRequest && (
         <div className="modal-overlay" style={{ zIndex: 5000, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
