@@ -56,12 +56,12 @@ export const FloatingAddMenu: React.FC<FloatingAddMenuProps> = ({
         onClick={createGroup}
         style={{
           width: '48px',
-          height: '48px',
-          borderRadius: '16px',
+          height: '40px',
+          borderRadius: '12px',
           background: 'linear-gradient(135deg, #FB923C 0%, #EA580C 100%)',
           border: 'none',
           color: '#FFFFFF',
-          boxShadow: '0 8px 20px rgba(234, 88, 12, 0.3)',
+          boxShadow: '0 6px 16px rgba(234, 88, 12, 0.25)',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
