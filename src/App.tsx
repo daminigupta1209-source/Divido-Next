@@ -2959,9 +2959,9 @@ function App() {
           {/* Central Circular Add Expense Button */}
           <div
             onClick={() => {
-              setEditingExpense(null);
+              setEditingExpenseSecure(null);
               if (view !== 'detail') setSelectedId('STANDALONE');
-              setShowExpModal(true);
+              setShowExpModalSecure(true);
             }}
             style={{ 
               display: 'flex', 
