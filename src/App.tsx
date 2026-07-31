@@ -132,6 +132,12 @@ function App() {
     setEditingExpense(exp);
   };
 
+  // Past members are view-only: opening the Add Friend modal nudges them to rejoin.
+  const setShowAddFriendModalSecure = (show: boolean) => {
+    if (show && checkPastMemberAndShowRejoin(true)) return;
+    setShowAddFriendModal(show);
+  };
+
   const [isAuthenticated, setIsAuthenticated] = useState<boolean>(() => {
     const savedAuth = localStorage.getItem('divido_authenticated');
     if (savedAuth === 'true') return true;
@@ -1419,6 +1425,7 @@ function App() {
   };
 
   const handleRenameGroup = (id: string | number) => {
+    if (checkPastMemberAndShowRejoin(true)) return;
     if (id === 'STANDALONE') {
       alert(
         'Non-Group Expenses is a permanent category and cannot be renamed, but you can clear its history using the delete icon! ⚡'
@@ -1559,6 +1566,7 @@ function App() {
   }, [selectedId, groups]);
 
   const handleHeaderRename = () => {
+    if (checkPastMemberAndShowRejoin(true)) { setHeaderRenaming(false); return; }
     const trimmed = headerNewName.trim();
     if (!trimmed) {
       setHeaderRenaming(false);
@@ -1692,6 +1700,7 @@ function App() {
       <main ref={mainContentRef} className="main-content">
         <MobileHeader
           headerHidden={headerHidden}
+          onRequestRejoin={() => setShowRejoinRequestModal(true)}
           view={view}
           selectedId={selectedId}
           selectedGroup={selectedGroup}
@@ -1861,7 +1870,7 @@ function App() {
             setShowExpModal={setShowExpModalSecure}
             setEditingExpense={setEditingExpenseSecure}
             setExpenses={setExpenses}
-            setShowAddFriendModal={setShowAddFriendModal}
+            setShowAddFriendModal={setShowAddFriendModalSecure}
             setShowMembersHealth={setShowMembersHealth}
             setShowCurrPickerId={setShowCurrPickerId}
             showCurrPickerId={showCurrPickerId}

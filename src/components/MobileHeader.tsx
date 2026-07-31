@@ -51,6 +51,7 @@ interface MobileHeaderProps {
   setExpenses?: React.Dispatch<React.SetStateAction<Expense[]>>;
   setShowExpModal?: (b: boolean) => void;
   setEditingExpense?: (exp: Expense | null) => void;
+  onRequestRejoin?: () => void;
 }
 
 export const MobileHeader: React.FC<MobileHeaderProps> = ({
@@ -99,7 +100,16 @@ export const MobileHeader: React.FC<MobileHeaderProps> = ({
   setExpenses = () => {},
   setShowExpModal = () => {},
   setEditingExpense = () => {},
+  onRequestRejoin,
 }) => {
+  // View-only guard: a member who has left this group can browse but not edit it.
+  const amIPastMember = (() => {
+    const cleanMe = me.replace(/\s*\(me\)$/i, '').replace(/\s*\(Left\)$/i, '').toLowerCase();
+    return !!selectedGroup?.members?.some((m: string) => {
+      const cleanM = m.replace(/\s*\(me\)$/i, '').replace(/\s*\(Left\)$/i, '').toLowerCase();
+      return cleanM === cleanMe && m.toLowerCase().endsWith(' (left)');
+    });
+  })();
   const [editingDate, setEditingDate] = React.useState(false);
   const uploadInputRef = React.useRef<HTMLInputElement>(null);
   const [selectedPhoto, setSelectedPhoto] = React.useState<string | null>(null);
@@ -290,6 +300,7 @@ export const MobileHeader: React.FC<MobileHeaderProps> = ({
                     }}
                     onClick={() => {
                       if (selectedId === 'STANDALONE') return;
+                      if (amIPastMember) { onRequestRejoin && onRequestRejoin(); return; }
                       setHeaderNewName(selectedGroup?.name || '');
                       setHeaderRenaming(true);
                     }}
@@ -661,8 +672,8 @@ export const MobileHeader: React.FC<MobileHeaderProps> = ({
                       const activeMembersCount = (selectedGroup?.members || []).filter(m => !m.toLowerCase().endsWith(' (left)')).length;
 
                       const actionItems = [
-                        ...(selectedId !== 'STANDALONE' ? [{ emoji: '🔗', label: 'Share Group Link', onClick: () => { setMobileShowGroupOptionsMenu(false); onInviteFriend && onInviteFriend(); } }] : []),
-                        { emoji: '💱', label: 'Convert Currency', onClick: () => { setMobileShowGroupOptionsMenu(false); setShowConvertModalId(selectedId); } },
+                        ...(selectedId !== 'STANDALONE' && !isPastMember ? [{ emoji: '🔗', label: 'Share Group Link', onClick: () => { setMobileShowGroupOptionsMenu(false); onInviteFriend && onInviteFriend(); } }] : []),
+                        ...(isPastMember ? [] : [{ emoji: '💱', label: 'Convert Currency', onClick: () => { setMobileShowGroupOptionsMenu(false); setShowConvertModalId(selectedId); } }]),
                         { emoji: '📤', label: 'Export Data', onClick: () => { setMobileShowGroupOptionsMenu(false); handleMobileExportCSV(); } },
                         { emoji: '📊', label: 'Analytics', onClick: () => { setMobileShowGroupOptionsMenu(false); setAnalyticsGroupId(selectedId); setView('analytics'); } },
                         ...(isActiveMember && selectedId !== 'STANDALONE' ? [{ 

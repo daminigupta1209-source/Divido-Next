@@ -34,6 +34,7 @@ interface GroupHeaderProps {
   setExpenses: React.Dispatch<React.SetStateAction<Expense[]>>;
   setShowExpModal: (b: boolean) => void;
   setEditingExpense: (exp: Expense | null) => void;
+  onRequestRejoin?: () => void;
 }
 
 export const GroupHeader: React.FC<GroupHeaderProps> = ({
@@ -66,7 +67,16 @@ export const GroupHeader: React.FC<GroupHeaderProps> = ({
   setExpenses,
   setShowExpModal,
   setEditingExpense,
+  onRequestRejoin,
 }) => {
+  // View-only guard: someone who has left this group can browse history but not edit it.
+  const amIPastMember = (() => {
+    const cleanMe = me.replace(/\s*\(me\)$/i, '').replace(/\s*\(Left\)$/i, '').toLowerCase();
+    return !!selectedGroup?.members?.some(m => {
+      const cleanM = m.replace(/\s*\(me\)$/i, '').replace(/\s*\(Left\)$/i, '').toLowerCase();
+      return cleanM === cleanMe && m.toLowerCase().endsWith(' (left)');
+    });
+  })();
   const [editingDate, setEditingDate] = React.useState(false);
   const uploadInputRef = React.useRef<HTMLInputElement>(null);
   const [selectedPhoto, setSelectedPhoto] = React.useState<string | null>(null);
@@ -259,7 +269,7 @@ export const GroupHeader: React.FC<GroupHeaderProps> = ({
                     gap: '8px',
                     flexShrink: 1,
                   }}
-                  onClick={() => { if (selectedId === 'STANDALONE') return; setNewName(selectedGroup.name || ''); setIsRenaming(true); }}
+                  onClick={() => { if (selectedId === 'STANDALONE') return; if (amIPastMember) { onRequestRejoin && onRequestRejoin(); return; } setNewName(selectedGroup.name || ''); setIsRenaming(true); }}
                 >
                   {selectedGroup.name || 'Untitled Group 🏘️'}
                   {selectedId !== 'STANDALONE' && (
@@ -538,7 +548,7 @@ export const GroupHeader: React.FC<GroupHeaderProps> = ({
 
                       const actionItems = [
                         ...(selectedId !== 'STANDALONE' && isActiveMember ? [{ emoji: '🔗', label: 'Share Group Link', onClick: () => { setShowGroupOptionsMenu(false); onShareShortcut && onShareShortcut(); } }] : []),
-                        { emoji: '💱', label: 'Convert Currency', onClick: () => { setShowGroupOptionsMenu(false); setShowConvertModalId(selectedId); } },
+                        ...(isPastMember ? [] : [{ emoji: '💱', label: 'Convert Currency', onClick: () => { setShowGroupOptionsMenu(false); setShowConvertModalId(selectedId); } }]),
                         { emoji: '📤', label: 'Export Data', onClick: () => { setShowGroupOptionsMenu(false); setShowExportMenu(true); } },
                         { emoji: '📊', label: 'Analytics Breakdown', onClick: () => { setShowGroupOptionsMenu(false); onOpenAnalytics && onOpenAnalytics(selectedId || 'ALL'); } },
                         ...(isActiveMember && selectedId !== 'STANDALONE' ? [{ 

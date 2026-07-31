@@ -205,6 +205,7 @@ export const GroupDetail: React.FC<GroupDetailProps> = ({
         setExpenses={setExpenses}
         setShowExpModal={setShowExpModal}
         setEditingExpense={setEditingExpense}
+        onRequestRejoin={onRequestRejoin}
       />
 
       {/* Past Member Rejoin Banner */}

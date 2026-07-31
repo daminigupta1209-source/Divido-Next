@@ -282,6 +282,23 @@ test.describe("Member Leave and Rejoin flow", () => {
     await pageB.waitForTimeout(1000);
     await expect(pageB.locator("#past-member-banner")).toContainText("You have left this group. Showing past history.");
 
+    // === View-only guards: a left member must not be able to edit the group ===
+    const rejoinModalText = "You left this group. Request to rejoin?";
+    const closeRejoinModal = async () => {
+      await pageB
+        .locator("div.card", { hasText: "Request to rejoin" })
+        .getByRole("button")
+        .filter({ hasText: "✕" })
+        .first()
+        .click();
+      await pageB.waitForTimeout(500);
+    };
+
+    // Adding a friend must be blocked and surface the rejoin modal instead
+    await pageB.locator("text=+ Friend").first().click();
+    await expect(pageB.locator(`text=${rejoinModalText}`)).toBeVisible();
+    await closeRejoinModal();
+
     // B clicks on a balance row to settle, which should trigger the Rejoin request modal
     await pageB.locator("#desktop-add-expense-btn").first().click();
     await pageB.waitForTimeout(1000);
