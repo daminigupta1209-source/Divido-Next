@@ -3371,6 +3371,15 @@ function App() {
           (req.placeholderName || '').replace(/\s*\(Left\)$/i, '').toLowerCase() === cleanMeName ||
           (req.requestName || '').toLowerCase() === cleanMeName
         );
+        console.log('REJOIN CARD DIAG', JSON.stringify({
+          me,
+          cleanMeName,
+          selectedId,
+          groupName: selectedGroup?.name,
+          members: selectedGroup?.members,
+          pendingLinkRequests: selectedGroup?.pendingLinkRequests,
+          hasPendingRejoin,
+        }));
         return (
         <div className="modal-overlay" style={{ zIndex: 5000, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
           <div
