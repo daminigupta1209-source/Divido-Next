@@ -3367,11 +3367,13 @@ function App() {
         const showAdminName = adminName && adminName.toLowerCase() !== 'you';
         const adminLabel = showAdminName ? <> (<span style={{ color: '#0F172A', fontWeight: 800 }}>{adminName}</span>)</> : null;
         const cleanMeName = me.replace(/\s*\(me\)$/i, '').replace(/\s*\(Left\)$/i, '').toLowerCase();
-        const hasPendingRejoin = !!(selectedGroup?.pendingLinkRequests || []).find((req: any) =>
+        const currentGroup = groups.find((g) => String(g.id) === String(selectedId));
+        const pendingReqs = currentGroup?.pendingLinkRequests || [];
+        const hasPendingRejoin = !!pendingReqs.find((req: any) =>
           (req.placeholderName || '').replace(/\s*\(Left\)$/i, '').toLowerCase() === cleanMeName ||
           (req.requestName || '').toLowerCase() === cleanMeName
         );
-        const __diag = `DIAG v3 · me="${me}" · plr=${JSON.stringify((selectedGroup?.pendingLinkRequests || []).map((r: any) => ({ p: r.placeholderName, n: r.requestName })))} · pending=${hasPendingRejoin}`;
+        const __diag = `DIAG v4 · me="${me}" · plr=${JSON.stringify(pendingReqs.map((r: any) => ({ p: r.placeholderName, n: r.requestName })))} · pending=${hasPendingRejoin}`;
         return (
         <div className="modal-overlay" style={{ zIndex: 5000, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
           <div
