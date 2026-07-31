@@ -347,76 +347,95 @@ export const MasterSummary: React.FC<MasterSummaryProps> = ({
       {hasNoUpi && !upiBannerDismissed && (
         <div
           className="card shadow-sm hover-up-mini"
+          onClick={() => {
+            sessionStorage.setItem('divido_autofocus_upi', 'true');
+            setView('profile');
+          }}
           style={{
-            background: '#FFFFFF',
-            border: '1.5px solid #E2E8F0',
-            borderRadius: '24px',
-            padding: '18px 24px',
-            marginBottom: '24px',
+            background: 'var(--w)',
+            border: '1.5px solid var(--bg)',
+            borderRadius: '999px',
+            padding: '6px 16px 6px 8px',
+            marginBottom: '16px',
             display: 'flex',
             alignItems: 'center',
-            justifyContent: 'space-between',
-            flexWrap: 'wrap',
-            gap: '16px',
+            gap: '12px',
             boxShadow: '0 4px 14px rgba(0, 0, 0, 0.02)',
             animation: 'fadeIn 0.4s ease-out',
-            textAlign: 'left',
-            position: 'relative'
+            cursor: 'pointer',
           }}
         >
-          <button
-            onClick={() => {
+          {/* Orange UPI Circular Badge */}
+          <div
+            style={{
+              width: '32px',
+              height: '32px',
+              borderRadius: '50%',
+              background: 'linear-gradient(135deg, #FB923C 0%, #EA580C 100%)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              flexShrink: 0,
+            }}
+          >
+            <span style={{ color: '#FFFFFF', fontStyle: 'italic', fontWeight: 900, fontSize: '10px', letterSpacing: '-0.3px' }}>UPI</span>
+          </div>
+
+          {/* Text Message */}
+          <span
+            style={{
+              fontSize: '12.5px',
+              color: 'var(--t)',
+              fontWeight: 800,
+              flex: 1,
+              whiteSpace: 'nowrap',
+              overflow: 'hidden',
+              textOverflow: 'ellipsis',
+              letterSpacing: '-0.1px',
+            }}
+          >
+            Link UPI to receive instantly
+          </span>
+
+          {/* Action Arrow */}
+          <span
+            style={{
+              color: '#EA580C',
+              fontSize: '18px',
+              fontWeight: 800,
+              cursor: 'pointer',
+              lineHeight: 1,
+              display: 'flex',
+              alignItems: 'center',
+              transition: 'transform 0.15s',
+            }}
+            className="arrow-hover-right"
+          >
+            →
+          </span>
+
+          {/* Dismiss Icon */}
+          <span
+            onClick={(e) => {
+              e.stopPropagation();
               setUpiBannerDismissed(true);
               localStorage.setItem('divido_upi_banner_dismissed', '1');
             }}
             style={{
-              position: 'absolute',
-              top: '12px',
-              right: '16px',
-              background: 'none',
-              border: 'none',
-              cursor: 'pointer',
-              fontSize: '16px',
               color: '#94A3B8',
+              fontSize: '18px',
+              fontWeight: 800,
+              cursor: 'pointer',
               lineHeight: 1,
-              padding: '2px',
-              fontWeight: 900
+              padding: '2px 4px',
+              transition: 'color 0.15s',
             }}
+            onMouseEnter={(e) => { e.currentTarget.style.color = '#EF4444'; }}
+            onMouseLeave={(e) => { e.currentTarget.style.color = '#94A3B8'; }}
             title="Dismiss"
           >
             ×
-          </button>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '16px', flex: 1, minWidth: '260px' }}>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-              <h4 className="nunito" style={{ fontSize: '15px', color: '#1E293B', margin: 0, fontWeight: 900 }}>
-                Link Your UPI ID
-              </h4>
-              <p style={{ fontSize: '11px', color: '#64748B', margin: 0, fontWeight: 800, lineHeight: 1.4 }}>
-                Configure your UPI ID to receive payments instantly.
-              </p>
-            </div>
-          </div>
-          <button
-            onClick={() => {
-              sessionStorage.setItem('divido_autofocus_upi', 'true');
-              setView('profile');
-            }}
-            style={{
-              padding: '10px 20px',
-              background: '#F59E0B',
-              color: '#FFFFFF',
-              border: 'none',
-              borderRadius: '14px',
-              fontSize: '12px',
-              fontWeight: 950,
-              cursor: 'pointer',
-              boxShadow: '0 4px 10px rgba(245, 158, 11, 0.15)',
-              transition: '0.2s all'
-            }}
-            className="hover-up-mini"
-          >
-            Link UPI ID
-          </button>
+          </span>
         </div>
       )}
 
