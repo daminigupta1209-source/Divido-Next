@@ -393,7 +393,7 @@ export const MasterSummary: React.FC<MasterSummaryProps> = ({
             }}
           >
             <span style={{ color: 'var(--t)' }}>Link UPI </span>
-            <span style={{ color: 'var(--g)', fontWeight: 650 }}>to receive instantly</span>
+            <span style={{ color: 'var(--g)', fontWeight: 500, fontSize: '11px', marginLeft: '2px' }}>to receive instantly</span>
           </span>
 
           {/* Action Arrow */}
