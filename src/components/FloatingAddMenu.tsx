@@ -57,11 +57,11 @@ export const FloatingAddMenu: React.FC<FloatingAddMenuProps> = ({
         style={{
           width: '48px',
           height: '48px',
-          borderRadius: '50%',
+          borderRadius: '16px',
           background: 'linear-gradient(135deg, #FB923C 0%, #EA580C 100%)',
           border: 'none',
           color: '#FFFFFF',
-          boxShadow: '0 8px 20px rgba(234, 88, 12, 0.35)',
+          boxShadow: '0 8px 20px rgba(234, 88, 12, 0.3)',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
