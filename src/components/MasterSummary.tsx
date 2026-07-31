@@ -381,11 +381,9 @@ export const MasterSummary: React.FC<MasterSummaryProps> = ({
             <span style={{ color: '#FFFFFF', fontStyle: 'italic', fontWeight: 900, fontSize: '10px', letterSpacing: '-0.3px' }}>UPI</span>
           </div>
 
-          {/* Text Message */}
           <span
             style={{
               fontSize: '12.5px',
-              color: 'var(--t)',
               fontWeight: 800,
               flex: 1,
               whiteSpace: 'nowrap',
@@ -394,7 +392,8 @@ export const MasterSummary: React.FC<MasterSummaryProps> = ({
               letterSpacing: '-0.1px',
             }}
           >
-            Link UPI to receive instantly
+            <span style={{ color: 'var(--t)' }}>Link UPI </span>
+            <span style={{ color: 'var(--g)', fontWeight: 650 }}>to receive instantly</span>
           </span>
 
           {/* Action Arrow */}
