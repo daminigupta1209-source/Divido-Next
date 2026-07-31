@@ -418,7 +418,6 @@ export const GroupDetail: React.FC<GroupDetailProps> = ({
                 </span>
               </div>
 
-              {/* Right: + Friend / Rejoin Button */}
               {!isLeftUser ? (
                 <button
                   onClick={(e) => {
@@ -449,10 +448,10 @@ export const GroupDetail: React.FC<GroupDetailProps> = ({
                     if (onRequestRejoin) onRequestRejoin();
                   }}
                   style={{
-                    background: 'linear-gradient(135deg, #10B981 0%, #059669 100%)',
-                    color: '#FFFFFF',
-                    border: 'none',
-                    padding: '6px 14px',
+                    background: 'transparent',
+                    color: '#10B981',
+                    border: '1.5px solid #10B981',
+                    padding: '5px 13px',
                     borderRadius: '999px',
                     fontWeight: 800,
                     fontSize: '12px',
@@ -460,11 +459,10 @@ export const GroupDetail: React.FC<GroupDetailProps> = ({
                     display: 'flex',
                     alignItems: 'center',
                     gap: '4px',
-                    boxShadow: '0 4px 10px rgba(16, 185, 129, 0.2)',
                     transition: 'all 0.2s ease',
                   }}
                 >
-                  🚪 Rejoin
+                  Rejoin
                 </button>
               )}
             </div>
