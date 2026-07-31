@@ -395,6 +395,40 @@ export const MobileHeader: React.FC<MobileHeaderProps> = ({
             {/* ⋮ Vertical three-dots button — positioned absolutely at the rightmost edge */}
             {selectedGroup && (
               <div style={{ position: 'absolute', right: '-12px', top: '50%', transform: 'translateY(-50%)', zIndex: 9999, display: 'inline-flex', alignItems: 'center' }}>
+                {/* Share Group Link Button */}
+                {!amIPastMember && (
+                  <button
+                    onClick={() => { onInviteFriend && onInviteFriend(); }}
+                    style={{
+                      background: 'none',
+                      border: 'none',
+                      cursor: 'pointer',
+                      color: '#94A3B8',
+                      width: '36px',
+                      height: '36px',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      flexShrink: 0,
+                      padding: 0,
+                      borderRadius: '8px',
+                      transition: '0.15s all',
+                      marginRight: '-4px',
+                    }}
+                    onMouseEnter={(e) => { e.currentTarget.style.background = 'rgba(0,0,0,0.05)'; }}
+                    onMouseLeave={(e) => { e.currentTarget.style.background = 'none'; }}
+                    title="Share Group Link"
+                  >
+                    <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ color: '#94A3B8' }}>
+                      <circle cx="18" cy="5" r="3" />
+                      <circle cx="6" cy="12" r="3" />
+                      <circle cx="18" cy="19" r="3" />
+                      <line x1="8.59" y1="13.51" x2="15.42" y2="17.49" />
+                      <line x1="15.41" y1="6.51" x2="8.59" y2="10.49" />
+                    </svg>
+                  </button>
+                )}
+
                 {/* Mobile Attachment Paperclip Button */}
                 <input
                   ref={uploadInputRef}
@@ -672,7 +706,6 @@ export const MobileHeader: React.FC<MobileHeaderProps> = ({
                       const activeMembersCount = (selectedGroup?.members || []).filter(m => !m.toLowerCase().endsWith(' (left)')).length;
 
                       const actionItems = [
-                        ...(selectedId !== 'STANDALONE' && !isPastMember ? [{ emoji: '🔗', label: 'Share Group Link', onClick: () => { setMobileShowGroupOptionsMenu(false); onInviteFriend && onInviteFriend(); } }] : []),
                         ...(isPastMember ? [] : [{ emoji: '💱', label: 'Convert Currency', onClick: () => { setMobileShowGroupOptionsMenu(false); setShowConvertModalId(selectedId); } }]),
                         { emoji: '📤', label: 'Export Data', onClick: () => { setMobileShowGroupOptionsMenu(false); handleMobileExportCSV(); } },
                         { emoji: '📊', label: 'Analytics', onClick: () => { setMobileShowGroupOptionsMenu(false); setAnalyticsGroupId(selectedId); setView('analytics'); } },

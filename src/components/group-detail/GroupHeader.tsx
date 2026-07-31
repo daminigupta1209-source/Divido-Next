@@ -280,8 +280,42 @@ export const GroupHeader: React.FC<GroupHeaderProps> = ({
             </div>
 
             {/* RIGHT: Horizontal ellipsis options button */}
-            {selectedId !== 'STANDALONE' && (
+             {selectedId !== 'STANDALONE' && (
               <div style={{ position: 'absolute', right: '-12px', display: 'inline-flex', alignItems: 'center' }}>
+                {/* Share Group Link Button */}
+                {!amIPastMember && (
+                  <button
+                    onClick={() => { onShareShortcut && onShareShortcut(); }}
+                    style={{
+                      background: 'none',
+                      border: 'none',
+                      cursor: 'pointer',
+                      color: '#94A3B8',
+                      width: '36px',
+                      height: '36px',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      flexShrink: 0,
+                      padding: 0,
+                      borderRadius: '8px',
+                      transition: '0.15s all',
+                      marginRight: '-4px',
+                    }}
+                    onMouseEnter={(e) => { e.currentTarget.style.background = 'rgba(0,0,0,0.05)'; }}
+                    onMouseLeave={(e) => { e.currentTarget.style.background = 'none'; }}
+                    title="Share Group Link"
+                  >
+                    <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ color: '#94A3B8' }}>
+                      <circle cx="18" cy="5" r="3" />
+                      <circle cx="6" cy="12" r="3" />
+                      <circle cx="18" cy="19" r="3" />
+                      <line x1="8.59" y1="13.51" x2="15.42" y2="17.49" />
+                      <line x1="15.41" y1="6.51" x2="8.59" y2="10.49" />
+                    </svg>
+                  </button>
+                )}
+
                 {/* Attachment Paperclip Button */}
                 <input
                   ref={uploadInputRef}
@@ -547,7 +581,6 @@ export const GroupHeader: React.FC<GroupHeaderProps> = ({
                       const activeMembersCount = (selectedGroup?.members || []).filter(m => !m.toLowerCase().endsWith(' (left)')).length;
 
                       const actionItems = [
-                        ...(selectedId !== 'STANDALONE' && isActiveMember ? [{ emoji: '🔗', label: 'Share Group Link', onClick: () => { setShowGroupOptionsMenu(false); onShareShortcut && onShareShortcut(); } }] : []),
                         ...(isPastMember ? [] : [{ emoji: '💱', label: 'Convert Currency', onClick: () => { setShowGroupOptionsMenu(false); setShowConvertModalId(selectedId); } }]),
                         { emoji: '📤', label: 'Export Data', onClick: () => { setShowGroupOptionsMenu(false); setShowExportMenu(true); } },
                         { emoji: '📊', label: 'Analytics Breakdown', onClick: () => { setShowGroupOptionsMenu(false); onOpenAnalytics && onOpenAnalytics(selectedId || 'ALL'); } },
