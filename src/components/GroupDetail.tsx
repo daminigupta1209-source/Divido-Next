@@ -418,8 +418,8 @@ export const GroupDetail: React.FC<GroupDetailProps> = ({
                 </span>
               </div>
 
-              {/* Right: + Friend Button */}
-              {!isLeftUser && (
+              {/* Right: + Friend / Rejoin Button */}
+              {!isLeftUser ? (
                 <button
                   onClick={(e) => {
                     e.stopPropagation();
@@ -441,6 +441,30 @@ export const GroupDetail: React.FC<GroupDetailProps> = ({
                   }}
                 >
                   <span style={{ fontSize: '14px', lineHeight: 1 }}>+</span> Friend
+                </button>
+              ) : (
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    if (onRequestRejoin) onRequestRejoin();
+                  }}
+                  style={{
+                    background: 'linear-gradient(135deg, #10B981 0%, #059669 100%)',
+                    color: '#FFFFFF',
+                    border: 'none',
+                    padding: '6px 14px',
+                    borderRadius: '999px',
+                    fontWeight: 800,
+                    fontSize: '12px',
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '4px',
+                    boxShadow: '0 4px 10px rgba(16, 185, 129, 0.2)',
+                    transition: 'all 0.2s ease',
+                  }}
+                >
+                  🚪 Rejoin
                 </button>
               )}
             </div>
