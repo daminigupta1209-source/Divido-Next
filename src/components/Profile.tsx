@@ -156,26 +156,28 @@ export const Profile: React.FC<ProfileProps> = ({
                 position: 'absolute',
                 bottom: '1px',
                 right: '1px',
-                width: '26px',
-                height: '26px',
+                width: '22px',
+                height: '22px',
                 borderRadius: '50%',
                 background: '#EA580C',
-                border: '2px solid #FFFFFF',
-                boxShadow: '0 2px 8px rgba(0,0,0,0.15)',
+                border: '1.5px solid #FFFFFF',
+                boxShadow: '0 2px 6px rgba(0,0,0,0.15)',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
                 cursor: 'pointer',
                 color: '#FFFFFF',
                 padding: 0,
-                fontSize: '11px',
                 transition: 'transform 0.15s',
               }}
               onMouseEnter={(e) => { e.currentTarget.style.transform = 'scale(1.1)'; }}
               onMouseLeave={(e) => { e.currentTarget.style.transform = 'scale(1)'; }}
               title="Upload Photo"
             >
-              ✏️
+              <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3.5" strokeLinecap="round" strokeLinejoin="round" style={{ color: '#FFFFFF' }}>
+                <path d="M12 20h9" />
+                <path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z" />
+              </svg>
             </button>
           </div>
           <input
