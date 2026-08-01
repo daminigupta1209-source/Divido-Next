@@ -116,58 +116,67 @@ export const Profile: React.FC<ProfileProps> = ({
         
         {/* Avatar / Photo Header Block */}
         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', margin: '10px 0 6px' }}>
-          <div
-            onClick={() => fileInputRef.current?.click()}
-            style={{
-              width: '90px',
-              height: '90px',
-              borderRadius: '50%',
-              background: '#FFEBE0',
-              border: '4px solid #FFF3EB',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              cursor: 'pointer',
-              position: 'relative',
-              boxShadow: '0 8px 24px rgba(251, 146, 60, 0.12)',
-              overflow: 'hidden',
-              transition: '0.2s all ease',
-            }}
-            className="hover-up-mini"
-            title="Upload Profile Photo"
-          >
-            {profilePhoto ? (
-              <img
-                src={profilePhoto}
-                alt="Profile"
-                style={{ width: '100%', height: '100%', objectFit: 'cover' }}
-              />
-            ) : (
-              <span style={{ fontSize: '26px', fontWeight: 900, color: '#E65100', userSelect: 'none' }}>
-                {initials}
-              </span>
-            )}
-            
-            {/* Camera Overlay */}
+          <div style={{ position: 'relative' }}>
             <div
+              onClick={() => fileInputRef.current?.click()}
               style={{
-                position: 'absolute',
-                inset: 0,
-                background: 'rgba(0, 0, 0, 0.4)',
+                width: '90px',
+                height: '90px',
+                borderRadius: '50%',
+                background: '#FFEBE0',
+                border: '4px solid #FFF3EB',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                opacity: 0,
-                transition: 'opacity 0.25s ease',
-                color: '#FFFFFF',
-                fontSize: '11px',
-                fontWeight: 700,
+                cursor: 'pointer',
+                boxShadow: '0 8px 24px rgba(251, 146, 60, 0.12)',
+                overflow: 'hidden',
+                transition: '0.2s all ease',
               }}
-              onMouseEnter={(e) => { e.currentTarget.style.opacity = '1'; }}
-              onMouseLeave={(e) => { e.currentTarget.style.opacity = '0'; }}
+              className="hover-up-mini"
+              title="Upload Profile Photo"
             >
-              📷 Edit
+              {profilePhoto ? (
+                <img
+                  src={profilePhoto}
+                  alt="Profile"
+                  style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                />
+              ) : (
+                <span style={{ fontSize: '26px', fontWeight: 900, color: '#E65100', userSelect: 'none' }}>
+                  {initials}
+                </span>
+              )}
             </div>
+
+            {/* Small edit badge button on the bottom right of the avatar */}
+            <button
+              onClick={() => fileInputRef.current?.click()}
+              style={{
+                position: 'absolute',
+                bottom: '1px',
+                right: '1px',
+                width: '26px',
+                height: '26px',
+                borderRadius: '50%',
+                background: '#EA580C',
+                border: '2px solid #FFFFFF',
+                boxShadow: '0 2px 8px rgba(0,0,0,0.15)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                cursor: 'pointer',
+                color: '#FFFFFF',
+                padding: 0,
+                fontSize: '11px',
+                transition: 'transform 0.15s',
+              }}
+              onMouseEnter={(e) => { e.currentTarget.style.transform = 'scale(1.1)'; }}
+              onMouseLeave={(e) => { e.currentTarget.style.transform = 'scale(1)'; }}
+              title="Upload Photo"
+            >
+              ✏️
+            </button>
           </div>
           <input
             ref={fileInputRef}
