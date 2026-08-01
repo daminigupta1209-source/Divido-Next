@@ -1105,6 +1105,17 @@ function App() {
     document.body.setAttribute('data-theme', theme);
     localStorage.setItem('divido_theme', theme);
   }, [theme]);
+
+  // Automatically configure default currency on onboarding to remove barriers
+  useEffect(() => {
+    if (isAuthenticated && me && userMetadata[me] && !userMetadata[me].defaultCurrency) {
+      setUserMetadata((prev) => ({
+        ...prev,
+        [me]: { ...prev[me], defaultCurrency: myDefaultCurrency }
+      }));
+      localStorage.setItem('divido_currency_setup_seen_' + me, '1');
+    }
+  }, [isAuthenticated, me, userMetadata[me]?.defaultCurrency, myDefaultCurrency]);
   useEffect(() => {
     localStorage.setItem('divido_groups', JSON.stringify(groups));
   }, [groups]);
@@ -3059,12 +3070,7 @@ function App() {
       )}
 
       <CurrencySetupModal
-        show={
-          !currencySetupDismissed &&
-          !userMetadata[me]?.defaultCurrency &&
-          !localStorage.getItem('divido_currency_setup_seen_' + me) &&
-          localStorage.getItem('divido_e2e_testing') !== 'true'
-        }
+        show={false}
         suggested={myDefaultCurrency}
         onConfirm={(symbol) => {
           setUserMetadata({
