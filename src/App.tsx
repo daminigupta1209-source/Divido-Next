@@ -1202,7 +1202,6 @@ function App() {
           } catch { localStorage.removeItem('divido_pending_join'); }
         }
 
-        console.log('[INVITE] joinGroupFromQuery → joinGroupId:', joinGroupId, 'fromUrl:', fromUrl, 'url:', window.location.href);
         if (!joinGroupId) return;
 
         // Persist the invite the moment the link is opened, BEFORE any sign-in.
@@ -1292,7 +1291,6 @@ function App() {
 
         // Show selection list of unlinked pending members (placeholders)
         const placeholders = existingMembers.filter((m: any) => m.is_pending && !m.user_email && !m.link_request_email);
-        console.log('[INVITE] showing claim card for group', joinGroupId, '→ placeholders:', placeholders.map((m: any) => m.name));
         setLinkRequestGroup(groupData);
         setLinkRequestPlaceholders(placeholders);
       } catch (err) {

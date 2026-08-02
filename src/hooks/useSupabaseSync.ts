@@ -490,6 +490,16 @@ export function useSupabaseSync({
               continue;
             }
 
+            // A group with a real (small) DB id that isn't in our synced list was
+            // JOINED via an invite — or already exists in the cloud — not created
+            // on this device (locally-created groups carry large temporary ids).
+            // Re-inserting it triggers a duplicate-key 409, so adopt it as-is; it
+            // gets folded into prevGroupsRef at the end of this sync pass, which
+            // also unblocks the initial cloud load.
+            if (typeof g.id === 'number' && g.id <= 2147483647) {
+              continue;
+            }
+
             // Sync Lock: skip if this temporary group is already uploading in another active task
             const lockKey = `divido_syncing_${g.id}`;
             if (sessionStorage.getItem(lockKey) === 'true') {
