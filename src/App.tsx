@@ -2972,6 +2972,7 @@ function App() {
           <div
             onClick={() => {
               setEditingExpenseSecure(null);
+              setAutoOpenScanner(false);
               if (view !== 'detail') setSelectedId('STANDALONE');
               setShowExpModalSecure(true);
             }}
