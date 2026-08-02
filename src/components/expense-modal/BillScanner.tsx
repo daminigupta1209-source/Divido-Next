@@ -645,12 +645,12 @@ If a valid receipt: {"title": "Sunrise Foods", "amount": 5445.30, "notes": "Groc
           border: '1.5px solid rgba(255, 255, 255, 0.7)',
           borderRadius: '24px',
           width: '92%',
-          maxWidth: '440px',
-          padding: '24px',
+          maxWidth: '320px',
+          padding: '18px 20px',
           boxShadow: '0 25px 50px -12px rgba(0,0,0,0.25)',
           display: 'flex',
           flexDirection: 'column',
-          gap: '16px',
+          gap: '12px',
         }}
         onClick={(e) => e.stopPropagation()}
       >
@@ -872,22 +872,6 @@ If a valid receipt: {"title": "Sunrise Foods", "amount": 5445.30, "notes": "Groc
                 ⚠️ {cameraError || scanError}
               </div>
             )}
-
-            <div
-              style={{
-                fontSize: '10px',
-                fontWeight: 800,
-                color: '#1E40AF',
-                background: '#EFF6FF',
-                padding: '8px 12px',
-                borderRadius: '10px',
-                border: '1px solid #BFDBFE',
-                lineHeight: '1.4',
-                textAlign: 'center',
-              }}
-            >
-              ✨ <strong>Smart Auto-Fill:</strong> Attach any receipt, bill, or payment screenshot to automatically extract details.
-            </div>
           </div>
         )}
 
