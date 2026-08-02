@@ -654,29 +654,34 @@ If a valid receipt: {"title": "Sunrise Foods", "amount": 5445.30, "notes": "Groc
         }}
         onClick={(e) => e.stopPropagation()}
       >
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <span style={{ fontSize: '15px', fontWeight: 950, color: '#1E293B', display: 'flex', alignItems: 'center', gap: '8px' }}>
-            📷 Smart Receipt Scanner
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+          <div style={{ flex: 1 }} />
+          <span style={{ fontSize: '12px', fontWeight: 900, color: '#64748B', textTransform: 'uppercase', letterSpacing: '1px', textAlign: 'center' }}>
+            Smart Scanner
           </span>
-          <button
-            type="button"
-            onClick={() => {
-              setIsCameraLive(false);
-              setShowScannerModal(false);
-            }}
-            disabled={scanProgress > 0 && scanProgress < 100}
-            style={{
-              background: 'transparent',
-              border: 'none',
-              cursor: scanProgress > 0 && scanProgress < 100 ? 'not-allowed' : 'pointer',
-              fontSize: '16px',
-              color: '#64748B',
-              fontWeight: 'bold',
-              opacity: scanProgress > 0 && scanProgress < 100 ? 0.3 : 1,
-            }}
-          >
-            ✕
-          </button>
+          <div style={{ flex: 1, display: 'flex', justifyContent: 'flex-end' }}>
+            <button
+              type="button"
+              onClick={() => {
+                setIsCameraLive(false);
+                setShowScannerModal(false);
+              }}
+              disabled={scanProgress > 0 && scanProgress < 100}
+              style={{
+                background: 'transparent',
+                border: 'none',
+                cursor: scanProgress > 0 && scanProgress < 100 ? 'not-allowed' : 'pointer',
+                fontSize: '16px',
+                color: '#64748B',
+                fontWeight: 'bold',
+                opacity: scanProgress > 0 && scanProgress < 100 ? 0.3 : 1,
+                padding: 0,
+                lineHeight: 1
+              }}
+            >
+              ✕
+            </button>
+          </div>
         </div>
 
         {scanFile ? (
@@ -792,53 +797,48 @@ If a valid receipt: {"title": "Sunrise Foods", "amount": 5445.30, "notes": "Groc
           </div>
         ) : (
           <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
-            <div style={{ display: 'flex', gap: '12px' }}>
-              <div
-                onClick={() => document.getElementById('receipt-file-input')?.click()}
-                style={{
-                  flex: 1,
-                  background: '#ECFDF5',
-                  border: '2px solid #A7F3D0',
-                  borderRadius: '16px',
-                  padding: '20px 10px',
-                  textAlign: 'center',
-                  cursor: 'pointer',
-                  transition: 'all 0.2s',
-                  display: 'flex',
-                  flexDirection: 'column',
-                  alignItems: 'center',
-                  gap: '8px',
-                }}
-                className="hover-up"
-              >
-                <span style={{ fontSize: '24px' }}>📎</span>
-                <span style={{ fontSize: '12px', fontWeight: 900, color: '#065F46' }}>
-                  Attach Receipt
-                </span>
-              </div>
-
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', padding: '4px 0' }}>
+              {/* Camera Option */}
               <div
                 onClick={() => setIsCameraLive(true)}
+                className="hover-bg"
                 style={{
-                  flex: 1,
-                  background: '#EFF6FF',
-                  border: '2px solid #BFDBFE',
-                  borderRadius: '16px',
-                  padding: '20px 10px',
-                  textAlign: 'center',
-                  cursor: 'pointer',
-                  transition: 'all 0.2s',
                   display: 'flex',
-                  flexDirection: 'column',
                   alignItems: 'center',
-                  gap: '8px',
+                  gap: '12px',
+                  padding: '12px',
+                  borderRadius: '12px',
+                  cursor: 'pointer',
+                  transition: 'all 0.2s'
                 }}
-                className="hover-up"
               >
-                <span style={{ fontSize: '24px' }}>📷</span>
-                <span style={{ fontSize: '12px', fontWeight: 900, color: '#1E40AF' }}>
-                  Take Photo
-                </span>
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#475569" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z" />
+                  <circle cx="12" cy="13" r="4" />
+                </svg>
+                <span style={{ fontSize: '15px', fontWeight: 800, color: '#1E293B' }}>Camera</span>
+              </div>
+
+              {/* Upload Bill Option */}
+              <div
+                onClick={() => document.getElementById('receipt-file-input')?.click()}
+                className="hover-bg"
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '12px',
+                  padding: '12px',
+                  borderRadius: '12px',
+                  cursor: 'pointer',
+                  transition: 'all 0.2s'
+                }}
+              >
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#475569" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                  <polyline points="17 8 12 3 7 8" />
+                  <line x1="12" y1="3" x2="12" y2="15" />
+                </svg>
+                <span style={{ fontSize: '15px', fontWeight: 800, color: '#1E293B' }}>Upload Bill</span>
               </div>
             </div>
 
