@@ -158,7 +158,7 @@ function App() {
     if (localStorage.getItem('divido_e2e_testing') === 'true' && localStorage.getItem('divido_force_logged_out') !== 'true') {
       return localStorage.getItem('divido_mock_email') || 'e2e-test-guest@divido.app';
     }
-    return '';
+    return localStorage.getItem('divido_email') || '';
   });
   const [feedback, setFeedback] = useState<string>('');
   
@@ -680,16 +680,18 @@ function App() {
         if (!groupId || groupId === 'STANDALONE' || !claimedName) continue;
         const { data: rows } = await supabase
           .from('group_members')
-          .select('id')
+          .select('id, user_email')
           .eq('group_id', groupId)
           .ilike('name', claimedName)
-          .is('user_email', null)
           .limit(1);
         if (rows && rows[0]) {
-          await supabase
-            .from('group_members')
-            .update({ user_email: email, is_pending: false })
-            .eq('id', rows[0].id);
+          const currentDbEmail = rows[0].user_email;
+          if (!currentDbEmail || currentDbEmail.startsWith('guest-') || currentDbEmail.includes('@divido.app')) {
+            await supabase
+              .from('group_members')
+              .update({ user_email: email, is_pending: false })
+              .eq('id', rows[0].id);
+          }
         }
       }
     } catch (e) {
@@ -714,13 +716,19 @@ function App() {
         setIsAuthenticated(true);
         localStorage.setItem('divido_authenticated', 'true');
       } else {
-        setUserEmail('');
         if (localStorage.getItem('divido_e2e_testing') === 'true' && localStorage.getItem('divido_force_logged_out') !== 'true') {
           setIsAuthenticated(true);
           setUserEmail(localStorage.getItem('divido_mock_email') || 'e2e-test-guest@divido.app');
         } else {
-          setIsAuthenticated(false);
-          localStorage.removeItem('divido_authenticated');
+          const guestEmail = localStorage.getItem('divido_email');
+          if (guestEmail && guestEmail.startsWith('guest-')) {
+            setIsAuthenticated(true);
+            setUserEmail(guestEmail);
+          } else {
+            setIsAuthenticated(false);
+            localStorage.removeItem('divido_authenticated');
+            setUserEmail('');
+          }
         }
       }
     });
@@ -743,6 +751,12 @@ function App() {
       } else if (localStorage.getItem('divido_e2e_testing') === 'true' && localStorage.getItem('divido_force_logged_out') !== 'true') {
         setIsAuthenticated(true);
         setUserEmail(localStorage.getItem('divido_mock_email') || 'e2e-test-guest@divido.app');
+      } else {
+        const guestEmail = localStorage.getItem('divido_email');
+        if (guestEmail && guestEmail.startsWith('guest-')) {
+          setIsAuthenticated(true);
+          setUserEmail(guestEmail);
+        }
       }
     });
 
@@ -1412,6 +1426,7 @@ function App() {
         // Clear local storage completely for app data
         localStorage.removeItem('divido_guest_mode');
         localStorage.removeItem('divido_authenticated');
+        localStorage.removeItem('divido_email');
         localStorage.removeItem('divido_username');
         localStorage.removeItem('divido_usermetadata');
         localStorage.removeItem('divido_groups');
@@ -1620,7 +1635,7 @@ function App() {
   const urlParams = new URLSearchParams(window.location.search);
   const joinGroupIdParam = urlParams.get('joinGroupId');
 
-  if (!isAuthenticated && !joinGroupIdParam) {
+  if (!isAuthenticated) {
     return (
       <Login
         onLoginSuccess={(name) => {
@@ -2274,17 +2289,29 @@ function App() {
                       const { data: { session } } = await supabase.auth.getSession();
                       const myEmail = session?.user?.email || (localStorage.getItem('divido_e2e_testing') === 'true' ? localStorage.getItem('divido_mock_email') || 'e2e-test-guest@divido.app' : null);
 
-                      // Account-first: joining a shared group requires a real sign-in.
-                      // Send guests through Google sign-in and bring them back to this
-                      // same invite link, where they can then claim their name.
-                      if (!myEmail) {
-                        alert('Please sign in with Google to join this group. You will come right back here to pick your name.');
-                        await supabase.auth.signInWithOAuth({
-                          provider: 'google',
-                          options: { redirectTo: window.location.href },
-                        });
-                        setSubmittingLinkRequest(false);
-                        return;
+                      let activeEmail = myEmail;
+                      if (!activeEmail) {
+                        const joinAsGuest = confirm(
+                          `How would you like to join "${linkRequestGroup.name}"?\n\n` +
+                          `• Click "OK" to join instantly as a Guest (no account needed).\n` +
+                          `• Click "Cancel" to sign in with Google (recommended, saves your data).`
+                        );
+                        if (joinAsGuest) {
+                          let guestId = localStorage.getItem('divido_guest_id');
+                          if (!guestId) {
+                            guestId = 'guest-' + Math.random().toString(36).substring(2, 11) + '-' + Date.now();
+                            localStorage.setItem('divido_guest_id', guestId);
+                          }
+                          activeEmail = guestId + '@divido.app';
+                          localStorage.setItem('divido_email', activeEmail);
+                        } else {
+                          await supabase.auth.signInWithOAuth({
+                            provider: 'google',
+                            options: { redirectTo: window.location.href },
+                          });
+                          setSubmittingLinkRequest(false);
+                          return;
+                        }
                       }
 
                       const isRejoin = p.name.endsWith(' (Left)') ||
@@ -2299,7 +2326,7 @@ function App() {
                           .from('group_members')
                           .update({
                             name: cleanName,
-                            user_email: myEmail,
+                            user_email: activeEmail,
                             is_pending: false
                           })
                           .eq('id', p.id);
@@ -2310,6 +2337,9 @@ function App() {
                         localStorage.setItem(`divido_identity_${linkRequestGroup.id}`, cleanName);
                         setUserName(cleanName);
                         setIsAuthenticated(true);
+                        if (activeEmail.startsWith('guest-')) {
+                          setUserEmail(activeEmail);
+                        }
 
                         // Notify other members
                         try {
@@ -2322,7 +2352,7 @@ function App() {
                           if (activeMems && activeMems.length > 0) {
                             const { pushNotification } = await import('./lib/notifications');
                             for (const mem of activeMems) {
-                              if (mem.user_email && mem.user_email !== myEmail) {
+                              if (mem.user_email && mem.user_email !== activeEmail) {
                                 await pushNotification({
                                   recipientEmail: mem.user_email,
                                   type: 'join',
@@ -2357,7 +2387,7 @@ function App() {
                         await supabase
                           .from('group_members')
                           .update({
-                            user_email: myEmail,
+                            user_email: activeEmail,
                             is_pending: false,
                           })
                           .eq('id', p.id);
@@ -2367,6 +2397,9 @@ function App() {
                         localStorage.setItem(`divido_identity_${linkRequestGroup.id}`, p.name);
                         setUserName(p.name);
                         setIsAuthenticated(true);
+                        if (activeEmail.startsWith('guest-')) {
+                          setUserEmail(activeEmail);
+                        }
                         
                         alert(`Welcome, ${p.name}! You have successfully joined the group. 🎉`);
                       }
