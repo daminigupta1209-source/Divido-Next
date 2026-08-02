@@ -2,8 +2,6 @@ import React, { useRef } from 'react';
 import { Group } from '../lib/types';
 
 interface FloatingAddMenuProps {
-  showGlobalAddMenu: boolean;
-  setShowGlobalAddMenu: (b: boolean) => void;
   view: string;
   setView: (v: string) => void;
   setSelectedId: (id: string | number | null) => void;

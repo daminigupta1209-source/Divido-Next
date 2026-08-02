@@ -193,7 +193,6 @@ function App() {
   const [headerNewName, setHeaderNewName] = useState('');
   const [headerNameError, setHeaderNameError] = useState('');
   const [showInfo, setShowInfo] = useState(false);
-  const [showGlobalAddMenu, setShowGlobalAddMenu] = useState(false);
   const [activeReminderName, setActiveReminderName] = useState<string | null>(null);
   const [activeRejoinLink, setActiveRejoinLink] = useState<string | null>(null);
   const [mobileShowGroupOptionsMenu, setMobileShowGroupOptionsMenu] = useState(false);
@@ -244,7 +243,7 @@ function App() {
   const anyOverlayOpen = showExpModal || showSettleModal || showAddFriendModal
     || confirmState.show || !!qrModalData || !!showConvertModalId || !!matchPrompt
     || !!linkRequestGroup || showDeleteAccountModal || showNotifPanel
-    || mobileShowGroupOptionsMenu || showGlobalAddMenu;
+    || mobileShowGroupOptionsMenu;
 
   // 1. Listen for the browser "back" / "forward" events.
   useEffect(() => {
@@ -263,7 +262,6 @@ function App() {
       if (showDeleteAccountModal) { setShowDeleteAccountModal(false); return; }
       if (showNotifPanel) { setShowNotifPanel(false); return; }
       if (mobileShowGroupOptionsMenu) { setMobileShowGroupOptionsMenu(false); return; }
-      if (showGlobalAddMenu) { setShowGlobalAddMenu(false); return; }
 
 
       if (st && st._divido) {
@@ -286,7 +284,7 @@ function App() {
   }, [anyOverlayOpen, showExpModal, showSettleModal, showAddFriendModal,
       confirmState.show, qrModalData, showConvertModalId, matchPrompt,
       linkRequestGroup, showDeleteAccountModal, showNotifPanel,
-      mobileShowGroupOptionsMenu, showGlobalAddMenu,
+      mobileShowGroupOptionsMenu,
       view, selectedId]);
 
   // 2. Push a new history entry whenever the app navigates internally.
@@ -1137,7 +1135,7 @@ function App() {
     localStorage.setItem('divido_expenses', JSON.stringify(expenses));
   }, [expenses]);
 
-  const { syncStatus, isInitialLoadDone } = useSupabaseSync({
+  const { syncStatus } = useSupabaseSync({
     groups,
     setGroups,
     expenses,
@@ -2153,8 +2151,6 @@ function App() {
 
       {/* Unified Floating Action Button (FAB) Menu */}
       <FloatingAddMenu
-        showGlobalAddMenu={showGlobalAddMenu}
-        setShowGlobalAddMenu={setShowGlobalAddMenu}
         view={view}
         setView={setView}
         setSelectedId={setSelectedId}
@@ -2320,7 +2316,10 @@ function App() {
                         } else {
                           await supabase.auth.signInWithOAuth({
                             provider: 'google',
-                            options: { redirectTo: window.location.href },
+                            options: {
+                              redirectTo: window.location.href,
+                              queryParams: { prompt: 'select_account' },
+                            },
                           });
                           setSubmittingLinkRequest(false);
                           return;
@@ -3220,19 +3219,31 @@ function App() {
                     } catch (e) {
                       console.error('Failed to unlink user memberships on deletion:', e);
                     }
+
+                    // 3. Permanently delete the auth identity via the server-side
+                    //    Edge Function (the client cannot do this itself). Must run
+                    //    while the session is still valid, before signOut below.
+                    //    If the function isn't deployed / fails, we still fall
+                    //    through to signOut + local wipe (soft delete) as a safety net.
+                    try {
+                      const { error: fnErr } = await supabase.functions.invoke('delete-account');
+                      if (fnErr) console.error('Account deletion function returned an error:', fnErr);
+                    } catch (e) {
+                      console.error('Account deletion function failed (falling back to sign-out):', e);
+                    }
                   }
 
-                  // 3. Terminate active session
+                  // 4. Terminate active session
                   try {
                     await supabase.auth.signOut();
                   } catch (e) {
                     console.error('Sign out error on account deletion:', e);
                   }
 
-                  // 4. Clear local cache
+                  // 5. Clear local cache
                   localStorage.clear();
 
-                  // 5. Reset React states
+                  // 6. Reset React states
                   setGroups([]);
                   setExpenses([]);
                   setUserName('You');
@@ -3352,12 +3363,15 @@ function App() {
             }
           `}</style>
           
-          <span style={{ 
-            fontSize: '12px', 
-            fontWeight: 700, 
-            letterSpacing: '0.2px', 
+          <span style={{
+            fontSize: '12px',
+            fontWeight: 700,
+            letterSpacing: '0.2px',
             lineHeight: 1.2,
-            whiteSpace: 'nowrap'
+            whiteSpace: 'nowrap',
+            minWidth: 0,
+            overflow: 'hidden',
+            textOverflow: 'ellipsis'
           }}>
             {toastMsg}
           </span>
