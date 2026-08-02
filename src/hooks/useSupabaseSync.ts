@@ -230,19 +230,17 @@ export function useSupabaseSync({
         });
 
         // Self-Healing Database Cleanup: Automatically find and delete duplicate member rows
-        // for the same email in the same group (e.g., active row alongside left row) to prevent double-rendering.
+        // (e.g., active row alongside left row with matching clean name) to prevent double-rendering.
         const duplicateMemsToDelete: number[] = [];
         idToGroup.forEach((group: any) => {
           const groupMems = allMembers.filter((m: any) => m.group_id === group.id);
-          const emailMap = new Map<string, any[]>();
+          const nameMap = new Map<string, any[]>();
           groupMems.forEach((m: any) => {
-            if (m.user_email) {
-              const email = m.user_email.toLowerCase();
-              if (!emailMap.has(email)) emailMap.set(email, []);
-              emailMap.get(email)!.push(m);
-            }
+            const cleanName = m.name.replace(/\s*\(Left\)$/i, '').toLowerCase();
+            if (!nameMap.has(cleanName)) nameMap.set(cleanName, []);
+            nameMap.get(cleanName)!.push(m);
           });
-          emailMap.forEach((rows) => {
+          nameMap.forEach((rows) => {
             if (rows.length > 1) {
               const leftRow = rows.find(r => r.name.toLowerCase().endsWith(' (left)') || r.is_pending);
               if (leftRow) {
