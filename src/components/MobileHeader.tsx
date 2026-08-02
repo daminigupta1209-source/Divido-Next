@@ -238,7 +238,8 @@ export const MobileHeader: React.FC<MobileHeaderProps> = ({
               alignItems: 'flex-start',
               justifyContent: 'center',
               zIndex: 1,
-              overflow: 'hidden'
+              overflow: 'hidden',
+              marginRight: '12px'
             }}>
               {headerRenaming ? (
                 <div style={{ display: 'flex', flexDirection: 'column', width: '100%', alignItems: 'flex-start' }}>
@@ -394,7 +395,7 @@ export const MobileHeader: React.FC<MobileHeaderProps> = ({
  
             {/* ⋮ Vertical three-dots button — positioned at the rightmost edge */}
             {selectedGroup && (
-              <div style={{ zIndex: 9999, display: 'inline-flex', alignItems: 'center', flexShrink: 0, marginLeft: 'auto' }}>lay: 'inline-flex', alignItems: 'center' }}>
+              <div style={{ zIndex: 9999, display: 'inline-flex', alignItems: 'center', flexShrink: 0, marginLeft: 'auto' }}>
                 {/* Share Group Link Button */}
                 {!amIPastMember && (
                   <button
