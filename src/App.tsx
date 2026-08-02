@@ -1181,7 +1181,26 @@ function App() {
     const joinGroupFromQuery = async () => {
       try {
         const urlParams = new URLSearchParams(window.location.search);
-        const joinGroupId = urlParams.get('joinGroupId');
+        let joinGroupId = urlParams.get('joinGroupId');
+
+        // Resume an invite that was interrupted by the Google sign-in redirect:
+        // the ?joinGroupId= param is lost across OAuth, so we fall back to the
+        // intent we saved just before redirecting. Expires after 15 min so a
+        // stale claim card can never resurface on unrelated future visits.
+        if (!joinGroupId) {
+          try {
+            const savedRaw = localStorage.getItem('divido_pending_join');
+            if (savedRaw) {
+              const saved = JSON.parse(savedRaw);
+              if (saved?.groupId && (!saved.ts || Date.now() - saved.ts < 15 * 60 * 1000)) {
+                joinGroupId = String(saved.groupId);
+              } else {
+                localStorage.removeItem('divido_pending_join');
+              }
+            }
+          } catch { localStorage.removeItem('divido_pending_join'); }
+        }
+
         if (!joinGroupId) return;
 
         // Fetch group
@@ -2314,6 +2333,18 @@ function App() {
                           activeEmail = guestId + '@divido.app';
                           localStorage.setItem('divido_email', activeEmail);
                         } else {
+                          // Remember which group/member we're claiming so the invite
+                          // survives the Google sign-in round-trip — the ?joinGroupId=
+                          // URL param gets wiped by the OAuth redirect, which would
+                          // otherwise drop us on an empty home with no claim card.
+                          // Restored by joinGroupFromQuery when we land back signed in.
+                          try {
+                            localStorage.setItem('divido_pending_join', JSON.stringify({
+                              groupId: linkRequestGroup.id,
+                              placeholderName: p.name,
+                              ts: Date.now(),
+                            }));
+                          } catch { /* storage full — non-fatal */ }
                           await supabase.auth.signInWithOAuth({
                             provider: 'google',
                             options: {
@@ -2433,6 +2464,7 @@ function App() {
                       setSelectedId(linkRequestGroup.id);
                       setView('detail');
                       setLinkRequestGroup(null);
+                      localStorage.removeItem('divido_pending_join');
                     } catch (err) {
                       console.error(err);
                     } finally {
@@ -2466,6 +2498,7 @@ function App() {
             <button
               onClick={() => {
                 setLinkRequestGroup(null);
+                localStorage.removeItem('divido_pending_join');
                 const cleanUrl = window.location.protocol + '//' + window.location.host + window.location.pathname;
                 window.history.replaceState({}, document.title, cleanUrl);
               }}
