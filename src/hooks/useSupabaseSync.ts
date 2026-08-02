@@ -229,6 +229,42 @@ export function useSupabaseSync({
           }
         });
 
+        // Self-Healing Database Cleanup: Automatically find and delete duplicate member rows
+        // for the same email in the same group (e.g., active row alongside left row) to prevent double-rendering.
+        const duplicateMemsToDelete: number[] = [];
+        idToGroup.forEach((group: any) => {
+          const groupMems = allMembers.filter((m: any) => m.group_id === group.id);
+          const emailMap = new Map<string, any[]>();
+          groupMems.forEach((m: any) => {
+            if (m.user_email) {
+              const email = m.user_email.toLowerCase();
+              if (!emailMap.has(email)) emailMap.set(email, []);
+              emailMap.get(email)!.push(m);
+            }
+          });
+          emailMap.forEach((rows) => {
+            if (rows.length > 1) {
+              const leftRow = rows.find(r => r.name.toLowerCase().endsWith(' (left)') || r.is_pending);
+              if (leftRow) {
+                duplicateMemsToDelete.push(leftRow.id);
+              } else {
+                rows.slice(1).forEach(r => duplicateMemsToDelete.push(r.id));
+              }
+            }
+          });
+        });
+
+        if (duplicateMemsToDelete.length > 0) {
+          supabase
+            .from('group_members')
+            .delete()
+            .in('id', duplicateMemsToDelete)
+            .then(({ error }) => {
+              if (error) console.error('Failed to run duplicate members database cleanup:', error);
+              else setLoadTrigger(prev => prev + 1);
+            });
+        }
+
         const currentEmail = session?.user?.email?.toLowerCase() || '';
         idToGroup.forEach((group: any) => {
           const groupMems = allMembers.filter((m: any) => m.group_id === group.id);
