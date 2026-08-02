@@ -2510,8 +2510,17 @@ function App() {
 
             <button
               onClick={() => {
+                // Declining an invite you never accepted shouldn't leave the group
+                // sitting in your feed. The claim card only shows when you're NOT an
+                // active member, so it's safe to drop it locally here; the cloud sync
+                // re-adds it only if you actually are a member. (Cloud data is never
+                // deleted by this — groups are only removed via explicit "Leave/Delete".)
+                const declinedId = linkRequestGroup?.id;
                 setLinkRequestGroup(null);
                 localStorage.removeItem('divido_pending_join');
+                if (declinedId != null) {
+                  setGroups(prev => prev.filter(g => String(g.id) !== String(declinedId)));
+                }
                 const cleanUrl = window.location.protocol + '//' + window.location.host + window.location.pathname;
                 window.history.replaceState({}, document.title, cleanUrl);
               }}
