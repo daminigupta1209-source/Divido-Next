@@ -236,19 +236,52 @@ export const GroupDetail: React.FC<GroupDetailProps> = ({
           <div
             id="past-member-banner"
             style={{
-              background: '#F1F5F9',
-              border: '1.5px solid #CBD5E1',
-              borderRadius: '16px',
-              padding: '12px 16px',
+              background: hasPendingRejoin 
+                ? 'linear-gradient(135deg, #FEF3C7 0%, #FFFBEB 100%)' 
+                : 'linear-gradient(135deg, #F8FAFC 0%, #F1F5F9 100%)',
+              border: hasPendingRejoin 
+                ? '1px solid #FCD34D' 
+                : '1px solid #E2E8F0',
+              borderRadius: '20px',
+              padding: '16px 20px',
               fontSize: '13px',
-              fontWeight: 700,
-              color: '#475569',
+              fontWeight: 600,
+              color: hasPendingRejoin ? '#B45309' : '#475569',
               textAlign: 'center',
-              marginBottom: '16px',
-              boxShadow: '0 2px 4px rgba(0,0,0,0.02)'
+              marginBottom: '20px',
+              boxShadow: '0 10px 25px -5px rgba(0, 0, 0, 0.03), 0 8px 10px -6px rgba(0, 0, 0, 0.03)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: '10px',
+              transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)'
             }}
           >
-            {bannerText}
+            <style>{`
+              @keyframes pulseYellow {
+                0% { transform: scale(0.95); opacity: 0.5; }
+                50% { transform: scale(1.15); opacity: 1; }
+                100% { transform: scale(0.95); opacity: 0.5; }
+              }
+              .pulse-yellow-indicator {
+                display: inline-block;
+                width: 8px;
+                height: 8px;
+                borderRadius: 50%;
+                background: #D97706;
+                animation: pulseYellow 1.6s infinite ease-in-out;
+              }
+            `}</style>
+            {hasPendingRejoin ? (
+              <span style={{ display: 'inline-flex', alignItems: 'center', gap: '8px' }}>
+                <span className="pulse-yellow-indicator" />
+                ⏳ <strong>Rejoin request pending approval.</strong> Showing past history.
+              </span>
+            ) : (
+              <span>
+                🔒 <strong>You have left this group.</strong> Showing past history.
+              </span>
+            )}
           </div>
         );
       })()}

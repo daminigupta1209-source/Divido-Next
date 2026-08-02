@@ -3323,30 +3323,54 @@ function App() {
           onClick={() => setToastMsg(null)}
           style={{
             position: 'fixed',
-            bottom: '100px',
+            bottom: '90px',
             left: '50%',
             transform: 'translateX(-50%)',
-            background: 'rgba(15, 23, 42, 0.95)',
-            color: 'white',
-            padding: '14px 24px',
-            borderRadius: '24px',
+            background: '#FFFBEB',
+            border: '1px solid #FCD34D',
+            color: '#B45309',
+            padding: '8px 14px',
+            borderRadius: '999px',
             display: 'flex',
             alignItems: 'center',
-            gap: '12px',
-            boxShadow: '0 20px 40px rgba(0,0,0,0.3)',
+            gap: '8px',
+            boxShadow: '0 10px 25px -5px rgba(0, 0, 0, 0.05), 0 8px 10px -6px rgba(0, 0, 0, 0.05)',
             zIndex: 10000,
             cursor: 'pointer',
-            border: '1px solid rgba(255,255,255,0.1)',
-            backdropFilter: 'blur(10px)',
-            animation: 'slideUp 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275)',
+            animation: 'toastPopIn 0.35s cubic-bezier(0.34, 1.56, 0.64, 1) both',
+            boxSizing: 'border-box',
+            width: 'max-content',
+            maxWidth: '90%',
           }}
         >
-          <span style={{ fontSize: '20px' }}>🔁</span>
-          <div style={{ display: 'flex', flexDirection: 'column' }}>
-            <span style={{ fontSize: '12px', fontWeight: 900 }}>Recurring Expenses Auto-Logged</span>
-            <span style={{ fontSize: '10px', opacity: 0.8 }}>{toastMsg}</span>
-          </div>
-          <span style={{ fontSize: '10px', marginLeft: '12px', opacity: 0.5 }}>✕</span>
+          <style>{`
+            @keyframes toastPopIn {
+              0% { transform: translate(-50%, 20px) scale(0.9); opacity: 0; }
+              100% { transform: translate(-50%, 0) scale(1); opacity: 1; }
+            }
+          `}</style>
+          
+          <span style={{ 
+            fontSize: '12px', 
+            fontWeight: 700, 
+            letterSpacing: '0.2px', 
+            lineHeight: 1.2,
+            whiteSpace: 'nowrap'
+          }}>
+            {toastMsg}
+          </span>
+          
+          <span style={{ 
+            fontSize: '11px', 
+            color: '#D97706', 
+            marginLeft: '6px', 
+            opacity: 0.8,
+            fontWeight: 'bold',
+            transition: 'color 0.2s' 
+          }}
+          onMouseEnter={(e) => { e.currentTarget.style.color = '#B45309'; }}
+          onMouseLeave={(e) => { e.currentTarget.style.color = '#D97706'; }}
+          >✕</span>
         </div>
       )}
 
@@ -3469,11 +3493,13 @@ function App() {
                         .eq('id', matched.id);
 
                       // Find Admin to notify
+                      let targetAdminName = 'Admin';
                       const selectedGroup = groups.find((g) => String(g.id) === String(selectedId));
                       if (selectedGroup) {
                         const activeMembers = (selectedGroup.members || []).filter((m) => !m.endsWith(' (Left)'));
                         const adminName = activeMembers[0];
                         if (adminName) {
+                          targetAdminName = adminName.replace(/\s*\(me\)$/i, '');
                           const { data: adminRows } = await supabase
                             .from('group_members')
                             .select('user_email')
@@ -3494,8 +3520,8 @@ function App() {
                         }
                       }
 
-                      setToastMsg("Request sent to Admin! 🚀");
-                      setTimeout(() => setToastMsg(null), 5000);
+                      setToastMsg(`Request Sent to Admin (${targetAdminName})`);
+                      setTimeout(() => setToastMsg(null), 3000);
                       
                       setGroups(groups.map((g) => {
                         if (String(g.id) === String(selectedId)) {
