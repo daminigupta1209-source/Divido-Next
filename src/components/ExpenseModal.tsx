@@ -1,6 +1,6 @@
 import React from 'react';
 import { Group, Expense } from '../lib/types';
-import { formatDate } from '../lib/utils';
+import { formatDate, GROUP_COLORS } from '../lib/utils';
 import { SearchableCurrencyPicker } from './SearchableCurrencyPicker';
 import { BillScanner } from './expense-modal/BillScanner';
 import { SplitSelector } from './expense-modal/SplitSelector';
@@ -491,7 +491,7 @@ export const ExpenseModal: React.FC<ExpenseModalProps> = ({
                       marginBottom: '4px',
                     }}
                   >
-                    <div style={{ width: '30px', height: '30px', borderRadius: '8px', background: '#F1F5F9', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '14px', flexShrink: 0 }}>👤</div>
+                    <div style={{ width: '30px', height: '30px', borderRadius: '50%', background: '#F1F5F9', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '14px', flexShrink: 0 }}>👤</div>
                     <span style={{ fontSize: '12px', fontWeight: 900, color: 'var(--t)' }}>Non-Group Split</span>
                   </div>
 
@@ -506,32 +506,52 @@ export const ExpenseModal: React.FC<ExpenseModalProps> = ({
                         const hasOtherMembers = g.members && g.members.length > 1;
                         return hasExpenses || hasOtherMembers;
                       })
-                      .map((g) => (
-                        <div
-                          key={g.id}
-                          onMouseDown={(e) => {
-                            e.preventDefault();
-                            setLocalGId(g.id);
-                            setSelectedSplitters(g.members);
-                            setShares({});
-                            setManualEdits(new Set());
-                            setPayer(me);
-                            setCurr(g.currency || '₹');
-                            setShowGroupDropdown(false);
-                          }}
-                          style={{
-                            display: 'flex', alignItems: 'center', gap: '10px',
-                            padding: '9px 12px', borderRadius: '10px', cursor: 'pointer',
-                            background: localGId === g.id ? '#F0FDF4' : 'transparent',
-                            marginBottom: '4px',
-                          }}
-                        >
-                          <div style={{ width: '30px', height: '30px', borderRadius: '8px', background: '#EEF2FF', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '16px', flexShrink: 0 }}>{g.emoji || '🏡'}</div>
-                          <span style={{ fontSize: '12px', fontWeight: 900, color: 'var(--t)', flex: 1, minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                            {g.name}
-                          </span>
-                        </div>
-                      ))}
+                      .map((g) => {
+                        const index = groups.findIndex((x) => String(x.id) === String(g.id));
+                        const c = GROUP_COLORS[index !== -1 ? index % GROUP_COLORS.length : 0];
+                        const initials = g.emoji || g.name.charAt(0).toUpperCase() || '🏡';
+                        
+                        return (
+                          <div
+                            key={g.id}
+                            onMouseDown={(e) => {
+                              e.preventDefault();
+                              setLocalGId(g.id);
+                              setSelectedSplitters(g.members);
+                              setShares({});
+                              setManualEdits(new Set());
+                              setPayer(me);
+                              setCurr(g.currency || '₹');
+                              setShowGroupDropdown(false);
+                            }}
+                            style={{
+                              display: 'flex', alignItems: 'center', gap: '10px',
+                              padding: '9px 12px', borderRadius: '10px', cursor: 'pointer',
+                              background: localGId === g.id ? '#F0FDF4' : 'transparent',
+                              marginBottom: '4px',
+                            }}
+                          >
+                            <div style={{ 
+                              width: '30px', 
+                              height: '30px', 
+                              borderRadius: '50%', 
+                              background: c.bg, 
+                              color: c.text, 
+                              display: 'flex', 
+                              alignItems: 'center', 
+                              justifyContent: 'center', 
+                              fontSize: '12px', 
+                              fontWeight: 900,
+                              flexShrink: 0 
+                            }}>
+                              {initials}
+                            </div>
+                            <span style={{ fontSize: '12px', fontWeight: 900, color: 'var(--t)', flex: 1, minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                              {g.name}
+                            </span>
+                          </div>
+                        );
+                      })}
                   </div>
 
                   {/* Create group */}
