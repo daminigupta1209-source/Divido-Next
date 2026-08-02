@@ -19,6 +19,9 @@ interface FloatingAddMenuProps {
 }
 
 export const FloatingAddMenu: React.FC<FloatingAddMenuProps> = ({
+  setEditingExpense,
+  setAutoOpenScanner,
+  setShowExpModal,
   setView,
   setSelectedId,
   groups,
@@ -51,6 +54,38 @@ export const FloatingAddMenu: React.FC<FloatingAddMenuProps> = ({
       ref={containerRef}
       style={{ position: 'fixed', bottom: '96px', right: '20px', zIndex: 1000, display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '10px' }}
     >
+      {/* Floating Scan Button — active inside group view */}
+      <button
+        onClick={() => {
+          // Account-first: guests are nudged to sign in instead of scanning.
+          if (onRequireSignIn && !onRequireSignIn()) return;
+
+          setEditingExpense({ id: null, title: '', amt: 0, date: new Date().toISOString().split('T')[0], splitters: [], paid: me });
+          setAutoOpenScanner(true);
+          setShowExpModal(true);
+        }}
+        style={{
+          width: '48px',
+          height: '40px',
+          borderRadius: '12px',
+          background: 'linear-gradient(135deg, #10B981 0%, #059669 100%)',
+          border: 'none',
+          color: '#FFFFFF',
+          boxShadow: '0 6px 16px rgba(5, 150, 105, 0.25)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          cursor: 'pointer',
+          transition: '0.2s all cubic-bezier(0.175, 0.885, 0.32, 1.275)',
+        }}
+        title="Scan Receipt"
+        aria-label="Scan Receipt"
+      >
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" style={{ width: '20px', height: '20px' }}>
+          <path d="M4 8V6a2 2 0 0 1 2-2h2" /><path d="M16 4h2a2 2 0 0 1 2 2v2" /><path d="M20 16v2a2 2 0 0 1-2 2h-2" /><path d="M8 20H6a2 2 0 0 1-2-2v-2" /><path d="M4 12h16" />
+        </svg>
+      </button>
+
       {/* The Main Round trigger button — creates a new group directly */}
       <button
         onClick={createGroup}
