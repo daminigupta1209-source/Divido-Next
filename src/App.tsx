@@ -1182,11 +1182,12 @@ function App() {
       try {
         const urlParams = new URLSearchParams(window.location.search);
         let joinGroupId = urlParams.get('joinGroupId');
+        const fromUrl = !!joinGroupId;
 
         // Resume an invite that was interrupted by the Google sign-in redirect:
         // the ?joinGroupId= param is lost across OAuth, so we fall back to the
-        // intent we saved just before redirecting. Expires after 15 min so a
-        // stale claim card can never resurface on unrelated future visits.
+        // intent we saved when the invite link was opened. Expires after 15 min
+        // so a stale claim card can never resurface on unrelated future visits.
         if (!joinGroupId) {
           try {
             const savedRaw = localStorage.getItem('divido_pending_join');
@@ -1201,7 +1202,18 @@ function App() {
           } catch { localStorage.removeItem('divido_pending_join'); }
         }
 
+        console.log('[INVITE] joinGroupFromQuery → joinGroupId:', joinGroupId, 'fromUrl:', fromUrl, 'url:', window.location.href);
         if (!joinGroupId) return;
+
+        // Persist the invite the moment the link is opened, BEFORE any sign-in.
+        // This makes the claim survive a Google round-trip no matter how the
+        // user signs in (not only via the claim-card button). Cleared below in
+        // the direct-admit branches, and on claim/cancel.
+        if (fromUrl) {
+          try {
+            localStorage.setItem('divido_pending_join', JSON.stringify({ groupId: joinGroupId, ts: Date.now() }));
+          } catch { /* storage full — non-fatal */ }
+        }
 
         // Fetch group
         const { data: groupData, error: groupErr } = await supabase
@@ -1250,6 +1262,7 @@ function App() {
           // If they are already an active member, direct them straight in
           const alreadyMember = existingMembers.some((m: any) => m.user_email === myEmail);
           if (alreadyMember) {
+            localStorage.removeItem('divido_pending_join');
             setSelectedId(joinGroupId);
             setView('detail');
             // Clean URL parameters
@@ -1268,6 +1281,7 @@ function App() {
             (m: any) => m.name.toLowerCase() === claimedIdentity.toLowerCase() && !m.is_pending
           );
           if (stillActive) {
+            localStorage.removeItem('divido_pending_join');
             setSelectedId(joinGroupId);
             setView('detail');
             const cleanUrl = window.location.protocol + '//' + window.location.host + window.location.pathname;
@@ -1278,6 +1292,7 @@ function App() {
 
         // Show selection list of unlinked pending members (placeholders)
         const placeholders = existingMembers.filter((m: any) => m.is_pending && !m.user_email && !m.link_request_email);
+        console.log('[INVITE] showing claim card for group', joinGroupId, '→ placeholders:', placeholders.map((m: any) => m.name));
         setLinkRequestGroup(groupData);
         setLinkRequestPlaceholders(placeholders);
       } catch (err) {
