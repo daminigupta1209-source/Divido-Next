@@ -1270,8 +1270,68 @@ function App() {
           }
         }
 
-        // If user is logged in, check if they are already an active member
+        // Check if this logged-in user is a past member of this group (rejoin fallback)
         if (myEmail) {
+          const leftMemberRow = existingMembers.find((m: any) => 
+            m.user_email === myEmail && m.name.toLowerCase().endsWith(' (left)')
+          );
+          if (leftMemberRow) {
+            const cleanName = leftMemberRow.name.replace(/\s*\(Left\)$/i, '');
+            
+            // 1. Reactivate in DB
+            await supabase
+              .from('group_members')
+              .update({
+                name: cleanName,
+                is_pending: false
+              })
+              .eq('id', leftMemberRow.id);
+
+            // 2. Set local identity
+            localStorage.setItem('divido_username', cleanName);
+            localStorage.setItem('divido_authenticated', 'true');
+            localStorage.setItem(`divido_identity_${joinGroupId}`, cleanName);
+            setUserName(cleanName);
+            setIsAuthenticated(true);
+
+            // 3. Add system notification
+            await supabase
+              .from('expenses')
+              .insert({
+                group_id: joinGroupId,
+                title: `${cleanName} rejoined`,
+                amt: 0,
+                paid: 'SYSTEM',
+                date: new Date().toISOString().split('T')[0],
+                mode: 'Equally',
+                splitters: []
+              });
+
+            // 4. Update state and view
+            const updatedGroup = {
+              ...groupData,
+              members: (groupData.members || []).map((m: string) => 
+                m.toLowerCase() === (cleanName + ' (Left)').toLowerCase() ? cleanName : m
+              )
+            };
+            setGroups(prev => {
+              const exists = prev.some(g => g.id === updatedGroup.id);
+              if (exists) {
+                return prev.map(g => g.id === updatedGroup.id ? updatedGroup : g);
+              }
+              return [...prev, updatedGroup];
+            });
+
+            alert(`Welcome back to "${groupData.name}"! You have successfully rejoined. 🎉`);
+            setSelectedId(joinGroupId);
+            setView('detail');
+
+            const cleanUrl = window.location.protocol + '//' + window.location.host + window.location.pathname;
+            window.history.replaceState({}, document.title, cleanUrl);
+            return;
+          }
+
+          // If they are already an active member, direct them straight in
           const alreadyMember = existingMembers.some((m: any) => m.user_email === myEmail);
           if (alreadyMember) {
             setSelectedId(joinGroupId);
