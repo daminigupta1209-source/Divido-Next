@@ -63,6 +63,14 @@ Deno.serve(async (req: Request) => {
         .from('group_members')
         .update({ user_email: null, is_pending: true })
         .eq('user_email', user.email);
+
+      // Delete this email's notifications so a future sign-up with the same
+      // Google email doesn't resurface old, pre-deletion notifications
+      // (notifications are keyed by email, not by account id).
+      await adminClient
+        .from('notifications')
+        .delete()
+        .eq('recipient_email', user.email);
     }
 
     // 4. Permanently delete the auth identity.

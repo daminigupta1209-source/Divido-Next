@@ -3253,7 +3253,16 @@ function App() {
                       console.error('Failed to unlink user memberships on deletion:', e);
                     }
 
-                    // 3. Permanently delete the auth identity via the server-side
+                    // 3. Clear this email's notifications. They're keyed by email,
+                    //    not by account — so without this, signing up again with the
+                    //    same Google email would resurface old pre-deletion notifications.
+                    try {
+                      await clearAllNotifications(userEmail);
+                    } catch (e) {
+                      console.error('Failed to clear notifications on deletion:', e);
+                    }
+
+                    // 4. Permanently delete the auth identity via the server-side
                     //    Edge Function (the client cannot do this itself). Must run
                     //    while the session is still valid, before signOut below.
                     //    If the function isn't deployed / fails, we still fall
@@ -3266,17 +3275,17 @@ function App() {
                     }
                   }
 
-                  // 4. Terminate active session
+                  // 5. Terminate active session
                   try {
                     await supabase.auth.signOut();
                   } catch (e) {
                     console.error('Sign out error on account deletion:', e);
                   }
 
-                  // 5. Clear local cache
+                  // 6. Clear local cache
                   localStorage.clear();
 
-                  // 6. Reset React states
+                  // 7. Reset React states
                   setGroups([]);
                   setExpenses([]);
                   setUserName('You');
