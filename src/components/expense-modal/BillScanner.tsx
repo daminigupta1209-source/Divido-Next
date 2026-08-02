@@ -642,21 +642,22 @@ If a valid receipt: {"title": "Sunrise Foods", "amount": 5445.30, "notes": "Groc
       <div
         style={{
           background: 'rgba(255, 255, 255, 0.98)',
-          border: '1.5px solid rgba(255, 255, 255, 0.7)',
-          borderRadius: '24px',
-          width: '92%',
-          maxWidth: '320px',
-          padding: '18px 20px',
+          border: '1.5px solid rgba(226, 232, 240, 0.8)',
+          borderRadius: '20px',
+          width: '260px',
+          padding: '10px',
           boxShadow: '0 25px 50px -12px rgba(0,0,0,0.25)',
           display: 'flex',
           flexDirection: 'column',
-          gap: '12px',
+          gap: '4px',
+          boxSizing: 'border-box',
+          position: 'relative',
         }}
         onClick={(e) => e.stopPropagation()}
       >
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', margin: '6px 0 10px' }}>
           <div style={{ flex: 1 }} />
-          <span style={{ fontSize: '12px', fontWeight: 900, color: '#64748B', textTransform: 'uppercase', letterSpacing: '1px', textAlign: 'center' }}>
+          <span style={{ fontSize: '11px', fontWeight: 900, color: 'var(--g)', textTransform: 'uppercase', letterSpacing: '1px', textAlign: 'center' }}>
             Smart Scanner
           </span>
           <div style={{ flex: 1, display: 'flex', justifyContent: 'flex-end' }}>
@@ -672,11 +673,14 @@ If a valid receipt: {"title": "Sunrise Foods", "amount": 5445.30, "notes": "Groc
                 border: 'none',
                 cursor: scanProgress > 0 && scanProgress < 100 ? 'not-allowed' : 'pointer',
                 fontSize: '16px',
-                color: '#64748B',
+                color: 'var(--g)',
                 fontWeight: 'bold',
-                opacity: scanProgress > 0 && scanProgress < 100 ? 0.3 : 1,
+                opacity: scanProgress > 0 && scanProgress < 100 ? 0.3 : 0.6,
                 padding: 0,
-                lineHeight: 1
+                lineHeight: 1,
+                position: 'absolute',
+                top: '10px',
+                right: '12px'
               }}
             >
               ✕
