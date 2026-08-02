@@ -219,11 +219,11 @@ export const MobileHeader: React.FC<MobileHeaderProps> = ({
     <div className={`mobile-header-bar ${isHomeStyle ? 'mobile-header-bar--home' : ''}`} style={{ display: 'flex', flexDirection: 'column', height: 'auto', gap: '10px', padding: '16px 20px', marginBottom: '24px', transform: headerHidden ? 'translateY(-110%)' : 'translateY(0)', transition: 'transform 0.28s cubic-bezier(0.4, 0, 0.2, 1)' }}>
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: '100%', position: 'relative', height: '40px' }}>
         {view === 'detail' && selectedGroup ? (
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: '100%', position: 'relative', height: '100%' }}>
+          <div style={{ display: 'flex', alignItems: 'center', width: '100%', height: '100%', gap: '10px' }}>
             <button
               className="menu-burger-btn"
               onClick={() => setIsSidebarOpen(true)}
-              style={{ position: 'absolute', left: 0, top: '50%', transform: 'translateY(-50%)', margin: 0, zIndex: 2 }}
+              style={{ margin: 0, zIndex: 2, flexShrink: 0 }}
             >
               <span className="burger-line"></span>
               <span className="burger-line"></span>
@@ -231,16 +231,13 @@ export const MobileHeader: React.FC<MobileHeaderProps> = ({
             </button>
             
             <div style={{
-              position: 'absolute',
-              left: '48px',
-              top: '50%',
-              transform: 'translateY(-50%)',
+              flex: 1,
+              minWidth: 0,
               display: 'flex',
               flexDirection: 'column',
               alignItems: 'flex-start',
               justifyContent: 'center',
               zIndex: 1,
-              maxWidth: '52%',
               overflow: 'hidden'
             }}>
               {headerRenaming ? (
@@ -296,7 +293,9 @@ export const MobileHeader: React.FC<MobileHeaderProps> = ({
                       margin: 0,
                       color: 'var(--t)',
                       lineHeight: 1.1,
-                      textAlign: 'left'
+                      textAlign: 'left',
+                      width: '100%',
+                      overflow: 'hidden'
                     }}
                     onClick={() => {
                       if (selectedId === 'STANDALONE') return;
@@ -310,8 +309,9 @@ export const MobileHeader: React.FC<MobileHeaderProps> = ({
                       whiteSpace: 'nowrap',
                       overflow: 'hidden',
                       textOverflow: 'ellipsis',
-                      maxWidth: '170px',
-                      display: 'inline-block'
+                      width: '100%',
+                      display: 'inline-block',
+                      paddingRight: selectedId !== 'STANDALONE' ? '20px' : '0'
                     }}>
                       {selectedGroup?.name || 'Untitled Group'}
                       {selectedId !== 'STANDALONE' && (
@@ -319,7 +319,7 @@ export const MobileHeader: React.FC<MobileHeaderProps> = ({
                           className="edit-pencil"
                           style={{
                             position: 'absolute',
-                            right: '-22px',
+                            right: 0,
                             top: '50%',
                             transform: 'translateY(-50%)',
                             fontSize: '12px',
@@ -332,7 +332,7 @@ export const MobileHeader: React.FC<MobileHeaderProps> = ({
                       )}
                     </span>
                   </h1>
-
+ 
                   {/* Since date, placed directly below the title */}
                   {selectedId !== 'STANDALONE' && (
                     <div style={{ display: 'flex', alignItems: 'center', marginTop: '2px' }}>
@@ -391,10 +391,10 @@ export const MobileHeader: React.FC<MobileHeaderProps> = ({
                 </>
               )}
             </div>
-
-            {/* ⋮ Vertical three-dots button — positioned absolutely at the rightmost edge */}
+ 
+            {/* ⋮ Vertical three-dots button — positioned at the rightmost edge */}
             {selectedGroup && (
-              <div style={{ position: 'absolute', right: '-12px', top: '50%', transform: 'translateY(-50%)', zIndex: 9999, display: 'inline-flex', alignItems: 'center' }}>
+              <div style={{ zIndex: 9999, display: 'inline-flex', alignItems: 'center', flexShrink: 0, marginLeft: 'auto' }}>lay: 'inline-flex', alignItems: 'center' }}>
                 {/* Share Group Link Button */}
                 {!amIPastMember && (
                   <button
