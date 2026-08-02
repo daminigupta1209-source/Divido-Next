@@ -1204,22 +1204,75 @@ function App() {
         if (!existingMembers) return;
 
         const rejoinName = urlParams.get('rejoinName');
-        if (rejoinName) {
+        const { data: { session } } = await supabase.auth.getSession();
+        const myEmail = session?.user?.email || userEmail;
+
+        if (rejoinName && myEmail) {
           const matchLeftMember = existingMembers.find((m: any) => 
             m.name.toLowerCase() === (rejoinName + ' (Left)').toLowerCase() ||
             (m.name.toLowerCase() === rejoinName.toLowerCase() && m.is_pending)
           );
           if (matchLeftMember) {
-            setLinkRequestGroup(groupData);
-            setLinkRequestPlaceholders([matchLeftMember]);
+            const cleanName = rejoinName;
+            
+            // 1. Automatically reactivate left member in the database
+            await supabase
+              .from('group_members')
+              .update({
+                name: cleanName,
+                user_email: myEmail,
+                is_pending: false
+              })
+              .eq('id', matchLeftMember.id);
+
+            // 2. Set local identity
+            localStorage.setItem('divido_username', cleanName);
+            localStorage.setItem('divido_authenticated', 'true');
+            localStorage.setItem(`divido_identity_${joinGroupId}`, cleanName);
+            setUserName(cleanName);
+            setIsAuthenticated(true);
+
+            // 3. Add system notification of rejoin
+            await supabase
+              .from('expenses')
+              .insert({
+                group_id: joinGroupId,
+                title: `${cleanName} rejoined`,
+                amt: 0,
+                paid: 'SYSTEM',
+                date: new Date().toISOString().split('T')[0],
+                mode: 'Equally',
+                splitters: []
+              });
+
+            // 4. Update state and redirect directly to dashboard
+            const updatedGroup = {
+              ...groupData,
+              members: (groupData.members || []).map((m: string) => 
+                m.toLowerCase() === (cleanName + ' (Left)').toLowerCase() ? cleanName : m
+              )
+            };
+            setGroups(prev => {
+              const exists = prev.some(g => g.id === updatedGroup.id);
+              if (exists) {
+                return prev.map(g => g.id === updatedGroup.id ? updatedGroup : g);
+              }
+              return [...prev, updatedGroup];
+            });
+
+            alert(`Welcome back to "${groupData.name}"! You have successfully rejoined. 🎉`);
+            setSelectedId(joinGroupId);
+            setView('detail');
+
+            const cleanUrl = window.location.protocol + '//' + window.location.host + window.location.pathname;
+            window.history.replaceState({}, document.title, cleanUrl);
             return;
           }
         }
 
         // If user is logged in, check if they are already an active member
-        const { data: { session } } = await supabase.auth.getSession();
-        if (session?.user?.email) {
-          const alreadyMember = existingMembers.some((m: any) => m.user_email === session.user.email);
+        if (myEmail) {
+          const alreadyMember = existingMembers.some((m: any) => m.user_email === myEmail);
           if (alreadyMember) {
             setSelectedId(joinGroupId);
             setView('detail');
