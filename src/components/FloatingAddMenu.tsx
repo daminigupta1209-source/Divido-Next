@@ -16,6 +16,7 @@ interface FloatingAddMenuProps {
   myDefaultCurrency: string;
   isSignedIn?: boolean;
   onRequireSignIn?: () => boolean;
+  selectedId?: string | number | null;
 }
 
 export const FloatingAddMenu: React.FC<FloatingAddMenuProps> = ({
@@ -23,12 +24,14 @@ export const FloatingAddMenu: React.FC<FloatingAddMenuProps> = ({
   setAutoOpenScanner,
   setShowExpModal,
   setView,
+  view,
   setSelectedId,
   groups,
   setGroups,
   me,
   myDefaultCurrency,
   onRequireSignIn,
+  selectedId,
 }) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const creatingRef = useRef(false);
@@ -60,7 +63,8 @@ export const FloatingAddMenu: React.FC<FloatingAddMenuProps> = ({
           // Account-first: guests are nudged to sign in instead of scanning.
           if (onRequireSignIn && !onRequireSignIn()) return;
 
-          setEditingExpense({ id: null, title: '', amt: 0, date: new Date().toISOString().split('T')[0], splitters: [], paid: me });
+          const defaultGroupId = view === 'detail' && selectedId ? selectedId : 'STANDALONE';
+          setEditingExpense({ id: null, gId: defaultGroupId, title: '', amt: 0, date: new Date().toISOString().split('T')[0], splitters: [], paid: me });
           setAutoOpenScanner(true);
           setShowExpModal(true);
         }}

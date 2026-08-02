@@ -2158,6 +2158,7 @@ function App() {
         view={view}
         setView={setView}
         setSelectedId={setSelectedId}
+        selectedId={selectedId}
         setEditingExpense={setEditingExpenseSecure}
         setAutoOpenScanner={setAutoOpenScanner}
         setShowExpModal={setShowExpModalSecure}
