@@ -49,15 +49,8 @@ export const NetReceivableModal: React.FC<NetReceivableModalProps> = ({
       const globalUpi = localStorage.getItem('divido_global_upi_id') || '';
       const myUpi = globalUpi || userMetadata[me]?.upiId || '';
       setRemPopupUpi(myUpi);
-      
-      const hasSkippedBefore = localStorage.getItem('divido_upi_prompt_skipped') === 'true';
-      if (!myUpi && !hasSkippedBefore) {
-        setShowOnboarding(true);
-        setRemPopupEditing(false);
-      } else {
-        setShowOnboarding(false);
-        setRemPopupEditing(false);
-      }
+      setShowOnboarding(false);
+      setRemPopupEditing(false);
     }
   }, [popupData, userMetadata, me]);
 
@@ -170,56 +163,14 @@ export const NetReceivableModal: React.FC<NetReceivableModalProps> = ({
           ✕
         </div>
         
-        <h3 className="nunito" style={{ fontSize: '17px', fontWeight: 950, marginBottom: '3px' }}>
-          Send Reminder to {popupData.friendName} 🔔
+        <h3 className="nunito" style={{ fontSize: '17px', fontWeight: 950, marginBottom: '14px', textAlign: 'center' }}>
+          Send Reminder to {popupData.friendName}
         </h3>
-        <p style={{ fontSize: '10.5px', color: 'var(--g)', fontWeight: 800, marginBottom: '12px' }}>
-          Share the reminder, or show your QR to scan in person.
-        </p>
-        {showOnboarding ? (
-          /* One-time Onboarding/Awareness Screen */
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', marginBottom: '16px', background: '#F8FAFC', padding: '16px', borderRadius: '16px', border: '1px solid #E2E8F0', textAlign: 'center' }}>
-            <span style={{ fontSize: '13px', fontWeight: 800, color: '#334155', lineHeight: 1.4 }}>
-              Enable UPI payments (link or QR code)?
-            </span>
-            <div style={{ display: 'flex', gap: '8px' }}>
-              <button
-                className="btn-green"
-                onClick={() => {
-                  setShowOnboarding(false);
-                  setRemPopupEditing(true); // Open the input form
-                }}
-                style={{ flex: 1, padding: '10px', fontSize: '12px', borderRadius: '10px', cursor: 'pointer', fontWeight: 900 }}
-              >
-                Add UPI
-              </button>
-              <button
-                onClick={() => {
-                  localStorage.setItem('divido_upi_prompt_skipped', 'true');
-                  setShowOnboarding(false);
-                }}
-                style={{
-                  flex: 1,
-                  padding: '10px',
-                  borderRadius: '10px',
-                  border: '1.5px solid #CBD5E1',
-                  background: 'white',
-                  color: '#64748B',
-                  fontWeight: 900,
-                  fontSize: '12px',
-                  cursor: 'pointer',
-                  textAlign: 'center'
-                }}
-              >
-                Skip
-              </button>
-            </div>
-          </div>
-        ) : remPopupEditing ? (
+        {remPopupEditing ? (
           /* Link UPI first (needed for pay link + QR) */
           <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', marginBottom: '18px', background: 'var(--bg)', padding: '16px', borderRadius: '16px', border: '2px dashed var(--b)' }}>
             <span style={{ fontSize: '12px', fontWeight: 900, color: 'var(--t)' }}>
-              💳 Link your UPI ID to receive payments
+              Link your UPI ID to receive payments
             </span>
             <input
               type="text"
@@ -282,9 +233,20 @@ export const NetReceivableModal: React.FC<NetReceivableModalProps> = ({
             ) : (
               <button
                 onClick={() => setRemPopupEditing(true)}
-                style={{ background: 'none', border: 'none', color: '#64748B', fontSize: '11px', fontWeight: 700, cursor: 'pointer', marginBottom: '14px', textDecoration: 'underline' }}
+                style={{ 
+                  background: 'none', 
+                  border: 'none', 
+                  color: '#64748B', 
+                  fontSize: '13px', 
+                  fontWeight: 700, 
+                  cursor: 'pointer', 
+                  marginBottom: '14px', 
+                  textDecoration: 'underline',
+                  display: 'block',
+                  margin: '12px auto'
+                }}
               >
-                🔗 Link UPI ID to enable QR payments
+                Link UPI ID to enable QR payments
               </button>
             )}
 
@@ -306,7 +268,7 @@ export const NetReceivableModal: React.FC<NetReceivableModalProps> = ({
         )}
 
         {/* Actions */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', marginTop: '10px' }}>
           <button
             className="btn-green hover-up"
             onClick={() => {
@@ -315,7 +277,7 @@ export const NetReceivableModal: React.FC<NetReceivableModalProps> = ({
             }}
             style={{ padding: '12px', fontSize: '13px', borderRadius: '14px', width: '100%', fontWeight: 950 }}
           >
-            Mark as Settled & Record 💸
+            Mark as Settled & Record
           </button>
         </div>
       </div>
