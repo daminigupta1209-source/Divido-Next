@@ -891,61 +891,63 @@ If a valid receipt: {"title": "Sunrise Foods", "amount": 5445.30, "notes": "Groc
           </div>
         )}
 
-        <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end', marginTop: '4px' }}>
-          <button
-            type="button"
-            onClick={() => {
-              setIsCameraLive(false);
-              setScanFile(null);
-              setScanPreview(null);
-              setScanProgress(0);
-              setScannerStatus('');
-              setScanError('');
-              setShowScannerModal(false);
-            }}
-            disabled={scanProgress > 0 && scanProgress < 100}
-            style={{
-              padding: '8px 14px',
-              background: 'var(--bg)',
-              color: '#64748B',
-              border: 'none',
-              borderRadius: '10px',
-              fontSize: '12px',
-              fontWeight: 900,
-              cursor: scanProgress > 0 && scanProgress < 100 ? 'not-allowed' : 'pointer',
-              opacity: scanProgress > 0 && scanProgress < 100 ? 0.3 : 1,
-            }}
-            className="hover-up-mini"
-          >
-            Cancel
-          </button>
-          {scanFile && scanProgress === 100 && (
+        {(isCameraLive || scanFile || scanProgress > 0) && (
+          <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end', marginTop: '4px' }}>
             <button
               type="button"
               onClick={() => {
-                setShowScannerModal(false);
+                setIsCameraLive(false);
                 setScanFile(null);
                 setScanPreview(null);
                 setScanProgress(0);
                 setScannerStatus('');
                 setScanError('');
+                setShowScannerModal(false);
               }}
+              disabled={scanProgress > 0 && scanProgress < 100}
               style={{
                 padding: '8px 14px',
-                background: '#10B981',
-                color: 'white',
+                background: 'var(--bg)',
+                color: '#64748B',
                 border: 'none',
                 borderRadius: '10px',
                 fontSize: '12px',
                 fontWeight: 900,
-                cursor: 'pointer',
+                cursor: scanProgress > 0 && scanProgress < 100 ? 'not-allowed' : 'pointer',
+                opacity: scanProgress > 0 && scanProgress < 100 ? 0.3 : 1,
               }}
               className="hover-up-mini"
             >
-              Done
+              Cancel
             </button>
-          )}
-        </div>
+            {scanFile && scanProgress === 100 && (
+              <button
+                type="button"
+                onClick={() => {
+                  setShowScannerModal(false);
+                  setScanFile(null);
+                  setScanPreview(null);
+                  setScanProgress(0);
+                  setScannerStatus('');
+                  setScanError('');
+                }}
+                style={{
+                  padding: '8px 14px',
+                  background: '#10B981',
+                  color: 'white',
+                  border: 'none',
+                  borderRadius: '10px',
+                  fontSize: '12px',
+                  fontWeight: 900,
+                  cursor: 'pointer',
+                }}
+                className="hover-up"
+              >
+                Apply Details
+              </button>
+            )}
+          </div>
+        )}
       </div>
     </div>
   );
