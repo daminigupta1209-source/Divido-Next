@@ -1900,6 +1900,7 @@ function App() {
             showCurrPickerId={showCurrPickerId}
             me={me}
             setShowConvertModalId={setShowConvertModalId}
+            wasRemovedByAdmin={notifications.some((n) => n.type === 'removed' && String(n.groupId) === String(selectedId))}
             userMetadata={userMetadata}
             setUserMetadata={setUserMetadata}
             deleteExpense={deleteExpenseSecure}
@@ -2113,7 +2114,7 @@ function App() {
                     // 1. Rename membership row to preserve history, keep email, set is_pending: true
                     const { data: memRows } = await supabase
                       .from('group_members')
-                      .select('id')
+                      .select('id, user_email')
                       .eq('group_id', selectedId)
                       .ilike('name', memberName);
 
@@ -2125,6 +2126,27 @@ function App() {
                           is_pending: true
                         })
                         .eq('id', memRows[0].id);
+
+                      // Tell the removed member it was an admin removal (not a
+                      // voluntary leave), so their app shows the correct banner.
+                      const removedEmail = memRows[0].user_email;
+                      if (removedEmail && removedEmail !== userEmail) {
+                        try {
+                          const grpName = groups.find((g) => String(g.id) === String(selectedId))?.name || 'the group';
+                          const { pushNotification } = await import('./lib/notifications');
+                          await pushNotification({
+                            recipientEmail: removedEmail,
+                            type: 'removed',
+                            title: `You were removed from ${grpName}`,
+                            body: `The group admin removed you from ${grpName}. You can view past history and request to rejoin.`,
+                            fromName: me,
+                            fromEmail: userEmail,
+                            groupId: selectedId,
+                          });
+                        } catch (notifErr) {
+                          console.error('Failed to notify removed member:', notifErr);
+                        }
+                      }
                     }
 
                     // 2. Insert system notification of departure

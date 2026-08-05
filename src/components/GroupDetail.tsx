@@ -49,6 +49,7 @@ interface GroupDetailProps {
   onRemoveMember?: (memberName: string) => void;
   onReinviteMember?: (memberName: string, inviteUrl: string) => void;
   onRequestRejoin?: () => Promise<void>;
+  wasRemovedByAdmin?: boolean;
 }
 
 export const GroupDetail: React.FC<GroupDetailProps> = ({
@@ -89,6 +90,7 @@ export const GroupDetail: React.FC<GroupDetailProps> = ({
   onRemoveMember,
   onReinviteMember,
   onRequestRejoin,
+  wasRemovedByAdmin,
 }) => {
   const {
     currentId,
@@ -228,9 +230,12 @@ export const GroupDetail: React.FC<GroupDetailProps> = ({
         );
         const hasPendingRejoin = !!myRequest;
 
+        const leftText = wasRemovedByAdmin
+          ? "You were removed from this group by the admin. Showing past history."
+          : "You have left this group. Showing past history.";
         const bannerText = hasPendingRejoin
           ? "Rejoin request pending approval. Showing past history."
-          : "You have left this group. Showing past history.";
+          : leftText;
 
         return (
           <div
@@ -279,7 +284,7 @@ export const GroupDetail: React.FC<GroupDetailProps> = ({
               </span>
             ) : (
               <span>
-                🔒 <strong>You have left this group.</strong> Showing past history.
+                🔒 <strong>{wasRemovedByAdmin ? 'You were removed from this group by the admin.' : 'You have left this group.'}</strong> Showing past history.
               </span>
             )}
           </div>

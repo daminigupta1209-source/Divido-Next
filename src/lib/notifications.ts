@@ -7,7 +7,8 @@ export type NotificationType =
   | 'link_request'
   | 'join'
   | 'rename_request'
-  | 'admin_transfer';
+  | 'admin_transfer'
+  | 'removed';
 
 export interface AppNotification {
   id: string | number;
