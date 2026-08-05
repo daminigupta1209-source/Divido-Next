@@ -171,6 +171,25 @@ function App() {
   const [linkRequestGroup, setLinkRequestGroup] = useState<any | null>(null);
   const [linkRequestPlaceholders, setLinkRequestPlaceholders] = useState<any[]>([]);
   const [submittingLinkRequest, setSubmittingLinkRequest] = useState<boolean>(false);
+  // True while we resolve an invite link (fetch the group + members + session)
+  // before deciding whether to show the claim card, admit the user, etc. Seeded
+  // synchronously so the home feed never flashes behind the pending claim card.
+  const [isResolvingInvite, setIsResolvingInvite] = useState<boolean>(() => {
+    try {
+      if (checkIfDemoMode()) return false;
+      const param = new URLSearchParams(window.location.search).get('joinGroupId');
+      if (param) {
+        const n = parseInt(param, 10);
+        if (!isNaN(n) && n <= 2147483647 && !param.includes('.')) return true;
+      }
+      const savedRaw = localStorage.getItem('divido_pending_join');
+      if (savedRaw) {
+        const saved = JSON.parse(savedRaw);
+        if (saved?.groupId && (!saved.ts || Date.now() - saved.ts < 15 * 60 * 1000)) return true;
+      }
+    } catch { /* fall through to no-gate */ }
+    return false;
+  });
   const [tempName, setTempName] = useState<string>(() => {
     const saved = localStorage.getItem('divido_username');
     return saved && saved !== 'You' && saved !== 'undefined' ? saved : '';
@@ -1182,7 +1201,7 @@ function App() {
 
   // Safe Account Linking Invite Landing
   useEffect(() => {
-    if (checkIfDemoMode()) return;
+    if (checkIfDemoMode()) { setIsResolvingInvite(false); return; }
     const joinGroupFromQuery = async () => {
       try {
         const urlParams = new URLSearchParams(window.location.search);
@@ -1304,11 +1323,23 @@ function App() {
         setLinkRequestPlaceholders(placeholders);
       } catch (err) {
         console.error('Landing error:', err);
+      } finally {
+        // Resolution finished (claim card shown, admitted, or nothing to do) —
+        // drop the loading gate so the app renders its normal view.
+        setIsResolvingInvite(false);
       }
     };
 
     joinGroupFromQuery();
   }, [groups]);
+
+  // Safety net: never trap a friend on the invite loader if the round-trip
+  // stalls (slow network, an early return). Fall through after a few seconds.
+  useEffect(() => {
+    if (!isResolvingInvite) return;
+    const t = setTimeout(() => setIsResolvingInvite(false), 5000);
+    return () => clearTimeout(t);
+  }, [isResolvingInvite]);
   const handleDeleteGroup = (id: string | number) => {
     const isStandalone = String(id) === 'STANDALONE';
     const g = isStandalone
@@ -1695,6 +1726,27 @@ function App() {
         }}
         currentTheme={theme}
       />
+    );
+  }
+
+  // While an invite link is being resolved, show a lightweight loader instead of
+  // the home feed — otherwise the home screen flashes for a beat before the
+  // claim card appears once the Supabase round-trip completes.
+  if (isResolvingInvite) {
+    return (
+      <div style={{
+        position: 'fixed', inset: 0, display: 'flex', flexDirection: 'column',
+        alignItems: 'center', justifyContent: 'center', gap: '18px',
+        background: 'var(--bg)', color: 'var(--t)', zIndex: 10000,
+      }}>
+        <div style={{
+          width: '44px', height: '44px', borderRadius: '50%',
+          border: '4px solid rgba(99, 102, 241, 0.2)', borderTopColor: '#6366F1',
+          animation: 'spin 0.8s linear infinite',
+        }} />
+        <div style={{ fontSize: '14px', fontWeight: 700, opacity: 0.7 }}>Opening your invite…</div>
+        <style>{`@keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }`}</style>
+      </div>
     );
   }
 
