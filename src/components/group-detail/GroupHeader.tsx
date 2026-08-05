@@ -324,32 +324,34 @@ export const GroupHeader: React.FC<GroupHeaderProps> = ({
                   style={{ display: 'none' }}
                   onChange={handleFileChange}
                 />
-                <button
-                  onClick={() => setShowAttachMenu(true)}
-                  style={{
-                    background: 'none',
-                    border: 'none',
-                    cursor: 'pointer',
-                    color: '#94A3B8',
-                    width: '36px',
-                    height: '36px',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    flexShrink: 0,
-                    padding: 0,
-                    borderRadius: '8px',
-                    transition: '0.15s all',
-                    marginRight: '-6px',
-                  }}
-                  onMouseEnter={(e) => { e.currentTarget.style.background = 'rgba(0,0,0,0.05)'; }}
-                  onMouseLeave={(e) => { e.currentTarget.style.background = 'none'; }}
-                  title="Add attachment"
-                >
-                  <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ color: '#94A3B8' }}>
-                    <path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48" />
-                  </svg>
-                </button>
+                {!amIPastMember && (
+                  <button
+                    onClick={() => setShowAttachMenu(true)}
+                    style={{
+                      background: 'none',
+                      border: 'none',
+                      cursor: 'pointer',
+                      color: '#94A3B8',
+                      width: '36px',
+                      height: '36px',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      flexShrink: 0,
+                      padding: 0,
+                      borderRadius: '8px',
+                      transition: '0.15s all',
+                      marginRight: '-6px',
+                    }}
+                    onMouseEnter={(e) => { e.currentTarget.style.background = 'rgba(0,0,0,0.05)'; }}
+                    onMouseLeave={(e) => { e.currentTarget.style.background = 'none'; }}
+                    title="Add attachment"
+                  >
+                    <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ color: '#94A3B8' }}>
+                      <path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48" />
+                    </svg>
+                  </button>
+                )}
 
                 <button
                   onClick={(e) => { e.stopPropagation(); setShowBellMenu(!showBellMenu); }}
@@ -539,6 +541,7 @@ export const GroupHeader: React.FC<GroupHeaderProps> = ({
                       <div
                         onClick={(e) => {
                           e.stopPropagation();
+                          if (amIPastMember) return;
                           setGroups(groups.map((g) => String(g.id) === String(selectedId) ? { ...g, simplifyDebts: !g.simplifyDebts } : g));
                         }}
                         style={{
@@ -547,7 +550,8 @@ export const GroupHeader: React.FC<GroupHeaderProps> = ({
                           borderRadius: '20px',
                           background: selectedGroup.simplifyDebts ? '#10B981' : '#CBD5E1',
                           position: 'relative',
-                          cursor: 'pointer',
+                          cursor: amIPastMember ? 'not-allowed' : 'pointer',
+                          opacity: amIPastMember ? 0.5 : 1,
                           transition: 'background-color 0.2s',
                           flexShrink: 0,
                         }}
@@ -660,13 +664,13 @@ export const GroupHeader: React.FC<GroupHeaderProps> = ({
                 />
               ) : (
                 <span
-                  onClick={() => setEditingDate(true)}
-                  title="Tap to edit"
+                  onClick={() => { if (!amIPastMember) setEditingDate(true); }}
+                  title={amIPastMember ? undefined : "Tap to edit"}
                   style={{
                     fontSize: '11px',
                     fontWeight: 650,
                     color: '#94A3B8',
-                    cursor: 'pointer',
+                    cursor: amIPastMember ? 'default' : 'pointer',
                     userSelect: 'none',
                     letterSpacing: '0.2px',
                   }}

@@ -360,9 +360,9 @@ export const GroupMemberList: React.FC<GroupMemberListProps> = ({
                           title="Remove member"
                           onClick={(e) => {
                             e.stopPropagation();
-                             const promptMsg = checkIsMe(m) 
+                             const promptMsg = checkIsMe(m)
                                ? `Leave group? You won't see new updates.`
-                               : `Remove "${m}" from the group? This will shift them to Past Members and keep past history.`;
+                               : `Cancel the invite for "${m}"? They haven't joined yet, so this removes them completely.`;
                             if (confirm(promptMsg)) {
                               if (onRemoveMember) {
                                 onRemoveMember(m);

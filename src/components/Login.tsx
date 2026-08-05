@@ -43,7 +43,7 @@ export const Login: React.FC<LoginProps> = ({ onLoginSuccess, currentTheme }) =>
       const { error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
-          redirectTo: window.location.origin,
+          redirectTo: window.location.href,
           // Always show Google's account picker instead of silently reusing the
           // active Google session — so a signed-out/deleted user can pick a
           // different account and always sees which one they're logging in with.

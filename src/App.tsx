@@ -108,6 +108,11 @@ function App() {
     return false;
   };
 
+  const setGlobalSettleDataSecure = (data: { name: string; gId?: string | number | null } | null) => {
+    if (data && checkPastMemberAndShowRejoin(true)) return;
+    setGlobalSettleData(data);
+  };
+
   const setShowExpModalSecure = (show: boolean) => {
     if (show && checkPastMemberAndShowRejoin(true)) return;
     const hasClaimedIdentity = selectedId && localStorage.getItem(`divido_identity_${selectedId}`);
@@ -1204,6 +1209,10 @@ function App() {
 
         if (!joinGroupId) return;
 
+        const parsedGroupId = parseInt(String(joinGroupId), 10);
+        const isValidDbId = !isNaN(parsedGroupId) && parsedGroupId <= 2147483647 && !String(joinGroupId).includes('.');
+        if (!isValidDbId) return;
+
         // Persist the invite the moment the link is opened, BEFORE any sign-in.
         // This makes the claim survive a Google round-trip no matter how the
         // user signs in (not only via the claim-card button). Cleared below in
@@ -1906,7 +1915,7 @@ function App() {
             deleteExpense={deleteExpenseSecure}
             onDeleteGroup={handleDeleteGroup}
             onShowQR={(payee, amt, curr) => setQrModalData({ payee, amt, currency: curr })}
-            setGlobalSettleData={setGlobalSettleData}
+            setGlobalSettleData={setGlobalSettleDataSecure}
             showSettleModal={showSettleModal}
             setShowSettleModal={setShowSettleModalSecure}
             editingSettle={editingSettle}
@@ -2101,9 +2110,13 @@ function App() {
             onRemoveMember={async (memberName) => {
               if (!selectedId || selectedId === 'STANDALONE') return;
               const isPastMember = memberName.endsWith(' (Left)');
+              // A pending invite is someone who never actually joined. Removing them
+              // should delete the invite outright, not tombstone them as a past member.
+              const currentGroup = groups.find((g) => String(g.id) === String(selectedId));
+              const isPendingInvite = !isPastMember && !!currentGroup?.pendingMembers?.includes(memberName);
               if (!checkIfDemoMode() && isAuthenticated) {
                 try {
-                  if (isPastMember) {
+                  if (isPastMember || isPendingInvite) {
                     // Permanently delete from group_members table
                     await supabase
                       .from('group_members')
@@ -2172,7 +2185,7 @@ function App() {
                   String(g.id) === String(selectedId)
                     ? {
                         ...g,
-                        members: isPastMember
+                        members: (isPastMember || isPendingInvite)
                           ? g.members.filter((m) => m !== memberName)
                           : g.members.map((m) => (m === memberName ? memberName + ' (Left)' : m)),
                         pendingMembers: g.pendingMembers?.filter((m) => m !== memberName)

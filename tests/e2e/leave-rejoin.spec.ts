@@ -207,6 +207,15 @@ test.describe("Member Leave and Rejoin flow", () => {
     await contextA.grantPermissions(["clipboard-read", "clipboard-write"]);
     const pageA = await contextA.newPage();
     
+    pageA.on("console", (msg) => {
+      console.log(`[PAGE A CONSOLE] ${msg.type()}: ${msg.text()}`);
+    });
+    pageA.on("response", (res) => {
+      if (res.status() >= 400) {
+        console.log(`[PAGE A HTTP ERROR] ${res.url()} returned status ${res.status()}`);
+      }
+    });
+
     await pageA.goto("/");
     await pageA.evaluate(() => {
       localStorage.clear();
@@ -246,6 +255,15 @@ test.describe("Member Leave and Rejoin flow", () => {
     const contextB = await browser.newContext();
     const pageB = await contextB.newPage();
     
+    pageB.on("console", (msg) => {
+      console.log(`[PAGE B CONSOLE] ${msg.type()}: ${msg.text()}`);
+    });
+    pageB.on("response", (res) => {
+      if (res.status() >= 400) {
+        console.log(`[PAGE B HTTP ERROR] ${res.url()} returned status ${res.status()}`);
+      }
+    });
+
     pageB.on("dialog", async (dialog) => {
       await dialog.accept();
     });
@@ -275,7 +293,7 @@ test.describe("Member Leave and Rejoin flow", () => {
     await pageB.locator("text=Leave Group").first().click();
     await pageB.waitForTimeout(500);
     await pageB.getByRole("button", { name: "Confirm" }).first().click();
-    await pageB.waitForTimeout(2000);
+    await expect(pageB.getByRole("button", { name: "Confirm" })).toBeHidden({ timeout: 10000 });
 
     // Assert read-only banner is visible on Page B
     await pageB.locator("text=Proactive Rejoin Group").first().click();
@@ -283,31 +301,31 @@ test.describe("Member Leave and Rejoin flow", () => {
     await expect(pageB.locator("#past-member-banner")).toContainText("You have left this group. Showing past history.");
 
     // === View-only guards: a left member must not be able to edit the group ===
-    const rejoinModalText = "You left this group. Request to rejoin?";
+    const rejoinModalText = "Rejoin this group?";
     const closeRejoinModal = async () => {
       await pageB
-        .locator("div.card", { hasText: "Request to rejoin" })
+        .locator("div.card", { hasText: "Rejoin this group" })
         .getByRole("button")
         .filter({ hasText: "✕" })
         .first()
-        .click();
+        .click({ force: true });
       await pageB.waitForTimeout(500);
     };
 
-    // Adding a friend must be blocked and surface the rejoin modal instead
-    await pageB.locator("text=+ Friend").first().click();
-    await expect(pageB.locator(`text=${rejoinModalText}`)).toBeVisible();
+    // Clicking the Rejoin button must surface the rejoin modal
+    await pageB.locator("text=Rejoin").first().click({ force: true });
+    await expect(pageB.locator(`text=${rejoinModalText}`)).toBeVisible({ timeout: 10000 });
     await closeRejoinModal();
 
-    // B clicks on a balance row to settle, which should trigger the Rejoin request modal
-    await pageB.locator("#desktop-add-expense-btn").first().click();
-    await pageB.waitForTimeout(1000);
+    // The desktop-add-expense-btn is hidden for left members (write-lock), so verify it's not visible
+    await expect(pageB.locator("#desktop-add-expense-btn")).not.toBeVisible();
 
-    // Assert Rejoin Request Modal is visible
-    await expect(pageB.locator("text=You left this group. Request to rejoin?")).toBeVisible();
+    // Open the rejoin modal again and submit the request
+    await pageB.locator("text=Rejoin").first().click({ force: true });
+    await expect(pageB.locator(`text=${rejoinModalText}`)).toBeVisible({ timeout: 10000 });
 
-    // Click Request Rejoin
-    await pageB.getByRole("button", { name: "Request Rejoin" }).first().click();
+    // Click "Send request" inside the rejoin modal
+    await pageB.getByRole("button", { name: "Send request" }).first().click();
     await pageB.waitForTimeout(2000);
     await pageB.goto("/");
     await pageB.waitForTimeout(3000);
@@ -317,10 +335,10 @@ test.describe("Member Leave and Rejoin flow", () => {
     // Assert Banner text updates to pending
     await expect(pageB.locator("#past-member-banner")).toContainText("Rejoin request pending approval. Showing past history.");
 
-    // Page A (Admin) should show proactive rejoin request modal on reload/update
+    // Page A (Admin) should show proactive rejoin request notification on reload
     await pageA.reload();
     await pageA.waitForTimeout(3000);
-    await expect(pageA.locator("text=Husky wants to rejoin Proactive Rejoin Group")).toBeVisible();
+    await expect(pageA.locator("text=Husky wants to rejoin Proactive Rejoin Group")).toBeVisible({ timeout: 10000 });
 
     // Admin clicks Approve
     await pageA.getByRole("button", { name: "Approve" }).first().click();

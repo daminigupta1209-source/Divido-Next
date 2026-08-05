@@ -1101,40 +1101,42 @@ export const GroupDetail: React.FC<GroupDetailProps> = ({
             )}
 
             {/* Circular Add Expense Button lookalike / button matching group's + Add Expense */}
-            <button
-              id="desktop-add-expense-btn"
-              style={{
-                width: '100%',
-                height: '38px',
-                padding: '8px 16px',
-                fontSize: '13px',
-                fontWeight: 950,
-                borderRadius: '999px',
-                cursor: 'pointer',
-                background: 'transparent',
-                border: '1.5px solid #059669',
-                color: '#059669',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                gap: '8px',
-                transition: '0.2s all ease',
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.transform = 'scale(1.03)';
-                e.currentTarget.style.background = 'rgba(5, 150, 105, 0.04)';
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.transform = 'scale(1)';
-                e.currentTarget.style.background = 'transparent';
-              }}
-              onClick={() => {
-                setEditingExpense(null);
-                setShowExpModal(true);
-              }}
-            >
-              <span style={{ fontSize: '15px', fontWeight: 950, lineHeight: 1, color: '#059669' }}>+</span> Expense
-            </button>
+            {!isLeftUser && (
+              <button
+                id="desktop-add-expense-btn"
+                style={{
+                  width: '100%',
+                  height: '38px',
+                  padding: '8px 16px',
+                  fontSize: '13px',
+                  fontWeight: 950,
+                  borderRadius: '999px',
+                  cursor: 'pointer',
+                  background: 'transparent',
+                  border: '1.5px solid #059669',
+                  color: '#059669',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: '8px',
+                  transition: '0.2s all ease',
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.transform = 'scale(1.03)';
+                  e.currentTarget.style.background = 'rgba(5, 150, 105, 0.04)';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.transform = 'scale(1)';
+                  e.currentTarget.style.background = 'transparent';
+                }}
+                onClick={() => {
+                  setEditingExpense(null);
+                  setShowExpModal(true);
+                }}
+              >
+                <span style={{ fontSize: '15px', fontWeight: 950, lineHeight: 1, color: '#059669' }}>+</span> Expense
+              </button>
+            )}
           </div>
         </div>
       )}
@@ -1422,19 +1424,33 @@ export const GroupDetail: React.FC<GroupDetailProps> = ({
           </div>
 
           {/* Central Circular Add Expense Button */}
-          <div
-            onClick={() => { setEditingExpense(null); setShowExpModal(true); }}
-            style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', width: '70px', cursor: 'pointer' }}
-            title="Add Expense"
-          >
+          {isLeftUser ? (
             <div
-              style={{ width: '50px', height: '50px', borderRadius: '50%', background: '#059669', boxShadow: '0 4px 14px rgba(5, 150, 105, 0.4)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#FFFFFF', fontSize: '24px', fontWeight: 700, zIndex: 1600, transform: 'translateY(-18px)', transition: 'all 0.15s ease-in-out', lineHeight: 1 }}
-              className="hover-up"
+              style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', width: '70px', cursor: 'not-allowed', opacity: 0.6 }}
+              title="Cannot add expenses (View Only)"
             >
-              +
+              <div
+                style={{ width: '50px', height: '50px', borderRadius: '50%', background: '#94A3B8', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#FFFFFF', fontSize: '20px', fontWeight: 700, zIndex: 1600, transform: 'translateY(-18px)', lineHeight: 1 }}
+              >
+                🔒
+              </div>
+              <span style={{ fontSize: '10px', fontWeight: 800, color: '#94A3B8', transform: 'translateY(-10px)' }}>View Only</span>
             </div>
-            <span style={{ fontSize: '10px', fontWeight: 800, color: '#475569', transform: 'translateY(-10px)' }}>Expense</span>
-          </div>
+          ) : (
+            <div
+              onClick={() => { setEditingExpense(null); setShowExpModal(true); }}
+              style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', width: '70px', cursor: 'pointer' }}
+              title="Add Expense"
+            >
+              <div
+                style={{ width: '50px', height: '50px', borderRadius: '50%', background: '#059669', boxShadow: '0 4px 14px rgba(5, 150, 105, 0.4)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#FFFFFF', fontSize: '24px', fontWeight: 700, zIndex: 1600, transform: 'translateY(-18px)', transition: 'all 0.15s ease-in-out', lineHeight: 1 }}
+                className="hover-up"
+              >
+                +
+              </div>
+              <span style={{ fontSize: '10px', fontWeight: 800, color: '#475569', transform: 'translateY(-10px)' }}>Expense</span>
+            </div>
+          )}
 
           <div className="b-nav-btn" onClick={() => setView('friends')}>
             <span className="b-nav-icon" style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: '24px', height: '24px' }}>
