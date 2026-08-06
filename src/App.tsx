@@ -3610,7 +3610,6 @@ function App() {
           (req.placeholderName || '').replace(/\s*\(Left\)$/i, '').toLowerCase() === cleanMeName ||
           (req.requestName || '').toLowerCase() === cleanMeName
         );
-        const __diag = `DIAG v4 · me="${me}" · plr=${JSON.stringify(pendingReqs.map((r: any) => ({ p: r.placeholderName, n: r.requestName })))} · pending=${hasPendingRejoin}`;
         return (
         <div className="modal-overlay" style={{ zIndex: 5000, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
           <div
@@ -3657,9 +3656,6 @@ function App() {
               {hasPendingRejoin
                 ? <>Your request was sent to the group admin{adminLabel}. You'll get access once it's approved.</>
                 : <>The group admin{adminLabel} needs to approve.</>}
-            </p>
-            <p style={{ fontSize: '9px', color: '#94A3B8', fontWeight: 500, margin: '0 0 12px 0', lineHeight: 1.3, wordBreak: 'break-all', textAlign: 'left' }}>
-              {__diag}
             </p>
             {hasPendingRejoin ? (
               <button
