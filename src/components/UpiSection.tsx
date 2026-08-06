@@ -119,28 +119,41 @@ export const UpiSection: React.FC<UpiSectionProps> = ({
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-      {/* Brief hint shown for 3s while the phone's UPI app chooser opens. */}
+      {/* Compact horizontal hint shown for 3s while the phone's UPI app chooser
+          opens — with a shrinking timer bar and a small dismiss button. */}
       {showVerifyHint && (
         <div
           style={{
             position: 'fixed',
-            top: '16px',
+            top: '14px',
             left: '50%',
             transform: 'translateX(-50%)',
             zIndex: 10001,
-            maxWidth: 'calc(100% - 24px)',
+            width: 'calc(100% - 24px)',
+            maxWidth: '380px',
             background: '#2E2A25',
-            color: '#FFFFFF',
-            fontSize: '12px',
-            fontWeight: 700,
-            lineHeight: 1.4,
-            padding: '10px 16px',
-            borderRadius: '14px',
-            boxShadow: '0 12px 28px -8px rgba(0,0,0,0.4)',
-            textAlign: 'center',
+            borderRadius: '12px',
+            boxShadow: '0 10px 24px -8px rgba(0,0,0,0.4)',
+            overflow: 'hidden',
           }}
         >
-          Open your UPI app and check the payee name shows correctly, then return here.
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '8px 10px 8px 14px' }}>
+            <span style={{ flex: 1, color: '#FFFFFF', fontSize: '11px', fontWeight: 700, lineHeight: 1.35 }}>
+              Open your UPI app, check the payee name, then come back.
+            </span>
+            <button
+              type="button"
+              onClick={() => setShowVerifyHint(false)}
+              aria-label="Dismiss"
+              style={{ background: 'none', border: 'none', color: 'rgba(255,255,255,0.6)', fontSize: '14px', cursor: 'pointer', padding: '0 2px', flexShrink: 0, lineHeight: 1 }}
+            >
+              ✕
+            </button>
+          </div>
+          <div style={{ height: '3px', background: 'rgba(255,255,255,0.15)' }}>
+            <div style={{ height: '100%', background: '#F97316', width: '100%', animation: 'dividoHintTimer 3s linear forwards' }} />
+          </div>
+          <style>{`@keyframes dividoHintTimer { from { width: 100%; } to { width: 0%; } }`}</style>
         </div>
       )}
 
