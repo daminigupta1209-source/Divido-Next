@@ -2547,11 +2547,36 @@ function App() {
                         alert(`Welcome, ${p.name}! You have successfully joined the group. 🎉`);
                       }
                       
+                      // Fetch the real member roster right now so the joiner sees
+                      // everyone immediately. linkRequestGroup comes from the `groups`
+                      // table and has no members array, so without this the group
+                      // renders empty until the background cloud-load catches up
+                      // (the 5-20s delay a new joiner would otherwise see).
+                      let freshMembers: string[] = [];
+                      let freshPending: string[] = [];
+                      try {
+                        const { data: gm } = await supabase
+                          .from('group_members')
+                          .select('*')
+                          .eq('group_id', linkRequestGroup.id)
+                          .order('id', { ascending: true });
+                        if (gm) {
+                          const activeMems = gm.filter((m: any) => !m.link_request_email || !m.is_pending || m.name.endsWith(' (Left)'));
+                          freshMembers = Array.from(new Set(activeMems.map((m: any) => m.name)));
+                          freshPending = Array.from(new Set(activeMems
+                            .filter((m: any) => m.is_pending && !m.user_email && !m.name.endsWith(' (Left)'))
+                            .map((m: any) => m.name)));
+                        }
+                      } catch { /* fall back to background cloud-load below */ }
+
                        const updatedGroup = {
                         ...linkRequestGroup,
-                        members: (linkRequestGroup.members || []).map((m: string) => 
-                          m.toLowerCase() === (cleanName + ' (Left)').toLowerCase() ? cleanName : m
-                        )
+                        members: freshMembers.length
+                          ? freshMembers
+                          : (linkRequestGroup.members || []).map((m: string) =>
+                              m.toLowerCase() === (cleanName + ' (Left)').toLowerCase() ? cleanName : m
+                            ),
+                        pendingMembers: freshPending,
                       };
                       setGroups(prev => {
                         const exists = prev.some(g => g.id === updatedGroup.id);
