@@ -32,6 +32,7 @@ import { useAppHotkeys } from './hooks/useAppHotkeys';
 import { useUndoStack } from './hooks/useUndoStack';
 import { MobileHeader } from './components/MobileHeader';
 import { FloatingAddMenu } from './components/FloatingAddMenu';
+import { InstallPrompt } from './components/InstallPrompt';
 import { useExportCSV } from './hooks/useExportCSV';
 import QRCode from 'qrcode';
 
@@ -1721,13 +1722,16 @@ function App() {
 
   if (!isAuthenticated) {
     return (
-      <Login
-        onLoginSuccess={(name) => {
-          updateUserName(name);
-          setIsAuthenticated(true);
-        }}
-        currentTheme={theme}
-      />
+      <>
+        <Login
+          onLoginSuccess={(name) => {
+            updateUserName(name);
+            setIsAuthenticated(true);
+          }}
+          currentTheme={theme}
+        />
+        <InstallPrompt />
+      </>
     );
   }
 
@@ -1755,6 +1759,7 @@ function App() {
 
   return (
     <div className="app-container">
+      <InstallPrompt />
       <Sidebar
         view={view}
         setView={setView}
