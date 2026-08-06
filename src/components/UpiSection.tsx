@@ -345,6 +345,27 @@ export const UpiSection: React.FC<UpiSectionProps> = ({
                         </div>
                       ))}
                     </div>
+
+                    {/* Fallback for any other UPI app (CRED, WhatsApp, bank apps,
+                        etc.). Fires the generic upi:// intent so the phone shows
+                        its full "Open with" list — but only when the user asks,
+                        not automatically. */}
+                    <div
+                      onClick={() => {
+                        window.location.href = `upi://pay?pa=${encodeURIComponent(localUpi.trim())}&pn=${encodeURIComponent(userName)}&am=1.00&cu=INR&tn=Divido Verify`;
+                      }}
+                      style={{
+                        fontSize: '12px',
+                        fontWeight: 800,
+                        color: '#EA580C',
+                        cursor: 'pointer',
+                        textDecoration: 'underline',
+                        textAlign: 'center',
+                        marginTop: '2px',
+                      }}
+                    >
+                      Use a different app? Show all UPI apps →
+                    </div>
                   </div>
                 ) : (
                   <div style={{ display: 'flex', justifyContent: 'center', margin: '8px 0', background: '#F8FAFC', padding: '16px', borderRadius: '16px', border: '1px solid #E2E8F0' }}>
