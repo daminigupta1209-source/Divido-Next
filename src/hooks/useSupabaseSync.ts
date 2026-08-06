@@ -401,13 +401,41 @@ export function useSupabaseSync({
     if (!hasCloudSession) return;
     if (!isAuthenticated && typeof selectedId !== 'number') return;
 
+    // The subscription receives EVERY change on these tables across the whole
+    // database. Reloading the entire account on each one (incl. strangers'
+    // activity in unrelated groups) is wasteful, so:
+    //   1. Ignore changes that don't touch one of my groups (or me directly).
+    //   2. Debounce, so a burst of writes collapses into a single reload.
+    const myEmail = (userEmail || '').toLowerCase();
+    const myGroupIds = () => new Set(groupsRef.current.map((g) => String(g.id)));
+    // undefined group id (e.g. a DELETE without full replica identity) -> can't
+    // tell, so reload to stay correct rather than risk missing a change.
+    const affectsMyGroups = (gid: any) =>
+      gid === undefined || gid === null ? true : myGroupIds().has(String(gid));
+
+    let reloadTimer: ReturnType<typeof setTimeout> | null = null;
+    const scheduleReload = () => {
+      if (reloadTimer) clearTimeout(reloadTimer);
+      reloadTimer = setTimeout(() => {
+        reloadTimer = null;
+        setLoadTrigger((prev) => prev + 1);
+      }, 500);
+    };
+
     const channel = supabase
       .channel('divido_realtime_sync')
       .on('postgres_changes', { event: '*', schema: 'public', table: 'group_members' }, async (payload) => {
-        // Refresh members list on any database writes (claims, renames, additions)
+        const newRow = payload.new as any;
+        const oldRow = payload.old as any;
+        const gid = newRow?.group_id ?? oldRow?.group_id;
+        // A row that names my email is relevant even if the group isn't in my
+        // list yet (e.g. I'm being added/matched into a brand-new group).
+        const involvesMe = !!myEmail && [newRow?.user_email, newRow?.link_request_email, oldRow?.user_email]
+          .some((e: any) => e && String(e).toLowerCase() === myEmail);
+        if (!affectsMyGroups(gid) && !involvesMe) return;
+
         // If it was a new user requesting to match a placeholder, trigger matching popup
         if (payload.eventType === 'INSERT') {
-          const newRow = payload.new as any;
           if (newRow.is_pending && newRow.user_email && !newRow.name.toLowerCase().endsWith(' (left)')) {
             const { data: { session } } = await supabase.auth.getSession();
             if (session?.user?.email && newRow.user_email !== session.user.email) {
@@ -432,21 +460,25 @@ export function useSupabaseSync({
             }
           }
         }
-        // Force refresh local groups state by triggering cloud refetch
-        setLoadTrigger((prev) => prev + 1);
+        scheduleReload();
       })
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'expenses' }, () => {
-        // Refresh expenses list on any db writes (additions, edits, deletions)
-        setLoadTrigger((prev) => prev + 1);
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'expenses' }, (payload) => {
+        const gid = (payload.new as any)?.group_id ?? (payload.old as any)?.group_id;
+        if (!affectsMyGroups(gid)) return;
+        scheduleReload();
       })
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'groups' }, () => {
-        // Refresh groups settings (like simplify_debts changes) instantly
-        setLoadTrigger((prev) => prev + 1);
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'groups' }, (payload) => {
+        const id = (payload.new as any)?.id ?? (payload.old as any)?.id;
+        if (!affectsMyGroups(id)) return;
+        scheduleReload();
       })
       .subscribe();
 
-    return () => { supabase.removeChannel(channel); };
-  }, [isAuthenticated, hasCloudSession, selectedId, setGroups, setMatchPrompt, setLoadTrigger]);
+    return () => {
+      if (reloadTimer) clearTimeout(reloadTimer);
+      supabase.removeChannel(channel);
+    };
+  }, [isAuthenticated, hasCloudSession, selectedId, setGroups, setMatchPrompt, setLoadTrigger, userEmail]);
 
   // Sync groups to Supabase in real-time
   useEffect(() => {
