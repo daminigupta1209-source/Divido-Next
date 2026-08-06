@@ -24,10 +24,16 @@ export const UpiSection: React.FC<UpiSectionProps> = ({
 }) => {
   const [upiError, setUpiError] = useState<string | null>(null);
   const [verificationStep, setVerificationStep] = useState<'idle' | 'awaiting_action' | 'verifying' | 'confirm_resolved'>('idle');
+  // Brief on-screen hint shown while the phone's UPI app chooser opens.
+  const [showVerifyHint, setShowVerifyHint] = useState(false);
   const isVerified = !!userMetadata[me]?.upiVerified && userMetadata[me]?.upiId === localUpi.trim();
 
   const upiInputRef = useRef<HTMLInputElement>(null);
   const verifyCanvasRef = useRef<HTMLCanvasElement | null>(null);
+  // On mobile we open the phone's own UPI app chooser and wait for the user to
+  // come back. This stamps when they left; the visibility handler uses it to
+  // start verification only after a genuine round-trip to a UPI app.
+  const mobileReturnPendingRef = useRef<number | null>(null);
 
   const validateUpi = (upi: string) => {
     if (!upi) return true;
@@ -57,11 +63,23 @@ export const UpiSection: React.FC<UpiSectionProps> = ({
     const onVisibility = () => {
       if (document.visibilityState === 'hidden') {
         hiddenAt = Date.now();
-      } else {
-        if (verificationStep === 'awaiting_action' && hiddenAt && Date.now() - hiddenAt > 1000) {
-          setVerificationStep('verifying');
-        }
-        hiddenAt = null;
+        return;
+      }
+      const awayFor = hiddenAt ? Date.now() - hiddenAt : 0;
+      hiddenAt = null;
+      // A quick open-and-cancel of the app chooser returns almost instantly —
+      // ignore it. Only a genuine trip to a UPI app takes longer.
+      if (awayFor <= 1000) return;
+
+      // Mobile: user came back from their UPI app -> start verifying.
+      if (mobileReturnPendingRef.current && Date.now() - mobileReturnPendingRef.current < 60000) {
+        mobileReturnPendingRef.current = null;
+        setVerificationStep('verifying');
+        return;
+      }
+      // Desktop QR flow: the modal is open waiting, advance it.
+      if (verificationStep === 'awaiting_action') {
+        setVerificationStep('verifying');
       }
     };
 
@@ -101,6 +119,31 @@ export const UpiSection: React.FC<UpiSectionProps> = ({
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+      {/* Brief hint shown for 3s while the phone's UPI app chooser opens. */}
+      {showVerifyHint && (
+        <div
+          style={{
+            position: 'fixed',
+            top: '16px',
+            left: '50%',
+            transform: 'translateX(-50%)',
+            zIndex: 10001,
+            maxWidth: 'calc(100% - 24px)',
+            background: '#2E2A25',
+            color: '#FFFFFF',
+            fontSize: '12px',
+            fontWeight: 700,
+            lineHeight: 1.4,
+            padding: '10px 16px',
+            borderRadius: '14px',
+            boxShadow: '0 12px 28px -8px rgba(0,0,0,0.4)',
+            textAlign: 'center',
+          }}
+        >
+          Open your UPI app and check the payee name shows correctly, then return here.
+        </div>
+      )}
+
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%', gap: '8px' }}>
         <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', flex: 1, minWidth: 0 }}>
           <label style={{ fontSize: '11px', fontWeight: 700, color: '#B3A897', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
@@ -148,12 +191,18 @@ export const UpiSection: React.FC<UpiSectionProps> = ({
             {!isVerified && verificationStep === 'idle' && (
               <span
                 onClick={() => {
-                  // Just open our modal — it already lets the user pick their UPI
-                  // app (GPay/PhonePe/Paytm/BHIM). Don't also fire a upi:// intent
-                  // here, or Android's own "Open with" chooser pops up on top of
-                  // our modal (the double-popup users were seeing).
-                  setVerificationStep('awaiting_action');
                   setUpiError(null);
+                  if (isMobile) {
+                    // Show a brief hint, then open the phone's own UPI app chooser
+                    // (every installed UPI app), and wait for the user to return.
+                    setShowVerifyHint(true);
+                    setTimeout(() => setShowVerifyHint(false), 3000);
+                    mobileReturnPendingRef.current = Date.now();
+                    window.location.href = `upi://pay?pa=${encodeURIComponent(localUpi.trim())}&pn=${encodeURIComponent(userName)}&am=1.00&cu=INR&tn=Divido Verify`;
+                  } else {
+                    // Desktop has no UPI apps — show our QR code to scan instead.
+                    setVerificationStep('awaiting_action');
+                  }
                 }}
                 style={{
                   fontSize: '13px',
@@ -252,127 +301,16 @@ export const UpiSection: React.FC<UpiSectionProps> = ({
               </button>
             </div>
 
+            {/* Desktop only: mobile opens the phone's UPI app chooser directly. */}
             {verificationStep === 'awaiting_action' && (
               <div style={{ display: 'flex', flexDirection: 'column', gap: '14px', alignItems: 'center', textAlign: 'center' }}>
                 <p style={{ fontSize: '12px', color: '#64748B', fontWeight: 700, margin: 0, lineHeight: 1.4 }}>
-                  {isMobile
-                    ? 'Tap your UPI app below to open it and check the payee name on screen. Return here when done.'
-                    : 'Scan this QR code using GPay/PhonePe to see the registered bank name on your phone.'}
+                  Scan this QR code using GPay/PhonePe to see the registered bank name on your phone.
                 </p>
 
-                {isMobile ? (
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', width: '100%', marginTop: '4px' }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', gap: '8px' }}>
-                      {[
-                        {
-                          name: 'GPay',
-                          scheme: `gpay://upi/pay?pa=${encodeURIComponent(localUpi.trim())}&pn=${encodeURIComponent(userName)}&am=1.00&cu=INR`,
-                          icon: (
-                            <img
-                              src="/gpay.png"
-                              alt="Google Pay"
-                              style={{ width: '38px', height: '38px', objectFit: 'contain', borderRadius: '8px' }}
-                            />
-                          )
-                        },
-                        {
-                          name: 'PhonePe',
-                          scheme: `phonepe://pay?pa=${encodeURIComponent(localUpi.trim())}&pn=${encodeURIComponent(userName)}&am=1.00&cu=INR`,
-                          icon: (
-                            <img
-                              src="/phonepe.png"
-                              alt="PhonePe"
-                              style={{ width: '38px', height: '38px', objectFit: 'contain', borderRadius: '8px' }}
-                            />
-                          )
-                        },
-                        {
-                          name: 'Paytm',
-                          scheme: `paytmmp://pay?pa=${encodeURIComponent(localUpi.trim())}&pn=${encodeURIComponent(userName)}&am=1.00&cu=INR`,
-                          icon: (
-                            <img
-                              src="/paytm.png"
-                              alt="Paytm"
-                              style={{ width: '38px', height: '38px', objectFit: 'contain', borderRadius: '8px' }}
-                            />
-                          )
-                        },
-                        {
-                          name: 'BHIM',
-                          scheme: `upi://pay?pa=${encodeURIComponent(localUpi.trim())}&pn=${encodeURIComponent(userName)}&am=1.00&cu=INR`,
-                          icon: (
-                            <img
-                              src="/bhim.png"
-                              alt="BHIM"
-                              style={{ width: '38px', height: '38px', objectFit: 'contain', borderRadius: '8px' }}
-                            />
-                          )
-                        }
-                      ].map((app) => (
-                        <div
-                          key={app.name}
-                          onClick={() => {
-                            window.location.href = app.scheme;
-                          }}
-                          style={{
-                            display: 'flex',
-                            flexDirection: 'column',
-                            alignItems: 'center',
-                            gap: '6px',
-                            cursor: 'pointer',
-                            flex: 1
-                          }}
-                        >
-                          <div style={{
-                            width: '48px',
-                            height: '48px',
-                            borderRadius: '14px',
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            boxShadow: '0 4px 6px rgba(0,0,0,0.05)',
-                            background: '#FFFFFF',
-                            border: '1px solid #E2E8F0',
-                            transition: 'transform 0.2s',
-                          }}
-                          onMouseEnter={(e) => e.currentTarget.style.transform = 'scale(1.05)'}
-                          onMouseLeave={(e) => e.currentTarget.style.transform = 'scale(1)'}
-                          >
-                            {app.icon}
-                          </div>
-                          <span style={{ fontSize: '10px', fontWeight: 800, color: '#64748B' }}>
-                            {app.name}
-                          </span>
-                        </div>
-                      ))}
-                    </div>
-
-                    {/* Fallback for any other UPI app (CRED, WhatsApp, bank apps,
-                        etc.). Fires the generic upi:// intent so the phone shows
-                        its full "Open with" list — but only when the user asks,
-                        not automatically. */}
-                    <div
-                      onClick={() => {
-                        window.location.href = `upi://pay?pa=${encodeURIComponent(localUpi.trim())}&pn=${encodeURIComponent(userName)}&am=1.00&cu=INR&tn=Divido Verify`;
-                      }}
-                      style={{
-                        fontSize: '12px',
-                        fontWeight: 800,
-                        color: '#EA580C',
-                        cursor: 'pointer',
-                        textDecoration: 'underline',
-                        textAlign: 'center',
-                        marginTop: '2px',
-                      }}
-                    >
-                      Use a different app? Show all UPI apps →
-                    </div>
-                  </div>
-                ) : (
-                  <div style={{ display: 'flex', justifyContent: 'center', margin: '8px 0', background: '#F8FAFC', padding: '16px', borderRadius: '16px', border: '1px solid #E2E8F0' }}>
-                    <canvas ref={verifyCanvasRef} style={{ background: '#FFFFFF', padding: '8px', borderRadius: '8px', border: '1px solid #E2E8F0' }} />
-                  </div>
-                )}
+                <div style={{ display: 'flex', justifyContent: 'center', margin: '8px 0', background: '#F8FAFC', padding: '16px', borderRadius: '16px', border: '1px solid #E2E8F0' }}>
+                  <canvas ref={verifyCanvasRef} style={{ background: '#FFFFFF', padding: '8px', borderRadius: '8px', border: '1px solid #E2E8F0' }} />
+                </div>
 
                 <button
                   type="button"
