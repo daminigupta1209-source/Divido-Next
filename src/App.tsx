@@ -2,14 +2,16 @@ import React, { useState, useEffect, useRef } from 'react';
 import { Login } from './components/Login';
 import { supabase } from './lib/supabaseClient';
 import { Sidebar } from './components/Sidebar';
-import { MasterSummary } from './components/MasterSummary';
-import { FriendsView } from './components/FriendsView';
-import { Analytics } from './components/Analytics';
-import { ActivityStudio } from './components/ActivityStudio';
-import { Profile } from './components/Profile';
 import { GroupDetail } from './components/GroupDetail';
 import { GroupsView } from './components/GroupsView';
-import { ExpenseModal } from './components/ExpenseModal';
+// Lazy-loaded heavy screens/modals: only fetched when the user actually opens
+// them, keeping the initial app bundle (and first paint) smaller.
+const MasterSummary = React.lazy(() => import('./components/MasterSummary').then((m) => ({ default: m.MasterSummary })));
+const FriendsView = React.lazy(() => import('./components/FriendsView').then((m) => ({ default: m.FriendsView })));
+const Analytics = React.lazy(() => import('./components/Analytics').then((m) => ({ default: m.Analytics })));
+const ActivityStudio = React.lazy(() => import('./components/ActivityStudio').then((m) => ({ default: m.ActivityStudio })));
+const Profile = React.lazy(() => import('./components/Profile').then((m) => ({ default: m.Profile })));
+const ExpenseModal = React.lazy(() => import('./components/ExpenseModal').then((m) => ({ default: m.ExpenseModal })));
 import { CurrencyConverterModal } from './components/CurrencyConverterModal';
 import { AddFriendModal } from './components/AddFriendModal';
 import { MatchPromptModal } from './components/MatchPromptModal';
@@ -1832,6 +1834,12 @@ function App() {
           setEditingExpense={setEditingExpenseSecure}
         />
 
+        <React.Suspense fallback={
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', flex: 1, padding: '60px 0' }}>
+            <div style={{ width: '32px', height: '32px', borderRadius: '50%', border: '3px solid rgba(99,102,241,0.2)', borderTopColor: '#6366F1', animation: 'spin 0.8s linear infinite' }} />
+            <style>{`@keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }`}</style>
+          </div>
+        }>
         {view === 'summary' ? (
           <MasterSummary
             groups={groups}
@@ -2248,6 +2256,7 @@ function App() {
             }}
           />
         )}
+        </React.Suspense>
       </main>
 
 
@@ -2288,6 +2297,7 @@ function App() {
 
 
       {showExpModal && (
+        <React.Suspense fallback={null}>
         <ExpenseModal
           setShowExpModal={setShowExpModal}
           setEditingExpense={setEditingExpense}
@@ -2313,6 +2323,7 @@ function App() {
           setAutoOpenScanner={setAutoOpenScanner}
           onRequireSignIn={requireSignInToCreate}
         />
+        </React.Suspense>
       )}
 
       {showConvertModalId && (

@@ -2,7 +2,12 @@ import React from 'react';
 import { Group, Expense } from '../lib/types';
 import { formatDate, GROUP_COLORS } from '../lib/utils';
 import { SearchableCurrencyPicker } from './SearchableCurrencyPicker';
-import { BillScanner } from './expense-modal/BillScanner';
+// Lazy-loaded: BillScanner pulls in tesseract.js (OCR), which is large. Loading
+// it on demand (only when the user opens the scanner) keeps it out of the main
+// bundle so the app opens faster for everyone else.
+const BillScanner = React.lazy(() =>
+  import('./expense-modal/BillScanner').then((m) => ({ default: m.BillScanner }))
+);
 import { SplitSelector } from './expense-modal/SplitSelector';
 import { RecurrenceSelector } from './expense-modal/RecurrenceSelector';
 import { useExpenseForm } from '../hooks/useExpenseForm';
@@ -2008,13 +2013,18 @@ export const ExpenseModal: React.FC<ExpenseModalProps> = ({
         </div>
       )}
 
-      {/* Smart Receipt Scanner Modal */}
-      <BillScanner
-        showScannerModal={showScannerModal}
-        setShowScannerModal={setShowScannerModal}
-        curr={curr}
-        onScanComplete={handleScanComplete}
-      />
+      {/* Smart Receipt Scanner Modal — mounted only when opened so its heavy
+          OCR bundle loads on demand rather than at app startup. */}
+      {showScannerModal && (
+        <React.Suspense fallback={null}>
+          <BillScanner
+            showScannerModal={showScannerModal}
+            setShowScannerModal={setShowScannerModal}
+            curr={curr}
+            onScanComplete={handleScanComplete}
+          />
+        </React.Suspense>
+      )}
 
       <CameraCaptureModal
         show={showCameraCapture}
