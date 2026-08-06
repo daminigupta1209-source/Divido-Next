@@ -147,11 +147,12 @@ export const UpiSection: React.FC<UpiSectionProps> = ({
             {!isVerified && verificationStep === 'idle' && (
               <span
                 onClick={() => {
+                  // Just open our modal — it already lets the user pick their UPI
+                  // app (GPay/PhonePe/Paytm/BHIM). Don't also fire a upi:// intent
+                  // here, or Android's own "Open with" chooser pops up on top of
+                  // our modal (the double-popup users were seeing).
                   setVerificationStep('awaiting_action');
                   setUpiError(null);
-
-                  const upiIntent = `upi://pay?pa=${encodeURIComponent(localUpi.trim())}&pn=${encodeURIComponent(userName)}&am=1.00&cu=INR`;
-                  if (isMobile) window.location.href = upiIntent;
                 }}
                 style={{
                   fontSize: '13px',
