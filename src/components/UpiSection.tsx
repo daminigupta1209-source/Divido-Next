@@ -47,25 +47,26 @@ export const UpiSection: React.FC<UpiSectionProps> = ({
   }, []);
 
   useEffect(() => {
-    const handleVisibilityChange = () => {
-      if (document.visibilityState === 'visible' && verificationStep === 'awaiting_action') {
-        setVerificationStep('verifying');
+    // Auto-advance to "verifying" only when the user genuinely left to their UPI
+    // app and came back — NOT when they just opened and dismissed the "Open with"
+    // app chooser. We require the page to have been backgrounded (hidden) for a
+    // moment; a quick chooser open-and-cancel returns almost instantly and won't
+    // qualify. (The window "focus" event fires on chooser-cancel too, so we
+    // deliberately rely on visibility + elapsed time, not focus.)
+    let hiddenAt: number | null = null;
+    const onVisibility = () => {
+      if (document.visibilityState === 'hidden') {
+        hiddenAt = Date.now();
+      } else {
+        if (verificationStep === 'awaiting_action' && hiddenAt && Date.now() - hiddenAt > 1000) {
+          setVerificationStep('verifying');
+        }
+        hiddenAt = null;
       }
     };
 
-    const handleWindowFocus = () => {
-      if (verificationStep === 'awaiting_action') {
-        setVerificationStep('verifying');
-      }
-    };
-
-    document.addEventListener('visibilitychange', handleVisibilityChange);
-    window.addEventListener('focus', handleWindowFocus);
-
-    return () => {
-      document.removeEventListener('visibilitychange', handleVisibilityChange);
-      window.removeEventListener('focus', handleWindowFocus);
-    };
+    document.addEventListener('visibilitychange', onVisibility);
+    return () => document.removeEventListener('visibilitychange', onVisibility);
   }, [verificationStep]);
 
   useEffect(() => {
