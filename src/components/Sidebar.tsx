@@ -59,7 +59,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
       case 'offline':
         return {
           color: '#64748B', // Grey
-          label: 'Offline Mode',
+          label: 'No internet connection',
           pulse: false,
         };
       case 'demo':
