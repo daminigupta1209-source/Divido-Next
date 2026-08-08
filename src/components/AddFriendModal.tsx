@@ -92,6 +92,26 @@ export const AddFriendModal: React.FC<AddFriendModalProps> = ({
     setTimeout(() => setCopied(false), 2000);
   };
 
+  // Opens the phone's own share sheet (WhatsApp, Telegram, SMS, email, and every
+  // other app that accepts a link) — the same "all your apps" chooser idea as
+  // UPI verify. Falls back to copying the link where Web Share isn't supported
+  // (most desktop browsers).
+  const canNativeShare = typeof navigator !== 'undefined' && !!(navigator as any).share;
+  const handleNativeShare = async () => {
+    const shareText = customRejoinLink
+      ? `Hey! Rejoin the group ${selectedGroup ? `"${selectedGroup.name}"` : 'our group'} on Divido 💸`
+      : `Hey! Join ${selectedGroup ? `"${selectedGroup.name}"` : 'my group'} on Divido to split expenses 💸`;
+    try {
+      await (navigator as any).share({
+        title: selectedGroup ? `Join "${selectedGroup.name}" on Divido` : 'Join my group on Divido',
+        text: shareText,
+        url: getInviteLink(),
+      });
+    } catch {
+      /* user dismissed the share sheet, or share failed — nothing to do */
+    }
+  };
+
   const encodedMsg = encodeURIComponent(getInviteMessage());
 
   const shareApps = [
@@ -349,6 +369,34 @@ export const AddFriendModal: React.FC<AddFriendModalProps> = ({
               <p style={{ margin: '0 0 16px 0', fontSize: '11px', fontWeight: 700, color: '#94A3B8', textTransform: 'uppercase', letterSpacing: '0.5px', textAlign: 'center' }}>
                 {confirmedNames.length === 0 ? 'Friends join by claiming their name' : 'Send them the invite link to join'}
               </p>
+              {canNativeShare && (
+                <button
+                  onClick={handleNativeShare}
+                  style={{
+                    width: '100%',
+                    padding: '13px',
+                    borderRadius: '14px',
+                    border: 'none',
+                    background: '#6366F1',
+                    color: 'white',
+                    fontSize: '14px',
+                    fontWeight: 800,
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: '8px',
+                    margin: '4px 0 6px',
+                  }}
+                >
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <circle cx="18" cy="5" r="3" /><circle cx="6" cy="12" r="3" /><circle cx="18" cy="19" r="3" />
+                    <line x1="8.59" y1="13.51" x2="15.42" y2="17.49" /><line x1="15.41" y1="6.51" x2="8.59" y2="10.49" />
+                  </svg>
+                  Share to any app
+                </button>
+              )}
+
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', rowGap: '14px', margin: '10px 0' }}>
                 {shareApps.map((app) => (
                   <div key={app.label} onClick={app.action} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '6px', cursor: 'pointer' }}>
