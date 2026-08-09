@@ -2150,6 +2150,24 @@ function App() {
               setShowAddFriendModal(true);
             }}
             onReinviteMember={async (memberName, inviteUrl) => {
+              const grpName = selectedGroup?.name;
+              const shareText = `Hey ${memberName}! Rejoin ${grpName ? `"${grpName}"` : 'our group'} on Divido 💸`;
+              const nativeShare = typeof navigator !== 'undefined' && (navigator as any).share;
+
+              // Fire the phone's own share sheet FIRST — the awaited DB
+              // reactivation below would otherwise consume the tap's activation.
+              if (nativeShare) {
+                try {
+                  await (navigator as any).share({
+                    title: grpName ? `Rejoin "${grpName}" on Divido` : 'Rejoin my group on Divido',
+                    text: shareText,
+                    url: inviteUrl,
+                  });
+                } catch {
+                  /* user dismissed the share sheet — nothing to do */
+                }
+              }
+
               if (selectedId && selectedId !== 'STANDALONE') {
                 try {
                   const searchName = memberName + ' (Left)';
@@ -2188,9 +2206,13 @@ function App() {
                     : g
                 )
               );
-              setActiveReminderName(memberName);
-              setActiveRejoinLink(inviteUrl);
-              setShowAddFriendModal(true);
+
+              // Desktop / no native share: fall back to our in-app share card.
+              if (!nativeShare) {
+                setActiveReminderName(memberName);
+                setActiveRejoinLink(inviteUrl);
+                setShowAddFriendModal(true);
+              }
             }}
             onRemoveMember={async (memberName) => {
               if (!selectedId || selectedId === 'STANDALONE') return;
