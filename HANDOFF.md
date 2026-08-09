@@ -23,6 +23,79 @@ An expense-splitting app (Splitwise/Tricount-style).
 - **Duplicate group names are blocked.**
 - Tricount-style "view a group without signing in" = FUTURE v2. Do NOT build now.
 
+## Status Update — August 6, 2026 (Claude Code session)
+
+All items below are **committed AND pushed to `main`** (deployed to Vercel). Working tree
+clean at end of session. Owner is non-technical — walked through each step with analogies.
+
+### ⚠️ TWO Supabase SQL scripts must be run in the Supabase SQL Editor (owner already ran both)
+- `api/fix_removed_member_write_access.sql` — RLS so only **active** (non-`(Left)`) members can
+  INSERT/UPDATE/DELETE expenses; any member (incl. removed) can still SELECT. Closes the hole
+  where a removed member's still-linked email let them keep writing. **Owner confirmed "Success".**
+- `api/add_performance_indexes.sql` — indexes on `group_members(group_id)`,
+  `group_members(user_email)`, `expenses(group_id)`. **Owner confirmed "Success".**
+
+### Member removal / re-invite
+1. **Pending invite removal now DELETES (`2d…`/earlier commit)** — removing a *pending* invite
+   (never joined) hard-deletes the `group_members` row instead of tombstoning to `(Left)`.
+   `onRemoveMember` in App.tsx branches on `isPendingInvite` (in `pendingMembers`, not `(Left)`).
+2. **"Invite again" detaches email (`6b56aff`)** — reactivating a removed member kept their
+   `user_email`, so the sync treated the linked email as "joined" and snapped them back into
+   Joined Members ~1s after clicking Invite again. Fix: `onReinviteMember` now sets
+   `user_email: null` on reactivation → they stay a true pending invite until they rejoin.
+
+### Invite / claim flow speed & polish
+3. **No home-screen flash on invite (`isResolvingInvite`)** — invite landing was async, so the
+   home feed painted before the claim card. Now a synchronously-seeded `isResolvingInvite` flag
+   shows a loader until `joinGroupFromQuery` resolves (5s safety fallback).
+4. **Joiner sees full roster instantly** — claim built the local group from the `groups` record
+   (no members array) → empty group for 5–20s until cloud load. Now the claim handler fetches
+   `group_members` and seeds `members`/`pendingMembers` immediately.
+5. **Removed leftover `DIAG v4 …` debug line** from the rejoin modal (was user-visible).
+
+### Performance
+6. **Code-splitting (`75732b1`)** — `React.lazy` for ExpenseModal, the tesseract BillScanner,
+   Analytics, MasterSummary, FriendsView, ActivityStudio, Profile. Main bundle 572kB→367kB
+   (gzip 145→95kB). Suspense boundaries in App.tsx.
+7. **Smarter realtime (`f91456b`)** — the realtime sub reloaded the whole account on ANY global
+   DB change. Now ignores changes not touching the user's groups (or their email) and debounces
+   reloads 500ms. Still a full reload, not incremental — future work.
+
+### PWA / distribution / offline
+8. **Install prompt (`InstallPrompt.tsx`)** — dismissible banner: native install on Android
+   (beforeinstallprompt), Share→Add to Home Screen steps on iOS; hidden if standalone or
+   dismissed <14 days. Mounted on Login + main app.
+9. **Offline support (`public/sw.js` + registration in `main.tsx`)** — service worker: HTML
+   network-first (so deploys reach users), same-origin assets cache-first, cross-origin
+   (Supabase) never intercepted. App now opens with no connection (after one online visit).
+   Sidebar offline label renamed "Offline Mode" → **"No internet connection"**.
+10. **Login install hint** — small line under Google button explaining that installing helps when
+    mobile-browser Google sign-in silently fails (install prompt swallows the tap / Google is
+    strict in plain tabs). Note: APK "Unsafe app blocked" on newer phones (Samsung S24 Auto
+    Blocker + Play Protect) is a device issue, not the app — recommend website + Add to Home Screen.
+
+### UPI verify (Profile → UpiSection.tsx)
+11. Removed the double popup (our modal + auto-fired `upi://` chooser). Mobile now shows a compact
+    horizontal **hint pill** (3s shrinking timer bar + ✕) and opens the phone's **own UPI app
+    chooser** directly (all apps). Verification advances only after a genuine round-trip (page
+    hidden >1s, tracked via `mobileReturnPendingRef`) so a cancelled chooser won't falsely start
+    it. Desktop keeps the QR-code flow.
+
+### Share / invite = native share sheet
+12. **Add Friend, Remind, Invite again all use `navigator.share`** — on mobile, these open the
+    phone's own share sheet (all apps) **directly within the tap** and skip the in-app share card.
+    `navigator.share` MUST be called synchronously in the gesture (before any `await`) or it fails
+    — Invite again fires share BEFORE its Supabase reactivation. Desktop (no `navigator.share`)
+    falls back to the in-app share card (branded WhatsApp/Telegram/SMS/Email/Copy grid).
+
+### Gotchas learned this session
+- **Installed PWA holds the old version until fully closed & reopened** — owner repeatedly tested
+  before reopening. Always remind: swipe from recents → reopen with internet.
+- **`navigator.share` needs transient user activation** — call it as the FIRST awaited action in
+  the click handler; awaiting Supabase first kills it.
+
+---
+
 ## Status Update — August 5, 2026 (Antigravity session)
 
 Changes are **LOCAL ONLY — NOT YET PUSHED**. 6 files modified. Owner must `git add -A && git commit && git push` after review.
@@ -167,8 +240,18 @@ non-technical — was walked through each step. Working tree clean at end of ses
   `wasRemovedByAdmin`, **write-lock: + Expense hidden, + Friend becomes Rejoin for left users**),
   FloatingAddMenu.tsx, group-detail/GroupMemberList.tsx (Leave/Remove prompts, member list),
   **group-detail/GroupHeader.tsx (paperclip/simplify/date disabled for past members)**.
-- `vite.config.ts` — manual code-splitting config.
+- `src/components/InstallPrompt.tsx` — **NEW** dismissible "Add to Home screen" banner (Android
+  native prompt / iOS manual steps). Mounted in App.tsx on both Login and main app.
+- `public/sw.js` — **NEW** service worker for offline support (HTML network-first, assets
+  cache-first, Supabase untouched). Registered in `src/main.tsx`.
+- `src/components/UpiSection.tsx` — UPI id entry + verify. Mobile: hint pill + native UPI app
+  chooser; desktop: QR. Verification gated on real app round-trip (`mobileReturnPendingRef`).
+- `src/components/AddFriendModal.tsx` — invite/share. `navigator.share` primary on mobile
+  (skips card); branded grid + Copy is the desktop fallback.
+- `vite.config.ts` — manual code-splitting config (plus `React.lazy` splits in App.tsx/ExpenseModal).
 - `api/supabase_setup.sql` — DB schema + Row Level Security setup.
+- `api/fix_removed_member_write_access.sql` — **NEW** RLS: expense writes limited to active members.
+- `api/add_performance_indexes.sql` — **NEW** indexes on group_members/expenses. (Both already run.)
 - `tests/e2e/` — leave-rejoin (updated for write-lock UI), realtime-sync, auth-gating, past-member-ui specs.
 
 ## Key conventions (gotchas)
