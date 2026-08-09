@@ -204,7 +204,7 @@ export const AddFriendModal: React.FC<AddFriendModalProps> = ({
     }
   }, [targetReminderName]);
 
-  const handleConfirmedAdd = () => {
+  const handleConfirmedAdd = async () => {
     let finalPending = [...pending];
     const trimmed = name.trim();
     if (trimmed) {
@@ -226,13 +226,16 @@ export const AddFriendModal: React.FC<AddFriendModalProps> = ({
       finalPending.forEach((n) => { if (!newMembers.includes(n)) newMembers.push(n); });
       setGroups(groups.map((g) => (g.id === selectedGroup.id ? { ...g, members: newMembers } : g)));
     }
-    setInvited(true);
-
-    // Jump straight to the phone's own share sheet (all apps). This runs inside
-    // the button tap, so the browser permits it. The in-modal share buttons stay
-    // as a fallback for desktop or if the user dismisses the sheet.
     if (canNativeShare) {
-      handleNativeShare();
+      // Mobile: open the phone's own share sheet directly and DON'T show our
+      // share card. This runs inside the button tap, so the browser permits it.
+      // handleNativeShare swallows its own errors, so this resolves whether the
+      // user shares or dismisses — either way we close the modal.
+      await handleNativeShare();
+      setShowAddFriendModal(false);
+    } else {
+      // Desktop / no native share sheet: fall back to our in-app share card.
+      setInvited(true);
     }
   };
 
