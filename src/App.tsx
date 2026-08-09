@@ -2116,18 +2116,38 @@ function App() {
                 console.error('Rename failed:', err);
               }
             }}
-            onRemindMember={(memberName) => {
-              // Set active reminder name target
-              setActiveReminderName(memberName);
-              // Open AddFriendModal directly to invite sharing slide
-              setShowAddFriendModal(true);
-              // Also send an in-app reminder notification if this friend has joined
+            onRemindMember={async (memberName) => {
+              // Fire the in-app reminder notification (fire-and-forget so it
+              // doesn't consume the tap's user-activation before navigator.share).
               notifyFriend(memberName, {
                 type: 'reminder',
                 title: `${userName} sent you a reminder`,
                 body: selectedGroup && selectedId !== 'STANDALONE' ? `Settle up in ${selectedGroup.name}` : 'You have a pending balance to settle',
                 groupId: selectedId,
               });
+
+              const grpName = selectedGroup?.name;
+              const inviteLink = `${window.location.origin}/?joinGroupId=${selectedId}`;
+              const shareText = `Hey ${memberName}! Join ${grpName ? `"${grpName}"` : 'my group'} on Divido to split expenses 💸`;
+
+              // Mobile: open the phone's own share sheet directly (all apps),
+              // no in-app card. Runs inside the tap, so the browser permits it.
+              if (typeof navigator !== 'undefined' && (navigator as any).share) {
+                try {
+                  await (navigator as any).share({
+                    title: grpName ? `Join "${grpName}" on Divido` : 'Join my group on Divido',
+                    text: shareText,
+                    url: inviteLink,
+                  });
+                } catch {
+                  /* user dismissed the share sheet — nothing to do */
+                }
+                return;
+              }
+
+              // Desktop / no native share: fall back to our in-app share card.
+              setActiveReminderName(memberName);
+              setShowAddFriendModal(true);
             }}
             onReinviteMember={async (memberName, inviteUrl) => {
               if (selectedId && selectedId !== 'STANDALONE') {
