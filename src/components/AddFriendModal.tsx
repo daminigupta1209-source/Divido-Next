@@ -227,6 +227,13 @@ export const AddFriendModal: React.FC<AddFriendModalProps> = ({
       setGroups(groups.map((g) => (g.id === selectedGroup.id ? { ...g, members: newMembers } : g)));
     }
     setInvited(true);
+
+    // Jump straight to the phone's own share sheet (all apps). This runs inside
+    // the button tap, so the browser permits it. The in-modal share buttons stay
+    // as a fallback for desktop or if the user dismisses the sheet.
+    if (canNativeShare) {
+      handleNativeShare();
+    }
   };
 
   return (
