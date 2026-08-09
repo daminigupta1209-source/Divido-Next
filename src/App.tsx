@@ -2183,7 +2183,13 @@ function App() {
                       .from('group_members')
                       .update({
                         name: memberName,
-                        is_pending: true
+                        is_pending: true,
+                        // Detach their old email so they're a genuine pending
+                        // invite — otherwise the sync treats the still-linked
+                        // email as "joined" and snaps them back into Joined
+                        // Members before they ever accept. Re-attached when they
+                        // actually rejoin via the invite link.
+                        user_email: null
                       })
                       .eq('id', matched.id);
                   }
