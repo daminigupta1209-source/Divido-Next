@@ -166,6 +166,11 @@ export const UpiSection: React.FC<UpiSectionProps> = ({
             ref={upiInputRef}
             type="text"
             name="upiId"
+            autoComplete="off"
+            autoCorrect="off"
+            spellCheck="false"
+            data-1p-ignore
+            data-lpignore="true"
             value={localUpi}
             onChange={(e) => {
               setLocalUpi(e.target.value);

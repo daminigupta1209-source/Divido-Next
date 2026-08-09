@@ -212,6 +212,11 @@ export const GroupsView: React.FC<GroupsViewProps> = ({
             </svg>
             <input
               type="text"
+              autoComplete="off"
+              autoCorrect="off"
+              spellCheck="false"
+              data-1p-ignore
+              data-lpignore="true"
               placeholder="Search groups..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}

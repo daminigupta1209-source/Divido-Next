@@ -223,6 +223,11 @@ export const Profile: React.FC<ProfileProps> = ({
               </label>
               <input
                 type="text"
+                autoComplete="off"
+                autoCorrect="off"
+                spellCheck="false"
+                data-1p-ignore
+                data-lpignore="true"
                 value={localName}
                 onChange={(e) => setLocalName(e.target.value)}
                 onBlur={handleNameBlur}

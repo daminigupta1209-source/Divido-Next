@@ -244,6 +244,12 @@ export const MobileHeader: React.FC<MobileHeaderProps> = ({
               {headerRenaming ? (
                 <div style={{ display: 'flex', flexDirection: 'column', width: '100%', alignItems: 'flex-start' }}>
                   <input
+                    type="text"
+                    autoComplete="off"
+                    autoCorrect="off"
+                    spellCheck="false"
+                    data-1p-ignore
+                    data-lpignore="true"
                     autoFocus
                     value={headerNewName}
                     onChange={(e) => {
@@ -833,6 +839,11 @@ export const MobileHeader: React.FC<MobileHeaderProps> = ({
                 {isHeaderSearchActive && view === 'summary' && (
                   <input
                     type="text"
+                    autoComplete="off"
+                    autoCorrect="off"
+                    spellCheck="false"
+                    data-1p-ignore
+                    data-lpignore="true"
                     placeholder="Search groups..."
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}

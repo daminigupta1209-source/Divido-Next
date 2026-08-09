@@ -133,6 +133,11 @@ export const SearchableCurrencyPicker: React.FC<SearchableCurrencyPickerProps> =
           <input
             autoFocus
             type="text"
+            autoComplete="off"
+            autoCorrect="off"
+            spellCheck="false"
+            data-1p-ignore
+            data-lpignore="true"
             placeholder="Search by name, code, or symbol..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}

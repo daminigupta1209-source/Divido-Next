@@ -657,6 +657,10 @@ export const SettleModal: React.FC<SettleModalProps> = ({
                 onClick={(e) => e.stopPropagation()}
                 placeholder="0.00"
                 autoComplete="off"
+                autoCorrect="off"
+                spellCheck="false"
+                data-1p-ignore
+                data-lpignore="true"
                 style={{
                   flex: 1,
                   background: 'transparent',
@@ -683,6 +687,11 @@ export const SettleModal: React.FC<SettleModalProps> = ({
                 id="settle-notes-input"
                 ref={settleNotesRef}
                 type="text"
+                autoComplete="off"
+                autoCorrect="off"
+                spellCheck="false"
+                data-1p-ignore
+                data-lpignore="true"
                 value={settleNotes}
                 onChange={(e) => setSettleNotes(e.target.value)}
                 placeholder="What's this for?"

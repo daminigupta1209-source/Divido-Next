@@ -180,6 +180,12 @@ export const GroupHeader: React.FC<GroupHeaderProps> = ({
 
           <div style={{ position: 'relative', display: 'flex', alignItems: 'center', flex: 1 }}>
             <input
+              type="text"
+              autoComplete="off"
+              autoCorrect="off"
+              spellCheck="false"
+              data-1p-ignore
+              data-lpignore="true"
               autoFocus
               value={newName}
               onChange={(e) => {
@@ -239,6 +245,12 @@ export const GroupHeader: React.FC<GroupHeaderProps> = ({
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '2px', alignItems: 'center' }}>
                   <label style={{ fontSize: '8px', fontWeight: 900, color: 'var(--g)', textTransform: 'uppercase', letterSpacing: '1.2px', marginBottom: '-4px' }}>Group Name</label>
                   <input
+                    type="text"
+                    autoComplete="off"
+                    autoCorrect="off"
+                    spellCheck="false"
+                    data-1p-ignore
+                    data-lpignore="true"
                     autoFocus
                     value={newName}
                     onChange={(e) => { setNewName(e.target.value); setNameError(''); }}

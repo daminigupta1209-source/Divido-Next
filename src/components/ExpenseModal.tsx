@@ -1137,6 +1137,10 @@ export const ExpenseModal: React.FC<ExpenseModalProps> = ({
                   }}
                   type="text"
                   autoComplete="off"
+                  autoCorrect="off"
+                  spellCheck="false"
+                  data-1p-ignore
+                  data-lpignore="true"
                   placeholder="e.g. Pizza 🍕"
                   style={{
                     width: '100%',
@@ -1273,6 +1277,11 @@ export const ExpenseModal: React.FC<ExpenseModalProps> = ({
                 <input
                   id="exp-amt"
                   type="number"
+                  autoComplete="off"
+                  autoCorrect="off"
+                  spellCheck="false"
+                  data-1p-ignore
+                  data-lpignore="true"
                   placeholder="0.00"
                   value={amt}
                   onChange={(e) => setAmt(e.target.value)}

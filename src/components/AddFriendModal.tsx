@@ -280,6 +280,11 @@ export const AddFriendModal: React.FC<AddFriendModalProps> = ({
               <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                 <input
                   type="text"
+                  autoComplete="off"
+                  autoCorrect="off"
+                  spellCheck="false"
+                  data-1p-ignore
+                  data-lpignore="true"
                   placeholder="e.g. Rahul S, Priya..."
                   value={name}
                   onChange={(e) => { e.stopPropagation(); setName(e.target.value); setError(null); }}

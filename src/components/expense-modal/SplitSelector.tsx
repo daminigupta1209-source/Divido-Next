@@ -115,6 +115,11 @@ export const SplitSelector: React.FC<SplitSelectorProps> = ({
               <input
                 id="shares-amt-input"
                 type="number"
+                autoComplete="off"
+                autoCorrect="off"
+                spellCheck="false"
+                data-1p-ignore
+                data-lpignore="true"
                 placeholder="0.00"
                 value={amt}
                 onChange={(e) => setAmt(e.target.value)}
@@ -294,6 +299,10 @@ export const SplitSelector: React.FC<SplitSelectorProps> = ({
                     id={`share-input-${friend}`}
                     type="number"
                     autoComplete="off"
+                    autoCorrect="off"
+                    spellCheck="false"
+                    data-1p-ignore
+                    data-lpignore="true"
                     value={shares[friend] === undefined ? '' : shares[friend]}
                     onChange={(e) => {
                       const inputVal = e.target.value;

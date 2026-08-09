@@ -188,10 +188,14 @@ export const NetPayableModal: React.FC<NetPayableModalProps> = ({
                     type="text"
                     name="upiId"
                     id="payee-upi-input"
+                    autoComplete="off"
+                    autoCorrect="off"
+                    spellCheck="false"
+                    data-1p-ignore
+                    data-lpignore="true"
                     placeholder="friendname@okaxis"
                     value={payPopupUpi}
                     onChange={(e) => setPayPopupUpi(e.target.value)}
-                    autoComplete="on"
                     style={{
                       padding: '10px 12px',
                       fontSize: '13px',
