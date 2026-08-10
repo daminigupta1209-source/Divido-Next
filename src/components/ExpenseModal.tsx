@@ -2290,6 +2290,7 @@ export const ExpenseModal: React.FC<ExpenseModalProps> = ({
           </div>
         </div>
       )}
+      </div>
     </div>
   );
 };

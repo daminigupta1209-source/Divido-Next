@@ -668,11 +668,6 @@ export const SettleModal: React.FC<SettleModalProps> = ({
                 }}
                 onClick={(e) => e.stopPropagation()}
                 placeholder="0.00"
-                autoComplete="one-time-code"
-                autoCorrect="off"
-                spellCheck="false"
-                data-1p-ignore
-                data-lpignore="true"
                 style={{
                   flex: 1,
                   background: 'transparent',
