@@ -2047,7 +2047,40 @@ export const ExpenseModal: React.FC<ExpenseModalProps> = ({
       {/* Smart Receipt Scanner Modal — mounted only when opened so its heavy
           OCR bundle loads on demand rather than at app startup. */}
       {showScannerModal && (
-        <React.Suspense fallback={null}>
+        <React.Suspense fallback={
+          <div style={{
+            position: 'fixed',
+            inset: 0,
+            background: '#F8FAFC',
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 3000,
+            animation: 'fadeIn 0.2s ease-out',
+          }}>
+            <div className="scanner-fallback-spinner" style={{
+              width: '50px',
+              height: '50px',
+              borderRadius: '50%',
+              border: '3px solid #E2E8F0',
+              borderTopColor: '#10B981',
+              animation: 'scannerSpin 0.7s linear infinite',
+              marginBottom: '16px',
+            }} />
+            <h3 className="nunito" style={{ fontSize: '15px', fontWeight: 900, color: '#0F172A', margin: '0 0 6px 0' }}>
+              Launching Smart Scanner...
+            </h3>
+            <p style={{ fontSize: '12px', fontWeight: 700, color: '#64748B', margin: 0 }}>
+              Preparing OCR engine & camera
+            </p>
+            <style>{`
+              @keyframes scannerSpin {
+                to { transform: rotate(360deg); }
+              }
+            `}</style>
+          </div>
+        }>
           <BillScanner
             showScannerModal={showScannerModal}
             setShowScannerModal={setShowScannerModal}
