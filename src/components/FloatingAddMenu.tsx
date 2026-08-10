@@ -38,29 +38,39 @@ export const FloatingAddMenu: React.FC<FloatingAddMenuProps> = ({
   return (
     <div
       ref={containerRef}
-      style={{ position: 'fixed', bottom: '96px', right: '20px', zIndex: 1000, display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '10px' }}
+      style={{
+        position: 'fixed',
+        bottom: '96px',
+        right: '20px',
+        zIndex: 1000,
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        gap: '12px'
+      }}
     >
       {/* Floating Scan Button — active inside group view */}
       <button
         onClick={() => handleAddExpense(true)}
         style={{
-          width: '48px',
-          height: '40px',
-          borderRadius: '12px',
+          width: '44px',
+          height: '44px',
+          borderRadius: '50%',
           background: 'linear-gradient(135deg, #34D399 0%, #10B981 100%)',
           border: 'none',
           color: '#FFFFFF',
-          boxShadow: '0 6px 16px rgba(16, 185, 129, 0.2)',
+          boxShadow: '0 4px 14px rgba(16, 185, 129, 0.25)',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
           cursor: 'pointer',
-          transition: '0.2s all cubic-bezier(0.175, 0.885, 0.32, 1.275)',
+          transition: 'all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275)',
         }}
+        className="hover-up"
         title="Scan Receipt"
         aria-label="Scan Receipt"
       >
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" style={{ width: '20px', height: '20px' }}>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" style={{ width: '18px', height: '18px' }}>
           <path d="M4 8V6a2 2 0 0 1 2-2h2" /><path d="M16 4h2a2 2 0 0 1 2 2v2" /><path d="M20 16v2a2 2 0 0 1-2 2h-2" /><path d="M8 20H6a2 2 0 0 1-2-2v-2" /><path d="M4 12h16" />
         </svg>
       </button>
@@ -69,31 +79,31 @@ export const FloatingAddMenu: React.FC<FloatingAddMenuProps> = ({
       <button
         onClick={() => handleAddExpense(false)}
         style={{
-          width: '48px',
-          height: '40px',
-          borderRadius: '12px',
+          width: '52px',
+          height: '52px',
+          borderRadius: '50%',
           background: 'linear-gradient(135deg, #10B981 0%, #059669 100%)',
           border: 'none',
           color: '#FFFFFF',
-          boxShadow: '0 6px 16px rgba(5, 150, 105, 0.25)',
+          boxShadow: '0 6px 18px rgba(5, 150, 105, 0.35)',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
           cursor: 'pointer',
-          transition: '0.2s all cubic-bezier(0.175, 0.885, 0.32, 1.275)',
+          transition: 'all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275)',
         }}
+        className="hover-up"
         title="Add Expense"
         aria-label="Add Expense"
       >
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '3px', color: '#FFFFFF' }}>
-          <span style={{ fontSize: '15px', fontWeight: 900, lineHeight: 1 }}>+</span>
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" style={{ width: '16px', height: '16px' }}>
-            <path d="M4 2v20l2-1 2 1 2-1 2 1 2-1 2 1 2-1 2 1V2l-2 1-2-1-2 1-2-1-2 1-2-1-2 1Z" />
-            <path d="M16 8H8" />
-            <path d="M16 12H8" />
-            <path d="M15 16H8" />
-          </svg>
-        </div>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" style={{ width: '24px', height: '24px' }}>
+          <path d="M4 2v20l2-1 2 1 2-1 2 1 2-1 2 1 2-1 2 1V2l-2 1-2-1-2 1-2-1-2 1-2-1-2 1Z" />
+          <path d="M8 7h8" />
+          <path d="M8 11h8" />
+          <path d="M8 15h4" />
+          <path d="M16 17v-4" strokeWidth="2.5" />
+          <path d="M14 15h4" strokeWidth="2.5" />
+        </svg>
       </button>
     </div>
   );
