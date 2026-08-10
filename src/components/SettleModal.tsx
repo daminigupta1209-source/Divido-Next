@@ -615,7 +615,7 @@ export const SettleModal: React.FC<SettleModalProps> = ({
               </div>
               <input
                 id="settle-amt-input"
-                type="text"
+                type="search"
                 inputMode="decimal"
                 value={settleAmt}
                 onChange={(e) => {
@@ -686,7 +686,7 @@ export const SettleModal: React.FC<SettleModalProps> = ({
               <input
                 id="settle-notes-input"
                 ref={settleNotesRef}
-                type="text"
+                type="search"
                 autoComplete="one-time-code"
                 autoCorrect="off"
                 spellCheck="false"

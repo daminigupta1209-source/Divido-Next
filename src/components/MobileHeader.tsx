@@ -244,7 +244,7 @@ export const MobileHeader: React.FC<MobileHeaderProps> = ({
               {headerRenaming ? (
                 <div style={{ display: 'flex', flexDirection: 'column', width: '100%', alignItems: 'flex-start' }}>
                   <input
-                    type="text"
+                    type="search"
                     autoComplete="one-time-code"
                     autoCorrect="off"
                     spellCheck="false"
@@ -838,7 +838,7 @@ export const MobileHeader: React.FC<MobileHeaderProps> = ({
               <div className="home-header-actions" aria-label="Home actions" onClick={(e) => e.stopPropagation()} style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', flex: 1, marginLeft: isHeaderSearchActive ? '40px' : '0px', minWidth: 0 }}>
                 {isHeaderSearchActive && view === 'summary' && (
                   <input
-                    type="text"
+                    type="search"
                     autoComplete="one-time-code"
                     autoCorrect="off"
                     spellCheck="false"

@@ -222,7 +222,7 @@ export const Profile: React.FC<ProfileProps> = ({
                 Full Name
               </label>
               <input
-                type="text"
+                type="search"
                 autoComplete="one-time-code"
                 autoCorrect="off"
                 spellCheck="false"

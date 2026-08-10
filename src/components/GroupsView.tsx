@@ -211,7 +211,7 @@ export const GroupsView: React.FC<GroupsViewProps> = ({
               <line x1="21" y1="21" x2="16.65" y2="16.65" />
             </svg>
             <input
-              type="text"
+              type="search"
               autoComplete="one-time-code"
               autoCorrect="off"
               spellCheck="false"

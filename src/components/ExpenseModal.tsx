@@ -1135,7 +1135,7 @@ export const ExpenseModal: React.FC<ExpenseModalProps> = ({
                     setTitle(v.length === 1 ? v.toUpperCase() : v);
                     setOverrideEmoji(null);
                   }}
-                  type="text"
+                  type="search"
                   autoComplete="one-time-code"
                   autoCorrect="off"
                   spellCheck="false"

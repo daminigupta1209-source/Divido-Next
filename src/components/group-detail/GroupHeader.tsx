@@ -180,7 +180,7 @@ export const GroupHeader: React.FC<GroupHeaderProps> = ({
 
           <div style={{ position: 'relative', display: 'flex', alignItems: 'center', flex: 1 }}>
             <input
-              type="text"
+              type="search"
               autoComplete="one-time-code"
               autoCorrect="off"
               spellCheck="false"
@@ -245,7 +245,7 @@ export const GroupHeader: React.FC<GroupHeaderProps> = ({
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '2px', alignItems: 'center' }}>
                   <label style={{ fontSize: '8px', fontWeight: 900, color: 'var(--g)', textTransform: 'uppercase', letterSpacing: '1.2px', marginBottom: '-4px' }}>Group Name</label>
                   <input
-                    type="text"
+                    type="search"
                     autoComplete="one-time-code"
                     autoCorrect="off"
                     spellCheck="false"

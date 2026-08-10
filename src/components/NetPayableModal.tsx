@@ -185,7 +185,7 @@ export const NetPayableModal: React.FC<NetPayableModalProps> = ({
                     }
                   `}</style>
                   <input
-                    type="text"
+                    type="search"
                     name="upiId"
                     id="payee-upi-input"
                     autoComplete="one-time-code"

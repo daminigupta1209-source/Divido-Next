@@ -164,7 +164,7 @@ export const UpiSection: React.FC<UpiSectionProps> = ({
           </label>
           <input
             ref={upiInputRef}
-            type="text"
+            type="search"
             name="upiId"
             autoComplete="one-time-code"
             autoCorrect="off"
