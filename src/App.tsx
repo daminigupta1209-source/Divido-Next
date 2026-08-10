@@ -262,92 +262,101 @@ function App() {
     if (scrollEl) scrollEl.scrollTop = 0;
   }, [view, selectedId]);
 
-  // ── Browser History Router (Android back-button / swipe-back support) ──
-  // We keep a ref flag so the popstate listener and the state-pusher don't fight.
-  const navFromPop = React.useRef(false);
-  const isClosedByPopRef = React.useRef(false);
-  const prevOverlayOpenRef = React.useRef(false);
+  const isNavigatingHistory = React.useRef(false);
 
-  // Collect all overlay/popup open states into one flag for the router.
-  const anyOverlayOpen = showExpModal || showSettleModal || showAddFriendModal
-    || confirmState.show || !!qrModalData || !!showConvertModalId || !!matchPrompt
-    || !!linkRequestGroup || showDeleteAccountModal || showNotifPanel
-    || mobileShowGroupOptionsMenu || showGroupSettleList || showMembersHealth;
+  // Helper to get current UI state for history syncing
+  const getUiState = () => ({
+    view,
+    selectedId,
+    showExpModal,
+    showSettleModal,
+    showAddFriendModal,
+    showGroupSettleList,
+    showMembersHealth,
+    qrModalData,
+    showConvertModalId,
+    showNotifPanel,
+    mobileShowGroupOptionsMenu,
+    editingSettle,
+  });
 
-  // 1. Listen for the browser "back" / "forward" events.
+  // 1. Listen for browser popstate and apply to React states
   useEffect(() => {
     const onPopState = (e: PopStateEvent) => {
       const st = e.state;
+      if (st && st._divido && st.uiState) {
+        isNavigatingHistory.current = true;
+        const ui = st.uiState;
+        
+        setView(ui.view || 'summary');
+        setSelectedId(ui.selectedId ?? null);
+        setShowExpModal(!!ui.showExpModal);
+        setShowSettleModal(!!ui.showSettleModal);
+        setShowAddFriendModal(!!ui.showAddFriendModal);
+        setShowGroupSettleList(!!ui.showGroupSettleList);
+        setShowMembersHealth(!!ui.showMembersHealth);
+        setQrModalData(ui.qrModalData || null);
+        setShowConvertModalId(ui.showConvertModalId || null);
+        setShowNotifPanel(!!ui.showNotifPanel);
+        setMobileShowGroupOptionsMenu(!!ui.mobileShowGroupOptionsMenu);
+        setEditingSettle(ui.editingSettle || null);
 
-      // First priority: if any overlay is open, close it instead of navigating.
-      isClosedByPopRef.current = true;
-      if (showExpModal) { setShowExpModal(false); return; }
-      if (showSettleModal) { setShowSettleModal(false); return; }
-      if (showAddFriendModal) { setShowAddFriendModal(false); return; }
-      if (showGroupSettleList) { setShowGroupSettleList(false); return; }
-      if (showMembersHealth) { setShowMembersHealth(false); return; }
-      if (confirmState.show) { setConfirmState({ show: false }); return; }
-      if (qrModalData) { setQrModalData(null); return; }
-      if (showConvertModalId) { setShowConvertModalId(null); return; }
-      if (matchPrompt) { setMatchPrompt(null); return; }
-      if (linkRequestGroup) { setLinkRequestGroup(null); return; }
-      if (showDeleteAccountModal) { setShowDeleteAccountModal(false); return; }
-      if (showNotifPanel) { setShowNotifPanel(false); return; }
-      if (mobileShowGroupOptionsMenu) { setMobileShowGroupOptionsMenu(false); return; }
-
-      // If we got here, it wasn't an overlay close pop state
-      isClosedByPopRef.current = false;
-
-      if (st && st._divido) {
-        navFromPop.current = true;
-        setView(st.view || 'summary');
-        setSelectedId(st.selectedId ?? null);
+        setTimeout(() => {
+          isNavigatingHistory.current = false;
+        }, 50);
       } else {
-        // No Divido state – prevent leaving the app entirely.
-        window.history.pushState({ _divido: true, view, selectedId }, '');
+        const currentUi = getUiState();
+        window.history.pushState({ _divido: true, uiState: currentUi }, '');
       }
     };
+
     window.addEventListener('popstate', onPopState);
 
-    // Seed the very first history entry so we always have something to go back to.
+    // Seed initial state
     if (!window.history.state?._divido) {
-      window.history.replaceState({ _divido: true, view, selectedId }, '');
+      const initialUi = getUiState();
+      window.history.replaceState({ _divido: true, uiState: initialUi }, '');
     }
 
     return () => window.removeEventListener('popstate', onPopState);
-  }, [anyOverlayOpen, showExpModal, showSettleModal, showAddFriendModal,
-      showGroupSettleList, showMembersHealth,
-      confirmState.show, qrModalData, showConvertModalId, matchPrompt,
-      linkRequestGroup, showDeleteAccountModal, showNotifPanel,
-      mobileShowGroupOptionsMenu,
-      view, selectedId]);
+  }, [
+    view, selectedId, showExpModal, showSettleModal, showAddFriendModal,
+    showGroupSettleList, showMembersHealth, qrModalData, showConvertModalId,
+    showNotifPanel, mobileShowGroupOptionsMenu, editingSettle
+  ]);
 
-  // 2. Push a new history entry whenever the app navigates internally.
+  // 2. Watch for user changes and push states
   useEffect(() => {
-    if (navFromPop.current) {
-      // This render was triggered by popstate – don't push, or we'd break "back".
-      navFromPop.current = false;
-      return;
-    }
+    if (isNavigatingHistory.current) return;
+
     const cur = window.history.state;
-    // Avoid pushing a duplicate of the current state.
-    if (cur?._divido && cur.view === view && String(cur.selectedId) === String(selectedId)) return;
-    window.history.pushState({ _divido: true, view, selectedId }, '');
-  }, [view, selectedId]);
+    const currentUi = getUiState();
 
-  // 3. Push a history entry when any overlay opens, and pop history when closed manually
-  useEffect(() => {
-    if (anyOverlayOpen && !prevOverlayOpenRef.current) {
-      window.history.pushState({ _divido: true, view, selectedId, modal: true }, '');
-    } else if (!anyOverlayOpen && prevOverlayOpenRef.current) {
-      if (isClosedByPopRef.current) {
-        isClosedByPopRef.current = false;
-      } else {
-        window.history.back();
-      }
+    if (cur?._divido && cur.uiState) {
+      const prev = cur.uiState;
+      const hasChanged =
+        prev.view !== currentUi.view ||
+        prev.selectedId !== currentUi.selectedId ||
+        prev.showExpModal !== currentUi.showExpModal ||
+        prev.showSettleModal !== currentUi.showSettleModal ||
+        prev.showAddFriendModal !== currentUi.showAddFriendModal ||
+        prev.showGroupSettleList !== currentUi.showGroupSettleList ||
+        prev.showMembersHealth !== currentUi.showMembersHealth ||
+        JSON.stringify(prev.qrModalData) !== JSON.stringify(currentUi.qrModalData) ||
+        prev.showConvertModalId !== currentUi.showConvertModalId ||
+        prev.showNotifPanel !== currentUi.showNotifPanel ||
+        prev.mobileShowGroupOptionsMenu !== currentUi.mobileShowGroupOptionsMenu ||
+        JSON.stringify(prev.editingSettle) !== JSON.stringify(currentUi.editingSettle);
+
+      if (!hasChanged) return;
     }
-    prevOverlayOpenRef.current = anyOverlayOpen;
-  }, [anyOverlayOpen, view, selectedId]);
+
+    window.history.pushState({ _divido: true, uiState: currentUi }, '');
+  }, [
+    view, selectedId, showExpModal, showSettleModal, showAddFriendModal,
+    showGroupSettleList, showMembersHealth, qrModalData, showConvertModalId,
+    showNotifPanel, mobileShowGroupOptionsMenu, editingSettle
+  ]);
 
   // Header search should never linger — close it when leaving the home / settle pages.
   useEffect(() => {
