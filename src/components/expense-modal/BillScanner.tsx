@@ -339,7 +339,7 @@ export const BillScanner: React.FC<BillScannerProps> = ({
   const [scanProgress, setScanProgress] = useState<number>(0);
   const [scannerStatus, setScannerStatus] = useState<string>('');
   const [scanError, setScanError] = useState<string>('');
-  const [isCameraLive, setIsCameraLive] = useState<boolean>(false);
+  const [isCameraLive, setIsCameraLive] = useState<boolean>(true);
   const [cameraError, setCameraError] = useState<string>('');
 
   const videoRef = useRef<HTMLVideoElement | null>(null);
@@ -798,6 +798,29 @@ If a valid receipt: {"title": "Sunrise Foods", "amount": 5445.30, "notes": "Groc
                 📸
               </button>
             </div>
+            
+            {/* Inline file upload option below camera controls */}
+            <div style={{ marginTop: '10px', textAlign: 'center' }}>
+              <span
+                onClick={() => document.getElementById('receipt-file-input')?.click()}
+                style={{
+                  fontSize: '11.5px',
+                  fontWeight: 900,
+                  color: '#4F46E5',
+                  cursor: 'pointer',
+                  background: '#EEF2FF',
+                  padding: '6px 12px',
+                  borderRadius: '20px',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '5px',
+                  boxShadow: '0 1px 3px rgba(0,0,0,0.03)',
+                  border: '1.5px solid #E0E7FF'
+                }}
+              >
+                📂 Or upload from files
+              </span>
+            </div>
           </div>
         ) : (
           <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
@@ -846,18 +869,7 @@ If a valid receipt: {"title": "Sunrise Foods", "amount": 5445.30, "notes": "Groc
               </div>
             </div>
 
-            <input
-              id="receipt-file-input"
-              type="file"
-              accept="image/*,application/pdf"
-              onChange={(e) => {
-                const filesList = e.target.files;
-                if (filesList && filesList.length > 0) {
-                  handleScannerImageUpload(filesList[0]);
-                }
-              }}
-              style={{ display: 'none' }}
-            />
+
 
             {(cameraError || scanError) && (
               <div
@@ -936,6 +948,20 @@ If a valid receipt: {"title": "Sunrise Foods", "amount": 5445.30, "notes": "Groc
             )}
           </div>
         )}
+        
+        {/* File Input shared across scanner views */}
+        <input
+          id="receipt-file-input"
+          type="file"
+          accept="image/*,application/pdf"
+          onChange={(e) => {
+            const filesList = e.target.files;
+            if (filesList && filesList.length > 0) {
+              handleScannerImageUpload(filesList[0]);
+            }
+          }}
+          style={{ display: 'none' }}
+        />
       </div>
     </div>
   );
