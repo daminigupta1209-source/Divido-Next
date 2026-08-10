@@ -38,7 +38,7 @@ export const FloatingAddMenu: React.FC<FloatingAddMenuProps> = ({
   return (
     <div
       ref={containerRef}
-      style={{ position: 'fixed', bottom: '96px', right: '20px', zIndex: 1000, display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '10px' }}
+      style={{ position: 'fixed', bottom: '96px', right: '20px', zIndex: 1000, display: 'flex', flexDirection: 'row', alignItems: 'center', gap: '10px' }}
     >
       {/* Floating Scan Button — active inside group view */}
       <button
