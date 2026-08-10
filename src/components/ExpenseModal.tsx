@@ -349,7 +349,7 @@ export const ExpenseModal: React.FC<ExpenseModalProps> = ({
             box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05) !important;
             outline: none !important;
           }
-          #exp-title:focus, #exp-amt:focus {
+          #exp-title:focus, #val-entry:focus {
             border-color: #CBD5E1 !important;
             box-shadow: none !important;
             outline: none !important;
@@ -1222,7 +1222,9 @@ export const ExpenseModal: React.FC<ExpenseModalProps> = ({
                           }
                           setShowSuggestions(false);
                           setSelIdx(-1);
-                          document.getElementById('exp-amt')?.focus();
+                          setTimeout(() => {
+                            document.getElementById('val-entry')?.focus();
+                          }, 50);
                         }}
                         onMouseEnter={() => setSelIdx(idx)}
                         style={{
@@ -1275,7 +1277,7 @@ export const ExpenseModal: React.FC<ExpenseModalProps> = ({
               </div>
               <div className="premium-input-wrapper">
                 <input
-                  id="exp-amt"
+                  id="val-entry"
                   type="number"
                   autoComplete="one-time-code"
                   autoCorrect="off"

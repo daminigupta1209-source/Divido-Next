@@ -634,7 +634,7 @@ export function useExpenseForm({
             'exp-title',
             'expense-scan-btn',
             'expense-notes-btn',
-            'exp-amt',
+            'val-entry',
             'expense-recurrence-btn',
             'expense-date-btn',
             'payer-select',
@@ -728,15 +728,15 @@ export function useExpenseForm({
           if (!titleRef.current) {
             document.getElementById('exp-title')?.focus();
           } else if (!amtRef.current) {
-            document.getElementById('exp-amt')?.focus();
+            document.getElementById('val-entry')?.focus();
           } else {
             setTimeout(() => document.getElementById('payer-select')?.focus(), 20);
           }
         } else if (activeEl.id === 'exp-title') {
           e.preventDefault();
           e.stopPropagation();
-          document.getElementById('exp-amt')?.focus();
-        } else if (activeEl.id === 'exp-amt') {
+          document.getElementById('val-entry')?.focus();
+        } else if (activeEl.id === 'val-entry') {
           e.preventDefault();
           e.stopPropagation();
           setTimeout(() => document.getElementById('payer-select')?.focus(), 20);
