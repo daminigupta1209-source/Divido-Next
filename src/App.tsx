@@ -265,12 +265,14 @@ function App() {
   // ── Browser History Router (Android back-button / swipe-back support) ──
   // We keep a ref flag so the popstate listener and the state-pusher don't fight.
   const navFromPop = React.useRef(false);
+  const isClosedByPopRef = React.useRef(false);
+  const prevOverlayOpenRef = React.useRef(false);
 
   // Collect all overlay/popup open states into one flag for the router.
   const anyOverlayOpen = showExpModal || showSettleModal || showAddFriendModal
     || confirmState.show || !!qrModalData || !!showConvertModalId || !!matchPrompt
     || !!linkRequestGroup || showDeleteAccountModal || showNotifPanel
-    || mobileShowGroupOptionsMenu;
+    || mobileShowGroupOptionsMenu || showGroupSettleList || showMembersHealth;
 
   // 1. Listen for the browser "back" / "forward" events.
   useEffect(() => {
@@ -278,9 +280,12 @@ function App() {
       const st = e.state;
 
       // First priority: if any overlay is open, close it instead of navigating.
+      isClosedByPopRef.current = true;
       if (showExpModal) { setShowExpModal(false); return; }
       if (showSettleModal) { setShowSettleModal(false); return; }
       if (showAddFriendModal) { setShowAddFriendModal(false); return; }
+      if (showGroupSettleList) { setShowGroupSettleList(false); return; }
+      if (showMembersHealth) { setShowMembersHealth(false); return; }
       if (confirmState.show) { setConfirmState({ show: false }); return; }
       if (qrModalData) { setQrModalData(null); return; }
       if (showConvertModalId) { setShowConvertModalId(null); return; }
@@ -290,6 +295,8 @@ function App() {
       if (showNotifPanel) { setShowNotifPanel(false); return; }
       if (mobileShowGroupOptionsMenu) { setMobileShowGroupOptionsMenu(false); return; }
 
+      // If we got here, it wasn't an overlay close pop state
+      isClosedByPopRef.current = false;
 
       if (st && st._divido) {
         navFromPop.current = true;
@@ -309,6 +316,7 @@ function App() {
 
     return () => window.removeEventListener('popstate', onPopState);
   }, [anyOverlayOpen, showExpModal, showSettleModal, showAddFriendModal,
+      showGroupSettleList, showMembersHealth,
       confirmState.show, qrModalData, showConvertModalId, matchPrompt,
       linkRequestGroup, showDeleteAccountModal, showNotifPanel,
       mobileShowGroupOptionsMenu,
@@ -327,12 +335,19 @@ function App() {
     window.history.pushState({ _divido: true, view, selectedId }, '');
   }, [view, selectedId]);
 
-  // 3. Push a history entry when any overlay opens so back-button can close it.
+  // 3. Push a history entry when any overlay opens, and pop history when closed manually
   useEffect(() => {
-    if (anyOverlayOpen) {
+    if (anyOverlayOpen && !prevOverlayOpenRef.current) {
       window.history.pushState({ _divido: true, view, selectedId, modal: true }, '');
+    } else if (!anyOverlayOpen && prevOverlayOpenRef.current) {
+      if (isClosedByPopRef.current) {
+        isClosedByPopRef.current = false;
+      } else {
+        window.history.back();
+      }
     }
-  }, [anyOverlayOpen]);
+    prevOverlayOpenRef.current = anyOverlayOpen;
+  }, [anyOverlayOpen, view, selectedId]);
 
   // Header search should never linger — close it when leaving the home / settle pages.
   useEffect(() => {
