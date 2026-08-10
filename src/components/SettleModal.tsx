@@ -240,13 +240,13 @@ export const SettleModal: React.FC<SettleModalProps> = ({
         document.getElementById('settle-to-select')?.focus();
       } else if (activeEl.id === 'settle-to-select') {
         e.preventDefault();
-        document.getElementById('settle-amt-input')?.focus();
-      } else if (activeEl.id === 'settle-amt-input') {
+        document.getElementById('settle-val-input')?.focus();
+      } else if (activeEl.id === 'settle-val-input') {
         e.preventDefault();
-        const notesEl = document.getElementById('settle-notes-input');
+        const notesEl = document.getElementById('settle-txt-input');
         if (notesEl) notesEl.focus();
         else document.getElementById('settle-submit-btn')?.focus();
-      } else if (activeEl.id === 'settle-notes-input') {
+      } else if (activeEl.id === 'settle-txt-input') {
         e.preventDefault();
         document.getElementById('settle-submit-btn')?.focus();
       } else if (activeEl.id === 'settle-submit-btn') {
@@ -266,7 +266,7 @@ export const SettleModal: React.FC<SettleModalProps> = ({
           document.getElementById('settle-to-select')?.focus();
         } else if (e.key === 'ArrowDown') {
           e.preventDefault();
-          document.getElementById('settle-amt-input')?.focus();
+          document.getElementById('settle-val-input')?.focus();
         }
       } else if (activeEl.id === 'settle-to-select') {
         if (e.key === 'ArrowLeft') {
@@ -274,22 +274,22 @@ export const SettleModal: React.FC<SettleModalProps> = ({
           document.getElementById('settle-from-select')?.focus();
         } else if (e.key === 'ArrowDown') {
           e.preventDefault();
-          document.getElementById('settle-amt-input')?.focus();
+          document.getElementById('settle-val-input')?.focus();
         }
-      } else if (activeEl.id === 'settle-amt-input') {
+      } else if (activeEl.id === 'settle-val-input') {
         if (e.key === 'ArrowUp') {
           e.preventDefault();
           document.getElementById('settle-from-select')?.focus();
         } else if (e.key === 'ArrowDown') {
           e.preventDefault();
-          const notesEl = document.getElementById('settle-notes-input');
+          const notesEl = document.getElementById('settle-txt-input');
           if (notesEl) notesEl.focus();
           else document.getElementById('settle-submit-btn')?.focus();
         }
-      } else if (activeEl.id === 'settle-notes-input') {
+      } else if (activeEl.id === 'settle-txt-input') {
         if (e.key === 'ArrowUp') {
           e.preventDefault();
-          document.getElementById('settle-amt-input')?.focus();
+          document.getElementById('settle-val-input')?.focus();
         } else if (e.key === 'ArrowDown') {
           e.preventDefault();
           document.getElementById('settle-submit-btn')?.focus();
@@ -297,9 +297,9 @@ export const SettleModal: React.FC<SettleModalProps> = ({
       } else if (activeEl.id === 'settle-submit-btn') {
         if (e.key === 'ArrowUp') {
           e.preventDefault();
-          const notesEl = document.getElementById('settle-notes-input');
+          const notesEl = document.getElementById('settle-txt-input');
           if (notesEl) notesEl.focus();
-          else document.getElementById('settle-amt-input')?.focus();
+          else document.getElementById('settle-val-input')?.focus();
         }
       }
     }
@@ -614,7 +614,7 @@ export const SettleModal: React.FC<SettleModalProps> = ({
                 {settleCurr} <span style={{ fontSize: '8px' }}>▼</span>
               </div>
               <input
-                id="settle-amt-input"
+                id="settle-val-input"
                 type="search"
                 inputMode="decimal"
                 value={settleAmt}
@@ -684,7 +684,7 @@ export const SettleModal: React.FC<SettleModalProps> = ({
             <div>
               <label style={{ fontSize: '10px', fontWeight: 900, color: 'var(--g)', textTransform: 'uppercase' }}>Notes</label>
               <input
-                id="settle-notes-input"
+                id="settle-txt-input"
                 ref={settleNotesRef}
                 type="search"
                 autoComplete="one-time-code"
