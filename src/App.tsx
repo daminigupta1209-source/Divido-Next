@@ -278,6 +278,8 @@ function App() {
     showNotifPanel,
     mobileShowGroupOptionsMenu,
     editingSettle,
+    globalSettleData,
+    confirmState,
   });
 
   // 1. Listen for browser popstate and apply to React states
@@ -300,6 +302,8 @@ function App() {
         setShowNotifPanel(!!ui.showNotifPanel);
         setMobileShowGroupOptionsMenu(!!ui.mobileShowGroupOptionsMenu);
         setEditingSettle(ui.editingSettle || null);
+        setGlobalSettleData(ui.globalSettleData || null);
+        setConfirmState(ui.confirmState || { show: false });
       } else {
         const currentUi = getUiState();
         window.history.pushState({ _divido: true, uiState: currentUi }, '');
@@ -318,7 +322,7 @@ function App() {
   }, [
     view, selectedId, showExpModal, showSettleModal, showAddFriendModal,
     showGroupSettleList, showMembersHealth, qrModalData, showConvertModalId,
-    showNotifPanel, mobileShowGroupOptionsMenu, editingSettle
+    showNotifPanel, mobileShowGroupOptionsMenu, editingSettle, globalSettleData, confirmState
   ]);
 
   // 2. Watch for user changes and push states
@@ -351,7 +355,9 @@ function App() {
         prev.showConvertModalId !== currentUi.showConvertModalId ||
         prev.showNotifPanel !== currentUi.showNotifPanel ||
         prev.mobileShowGroupOptionsMenu !== currentUi.mobileShowGroupOptionsMenu ||
-        JSON.stringify(prev.editingSettle) !== JSON.stringify(currentUi.editingSettle);
+        JSON.stringify(prev.editingSettle) !== JSON.stringify(currentUi.editingSettle) ||
+        JSON.stringify(prev.globalSettleData) !== JSON.stringify(currentUi.globalSettleData) ||
+        JSON.stringify(prev.confirmState) !== JSON.stringify(currentUi.confirmState);
 
       if (!hasChanged) return;
     }
@@ -360,7 +366,7 @@ function App() {
   }, [
     view, selectedId, showExpModal, showSettleModal, showAddFriendModal,
     showGroupSettleList, showMembersHealth, qrModalData, showConvertModalId,
-    showNotifPanel, mobileShowGroupOptionsMenu, editingSettle
+    showNotifPanel, mobileShowGroupOptionsMenu, editingSettle, globalSettleData, confirmState
   ]);
 
   // Header search should never linger — close it when leaving the home / settle pages.
