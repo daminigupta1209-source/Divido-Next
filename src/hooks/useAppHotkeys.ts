@@ -102,7 +102,7 @@ export function useAppHotkeys({
 
     setTimeout(() => {
       const firstInput =
-        document.getElementById('global-settle-amt-0') ||
+        document.getElementById('global-settle-val-0') ||
         document.getElementById('global-settle-submit-btn');
       firstInput?.focus();
     }, 50);
@@ -117,7 +117,7 @@ export function useAppHotkeys({
         const activeEl = document.activeElement;
         const elements = localSettleEdits.flatMap((_, idx) => [
           `global-settle-check-${idx}`,
-          `global-settle-amt-${idx}`,
+          `global-settle-val-${idx}`,
         ]);
         elements.push('global-settle-cancel-btn');
         elements.push('global-settle-submit-btn');

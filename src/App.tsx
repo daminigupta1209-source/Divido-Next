@@ -2966,8 +2966,13 @@ function App() {
                           {item.curr}
                         </span>
                         <input
-                          id={`global-settle-amt-${idx}`}
+                          id={`global-settle-val-${idx}`}
                           type="number"
+                          autoComplete="one-time-code"
+                          autoCorrect="off"
+                          spellCheck="false"
+                          data-1p-ignore
+                          data-lpignore="true"
                           value={typeof item.amt === 'number' ? Math.round(item.amt * 100) / 100 : item.amt}
                           disabled={!isSelected}
                           onChange={(e) => {
