@@ -180,7 +180,7 @@ export function useExpenseForm({
   const [manualEdits, setManualEdits] = useState<Set<string>>(new Set());
   const [shouldShake, setShouldShake] = useState<boolean>(false);
   const [isScanning, setIsScanning] = useState<boolean>(false);
-  const [showScannerModal, setShowScannerModal] = useState<boolean>(false);
+  const [showScannerModal, setShowScannerModal] = useState<boolean>(!!autoOpenScanner);
   const [highlightAddFriend, setHighlightAddFriend] = useState<boolean>(false);
   const [attachments, setAttachments] = useState<string[]>(editingExpense?.attachments || []);
   const [tagsInput, setTagsInput] = useState<string>(editingExpense?.tags ? editingExpense.tags.map(t => '#' + t).join(', ') : '');
