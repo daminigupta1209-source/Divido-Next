@@ -166,7 +166,7 @@ export const UpiSection: React.FC<UpiSectionProps> = ({
             ref={upiInputRef}
             type="text"
             name="upiId"
-            autoComplete="off"
+            autoComplete="one-time-code"
             autoCorrect="off"
             spellCheck="false"
             data-1p-ignore

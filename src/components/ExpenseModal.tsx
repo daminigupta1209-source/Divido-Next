@@ -1136,7 +1136,7 @@ export const ExpenseModal: React.FC<ExpenseModalProps> = ({
                     setOverrideEmoji(null);
                   }}
                   type="text"
-                  autoComplete="off"
+                  autoComplete="one-time-code"
                   autoCorrect="off"
                   spellCheck="false"
                   data-1p-ignore
@@ -1277,7 +1277,7 @@ export const ExpenseModal: React.FC<ExpenseModalProps> = ({
                 <input
                   id="exp-amt"
                   type="number"
-                  autoComplete="off"
+                  autoComplete="one-time-code"
                   autoCorrect="off"
                   spellCheck="false"
                   data-1p-ignore

@@ -245,7 +245,7 @@ export const MobileHeader: React.FC<MobileHeaderProps> = ({
                 <div style={{ display: 'flex', flexDirection: 'column', width: '100%', alignItems: 'flex-start' }}>
                   <input
                     type="text"
-                    autoComplete="off"
+                    autoComplete="one-time-code"
                     autoCorrect="off"
                     spellCheck="false"
                     data-1p-ignore
@@ -839,7 +839,7 @@ export const MobileHeader: React.FC<MobileHeaderProps> = ({
                 {isHeaderSearchActive && view === 'summary' && (
                   <input
                     type="text"
-                    autoComplete="off"
+                    autoComplete="one-time-code"
                     autoCorrect="off"
                     spellCheck="false"
                     data-1p-ignore

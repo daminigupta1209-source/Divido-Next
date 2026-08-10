@@ -133,7 +133,7 @@ export const SearchableCurrencyPicker: React.FC<SearchableCurrencyPickerProps> =
           <input
             autoFocus
             type="text"
-            autoComplete="off"
+            autoComplete="one-time-code"
             autoCorrect="off"
             spellCheck="false"
             data-1p-ignore

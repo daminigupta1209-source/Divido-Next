@@ -181,7 +181,7 @@ export const GroupHeader: React.FC<GroupHeaderProps> = ({
           <div style={{ position: 'relative', display: 'flex', alignItems: 'center', flex: 1 }}>
             <input
               type="text"
-              autoComplete="off"
+              autoComplete="one-time-code"
               autoCorrect="off"
               spellCheck="false"
               data-1p-ignore
@@ -246,7 +246,7 @@ export const GroupHeader: React.FC<GroupHeaderProps> = ({
                   <label style={{ fontSize: '8px', fontWeight: 900, color: 'var(--g)', textTransform: 'uppercase', letterSpacing: '1.2px', marginBottom: '-4px' }}>Group Name</label>
                   <input
                     type="text"
-                    autoComplete="off"
+                    autoComplete="one-time-code"
                     autoCorrect="off"
                     spellCheck="false"
                     data-1p-ignore

@@ -656,7 +656,7 @@ export const SettleModal: React.FC<SettleModalProps> = ({
                 }}
                 onClick={(e) => e.stopPropagation()}
                 placeholder="0.00"
-                autoComplete="off"
+                autoComplete="one-time-code"
                 autoCorrect="off"
                 spellCheck="false"
                 data-1p-ignore
@@ -687,7 +687,7 @@ export const SettleModal: React.FC<SettleModalProps> = ({
                 id="settle-notes-input"
                 ref={settleNotesRef}
                 type="text"
-                autoComplete="off"
+                autoComplete="one-time-code"
                 autoCorrect="off"
                 spellCheck="false"
                 data-1p-ignore
