@@ -621,6 +621,14 @@ export const SettleModal: React.FC<SettleModalProps> = ({
                 name="non-secure-value"
                 type="search"
                 inputMode="decimal"
+                readOnly
+                onFocus={(e) => { e.currentTarget.readOnly = false; }}
+                onBlur={(e) => { e.currentTarget.readOnly = true; }}
+                autoComplete="off"
+                autoCorrect="off"
+                spellCheck="false"
+                data-1p-ignore
+                data-lpignore="true"
                 value={settleAmt}
                 onChange={(e) => {
                   // Only allow digits and a single decimal point

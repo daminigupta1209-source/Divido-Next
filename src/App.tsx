@@ -2972,7 +2972,10 @@ function App() {
                           id={`global-settle-val-${idx}`}
                           type="search"
                           inputMode="decimal"
-                          autoComplete="one-time-code"
+                          readOnly
+                          onFocus={(e) => { e.currentTarget.readOnly = false; }}
+                          onBlur={(e) => { e.currentTarget.readOnly = true; }}
+                          autoComplete="off"
                           autoCorrect="off"
                           spellCheck="false"
                           data-1p-ignore
