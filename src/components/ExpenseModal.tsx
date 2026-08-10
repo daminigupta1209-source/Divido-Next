@@ -1288,7 +1288,8 @@ export const ExpenseModal: React.FC<ExpenseModalProps> = ({
               <div className="premium-input-wrapper">
                 <input
                   id="val-entry"
-                  type="number"
+                  type="search"
+                  inputMode="decimal"
                   autoComplete="one-time-code"
                   autoCorrect="off"
                   spellCheck="false"
@@ -1296,7 +1297,12 @@ export const ExpenseModal: React.FC<ExpenseModalProps> = ({
                   data-lpignore="true"
                   placeholder="0.00"
                   value={amt}
-                  onChange={(e) => setAmt(e.target.value)}
+                  onChange={(e) => {
+                    const val = e.target.value;
+                    if (val === '' || /^\d*\.?\d*$/.test(val)) {
+                      setAmt(val);
+                    }
+                  }}
                   style={{
                     width: '100%',
                     height: '100%',

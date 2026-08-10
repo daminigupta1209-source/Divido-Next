@@ -2970,7 +2970,8 @@ function App() {
                         </span>
                         <input
                           id={`global-settle-val-${idx}`}
-                          type="number"
+                          type="search"
+                          inputMode="decimal"
                           autoComplete="one-time-code"
                           autoCorrect="off"
                           spellCheck="false"
@@ -2979,11 +2980,14 @@ function App() {
                           value={typeof item.amt === 'number' ? Math.round(item.amt * 100) / 100 : item.amt}
                           disabled={!isSelected}
                           onChange={(e) => {
-                            const val = e.target.value.replace(/^0+(?=\d)/, '');
-                            const newAmt = parseFloat(val) || 0;
-                            setLocalSettleEdits(
-                              localSettleEdits.map((it, i) => (i === idx ? { ...it, amt: val === '' ? '' : newAmt } : it))
-                            );
+                            const val = e.target.value;
+                            if (val === '' || /^\d*\.?\d*$/.test(val)) {
+                              const cleanedVal = val.replace(/^0+(?=\d)/, '');
+                              const newAmt = parseFloat(cleanedVal) || 0;
+                              setLocalSettleEdits(
+                                localSettleEdits.map((it, i) => (i === idx ? { ...it, amt: val === '' ? '' : newAmt } : it))
+                              );
+                            }
                           }}
                           style={{
                             width: '76px',

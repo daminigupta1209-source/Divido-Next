@@ -114,7 +114,8 @@ export const SplitSelector: React.FC<SplitSelectorProps> = ({
             <div style={{ position: 'relative', height: '38px', display: 'flex', alignItems: 'center', marginTop: '2px' }}>
               <input
                 id="shares-val-input"
-                type="number"
+                type="search"
+                inputMode="decimal"
                 autoComplete="one-time-code"
                 autoCorrect="off"
                 spellCheck="false"
@@ -122,7 +123,12 @@ export const SplitSelector: React.FC<SplitSelectorProps> = ({
                 data-lpignore="true"
                 placeholder="0.00"
                 value={amt}
-                onChange={(e) => setAmt(e.target.value)}
+                onChange={(e) => {
+                  const val = e.target.value;
+                  if (val === '' || /^\d*\.?\d*$/.test(val)) {
+                    setAmt(val);
+                  }
+                }}
                 style={{
                   width: '100%',
                   height: '100%',
