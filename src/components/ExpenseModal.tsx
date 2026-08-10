@@ -174,6 +174,35 @@ export const ExpenseModal: React.FC<ExpenseModalProps> = ({
     setAutoOpenScanner,
   });
 
+  const [inlineFriendName, setInlineFriendName] = React.useState('');
+
+  const handleInlineAddFriend = () => {
+    const trimmed = inlineFriendName.trim();
+    if (!trimmed) return;
+
+    if (localGId !== 'STANDALONE' && selectedGroup) {
+      if (selectedGroup.members.some(m => m.toLowerCase() === trimmed.toLowerCase())) {
+        alert(`"${trimmed}" is already in the group!`);
+        return;
+      }
+      const updatedMembers = [...selectedGroup.members, trimmed];
+      setGroups(groups.map(g => String(g.id) === String(selectedGroup.id) ? { ...g, members: updatedMembers } : g));
+    } else {
+      if (newlyAddedFriends.some(f => f.toLowerCase() === trimmed.toLowerCase())) {
+        alert(`"${trimmed}" is already added!`);
+        return;
+      }
+      setNewlyAddedFriends([...newlyAddedFriends, trimmed]);
+    }
+
+    const cleanName = trimmed.replace(' (Left)', '');
+    if (!selectedSplitters.includes(cleanName)) {
+      setSelectedSplitters([...selectedSplitters, cleanName]);
+    }
+
+    setInlineFriendName('');
+  };
+
   // Header attachment button: save a photo/file as a receipt attachment (no OCR).
   const uploadInputRef = React.useRef<HTMLInputElement>(null);
   const [showAttachMenu, setShowAttachMenu] = React.useState(false);
@@ -807,9 +836,7 @@ export const ExpenseModal: React.FC<ExpenseModalProps> = ({
                   <button
                     type="button"
                     onClick={() => {
-                      setShowFriendPickerPopup(false);
-                      setSelectedId(localGId === 'STANDALONE' ? 'STANDALONE' : localGId);
-                      setShowAddFriendModal(true);
+                      setShowFriendPickerPopup(true);
                     }}
                     style={{
                       height: '34px',
@@ -971,6 +998,56 @@ export const ExpenseModal: React.FC<ExpenseModalProps> = ({
                         </button>
                       </div>
 
+                      {/* Inline Add Friend Input */}
+                      <div style={{ padding: '0 16px 12px 16px', borderBottom: '1px solid #F1F5F9', marginBottom: '4px' }}>
+                        <div style={{ display: 'flex', gap: '8px' }}>
+                          <input
+                            type="search"
+                            placeholder="Add friend instantly..."
+                            value={inlineFriendName}
+                            onChange={(e) => { e.stopPropagation(); setInlineFriendName(e.target.value); }}
+                            onClick={(e) => e.stopPropagation()}
+                            onKeyDown={(e) => {
+                              e.stopPropagation();
+                              if (e.key === 'Enter') {
+                                e.preventDefault();
+                                handleInlineAddFriend();
+                              }
+                            }}
+                            style={{
+                              flex: 1,
+                              height: '36px',
+                              borderRadius: '10px',
+                              border: '1.5px solid #CBD5E1',
+                              padding: '0 10px',
+                              fontSize: '13px',
+                              fontWeight: 600,
+                              outline: 'none',
+                              boxSizing: 'border-box',
+                            }}
+                          />
+                          {inlineFriendName.trim().length > 0 && (
+                            <button
+                              type="button"
+                              onClick={(e) => { e.stopPropagation(); handleInlineAddFriend(); }}
+                              style={{
+                                height: '36px',
+                                padding: '0 14px',
+                                background: '#10B981',
+                                border: 'none',
+                                borderRadius: '10px',
+                                color: 'white',
+                                fontSize: '12px',
+                                fontWeight: 800,
+                                cursor: 'pointer',
+                              }}
+                            >
+                              Add
+                            </button>
+                          )}
+                        </div>
+                      </div>
+
                       {/* Friends list */}
                       <div style={{ maxHeight: '260px', overflowY: 'auto', padding: '0 8px 4px 8px' }}>
                         {friendsToSelect.filter(f => f !== me).map((friend) => {
@@ -1038,32 +1115,9 @@ export const ExpenseModal: React.FC<ExpenseModalProps> = ({
                             </div>
                           );
                         })}
-                         {friendsToSelect.filter(f => f !== me).length === 0 && (
-                          <div style={{ padding: '16px 10px', display: 'flex', justifyContent: 'center' }}>
-                            <button
-                              type="button"
-                              onClick={() => {
-                                setShowFriendPickerPopup(false);
-                                setSelectedId(localGId === 'STANDALONE' ? 'STANDALONE' : localGId);
-                                setShowAddFriendModal(true);
-                              }}
-                              style={{
-                                height: '34px',
-                                padding: '0 16px',
-                                borderRadius: '999px',
-                                background: 'transparent',
-                                border: '1.5px solid #059669',
-                                fontSize: '12px',
-                                fontWeight: 800,
-                                color: '#059669',
-                                cursor: 'pointer',
-                                display: 'flex',
-                                alignItems: 'center',
-                                gap: '4px',
-                              }}
-                            >
-                              + Friend
-                            </button>
+                        {friendsToSelect.filter(f => f !== me).length === 0 && (
+                          <div style={{ padding: '24px 16px', textAlign: 'center', color: '#64748B', fontSize: '12px', fontWeight: 600, lineHeight: 1.5 }}>
+                            No other friends in this list yet.<br/>Type a name above to add them instantly! 👥
                           </div>
                         )}
                       </div>
