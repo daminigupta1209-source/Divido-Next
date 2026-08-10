@@ -300,10 +300,6 @@ function App() {
         setShowNotifPanel(!!ui.showNotifPanel);
         setMobileShowGroupOptionsMenu(!!ui.mobileShowGroupOptionsMenu);
         setEditingSettle(ui.editingSettle || null);
-
-        setTimeout(() => {
-          isNavigatingHistory.current = false;
-        }, 50);
       } else {
         const currentUi = getUiState();
         window.history.pushState({ _divido: true, uiState: currentUi }, '');
@@ -327,16 +323,25 @@ function App() {
 
   // 2. Watch for user changes and push states
   useEffect(() => {
-    if (isNavigatingHistory.current) return;
+    if (isNavigatingHistory.current) {
+      isNavigatingHistory.current = false;
+      return;
+    }
 
     const cur = window.history.state;
     const currentUi = getUiState();
 
     if (cur?._divido && cur.uiState) {
       const prev = cur.uiState;
+      const isSameId = (a: any, b: any) => {
+        if (a === b) return true;
+        if (a == null || b == null) return a === b;
+        return String(a) === String(b);
+      };
+      
       const hasChanged =
         prev.view !== currentUi.view ||
-        prev.selectedId !== currentUi.selectedId ||
+        !isSameId(prev.selectedId, currentUi.selectedId) ||
         prev.showExpModal !== currentUi.showExpModal ||
         prev.showSettleModal !== currentUi.showSettleModal ||
         prev.showAddFriendModal !== currentUi.showAddFriendModal ||
