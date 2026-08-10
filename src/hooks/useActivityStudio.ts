@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo } from 'react';
 import { Group, Expense } from '../lib/types';
-import { getEmoji } from '../lib/utils';
+import { getEmoji, parseExpenseId } from '../lib/utils';
 
 export interface UseActivityStudioProps {
   expenses: Expense[];
@@ -117,7 +117,7 @@ export function useActivityStudio({
     return [...filteredExpenses].sort((a, b) => {
       const dateDiff = new Date(b.date).getTime() - new Date(a.date).getTime();
       if (dateDiff !== 0) return dateDiff;
-      return (Number(b.id) || 0) - (Number(a.id) || 0);
+      return parseExpenseId(b.id) - parseExpenseId(a.id);
     });
   }, [filteredExpenses]);
 

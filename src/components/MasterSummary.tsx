@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { BalanceDisplay } from './BalanceDisplay';
-import { getEmoji, GROUP_COLORS, formatCompactAmount } from '../lib/utils';
+import { getEmoji, GROUP_COLORS, formatCompactAmount, parseExpenseId } from '../lib/utils';
 import { StyledDropdown } from './StyledDropdown';
 
 // Pill-style trigger for the compact filter dropdowns (matches the old selects).
@@ -761,7 +761,7 @@ export const MasterSummary: React.FC<MasterSummaryProps> = ({
           })).filter((r) => Object.values(r.balances).some((v) => Math.abs(v) > 0.01));
 
           // Most recent activity for the subtitle line
-          const lastExp = groupExps.slice().sort((a, b) => (b.date.localeCompare(a.date)) || (Number(b.id) - Number(a.id)))[0];
+          const lastExp = groupExps.slice().sort((a, b) => (b.date.localeCompare(a.date)) || (parseExpenseId(b.id) - parseExpenseId(a.id)))[0];
           const relTime = (dateStr: string) => {
             const d = new Date(dateStr);
             if (isNaN(d.getTime())) return '';

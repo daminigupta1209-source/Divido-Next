@@ -276,6 +276,14 @@ export const formatCompactAmount = (value: number): string => {
   return abs.toLocaleString('en-US', { maximumFractionDigits: 0 });
 };
 
+export const parseExpenseId = (id: string | number | undefined | null): number => {
+  if (id === undefined || id === null) return 0;
+  if (typeof id === 'number') return id;
+  const clean = String(id).replace(/^(temp|photo)-/, '');
+  const parsed = Number(clean);
+  return isNaN(parsed) ? 0 : parsed;
+};
+
 export const getExactTime = (id: string | number): string | null => {
   const timestamp = Number(id);
   if (!isNaN(timestamp) && timestamp > 1000000000000) {

@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { getExactTime } from '../lib/utils';
+import { getExactTime, parseExpenseId } from '../lib/utils';
 
 import { Group, Expense } from '../lib/types';
 
@@ -28,7 +28,7 @@ export const PaymentHistory: React.FC<PaymentHistoryProps> = ({
 
   const settlements = expenses
     .filter((e) => e.title && e.title.includes('🤝 Settlement'))
-    .sort((a, b) => Number(b.id) - Number(a.id));
+    .sort((a, b) => parseExpenseId(b.id) - parseExpenseId(a.id));
 
   return (
     <div className="content-width-limit" style={{ paddingBottom: '80px' }}>

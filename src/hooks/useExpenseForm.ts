@@ -2,7 +2,7 @@ import { useState, useEffect, useRef, useMemo } from 'react';
 import { escManager } from '../lib/escManager';
 import { Group, Expense } from '../lib/types';
 import { calculateNextOccurrenceDate } from '../lib/calculations';
-import { getEmoji } from '../lib/utils';
+import { getEmoji, parseExpenseId } from '../lib/utils';
 
 export interface UseExpenseFormProps {
   setShowExpModal: (show: boolean) => void;
@@ -166,7 +166,7 @@ export function useExpenseForm({
     () =>
       expenses
         .filter((e) => e && String(e.gId) === String(localGId))
-        .sort((a, b) => Number(b.id) - Number(a.id))[0],
+        .sort((a, b) => parseExpenseId(b.id) - parseExpenseId(a.id))[0],
     [expenses, localGId]
   );
 
