@@ -758,30 +758,13 @@ If a valid receipt: {"title": "Sunrise Foods", "amount": 5445.30, "notes": "Groc
               </div>
             </div>
 
-            <div style={{ display: 'flex', gap: '16px', width: '100%', justifyContent: 'center', alignItems: 'center' }}>
-              <button
-                type="button"
-                onClick={() => setIsCameraLive(false)}
-                style={{
-                  padding: '8px 14px',
-                  background: '#F1F5F9',
-                  color: '#475569',
-                  border: 'none',
-                  borderRadius: '10px',
-                  fontSize: '12px',
-                  fontWeight: 900,
-                  cursor: 'pointer',
-                }}
-                className="hover-up-mini"
-              >
-                Back
-              </button>
+            <div style={{ display: 'flex', width: '100%', justifyContent: 'center', alignItems: 'center' }}>
               <button
                 type="button"
                 onClick={capturePhoto}
                 style={{
-                  width: '50px',
-                  height: '50px',
+                  width: '52px',
+                  height: '52px',
                   borderRadius: '50%',
                   background: '#10B981',
                   border: '3px solid #fff',
@@ -792,7 +775,10 @@ If a valid receipt: {"title": "Sunrise Foods", "amount": 5445.30, "notes": "Groc
                   justifyContent: 'center',
                   fontSize: '18px',
                   color: 'white',
+                  transition: 'transform 0.1s ease',
                 }}
+                onMouseEnter={(e) => (e.currentTarget.style.transform = 'scale(1.06)')}
+                onMouseLeave={(e) => (e.currentTarget.style.transform = 'scale(1)')}
                 title="Capture Photo"
               >
                 📸
