@@ -327,6 +327,9 @@ export const SettleModal: React.FC<SettleModalProps> = ({
         onClick={(e) => e.stopPropagation()}
         style={{ maxWidth: '440px', padding: '24px', borderRadius: '28px', position: 'relative', background: 'var(--w)' }}
       >
+        {/* Invisible decoy inputs to trick browser autofill heuristics */}
+        <input type="text" name="username" style={{ display: 'none' }} tabIndex={-1} autoComplete="off" />
+        <input type="password" name="password" style={{ display: 'none' }} tabIndex={-1} autoComplete="off" />
         <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '20px', alignItems: 'center' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
             <div

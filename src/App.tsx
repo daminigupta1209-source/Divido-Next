@@ -2818,6 +2818,9 @@ function App() {
             }}
             onClick={(e) => e.stopPropagation()}
           >
+            {/* Invisible decoy inputs to trick browser autofill heuristics */}
+            <input type="text" name="username" style={{ display: 'none' }} tabIndex={-1} autoComplete="off" />
+            <input type="password" name="password" style={{ display: 'none' }} tabIndex={-1} autoComplete="off" />
             <div
               onClick={() => setGlobalSettleData(null)}
               style={{

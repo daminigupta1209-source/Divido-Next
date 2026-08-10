@@ -223,10 +223,18 @@ export const ExpenseModal: React.FC<ExpenseModalProps> = ({
           display: 'flex',
           flexDirection: 'column',
           overflow: 'hidden',
-          padding: '16px 20px',
-          animation: 'fadeIn 0.18s ease-out',
         }}
       >
+        {/* Invisible decoy inputs to trick browser autofill heuristics */}
+        <input type="text" name="username" style={{ display: 'none' }} tabIndex={-1} autoComplete="off" />
+        <input type="password" name="password" style={{ display: 'none' }} tabIndex={-1} autoComplete="off" />
+        <div style={{
+          padding: '16px 20px',
+          animation: 'fadeIn 0.18s ease-out',
+          display: 'flex',
+          flexDirection: 'column',
+          flex: 1
+        }}>
         <style>{`
           .modal-body-scroll::-webkit-scrollbar { width: 6px; }
           .modal-body-scroll::-webkit-scrollbar-thumb { background: rgba(16, 185, 129, 0.4); border-radius: 10px; }
