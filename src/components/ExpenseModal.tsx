@@ -204,10 +204,12 @@ export const ExpenseModal: React.FC<ExpenseModalProps> = ({
         zIndex: 2000,
         background: '#F8FAFC',
         padding: 0,
+        alignItems: 'stretch',
+        overflowY: 'hidden',
       }}
     >
       <div
-        className="modal-content"
+        className="expense-modal-content"
         onClick={(e) => e.stopPropagation()}
         style={{
           width: '100vw',
