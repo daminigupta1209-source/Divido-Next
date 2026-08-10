@@ -346,7 +346,7 @@ export const ExpenseModal: React.FC<ExpenseModalProps> = ({
           }
 
            /* Focus styling for input, select, and custom focusable elements */
-          #payer-select:focus, #split-mode-select:focus, #shares-amt-input:focus, #shares-split-mode-select:focus, .splitter-scroll input:focus {
+          #payer-select:focus, #split-mode-select:focus, #shares-val-input:focus, #shares-split-mode-select:focus, .splitter-scroll input:focus {
             border-color: #CBD5E1 !important;
             box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05) !important;
             outline: none !important;
@@ -1436,7 +1436,7 @@ export const ExpenseModal: React.FC<ExpenseModalProps> = ({
                     if (mode !== 'Equally') {
                       setShowSharesPopup(true);
                       setTimeout(() => {
-                        const el = document.getElementById('shares-amt-input');
+                        const el = document.getElementById('shares-val-input');
                         el?.focus();
                         (el as HTMLInputElement).select?.();
                       }, 50);

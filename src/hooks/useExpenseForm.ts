@@ -622,7 +622,7 @@ export function useExpenseForm({
         let elements: string[] = [];
         if (showSharesPopupRef.current) {
           elements = [
-            'shares-amt-input',
+            'shares-val-input',
             'shares-split-mode-select',
             ...selectedSplittersRef.current.map((f) => `share-input-${f}`),
             'shares-done-btn',
@@ -688,7 +688,7 @@ export function useExpenseForm({
 
         if (showSharesPopupRef.current) {
           if (activeEl) {
-            if (activeEl.id === 'shares-amt-input') {
+            if (activeEl.id === 'shares-val-input') {
               e.preventDefault();
               e.stopPropagation();
               document.getElementById('shares-split-mode-select')?.focus();
@@ -750,7 +750,7 @@ export function useExpenseForm({
           if (splitModeRef.current !== 'Equally') {
             setShowSharesPopup(true);
             setTimeout(() => {
-              const el = document.getElementById('shares-amt-input');
+              const el = document.getElementById('shares-val-input');
               el?.focus();
               (el as HTMLInputElement).select?.();
             }, 50);

@@ -591,7 +591,7 @@ export const SettleModal: React.FC<SettleModalProps> = ({
 
           <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
             <label style={{ fontSize: '10px', fontWeight: 900, color: 'var(--g)', textTransform: 'uppercase', letterSpacing: '1px' }}>
-              Amount to Clear
+              Dues to Clear
             </label>
             <div style={{ display: 'flex', alignItems: 'center', background: 'var(--bg)', borderRadius: '16px', border: '1.5px solid #F1F1F1', height: '56px', padding: '0 14px' }}>
               <div
@@ -615,6 +615,7 @@ export const SettleModal: React.FC<SettleModalProps> = ({
               </div>
               <input
                 id="settle-val-input"
+                name="non-secure-value"
                 type="search"
                 inputMode="decimal"
                 value={settleAmt}

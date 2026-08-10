@@ -109,11 +109,11 @@ export const SplitSelector: React.FC<SplitSelectorProps> = ({
                 letterSpacing: '1.2px',
               }}
             >
-              Total Amount ({curr})
+              Total Value ({curr})
             </label>
             <div style={{ position: 'relative', height: '38px', display: 'flex', alignItems: 'center', marginTop: '2px' }}>
               <input
-                id="shares-amt-input"
+                id="shares-val-input"
                 type="number"
                 autoComplete="one-time-code"
                 autoCorrect="off"
