@@ -882,61 +882,32 @@ If a valid receipt: {"title": "Sunrise Foods", "amount": 5445.30, "notes": "Groc
           </div>
         )}
 
-        {(isCameraLive || scanFile || scanProgress > 0) && (
+        {scanFile && scanProgress === 100 && (
           <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end', marginTop: '4px' }}>
             <button
               type="button"
               onClick={() => {
-                setIsCameraLive(false);
+                setShowScannerModal(false);
                 setScanFile(null);
                 setScanPreview(null);
                 setScanProgress(0);
                 setScannerStatus('');
                 setScanError('');
-                setShowScannerModal(false);
               }}
-              disabled={scanProgress > 0 && scanProgress < 100}
               style={{
                 padding: '8px 14px',
-                background: 'var(--bg)',
-                color: '#64748B',
+                background: '#10B981',
+                color: 'white',
                 border: 'none',
                 borderRadius: '10px',
                 fontSize: '12px',
                 fontWeight: 900,
-                cursor: scanProgress > 0 && scanProgress < 100 ? 'not-allowed' : 'pointer',
-                opacity: scanProgress > 0 && scanProgress < 100 ? 0.3 : 1,
+                cursor: 'pointer',
               }}
-              className="hover-up-mini"
+              className="hover-up"
             >
-              Cancel
+              Apply Details
             </button>
-            {scanFile && scanProgress === 100 && (
-              <button
-                type="button"
-                onClick={() => {
-                  setShowScannerModal(false);
-                  setScanFile(null);
-                  setScanPreview(null);
-                  setScanProgress(0);
-                  setScannerStatus('');
-                  setScanError('');
-                }}
-                style={{
-                  padding: '8px 14px',
-                  background: '#10B981',
-                  color: 'white',
-                  border: 'none',
-                  borderRadius: '10px',
-                  fontSize: '12px',
-                  fontWeight: 900,
-                  cursor: 'pointer',
-                }}
-                className="hover-up"
-              >
-                Apply Details
-              </button>
-            )}
           </div>
         )}
         
