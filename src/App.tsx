@@ -2382,11 +2382,7 @@ function App() {
         setEditingExpense={setEditingExpenseSecure}
         setAutoOpenScanner={setAutoOpenScanner}
         setShowExpModal={setShowExpModalSecure}
-        groups={groups}
-        setGroups={setGroups}
         me={me}
-        myDefaultCurrency={myDefaultCurrency}
-        isSignedIn={isSignedIn}
         onRequireSignIn={requireSignInToCreate}
       />
 
@@ -3258,14 +3254,9 @@ function App() {
             <span>Settle</span>
           </div>
           
-          {/* Central Circular Add Expense Button */}
+          {/* Central Circular Add Group Button */}
           <div
-            onClick={() => {
-              setEditingExpenseSecure(null);
-              setAutoOpenScanner(false);
-              if (view !== 'detail') setSelectedId('STANDALONE');
-              setShowExpModalSecure(true);
-            }}
+            onClick={createGroupSecure}
             style={{ 
               display: 'flex', 
               flexDirection: 'column', 
@@ -3274,15 +3265,15 @@ function App() {
               width: '70px',
               cursor: 'pointer',
             }}
-            title="Add Expense"
+            title="New Group"
           >
             <div
               style={{
                 width: '50px',
                 height: '50px',
                 borderRadius: '50%',
-                background: '#059669',
-                boxShadow: '0 4px 14px rgba(5, 150, 105, 0.4)',
+                background: '#EA580C',
+                boxShadow: '0 4px 14px rgba(234, 88, 12, 0.4)',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
@@ -3304,7 +3295,7 @@ function App() {
               color: '#475569',
               transform: 'translateY(-10px)',
             }}>
-              Expense
+              Group
             </span>
           </div>
 
