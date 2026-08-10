@@ -3295,7 +3295,7 @@ function App() {
               color: '#475569',
               transform: 'translateY(-10px)',
             }}>
-              New Group
+              Group
             </span>
           </div>
 
