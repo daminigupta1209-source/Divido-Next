@@ -80,7 +80,6 @@ export const FloatingAddMenu: React.FC<FloatingAddMenuProps> = ({
           alignItems: 'center',
           justifyContent: 'center',
           cursor: 'pointer',
-          transform: 'translateX(4px)',
           transition: '0.2s all cubic-bezier(0.175, 0.885, 0.32, 1.275)',
         }}
         title="Add Expense"
@@ -88,7 +87,7 @@ export const FloatingAddMenu: React.FC<FloatingAddMenuProps> = ({
       >
         {/* Receipt (wavy top & bottom) with a "+" merged at the bottom-right; the
             receipt is trimmed away around the plus (mask) so it reads clearly. */}
-        <svg viewBox="0 0 24 24" style={{ width: '26px', height: '26px' }}>
+        <svg viewBox="-2 0 24 24" style={{ width: '26px', height: '26px' }}>
           <defs>
             <mask id="addExpReceiptCut">
               <rect width="24" height="24" fill="#fff" />
