@@ -85,9 +85,11 @@ export const FloatingAddMenu: React.FC<FloatingAddMenuProps> = ({
         title="Add Expense"
         aria-label="Add Expense"
       >
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" style={{ width: '22px', height: '22px' }}>
-          <line x1="12" y1="5" x2="12" y2="19" />
-          <line x1="5" y1="12" x2="19" y2="12" />
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" style={{ width: '24px', height: '24px' }}>
+          <path d="M7 18.5V4.5l1.5-1 1.5 1 1.5-1 1.5 1 1.5-1 1.5 1V12h-4v6.5l-1.25-1-1.25 1-1.25-1-1.25 1Z" />
+          <path d="M10 7.5h4" />
+          <path d="M10 11.5h2" />
+          <path d="M17 15.5h4M19 13.5v4" strokeWidth="2.5" />
         </svg>
       </button>
     </div>
