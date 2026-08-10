@@ -215,13 +215,13 @@ export const UPIQRModal: React.FC<UPIQRModalProps> = ({
                 {requestFrom ? 'Link your UPI ID to receive payments:' : `Link UPI ID for ${payeeName}:`}
               </span>
               <input
-                type="text"
+                type="search"
                 name="upiId"
                 id="qr-upi-input"
                 placeholder="e.g. name@okhdfcbank"
                 value={localUpi}
                 onChange={(e) => setLocalUpi(e.target.value)}
-                autoComplete="on"
+                autoComplete="one-time-code"
                 style={{
                   padding: '10px 12px',
                   fontSize: '13px',

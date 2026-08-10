@@ -112,7 +112,7 @@ export const NetPayableModal: React.FC<NetPayableModalProps> = ({
   return (
     <div
       className="modal-overlay"
-      style={{ zIndex: 6000, display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+      style={{ zIndex: 6000 }}
       onClick={onClose}
     >
       <div
