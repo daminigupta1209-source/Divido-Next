@@ -763,25 +763,30 @@ If a valid receipt: {"title": "Sunrise Foods", "amount": 5445.30, "notes": "Groc
                 type="button"
                 onClick={capturePhoto}
                 style={{
-                  width: '52px',
-                  height: '52px',
+                  width: '54px',
+                  height: '54px',
                   borderRadius: '50%',
                   background: '#10B981',
-                  border: '3px solid #fff',
-                  boxShadow: '0 0 0 2px #10B981, 0 8px 12px -3px rgba(16, 185, 129, 0.4)',
+                  border: '4px solid #fff',
+                  boxShadow: '0 0 0 2px #10B981, 0 6px 12px rgba(16, 185, 129, 0.25)',
                   cursor: 'pointer',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
-                  fontSize: '18px',
-                  color: 'white',
                   transition: 'transform 0.1s ease',
+                  padding: 0,
+                  outline: 'none',
                 }}
-                onMouseEnter={(e) => (e.currentTarget.style.transform = 'scale(1.06)')}
+                onMouseEnter={(e) => (e.currentTarget.style.transform = 'scale(1.05)')}
                 onMouseLeave={(e) => (e.currentTarget.style.transform = 'scale(1)')}
                 title="Capture Photo"
               >
-                📸
+                <div style={{
+                  width: '28px',
+                  height: '28px',
+                  borderRadius: '50%',
+                  background: '#fff',
+                }} />
               </button>
             </div>
             
