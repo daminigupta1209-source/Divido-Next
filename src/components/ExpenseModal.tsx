@@ -233,7 +233,8 @@ export const ExpenseModal: React.FC<ExpenseModalProps> = ({
           animation: 'fadeIn 0.18s ease-out',
           display: 'flex',
           flexDirection: 'column',
-          flex: 1
+          flex: 1,
+          overflow: 'hidden'
         }}>
         <style>{`
           .modal-body-scroll::-webkit-scrollbar { width: 6px; }
