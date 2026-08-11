@@ -251,8 +251,8 @@ export const GroupDetail: React.FC<GroupDetailProps> = ({
                 ? '1px solid #FCD34D' 
                 : '1px solid #E2E8F0',
               borderRadius: '20px',
-              padding: '16px 20px',
-              fontSize: '13px',
+              padding: '12px 16px',
+              fontSize: '12px',
               fontWeight: 600,
               color: hasPendingRejoin ? '#B45309' : '#475569',
               textAlign: 'center',
@@ -261,8 +261,13 @@ export const GroupDetail: React.FC<GroupDetailProps> = ({
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              gap: '10px',
-              transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)'
+              gap: '8px',
+              transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+              whiteSpace: 'nowrap',
+              overflow: 'hidden',
+              textOverflow: 'ellipsis',
+              width: '100%',
+              boxSizing: 'border-box',
             }}
           >
             <style>{`
@@ -275,19 +280,19 @@ export const GroupDetail: React.FC<GroupDetailProps> = ({
                 display: inline-block;
                 width: 8px;
                 height: 8px;
-                borderRadius: 50%;
+                border-radius: 50%;
                 background: #D97706;
                 animation: pulseYellow 1.6s infinite ease-in-out;
               }
             `}</style>
             {hasPendingRejoin ? (
-              <span style={{ display: 'inline-flex', alignItems: 'center', gap: '8px' }}>
-                <span className="pulse-yellow-indicator" />
-                ⏳ <strong>Rejoin request pending approval.</strong> Showing past history.
+              <span style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', whiteSpace: 'nowrap' }}>
+                <span className="pulse-yellow-indicator" style={{ flexShrink: 0 }} />
+                <strong>Rejoin request pending approval.</strong> Showing past history.
               </span>
             ) : (
-              <span>
-                🔒 <strong>{wasRemovedByAdmin ? 'You were removed from this group by the admin.' : 'You have left this group.'}</strong> Showing past history.
+              <span style={{ whiteSpace: 'nowrap' }}>
+                <strong>{wasRemovedByAdmin ? 'Removed by admin.' : 'You left this group.'}</strong> Showing past history.
               </span>
             )}
           </div>
