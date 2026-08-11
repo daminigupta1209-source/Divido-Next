@@ -133,7 +133,7 @@ export const CreateGroupView: React.FC<CreateGroupViewProps> = ({
           <label style={{ display: 'block', fontSize: '12px', fontWeight: 850, color: 'var(--g)', marginBottom: '8px', textTransform: 'uppercase', letterSpacing: '0.8px' }}>
             Group Name
           </label>
-          <div style={{ display: 'flex', gap: '12px', alignItems: 'flex-start' }}>
+          <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
             {/* DP Upload Circle Container */}
             <div
               onClick={() => fileInputRef.current?.click()}
@@ -151,6 +151,7 @@ export const CreateGroupView: React.FC<CreateGroupViewProps> = ({
                 position: 'relative',
                 boxShadow: '0 4px 10px rgba(0,0,0,0.02)',
                 flexShrink: 0,
+                boxSizing: 'border-box',
               }}
             >
               {selectedEmoji && (selectedEmoji.startsWith('data:image/') || selectedEmoji.startsWith('http')) ? (
