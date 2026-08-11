@@ -250,7 +250,7 @@ export const CreateGroupView: React.FC<CreateGroupViewProps> = ({
               borderRadius: '16px',
               background: '#FFFFFF',
               border: '1.5px solid var(--border)',
-              padding: '12px 16px',
+              padding: '16px 20px',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'space-between',
@@ -260,24 +260,6 @@ export const CreateGroupView: React.FC<CreateGroupViewProps> = ({
             }}
           >
             <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-              <div
-                style={{
-                  width: '40px',
-                  height: '40px',
-                  borderRadius: '50%',
-                  background: '#FEF3C7',
-                  border: '1.5px solid #FDE68A',
-                  color: '#D97706',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  fontSize: '18px',
-                  fontWeight: 800,
-                  flexShrink: 0,
-                }}
-              >
-                🪙
-              </div>
               <div style={{ display: 'flex', flexDirection: 'column', minWidth: 0, alignItems: 'flex-start' }}>
                 <span style={{ fontSize: '15px', fontWeight: 800, color: 'var(--t)', textAlign: 'left' }}>
                   {currencyInfo?.n || 'Indian Rupee'}

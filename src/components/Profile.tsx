@@ -287,9 +287,8 @@ export const Profile: React.FC<ProfileProps> = ({
             style={{
               padding: '16px 20px',
               background: '#FFFFFF',
-              border: '0.5px solid #EFE7DC',
-              borderRadius: '18px',
-              boxShadow: '0 4px 12px rgba(0,0,0,0.02)',
+              borderRadius: '16px',
+              border: '1.5px solid var(--border)',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'space-between',
@@ -297,28 +296,12 @@ export const Profile: React.FC<ProfileProps> = ({
             }}
           >
             <div style={{ display: 'flex', alignItems: 'center', gap: '12px', minWidth: 0, flex: 1 }}>
-              <div
-                style={{
-                  width: '38px',
-                  height: '38px',
-                  borderRadius: '50%',
-                  background: '#FEF3C7',
-                  border: '1.5px solid #FDE68A',
-                  color: '#D97706',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  fontSize: '18px',
-                  fontWeight: 800,
-                  flexShrink: 0,
-                }}
-              >
-                🪙
-              </div>
               <div style={{ display: 'flex', flexDirection: 'column', minWidth: 0 }}>
-                <span style={{ fontSize: '15px', fontWeight: 800, color: '#2E2A25' }}>Primary Currency</span>
-                <span style={{ fontSize: '11.5px', fontWeight: 600, color: '#A09586', marginTop: '2px' }}>
-                  {currencyInfo?.c || 'INR'} — {currencyInfo?.n || 'Indian Rupee'}
+                <span style={{ fontSize: '15px', fontWeight: 800, color: 'var(--t)' }}>
+                  {currencyInfo?.n || 'Indian Rupee'}
+                </span>
+                <span style={{ fontSize: '11.5px', fontWeight: 600, color: 'var(--g)', marginTop: '2px' }}>
+                  {currencyInfo?.c || 'INR'} — {currencyInfo?.s || '₹'}
                 </span>
               </div>
             </div>

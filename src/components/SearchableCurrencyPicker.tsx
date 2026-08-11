@@ -96,7 +96,7 @@ export const SearchableCurrencyPicker: React.FC<SearchableCurrencyPickerProps> =
           }}
         >
           <h2 className="nunito" style={{ fontSize: '16px', fontWeight: 900 }}>
-            Select Currency 🌍
+            Select Currency
           </h2>
           <button
             style={{
@@ -118,18 +118,25 @@ export const SearchableCurrencyPicker: React.FC<SearchableCurrencyPickerProps> =
           </button>
         </div>
         <div style={{ position: 'relative', marginBottom: '10px' }}>
-          <span
+          <svg
             style={{
               position: 'absolute',
               left: '16px',
               top: '50%',
               transform: 'translateY(-50%)',
               opacity: 0.4,
-              fontSize: '16px',
+              color: 'var(--t)',
             }}
+            width="15"
+            height="15"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="3"
           >
-            🔍
-          </span>
+            <circle cx="11" cy="11" r="8"></circle>
+            <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+          </svg>
           <input
             autoFocus
             type="search"
@@ -166,7 +173,6 @@ export const SearchableCurrencyPicker: React.FC<SearchableCurrencyPickerProps> =
         >
           {filtered.length === 0 ? (
             <div style={{ textAlign: 'center', padding: '40px 20px' }}>
-              <div style={{ fontSize: '32px', marginBottom: '12px' }}>🌍</div>
               <p style={{ color: 'var(--g)', fontWeight: 800, fontSize: '14px' }}>
                 No currencies found for "{search}"
               </p>
