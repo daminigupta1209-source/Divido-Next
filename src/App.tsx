@@ -4,6 +4,7 @@ import { supabase } from './lib/supabaseClient';
 import { Sidebar } from './components/Sidebar';
 import { GroupDetail } from './components/GroupDetail';
 import { GroupsView } from './components/GroupsView';
+import { CreateGroupView } from './components/CreateGroupView';
 // Lazy-loaded heavy screens/modals: only fetched when the user actually opens
 // them, keeping the initial app bundle (and first paint) smaller.
 const MasterSummary = React.lazy(() => import('./components/MasterSummary').then((m) => ({ default: m.MasterSummary })));
@@ -1778,8 +1779,20 @@ function App() {
 
   const createGroupSecure = () => {
     if (!requireSignInToCreate()) return;
+    setView('create_group');
+  };
+
+  const handleCreateGroup = (groupData: { name: string; currency: string; members: string[]; emoji: string }) => {
     const id = Date.now() + Math.random();
-    setGroups([...groups, { id, name: '', members: [me], currency: myDefaultCurrency }]);
+    const newGroup = {
+      id,
+      name: groupData.name,
+      currency: groupData.currency,
+      members: groupData.members,
+      emoji: groupData.emoji,
+      simplifyDebts: false,
+    };
+    setGroups([...groups, newGroup]);
     setSelectedId(id);
     setView('detail');
   };
@@ -1869,55 +1882,57 @@ function App() {
       )}
 
       <main ref={mainContentRef} className="main-content">
-        <MobileHeader
-          headerHidden={headerHidden}
-          onRequestRejoin={() => setShowRejoinRequestModal(true)}
-          view={view}
-          selectedId={selectedId}
-          selectedGroup={selectedGroup}
-          me={me}
-          groups={groups}
-          expenses={expenses}
-          setGroups={setGroups}
-          setIsSidebarOpen={setIsSidebarOpen}
-          setView={setView}
-          headerRenaming={headerRenaming}
-          setHeaderRenaming={setHeaderRenaming}
-          headerNewName={headerNewName}
-          setHeaderNewName={setHeaderNewName}
-          headerNameError={headerNameError}
-          setHeaderNameError={setHeaderNameError}
-          handleHeaderRename={handleHeaderRename}
-          showInfo={showInfo}
-          setShowInfo={setShowInfo}
-          mobileShowGroupOptionsMenu={mobileShowGroupOptionsMenu}
-          setMobileShowGroupOptionsMenu={setMobileShowGroupOptionsMenu}
-          setShowConvertModalId={setShowConvertModalId}
-          handleMobileExportCSV={handleMobileExportCSV}
-          setAnalyticsGroupId={setAnalyticsGroupId}
-          handleDeleteGroup={handleDeleteGroup}
-          pageDescriptions={pageDescriptions}
-          notifications={notifications}
-          unreadNotifCount={unreadNotifCount}
-          showNotifPanel={showNotifPanel}
-          setShowNotifPanel={setShowNotifPanel}
-          onOpenNotifications={handleOpenNotifications}
-          onClearNotifications={handleClearNotifications}
-          onNotificationClick={handleNotificationClick}
-          onHeaderSearch={() => { setView('summary'); setHomeSearchNonce((n) => n + 1); }}
-          onAcceptRename={handleAcceptRename}
-          onRejectRename={handleRejectRename}
-          onInviteFriend={openGroupShareLink}
-          searchQuery={globalSearchQuery}
-          setSearchQuery={setGlobalSearchQuery}
-          isHeaderSearchActive={isHeaderSearchActive}
-          setIsHeaderSearchActive={setIsHeaderSearchActive}
-          onOpenConvert={() => setShowFriendsConvert(true)}
-          setExpenses={setExpenses}
-          setShowExpModal={setShowExpModalSecure}
-          setEditingExpense={setEditingExpenseSecure}
-          onCreateGroup={createGroupSecure}
-        />
+        {view !== 'create_group' && (
+          <MobileHeader
+            headerHidden={headerHidden}
+            onRequestRejoin={() => setShowRejoinRequestModal(true)}
+            view={view}
+            selectedId={selectedId}
+            selectedGroup={selectedGroup}
+            me={me}
+            groups={groups}
+            expenses={expenses}
+            setGroups={setGroups}
+            setIsSidebarOpen={setIsSidebarOpen}
+            setView={setView}
+            headerRenaming={headerRenaming}
+            setHeaderRenaming={setHeaderRenaming}
+            headerNewName={headerNewName}
+            setHeaderNewName={setHeaderNewName}
+            headerNameError={headerNameError}
+            setHeaderNameError={setHeaderNameError}
+            handleHeaderRename={handleHeaderRename}
+            showInfo={showInfo}
+            setShowInfo={setShowInfo}
+            mobileShowGroupOptionsMenu={mobileShowGroupOptionsMenu}
+            setMobileShowGroupOptionsMenu={setMobileShowGroupOptionsMenu}
+            setShowConvertModalId={setShowConvertModalId}
+            handleMobileExportCSV={handleMobileExportCSV}
+            setAnalyticsGroupId={setAnalyticsGroupId}
+            handleDeleteGroup={handleDeleteGroup}
+            pageDescriptions={pageDescriptions}
+            notifications={notifications}
+            unreadNotifCount={unreadNotifCount}
+            showNotifPanel={showNotifPanel}
+            setShowNotifPanel={setShowNotifPanel}
+            onOpenNotifications={handleOpenNotifications}
+            onClearNotifications={handleClearNotifications}
+            onNotificationClick={handleNotificationClick}
+            onHeaderSearch={() => { setView('summary'); setHomeSearchNonce((n) => n + 1); }}
+            onAcceptRename={handleAcceptRename}
+            onRejectRename={handleRejectRename}
+            onInviteFriend={openGroupShareLink}
+            searchQuery={globalSearchQuery}
+            setSearchQuery={setGlobalSearchQuery}
+            isHeaderSearchActive={isHeaderSearchActive}
+            setIsHeaderSearchActive={setIsHeaderSearchActive}
+            onOpenConvert={() => setShowFriendsConvert(true)}
+            setExpenses={setExpenses}
+            setShowExpModal={setShowExpModalSecure}
+            setEditingExpense={setEditingExpenseSecure}
+            onCreateGroup={createGroupSecure}
+          />
+        )}
 
         <React.Suspense fallback={
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', flex: 1, padding: '60px 0' }}>
@@ -2035,6 +2050,15 @@ function App() {
             setShowExpModal={setShowExpModalSecure}
             setEditingSettle={setEditingSettle}
             setShowSettleModal={setShowSettleModalSecure}
+          />
+        ) : view === 'create_group' ? (
+          <CreateGroupView
+            me={me}
+            myDefaultCurrency={myDefaultCurrency}
+            onCancel={() => setView('summary')}
+            onCreateGroup={handleCreateGroup}
+            groups={groups}
+            userName={userName}
           />
         ) : (
           <GroupDetail
@@ -3276,7 +3300,10 @@ function App() {
         </div>
       )}
 
-      <nav className="bottom-nav">
+
+
+      {view !== 'create_group' && (
+        <nav className="bottom-nav">
           <div className={`b-nav-btn ${view === 'summary' ? 'active' : ''}`} onClick={() => { setSelectedId(null); setView('summary'); }}>
             <span className="b-nav-icon" style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: '24px', height: '24px' }}>
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" style={{ width: '22px', height: '22px' }}>
@@ -3291,113 +3318,88 @@ function App() {
           <div className={`b-nav-btn ${view === 'friends' ? 'active' : ''}`} onClick={() => setView('friends')}>
             <span className="b-nav-icon" style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: '24px', height: '24px' }}>
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" style={{ width: '22px', height: '22px' }}>
-                <path d="M4 8h13" />
-                <path d="m14 5 3 3-3 3" />
-                <path d="M20 16H7" />
-                <path d="m10 13-3 3 3 3" />
+                <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
+                <circle cx="9" cy="7" r="4" />
+                <path d="M23 21v-2a4 4 0 0 0-3-3.87" />
+                <path d="M16 3.13a4 4 0 0 1 0 7.75" />
               </svg>
             </span>
-            <span>Settle</span>
+            <span>Friends</span>
           </div>
-          
-          {/* Central Circular Add Group / Upload Button */}
-          {view === 'detail' ? (
-            <div
-              onClick={() => (document.querySelector('[title="Add attachment"]') as HTMLButtonElement)?.click()}
-              style={{ 
-                display: 'flex', 
-                flexDirection: 'column', 
-                alignItems: 'center', 
-                justifyContent: 'center', 
-                width: '70px',
-                cursor: 'pointer',
-              }}
-              title="Add Attachment"
-            >
-              <div
-                style={{
-                  width: '50px',
-                  height: '50px',
-                  borderRadius: '50%',
-                  background: '#059669',
-                  boxShadow: '0 4px 14px rgba(5, 150, 105, 0.4)',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  color: '#FFFFFF',
-                  zIndex: 1600,
-                  transform: 'translateY(-18px)',
-                  transition: 'all 0.15s ease-in-out',
+
+          {/* Central Button */}
+          {(() => {
+            const isInsideGroup = view === 'detail' && selectedGroup;
+            const isUploadTheme = isInsideGroup;
+            const clickHandler = isUploadTheme ? () => (document.querySelector('[title="Add attachment"]') as HTMLButtonElement)?.click() : createGroupSecure;
+            const buttonColor = isUploadTheme ? '#059669' : '#F97316';
+            const iconSvg = isUploadTheme ? (
+              // Custom Clean Vector Upload SVG (Emerald theme background)
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.8" strokeLinecap="round" strokeLinejoin="round" style={{ width: '18px', height: '18px', color: '#FFFFFF' }}>
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                <polyline points="17 8 12 3 7 8" />
+                <line x1="12" y1="3" x2="12" y2="15" />
+              </svg>
+            ) : (
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ width: '22px', height: '22px', color: '#FFFFFF' }}>
+                <line x1="12" y1="5" x2="12" y2="19" />
+                <line x1="5" y1="12" x2="19" y2="12" />
+              </svg>
+            );
+
+            return (
+              <div 
+                style={{ 
+                  display: 'flex', 
+                  flexDirection: 'column', 
+                  alignItems: 'center', 
+                  justifyContent: 'center', 
+                  position: 'relative', 
+                  top: '-16px',
+                  width: '68px',
+                  height: '68px',
+                  zIndex: 10
                 }}
-                className="hover-up"
               >
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ color: '#FFFFFF' }}>
-                  <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
-                  <polyline points="17 8 12 3 7 8" />
-                  <line x1="12" y1="3" x2="12" y2="15" />
-                </svg>
+                <button
+                  onClick={clickHandler}
+                  className="pulse-button"
+                  style={{
+                    width: '56px',
+                    height: '56px',
+                    borderRadius: '50%',
+                    background: buttonColor,
+                    border: 'none',
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    boxShadow: '0 8px 16px rgba(0,0,0,0.15)',
+                    transition: 'all 0.2s',
+                    padding: 0,
+                  }}
+                >
+                  {iconSvg}
+                </button>
+                <span 
+                  style={{ 
+                    fontSize: '10px', 
+                    fontWeight: 700, 
+                    color: 'var(--g)', 
+                    marginTop: '2px',
+                    whiteSpace: 'nowrap'
+                  }}
+                >
+                  {isUploadTheme ? 'Upload' : 'Group'}
+                </span>
               </div>
-              <span style={{
-                fontSize: '10px',
-                fontWeight: 800,
-                color: '#475569',
-                transform: 'translateY(-10px)',
-              }}>
-                Upload
-              </span>
-            </div>
-          ) : (
-            <div
-              onClick={createGroupSecure}
-              style={{ 
-                display: 'flex', 
-                flexDirection: 'column', 
-                alignItems: 'center', 
-                justifyContent: 'center', 
-                width: '70px',
-                cursor: 'pointer',
-              }}
-              title="New Group"
-            >
-              <div
-                style={{
-                  width: '50px',
-                  height: '50px',
-                  borderRadius: '50%',
-                  background: '#EA580C',
-                  boxShadow: '0 4px 14px rgba(234, 88, 12, 0.4)',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  color: '#FFFFFF',
-                  fontSize: '24px',
-                  fontWeight: 700,
-                  zIndex: 1600,
-                  transform: 'translateY(-18px)',
-                  transition: 'all 0.15s ease-in-out',
-                  lineHeight: 1,
-                }}
-                className="hover-up"
-              >
-                +
-              </div>
-              <span style={{
-                fontSize: '10px',
-                fontWeight: 800,
-                color: '#475569',
-                transform: 'translateY(-10px)',
-              }}>
-                Group
-              </span>
-            </div>
-          )}
+            );
+          })()}
 
           <div className={`b-nav-btn ${view === 'activity' ? 'active' : ''}`} onClick={() => setView('activity')}>
             <span className="b-nav-icon" style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: '24px', height: '24px' }}>
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" style={{ width: '22px', height: '22px' }}>
-                <path d="M12 8v4l2.5 2" />
-                <path d="M3.5 9a9 9 0 1 1-.5 5" />
-                <path d="M3 5v4h4" />
+                <polyline points="22 12 18 12 15 21 9 3 6 12 2 12" />
               </svg>
             </span>
             <span>Activities</span>
@@ -3412,6 +3414,7 @@ function App() {
             <span>Profile</span>
           </div>
         </nav>
+      )}
 
       <PremiumConfirm
         show={confirmState.show}
