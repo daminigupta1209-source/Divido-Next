@@ -177,8 +177,6 @@ export const CreateGroupView: React.FC<CreateGroupViewProps> = ({
               />
             </div>
 
-            {/* Text Input */}
-            <div style={{ flex: 1 }}>
               <input
                 ref={titleInputRef}
                 type="text"
@@ -190,7 +188,7 @@ export const CreateGroupView: React.FC<CreateGroupViewProps> = ({
                 placeholder="E.g. City Trip"
                 required
                 style={{
-                  width: '100%',
+                  flex: 1,
                   height: '54px',
                   borderRadius: '16px',
                   background: '#FFFFFF',
@@ -204,13 +202,12 @@ export const CreateGroupView: React.FC<CreateGroupViewProps> = ({
                   fontFamily: 'Nunito',
                 }}
               />
-              {nameError && (
-                <span style={{ fontSize: '11px', color: '#EF4444', fontWeight: 700, marginTop: '4px', display: 'block' }}>
-                  {nameError}
-                </span>
-              )}
             </div>
-          </div>
+          {nameError && (
+            <span style={{ fontSize: '11px', color: '#EF4444', fontWeight: 700, marginTop: '6px', display: 'block' }}>
+              {nameError}
+            </span>
+          )}
         </div>
 
         {/* OPTIONS SECTION (CURRENCY) */}
