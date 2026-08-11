@@ -683,7 +683,7 @@ function App() {
   const [newlyAddedFriends, setNewlyAddedFriends] = useState<string[]>([]);
   const [activeSplitters, setActiveSplitters] = useState<string[]>([]);
 
-  const updateUserName = (newName: string) => {
+  const updateUserName = async (newName: string) => {
     const cleanNew = newName.trim();
     if (!cleanNew) return;
 
@@ -724,6 +724,21 @@ function App() {
 
     setUserName(cleanNew);
     localStorage.setItem('divido_username', cleanNew);
+
+    // Sync profile name change to Supabase group_members to prevent duplicates
+    if (userEmail) {
+      try {
+        const { error } = await supabase
+          .from('group_members')
+          .update({ name: cleanNew })
+          .eq('user_email', userEmail);
+        if (error) {
+          console.error('Failed to sync profile name change to Supabase group_members:', error);
+        }
+      } catch (err) {
+        console.error('Error syncing profile name change to Supabase:', err);
+      }
+    }
   };
 
   // When a user signs in after having claimed a guest identity, adopt those
