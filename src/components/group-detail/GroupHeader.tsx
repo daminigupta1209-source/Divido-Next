@@ -161,83 +161,7 @@ export const GroupHeader: React.FC<GroupHeaderProps> = ({
 
   return (
     <>
-      {isRenaming && selectedGroup.name === '' ? (
-        <div
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: '12px',
-            marginBottom: '20px',
-            width: '100%',
-          }}
-        >
-          {/* Back arrow */}
-          <span
-            onClick={() => {
-              setGroups(groups.filter((g) => g.id !== selectedId));
-              setView('summary');
-            }}
-            style={{ fontSize: '22px', cursor: 'pointer', opacity: 0.7, lineHeight: 1, flexShrink: 0 }}
-          >←</span>
-
-          <div style={{ position: 'relative', display: 'flex', alignItems: 'center', flex: 1 }}>
-            <input
-              type="search"
-              autoComplete="one-time-code"
-              autoCorrect="off"
-              spellCheck="false"
-              data-1p-ignore
-              data-lpignore="true"
-              autoFocus
-              value={newName}
-              onChange={(e) => {
-                setNewName(e.target.value);
-                setNameError('');
-              }}
-              onBlur={handleRename}
-              onKeyDown={(e) => {
-                if (e.key === 'Enter') handleRename();
-              }}
-              placeholder="Enter group name"
-              style={{
-                width: '100%',
-                fontSize: '18px',
-                fontWeight: 800,
-                fontFamily: 'Nunito',
-                background: 'var(--bg)',
-                outline: 'none',
-                color: 'var(--t)',
-                padding: '12px 48px 12px 14px',
-                borderRadius: '12px',
-                border: '2.5px solid ' + (nameError ? '#EF4444' : '#E2E8F0'),
-                transition: '0.3s all',
-                boxSizing: 'border-box',
-              }}
-            />
-            <button
-              onMouseDown={(e) => { e.preventDefault(); handleRename(); }}
-              style={{
-                position: 'absolute',
-                right: '12px',
-                background: 'none',
-                border: 'none',
-                fontSize: '22px',
-                cursor: 'pointer',
-                padding: 0,
-                lineHeight: 1,
-              }}
-            >
-              <span style={{ color: '#7C3AED', fontSize: '22px' }}>✔️</span>
-            </button>
-            {nameError && (
-              <p style={{ position: 'absolute', bottom: '-20px', left: 0, fontSize: '12px', fontWeight: 900, color: '#EF4444', margin: 0 }}>
-                {nameError}
-              </p>
-            )}
-          </div>
-        </div>
-      ) : (
-        <div className="group-detail-header-row" style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginBottom: '16px' }}>
+      <div className="group-detail-header-row" style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginBottom: '16px' }}>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: '100%', position: 'relative', minHeight: '44px' }}>
 
 
@@ -262,6 +186,7 @@ export const GroupHeader: React.FC<GroupHeaderProps> = ({
                       if (e.key === 'Enter') handleRename();
                       if (e.key === 'Escape') { e.preventDefault(); e.stopPropagation(); handleCancel(); }
                     }}
+                    placeholder="New Group Name..."
                     style={{ fontSize: '22px', fontWeight: 950, fontFamily: 'Nunito', border: 'none', background: 'transparent', outline: 'none', color: nameError ? '#EF4444' : 'var(--t)', padding: 0, margin: 0, textAlign: 'center' }}
                   />
                   {nameError && <p style={{ fontSize: '10px', fontWeight: 900, color: '#EF4444' }}>{nameError}</p>}
@@ -696,7 +621,6 @@ export const GroupHeader: React.FC<GroupHeaderProps> = ({
             </div>
           )}
         </div>
-      )}
 
 
       {showInfo && (

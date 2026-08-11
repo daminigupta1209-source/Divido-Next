@@ -266,6 +266,7 @@ export const MobileHeader: React.FC<MobileHeaderProps> = ({
                         setHeaderNewName(selectedGroup?.name || '');
                       }
                     }}
+                    placeholder="New Group Name..."
                     className="nunito"
                     style={{
                       fontSize: '20px',

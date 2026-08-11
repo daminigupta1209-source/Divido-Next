@@ -219,6 +219,7 @@ function App() {
   const [headerRenaming, setHeaderRenaming] = useState(false);
   const [headerNewName, setHeaderNewName] = useState('');
   const [headerNameError, setHeaderNameError] = useState('');
+
   const [showInfo, setShowInfo] = useState(false);
   const [activeReminderName, setActiveReminderName] = useState<string | null>(null);
   const [activeRejoinLink, setActiveRejoinLink] = useState<string | null>(null);
@@ -1729,8 +1730,12 @@ function App() {
   useEffect(() => {
     if (selectedGroup) {
       setHeaderNewName(selectedGroup?.name || '');
-      setHeaderRenaming(false);
       setHeaderNameError('');
+      if (selectedGroup.name === '') {
+        setHeaderRenaming(true);
+      } else {
+        setHeaderRenaming(false);
+      }
     }
   }, [selectedId, groups]);
 
