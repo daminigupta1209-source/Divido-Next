@@ -279,7 +279,12 @@ function App() {
     mobileShowGroupOptionsMenu,
     editingSettle,
     globalSettleData,
-    confirmState,
+    confirmState: {
+      show: confirmState?.show || false,
+      title: confirmState?.title || '',
+      desc: confirmState?.desc || '',
+      type: confirmState?.type || '',
+    },
   });
 
   // 1. Listen for browser popstate and apply to React states
@@ -303,7 +308,7 @@ function App() {
         setMobileShowGroupOptionsMenu(!!ui.mobileShowGroupOptionsMenu);
         setEditingSettle(ui.editingSettle || null);
         setGlobalSettleData(ui.globalSettleData || null);
-        setConfirmState(ui.confirmState || { show: false });
+        setConfirmState({ show: false });
       } else {
         const currentUi = getUiState();
         window.history.pushState({ _divido: true, uiState: currentUi }, '');
