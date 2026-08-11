@@ -339,15 +339,13 @@ export const GroupHeader: React.FC<GroupHeaderProps> = ({
                   <button
                     onClick={() => setShowAttachMenu(true)}
                     style={{
+                      display: 'none',
                       background: 'none',
                       border: 'none',
                       cursor: 'pointer',
                       color: '#94A3B8',
                       width: '36px',
                       height: '36px',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
                       flexShrink: 0,
                       padding: 0,
                       borderRadius: '8px',
