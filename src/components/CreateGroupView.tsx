@@ -100,7 +100,7 @@ export const CreateGroupView: React.FC<CreateGroupViewProps> = ({
   };
 
   return (
-    <div className="content-width-limit" style={{ padding: '20px 16px', boxSizing: 'border-box' }}>
+    <div className="content-width-limit" style={{ padding: '20px 16px', boxSizing: 'border-box', minHeight: '100vh', background: 'var(--bg)' }}>
       {/* HEADER */}
       <div style={{ display: 'flex', alignItems: 'center', gap: '16px', marginBottom: '24px' }}>
         <button
@@ -142,7 +142,7 @@ export const CreateGroupView: React.FC<CreateGroupViewProps> = ({
                 width: '54px',
                 height: '54px',
                 borderRadius: '16px',
-                background: 'var(--card-bg)',
+                background: '#FFFFFF',
                 border: '1.5px solid var(--border)',
                 display: 'flex',
                 alignItems: 'center',
@@ -164,7 +164,7 @@ export const CreateGroupView: React.FC<CreateGroupViewProps> = ({
                   position: 'absolute',
                   top: '64px',
                   left: 0,
-                  background: 'var(--w)',
+                  background: '#FFFFFF',
                   border: '1.5px solid var(--border)',
                   borderRadius: '16px',
                   padding: '12px',
@@ -215,7 +215,7 @@ export const CreateGroupView: React.FC<CreateGroupViewProps> = ({
                   width: '100%',
                   height: '54px',
                   borderRadius: '16px',
-                  background: 'var(--card-bg)',
+                  background: '#FFFFFF',
                   border: nameError ? '2px solid #EF4444' : '1.5px solid var(--border)',
                   padding: '0 16px',
                   fontSize: '16px',
@@ -238,12 +238,12 @@ export const CreateGroupView: React.FC<CreateGroupViewProps> = ({
         {/* OPTIONS SECTION (CURRENCY) */}
         <div>
           <label style={{ display: 'block', fontSize: '12px', fontWeight: 850, color: 'var(--g)', marginBottom: '8px', textTransform: 'uppercase', letterSpacing: '0.8px' }}>
-            Options
+            Currency
           </label>
           <div
             style={{
               borderRadius: '16px',
-              background: 'var(--card-bg)',
+              background: '#FFFFFF',
               border: '1.5px solid var(--border)',
               padding: '12px 16px',
               display: 'flex',
@@ -252,7 +252,7 @@ export const CreateGroupView: React.FC<CreateGroupViewProps> = ({
               boxShadow: '0 4px 10px rgba(0,0,0,0.02)',
             }}
           >
-            <span style={{ fontSize: '14px', fontWeight: 750, color: 'var(--t)' }}>Currency</span>
+            <span style={{ fontSize: '14px', fontWeight: 750, color: 'var(--t)' }}>Default Currency</span>
             <select
               value={selectedCurrency}
               onChange={(e) => setSelectedCurrency(e.target.value)}
@@ -286,7 +286,7 @@ export const CreateGroupView: React.FC<CreateGroupViewProps> = ({
           <div
             style={{
               borderRadius: '16px',
-              background: 'var(--card-bg)',
+              background: '#FFFFFF',
               border: '1.5px solid var(--border)',
               padding: '8px',
               display: 'flex',
