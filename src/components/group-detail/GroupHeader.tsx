@@ -194,6 +194,7 @@ export const GroupHeader: React.FC<GroupHeaderProps> = ({
                 setNewName(e.target.value);
                 setNameError('');
               }}
+              onBlur={handleRename}
               onKeyDown={(e) => {
                 if (e.key === 'Enter') handleRename();
               }}
