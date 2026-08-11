@@ -2444,17 +2444,19 @@ function App() {
       )}
 
       {/* Unified Floating Action Button (FAB) Menu */}
-      <FloatingAddMenu
-        view={view}
-        setView={setView}
-        setSelectedId={setSelectedId}
-        selectedId={selectedId}
-        setEditingExpense={setEditingExpenseSecure}
-        setAutoOpenScanner={setAutoOpenScanner}
-        setShowExpModal={setShowExpModalSecure}
-        me={me}
-        onRequireSignIn={requireSignInToCreate}
-      />
+      {view !== 'create_group' && (
+        <FloatingAddMenu
+          view={view}
+          setView={setView}
+          setSelectedId={setSelectedId}
+          selectedId={selectedId}
+          setEditingExpense={setEditingExpenseSecure}
+          setAutoOpenScanner={setAutoOpenScanner}
+          setShowExpModal={setShowExpModalSecure}
+          me={me}
+          onRequireSignIn={requireSignInToCreate}
+        />
+      )}
 
 
 
