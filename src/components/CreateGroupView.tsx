@@ -260,6 +260,25 @@ export const CreateGroupView: React.FC<CreateGroupViewProps> = ({
             }}
           >
             <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+              <div
+                style={{
+                  width: '40px',
+                  height: '40px',
+                  borderRadius: '50%',
+                  background: 'var(--bg)',
+                  border: '1.5px solid var(--border)',
+                  color: 'var(--t)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  fontSize: '16px',
+                  fontWeight: 900,
+                  flexShrink: 0,
+                  fontFamily: 'Nunito',
+                }}
+              >
+                {currencyInfo?.s || '₹'}
+              </div>
               <div style={{ display: 'flex', flexDirection: 'column', minWidth: 0, alignItems: 'flex-start' }}>
                 <span style={{ fontSize: '15px', fontWeight: 800, color: 'var(--t)', textAlign: 'left' }}>
                   {currencyInfo?.n || 'Indian Rupee'}

@@ -296,6 +296,25 @@ export const Profile: React.FC<ProfileProps> = ({
             }}
           >
             <div style={{ display: 'flex', alignItems: 'center', gap: '12px', minWidth: 0, flex: 1 }}>
+              <div
+                style={{
+                  width: '38px',
+                  height: '38px',
+                  borderRadius: '50%',
+                  background: 'var(--bg)',
+                  border: '1.5px solid var(--border)',
+                  color: 'var(--t)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  fontSize: '15px',
+                  fontWeight: 900,
+                  flexShrink: 0,
+                  fontFamily: 'Nunito',
+                }}
+              >
+                {currencyInfo?.s || '₹'}
+              </div>
               <div style={{ display: 'flex', flexDirection: 'column', minWidth: 0 }}>
                 <span style={{ fontSize: '15px', fontWeight: 800, color: 'var(--t)' }}>
                   {currencyInfo?.n || 'Indian Rupee'}
