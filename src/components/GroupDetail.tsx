@@ -245,55 +245,25 @@ export const GroupDetail: React.FC<GroupDetailProps> = ({
             id="past-member-banner"
             style={{
               background: hasPendingRejoin 
-                ? 'linear-gradient(135deg, #FEF3C7 0%, #FFFBEB 100%)' 
-                : 'linear-gradient(135deg, #F8FAFC 0%, #F1F5F9 100%)',
+                ? '#FFFBEB' 
+                : '#F8FAFC', 
               border: hasPendingRejoin 
-                ? '1px solid #FCD34D' 
+                ? '1px solid #FDE68A' 
                 : '1px solid #E2E8F0',
-              borderRadius: '20px',
-              padding: '12px 16px',
-              fontSize: '12px',
+              borderRadius: '24px',
+              padding: '14px 24px',
+              fontSize: '13.5px',
               fontWeight: 600,
-              color: hasPendingRejoin ? '#B45309' : '#475569',
+              color: hasPendingRejoin ? '#475569' : '#475569',
               textAlign: 'center',
               marginBottom: '20px',
-              boxShadow: '0 10px 25px -5px rgba(0, 0, 0, 0.03), 0 8px 10px -6px rgba(0, 0, 0, 0.03)',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              gap: '8px',
-              transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-              whiteSpace: 'nowrap',
-              overflow: 'hidden',
-              textOverflow: 'ellipsis',
-              width: '100%',
-              boxSizing: 'border-box',
+              boxShadow: '0 4px 12px rgba(0, 0, 0, 0.02)',
             }}
           >
-            <style>{`
-              @keyframes pulseYellow {
-                0% { transform: scale(0.95); opacity: 0.5; }
-                50% { transform: scale(1.15); opacity: 1; }
-                100% { transform: scale(0.95); opacity: 0.5; }
-              }
-              .pulse-yellow-indicator {
-                display: inline-block;
-                width: 8px;
-                height: 8px;
-                border-radius: 50%;
-                background: #D97706;
-                animation: pulseYellow 1.6s infinite ease-in-out;
-              }
-            `}</style>
             {hasPendingRejoin ? (
-              <span style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', whiteSpace: 'nowrap' }}>
-                <span className="pulse-yellow-indicator" style={{ flexShrink: 0 }} />
-                <strong>Rejoin request pending approval.</strong> Showing past history.
-              </span>
+              <span>Rejoin request pending approval. Showing past history.</span>
             ) : (
-              <span style={{ whiteSpace: 'nowrap' }}>
-                <strong>{wasRemovedByAdmin ? 'Removed by admin.' : 'You left this group.'}</strong> Showing past history.
-              </span>
+              <span>{wasRemovedByAdmin ? 'You were removed by the admin.' : 'You left this group.'} Showing past history.</span>
             )}
           </div>
         );
