@@ -119,6 +119,17 @@ export const MobileHeader: React.FC<MobileHeaderProps> = ({
   const [photoCaption, setPhotoCaption] = React.useState('');
   const [showAttachMenu, setShowAttachMenu] = React.useState(false);
   const [showCameraCapture, setShowCameraCapture] = React.useState(false);
+  const renameInputRef = React.useRef<HTMLInputElement>(null);
+
+  React.useEffect(() => {
+    if (headerRenaming) {
+      setTimeout(() => {
+        renameInputRef.current?.focus();
+        renameInputRef.current?.select();
+      }, 50);
+    }
+  }, [headerRenaming]);
+
   const [showMobileBellMenu, setShowMobileBellMenu] = React.useState(false);
 
   React.useEffect(() => {
@@ -246,6 +257,7 @@ export const MobileHeader: React.FC<MobileHeaderProps> = ({
               {headerRenaming ? (
                 <div style={{ display: 'flex', flexDirection: 'column', width: '100%', alignItems: 'flex-start' }}>
                   <input
+                    ref={renameInputRef}
                     type="search"
                     autoComplete="one-time-code"
                     autoCorrect="off"

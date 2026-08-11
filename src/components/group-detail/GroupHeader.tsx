@@ -86,6 +86,17 @@ export const GroupHeader: React.FC<GroupHeaderProps> = ({
   const [photoCaption, setPhotoCaption] = React.useState('');
   const [showAttachMenu, setShowAttachMenu] = React.useState(false);
   const [showCameraCapture, setShowCameraCapture] = React.useState(false);
+  const renameInputRef = React.useRef<HTMLInputElement>(null);
+
+  React.useEffect(() => {
+    if (isRenaming) {
+      setTimeout(() => {
+        renameInputRef.current?.focus();
+        renameInputRef.current?.select();
+      }, 50);
+    }
+  }, [isRenaming]);
+
   const [showBellMenu, setShowBellMenu] = React.useState(false);
 
   React.useEffect(() => {
@@ -172,6 +183,7 @@ export const GroupHeader: React.FC<GroupHeaderProps> = ({
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '2px', alignItems: 'center' }}>
                   <label style={{ fontSize: '8px', fontWeight: 900, color: 'var(--g)', textTransform: 'uppercase', letterSpacing: '1.2px', marginBottom: '-4px' }}>Group Name</label>
                   <input
+                    ref={renameInputRef}
                     type="search"
                     autoComplete="one-time-code"
                     autoCorrect="off"
