@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { worldCurrencies } from '../lib/utils';
 import { Group } from '../lib/types';
+import { SearchableCurrencyPicker } from './SearchableCurrencyPicker';
 
 interface CreateGroupViewProps {
   me: string;
@@ -23,8 +24,11 @@ export const CreateGroupView: React.FC<CreateGroupViewProps> = ({
   const [selectedEmoji, setSelectedEmoji] = useState('🏘️');
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
   const [selectedCurrency, setSelectedCurrency] = useState(myDefaultCurrency || '₹');
+  const [showCurrencyPicker, setShowCurrencyPicker] = useState(false);
   const [participants, setParticipants] = useState<string[]>([me]);
   const [nameError, setNameError] = useState('');
+
+  const currencyInfo = worldCurrencies.find((c) => c.s === selectedCurrency) || { s: '₹', n: 'Indian Rupee', c: 'INR' };
 
   const titleInputRef = useRef<HTMLInputElement>(null);
   const emojiPickerRef = useRef<HTMLDivElement>(null);
@@ -241,6 +245,7 @@ export const CreateGroupView: React.FC<CreateGroupViewProps> = ({
             Currency
           </label>
           <div
+            onClick={() => setShowCurrencyPicker(true)}
             style={{
               borderRadius: '16px',
               background: '#FFFFFF',
@@ -250,31 +255,39 @@ export const CreateGroupView: React.FC<CreateGroupViewProps> = ({
               alignItems: 'center',
               justifyContent: 'space-between',
               boxShadow: '0 4px 10px rgba(0,0,0,0.02)',
+              cursor: 'pointer',
+              boxSizing: 'border-box',
             }}
           >
-            <span style={{ fontSize: '14px', fontWeight: 750, color: 'var(--t)' }}>Default Currency</span>
-            <select
-              value={selectedCurrency}
-              onChange={(e) => setSelectedCurrency(e.target.value)}
-              style={{
-                border: 'none',
-                background: 'transparent',
-                outline: 'none',
-                color: 'var(--t)',
-                fontWeight: 800,
-                fontSize: '14px',
-                cursor: 'pointer',
-                textAlign: 'right',
-                fontFamily: 'Nunito',
-                direction: 'rtl', // pushes select text to right
-              }}
-            >
-              {worldCurrencies.map((c) => (
-                <option key={c.s + c.c} value={c.s} style={{ direction: 'ltr', background: 'var(--w)', color: 'var(--t)' }}>
-                  {c.n} ({c.s})
-                </option>
-              ))}
-            </select>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+              <div
+                style={{
+                  width: '40px',
+                  height: '40px',
+                  borderRadius: '50%',
+                  background: '#FEF3C7',
+                  border: '1.5px solid #FDE68A',
+                  color: '#D97706',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  fontSize: '18px',
+                  fontWeight: 800,
+                  flexShrink: 0,
+                }}
+              >
+                🪙
+              </div>
+              <div style={{ display: 'flex', flexDirection: 'column', minWidth: 0, alignItems: 'flex-start' }}>
+                <span style={{ fontSize: '15px', fontWeight: 800, color: 'var(--t)', textAlign: 'left' }}>
+                  {currencyInfo?.n || 'Indian Rupee'}
+                </span>
+                <span style={{ fontSize: '11.5px', fontWeight: 600, color: '#A09586', marginTop: '2px', textAlign: 'left' }}>
+                  {currencyInfo?.c || 'INR'} — {currencyInfo?.s || '₹'}
+                </span>
+              </div>
+            </div>
+            <span style={{ fontSize: '20px', color: '#CFC6BB', fontWeight: 900, userSelect: 'none' }}>›</span>
           </div>
         </div>
 
@@ -392,6 +405,16 @@ export const CreateGroupView: React.FC<CreateGroupViewProps> = ({
         </button>
 
       </form>
+
+      <SearchableCurrencyPicker
+        show={showCurrencyPicker}
+        onClose={() => setShowCurrencyPicker(false)}
+        current={selectedCurrency}
+        onSelect={(symbol) => {
+          setSelectedCurrency(symbol);
+          setShowCurrencyPicker(false);
+        }}
+      />
     </div>
   );
 };
