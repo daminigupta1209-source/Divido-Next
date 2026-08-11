@@ -535,8 +535,17 @@ export const Analytics: React.FC<AnalyticsProps> = ({ expenses, groups, me, user
               whiteSpace: 'nowrap', maxWidth: '200px',
             }}
           >
-            <span style={{ fontSize: '14px' }}>
-              {selectedGroupId === 'ALL' ? '📊' : selectedGroupId === 'STANDALONE' ? '👤' : (groups.find(g => String(g.id) === String(selectedGroupId))?.emoji || '👥')}
+             <span style={{ fontSize: '14px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              {(() => {
+                if (selectedGroupId === 'ALL') return '📊';
+                if (selectedGroupId === 'STANDALONE') return '👤';
+                const found = groups.find(g => String(g.id) === String(selectedGroupId));
+                if (!found) return '👥';
+                if (found.emoji && (found.emoji.startsWith('data:image/') || found.emoji.startsWith('http'))) {
+                  return <img src={found.emoji} style={{ width: '16px', height: '16px', borderRadius: '50%', objectFit: 'cover' }} alt="" />;
+                }
+                return found.emoji || '👥';
+              })()}
             </span>
             <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: '140px' }}>
               {selectedGroupId === 'ALL' ? 'All Groups & Expenses' : selectedGroupId === 'STANDALONE' ? 'Standalone' : (groups.find(g => String(g.id) === String(selectedGroupId))?.name || 'Select')}
@@ -578,7 +587,13 @@ export const Analytics: React.FC<AnalyticsProps> = ({ expenses, groups, me, user
                   return (
                     <div key={g.id} onClick={() => { setSelectedGroupId(g.id); setShowGroupDropdown(false); }}
                       style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '9px 12px', borderRadius: '10px', cursor: 'pointer', background: isActive ? '#F0FDF4' : 'transparent', marginBottom: '2px' }}>
-                      <div style={{ width: '30px', height: '30px', borderRadius: '8px', background: isActive ? '#DCFCE7' : '#F8FAFC', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '14px', flexShrink: 0 }}>{g.emoji || '👥'}</div>
+                      <div style={{ width: '30px', height: '30px', borderRadius: '8px', background: isActive ? '#DCFCE7' : '#F8FAFC', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '14px', flexShrink: 0, overflow: 'hidden' }}>
+                        {g.emoji && (g.emoji.startsWith('data:image/') || g.emoji.startsWith('http')) ? (
+                          <img src={g.emoji} style={{ width: '100%', height: '100%', objectFit: 'cover' }} alt="" />
+                        ) : (
+                          g.emoji || '👥'
+                        )}
+                      </div>
                       <div style={{ flex: 1, minWidth: 0 }}>
                         <div style={{ fontSize: '12px', fontWeight: 900, color: isActive ? '#16A34A' : '#1E293B', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{g.name}</div>
                         <div style={{ fontSize: '10px', color: '#94A3B8', fontWeight: 600 }}>{g.members.length} members · {g.currency || '₹'}</div>

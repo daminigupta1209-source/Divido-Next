@@ -21,8 +21,7 @@ export const CreateGroupView: React.FC<CreateGroupViewProps> = ({
   userName,
 }) => {
   const [title, setTitle] = useState('');
-  const [selectedEmoji, setSelectedEmoji] = useState('🏘️');
-  const [showEmojiPicker, setShowEmojiPicker] = useState(false);
+  const [selectedEmoji, setSelectedEmoji] = useState('🏘️'); // Stores base64 group DP URL or default emoji fallback
   const [selectedCurrency, setSelectedCurrency] = useState(myDefaultCurrency || '₹');
   const [showCurrencyPicker, setShowCurrencyPicker] = useState(false);
   const [participants, setParticipants] = useState<string[]>([me]);
@@ -31,7 +30,7 @@ export const CreateGroupView: React.FC<CreateGroupViewProps> = ({
   const currencyInfo = worldCurrencies.find((c) => c.s === selectedCurrency) || { s: '₹', n: 'Indian Rupee', c: 'INR' };
 
   const titleInputRef = useRef<HTMLInputElement>(null);
-  const emojiPickerRef = useRef<HTMLDivElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Autofocus title input on mount
   useEffect(() => {
@@ -40,18 +39,17 @@ export const CreateGroupView: React.FC<CreateGroupViewProps> = ({
     }, 100);
   }, []);
 
-  // Close emoji picker when clicking outside
-  useEffect(() => {
-    const clickOutside = (e: MouseEvent) => {
-      if (emojiPickerRef.current && !emojiPickerRef.current.contains(e.target as Node)) {
-        setShowEmojiPicker(false);
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      if (typeof reader.result === 'string') {
+        setSelectedEmoji(reader.result);
       }
     };
-    window.addEventListener('click', clickOutside);
-    return () => window.removeEventListener('click', clickOutside);
-  }, []);
-
-  const popularEmojis = ['🏘️', '✈️', '🍻', '🍔', '🚗', '🛒', '⛺', '🏠', '💸', '🎟️', '🎒', '🍕', '🎉', '🏖️', '⛰️', '💡'];
+    reader.readAsDataURL(file);
+  };
 
   const handleAddParticipant = () => {
     setParticipants([...participants, '']);
@@ -130,78 +128,53 @@ export const CreateGroupView: React.FC<CreateGroupViewProps> = ({
 
       <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
         
-        {/* TITLE SECTION */}
+        {/* GROUP NAME SECTION */}
         <div>
           <label style={{ display: 'block', fontSize: '12px', fontWeight: 850, color: 'var(--g)', marginBottom: '8px', textTransform: 'uppercase', letterSpacing: '0.8px' }}>
-            Title
+            Group Name
           </label>
-          <div style={{ display: 'flex', gap: '12px', position: 'relative' }}>
-            {/* Emoji Box Trigger */}
+          <div style={{ display: 'flex', gap: '12px', alignItems: 'flex-start' }}>
+            {/* DP Upload Circle Container */}
             <div
-              onClick={(e) => {
-                e.stopPropagation();
-                setShowEmojiPicker(!showEmojiPicker);
-              }}
+              onClick={() => fileInputRef.current?.click()}
               style={{
                 width: '54px',
                 height: '54px',
-                borderRadius: '16px',
+                borderRadius: '50%',
                 background: '#FFFFFF',
-                border: '1.5px solid var(--border)',
+                border: '1.5px dashed var(--border)',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                fontSize: '24px',
                 cursor: 'pointer',
-                userSelect: 'none',
+                overflow: 'hidden',
+                position: 'relative',
                 boxShadow: '0 4px 10px rgba(0,0,0,0.02)',
+                flexShrink: 0,
               }}
             >
-              {selectedEmoji}
+              {selectedEmoji && (selectedEmoji.startsWith('data:image/') || selectedEmoji.startsWith('http')) ? (
+                <img
+                  src={selectedEmoji}
+                  style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                  alt="Group DP"
+                />
+              ) : (
+                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', color: '#94A3B8' }}>
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/>
+                    <circle cx="12" cy="13" r="4"/>
+                  </svg>
+                </div>
+              )}
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="image/*"
+                onChange={handleFileChange}
+                style={{ display: 'none' }}
+              />
             </div>
-
-            {/* Emoji Picker Popover */}
-            {showEmojiPicker && (
-              <div
-                ref={emojiPickerRef}
-                style={{
-                  position: 'absolute',
-                  top: '64px',
-                  left: 0,
-                  background: '#FFFFFF',
-                  border: '1.5px solid var(--border)',
-                  borderRadius: '16px',
-                  padding: '12px',
-                  zIndex: 2000,
-                  display: 'grid',
-                  gridTemplateColumns: 'repeat(4, 1fr)',
-                  gap: '8px',
-                  boxShadow: '0 12px 30px rgba(0,0,0,0.1)',
-                }}
-              >
-                {popularEmojis.map((emoji) => (
-                  <div
-                    key={emoji}
-                    onClick={() => {
-                      setSelectedEmoji(emoji);
-                      setShowEmojiPicker(false);
-                    }}
-                    style={{
-                      fontSize: '24px',
-                      padding: '6px',
-                      cursor: 'pointer',
-                      borderRadius: '8px',
-                      textAlign: 'center',
-                      transition: 'background 0.15s',
-                    }}
-                    onMouseEnter={(e) => { e.currentTarget.style.background = 'rgba(0,0,0,0.05)'; }}
-                    onMouseLeave={(e) => { e.currentTarget.style.background = 'none'; }}
-                  >
-                    {emoji}
-                  </div>
-                ))}
-              </div>
-            )}
 
             {/* Text Input */}
             <div style={{ flex: 1 }}>

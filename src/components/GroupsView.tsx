@@ -449,10 +449,14 @@ export const GroupsView: React.FC<GroupsViewProps> = ({
                     justifyContent: 'center',
                     fontSize: '15px',
                     fontWeight: 900,
-                    flexShrink: 0,
+                    overflow: 'hidden',
                   }}
                 >
-                  {g.emoji || g.name.charAt(0).toUpperCase() || '👤'}
+                  {g.emoji && (g.emoji.startsWith('data:image/') || g.emoji.startsWith('http')) ? (
+                    <img src={g.emoji} style={{ width: '100%', height: '100%', objectFit: 'cover' }} alt="" />
+                  ) : (
+                    g.emoji || g.name.charAt(0).toUpperCase() || '👤'
+                  )}
                 </div>
                 <div style={{ minWidth: 0 }}>
                   <h3

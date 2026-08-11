@@ -409,7 +409,12 @@ export const Sidebar: React.FC<SidebarProps> = ({
                           whiteSpace: 'nowrap',
                         }}
                       >
-                        {g.emoji || getEmoji(g.name)} {g.name}
+                        {g.emoji && (g.emoji.startsWith('data:image/') || g.emoji.startsWith('http')) ? (
+                          <img src={g.emoji} style={{ width: '18px', height: '18px', borderRadius: '50%', objectFit: 'cover', flexShrink: 0 }} alt="" />
+                        ) : (
+                          <span style={{ flexShrink: 0 }}>{g.emoji || getEmoji(g.name)}</span>
+                        )}
+                        <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{g.name}</span>
                       </div>
                       <div style={{ display: 'flex', gap: '4px' }}>
                         <span

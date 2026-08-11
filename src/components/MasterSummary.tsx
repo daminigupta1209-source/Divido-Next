@@ -829,9 +829,14 @@ export const MasterSummary: React.FC<MasterSummaryProps> = ({
                   fontSize: '18px',
                   fontWeight: 900,
                   flexShrink: 0,
+                  overflow: 'hidden',
                 }}
               >
-                {g.emoji || g.name.charAt(0).toUpperCase() || '👤'}
+                {g.emoji && (g.emoji.startsWith('data:image/') || g.emoji.startsWith('http')) ? (
+                  <img src={g.emoji} style={{ width: '100%', height: '100%', objectFit: 'cover' }} alt="" />
+                ) : (
+                  g.emoji || g.name.charAt(0).toUpperCase() || '👤'
+                )}
               </div>
 
               {/* Name + subtitle */}

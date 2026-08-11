@@ -558,9 +558,14 @@ export const ExpenseModal: React.FC<ExpenseModalProps> = ({
                               justifyContent: 'center', 
                               fontSize: '12px', 
                               fontWeight: 900,
-                              flexShrink: 0 
+                              flexShrink: 0,
+                              overflow: 'hidden',
                             }}>
-                              {initials}
+                              {initials && (initials.startsWith('data:image/') || initials.startsWith('http')) ? (
+                                <img src={initials} style={{ width: '100%', height: '100%', objectFit: 'cover' }} alt="" />
+                              ) : (
+                                initials
+                              )}
                             </div>
                             <span style={{ fontSize: '12px', fontWeight: 900, color: 'var(--t)', flex: 1, minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                               {g.name}
