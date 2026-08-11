@@ -1727,13 +1727,19 @@ function App() {
       }
     : (groups.find((g) => String(g.id) === String(selectedId)) || groups.find((g) => g.id === selectedId) || groups[0]);
 
+  const lastSelectedIdRef = useRef(selectedId);
   useEffect(() => {
     if (selectedGroup) {
-      setHeaderNewName(selectedGroup?.name || '');
+      const idChanged = lastSelectedIdRef.current !== selectedId;
+      lastSelectedIdRef.current = selectedId;
+
+      if (idChanged || !headerRenaming) {
+        setHeaderNewName(selectedGroup?.name || '');
+      }
       setHeaderNameError('');
       if (selectedGroup.name === '') {
         setHeaderRenaming(true);
-      } else {
+      } else if (idChanged) {
         setHeaderRenaming(false);
       }
     }
@@ -1743,6 +1749,10 @@ function App() {
     if (checkPastMemberAndShowRejoin(true)) { setHeaderRenaming(false); return; }
     const trimmed = headerNewName.trim();
     if (!trimmed) {
+      if (selectedGroup && selectedGroup.name === '') {
+        // Do not exit renaming mode if it's a new untitled group on blur/sync
+        return;
+      }
       setHeaderRenaming(false);
       return;
     }
