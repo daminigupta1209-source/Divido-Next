@@ -284,9 +284,6 @@ export const GroupHeader: React.FC<GroupHeaderProps> = ({
                   onClick={() => { if (selectedId === 'STANDALONE') return; if (amIPastMember) { onRequestRejoin && onRequestRejoin(); return; } setNewName(selectedGroup.name || ''); setIsRenaming(true); }}
                 >
                   {selectedGroup.name || 'Untitled Group 🏘️'}
-                  {selectedId !== 'STANDALONE' && (
-                    <span className="edit-pencil" style={{ fontSize: '14px', opacity: 0.45, flexShrink: 0 }}>✏️</span>
-                  )}
                 </h1>
               )}
             </div>

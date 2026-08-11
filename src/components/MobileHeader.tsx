@@ -318,25 +318,8 @@ export const MobileHeader: React.FC<MobileHeaderProps> = ({
                       textOverflow: 'ellipsis',
                       width: '100%',
                       display: 'inline-block',
-                      paddingRight: selectedId !== 'STANDALONE' ? '20px' : '0'
                     }}>
                       {selectedGroup?.name || 'Untitled Group'}
-                      {selectedId !== 'STANDALONE' && (
-                        <span
-                          className="edit-pencil"
-                          style={{
-                            position: 'absolute',
-                            right: 0,
-                            top: '50%',
-                            transform: 'translateY(-50%)',
-                            fontSize: '12px',
-                            opacity: 0.5,
-                            lineHeight: 1,
-                          }}
-                        >
-                          ✏️
-                        </span>
-                      )}
                     </span>
                   </h1>
  
