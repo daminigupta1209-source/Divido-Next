@@ -3304,22 +3304,23 @@ function App() {
                   width: '50px',
                   height: '50px',
                   borderRadius: '50%',
-                  background: '#6366F1',
-                  boxShadow: '0 4px 14px rgba(99, 102, 241, 0.4)',
+                  background: '#059669',
+                  boxShadow: '0 4px 14px rgba(5, 150, 105, 0.4)',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
                   color: '#FFFFFF',
-                  fontSize: '22px',
-                  fontWeight: 700,
                   zIndex: 1600,
                   transform: 'translateY(-18px)',
                   transition: 'all 0.15s ease-in-out',
-                  lineHeight: 1,
                 }}
                 className="hover-up"
               >
-                📎
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ color: '#FFFFFF' }}>
+                  <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                  <polyline points="17 8 12 3 7 8" />
+                  <line x1="12" y1="3" x2="12" y2="15" />
+                </svg>
               </div>
               <span style={{
                 fontSize: '10px',
