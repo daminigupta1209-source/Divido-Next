@@ -1901,6 +1901,7 @@ function App() {
           setExpenses={setExpenses}
           setShowExpModal={setShowExpModalSecure}
           setEditingExpense={setEditingExpenseSecure}
+          onCreateGroup={createGroupSecure}
         />
 
         <React.Suspense fallback={
@@ -2379,6 +2380,7 @@ function App() {
                 setView('summary');
               }
             }}
+            onCreateGroup={createGroupSecure}
           />
         )}
         </React.Suspense>
@@ -3260,7 +3262,7 @@ function App() {
       )}
 
       <nav className="bottom-nav">
-          <div className={`b-nav-btn ${view === 'summary' ? 'active' : ''}`} onClick={() => setView('summary')}>
+          <div className={`b-nav-btn ${view === 'summary' ? 'active' : ''}`} onClick={() => { setSelectedId(null); setView('summary'); }}>
             <span className="b-nav-icon" style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: '24px', height: '24px' }}>
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" style={{ width: '22px', height: '22px' }}>
                 <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
@@ -3283,50 +3285,96 @@ function App() {
             <span>Settle</span>
           </div>
           
-          {/* Central Circular Add Group Button */}
-          <div
-            onClick={createGroupSecure}
-            style={{ 
-              display: 'flex', 
-              flexDirection: 'column', 
-              alignItems: 'center', 
-              justifyContent: 'center', 
-              width: '70px',
-              cursor: 'pointer',
-            }}
-            title="New Group"
-          >
+          {/* Central Circular Add Group / Upload Button */}
+          {view === 'detail' ? (
             <div
-              style={{
-                width: '50px',
-                height: '50px',
-                borderRadius: '50%',
-                background: '#EA580C',
-                boxShadow: '0 4px 14px rgba(234, 88, 12, 0.4)',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                color: '#FFFFFF',
-                fontSize: '24px',
-                fontWeight: 700,
-                zIndex: 1600,
-                transform: 'translateY(-18px)',
-                transition: 'all 0.15s ease-in-out',
-                lineHeight: 1,
+              onClick={() => (document.querySelector('[title="Add attachment"]') as HTMLButtonElement)?.click()}
+              style={{ 
+                display: 'flex', 
+                flexDirection: 'column', 
+                alignItems: 'center', 
+                justifyContent: 'center', 
+                width: '70px',
+                cursor: 'pointer',
               }}
-              className="hover-up"
+              title="Add Attachment"
             >
-              +
+              <div
+                style={{
+                  width: '50px',
+                  height: '50px',
+                  borderRadius: '50%',
+                  background: '#6366F1',
+                  boxShadow: '0 4px 14px rgba(99, 102, 241, 0.4)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  color: '#FFFFFF',
+                  fontSize: '22px',
+                  fontWeight: 700,
+                  zIndex: 1600,
+                  transform: 'translateY(-18px)',
+                  transition: 'all 0.15s ease-in-out',
+                  lineHeight: 1,
+                }}
+                className="hover-up"
+              >
+                📎
+              </div>
+              <span style={{
+                fontSize: '10px',
+                fontWeight: 800,
+                color: '#475569',
+                transform: 'translateY(-10px)',
+              }}>
+                Upload
+              </span>
             </div>
-            <span style={{
-              fontSize: '10px',
-              fontWeight: 800,
-              color: '#475569',
-              transform: 'translateY(-10px)',
-            }}>
-              Group
-            </span>
-          </div>
+          ) : (
+            <div
+              onClick={createGroupSecure}
+              style={{ 
+                display: 'flex', 
+                flexDirection: 'column', 
+                alignItems: 'center', 
+                justifyContent: 'center', 
+                width: '70px',
+                cursor: 'pointer',
+              }}
+              title="New Group"
+            >
+              <div
+                style={{
+                  width: '50px',
+                  height: '50px',
+                  borderRadius: '50%',
+                  background: '#EA580C',
+                  boxShadow: '0 4px 14px rgba(234, 88, 12, 0.4)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  color: '#FFFFFF',
+                  fontSize: '24px',
+                  fontWeight: 700,
+                  zIndex: 1600,
+                  transform: 'translateY(-18px)',
+                  transition: 'all 0.15s ease-in-out',
+                  lineHeight: 1,
+                }}
+                className="hover-up"
+              >
+                +
+              </div>
+              <span style={{
+                fontSize: '10px',
+                fontWeight: 800,
+                color: '#475569',
+                transform: 'translateY(-10px)',
+              }}>
+                Group
+              </span>
+            </div>
+          )}
 
           <div className={`b-nav-btn ${view === 'activity' ? 'active' : ''}`} onClick={() => setView('activity')}>
             <span className="b-nav-icon" style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: '24px', height: '24px' }}>

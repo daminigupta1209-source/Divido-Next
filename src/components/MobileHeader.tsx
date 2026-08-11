@@ -52,6 +52,7 @@ interface MobileHeaderProps {
   setShowExpModal?: (b: boolean) => void;
   setEditingExpense?: (exp: Expense | null) => void;
   onRequestRejoin?: () => void;
+  onCreateGroup?: () => void;
 }
 
 export const MobileHeader: React.FC<MobileHeaderProps> = ({
@@ -101,6 +102,7 @@ export const MobileHeader: React.FC<MobileHeaderProps> = ({
   setShowExpModal = () => {},
   setEditingExpense = () => {},
   onRequestRejoin,
+  onCreateGroup,
 }) => {
   // View-only guard: a member who has left this group can browse but not edit it.
   const amIPastMember = (() => {
@@ -697,6 +699,7 @@ export const MobileHeader: React.FC<MobileHeaderProps> = ({
 
                       const actionItems = [
                         ...(isPastMember ? [] : [{ emoji: '💱', label: 'Convert Currency', onClick: () => { setMobileShowGroupOptionsMenu(false); setShowConvertModalId(selectedId); } }]),
+                        { emoji: '➕', label: 'Create New Group', onClick: () => { setMobileShowGroupOptionsMenu(false); onCreateGroup && onCreateGroup(); } },
                         { emoji: '📤', label: 'Export Data', onClick: () => { setMobileShowGroupOptionsMenu(false); handleMobileExportCSV(); } },
                         { emoji: '📊', label: 'Analytics', onClick: () => { setMobileShowGroupOptionsMenu(false); setAnalyticsGroupId(selectedId); setView('analytics'); } },
                         ...(isActiveMember && selectedId !== 'STANDALONE' ? [{ 

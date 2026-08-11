@@ -35,6 +35,7 @@ interface GroupHeaderProps {
   setShowExpModal: (b: boolean) => void;
   setEditingExpense: (exp: Expense | null) => void;
   onRequestRejoin?: () => void;
+  onCreateGroup?: () => void;
 }
 
 export const GroupHeader: React.FC<GroupHeaderProps> = ({
@@ -68,6 +69,7 @@ export const GroupHeader: React.FC<GroupHeaderProps> = ({
   setShowExpModal,
   setEditingExpense,
   onRequestRejoin,
+  onCreateGroup,
 }) => {
   // View-only guard: someone who has left this group can browse history but not edit it.
   const amIPastMember = (() => {
@@ -595,6 +597,7 @@ export const GroupHeader: React.FC<GroupHeaderProps> = ({
 
                       const actionItems = [
                         ...(isPastMember ? [] : [{ emoji: '💱', label: 'Convert Currency', onClick: () => { setShowGroupOptionsMenu(false); setShowConvertModalId(selectedId); } }]),
+                        { emoji: '➕', label: 'Create New Group', onClick: () => { setShowGroupOptionsMenu(false); onCreateGroup && onCreateGroup(); } },
                         { emoji: '📤', label: 'Export Data', onClick: () => { setShowGroupOptionsMenu(false); setShowExportMenu(true); } },
                         { emoji: '📊', label: 'Analytics Breakdown', onClick: () => { setShowGroupOptionsMenu(false); onOpenAnalytics && onOpenAnalytics(selectedId || 'ALL'); } },
                         ...(isActiveMember && selectedId !== 'STANDALONE' ? [{ 

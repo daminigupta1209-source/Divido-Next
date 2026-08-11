@@ -50,6 +50,7 @@ interface GroupDetailProps {
   onReinviteMember?: (memberName: string, inviteUrl: string) => void;
   onRequestRejoin?: () => Promise<void>;
   wasRemovedByAdmin?: boolean;
+  onCreateGroup?: () => void;
 }
 
 export const GroupDetail: React.FC<GroupDetailProps> = ({
@@ -91,6 +92,7 @@ export const GroupDetail: React.FC<GroupDetailProps> = ({
   onReinviteMember,
   onRequestRejoin,
   wasRemovedByAdmin,
+  onCreateGroup,
 }) => {
   const {
     currentId,
@@ -213,6 +215,7 @@ export const GroupDetail: React.FC<GroupDetailProps> = ({
         setShowExpModal={setShowExpModal}
         setEditingExpense={setEditingExpense}
         onRequestRejoin={onRequestRejoin}
+        onCreateGroup={onCreateGroup}
       />
 
       {/* Past Member Rejoin Banner */}
@@ -1398,83 +1401,7 @@ export const GroupDetail: React.FC<GroupDetailProps> = ({
         </div>
       )}
 
-      {/* Group-specific bottom navigation bar */}
-      {selectedId !== null && (
-        <nav className="bottom-nav">
-          <div className="b-nav-btn" onClick={() => setView('summary')}>
-            <span className="b-nav-icon" style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: '24px', height: '24px' }}>
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" style={{ width: '22px', height: '22px' }}>
-                <path d="M3 10.5 12 3l9 7.5" />
-                <path d="M5 9.5V20h14V9.5" />
-                <path d="M9.5 20v-6h5v6" />
-              </svg>
-            </span>
-            <span>Home</span>
-          </div>
-          <div className="b-nav-btn" onClick={() => setView('groups')}>
-            <span className="b-nav-icon" style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: '24px', height: '24px' }}>
-              <svg viewBox="0 0 24 20" fill="none" xmlns="http://www.w3.org/2000/svg" style={{ width: '22px', height: '22px' }}>
-                <circle cx="8" cy="5" r="3" strokeWidth="1.8" fill="none" stroke="currentColor" />
-                <path d="M1 17c0-3.5 3-6 7-6s7 2.5 7 6" strokeWidth="1.8" fill="none" strokeLinecap="round" stroke="currentColor" />
-                <circle cx="15" cy="5" r="2.5" strokeWidth="1.5" fill="none" stroke="currentColor" opacity="0.7" />
-                <path d="M17 11c2.5 0.5 4.5 2.2 4.5 5" strokeWidth="1.5" fill="none" strokeLinecap="round" stroke="currentColor" opacity="0.7" />
-              </svg>
-            </span>
-            <span>Groups</span>
-          </div>
 
-          {/* Central Circular Add Expense Button */}
-          {isLeftUser ? (
-            <div
-              style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', width: '70px', cursor: 'not-allowed', opacity: 0.6 }}
-              title="Cannot add expenses (View Only)"
-            >
-              <div
-                style={{ width: '50px', height: '50px', borderRadius: '50%', background: '#94A3B8', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#FFFFFF', fontSize: '20px', fontWeight: 700, zIndex: 1600, transform: 'translateY(-18px)', lineHeight: 1 }}
-              >
-                🔒
-              </div>
-              <span style={{ fontSize: '10px', fontWeight: 800, color: '#94A3B8', transform: 'translateY(-10px)' }}>View Only</span>
-            </div>
-          ) : (
-            <div
-              onClick={() => { setEditingExpense(null); setShowExpModal(true); }}
-              style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', width: '70px', cursor: 'pointer' }}
-              title="Add Expense"
-            >
-              <div
-                style={{ width: '50px', height: '50px', borderRadius: '50%', background: '#059669', boxShadow: '0 4px 14px rgba(5, 150, 105, 0.4)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#FFFFFF', fontSize: '24px', fontWeight: 700, zIndex: 1600, transform: 'translateY(-18px)', transition: 'all 0.15s ease-in-out', lineHeight: 1 }}
-                className="hover-up"
-              >
-                +
-              </div>
-              <span style={{ fontSize: '10px', fontWeight: 800, color: '#475569', transform: 'translateY(-10px)' }}>Expense</span>
-            </div>
-          )}
-
-          <div className="b-nav-btn" onClick={() => setView('friends')}>
-            <span className="b-nav-icon" style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: '24px', height: '24px' }}>
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" style={{ width: '22px', height: '22px' }}>
-                <path d="M4 8h13" />
-                <path d="m14 5 3 3-3 3" />
-                <path d="M20 16H7" />
-                <path d="m10 13-3 3 3 3" />
-              </svg>
-            </span>
-            <span>Settle All</span>
-          </div>
-          <div className="b-nav-btn" onClick={() => setView('activity')}>
-            <span className="b-nav-icon" style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: '24px', height: '24px' }}>
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" style={{ width: '22px', height: '22px' }}>
-                <path d="M12 8v4l2.5 2" />
-                <path d="M3.5 9a9 9 0 1 1-.5 5" />
-                <path d="M3 5v4h4" />
-              </svg>
-            </span>
-            <span>Activities</span>
-          </div>
-        </nav>
-      )}
 
       {/* Export Options Modal */}
       {showExportMenu && (
