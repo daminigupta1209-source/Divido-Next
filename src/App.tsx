@@ -1542,7 +1542,8 @@ function App() {
         } else {
           setExpenses(expenses.filter((e) => String(e.gId) !== String(id)));
         }
-        if (String(selectedId) === String(id) && (!hasOthers || isStandalone)) {
+        if (String(selectedId) === String(id)) {
+          setSelectedId(null);
           setView('summary');
         }
         setConfirmState({ show: false });
@@ -2364,6 +2365,14 @@ function App() {
                     : g
                 )
               );
+
+              // If I left or was removed, redirect to group list summary
+              const cleanMe = me.replace(/\s*\(me\)$/i, '').replace(/\s*\(Left\)$/i, '').toLowerCase();
+              const cleanRemoved = memberName.replace(/\s*\(me\)$/i, '').replace(/\s*\(Left\)$/i, '').toLowerCase();
+              if (cleanRemoved === cleanMe) {
+                setSelectedId(null);
+                setView('summary');
+              }
             }}
           />
         )}
