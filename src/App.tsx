@@ -58,6 +58,7 @@ function App() {
   });
   const [view, setView] = useState<string>('summary');
   const [selectedId, setSelectedId] = useState<string | number | null>(null);
+  const [editingGroupId, setEditingGroupId] = useState<string | number | null>(null);
   const [showCurrPickerId, setShowCurrPickerId] = useState<string | null>(null);
   const [showExpModal, setShowExpModal] = useState<boolean>(false);
   const [autoOpenScanner, setAutoOpenScanner] = useState<boolean>(false);
@@ -1798,6 +1799,75 @@ function App() {
     setView('detail');
   };
 
+  const handleUpdateGroup = async (groupId: string | number, groupData: { name: string; currency: string; members: string[]; emoji: string; createdDate?: string }) => {
+    // 1. Update local groups state
+    setGroups(groups.map(g => String(g.id) === String(groupId) ? { ...g, ...groupData } : g));
+    
+    // Reset editing state and return to detail view
+    setEditingGroupId(null);
+    setView('detail');
+
+    // 2. If cloud session is active, sync database changes
+    if (userEmail) {
+      try {
+        // Update group details in Supabase
+        const { error: groupErr } = await supabase
+          .from('groups')
+          .update({
+            name: groupData.name,
+            currency: groupData.currency,
+            emoji: groupData.emoji,
+            created_date: groupData.createdDate,
+          })
+          .eq('id', groupId);
+        
+        if (groupErr) console.error('Failed to update group table in Supabase:', groupErr);
+
+        // Fetch existing group members in DB
+        const { data: existingMems, error: fetchErr } = await supabase
+          .from('group_members')
+          .select('user_email')
+          .eq('group_id', groupId);
+
+        if (fetchErr) {
+          console.error('Failed to fetch existing members from Supabase:', fetchErr);
+          return;
+        }
+
+        if (existingMems) {
+          const existingEmails = new Set(existingMems.map(m => m.user_email.toLowerCase()));
+          const targetEmails = groupData.members.map(m => m.toLowerCase());
+
+          // Identify new members to insert
+          const toAdd = groupData.members.filter(email => !existingEmails.has(email.toLowerCase()));
+          if (toAdd.length > 0) {
+            const memberInserts = toAdd.map(email => ({
+              group_id: groupId,
+              user_email: email,
+              user_name: email.split('@')[0], // fallback name
+              joined_at: new Date().toISOString()
+            }));
+            const { error: insertErr } = await supabase.from('group_members').insert(memberInserts);
+            if (insertErr) console.error('Failed to insert new members:', insertErr);
+          }
+
+          // Identify members to remove
+          const toRemove = Array.from(existingEmails).filter(email => !targetEmails.includes(email));
+          if (toRemove.length > 0) {
+            const { error: deleteErr } = await supabase
+              .from('group_members')
+              .delete()
+              .eq('group_id', groupId)
+              .in('user_email', toRemove);
+            if (deleteErr) console.error('Failed to remove members:', deleteErr);
+          }
+        }
+      } catch (err) {
+        console.error('Failed to sync group edits to Supabase:', err);
+      }
+    }
+  };
+
 
 
 
@@ -1895,6 +1965,10 @@ function App() {
             expenses={expenses}
             setGroups={setGroups}
             setIsSidebarOpen={setIsSidebarOpen}
+            onEditGroup={(id) => {
+              setEditingGroupId(id);
+              setView('create_group');
+            }}
             setView={setView}
             headerRenaming={headerRenaming}
             setHeaderRenaming={setHeaderRenaming}
@@ -2056,10 +2130,20 @@ function App() {
           <CreateGroupView
             me={me}
             myDefaultCurrency={myDefaultCurrency}
-            onCancel={() => setView('summary')}
-            onCreateGroup={handleCreateGroup}
+            onCancel={() => {
+              setView(editingGroupId ? 'detail' : 'summary');
+              setEditingGroupId(null);
+            }}
+            onCreateGroup={(groupData) => {
+              if (editingGroupId) {
+                handleUpdateGroup(editingGroupId, groupData);
+              } else {
+                handleCreateGroup(groupData);
+              }
+            }}
             groups={groups}
             userName={userName}
+            editingGroup={editingGroupId ? groups.find(g => String(g.id) === String(editingGroupId)) : undefined}
           />
         ) : (
           <GroupDetail

@@ -10,6 +10,7 @@ interface CreateGroupViewProps {
   onCreateGroup: (groupData: { name: string; currency: string; members: string[]; emoji: string; createdDate?: string }) => void;
   groups: Group[];
   userName: string;
+  editingGroup?: Group;
 }
 
 export const CreateGroupView: React.FC<CreateGroupViewProps> = ({
@@ -19,14 +20,15 @@ export const CreateGroupView: React.FC<CreateGroupViewProps> = ({
   onCreateGroup,
   groups,
   userName,
+  editingGroup,
 }) => {
-  const [title, setTitle] = useState('');
-  const [selectedEmoji, setSelectedEmoji] = useState('🏘️'); // Stores base64 group DP URL or default emoji fallback
-  const [selectedCurrency, setSelectedCurrency] = useState(myDefaultCurrency || '₹');
+  const [title, setTitle] = useState(editingGroup ? editingGroup.name : '');
+  const [selectedEmoji, setSelectedEmoji] = useState((editingGroup && editingGroup.emoji) ? editingGroup.emoji : '🏘️'); // Stores base64 group DP URL or default emoji fallback
+  const [selectedCurrency, setSelectedCurrency] = useState(editingGroup ? editingGroup.currency : (myDefaultCurrency || '₹'));
   const [showCurrencyPicker, setShowCurrencyPicker] = useState(false);
-  const [participants, setParticipants] = useState<string[]>([me]);
+  const [participants, setParticipants] = useState<string[]>(editingGroup ? editingGroup.members : [me]);
   const [nameError, setNameError] = useState('');
-  const [createdDate, setCreatedDate] = useState(() => new Date().toISOString().split('T')[0]);
+  const [createdDate, setCreatedDate] = useState(() => editingGroup?.createdDate || new Date().toISOString().split('T')[0]);
 
   const dateInputRef = useRef<HTMLInputElement>(null);
 
@@ -88,7 +90,7 @@ export const CreateGroupView: React.FC<CreateGroupViewProps> = ({
 
     // Check duplicate group name
     const isDuplicate = groups.some(
-      (g) => g.name.toLowerCase() === trimmedTitle.toLowerCase()
+      (g) => g.name.toLowerCase() === trimmedTitle.toLowerCase() && (!editingGroup || String(g.id) !== String(editingGroup.id))
     );
     if (isDuplicate) {
       setNameError('This group name already exists! 🏘️');
@@ -151,7 +153,7 @@ export const CreateGroupView: React.FC<CreateGroupViewProps> = ({
             ←
           </button>
           <h1 style={{ fontSize: '20px', fontWeight: 950, color: 'var(--t)', margin: 0, fontFamily: 'Nunito' }}>
-            New Group
+            {editingGroup ? 'Edit Group' : 'New Group'}
           </h1>
         </div>
 

@@ -13,6 +13,7 @@ interface MobileHeaderProps {
   groups: Group[];
   setGroups: React.Dispatch<React.SetStateAction<Group[]>>;
   setIsSidebarOpen: (b: boolean) => void;
+  onEditGroup?: (id: string | number) => void;
   setView: (v: string) => void;
   headerRenaming: boolean;
   setHeaderRenaming: (b: boolean) => void;
@@ -63,6 +64,7 @@ export const MobileHeader: React.FC<MobileHeaderProps> = ({
   groups,
   setGroups,
   setIsSidebarOpen,
+  onEditGroup,
   setView,
   headerRenaming,
   setHeaderRenaming,
@@ -112,7 +114,6 @@ export const MobileHeader: React.FC<MobileHeaderProps> = ({
       return cleanM === cleanMe && m.toLowerCase().endsWith(' (left)');
     });
   })();
-  const [editingDate, setEditingDate] = React.useState(false);
   const uploadInputRef = React.useRef<HTMLInputElement>(null);
   const [selectedPhoto, setSelectedPhoto] = React.useState<string | null>(null);
   const [showDecisionModal, setShowDecisionModal] = React.useState(false);
@@ -322,8 +323,9 @@ export const MobileHeader: React.FC<MobileHeaderProps> = ({
                     onClick={() => {
                       if (selectedId === 'STANDALONE') return;
                       if (amIPastMember) { onRequestRejoin && onRequestRejoin(); return; }
-                      setHeaderNewName(selectedGroup?.name || '');
-                      setHeaderRenaming(true);
+                      if (onEditGroup && selectedGroup) {
+                        onEditGroup(selectedGroup.id);
+                      }
                     }}
                   >
                     <span style={{
@@ -337,62 +339,6 @@ export const MobileHeader: React.FC<MobileHeaderProps> = ({
                       {selectedGroup?.name || 'Untitled Group'}
                     </span>
                   </h1>
- 
-                  {/* Since date, placed directly below the title */}
-                  {selectedId !== 'STANDALONE' && (
-                    <div style={{ display: 'flex', alignItems: 'center', marginTop: '2px' }}>
-                      {editingDate ? (
-                        <input
-                          type="date"
-                          autoFocus
-                          value={selectedGroup.createdDate || ''}
-                          max={new Date().toISOString().split('T')[0]}
-                          onChange={(e) => {
-                            const v = e.target.value;
-                            if (!v) return;
-                            setGroups(groups.map((g) => (String(g.id) === String(selectedId) ? { ...g, createdDate: v } : g)));
-                          }}
-                          onBlur={() => setEditingDate(false)}
-                          onKeyDown={(e) => {
-                            if (e.key === 'Enter' || e.key === 'Escape') {
-                              e.preventDefault();
-                              e.stopPropagation();
-                              setEditingDate(false);
-                            }
-                          }}
-                          style={{
-                            fontSize: '10px',
-                            fontWeight: 700,
-                            color: '#64748B',
-                            border: '1.5px solid #E2E8F0',
-                            borderRadius: '6px',
-                            padding: '1px 6px',
-                            outline: 'none',
-                            background: 'var(--w)',
-                          }}
-                        />
-                      ) : (
-                        <span
-                          onClick={() => setEditingDate(true)}
-                          title="Tap to edit"
-                          style={{
-                            fontSize: '10px',
-                            fontWeight: 650,
-                            color: '#94A3B8',
-                            cursor: 'pointer',
-                            userSelect: 'none',
-                            letterSpacing: '0.2px',
-                          }}
-                        >
-                          Since · {selectedGroup.createdDate ? (() => {
-                            const d = new Date(selectedGroup.createdDate);
-                            const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-                            return `${months[d.getMonth()]} ${d.getFullYear()}`;
-                          })() : '—'}
-                        </span>
-                      )}
-                    </div>
-                  )}
                 </>
               )}
             </div>
