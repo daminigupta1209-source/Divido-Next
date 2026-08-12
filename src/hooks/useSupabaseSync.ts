@@ -360,6 +360,13 @@ export function useSupabaseSync({
           );
           return !alreadySynced;
         });
+
+        // Prevent race conditions: ensure the currently selected group is never lost during a sync merge
+        const selectedLocalGroup = groupsRef.current.find(g => String(g.id) === String(selectedId));
+        if (selectedLocalGroup && !loadedGroups.some(l => String(l.id) === String(selectedLocalGroup.id))) {
+          loadedGroups.push(selectedLocalGroup);
+        }
+
         const mergedGroups = [...cleanUnsynced, ...loadedGroups];
 
         // Merge: keep any local expenses that are NOT in the cloud yet (pending upload)
