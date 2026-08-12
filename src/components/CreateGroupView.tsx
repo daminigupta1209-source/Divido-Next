@@ -200,6 +200,7 @@ export const CreateGroupView: React.FC<CreateGroupViewProps> = ({
                   outline: 'none',
                   boxSizing: 'border-box',
                   fontFamily: 'Nunito',
+                  marginTop: 0,
                 }}
               />
             </div>
