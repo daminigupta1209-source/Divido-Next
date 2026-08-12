@@ -272,103 +272,6 @@ export const CreateGroupView: React.FC<CreateGroupViewProps> = ({
           )}
         </div>
 
-        {/* DATE SECTION */}
-        <div>
-          <label style={{ display: 'block', fontSize: '12px', fontWeight: 850, color: 'var(--g)', marginBottom: '8px', textTransform: 'uppercase', letterSpacing: '0.8px' }}>
-            Date Formed
-          </label>
-          <div
-            onClick={() => {
-              if (dateInputRef.current) {
-                try {
-                  dateInputRef.current.showPicker();
-                } catch (e) {
-                  dateInputRef.current.focus();
-                  dateInputRef.current.click();
-                }
-              }
-            }}
-            style={{
-              position: 'relative',
-              width: '100%',
-              height: '54px',
-              cursor: 'pointer',
-            }}
-          >
-            {/* UNDERLAY: Beautifully formatted visual card */}
-            <div
-              style={{
-                position: 'absolute',
-                top: 0,
-                left: 0,
-                width: '100%',
-                height: '100%',
-                borderRadius: '16px',
-                background: '#FFFFFF',
-                border: '1.5px solid var(--border)',
-                padding: '0 16px',
-                display: 'flex',
-                alignItems: 'center',
-                boxSizing: 'border-box',
-                zIndex: 1,
-                pointerEvents: 'none', // Touch passes through to the input overlay
-              }}
-            >
-              <div style={{ display: 'flex', alignItems: 'center', gap: '12px', width: '100%' }}>
-                <div
-                  style={{
-                    width: '32px',
-                    height: '32px',
-                    borderRadius: '50%',
-                    background: 'var(--bg)',
-                    border: '1.5px solid var(--border)',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    color: 'var(--g)',
-                    flexShrink: 0,
-                  }}
-                >
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                    <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
-                    <line x1="16" y1="2" x2="16" y2="6" />
-                    <line x1="8" y1="2" x2="8" y2="6" />
-                    <line x1="3" y1="10" x2="21" y2="10" />
-                  </svg>
-                </div>
-                <span style={{ fontSize: '16px', fontWeight: 700, color: 'var(--t)', fontFamily: 'Nunito' }}>
-                  {formatDateLabel(createdDate)}
-                </span>
-              </div>
-            </div>
-
-            {/* OVERLAY: Native input that handles all click events natively */}
-            <input
-              ref={dateInputRef}
-              type="date"
-              value={createdDate}
-              onChange={(e) => setCreatedDate(e.target.value)}
-              max={new Date().toISOString().split('T')[0]}
-              style={{
-                position: 'absolute',
-                top: 0,
-                left: 0,
-                width: '100%',
-                height: '100%',
-                opacity: 0.01, // Near invisible but fully interactive and clickable
-                cursor: 'pointer',
-                zIndex: 2,
-                fontSize: '16px', // Standard size to avoid zoom on focus
-                padding: 0,
-                margin: 0,
-                border: 'none',
-                outline: 'none',
-                background: 'transparent',
-              }}
-            />
-          </div>
-        </div>
-
         {/* OPTIONS SECTION (CURRENCY) */}
         <div>
           <label style={{ display: 'block', fontSize: '12px', fontWeight: 850, color: 'var(--g)', marginBottom: '8px', textTransform: 'uppercase', letterSpacing: '0.8px' }}>
@@ -535,6 +438,63 @@ export const CreateGroupView: React.FC<CreateGroupViewProps> = ({
             >
               + Add Friend
             </button>
+          </div>
+        </div>
+
+        {/* DATE SECTION (SMALL PILL BADGE AT BOTTOM) */}
+        <div style={{ display: 'flex', justifyContent: 'flex-start', marginTop: '16px', padding: '0 4px' }}>
+          <div
+            onClick={() => {
+              if (dateInputRef.current) {
+                try {
+                  dateInputRef.current.showPicker();
+                } catch (e) {
+                  dateInputRef.current.focus();
+                  dateInputRef.current.click();
+                }
+              }
+            }}
+            style={{
+              position: 'relative',
+              display: 'inline-flex',
+              alignItems: 'center',
+              borderRadius: '10px',
+              background: '#FFFFFF',
+              border: '1px solid var(--border)',
+              padding: '6px 10px',
+              boxShadow: '0 2px 6px rgba(0,0,0,0.02)',
+              cursor: 'pointer',
+            }}
+          >
+            <div style={{ display: 'flex', alignItems: 'center', gap: '6px', zIndex: 1 }}>
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="var(--g)" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
+                <line x1="16" y1="2" x2="16" y2="6" />
+                <line x1="8" y1="2" x2="8" y2="6" />
+                <line x1="3" y1="10" x2="21" y2="10" />
+              </svg>
+              <span style={{ fontSize: '11px', fontWeight: 800, color: 'var(--g)', fontFamily: 'Nunito' }}>
+                {formatDateLabel(createdDate)}
+              </span>
+            </div>
+
+            <input
+              ref={dateInputRef}
+              type="date"
+              value={createdDate}
+              onChange={(e) => setCreatedDate(e.target.value)}
+              max={new Date().toISOString().split('T')[0]}
+              style={{
+                position: 'absolute',
+                top: 0,
+                left: 0,
+                width: '100%',
+                height: '100%',
+                opacity: 0.01,
+                cursor: 'pointer',
+                zIndex: 2,
+              }}
+            />
           </div>
         </div>
 
