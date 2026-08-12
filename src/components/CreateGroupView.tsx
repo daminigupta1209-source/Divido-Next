@@ -280,7 +280,6 @@ export const CreateGroupView: React.FC<CreateGroupViewProps> = ({
             Date
           </label>
           <div
-            onClick={() => dateInputRef.current?.showPicker?.() || dateInputRef.current?.click()}
             style={{
               borderRadius: '16px',
               background: '#FFFFFF',
@@ -288,13 +287,10 @@ export const CreateGroupView: React.FC<CreateGroupViewProps> = ({
               padding: '12px 16px',
               display: 'flex',
               alignItems: 'center',
-              justifyContent: 'space-between',
-              cursor: 'pointer',
-              position: 'relative',
               boxShadow: '0 4px 10px rgba(0,0,0,0.02)',
             }}
           >
-            <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '16px', width: '100%' }}>
               <div
                 style={{
                   width: '36px',
@@ -316,35 +312,32 @@ export const CreateGroupView: React.FC<CreateGroupViewProps> = ({
                   <line x1="3" y1="10" x2="21" y2="10" />
                 </svg>
               </div>
-              <div style={{ display: 'flex', flexDirection: 'column' }}>
-                <span style={{ fontSize: '15px', fontWeight: 800, color: 'var(--t)' }}>
-                  {formatDateLabel(createdDate)}
-                </span>
-                <span style={{ fontSize: '11px', fontWeight: 700, color: 'var(--g)', marginTop: '1px' }}>
+              <div style={{ display: 'flex', flexDirection: 'column', flex: 1 }}>
+                <span style={{ fontSize: '11px', fontWeight: 700, color: 'var(--g)', marginBottom: '2px' }}>
                   Group Formed On
                 </span>
+                <input
+                  ref={dateInputRef}
+                  type="date"
+                  value={createdDate}
+                  onChange={(e) => setCreatedDate(e.target.value)}
+                  max={new Date().toISOString().split('T')[0]}
+                  style={{
+                    fontSize: '15px',
+                    fontWeight: 800,
+                    color: 'var(--t)',
+                    border: 'none',
+                    background: 'transparent',
+                    outline: 'none',
+                    padding: 0,
+                    margin: 0,
+                    width: '100%',
+                    fontFamily: 'Nunito',
+                    marginTop: 0,
+                  }}
+                />
               </div>
             </div>
-
-            {/* Hidden native date input that triggers on card click */}
-            <input
-              ref={dateInputRef}
-              type="date"
-              value={createdDate}
-              onChange={(e) => setCreatedDate(e.target.value)}
-              max={new Date().toISOString().split('T')[0]}
-              onClick={(e) => e.stopPropagation()} // Prevent trigger loop
-              style={{
-                position: 'absolute',
-                top: 0,
-                left: 0,
-                width: '100%',
-                height: '100%',
-                opacity: 0,
-                cursor: 'pointer',
-                zIndex: 2,
-              }}
-            />
           </div>
         </div>
 
