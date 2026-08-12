@@ -283,7 +283,7 @@ export const CreateGroupView: React.FC<CreateGroupViewProps> = ({
               borderRadius: '16px',
               background: '#FFFFFF',
               border: '1.5px solid var(--border)',
-              padding: '16px 20px',
+              padding: '12px 16px',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'space-between',
@@ -295,8 +295,8 @@ export const CreateGroupView: React.FC<CreateGroupViewProps> = ({
             <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
               <div
                 style={{
-                  width: '40px',
-                  height: '40px',
+                  width: '32px',
+                  height: '32px',
                   borderRadius: '50%',
                   background: 'var(--bg)',
                   border: '1.5px solid var(--border)',
@@ -304,7 +304,7 @@ export const CreateGroupView: React.FC<CreateGroupViewProps> = ({
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
-                  fontSize: '16px',
+                  fontSize: '14px',
                   fontWeight: 900,
                   flexShrink: 0,
                   fontFamily: 'Nunito',
