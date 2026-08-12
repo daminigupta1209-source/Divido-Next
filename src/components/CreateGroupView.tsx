@@ -313,9 +313,6 @@ export const CreateGroupView: React.FC<CreateGroupViewProps> = ({
                 </svg>
               </div>
               <div style={{ display: 'flex', flexDirection: 'column', flex: 1 }}>
-                <span style={{ fontSize: '11px', fontWeight: 700, color: 'var(--g)', marginBottom: '2px' }}>
-                  Group Formed On
-                </span>
                 <input
                   ref={dateInputRef}
                   type="date"
