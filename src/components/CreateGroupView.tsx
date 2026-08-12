@@ -147,14 +147,16 @@ export const CreateGroupView: React.FC<CreateGroupViewProps> = ({
           style={{
             background: 'none',
             border: 'none',
-            color: title.trim() ? '#047857' : '#D1FAE5',
+            color: '#064E3B',
             cursor: title.trim() ? 'pointer' : 'not-allowed',
-            padding: '4px 0 4px 8px',
+            padding: '4px 0px',
+            marginRight: '-6px',
+            opacity: title.trim() ? 1 : 0.35,
             display: 'inline-flex',
             alignItems: 'center',
             justifyContent: 'center',
             lineHeight: 1,
-            transition: 'color 0.2s',
+            transition: 'all 0.2s',
           }}
         >
           <svg
