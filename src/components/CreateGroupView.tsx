@@ -102,31 +102,65 @@ export const CreateGroupView: React.FC<CreateGroupViewProps> = ({
   };
 
   return (
-    <div className="content-width-limit" style={{ padding: '20px 16px', boxSizing: 'border-box', minHeight: '100vh', background: 'var(--bg)' }}>
+    <form
+      onSubmit={handleSubmit}
+      className="content-width-limit"
+      style={{
+        padding: '20px 16px',
+        boxSizing: 'border-box',
+        minHeight: '100vh',
+        background: 'var(--bg)',
+        display: 'flex',
+        flexDirection: 'column',
+        gap: '20px'
+      }}
+    >
       {/* HEADER */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: '16px', marginBottom: '24px' }}>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '14px' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+          <button
+            type="button"
+            onClick={onCancel}
+            style={{
+              background: 'none',
+              border: 'none',
+              fontSize: '24px',
+              cursor: 'pointer',
+              color: 'var(--t)',
+              padding: 0,
+              lineHeight: 1,
+              display: 'inline-flex',
+              alignItems: 'center',
+            }}
+          >
+            ←
+          </button>
+          <h1 style={{ fontSize: '20px', fontWeight: 950, color: 'var(--t)', margin: 0, fontFamily: 'Nunito' }}>
+            New Group
+          </h1>
+        </div>
+
+        {/* Submit Tick Button */}
         <button
-          onClick={onCancel}
+          type="submit"
+          disabled={!title.trim()}
           style={{
             background: 'none',
             border: 'none',
-            fontSize: '24px',
-            cursor: 'pointer',
-            color: 'var(--t)',
-            padding: 0,
-            lineHeight: 1,
+            color: title.trim() ? '#10B981' : '#A7F3D0',
+            fontSize: '28px',
+            fontWeight: 'bold',
+            cursor: title.trim() ? 'pointer' : 'not-allowed',
+            padding: '4px 8px',
             display: 'inline-flex',
             alignItems: 'center',
+            lineHeight: 1,
+            transition: 'color 0.2s',
           }}
         >
-          ←
+          ✓
         </button>
-        <h1 style={{ fontSize: '20px', fontWeight: 950, color: 'var(--t)', margin: 0, fontFamily: 'Nunito' }}>
-          New Group
-        </h1>
       </div>
-
-      <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
         
         {/* GROUP NAME SECTION */}
         <div>
@@ -380,30 +414,6 @@ export const CreateGroupView: React.FC<CreateGroupViewProps> = ({
           </div>
         </div>
 
-        {/* CREATE BUTTON */}
-        <button
-          type="submit"
-          disabled={!title.trim()}
-          style={{
-            height: '52px',
-            borderRadius: '16px',
-            background: title.trim() ? '#3B82F6' : '#93C5FD',
-            color: '#FFFFFF',
-            border: 'none',
-            fontWeight: 850,
-            fontSize: '15px',
-            cursor: title.trim() ? 'pointer' : 'not-allowed',
-            boxShadow: title.trim() ? '0 10px 20px rgba(59, 130, 246, 0.3)' : 'none',
-            transition: 'all 0.2s',
-            marginTop: '12px',
-            fontFamily: 'Nunito',
-          }}
-        >
-          Create Group
-        </button>
-
-      </form>
-
       <SearchableCurrencyPicker
         show={showCurrencyPicker}
         onClose={() => setShowCurrencyPicker(false)}
@@ -413,6 +423,6 @@ export const CreateGroupView: React.FC<CreateGroupViewProps> = ({
           setShowCurrencyPicker(false);
         }}
       />
-    </div>
+    </form>
   );
 };
