@@ -276,9 +276,12 @@ export const CreateGroupView: React.FC<CreateGroupViewProps> = ({
 
         {/* DATE SECTION */}
         <div>
-          <label style={{ display: 'block', fontSize: '12px', fontWeight: 850, color: 'var(--g)', marginBottom: '8px', textTransform: 'uppercase', letterSpacing: '0.8px' }}>
-            Date
-          </label>
+          <style>{`
+            .custom-date-input::-webkit-calendar-picker-indicator {
+              display: none !important;
+              -webkit-appearance: none !important;
+            }
+          `}</style>
           <div
             style={{
               borderRadius: '16px',
@@ -319,6 +322,7 @@ export const CreateGroupView: React.FC<CreateGroupViewProps> = ({
                   value={createdDate}
                   onChange={(e) => setCreatedDate(e.target.value)}
                   max={new Date().toISOString().split('T')[0]}
+                  className="custom-date-input"
                   style={{
                     fontSize: '15px',
                     fontWeight: 800,
