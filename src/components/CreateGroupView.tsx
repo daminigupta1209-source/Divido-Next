@@ -31,16 +31,14 @@ export const CreateGroupView: React.FC<CreateGroupViewProps> = ({
   const dateInputRef = useRef<HTMLInputElement>(null);
 
   const formatDateLabel = (dateStr: string) => {
-    if (!dateStr) return "Today";
+    if (!dateStr) return "";
     const date = new Date(dateStr);
     if (isNaN(date.getTime())) return dateStr;
-    const todayStr = new Date().toISOString().split('T')[0];
-    if (dateStr === todayStr) return "Today";
-    return date.toLocaleDateString('en-US', {
-      month: 'long',
-      day: 'numeric',
-      year: 'numeric'
-    });
+    const day = date.getDate();
+    const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+    const month = months[date.getMonth()];
+    const year2Digits = String(date.getFullYear()).slice(-2);
+    return `${day} ${month} ${year2Digits}'`;
   };
 
   const currencyInfo = worldCurrencies.find((c) => c.s === selectedCurrency) || { s: '₹', n: 'Indian Rupee', c: 'INR' };
@@ -280,10 +278,21 @@ export const CreateGroupView: React.FC<CreateGroupViewProps> = ({
             Date Formed
           </label>
           <div
+            onClick={() => {
+              if (dateInputRef.current) {
+                try {
+                  dateInputRef.current.showPicker();
+                } catch (e) {
+                  dateInputRef.current.focus();
+                  dateInputRef.current.click();
+                }
+              }
+            }}
             style={{
               position: 'relative',
               width: '100%',
               height: '54px',
+              cursor: 'pointer',
             }}
           >
             {/* UNDERLAY: Beautifully formatted visual card */}
@@ -335,6 +344,7 @@ export const CreateGroupView: React.FC<CreateGroupViewProps> = ({
 
             {/* OVERLAY: Native input that handles all click events natively */}
             <input
+              ref={dateInputRef}
               type="date"
               value={createdDate}
               onChange={(e) => setCreatedDate(e.target.value)}
