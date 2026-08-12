@@ -267,7 +267,7 @@ export const CreateGroupView: React.FC<CreateGroupViewProps> = ({
         {/* PARTICIPANTS SECTION */}
         <div>
           <label style={{ display: 'block', fontSize: '12px', fontWeight: 850, color: 'var(--g)', marginBottom: '8px', textTransform: 'uppercase', letterSpacing: '0.8px' }}>
-            Participants
+            Friends
           </label>
           <div
             style={{
@@ -296,7 +296,7 @@ export const CreateGroupView: React.FC<CreateGroupViewProps> = ({
                 <input
                   type="text"
                   value={index === 0 && participant === me ? userName : participant}
-                  placeholder={index === 0 ? "Your name" : `Participant ${index + 1}`}
+                  placeholder={index === 0 ? "Your name" : `Friend ${index + 1}`}
                   onChange={(e) => handleParticipantChange(index, e.target.value)}
                   disabled={index === 0} // First user is always yourself
                   style={{
@@ -311,6 +311,31 @@ export const CreateGroupView: React.FC<CreateGroupViewProps> = ({
                     fontFamily: 'Nunito',
                   }}
                 />
+                {index > 0 && participant.trim() && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      alert(`Please create the group "${title || 'Untitled'}" first! Once created, you will get a personalized invite link to share with ${participant}.`);
+                    }}
+                    style={{
+                      background: 'rgba(59, 130, 246, 0.1)',
+                      border: 'none',
+                      borderRadius: '8px',
+                      padding: '5px 10px',
+                      color: '#2563EB',
+                      fontSize: '11px',
+                      fontWeight: 800,
+                      cursor: 'pointer',
+                      transition: '0.15s all ease',
+                      whiteSpace: 'nowrap',
+                      fontFamily: 'Nunito',
+                    }}
+                    onMouseEnter={(e) => { e.currentTarget.style.background = 'rgba(59, 130, 246, 0.2)'; }}
+                    onMouseLeave={(e) => { e.currentTarget.style.background = 'rgba(59, 130, 246, 0.1)'; }}
+                  >
+                    🔗 Invite
+                  </button>
+                )}
                 {index > 0 && (
                   <button
                     type="button"
@@ -332,7 +357,7 @@ export const CreateGroupView: React.FC<CreateGroupViewProps> = ({
               </div>
             ))}
 
-            {/* Add Participant Button Link */}
+            {/* Add Friend Button Link */}
             <button
               type="button"
               onClick={handleAddParticipant}
@@ -350,7 +375,7 @@ export const CreateGroupView: React.FC<CreateGroupViewProps> = ({
                 fontFamily: 'Nunito',
               }}
             >
-              + Add Participant
+              + Add Friend
             </button>
           </div>
         </div>
