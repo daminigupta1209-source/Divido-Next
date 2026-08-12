@@ -35,6 +35,7 @@ export function useSupabaseSync({
   const prevGroupsRef = useRef<Group[]>([]);
   const prevExpensesRef = useRef<Expense[]>([]);
   const groupsRef = useRef(groups);
+  const selectedIdRef = useRef(selectedId);
   const initialLoadDoneRef = useRef(false);
   const [loadTrigger, setLoadTrigger] = useState(0);
   const initializedRef = useRef(false);
@@ -86,6 +87,10 @@ export function useSupabaseSync({
   useEffect(() => {
     groupsRef.current = groups;
   }, [groups]);
+
+  useEffect(() => {
+    selectedIdRef.current = selectedId;
+  }, [selectedId]);
 
   // Safety net: the "Syncing ledger..." loader is gated on isInitialLoadDone.
   // If the cloud load stalls for any reason (slow network, an early-return path,
@@ -362,8 +367,9 @@ export function useSupabaseSync({
         });
 
         // Prevent race conditions: ensure the currently selected group is never lost during a sync merge
-        const selectedLocalGroup = groupsRef.current.find(g => String(g.id) === String(selectedId));
-        if (selectedLocalGroup && !loadedGroups.some(l => String(l.id) === String(selectedLocalGroup.id))) {
+        const currentSelectedId = selectedIdRef.current;
+        const selectedLocalGroup = groupsRef.current.find(g => String(g.id) === String(currentSelectedId));
+        if (selectedLocalGroup && !loadedGroups.some(l => String(l.id) === String(selectedLocalGroup.id) || l.name.trim().toLowerCase() === selectedLocalGroup.name.trim().toLowerCase())) {
           loadedGroups.push(selectedLocalGroup);
         }
 
