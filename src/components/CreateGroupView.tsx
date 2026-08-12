@@ -276,12 +276,6 @@ export const CreateGroupView: React.FC<CreateGroupViewProps> = ({
 
         {/* DATE SECTION */}
         <div>
-          <style>{`
-            .custom-date-input::-webkit-calendar-picker-indicator {
-              display: none !important;
-              -webkit-appearance: none !important;
-            }
-          `}</style>
           <div
             style={{
               borderRadius: '16px',
@@ -291,9 +285,13 @@ export const CreateGroupView: React.FC<CreateGroupViewProps> = ({
               display: 'flex',
               alignItems: 'center',
               boxShadow: '0 4px 10px rgba(0,0,0,0.02)',
+              position: 'relative', // Anchor the absolute input overlay
+              cursor: 'pointer',
+              minHeight: '54px',
+              boxSizing: 'border-box'
             }}
           >
-            <div style={{ display: 'flex', alignItems: 'center', gap: '16px', width: '100%' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '16px', width: '100%', zIndex: 1 }}>
               <div
                 style={{
                   width: '36px',
@@ -315,30 +313,32 @@ export const CreateGroupView: React.FC<CreateGroupViewProps> = ({
                   <line x1="3" y1="10" x2="21" y2="10" />
                 </svg>
               </div>
-              <div style={{ display: 'flex', flexDirection: 'column', flex: 1 }}>
-                <input
-                  ref={dateInputRef}
-                  type="date"
-                  value={createdDate}
-                  onChange={(e) => setCreatedDate(e.target.value)}
-                  max={new Date().toISOString().split('T')[0]}
-                  className="custom-date-input"
-                  style={{
-                    fontSize: '15px',
-                    fontWeight: 800,
-                    color: 'var(--t)',
-                    border: 'none',
-                    background: 'transparent',
-                    outline: 'none',
-                    padding: 0,
-                    margin: 0,
-                    width: '100%',
-                    fontFamily: 'Nunito',
-                    marginTop: 0,
-                  }}
-                />
+              <div style={{ display: 'flex', flexDirection: 'column' }}>
+                <span style={{ fontSize: '15px', fontWeight: 800, color: 'var(--t)' }}>
+                  {formatDateLabel(createdDate)}
+                </span>
               </div>
             </div>
+
+            {/* Hidden native input overlay that handles browser events natively */}
+            <input
+              type="date"
+              value={createdDate}
+              onChange={(e) => setCreatedDate(e.target.value)}
+              max={new Date().toISOString().split('T')[0]}
+              style={{
+                position: 'absolute',
+                top: 0,
+                left: 0,
+                width: '100%',
+                height: '100%',
+                opacity: 0,
+                cursor: 'pointer',
+                zIndex: 2,
+                WebkitAppearance: 'none',
+                appearance: 'none',
+              }}
+            />
           </div>
         </div>
 
