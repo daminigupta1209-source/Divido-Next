@@ -344,29 +344,6 @@ export const GroupDetail: React.FC<GroupDetailProps> = ({
       {/* Members header card with back button */}
       <div style={{ position: 'relative', marginBottom: '20px' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px', width: '100%' }}>
-          {/* Back Chevron */}
-          <button
-            onClick={() => setView('summary')}
-            style={{
-              border: 'none',
-              background: 'transparent',
-              cursor: 'pointer',
-              padding: 0,
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              width: '44px',
-              height: '44px',
-              marginLeft: '-11px',
-              flexShrink: 0,
-            }}
-            title="Back to summary"
-          >
-            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ color: '#475569' }}>
-              <polyline points="15 18 9 12 15 6" />
-            </svg>
-          </button>
-
           {selectedGroup && (
             <div
               style={{

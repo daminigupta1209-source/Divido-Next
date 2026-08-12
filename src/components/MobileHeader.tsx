@@ -234,6 +234,29 @@ export const MobileHeader: React.FC<MobileHeaderProps> = ({
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: '100%', position: 'relative', height: '40px' }}>
         {view === 'detail' && selectedGroup ? (
           <div style={{ display: 'flex', alignItems: 'center', width: '100%', height: '100%', gap: '10px' }}>
+            <button
+              onClick={() => setView('summary')}
+              style={{
+                border: 'none',
+                background: 'transparent',
+                cursor: 'pointer',
+                padding: 0,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                width: '30px',
+                height: '40px',
+                marginLeft: '-6px',
+                marginRight: '-4px',
+                flexShrink: 0,
+                zIndex: 2,
+              }}
+              title="Back to summary"
+            >
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ color: '#475569' }}>
+                <polyline points="15 18 9 12 15 6" />
+              </svg>
+            </button>
             <div
               onClick={() => {
                 if (selectedId === 'STANDALONE') return;
