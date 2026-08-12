@@ -565,7 +565,8 @@ export function useSupabaseSync({
                   name: g.name,
                   currency: g.currency,
                   emoji: g.emoji,
-                  simplify_debts: g.simplifyDebts
+                  simplify_debts: g.simplifyDebts,
+                  created_date: g.createdDate
                 })
                 .select();
 

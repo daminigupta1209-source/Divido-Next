@@ -1782,7 +1782,7 @@ function App() {
     setView('create_group');
   };
 
-  const handleCreateGroup = (groupData: { name: string; currency: string; members: string[]; emoji: string }) => {
+  const handleCreateGroup = (groupData: { name: string; currency: string; members: string[]; emoji: string; createdDate?: string }) => {
     const id = Date.now() + Math.random();
     const newGroup = {
       id,
@@ -1791,6 +1791,7 @@ function App() {
       members: groupData.members,
       emoji: groupData.emoji,
       simplifyDebts: false,
+      createdDate: groupData.createdDate || new Date().toISOString().split('T')[0],
     };
     setGroups([...groups, newGroup]);
     setSelectedId(id);
