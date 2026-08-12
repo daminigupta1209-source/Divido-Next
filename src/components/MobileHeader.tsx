@@ -234,16 +234,38 @@ export const MobileHeader: React.FC<MobileHeaderProps> = ({
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: '100%', position: 'relative', height: '40px' }}>
         {view === 'detail' && selectedGroup ? (
           <div style={{ display: 'flex', alignItems: 'center', width: '100%', height: '100%', gap: '10px' }}>
-            <button
-              className="menu-burger-btn"
-              onClick={() => setIsSidebarOpen(true)}
-              style={{ margin: 0, zIndex: 2, flexShrink: 0 }}
+            <div
+              onClick={() => {
+                if (selectedId === 'STANDALONE') return;
+                if (amIPastMember) { onRequestRejoin && onRequestRejoin(); return; }
+                if (onEditGroup && selectedGroup) {
+                  onEditGroup(selectedGroup.id);
+                }
+              }}
+              style={{
+                width: '38px',
+                height: '38px',
+                borderRadius: '50%',
+                background: 'var(--nav-bg)',
+                color: 'var(--purple-text)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                fontSize: '16px',
+                fontWeight: 900,
+                overflow: 'hidden',
+                flexShrink: 0,
+                zIndex: 2,
+                cursor: selectedId === 'STANDALONE' ? 'default' : 'pointer',
+              }}
             >
-              <span className="burger-line"></span>
-              <span className="burger-line"></span>
-              <span className="burger-line"></span>
-            </button>
-            
+              {selectedGroup.emoji && (selectedGroup.emoji.startsWith('data:image/') || selectedGroup.emoji.startsWith('http')) ? (
+                <img src={selectedGroup.emoji} style={{ width: '100%', height: '100%', objectFit: 'cover' }} alt="" />
+              ) : (
+                selectedGroup.emoji || selectedGroup.name?.charAt(0).toUpperCase() || '👤'
+              )}
+            </div>
+
             <div style={{
               flex: 1,
               minWidth: 0,
