@@ -295,8 +295,57 @@ export function useSupabaseSync({
             });
         }
 
+        // Self-Healing: collapse duplicate GROUPS (same name) that slipped in
+        // from a slow-network sync retry or a second device creating the same
+        // group before it had synced. Safety rules so this never loses data:
+        //   * a group holding any expenses is NEVER deleted;
+        //   * at least one group per name is always kept.
+        // So we only ever remove empty twins — exactly the phantom "parel"/
+        // "Kota" style duplicates.
+        const expenseCountByGroup = new Map<number, number>();
+        expenseRecords.forEach((e: any) => {
+          expenseCountByGroup.set(e.group_id, (expenseCountByGroup.get(e.group_id) || 0) + 1);
+        });
+        const groupsByCleanName = new Map<string, any[]>();
+        idToGroup.forEach((group: any) => {
+          const key = String(group.name || '').trim().toLowerCase();
+          if (!key) return;
+          if (!groupsByCleanName.has(key)) groupsByCleanName.set(key, []);
+          groupsByCleanName.get(key)!.push(group);
+        });
+        const duplicateGroupsToDelete: number[] = [];
+        groupsByCleanName.forEach((grps) => {
+          if (grps.length < 2) return;
+          const empty = grps.filter((gr) => (expenseCountByGroup.get(gr.id) || 0) === 0);
+          const withExpenses = grps.filter((gr) => (expenseCountByGroup.get(gr.id) || 0) > 0);
+          if (withExpenses.length > 0) {
+            // A real copy with data exists — drop every empty twin.
+            empty.forEach((gr) => duplicateGroupsToDelete.push(gr.id));
+          } else {
+            // All copies are empty — keep the oldest (smallest id), drop the rest.
+            [...empty]
+              .sort((a, b) => Number(a.id) - Number(b.id))
+              .slice(1)
+              .forEach((gr) => duplicateGroupsToDelete.push(gr.id));
+          }
+        });
+
+        if (duplicateGroupsToDelete.length > 0) {
+          Promise.all([
+            supabase.from('group_members').delete().in('group_id', duplicateGroupsToDelete),
+            supabase.from('expenses').delete().in('group_id', duplicateGroupsToDelete),
+          ]).then(async () => {
+            const { error } = await supabase.from('groups').delete().in('id', duplicateGroupsToDelete);
+            if (error) console.error('Failed to run duplicate groups cleanup:', error);
+            else setLoadTrigger((prev) => prev + 1);
+          });
+        }
+
         const currentEmail = session?.user?.email?.toLowerCase() || '';
         idToGroup.forEach((group: any) => {
+          // Don't render a duplicate we're about to delete — avoids a flash of
+          // the phantom group before the cleanup reload lands.
+          if (duplicateGroupsToDelete.includes(group.id)) return;
           const groupMems = allMembers.filter((m: any) => m.group_id === group.id);
           const activeMems = groupMems.filter((m: any) => !m.link_request_email || !m.is_pending || m.name.endsWith(' (Left)'));
           
@@ -596,6 +645,39 @@ export function useSupabaseSync({
             sessionStorage.setItem(lockKey, 'true');
 
             try {
+              // Save-time duplicate guard. A freshly-created group can reach
+              // this insert twice — a slow-network sync retry that fires before
+              // the first insert's real id has propagated back into local
+              // state, or a second device creating the same-named group. The
+              // type-time name check (CreateGroupView) only sees THIS device's
+              // in-memory list, so it can't catch either case. Before inserting,
+              // ask the cloud whether a group with this exact name that I
+              // already belong to exists; if so, adopt it instead of creating a
+              // twin.
+              if (userEmail) {
+                const { data: myMemberships } = await supabase
+                  .from('group_members')
+                  .select('group_id, groups(id, name)')
+                  .eq('user_email', userEmail);
+                const existing = (myMemberships || []).find((r: any) =>
+                  r.groups && String(r.groups.name || '').trim().toLowerCase() === g.name.trim().toLowerCase()
+                );
+                if (existing) {
+                  sessionStorage.removeItem(lockKey);
+                  const adoptedId = existing.group_id;
+                  const oldGroupId = g.id;
+                  nextGroups[i] = { ...g, id: adoptedId };
+                  nextExpenses = nextExpenses.map((exp) =>
+                    String(exp.gId) === String(oldGroupId) ? { ...exp, gId: adoptedId } : exp
+                  );
+                  if (String(nextSelectedId) === String(oldGroupId)) {
+                    nextSelectedId = adoptedId;
+                  }
+                  localStateUpdated = true;
+                  continue;
+                }
+              }
+
               // Insert new group
               const insertId = typeof g.id === 'number' && g.id < 2147483647 ? g.id : undefined;
               const { data, error } = await supabase
