@@ -201,6 +201,42 @@ export const GroupMemberList: React.FC<GroupMemberListProps> = ({
               Group Members
             </h1>
           </div>
+          <button
+            type="button"
+            onClick={() => {
+              if (isAddingInline && inlineAddVal.trim()) {
+                handleInlineAdd();
+              }
+              setShowFriendsList(false);
+            }}
+            title="Save changes and close"
+            style={{
+              background: 'none',
+              border: 'none',
+              cursor: 'pointer',
+              padding: '6px',
+              display: 'inline-flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              color: '#15803D',
+              transition: 'transform 0.2s ease',
+            }}
+            onMouseEnter={(e) => { e.currentTarget.style.transform = 'scale(1.15)'; }}
+            onMouseLeave={(e) => { e.currentTarget.style.transform = 'scale(1)'; }}
+          >
+            <svg
+              width="24"
+              height="24"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="3.5"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
+              <polyline points="20 6 9 17 4 12" />
+            </svg>
+          </button>
         </div>
 
         {/* 1. Joined Group Members Card */}
