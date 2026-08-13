@@ -1804,7 +1804,7 @@ export const ExpenseModal: React.FC<ExpenseModalProps> = ({
               bottom: 'calc(100% + 22px)',
               width: '38px',
               height: '38px',
-              borderRadius: '50%',
+              borderRadius: '12px',
               border: 'none',
               background: 'linear-gradient(135deg, #10B981 0%, #059669 100%)',
               boxShadow: '0 6px 16px rgba(5, 150, 105, 0.3)',
