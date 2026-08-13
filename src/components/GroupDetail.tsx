@@ -1016,45 +1016,6 @@ export const GroupDetail: React.FC<GroupDetailProps> = ({
           {/* Removed empty description text */}
 
           <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '14px', width: '100%', maxWidth: '240px' }}>
-            {/* Add Friend Button matching the top right one's color and design */}
-            {!isLeftUser && (
-              <button
-                className="add-friend-btn-anim"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  setShowAddFriendModal(true);
-                }}
-                style={{
-                  width: '100%',
-                  padding: '8px 16px',
-                  height: '38px',
-                  borderRadius: '999px',
-                  background: 'transparent',
-                  color: '#6366F1',
-                  border: '1.5px solid #6366F1',
-                  cursor: 'pointer',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  gap: '8px',
-                  boxSizing: 'border-box',
-                  fontSize: '13px',
-                  fontWeight: 950,
-                  transition: '0.2s all ease',
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.transform = 'scale(1.03)';
-                  e.currentTarget.style.background = 'rgba(99, 102, 241, 0.04)';
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.transform = 'scale(1)';
-                  e.currentTarget.style.background = 'transparent';
-                }}
-              >
-                <span style={{ fontSize: '15px', fontWeight: 950, lineHeight: 1 }}>+</span> Friend
-              </button>
-            )}
-
             {/* Circular Add Expense Button lookalike / button matching group's + Add Expense */}
             {!isLeftUser && (
               <button
