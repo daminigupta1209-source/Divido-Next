@@ -489,64 +489,65 @@ export const GroupMemberList: React.FC<GroupMemberListProps> = ({
                   </div>
                 </div>
               ))}
-            </div>
-            {isAddingInline && (
-              <div
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'space-between',
-                  padding: '8px 12px',
-                  background: '#F8FAFC',
-                  borderRadius: '12px',
-                  boxSizing: 'border-box',
-                  marginTop: '6px',
-                }}
-              >
-                <input
-                  ref={inlineInputRef}
-                  autoFocus
-                  type="text"
-                  placeholder="Enter name..."
-                  value={inlineAddVal}
-                  onChange={(e) => setInlineAddVal(e.target.value)}
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter') handleInlineAdd();
-                    if (e.key === 'Escape') {
-                      setIsAddingInline(false);
-                      setInlineAddVal('');
-                    }
-                  }}
+              {isAddingInline && (
+                <div
                   style={{
-                    border: 'none',
-                    background: 'transparent',
-                    fontSize: '13px',
-                    fontWeight: 'bold',
-                    color: 'var(--t)',
-                    outline: 'none',
-                    width: '100%',
-                    padding: 0,
-                  }}
-                />
-                <span
-                  onClick={() => {
-                    setIsAddingInline(false);
-                    setInlineAddVal('');
-                  }}
-                  style={{
-                    cursor: 'pointer',
-                    opacity: 0.6,
-                    fontSize: '13px',
-                    color: '#EF4444',
-                    fontWeight: 'bold',
-                    marginLeft: '8px',
-                    padding: '0 4px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    padding: '8px 12px',
+                    background: '#F8FAFC',
+                    borderRadius: '12px',
+                    boxSizing: 'border-box',
                   }}
                 >
-                  ✕
-                </span>
-              </div>
-            )}
+                  <input
+                    ref={inlineInputRef}
+                    autoFocus
+                    type="text"
+                    placeholder="Enter name..."
+                    value={inlineAddVal}
+                    onChange={(e) => setInlineAddVal(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') handleInlineAdd();
+                      if (e.key === 'Escape') {
+                        setIsAddingInline(false);
+                        setInlineAddVal('');
+                      }
+                    }}
+                    style={{
+                      border: 'none',
+                      background: 'transparent',
+                      fontSize: '13px',
+                      fontWeight: 'bold',
+                      color: 'var(--t)',
+                      outline: 'none',
+                      width: '100%',
+                      padding: '4px 0',
+                      lineHeight: '1.5',
+                      fontFamily: 'inherit',
+                    }}
+                  />
+                  <span
+                    onClick={() => {
+                      setIsAddingInline(false);
+                      setInlineAddVal('');
+                    }}
+                    style={{
+                      cursor: 'pointer',
+                      opacity: 0.6,
+                      fontSize: '13px',
+                      color: '#EF4444',
+                      fontWeight: 'bold',
+                      marginLeft: '8px',
+                      padding: '0 4px',
+                    }}
+                  >
+                    ✕
+                  </span>
+                </div>
+              )}
+            </div>
 
             {(!isAddingInline || inlineAddVal.length > 0) && (
               <div style={{ display: 'flex', justifyContent: 'flex-start', marginTop: '10px' }}>
