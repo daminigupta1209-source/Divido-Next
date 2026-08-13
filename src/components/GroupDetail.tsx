@@ -260,30 +260,31 @@ export const GroupDetail: React.FC<GroupDetailProps> = ({
           : leftText;
 
         return (
-          <div
-            id="past-member-banner"
-            style={{
-              background: hasPendingRejoin 
-                ? '#FFFBEB' 
-                : '#F8FAFC', 
-              border: hasPendingRejoin 
-                ? '1px solid #FDE68A' 
-                : '1px solid #E2E8F0',
-              borderRadius: '24px',
-              padding: '14px 24px',
-              fontSize: '13.5px',
-              fontWeight: 600,
-              color: hasPendingRejoin ? '#475569' : '#475569',
-              textAlign: 'center',
-              marginBottom: '20px',
-              boxShadow: '0 4px 12px rgba(0, 0, 0, 0.02)',
-            }}
-          >
-            {hasPendingRejoin ? (
-              <span>Rejoin request pending approval. Showing past history.</span>
-            ) : (
-              <span>{wasRemovedByAdmin ? 'You were removed by the admin.' : 'You left this group.'} Showing past history.</span>
-            )}
+          <div id="past-member-banner" style={{ display: 'flex', justifyContent: 'center', marginBottom: '20px' }}>
+            <span
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '6px',
+                background: hasPendingRejoin ? '#FEF3C7' : '#F1F5F9',
+                color: hasPendingRejoin ? '#92400E' : '#64748B',
+                borderRadius: '999px',
+                padding: '5px 12px',
+                fontSize: '11.5px',
+                fontWeight: 500,
+                maxWidth: '100%',
+                textAlign: 'center',
+              }}
+            >
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0, opacity: 0.8 }}>
+                <path d="M3 3v5h5" />
+                <path d="M3.05 13A9 9 0 1 0 6 5.3L3 8" />
+                <path d="M12 7v5l3 2" />
+              </svg>
+              {hasPendingRejoin
+                ? 'Rejoin request pending approval. Showing past history.'
+                : `${wasRemovedByAdmin ? 'You were removed by the admin.' : 'You left this group.'} Showing past history.`}
+            </span>
           </div>
         );
       })()}
