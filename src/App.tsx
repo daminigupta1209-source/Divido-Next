@@ -208,6 +208,11 @@ function App() {
     const saved = localStorage.getItem('divido_username');
     return saved && saved !== 'undefined' ? saved : 'You';
   });
+  // Logged-in user's Supabase auth id + a gate that blocks profile-saving until
+  // the server profile has been loaded (so a fresh device doesn't overwrite the
+  // account's real profile with its empty local defaults on first login).
+  const [userId, setUserId] = useState<string | null>(null);
+  const profileSyncReady = useRef(false);
 
   // Dynamically resolve active identity (me) for the selected group (Tricount cookie fallback)
   const me = (() => {
@@ -782,6 +787,41 @@ function App() {
     }
   };
 
+  // Load the account-level profile (name, UPI, currency, photo, budgets) from
+  // Supabase so it is consistent across every device the user signs in on.
+  const loadProfileFromSupabase = async (uid: string) => {
+    try {
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('full_name, upi_id, default_currency, profile_photo, budgets')
+        .eq('id', uid)
+        .maybeSingle();
+      if (!error && data) {
+        if (data.full_name) {
+          setUserName(data.full_name);
+          localStorage.setItem('divido_username', data.full_name);
+        }
+        const key = (data.full_name || userName).split(' ')[0];
+        if (data.upi_id) localStorage.setItem('divido_global_upi_id', data.upi_id);
+        setUserMetadata((prev) => ({
+          ...prev,
+          [key]: {
+            ...prev[key],
+            ...(data.upi_id ? { upiId: data.upi_id } : {}),
+            ...(data.default_currency ? { defaultCurrency: data.default_currency } : {}),
+            ...(data.profile_photo ? { profilePhoto: data.profile_photo } : {}),
+            ...(data.budgets ? { budgets: data.budgets } : {}),
+          },
+        }));
+      }
+    } catch (e) {
+      console.error('Failed to load profile from Supabase:', e);
+    } finally {
+      // Allow the save-effect to run only after we've attempted a load.
+      profileSyncReady.current = true;
+    }
+  };
+
   useEffect(() => {
     // Listen to changes in auth state from Supabase
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
@@ -795,6 +835,10 @@ function App() {
         // Await background linking so database has user_email set before sync fetches
         if (session.user?.email) {
           await linkGuestIdentities(session.user.email);
+        }
+        if (session.user?.id) {
+          setUserId(session.user.id);
+          await loadProfileFromSupabase(session.user.id);
         }
         setIsAuthenticated(true);
         localStorage.setItem('divido_authenticated', 'true');
@@ -828,6 +872,10 @@ function App() {
         // Await background linking so database has user_email set before sync fetches
         if (session.user?.email) {
           await linkGuestIdentities(session.user.email);
+        }
+        if (session.user?.id) {
+          setUserId(session.user.id);
+          await loadProfileFromSupabase(session.user.id);
         }
         setIsAuthenticated(true);
         localStorage.setItem('divido_authenticated', 'true');
@@ -1198,6 +1246,35 @@ function App() {
   useEffect(() => {
     localStorage.setItem('divido_username', userName);
   }, [userName]);
+
+  // Save the account-level profile back to Supabase (debounced) whenever the
+  // name, UPI, currency, photo, or budgets change — so all devices stay in sync.
+  // Gated on profileSyncReady so we never push empty local defaults before the
+  // server profile has loaded on a fresh device.
+  useEffect(() => {
+    if (!userId || !profileSyncReady.current) return;
+    const key = userName.split(' ')[0];
+    const md = userMetadata[key] || {};
+    const upi = md.upiId || localStorage.getItem('divido_global_upi_id') || null;
+    const payload = {
+      id: userId,
+      full_name: userName || null,
+      upi_id: upi,
+      default_currency: md.defaultCurrency || null,
+      profile_photo: md.profilePhoto || null,
+      budgets: md.budgets || null,
+      updated_at: new Date().toISOString(),
+    };
+    const t = window.setTimeout(() => {
+      supabase
+        .from('profiles')
+        .upsert(payload, { onConflict: 'id' })
+        .then(({ error }) => {
+          if (error) console.error('Failed to save profile to Supabase:', error);
+        });
+    }, 800);
+    return () => clearTimeout(t);
+  }, [userId, userName, userMetadata]);
   useEffect(() => {
     document.body.setAttribute('data-theme', theme);
     localStorage.setItem('divido_theme', theme);
