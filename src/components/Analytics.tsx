@@ -544,7 +544,7 @@ export const Analytics: React.FC<AnalyticsProps> = ({ expenses, groups, me, user
                 if (found.emoji && (found.emoji.startsWith('data:image/') || found.emoji.startsWith('http'))) {
                   return <img src={found.emoji} style={{ width: '16px', height: '16px', borderRadius: '50%', objectFit: 'cover' }} alt="" />;
                 }
-                return found.emoji || '👥';
+                return found.name?.charAt(0).toUpperCase() || '👥';
               })()}
             </span>
             <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: '140px' }}>
@@ -591,7 +591,7 @@ export const Analytics: React.FC<AnalyticsProps> = ({ expenses, groups, me, user
                         {g.emoji && (g.emoji.startsWith('data:image/') || g.emoji.startsWith('http')) ? (
                           <img src={g.emoji} style={{ width: '100%', height: '100%', objectFit: 'cover' }} alt="" />
                         ) : (
-                          g.emoji || '👥'
+                          g.name.charAt(0).toUpperCase() || '👥'
                         )}
                       </div>
                       <div style={{ flex: 1, minWidth: 0 }}>

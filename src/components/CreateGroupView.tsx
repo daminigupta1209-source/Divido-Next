@@ -23,7 +23,7 @@ export const CreateGroupView: React.FC<CreateGroupViewProps> = ({
   editingGroup,
 }) => {
   const [title, setTitle] = useState(editingGroup ? editingGroup.name : '');
-  const [selectedEmoji, setSelectedEmoji] = useState((editingGroup && editingGroup.emoji) ? editingGroup.emoji : '🏘️'); // Stores base64 group DP URL or default emoji fallback
+  const [selectedEmoji, setSelectedEmoji] = useState((editingGroup && editingGroup.emoji) ? editingGroup.emoji : ''); // Stores base64 group DP URL only; empty means show name initials
   const [selectedCurrency, setSelectedCurrency] = useState(editingGroup ? editingGroup.currency : (myDefaultCurrency || '₹'));
   const [showCurrencyPicker, setShowCurrencyPicker] = useState(false);
   const [participants, setParticipants] = useState<string[]>(editingGroup ? editingGroup.members : [me]);

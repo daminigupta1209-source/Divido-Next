@@ -525,7 +525,7 @@ export const ExpenseModal: React.FC<ExpenseModalProps> = ({
                       .map((g) => {
                         const index = groups.findIndex((x) => String(x.id) === String(g.id));
                         const c = GROUP_COLORS[index !== -1 ? index % GROUP_COLORS.length : 0];
-                        const initials = g.emoji || g.name.charAt(0).toUpperCase() || '🏡';
+                        const initials = (g.emoji && (g.emoji.startsWith('data:image/') || g.emoji.startsWith('http'))) ? g.emoji : (g.name.charAt(0).toUpperCase() || '🏡');
                         
                         return (
                           <div

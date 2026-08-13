@@ -285,7 +285,7 @@ export const MobileHeader: React.FC<MobileHeaderProps> = ({
               {selectedGroup.emoji && (selectedGroup.emoji.startsWith('data:image/') || selectedGroup.emoji.startsWith('http')) ? (
                 <img src={selectedGroup.emoji} style={{ width: '100%', height: '100%', objectFit: 'cover' }} alt="" />
               ) : (
-                selectedGroup.emoji || selectedGroup.name?.charAt(0).toUpperCase() || '👤'
+                selectedGroup.name?.charAt(0).toUpperCase() || '👤'
               )}
             </div>
 

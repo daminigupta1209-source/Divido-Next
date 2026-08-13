@@ -835,7 +835,7 @@ export const MasterSummary: React.FC<MasterSummaryProps> = ({
                 {g.emoji && (g.emoji.startsWith('data:image/') || g.emoji.startsWith('http')) ? (
                   <img src={g.emoji} style={{ width: '100%', height: '100%', objectFit: 'cover' }} alt="" />
                 ) : (
-                  g.emoji || g.name.charAt(0).toUpperCase() || '👤'
+                  g.name.charAt(0).toUpperCase() || '👤'
                 )}
               </div>
 
