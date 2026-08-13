@@ -495,7 +495,8 @@ export const GroupMemberList: React.FC<GroupMemberListProps> = ({
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'space-between',
-                    padding: '8px 12px',
+                    padding: '0 12px',
+                    height: '38px',
                     background: '#F8FAFC',
                     borderRadius: '12px',
                     boxSizing: 'border-box',
@@ -523,8 +524,9 @@ export const GroupMemberList: React.FC<GroupMemberListProps> = ({
                       color: 'var(--t)',
                       outline: 'none',
                       width: '100%',
-                      padding: '4px 0',
-                      lineHeight: '1.5',
+                      height: '100%',
+                      padding: 0,
+                      margin: 0,
                       fontFamily: 'inherit',
                     }}
                   />
