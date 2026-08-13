@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { Group, Expense } from '../../lib/types';
 import { ExpenseRow } from './ExpenseRow';
 import { StyledDropdown } from '../StyledDropdown';
@@ -63,6 +63,8 @@ export const ExpenseList: React.FC<ExpenseListProps> = ({
   groupUniqueTags,
 }) => {
   const [showFilters, setShowFilters] = useState(false);
+  const [showSearch, setShowSearch] = useState(false);
+  const searchInputRef = useRef<HTMLInputElement>(null);
 
   const sorted = [...filtered].sort(
     (a, b) => b.date.localeCompare(a.date) || parseExpenseId(b.id) - parseExpenseId(a.id)
@@ -71,9 +73,20 @@ export const ExpenseList: React.FC<ExpenseListProps> = ({
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
       <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', paddingLeft: '8px', paddingRight: '8px' }}>
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '12px', position: 'relative', width: '100%' }}>
-          {/* Search bar — always visible */}
-          <div style={{ position: 'relative', flex: 1, maxWidth: '240px', lineHeight: 0, fontSize: 0 }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: '10px', position: 'relative', width: '100%' }}>
+          {/* Collapsible search field — slides open from the search icon */}
+          <div
+            style={{
+              position: 'relative',
+              flex: showSearch ? 1 : '0 0 0px',
+              maxWidth: showSearch ? '400px' : '0px',
+              opacity: showSearch ? 1 : 0,
+              overflow: 'hidden',
+              transition: 'max-width 0.3s ease, opacity 0.2s ease',
+              lineHeight: 0,
+              fontSize: 0,
+            }}
+          >
             <svg
               viewBox="0 0 24 24" fill="none"
               stroke="currentColor" strokeWidth="2.5"
@@ -95,10 +108,12 @@ export const ExpenseList: React.FC<ExpenseListProps> = ({
               <line x1="21" y1="21" x2="16.65" y2="16.65" />
             </svg>
             <input
+              ref={searchInputRef}
               type="text"
               placeholder="Search activities..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
+              onKeyDown={(e) => { if (e.key === 'Escape') { setShowSearch(false); setSearchQuery(''); } }}
               style={{
                 display: 'block',
                 width: '100%',
@@ -119,31 +134,71 @@ export const ExpenseList: React.FC<ExpenseListProps> = ({
             />
           </div>
 
-          <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexShrink: 0 }}>
-            <button
-              onClick={() => setShowFilters(!showFilters)}
-              title="Filter Activities"
-              style={{
-                background: 'none',
-                border: 'none',
-                cursor: 'pointer',
-                width: '38px',
-                height: '38px',
-                padding: 0,
-                opacity: showFilters ? 1 : 0.55,
-                transition: '0.2s all',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                color: '#475569',
-                flexShrink: 0,
-              }}
-            >
-              <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" style={{ width: '18px', height: '18px' }}>
-                <path d="M22 3H2L10 12.46V19L14 21V12.46L22 3Z" stroke="currentColor" strokeWidth="2" strokeLinejoin="round" strokeLinecap="round" />
+          {/* Search toggle icon (frameless) */}
+          <button
+            onClick={() => {
+              const next = !showSearch;
+              setShowSearch(next);
+              if (next) {
+                setTimeout(() => searchInputRef.current?.focus(), 60);
+              } else {
+                setSearchQuery('');
+              }
+            }}
+            title="Search activities"
+            style={{
+              background: 'none',
+              border: 'none',
+              cursor: 'pointer',
+              width: '38px',
+              height: '38px',
+              padding: 0,
+              opacity: showSearch ? 1 : 0.55,
+              transition: '0.2s all',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              color: '#475569',
+              flexShrink: 0,
+            }}
+          >
+            {showSearch ? (
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" style={{ width: '17px', height: '17px' }}>
+                <line x1="18" y1="6" x2="6" y2="18" />
+                <line x1="6" y1="6" x2="18" y2="18" />
               </svg>
-            </button>
-          </div>
+            ) : (
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" style={{ width: '18px', height: '18px' }}>
+                <circle cx="11" cy="11" r="8" />
+                <line x1="21" y1="21" x2="16.65" y2="16.65" />
+              </svg>
+            )}
+          </button>
+
+          {/* Filter (funnel) icon */}
+          <button
+            onClick={() => setShowFilters(!showFilters)}
+            title="Filter Activities"
+            style={{
+              background: 'none',
+              border: 'none',
+              cursor: 'pointer',
+              width: '38px',
+              height: '38px',
+              padding: 0,
+              opacity: showFilters ? 1 : 0.55,
+              transition: '0.2s all',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              color: '#475569',
+              flexShrink: 0,
+            }}
+          >
+            <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" style={{ width: '18px', height: '18px' }}>
+              <path d="M22 3H2L10 12.46V19L14 21V12.46L22 3Z" stroke="currentColor" strokeWidth="2" strokeLinejoin="round" strokeLinecap="round" />
+            </svg>
+          </button>
         </div>
 
         {showFilters && (
