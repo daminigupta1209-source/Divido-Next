@@ -1800,14 +1800,14 @@ export const ExpenseModal: React.FC<ExpenseModalProps> = ({
             title="Add attachment"
             style={{
               position: 'absolute',
-              right: '4px',
-              bottom: 'calc(100% + 10px)',
-              width: '44px',
-              height: '44px',
+              right: '-2px',
+              bottom: 'calc(100% + 22px)',
+              width: '38px',
+              height: '38px',
               borderRadius: '50%',
               border: 'none',
-              background: 'var(--w)',
-              boxShadow: '0 4px 12px rgba(0,0,0,0.12), 0 1px 3px rgba(0,0,0,0.08)',
+              background: 'linear-gradient(135deg, #10B981 0%, #059669 100%)',
+              boxShadow: '0 6px 16px rgba(5, 150, 105, 0.3)',
               cursor: 'pointer',
               display: 'flex',
               alignItems: 'center',
@@ -1818,7 +1818,7 @@ export const ExpenseModal: React.FC<ExpenseModalProps> = ({
             onMouseEnter={(e) => { e.currentTarget.style.transform = 'scale(1.06)'; }}
             onMouseLeave={(e) => { e.currentTarget.style.transform = 'scale(1)'; }}
           >
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ color: '#64748B' }}>
+            <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
               <path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48" />
             </svg>
           </button>
