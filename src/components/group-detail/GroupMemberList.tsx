@@ -223,7 +223,7 @@ export const GroupMemberList: React.FC<GroupMemberListProps> = ({
                     />
                   ) : (
                     <span
-                      title={checkIsMe(m) ? "Click to edit name ✏️" : undefined}
+                      title={checkIsMe(m) ? "Click to edit name" : undefined}
                       style={{
                         fontWeight: 'bold',
                         fontSize: '12px',
@@ -241,7 +241,7 @@ export const GroupMemberList: React.FC<GroupMemberListProps> = ({
                         setInlineRenameVal(m);
                       }}
                     >
-                      {checkIsMe(m) ? 'You' : m.replace(/\s*\(me\)$/i, '')} {checkIsAdmin(m) && <span style={{ fontSize: '10px', fontWeight: 800, color: '#7C3AED', background: '#F5F3FF', padding: '1px 6px', borderRadius: '4px', marginLeft: '6px' }}>Admin</span>} {checkIsMe(m) && <span style={{ fontSize: '11px', marginLeft: '8px', opacity: 0.6 }}>✏️</span>}
+                      {checkIsMe(m) ? 'You' : m.replace(/\s*\(me\)$/i, '')} {checkIsAdmin(m) && <span style={{ fontSize: '10px', fontWeight: 800, color: '#7C3AED', background: '#F5F3FF', padding: '1px 6px', borderRadius: '4px', marginLeft: '6px' }}>Admin</span>}
                     </span>
                   )}
                   
@@ -360,7 +360,7 @@ export const GroupMemberList: React.FC<GroupMemberListProps> = ({
                       />
                     ) : (
                       <span
-                        title="Click to edit name ✏️"
+                        title="Click to edit name"
                         style={{
                           fontWeight: 'bold',
                           fontSize: '13px',
@@ -374,7 +374,7 @@ export const GroupMemberList: React.FC<GroupMemberListProps> = ({
                           setInlineRenameVal(m);
                         }}
                       >
-                        {checkIsMe(m) ? 'You' : m.replace(/\s*\(me\)$/i, '')} {checkIsAdmin(m) && <span style={{ fontSize: '10px', fontWeight: 800, color: '#7C3AED', background: '#F5F3FF', padding: '1px 6px', borderRadius: '4px', marginLeft: '6px' }}>Admin</span>} <span style={{ fontSize: '11px', marginLeft: '8px', opacity: 0.6 }}>✏️</span>
+                        {checkIsMe(m) ? 'You' : m.replace(/\s*\(me\)$/i, '')} {checkIsAdmin(m) && <span style={{ fontSize: '10px', fontWeight: 800, color: '#7C3AED', background: '#F5F3FF', padding: '1px 6px', borderRadius: '4px', marginLeft: '6px' }}>Admin</span>}
                       </span>
                     )}
                   </div>
