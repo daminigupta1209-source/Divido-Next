@@ -172,6 +172,25 @@ export const GroupDetail: React.FC<GroupDetailProps> = ({
     return () => window.removeEventListener('click', handleGlobalClick);
   }, []);
 
+  // Swipe left/right anywhere on the group screen to toggle Activities/Balances.
+  const swipeStart = React.useRef<{ x: number; y: number } | null>(null);
+  const onSwipeStart = (e: React.TouchEvent) => {
+    const t = e.touches[0];
+    swipeStart.current = { x: t.clientX, y: t.clientY };
+  };
+  const onSwipeEnd = (e: React.TouchEvent) => {
+    if (!swipeStart.current) return;
+    const t = e.changedTouches[0];
+    const dx = t.clientX - swipeStart.current.x;
+    const dy = t.clientY - swipeStart.current.y;
+    swipeStart.current = null;
+    // Only treat as a horizontal swipe when it's clearly sideways, not a scroll.
+    if (Math.abs(dx) > 60 && Math.abs(dx) > Math.abs(dy) * 1.5) {
+      if (dx < 0) setActiveTab('balances');
+      else setActiveTab('expenses');
+    }
+  };
+
   if (!selectedGroup) {
     return (
       <div className="content-width-limit">
@@ -183,7 +202,7 @@ export const GroupDetail: React.FC<GroupDetailProps> = ({
   }
 
   return (
-    <div className="content-width-limit">
+    <div className="content-width-limit" onTouchStart={onSwipeStart} onTouchEnd={onSwipeEnd}>
       <GroupHeader
         selectedGroup={selectedGroup}
         selectedId={selectedId}
@@ -582,50 +601,47 @@ export const GroupDetail: React.FC<GroupDetailProps> = ({
 
       <div style={{
         display: 'flex',
-        background: '#EEEFF1',
-        borderRadius: '12px',
-        padding: '3px',
+        borderBottom: '1.5px solid #F1F5F9',
         marginBottom: '20px',
         marginTop: '10px',
-        gap: '3px'
       }}>
-        <button
-          onClick={() => setActiveTab('expenses')}
-          style={{
-            flex: 1,
-            background: activeTab === 'expenses' ? '#FFFFFF' : 'transparent',
-            border: 'none',
-            padding: '8px 4px',
-            borderRadius: '9px',
-            fontSize: '14px',
-            fontWeight: 700,
-            cursor: 'pointer',
-            color: activeTab === 'expenses' ? '#1E293B' : '#8A9099',
-            boxShadow: activeTab === 'expenses' ? '0 1px 3px rgba(0,0,0,0.12), 0 1px 2px rgba(0,0,0,0.06)' : 'none',
-            transition: '0.2s all'
-          }}
-        >
-          Activities
-        </button>
-
-        <button
-          onClick={() => setActiveTab('balances')}
-          style={{
-            flex: 1,
-            background: activeTab === 'balances' ? '#FFFFFF' : 'transparent',
-            border: 'none',
-            padding: '8px 4px',
-            borderRadius: '9px',
-            fontSize: '14px',
-            fontWeight: 700,
-            cursor: 'pointer',
-            color: activeTab === 'balances' ? '#1E293B' : '#8A9099',
-            boxShadow: activeTab === 'balances' ? '0 1px 3px rgba(0,0,0,0.12), 0 1px 2px rgba(0,0,0,0.06)' : 'none',
-            transition: '0.2s all'
-          }}
-        >
-          Balances
-        </button>
+        {(['expenses', 'balances'] as const).map((tab) => {
+          const isActive = activeTab === tab;
+          return (
+            <button
+              key={tab}
+              onClick={() => setActiveTab(tab)}
+              style={{
+                flex: 1,
+                position: 'relative',
+                background: 'transparent',
+                border: 'none',
+                padding: '10px 4px 12px',
+                fontSize: '14px',
+                fontWeight: isActive ? 800 : 600,
+                cursor: 'pointer',
+                color: isActive ? '#1E293B' : '#94A3B8',
+                transition: '0.2s all',
+              }}
+            >
+              {tab === 'expenses' ? 'Activities' : 'Balances'}
+              <span
+                style={{
+                  position: 'absolute',
+                  left: '50%',
+                  bottom: '-1.5px',
+                  transform: `translateX(-50%) scaleX(${isActive ? 1 : 0})`,
+                  transformOrigin: 'center',
+                  width: '60%',
+                  height: '3px',
+                  borderRadius: '3px 3px 0 0',
+                  background: '#F97316',
+                  transition: 'transform 0.25s cubic-bezier(0.4, 0, 0.2, 1)',
+                }}
+              />
+            </button>
+          );
+        })}
       </div>
 
       {activeTab === 'balances' && (() => {
