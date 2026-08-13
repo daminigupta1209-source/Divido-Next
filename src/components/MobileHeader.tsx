@@ -954,101 +954,103 @@ export const MobileHeader: React.FC<MobileHeaderProps> = ({
         )}
       </div>
 
-      {/* Notifications panel */}
-      {showNotifPanel && (
-        <>
-          <div onClick={() => setShowNotifPanel(false)} style={{ position: 'fixed', inset: 0, zIndex: 3000 }} />
-          <div
-            onClick={(e) => e.stopPropagation()}
-            style={{
-              position: 'absolute', top: '58px', right: '12px', width: 'min(340px, calc(100vw - 24px))',
-              background: '#FFFFFF', border: '0.5px solid #EFE7DC', borderRadius: '16px',
-              boxShadow: '0 12px 32px rgba(0,0,0,0.14)', zIndex: 3001, overflow: 'hidden',
-              animation: 'fadeSlideIn 0.18s ease-out', maxHeight: '70vh', display: 'flex', flexDirection: 'column',
-            }}
-          >
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 16px', borderBottom: '0.5px solid #F1F5F9' }}>
-              <span style={{ fontSize: '15px', fontWeight: 800, color: '#2E2A25' }}>Notifications</span>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
-                {notifications.length > 0 && (
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      if (confirm('Clear all notifications?')) {
-                        onClearNotifications();
-                      }
-                    }}
-                    title="Clear all notifications"
-                    style={{
-                      background: 'none',
-                      border: 'none',
-                      padding: 0,
-                      cursor: 'pointer',
-                      display: 'flex',
-                      alignItems: 'center',
-                      color: '#94A3B8',
-                      transition: 'color 0.2s',
-                    }}
-                    onMouseEnter={(e) => e.currentTarget.style.color = '#EF4444'}
-                    onMouseLeave={(e) => e.currentTarget.style.color = '#94A3B8'}
-                  >
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-                      <polyline points="3 6 5 6 21 6"></polyline>
-                      <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
-                      <line x1="10" y1="11" x2="10" y2="17"></line>
-                      <line x1="14" y1="11" x2="14" y2="17"></line>
-                    </svg>
-                  </button>
-                )}
-                <span onClick={() => setShowNotifPanel(false)} style={{ fontSize: '18px', color: '#94A3B8', cursor: 'pointer', lineHeight: 1 }}>✕</span>
-              </div>
-            </div>
-            <div style={{ overflowY: 'auto' }}>
-              {notifications.length === 0 ? (
-                <div style={{ padding: '40px 20px', textAlign: 'center', color: '#9C948B' }}>
-                  <div style={{ fontSize: '28px', marginBottom: '8px' }}>🔔</div>
-                  <p style={{ margin: 0, fontSize: '13px', fontWeight: 600 }}>You're all caught up</p>
-                  <p style={{ margin: '4px 0 0', fontSize: '11px' }}>Invites, reminders and payment requests will show up here.</p>
-                </div>
-              ) : (
-                notifications.map((n) => (
-                  <div
-                    key={n.id}
-                    onClick={() => n.type !== 'rename_request' && onNotificationClick(n)}
-                    style={{
-                      display: 'flex', gap: '10px', padding: '12px 16px', cursor: n.type === 'rename_request' ? 'default' : 'pointer',
-                      borderBottom: '0.5px solid #F6F1EA', background: n.isRead ? '#FFFFFF' : '#FBF6EF',
-                    }}
-                  >
-                    <span style={{ fontSize: '18px', flexShrink: 0, lineHeight: 1.2 }}>{notifIcon(n.type)}</span>
-                    <div style={{ minWidth: 0, flex: 1 }}>
-                      <div style={{ fontSize: '13px', fontWeight: 700, color: '#2E2A25' }}>{n.title}</div>
-                      {n.body && <div style={{ fontSize: '12px', color: '#6B6259', marginTop: '2px', lineHeight: 1.4 }}>{n.body}</div>}
-                      <div style={{ fontSize: '11px', color: '#B0A79C', marginTop: '3px' }}>{relTime(n.createdAt)}</div>
-                      {n.type === 'rename_request' && (
-                        <div style={{ display: 'flex', gap: '8px', marginTop: '8px' }}>
-                          <button
-                            onClick={(e) => { e.stopPropagation(); onAcceptRename(n); }}
-                            style={{ padding: '5px 12px', fontSize: '12px', fontWeight: 700, borderRadius: '10px', border: 'none', background: '#059669', color: '#fff', cursor: 'pointer' }}
-                          >
-                            Accept
-                          </button>
-                          <button
-                            onClick={(e) => { e.stopPropagation(); onRejectRename(n); }}
-                            style={{ padding: '5px 12px', fontSize: '12px', fontWeight: 700, borderRadius: '10px', border: '1.5px solid #FECACA', background: '#FFFFFF', color: '#EF4444', cursor: 'pointer' }}
-                          >
-                            Reject
-                          </button>
-                        </div>
-                      )}
-                    </div>
-                    {!n.isRead && <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#059669', flexShrink: 0, marginTop: '5px' }} />}
-                  </div>
-                ))
-              )}
-            </div>
+      {/* Notifications full screen */}
+      {showNotifPanel && createPortal(
+        <div
+          style={{
+            position: 'fixed',
+            inset: 0,
+            background: '#FFFFFF',
+            zIndex: 100000,
+            display: 'flex',
+            flexDirection: 'column',
+            animation: 'fadeSlideIn 0.2s ease-out',
+          }}
+        >
+          {/* Screen header */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '18px 18px 14px', borderBottom: '1px solid #F1F5F9', flexShrink: 0 }}>
+            <button
+              onClick={() => setShowNotifPanel(false)}
+              style={{ border: 'none', background: 'none', cursor: 'pointer', padding: 0, display: 'flex', alignItems: 'center', color: '#475569' }}
+              aria-label="Back"
+            >
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                <polyline points="15 18 9 12 15 6" />
+              </svg>
+            </button>
+            <h2 className="nunito" style={{ margin: 0, fontSize: '19px', fontWeight: 950, letterSpacing: '-0.3px', color: '#1E293B', flex: 1 }}>
+              Notifications
+            </h2>
+            {notifications.length > 0 && (
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  if (confirm('Clear all notifications?')) {
+                    onClearNotifications();
+                  }
+                }}
+                title="Clear all notifications"
+                style={{ background: 'none', border: 'none', padding: 0, cursor: 'pointer', display: 'flex', alignItems: 'center', color: '#94A3B8', transition: 'color 0.2s' }}
+                onMouseEnter={(e) => e.currentTarget.style.color = '#EF4444'}
+                onMouseLeave={(e) => e.currentTarget.style.color = '#94A3B8'}
+              >
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                  <polyline points="3 6 5 6 21 6"></polyline>
+                  <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                  <line x1="10" y1="11" x2="10" y2="17"></line>
+                  <line x1="14" y1="11" x2="14" y2="17"></line>
+                </svg>
+              </button>
+            )}
           </div>
-        </>
+
+          {/* Screen body */}
+          <div style={{ flex: 1, overflowY: 'auto' }}>
+            {notifications.length === 0 ? (
+              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '8px', padding: '90px 24px', textAlign: 'center', color: '#9C948B' }}>
+                <div style={{ fontSize: '40px', marginBottom: '4px' }}>🔔</div>
+                <p style={{ margin: 0, fontSize: '15px', fontWeight: 700, color: '#475569' }}>You're all caught up</p>
+                <p style={{ margin: 0, fontSize: '12px' }}>Invites, reminders and payment requests will show up here.</p>
+              </div>
+            ) : (
+              notifications.map((n) => (
+                <div
+                  key={n.id}
+                  onClick={() => n.type !== 'rename_request' && onNotificationClick(n)}
+                  style={{
+                    display: 'flex', gap: '12px', padding: '16px 18px', cursor: n.type === 'rename_request' ? 'default' : 'pointer',
+                    borderBottom: '0.5px solid #F6F1EA', background: n.isRead ? '#FFFFFF' : '#FBF6EF',
+                  }}
+                >
+                  <span style={{ fontSize: '20px', flexShrink: 0, lineHeight: 1.2 }}>{notifIcon(n.type)}</span>
+                  <div style={{ minWidth: 0, flex: 1 }}>
+                    <div style={{ fontSize: '14px', fontWeight: 700, color: '#2E2A25' }}>{n.title}</div>
+                    {n.body && <div style={{ fontSize: '13px', color: '#6B6259', marginTop: '2px', lineHeight: 1.4 }}>{n.body}</div>}
+                    <div style={{ fontSize: '11px', color: '#B0A79C', marginTop: '4px' }}>{relTime(n.createdAt)}</div>
+                    {n.type === 'rename_request' && (
+                      <div style={{ display: 'flex', gap: '8px', marginTop: '10px' }}>
+                        <button
+                          onClick={(e) => { e.stopPropagation(); onAcceptRename(n); }}
+                          style={{ padding: '6px 14px', fontSize: '12px', fontWeight: 700, borderRadius: '10px', border: 'none', background: '#059669', color: '#fff', cursor: 'pointer' }}
+                        >
+                          Accept
+                        </button>
+                        <button
+                          onClick={(e) => { e.stopPropagation(); onRejectRename(n); }}
+                          style={{ padding: '6px 14px', fontSize: '12px', fontWeight: 700, borderRadius: '10px', border: '1.5px solid #FECACA', background: '#FFFFFF', color: '#EF4444', cursor: 'pointer' }}
+                        >
+                          Reject
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                  {!n.isRead && <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#059669', flexShrink: 0, marginTop: '6px' }} />}
+                </div>
+              ))
+            )}
+          </div>
+        </div>,
+        document.body
       )}
 
 
