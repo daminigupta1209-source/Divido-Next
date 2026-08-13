@@ -3770,51 +3770,80 @@ function App() {
             bottom: '100px',
             left: '50%',
             transform: 'translateX(-50%)',
-            background: '#1E293B',
-            color: 'white',
-            padding: '12px 20px',
-            borderRadius: '20px',
+            background: '#FFFFFF',
+            color: '#1E293B',
+            padding: '12px 14px 14px',
+            borderRadius: '16px',
             display: 'flex',
             alignItems: 'center',
-            gap: '16px',
-            boxShadow: '0 20px 40px rgba(0,0,0,0.3)',
+            gap: '12px',
+            minWidth: '290px',
+            maxWidth: 'calc(100vw - 32px)',
+            boxShadow: '0 8px 24px rgba(0,0,0,0.10), 0 2px 6px rgba(0,0,0,0.06)',
+            border: '0.5px solid #E2E8F0',
+            overflow: 'hidden',
             zIndex: 10000,
             animation: 'slideUp 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275)',
           }}
         >
-          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-            <span style={{ fontSize: '20px' }}>🗑️</span>
-            <div style={{ display: 'flex', flexDirection: 'column' }}>
-              <span style={{ fontSize: '12px', fontWeight: 900 }}>Entry Deleted</span>
-              <span
-                style={{
-                  fontSize: '10px',
-                  opacity: 0.6,
-                  maxWidth: '120px',
-                  overflow: 'hidden',
-                  textOverflow: 'ellipsis',
-                  whiteSpace: 'nowrap',
-                }}
-              >
-                {undoStack[0].item.title}
-              </span>
+          <span style={{ width: '34px', height: '34px', borderRadius: '50%', background: '#FEE2E2', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+            <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#EF4444" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+              <polyline points="3 6 5 6 21 6" />
+              <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
+              <line x1="10" y1="11" x2="10" y2="17" />
+              <line x1="14" y1="11" x2="14" y2="17" />
+            </svg>
+          </span>
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <div style={{ fontSize: '13px', fontWeight: 800 }}>Entry deleted</div>
+            <div
+              style={{
+                fontSize: '11px',
+                color: '#94A3B8',
+                overflow: 'hidden',
+                textOverflow: 'ellipsis',
+                whiteSpace: 'nowrap',
+              }}
+            >
+              {undoStack[0].item.title}
             </div>
           </div>
           <button
             onClick={performUndo}
             style={{
-              background: '#FCD34D',
-              color: '#92400E',
+              background: '#10B981',
+              color: '#FFFFFF',
               border: 'none',
               padding: '8px 16px',
               borderRadius: '12px',
-              fontWeight: 950,
-              fontSize: '11px',
+              fontWeight: 800,
+              fontSize: '12px',
               cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '5px',
+              flexShrink: 0,
             }}
           >
-            UNDO ↩️
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
+              <polyline points="9 14 4 9 9 4" />
+              <path d="M20 20v-7a4 4 0 0 0-4-4H4" />
+            </svg>
+            Undo
           </button>
+          <div
+            key={undoStack[0].timestamp}
+            style={{
+              position: 'absolute',
+              left: 0,
+              bottom: 0,
+              height: '3px',
+              width: '100%',
+              background: '#10B981',
+              transformOrigin: 'left',
+              animation: 'undoBarDeplete 6s linear forwards',
+            }}
+          />
         </div>
       )}
 

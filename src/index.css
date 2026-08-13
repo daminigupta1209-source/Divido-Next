@@ -151,6 +151,8 @@ body {
 .no-scrollbar::-webkit-scrollbar { display: none; }
 .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
 
+@keyframes undoBarDeplete { from { transform: scaleX(1); } to { transform: scaleX(0); } }
+
 @keyframes laugh-bounce {
     0%, 100% { transform: translateY(0) rotate(0deg) scale(1.1); }
     25% { transform: translateY(-4px) rotate(1deg) scale(1.12); }
