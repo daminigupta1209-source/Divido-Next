@@ -139,7 +139,10 @@ export const GroupMemberList: React.FC<GroupMemberListProps> = ({
       onAddMembers([trimmed]);
     }
     setInlineAddVal('');
-    setIsAddingInline(false);
+    // Automatically refocus the input box for consecutive additions
+    setTimeout(() => {
+      inlineInputRef.current?.focus();
+    }, 50);
   };
 
   const joinedMembersList = selectedGroup.members.filter(m => !selectedGroup.pendingMembers?.includes(m) && !m.endsWith(' (Left)'));
@@ -487,8 +490,19 @@ export const GroupMemberList: React.FC<GroupMemberListProps> = ({
                 </div>
               ))}
             </div>
-            {isAddingInline ? (
-              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', width: '100%', marginTop: '10px' }}>
+            {isAddingInline && (
+              <div
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  padding: '8px 12px',
+                  background: '#F8FAFC',
+                  borderRadius: '12px',
+                  boxSizing: 'border-box',
+                  marginTop: '6px',
+                }}
+              >
                 <input
                   ref={inlineInputRef}
                   autoFocus
@@ -504,59 +518,48 @@ export const GroupMemberList: React.FC<GroupMemberListProps> = ({
                     }
                   }}
                   style={{
-                    flex: 1,
+                    border: 'none',
+                    background: 'transparent',
                     fontSize: '13px',
                     fontWeight: 'bold',
-                    padding: '8px 12px',
-                    border: '1.5px solid #6366F1',
-                    borderRadius: '12px',
-                    background: 'var(--bg)',
                     color: 'var(--t)',
                     outline: 'none',
-                    boxSizing: 'border-box',
+                    width: '100%',
+                    padding: 0,
                   }}
                 />
-                <button
-                  onClick={handleInlineAdd}
-                  style={{
-                    background: '#6366F1',
-                    color: '#FFFFFF',
-                    border: 'none',
-                    borderRadius: '12px',
-                    padding: '8px 14px',
-                    fontSize: '12px',
-                    fontWeight: 800,
-                    cursor: 'pointer',
-                  }}
-                >
-                  Add
-                </button>
-                <button
+                <span
                   onClick={() => {
                     setIsAddingInline(false);
                     setInlineAddVal('');
                   }}
                   style={{
-                    background: 'transparent',
-                    color: '#EF4444',
-                    border: 'none',
-                    fontSize: '16px',
-                    fontWeight: 'bold',
                     cursor: 'pointer',
+                    opacity: 0.6,
+                    fontSize: '13px',
+                    color: '#EF4444',
+                    fontWeight: 'bold',
+                    marginLeft: '8px',
                     padding: '0 4px',
                   }}
                 >
                   ✕
-                </button>
+                </span>
               </div>
-            ) : (
+            )}
+
+            {(!isAddingInline || inlineAddVal.length > 0) && (
               <div style={{ display: 'flex', justifyContent: 'flex-start', marginTop: '10px' }}>
                 <span
                   onClick={() => {
-                    setIsAddingInline(true);
-                    setTimeout(() => {
-                      inlineInputRef.current?.focus();
-                    }, 50);
+                    if (isAddingInline) {
+                      handleInlineAdd();
+                    } else {
+                      setIsAddingInline(true);
+                      setTimeout(() => {
+                        inlineInputRef.current?.focus();
+                      }, 50);
+                    }
                   }}
                   style={{
                     color: '#4F46E6',
