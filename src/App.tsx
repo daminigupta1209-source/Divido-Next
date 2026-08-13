@@ -2714,6 +2714,18 @@ function App() {
               // bounced out to the groups list. (Removing someone else never
               // navigated away, so this only changes the self-removal case.)
             }}
+            onAddMembers={(names) => {
+              if (selectedId && selectedId !== 'STANDALONE') {
+                const clashing = names
+                  .map((n) => ({ name: n, candidates: findPersonCandidates(n, selectedId) }))
+                  .filter((x) => x.candidates.length > 0);
+                if (clashing.length > 0) {
+                  setSamePersonPrompt({ groupId: selectedId, queue: clashing, index: 0, addNames: names });
+                } else {
+                  commitAddMembers(selectedId, names);
+                }
+              }
+            }}
             onCreateGroup={createGroupSecure}
           />
         )}

@@ -17,6 +17,7 @@ interface GroupMemberListProps {
   onRemoveMember?: (memberName: string) => void;
   onReinviteMember?: (memberName: string, inviteUrl: string) => void;
   onRemindAllPending?: (pendingNames: string[]) => void;
+  onAddMembers?: (names: string[]) => void;
 }
 
 export const GroupMemberList: React.FC<GroupMemberListProps> = ({
@@ -35,11 +36,15 @@ export const GroupMemberList: React.FC<GroupMemberListProps> = ({
   onRemoveMember,
   onReinviteMember,
   onRemindAllPending,
+  onAddMembers,
 }) => {
   // Hooks must run unconditionally, before any early return, so React sees a
   // stable hook order across renders (toggling showFriendsList otherwise crashes).
   const [editingMemberName, setEditingMemberName] = React.useState<string | null>(null);
   const [inlineRenameVal, setInlineRenameVal] = React.useState<string>('');
+  const [isAddingInline, setIsAddingInline] = React.useState(false);
+  const [inlineAddVal, setInlineAddVal] = React.useState('');
+  const inlineInputRef = React.useRef<HTMLInputElement>(null);
 
   if (selectedId === 'STANDALONE' || !showFriendsList) return null;
 
@@ -108,6 +113,33 @@ export const GroupMemberList: React.FC<GroupMemberListProps> = ({
     } else {
       alert(`Reminding all ${pending.length} pending members! ⏳`);
     }
+  };
+
+  const handleInlineAdd = () => {
+    const trimmed = inlineAddVal.trim();
+    if (!trimmed) return;
+
+    // Check duplicates against selectedGroup.members (case-insensitive)
+    const isDuplicate = selectedGroup.members.some(
+      (m) => m.replace(/\s*\(Left\)$/i, '').trim().toLowerCase() === trimmed.toLowerCase()
+    );
+    if (isDuplicate) {
+      const isLeft = selectedGroup.members.some(
+        (m) => m.trim().toLowerCase() === `${trimmed.toLowerCase()} (left)`
+      );
+      if (isLeft) {
+        alert(`⏳ "${trimmed}" is a past member! Reinvite them using the 'Invite again' button in Past Members.`);
+      } else {
+        alert(`👥 "${trimmed}" is already in the group! Try adding a surname.`);
+      }
+      return;
+    }
+
+    if (onAddMembers) {
+      onAddMembers([trimmed]);
+    }
+    setInlineAddVal('');
+    setIsAddingInline(false);
   };
 
   const joinedMembersList = selectedGroup.members.filter(m => !selectedGroup.pendingMembers?.includes(m) && !m.endsWith(' (Left)'));
@@ -283,23 +315,23 @@ export const GroupMemberList: React.FC<GroupMemberListProps> = ({
         </div>
 
         {/* 2. Pending Members Card */}
-        {pendingMembersList.length > 0 && (
-          <div
-            className="card"
-            style={{
-              background: 'var(--w)',
-              borderRadius: '24px',
-              border: '1.5px solid #F1F5F9',
-              padding: '20px 16px',
-              display: 'flex',
-              flexDirection: 'column',
-              gap: '14px',
-            }}
-          >
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-              <h4 style={{ margin: 0, fontSize: '12px', fontWeight: 800, color: '#475569', textTransform: 'uppercase', letterSpacing: '0.5px', textAlign: 'left' }}>
-                Pending Invites ({pendingMembersList.length})
-              </h4>
+        <div
+          className="card"
+          style={{
+            background: 'var(--w)',
+            borderRadius: '24px',
+            border: '1.5px solid #F1F5F9',
+            padding: '20px 16px',
+            display: 'flex',
+            flexDirection: 'column',
+            gap: '14px',
+          }}
+        >
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+            <h4 style={{ margin: 0, fontSize: '12px', fontWeight: 800, color: '#475569', textTransform: 'uppercase', letterSpacing: '0.5px', textAlign: 'left' }}>
+              Pending Invites ({pendingMembersList.length})
+            </h4>
+            {pendingMembersList.length > 0 && (
               <button
                 onClick={handleRemindAll}
                 style={{
@@ -318,7 +350,8 @@ export const GroupMemberList: React.FC<GroupMemberListProps> = ({
               >
                 Remind All
               </button>
-            </div>
+            )}
+          </div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
               {pendingMembersList.map((m) => (
                 <div
@@ -453,29 +486,94 @@ export const GroupMemberList: React.FC<GroupMemberListProps> = ({
                 </div>
               ))}
             </div>
-            <div style={{ display: 'flex', justifyContent: 'flex-start', marginTop: '10px' }}>
-              <span
-                onClick={() => {
-                  setShowFriendsList(false);
-                  setShowAddFriendModal(true);
-                }}
-                style={{
-                  color: '#4F46E6',
-                  fontSize: '13px',
-                  fontWeight: 800,
-                  cursor: 'pointer',
-                  userSelect: 'none',
-                  transition: 'opacity 0.2s',
-                  fontFamily: 'Nunito',
-                }}
-                onMouseEnter={(e) => { e.currentTarget.style.opacity = '0.8'; }}
-                onMouseLeave={(e) => { e.currentTarget.style.opacity = '1'; }}
-              >
-                + Add Friend
-              </span>
-            </div>
+            {isAddingInline ? (
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', width: '100%', marginTop: '10px' }}>
+                <input
+                  ref={inlineInputRef}
+                  autoFocus
+                  type="text"
+                  placeholder="Enter name..."
+                  value={inlineAddVal}
+                  onChange={(e) => setInlineAddVal(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') handleInlineAdd();
+                    if (e.key === 'Escape') {
+                      setIsAddingInline(false);
+                      setInlineAddVal('');
+                    }
+                  }}
+                  style={{
+                    flex: 1,
+                    fontSize: '13px',
+                    fontWeight: 'bold',
+                    padding: '8px 12px',
+                    border: '1.5px solid #6366F1',
+                    borderRadius: '12px',
+                    background: 'var(--bg)',
+                    color: 'var(--t)',
+                    outline: 'none',
+                    boxSizing: 'border-box',
+                  }}
+                />
+                <button
+                  onClick={handleInlineAdd}
+                  style={{
+                    background: '#6366F1',
+                    color: '#FFFFFF',
+                    border: 'none',
+                    borderRadius: '12px',
+                    padding: '8px 14px',
+                    fontSize: '12px',
+                    fontWeight: 800,
+                    cursor: 'pointer',
+                  }}
+                >
+                  Add
+                </button>
+                <button
+                  onClick={() => {
+                    setIsAddingInline(false);
+                    setInlineAddVal('');
+                  }}
+                  style={{
+                    background: 'transparent',
+                    color: '#EF4444',
+                    border: 'none',
+                    fontSize: '16px',
+                    fontWeight: 'bold',
+                    cursor: 'pointer',
+                    padding: '0 4px',
+                  }}
+                >
+                  ✕
+                </button>
+              </div>
+            ) : (
+              <div style={{ display: 'flex', justifyContent: 'flex-start', marginTop: '10px' }}>
+                <span
+                  onClick={() => {
+                    setIsAddingInline(true);
+                    setTimeout(() => {
+                      inlineInputRef.current?.focus();
+                    }, 50);
+                  }}
+                  style={{
+                    color: '#4F46E6',
+                    fontSize: '13px',
+                    fontWeight: 800,
+                    cursor: 'pointer',
+                    userSelect: 'none',
+                    transition: 'opacity 0.2s',
+                    fontFamily: 'Nunito',
+                  }}
+                  onMouseEnter={(e) => { e.currentTarget.style.opacity = '0.8'; }}
+                  onMouseLeave={(e) => { e.currentTarget.style.opacity = '1'; }}
+                >
+                  + Add Friend
+                </span>
+              </div>
+            )}
           </div>
-        )}
 
         {/* 3. Past Members Card */}
         {leftMembersList.length > 0 && (
@@ -595,8 +693,10 @@ export const GroupMemberList: React.FC<GroupMemberListProps> = ({
               e.currentTarget.style.background = 'transparent';
             }}
             onClick={() => {
-              setShowFriendsList(false);
-              setShowAddFriendModal(true);
+              setIsAddingInline(true);
+              setTimeout(() => {
+                inlineInputRef.current?.focus();
+              }, 50);
             }}
           >
             + Friend
