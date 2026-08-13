@@ -576,58 +576,50 @@ export const GroupDetail: React.FC<GroupDetailProps> = ({
 
       <div style={{
         display: 'flex',
-        borderBottom: '2px solid #F1F5F9',
+        background: '#EEEFF1',
+        borderRadius: '12px',
+        padding: '3px',
         marginBottom: '20px',
         marginTop: '10px',
-        alignItems: 'stretch'
+        gap: '3px'
       }}>
-        <div style={{ flex: 1, display: 'flex', justifyContent: 'center' }}>
-          <button
-            onClick={() => setActiveTab('expenses')}
-            style={{
-              background: 'none',
-              border: 'none',
-              padding: '10px 4px',
-              fontSize: '14px',
-              fontWeight: 800,
-              cursor: 'pointer',
-              color: activeTab === 'expenses' ? '#6366F1' : '#94A3B8',
-              borderBottom: activeTab === 'expenses' ? '3px solid #6366F1' : '3px solid transparent',
-              marginBottom: '-2px',
-              transition: '0.2s all'
-            }}
-          >
-            Activities
-          </button>
-        </div>
+        <button
+          onClick={() => setActiveTab('expenses')}
+          style={{
+            flex: 1,
+            background: activeTab === 'expenses' ? '#FFFFFF' : 'transparent',
+            border: 'none',
+            padding: '8px 4px',
+            borderRadius: '9px',
+            fontSize: '14px',
+            fontWeight: 700,
+            cursor: 'pointer',
+            color: activeTab === 'expenses' ? '#1E293B' : '#8A9099',
+            boxShadow: activeTab === 'expenses' ? '0 1px 3px rgba(0,0,0,0.12), 0 1px 2px rgba(0,0,0,0.06)' : 'none',
+            transition: '0.2s all'
+          }}
+        >
+          Activities
+        </button>
 
-        <div style={{
-          width: '1px',
-          background: '#E2E8F0',
-          marginTop: '10px',
-          marginBottom: '0px',
-          opacity: 0.8
-        }} />
-
-        <div style={{ flex: 1, display: 'flex', justifyContent: 'center' }}>
-          <button
-            onClick={() => setActiveTab('balances')}
-            style={{
-              background: 'none',
-              border: 'none',
-              padding: '10px 4px',
-              fontSize: '14px',
-              fontWeight: 800,
-              cursor: 'pointer',
-              color: activeTab === 'balances' ? '#6366F1' : '#94A3B8',
-              borderBottom: activeTab === 'balances' ? '3px solid #6366F1' : '3px solid transparent',
-              marginBottom: '-2px',
-              transition: '0.2s all'
-            }}
-          >
-            Balances
-          </button>
-        </div>
+        <button
+          onClick={() => setActiveTab('balances')}
+          style={{
+            flex: 1,
+            background: activeTab === 'balances' ? '#FFFFFF' : 'transparent',
+            border: 'none',
+            padding: '8px 4px',
+            borderRadius: '9px',
+            fontSize: '14px',
+            fontWeight: 700,
+            cursor: 'pointer',
+            color: activeTab === 'balances' ? '#1E293B' : '#8A9099',
+            boxShadow: activeTab === 'balances' ? '0 1px 3px rgba(0,0,0,0.12), 0 1px 2px rgba(0,0,0,0.06)' : 'none',
+            transition: '0.2s all'
+          }}
+        >
+          Balances
+        </button>
       </div>
 
       {activeTab === 'balances' && (() => {
