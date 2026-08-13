@@ -297,14 +297,13 @@ export const GroupDetail: React.FC<GroupDetailProps> = ({
               key={req.id}
               style={{
                 background: '#EEF2FF',
-                border: '1.5px solid #C7D2FE',
-                borderRadius: '16px',
-                padding: '12px 16px',
+                border: '1px solid #C7D2FE',
+                borderRadius: '12px',
+                padding: '10px 14px',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'space-between',
                 gap: '12px',
-                boxShadow: '0 4px 6px -1px rgba(99, 102, 241, 0.08)',
               }}
             >
               <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>

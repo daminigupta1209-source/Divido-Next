@@ -442,17 +442,16 @@ export const MasterSummary: React.FC<MasterSummaryProps> = ({
         <div
           className="card shadow-sm hover-up-mini"
           style={{
-            background: 'linear-gradient(135deg, #FFF5F5 0%, #FFEBEB 100%)',
-            border: '1.5px solid #FCA5A5',
-            borderRadius: '24px',
-            padding: '16px 24px',
-            marginBottom: '24px',
+            background: '#FFF5F5',
+            border: '1px solid #FCA5A5',
+            borderRadius: '14px',
+            padding: '12px 16px',
+            marginBottom: '20px',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'space-between',
             flexWrap: 'wrap',
-            gap: '16px',
-            boxShadow: '0 4px 14px rgba(239, 68, 68, 0.05)',
+            gap: '12px',
             animation: 'fadeIn 0.4s ease-out',
             textAlign: 'left',
             position: 'relative',
