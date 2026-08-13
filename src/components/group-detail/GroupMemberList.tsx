@@ -391,21 +391,36 @@ export const GroupMemberList: React.FC<GroupMemberListProps> = ({
                           alert(`Invite link for "${m}" copied to clipboard! 📋`);
                         }
                       }}
+                      title={`Remind ${m}`}
                       style={{
                         background: '#FFEDD5',
                         border: 'none',
-                        borderRadius: '8px',
-                        padding: '5px 10px',
+                        borderRadius: '50%',
+                        width: '28px',
+                        height: '28px',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
                         color: '#EA580C',
-                        fontSize: '11px',
-                        fontWeight: 800,
                         cursor: 'pointer',
                         transition: '0.15s all ease',
                       }}
                       onMouseEnter={(e) => { e.currentTarget.style.background = '#FED7AA'; }}
                       onMouseLeave={(e) => { e.currentTarget.style.background = '#FFEDD5'; }}
                     >
-                      Remind
+                      <svg
+                        width="14"
+                        height="14"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="2.5"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      >
+                        <path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9" />
+                        <path d="M10.3 21a1.94 1.94 0 0 0 3.4 0" />
+                      </svg>
                     </button>
                     {selectedId !== 'STANDALONE' && (isAdmin || checkIsMe(m)) && (
                       <span
