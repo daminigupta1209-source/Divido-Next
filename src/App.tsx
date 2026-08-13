@@ -1628,7 +1628,13 @@ function App() {
         } else {
           setExpenses(expenses.filter((e) => String(e.gId) !== String(id)));
         }
-        if (String(selectedId) === String(id)) {
+        // Only leave the group's screen when the group is actually gone — a
+        // standalone history clear, or a delete because no other members
+        // remained. When we leave a group that others are still in, it lives
+        // on as past history: keep the user inside it so they see the "You
+        // left this group. Showing past history." banner and the Rejoin
+        // action, instead of being bounced out to the groups list.
+        if (String(selectedId) === String(id) && (isStandalone || !hasOthers)) {
           setSelectedId(null);
           setView('summary');
         }
@@ -2574,13 +2580,11 @@ function App() {
                 )
               );
 
-              // If I left or was removed, redirect to group list summary
-              const cleanMe = me.replace(/\s*\(me\)$/i, '').replace(/\s*\(Left\)$/i, '').toLowerCase();
-              const cleanRemoved = memberName.replace(/\s*\(me\)$/i, '').replace(/\s*\(Left\)$/i, '').toLowerCase();
-              if (cleanRemoved === cleanMe) {
-                setSelectedId(null);
-                setView('summary');
-              }
+              // If I removed myself, the group still exists as past history —
+              // keep me inside it so I see the "You left this group. Showing
+              // past history." banner and the Rejoin action, rather than being
+              // bounced out to the groups list. (Removing someone else never
+              // navigated away, so this only changes the self-removal case.)
             }}
             onCreateGroup={createGroupSecure}
           />
