@@ -453,6 +453,27 @@ export const GroupMemberList: React.FC<GroupMemberListProps> = ({
                 </div>
               ))}
             </div>
+            <div style={{ display: 'flex', justifyContent: 'flex-start', marginTop: '10px' }}>
+              <span
+                onClick={() => {
+                  setShowFriendsList(false);
+                  setShowAddFriendModal(true);
+                }}
+                style={{
+                  color: '#4F46E6',
+                  fontSize: '13px',
+                  fontWeight: 800,
+                  cursor: 'pointer',
+                  userSelect: 'none',
+                  transition: 'opacity 0.2s',
+                  fontFamily: 'Nunito',
+                }}
+                onMouseEnter={(e) => { e.currentTarget.style.opacity = '0.8'; }}
+                onMouseLeave={(e) => { e.currentTarget.style.opacity = '1'; }}
+              >
+                + Add Friend
+              </span>
+            </div>
           </div>
         )}
 
