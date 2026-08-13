@@ -418,21 +418,27 @@ export const GroupDetail: React.FC<GroupDetailProps> = ({
                     setShowAddFriendModal(true);
                   }}
                   style={{
-                    background: 'transparent',
-                    color: '#6366F1',
-                    border: '1.5px solid #6366F1',
-                    padding: '5px 13px',
+                    background: '#F97316',
+                    color: '#FFFFFF',
+                    border: 'none',
+                    padding: '8px 22px',
                     borderRadius: '999px',
-                    fontWeight: 800,
-                    fontSize: '12px',
+                    fontFamily: 'inherit',
+                    fontWeight: 600,
+                    fontSize: '13px',
+                    letterSpacing: '0.2px',
+                    lineHeight: 1,
                     cursor: 'pointer',
                     display: 'flex',
                     alignItems: 'center',
-                    gap: '4px',
+                    justifyContent: 'center',
+                    gap: '6px',
+                    boxShadow: '0 2px 8px rgba(249, 115, 22, 0.3)',
                     transition: 'all 0.2s ease',
                   }}
                 >
-                  <span style={{ fontSize: '14px', lineHeight: 1 }}>+</span> Friend
+                  <span style={{ fontSize: '15px', fontWeight: 600, lineHeight: 1, color: '#FFFFFF', display: 'flex', alignItems: 'center' }}>+</span>
+                  <span style={{ color: '#FFFFFF', lineHeight: 1, display: 'flex', alignItems: 'center' }}>Friend</span>
                 </button>
               ) : (
                 <button
