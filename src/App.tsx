@@ -13,6 +13,10 @@ const Analytics = React.lazy(() => import('./components/Analytics').then((m) => 
 const ActivityStudio = React.lazy(() => import('./components/ActivityStudio').then((m) => ({ default: m.ActivityStudio })));
 const Profile = React.lazy(() => import('./components/Profile').then((m) => ({ default: m.Profile })));
 const ExpenseModal = React.lazy(() => import('./components/ExpenseModal').then((m) => ({ default: m.ExpenseModal })));
+// QR modals pull in the qrcode library — keep it out of the main bundle by
+// loading these only when a user actually opens a payment/QR popup.
+const UPIQRModal = React.lazy(() => import('./components/UPIQRModal').then((m) => ({ default: m.UPIQRModal })));
+const NetReceivableModal = React.lazy(() => import('./components/NetReceivableModal').then((m) => ({ default: m.NetReceivableModal })));
 import { CurrencyConverterModal } from './components/CurrencyConverterModal';
 import { AddFriendModal } from './components/AddFriendModal';
 import { MatchPromptModal } from './components/MatchPromptModal';
@@ -20,10 +24,8 @@ import { SearchableCurrencyPicker } from './components/SearchableCurrencyPicker'
 import { BalanceDisplay } from './components/BalanceDisplay';
 import { PremiumConfirm } from './components/PremiumConfirm';
 import { escManager } from './lib/escManager';
-import { UPIQRModal } from './components/UPIQRModal';
 import { SettleModal } from './components/SettleModal';
 import { NetPayableModal } from './components/NetPayableModal';
-import { NetReceivableModal } from './components/NetReceivableModal';
 import { CurrencySetupModal } from './components/CurrencySetupModal';
 import { GroupGallery } from './components/GroupGallery';
 import { checkIfDemoMode } from './lib/demoMode';
@@ -35,7 +37,6 @@ import { MobileHeader } from './components/MobileHeader';
 import { FloatingAddMenu } from './components/FloatingAddMenu';
 import { InstallPrompt } from './components/InstallPrompt';
 import { useExportCSV } from './hooks/useExportCSV';
-import QRCode from 'qrcode';
 
 import { Group, Expense, PendingMatchPrompt } from './lib/types';
 import { AppNotification, fetchNotifications, markAllNotificationsRead, subscribeNotifications, clearAllNotifications } from './lib/notifications';
@@ -3605,24 +3606,26 @@ function App() {
       />
 
       {qrModalData && (
-        <UPIQRModal
-          show={!!qrModalData}
-          onClose={() => setQrModalData(null)}
-          payeeName={qrModalData.payee}
-          upiId={userMetadata[qrModalData.payee]?.upiId || ''}
-          amount={qrModalData.amt}
-          currency={qrModalData.currency}
-          requestFrom={qrModalData.requestFrom}
-          onSaveUpi={(newUpi) => {
-            setUserMetadata((prev) => ({
-              ...prev,
-              [qrModalData.payee]: {
-                ...prev[qrModalData.payee],
-                upiId: newUpi,
-              },
-            }));
-          }}
-        />
+        <React.Suspense fallback={null}>
+          <UPIQRModal
+            show={!!qrModalData}
+            onClose={() => setQrModalData(null)}
+            payeeName={qrModalData.payee}
+            upiId={userMetadata[qrModalData.payee]?.upiId || ''}
+            amount={qrModalData.amt}
+            currency={qrModalData.currency}
+            requestFrom={qrModalData.requestFrom}
+            onSaveUpi={(newUpi) => {
+              setUserMetadata((prev) => ({
+                ...prev,
+                [qrModalData.payee]: {
+                  ...prev[qrModalData.payee],
+                  upiId: newUpi,
+                },
+              }));
+            }}
+          />
+        </React.Suspense>
       )}
 
       <CurrencySetupModal
@@ -3651,14 +3654,18 @@ function App() {
         onFinalSettle={handleFinalGlobalSettle}
       />
 
-      <NetReceivableModal
-        popupData={netReceivablePopup}
-        onClose={() => setNetReceivablePopup(null)}
-        me={me}
-        userMetadata={userMetadata}
-        setUserMetadata={setUserMetadata}
-        onFinalSettle={handleFinalGlobalSettle}
-      />
+      {netReceivablePopup && (
+        <React.Suspense fallback={null}>
+          <NetReceivableModal
+            popupData={netReceivablePopup}
+            onClose={() => setNetReceivablePopup(null)}
+            me={me}
+            userMetadata={userMetadata}
+            setUserMetadata={setUserMetadata}
+            onFinalSettle={handleFinalGlobalSettle}
+          />
+        </React.Suspense>
+      )}
 
       {showDeleteAccountModal && (
         <div
