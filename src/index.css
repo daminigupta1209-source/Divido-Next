@@ -634,8 +634,8 @@ input[type=number] { -moz-appearance: textfield; }
     }
 
     .mobile-header-bar--home {
-        background: #FAF4EC;
-        border-bottom: 0.5px solid rgba(0, 0, 0, 0.05);
+        background: var(--bg);
+        border-bottom: none;
         height: 64px;
         margin-bottom: 12px;
     }
