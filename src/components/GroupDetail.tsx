@@ -1016,63 +1016,94 @@ export const GroupDetail: React.FC<GroupDetailProps> = ({
       {/* Clean Slate view for newly created groups / standalone */}
       {!hasExpenses && activeTab === 'expenses' && (
         <div
-          className="card"
           style={{
-            padding: '40px 24px',
-            textAlign: 'center',
-            background: 'linear-gradient(135deg, #FFFFFF 0%, #F8FAFC 100%)',
-            border: '1.5px dashed #E2E8F0',
-            borderRadius: '24px',
             display: 'flex',
             flexDirection: 'column',
             alignItems: 'center',
             justifyContent: 'center',
-            gap: '20px',
-            marginTop: '10px',
-            boxShadow: '0 4px 6px -1px rgba(0,0,0,0.01), 0 2px 4px -1px rgba(0,0,0,0.01)',
+            padding: '80px 24px',
+            gap: '12px',
+            textAlign: 'center',
           }}
         >
-          {/* Removed empty description text */}
-
-          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '14px', width: '100%', maxWidth: '240px' }}>
-            {/* Circular Add Expense Button lookalike / button matching group's + Add Expense */}
-            {!isLeftUser && (
-              <button
-                id="desktop-add-expense-btn"
-                style={{
-                  width: '100%',
-                  height: '38px',
-                  padding: '8px 16px',
-                  fontSize: '13px',
-                  fontWeight: 950,
-                  borderRadius: '999px',
-                  cursor: 'pointer',
-                  background: 'transparent',
-                  border: '1.5px solid #059669',
-                  color: '#059669',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  gap: '8px',
-                  transition: '0.2s all ease',
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.transform = 'scale(1.03)';
-                  e.currentTarget.style.background = 'rgba(5, 150, 105, 0.04)';
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.transform = 'scale(1)';
-                  e.currentTarget.style.background = 'transparent';
-                }}
-                onClick={() => {
-                  setEditingExpense(null);
-                  setShowExpModal(true);
-                }}
-              >
-                <span style={{ fontSize: '15px', fontWeight: 950, lineHeight: 1, color: '#059669' }}>+</span> Expense
-              </button>
-            )}
-          </div>
+          <svg
+            width="72"
+            height="72"
+            viewBox="0 0 64 64"
+            fill="none"
+            xmlns="http://www.w3.org/2000/svg"
+            style={{ opacity: 0.8, color: '#94A3B8' }}
+          >
+            <path
+              d="M22 10H38L46 18V50C46 52.2 44.2 54 42 54H22C19.8 54 18 52.2 18 50V14C18 11.8 19.8 10 22 10Z"
+              stroke="currentColor"
+              strokeWidth="2.5"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            />
+            <path
+              d="M38 10V18H46"
+              stroke="currentColor"
+              strokeWidth="2.5"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            />
+            <line
+              x1="24"
+              y1="24"
+              x2="36"
+              y2="24"
+              stroke="currentColor"
+              strokeWidth="2.5"
+              strokeLinecap="round"
+              strokeDasharray="3 3"
+            />
+            <line
+              x1="24"
+              y1="31"
+              x2="40"
+              y2="31"
+              stroke="currentColor"
+              strokeWidth="2.5"
+              strokeLinecap="round"
+            />
+            <line
+              x1="24"
+              y1="38"
+              x2="40"
+              y2="38"
+              stroke="currentColor"
+              strokeWidth="2.5"
+              strokeLinecap="round"
+            />
+            <line
+              x1="24"
+              y1="45"
+              x2="32"
+              y2="45"
+              stroke="currentColor"
+              strokeWidth="2.5"
+              strokeLinecap="round"
+              strokeDasharray="3 3"
+            />
+            <circle
+              cx="39"
+              cy="45"
+              r="4.5"
+              stroke="currentColor"
+              strokeWidth="2.5"
+            />
+          </svg>
+          <span
+            className="nunito"
+            style={{
+              fontSize: '15px',
+              fontWeight: 600,
+              color: '#64748B',
+            }}
+          >
+            No expenses yet
+          </span>
         </div>
       )}
 
