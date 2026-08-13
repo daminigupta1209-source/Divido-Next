@@ -466,21 +466,26 @@ export const GroupDetail: React.FC<GroupDetailProps> = ({
                     if (onRequestRejoin) onRequestRejoin();
                   }}
                   style={{
-                    background: 'transparent',
-                    color: '#10B981',
-                    border: '1.5px solid #10B981',
-                    padding: '5px 13px',
+                    background: '#F97316',
+                    color: '#FFFFFF',
+                    border: 'none',
+                    padding: '6px 16px',
                     borderRadius: '999px',
-                    fontWeight: 800,
+                    fontFamily: 'inherit',
+                    fontWeight: 600,
                     fontSize: '12px',
+                    letterSpacing: '0.2px',
+                    lineHeight: 1,
                     cursor: 'pointer',
                     display: 'flex',
                     alignItems: 'center',
-                    gap: '4px',
+                    justifyContent: 'center',
+                    gap: '5px',
+                    boxShadow: '0 2px 8px rgba(249, 115, 22, 0.3)',
                     transition: 'all 0.2s ease',
                   }}
                 >
-                  Rejoin
+                  <span style={{ color: '#FFFFFF', lineHeight: 1, display: 'flex', alignItems: 'center' }}>Rejoin</span>
                 </button>
               )}
             </div>
