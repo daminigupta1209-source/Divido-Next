@@ -41,6 +41,7 @@ interface ExpenseModalProps {
   autoOpenScanner?: boolean;
   setAutoOpenScanner?: (val: boolean) => void;
   onRequireSignIn?: () => boolean;
+  deleteExpense?: (id: string | number) => void;
 }
 
 export const ExpenseModal: React.FC<ExpenseModalProps> = ({
@@ -67,6 +68,7 @@ export const ExpenseModal: React.FC<ExpenseModalProps> = ({
   autoOpenScanner = false,
   setAutoOpenScanner,
   onRequireSignIn,
+  deleteExpense,
 }) => {
   const {
     localGId,
@@ -692,6 +694,35 @@ export const ExpenseModal: React.FC<ExpenseModalProps> = ({
               </div>
             )}
             
+            {editingExpense && editingExpense.id != null && (
+              <button
+                style={{
+                  border: 'none',
+                  background: 'transparent',
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  padding: 0,
+                }}
+                onClick={() => {
+                  if (confirm('Delete this activity? This cannot be undone.')) {
+                    deleteExpense && deleteExpense(editingExpense.id);
+                    setShowExpModal(false);
+                    setEditingExpense(null);
+                  }
+                }}
+                title="Delete activity"
+              >
+                <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="#EF4444" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                  <polyline points="3 6 5 6 21 6" />
+                  <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
+                  <line x1="10" y1="11" x2="10" y2="17" />
+                  <line x1="14" y1="11" x2="14" y2="17" />
+                </svg>
+              </button>
+            )}
+
             <button
               style={{
                 border: 'none',

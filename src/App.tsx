@@ -2571,6 +2571,7 @@ function App() {
           autoOpenScanner={autoOpenScanner}
           setAutoOpenScanner={setAutoOpenScanner}
           onRequireSignIn={requireSignInToCreate}
+          deleteExpense={deleteExpenseSecure}
         />
         </React.Suspense>
       )}
