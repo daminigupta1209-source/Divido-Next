@@ -481,40 +481,6 @@ export const ExpenseRow: React.FC<ExpenseRowProps> = ({
             {e.currency || selectedGroup.currency || '₹'} {formatCompactAmount(e.amt)}
           </span>
         </div>
-
-        <div
-          className="dropdown"
-          style={{ position: 'relative', cursor: 'pointer', fontSize: '16px', padding: '2px', color: 'var(--g)' }}
-          onClick={(ev) => {
-            ev.stopPropagation();
-            setOpenExpId(openExpId === e.id ? null : e.id);
-          }}
-        >
-          ⋮
-          <div
-            className="dropdown-content"
-            style={{ display: openExpId === e.id ? 'block' : 'none', right: 0, top: '100%', minWidth: '90px', zIndex: 100 }}
-          >
-            <div
-              onClick={() => {
-                setEditingExpense(e);
-                setShowExpModal(true);
-                setOpenExpId(null);
-              }}
-            >
-              ✏️ Edit
-            </div>
-            <div
-              style={{ color: '#DB2777' }}
-              onClick={() => {
-                deleteExpense(e.id);
-                setOpenExpId(null);
-              }}
-            >
-              🗑️ Delete
-            </div>
-          </div>
-        </div>
       </div>
     </div>
   );
