@@ -421,23 +421,23 @@ export const GroupDetail: React.FC<GroupDetailProps> = ({
                     background: '#F97316',
                     color: '#FFFFFF',
                     border: 'none',
-                    padding: '8px 22px',
+                    padding: '6px 16px',
                     borderRadius: '999px',
                     fontFamily: 'inherit',
                     fontWeight: 600,
-                    fontSize: '13px',
+                    fontSize: '12px',
                     letterSpacing: '0.2px',
                     lineHeight: 1,
                     cursor: 'pointer',
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
-                    gap: '6px',
+                    gap: '5px',
                     boxShadow: '0 2px 8px rgba(249, 115, 22, 0.3)',
                     transition: 'all 0.2s ease',
                   }}
                 >
-                  <span style={{ fontSize: '15px', fontWeight: 600, lineHeight: 1, color: '#FFFFFF', display: 'flex', alignItems: 'center' }}>+</span>
+                  <span style={{ fontSize: '14px', fontWeight: 600, lineHeight: 1, color: '#FFFFFF', display: 'flex', alignItems: 'center' }}>+</span>
                   <span style={{ color: '#FFFFFF', lineHeight: 1, display: 'flex', alignItems: 'center' }}>Friend</span>
                 </button>
               ) : (
