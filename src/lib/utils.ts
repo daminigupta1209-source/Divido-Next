@@ -254,7 +254,10 @@ export const formatDate = (dateStr: string): string => {
   const d = new Date(dateStr);
   if (isNaN(d.getTime())) return dateStr;
   const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-  return `${d.getDate().toString().padStart(2, '0')} ${months[d.getMonth()]} ${d.getFullYear()}`;
+  // Short 2-digit year with a trailing apostrophe (e.g. "13 Aug 26'") for a
+  // cleaner, more compact look in activity rows and cards.
+  const yy = d.getFullYear().toString().slice(-2);
+  return `${d.getDate().toString().padStart(2, '0')} ${months[d.getMonth()]} ${yy}'`;
 };
 
 /**
