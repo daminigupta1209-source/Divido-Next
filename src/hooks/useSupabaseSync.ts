@@ -4,6 +4,33 @@ import { Group, Expense } from '../lib/types';
 import { checkIfDemoMode } from '../lib/demoMode';
 import { ensureArray, ensureObject } from '../lib/utils';
 
+// Fresh hidden person id for a new name-only member, so two people who share a
+// name in different groups stay separate. Signed-in members are left null and
+// identified by their email instead.
+const genPersonId = (): string =>
+  (typeof crypto !== 'undefined' && (crypto as any).randomUUID)
+    ? (crypto as any).randomUUID()
+    : `pid-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 10)}`;
+
+// When the "same person" prompt links a new member to an existing person, it
+// stashes that person's id here keyed by `${groupId}::${name}`. On insert we
+// consume it (link → shared id) or fall back to a fresh id (a new, separate
+// person). Race-free: the id is chosen before the member is added.
+const pickPersonId = (groupId: string | number, name: string): string => {
+  try {
+    const raw = localStorage.getItem('divido_person_link');
+    const map = raw ? JSON.parse(raw) : {};
+    const key = `${groupId}::${name}`;
+    if (map[key]) {
+      const v = map[key];
+      delete map[key];
+      localStorage.setItem('divido_person_link', JSON.stringify(map));
+      return v;
+    }
+  } catch { /* ignore */ }
+  return genPersonId();
+};
+
 interface UseSupabaseSyncProps {
   groups: Group[];
   setGroups: React.Dispatch<React.SetStateAction<Group[]>>;
@@ -281,7 +308,9 @@ export function useSupabaseSync({
           const memberIdentities: Record<string, string> = {};
           activeMems.forEach((m: any) => {
             const cleanName = m.name.replace(/\s*\(Left\)$/i, '');
-            const identity = m.person_id || m.user_email || cleanName;
+            // Email is the strongest identity (a real signed-in account), then the
+            // stored person_id, then the raw name (legacy members merge by name).
+            const identity = (m.user_email ? m.user_email.toLowerCase() : '') || m.person_id || cleanName;
             if (!memberIdentities[m.name]) memberIdentities[m.name] = identity;
           });
 
@@ -598,7 +627,10 @@ export function useSupabaseSync({
                   group_id: newGroupId,
                   name: m,
                   user_email: isMe ? userEmail : null,
-                  is_pending: !isMe
+                  is_pending: !isMe,
+                  // Me is identified by email; other name-only members get their
+                  // own hidden id so same-named people never merge across groups.
+                  person_id: isMe ? null : genPersonId(),
                 };
               });
               const { error: memErr } = await supabase.from('group_members').insert(memberInserts);
@@ -653,7 +685,8 @@ export function useSupabaseSync({
               const memberInserts = newMembers.map(m => ({
                 group_id: g.id,
                 name: m,
-                is_pending: true
+                is_pending: true,
+                person_id: pickPersonId(g.id, m),
               }));
               const { error: memErr } = await supabase.from('group_members').insert(memberInserts);
               if (memErr) throw memErr;
