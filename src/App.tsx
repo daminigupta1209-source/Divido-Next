@@ -1791,6 +1791,67 @@ function App() {
     return allGroupBalances[gId]?.[memberName] || {};
   }, [allGroupBalances]);
 
+  // ── "Same person?" prompt (Step 4b) ────────────────────────────────────────
+  // When a name being added already exists elsewhere, ask whether it's the same
+  // person. "Same" links to that person's identity (via divido_person_link, which
+  // the sync layer consumes on insert); "Different" gets a fresh id by default.
+  const [samePersonPrompt, setSamePersonPrompt] = useState<null | {
+    groupId: string | number;
+    queue: { name: string; candidates: { identity: string; name: string; groups: string[] }[] }[];
+    index: number;
+    addNames: string[];
+  }>(null);
+
+  const findPersonCandidates = (name: string, excludeGroupId: string | number) => {
+    const clean = name.replace(/\s*\(Left\)$/i, '').trim().toLowerCase();
+    if (!clean) return [];
+    const meClean = me.replace(/\s*\(me\)$/i, '').replace(/\s*\(Left\)$/i, '').trim().toLowerCase();
+    const byId: Record<string, { identity: string; name: string; groups: Set<string> }> = {};
+    groups.forEach((g) => {
+      (g.members || []).forEach((mName) => {
+        const mc = mName.replace(/\s*\(Left\)$/i, '').trim().toLowerCase();
+        if (mc !== clean || mc === meClean) return;
+        // Skip the exact member we're re-adding into the same group.
+        if (String(g.id) === String(excludeGroupId)) return;
+        const identity = g.memberIdentities?.[mName] || mName.replace(/\s*\(Left\)$/i, '');
+        if (!byId[identity]) byId[identity] = { identity, name: mName.replace(/\s*\(Left\)$/i, ''), groups: new Set() };
+        byId[identity].groups.add(g.name);
+      });
+    });
+    return Object.values(byId).map((c) => ({ identity: c.identity, name: c.name, groups: Array.from(c.groups) }));
+  };
+
+  const commitAddMembers = (groupId: string | number, names: string[]) => {
+    setGroups((prev) => prev.map((x) => {
+      if (x.id != groupId) return x;
+      const newMembers = Array.from(new Set([...x.members, ...names]));
+      const newPending = Array.from(new Set([...(x.pendingMembers || []), ...names]));
+      return { ...x, members: newMembers, pendingMembers: newPending };
+    }));
+    setNewlyAddedFriends(names);
+  };
+
+  const resolvePersonChoice = (identity: string | null) => {
+    if (!samePersonPrompt) return;
+    const { groupId, queue, index, addNames } = samePersonPrompt;
+    const item = queue[index];
+    if (identity) {
+      try {
+        const raw = localStorage.getItem('divido_person_link');
+        const map = raw ? JSON.parse(raw) : {};
+        map[`${groupId}::${item.name}`] = identity;
+        localStorage.setItem('divido_person_link', JSON.stringify(map));
+      } catch { /* ignore */ }
+    }
+    const nextIndex = index + 1;
+    if (nextIndex >= queue.length) {
+      setSamePersonPrompt(null);
+      commitAddMembers(groupId, addNames);
+    } else {
+      setSamePersonPrompt({ ...samePersonPrompt, index: nextIndex });
+    }
+  };
+
   const selectedGroup = selectedId === 'STANDALONE'
     ? {
         id: 'STANDALONE',
@@ -2688,13 +2749,15 @@ function App() {
              if (selectedId === 'STANDALONE') {
                setNewlyAddedFriends(names);
              } else if (selectedId) {
-               const g = groups.find((x) => x.id == selectedId);
-               if (g) {
-                 const newMembers = Array.from(new Set([...g.members, ...names]));
-                 const newPending = Array.from(new Set([...(g.pendingMembers || []), ...names]));
-                 setGroups(groups.map((x) => (x.id == selectedId ? { ...x, members: newMembers, pendingMembers: newPending } : x)));
+               // If any added name already exists elsewhere, ask "same person?".
+               const clashing = names
+                 .map((n) => ({ name: n, candidates: findPersonCandidates(n, selectedId) }))
+                 .filter((x) => x.candidates.length > 0);
+               if (clashing.length > 0) {
+                 setSamePersonPrompt({ groupId: selectedId, queue: clashing, index: 0, addNames: names });
+               } else {
+                 commitAddMembers(selectedId, names);
                }
-               setNewlyAddedFriends(names);
              } else {
                if (!requireSignInToCreate()) return;
                const name = prompt('Ledger Name:', 'Quick Splits ⚡');
@@ -2719,6 +2782,60 @@ function App() {
            }}
         />
       )}
+
+      {samePersonPrompt && (() => {
+        const item = samePersonPrompt.queue[samePersonPrompt.index];
+        const multiple = samePersonPrompt.queue.length > 1;
+        return (
+          <div
+            onClick={() => resolvePersonChoice(null)}
+            style={{ position: 'fixed', inset: 0, background: 'rgba(15, 23, 42, 0.5)', backdropFilter: 'blur(6px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 100000, padding: '20px', boxSizing: 'border-box' }}
+          >
+            <div
+              onClick={(e) => e.stopPropagation()}
+              style={{ background: '#FFFFFF', borderRadius: '20px', width: '100%', maxWidth: '340px', padding: '20px', boxShadow: '0 20px 40px rgba(0,0,0,0.18)', animation: 'fadeIn 0.2s ease-out' }}
+            >
+              <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '6px' }}>
+                <span style={{ width: '36px', height: '36px', borderRadius: '50%', background: '#FEF3C7', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#D97706" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" /><circle cx="9" cy="7" r="4" /><path d="M23 21v-2a4 4 0 0 0-3-3.87" /><path d="M16 3.13a4 4 0 0 1 0 7.75" /></svg>
+                </span>
+                <div style={{ fontSize: '15px', fontWeight: 900, color: '#1E293B' }}>
+                  {multiple ? `Which "${item.name}"?` : `You already have a "${item.name}"`}
+                </div>
+              </div>
+              <p style={{ fontSize: '12.5px', color: '#64748B', margin: '0 0 14px', lineHeight: 1.5 }}>
+                Is this the same person, or someone different who happens to share the name?
+              </p>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                {item.candidates.map((c) => (
+                  <button
+                    key={c.identity}
+                    onClick={() => resolvePersonChoice(c.identity)}
+                    style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '10px 12px', borderRadius: '12px', border: '1px solid #E2E8F0', background: '#FFFFFF', cursor: 'pointer', textAlign: 'left', width: '100%' }}
+                  >
+                    <span style={{ width: '30px', height: '30px', borderRadius: '50%', background: '#EEF2FF', color: '#4338CA', fontSize: '12px', fontWeight: 900, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                      {c.name.charAt(0).toUpperCase()}
+                    </span>
+                    <span style={{ minWidth: 0, flex: 1 }}>
+                      <span style={{ display: 'block', fontSize: '13px', fontWeight: 800, color: '#1E293B' }}>Same as {c.name}</span>
+                      {c.groups.length > 0 && (
+                        <span style={{ display: 'block', fontSize: '11px', color: '#94A3B8', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{c.groups.join(', ')}</span>
+                      )}
+                    </span>
+                  </button>
+                ))}
+                <button
+                  onClick={() => resolvePersonChoice(null)}
+                  style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '10px 12px', borderRadius: '12px', border: '1px dashed #CBD5E1', background: '#F8FAFC', cursor: 'pointer', textAlign: 'left', width: '100%' }}
+                >
+                  <span style={{ width: '30px', height: '30px', borderRadius: '50%', background: '#F1F5F9', color: '#64748B', fontSize: '18px', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>+</span>
+                  <span style={{ fontSize: '13px', fontWeight: 800, color: '#475569' }}>A new, different person</span>
+                </button>
+              </div>
+            </div>
+          </div>
+        );
+      })()}
 
       {matchPrompt && (
         <MatchPromptModal
