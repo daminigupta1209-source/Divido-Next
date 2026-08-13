@@ -2583,12 +2583,43 @@ function App() {
                 )
               );
 
-              // Desktop / no native share: fall back to our in-app share card.
               if (!nativeShare) {
                 setActiveReminderName(memberName);
                 setActiveRejoinLink(inviteUrl);
                 setShowAddFriendModal(true);
               }
+            }}
+            onRemindAllPending={async (pendingNames) => {
+              if (!selectedId || selectedId === 'STANDALONE') return;
+              pendingNames.forEach((name) => {
+                notifyFriend(name, {
+                  type: 'reminder',
+                  title: `${userName} sent you a reminder`,
+                  body: selectedGroup && selectedId !== 'STANDALONE' ? `Settle up in ${selectedGroup.name}` : 'You have a pending balance to settle',
+                  groupId: selectedId,
+                });
+              });
+
+              const grpName = selectedGroup?.name;
+              const inviteLink = `${window.location.origin}/?joinGroupId=${selectedId}`;
+              const shareText = `Hey! Join ${grpName ? `"${grpName}"` : 'our group'} on Divido to split expenses 💸`;
+
+              if (typeof navigator !== 'undefined' && (navigator as any).share) {
+                try {
+                  await (navigator as any).share({
+                    title: grpName ? `Join "${grpName}" on Divido` : 'Join my group on Divido',
+                    text: shareText,
+                    url: inviteLink,
+                  });
+                } catch {
+                  /* user dismissed the share sheet */
+                }
+                return;
+              }
+
+              setActiveReminderName(null);
+              setActiveRejoinLink(null);
+              setShowAddFriendModal(true);
             }}
             onRemoveMember={async (memberName) => {
               if (!selectedId || selectedId === 'STANDALONE') return;

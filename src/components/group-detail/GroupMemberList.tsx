@@ -16,6 +16,7 @@ interface GroupMemberListProps {
   onRemindMember?: (memberName: string) => void;
   onRemoveMember?: (memberName: string) => void;
   onReinviteMember?: (memberName: string, inviteUrl: string) => void;
+  onRemindAllPending?: (pendingNames: string[]) => void;
 }
 
 export const GroupMemberList: React.FC<GroupMemberListProps> = ({
@@ -33,6 +34,7 @@ export const GroupMemberList: React.FC<GroupMemberListProps> = ({
   onRemindMember,
   onRemoveMember,
   onReinviteMember,
+  onRemindAllPending,
 }) => {
   // Hooks must run unconditionally, before any early return, so React sees a
   // stable hook order across renders (toggling showFriendsList otherwise crashes).
@@ -98,6 +100,20 @@ export const GroupMemberList: React.FC<GroupMemberListProps> = ({
     setEditingMemberName(null);
   };
 
+  const handleRemindAll = () => {
+    const pending = selectedGroup.pendingMembers || [];
+    if (pending.length === 0) return;
+    if (onRemindAllPending) {
+      onRemindAllPending(pending);
+    } else {
+      alert(`Reminding all ${pending.length} pending members! ⏳`);
+    }
+  };
+
+  const joinedMembersList = selectedGroup.members.filter(m => !selectedGroup.pendingMembers?.includes(m) && !m.endsWith(' (Left)'));
+  const pendingMembersList = selectedGroup.pendingMembers || [];
+  const leftMembersList = selectedGroup.members.filter((m) => m.endsWith(' (Left)'));
+
   return (
     <div
       style={{
@@ -106,168 +122,346 @@ export const GroupMemberList: React.FC<GroupMemberListProps> = ({
         left: 0,
         width: '100vw',
         height: '100vh',
-        backgroundColor: 'rgba(15, 23, 42, 0.4)',
-        backdropFilter: 'blur(4px)',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
+        backgroundColor: 'var(--bg)',
         zIndex: 9999,
+        overflowY: 'auto',
+        padding: '20px 16px 100px 16px',
+        boxSizing: 'border-box',
+        display: 'flex',
+        flexDirection: 'column',
+        gap: '20px',
       }}
-      onClick={() => setShowFriendsList(false)}
     >
       <div
-        className="card shadow-lg"
-        onClick={(e) => e.stopPropagation()}
+        className="content-width-limit"
         style={{
-          background: 'var(--w)',
-          borderRadius: '24px',
-          border: '1.5px solid #F1F5F9',
-          padding: '24px',
           display: 'flex',
           flexDirection: 'column',
-          gap: '16px',
-          width: '90%',
-          maxWidth: '360px',
-          boxSizing: 'border-box',
-          animation: 'balancePopIn 0.3s cubic-bezier(0.34, 1.56, 0.64, 1) both',
-          position: 'relative',
+          gap: '20px',
+          width: '100%',
         }}
       >
-        <button
-          onClick={() => setShowFriendsList(false)}
+        {/* HEADER */}
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '4px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+            <button
+              type="button"
+              onClick={() => setShowFriendsList(false)}
+              style={{
+                background: 'none',
+                border: 'none',
+                fontSize: '24px',
+                cursor: 'pointer',
+                color: 'var(--t)',
+                padding: 0,
+                lineHeight: 1,
+                display: 'inline-flex',
+                alignItems: 'center',
+              }}
+            >
+              ←
+            </button>
+            <h1 style={{ fontSize: '20px', fontWeight: 950, color: 'var(--t)', margin: 0, fontFamily: 'Nunito' }}>
+              Group Members
+            </h1>
+          </div>
+        </div>
+
+        {/* 1. Joined Group Members Card */}
+        <div
+          className="card"
           style={{
-            position: 'absolute',
-            top: '16px',
-            right: '18px',
-            border: 'none',
-            background: 'none',
-            fontSize: '18px',
-            cursor: 'pointer',
-            color: 'var(--g)',
-            opacity: 0.6,
-            zIndex: 10,
+            background: 'var(--w)',
+            borderRadius: '24px',
+            border: '1.5px solid #F1F5F9',
+            padding: '20px 16px',
+            display: 'flex',
+            flexDirection: 'column',
+            gap: '14px',
           }}
         >
-          ✕
-        </button>
-
-        {/* Grouped member lists */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', maxHeight: '320px', overflowY: 'auto', paddingRight: '4px', marginTop: '10px' }}>
-          
-          {/* 1. Joined Group Members */}
-          <div>
-            <h4 style={{ margin: '0 0 8px 0', fontSize: '12px', fontWeight: 800, color: '#475569', textTransform: 'uppercase', letterSpacing: '0.5px', textAlign: 'left' }}>
-              Joined Members ({selectedGroup.members.filter(m => !selectedGroup.pendingMembers?.includes(m) && !m.endsWith(' (Left)')).length})
-            </h4>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-              {selectedGroup.members
-                .filter(m => !selectedGroup.pendingMembers?.includes(m) && !m.endsWith(' (Left)'))
-                .map((m) => {
-                  return (
-                    <div
-                      key={m}
+          <h4 style={{ margin: 0, fontSize: '12px', fontWeight: 800, color: '#475569', textTransform: 'uppercase', letterSpacing: '0.5px', textAlign: 'left' }}>
+            Joined Members ({joinedMembersList.length})
+          </h4>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+            {joinedMembersList.map((m) => {
+              return (
+                <div
+                  key={m}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    padding: '8px 12px',
+                    background: '#F8FAFC',
+                    borderRadius: '12px',
+                    boxSizing: 'border-box',
+                  }}
+                >
+                  {editingMemberName === m ? (
+                    <input
+                      autoFocus
+                      value={inlineRenameVal}
+                      onChange={(e) => setInlineRenameVal(e.target.value)}
+                      onBlur={() => handleInlineSave(m)}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter') handleInlineSave(m);
+                        if (e.key === 'Escape') setEditingMemberName(null);
+                      }}
                       style={{
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'space-between',
-                        padding: '8px 12px',
-                        background: '#F8FAFC',
-                        borderRadius: '12px',
+                        fontSize: '12px',
+                        fontWeight: 'bold',
+                        padding: '2px 6px',
+                        border: '1.5px solid #6366F1',
+                        borderRadius: '6px',
+                        background: 'var(--bg)',
+                        color: 'var(--t)',
+                        outline: 'none',
+                        width: '120px',
                         boxSizing: 'border-box',
                       }}
+                    />
+                  ) : (
+                    <span
+                      title={checkIsMe(m) ? "Click to edit name ✏️" : undefined}
+                      style={{
+                        fontWeight: 'bold',
+                        fontSize: '12px',
+                        color: '#334155',
+                        cursor: checkIsMe(m) ? 'pointer' : 'default',
+                        textDecoration: checkIsMe(m) ? 'underline dotted rgba(0,0,0,0.1)' : 'none',
+                      }}
+                      onClick={(e) => {
+                        if (!checkIsMe(m)) {
+                          alert("Only this member can rename themselves.");
+                          return;
+                        }
+                        e.stopPropagation();
+                        setEditingMemberName(m);
+                        setInlineRenameVal(m);
+                      }}
                     >
-                      {editingMemberName === m ? (
-                        <input
-                          autoFocus
-                          value={inlineRenameVal}
-                          onChange={(e) => setInlineRenameVal(e.target.value)}
-                          onBlur={() => handleInlineSave(m)}
-                          onKeyDown={(e) => {
-                            if (e.key === 'Enter') handleInlineSave(m);
-                            if (e.key === 'Escape') setEditingMemberName(null);
-                          }}
-                          style={{
-                            fontSize: '12px',
-                            fontWeight: 'bold',
-                            padding: '2px 6px',
-                            border: '1.5px solid #6366F1',
-                            borderRadius: '6px',
-                            background: 'var(--bg)',
-                            color: 'var(--t)',
-                            outline: 'none',
-                            width: '120px',
-                            boxSizing: 'border-box',
-                          }}
-                        />
-                      ) : (
-                        <span
-                          title={checkIsMe(m) ? "Click to edit name ✏️" : undefined}
-                          style={{
-                            fontWeight: 'bold',
-                            fontSize: '12px',
-                            color: '#334155',
-                            cursor: checkIsMe(m) ? 'pointer' : 'default',
-                            textDecoration: checkIsMe(m) ? 'underline dotted rgba(0,0,0,0.1)' : 'none',
-                          }}
-                          onClick={(e) => {
-                            if (!checkIsMe(m)) {
-                              alert("Only this member can rename themselves.");
-                              return;
+                      {checkIsMe(m) ? 'You' : m.replace(/\s*\(me\)$/i, '')} {checkIsAdmin(m) && <span style={{ fontSize: '10px', fontWeight: 800, color: '#7C3AED', background: '#F5F3FF', padding: '1px 6px', borderRadius: '4px', marginLeft: '6px' }}>Admin</span>} {checkIsMe(m) && <span style={{ fontSize: '11px', marginLeft: '8px', opacity: 0.6 }}>✏️</span>}
+                    </span>
+                  )}
+                  
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    {userMetadata[m]?.upiId && (
+                      <span title="Payment Info Linked 安心" style={{ fontSize: '10px', color: '#1D4ED8', cursor: 'help' }}>
+                        💳
+                      </span>
+                    )}
+                    
+                    {(isAdmin || checkIsMe(m)) && (
+                      <span
+                        onClick={async (e) => {
+                          e.stopPropagation();
+                          const promptMsg = checkIsMe(m) 
+                            ? `Leave group? You won't see new updates.`
+                            : `Remove "${m}" from the group? This will shift them to Past Members and keep past history.`;
+                          if (confirm(promptMsg)) {
+                            if (onRemoveMember) {
+                              onRemoveMember(m);
                             }
-                            e.stopPropagation();
-                            setEditingMemberName(m);
-                            setInlineRenameVal(m);
-                          }}
-                        >
-                          {checkIsMe(m) ? 'You' : m.replace(/\s*\(me\)$/i, '')} {checkIsAdmin(m) && <span style={{ fontSize: '10px', fontWeight: 800, color: '#7C3AED', background: '#F5F3FF', padding: '1px 6px', borderRadius: '4px', marginLeft: '6px' }}>Admin</span>} {checkIsMe(m) && <span style={{ fontSize: '11px', marginLeft: '8px', opacity: 0.6 }}>✏️</span>}
-                        </span>
-                      )}
-                      
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                        {userMetadata[m]?.upiId && (
-                          <span title="Payment Info Linked 安心" style={{ fontSize: '10px', color: '#1D4ED8', cursor: 'help' }}>
-                            💳
-                          </span>
-                        )}
-                        
-                        {(isAdmin || checkIsMe(m)) && (
-                          <span
-                            onClick={async (e) => {
-                              e.stopPropagation();
-                              const promptMsg = checkIsMe(m) 
-                                ? `Leave group? You won't see new updates.`
-                                : `Remove "${m}" from the group? This will shift them to Past Members and keep past history.`;
-                              if (confirm(promptMsg)) {
-                                if (onRemoveMember) {
-                                  onRemoveMember(m);
-                                }
-                              }
-                            }}
-                            style={{
-                              cursor: 'pointer',
-                              color: '#EF4444',
-                              fontSize: '12px',
-                              fontWeight: 'bold',
-                              padding: '0 4px',
-                            }}
-                            title={checkIsMe(m) ? "Leave group" : "Remove member"}
-                          >✕</span>
-                        )}
-                      </div>
-                    </div>
-                  );
-                })}
+                          }
+                        }}
+                        style={{
+                          cursor: 'pointer',
+                          color: '#EF4444',
+                          fontSize: '12px',
+                          fontWeight: 'bold',
+                          padding: '0 4px',
+                        }}
+                        title={checkIsMe(m) ? "Leave group" : "Remove member"}
+                      >✕</span>
+                    )}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* 2. Pending Members Card */}
+        {pendingMembersList.length > 0 && (
+          <div
+            className="card"
+            style={{
+              background: 'var(--w)',
+              borderRadius: '24px',
+              border: '1.5px solid #F1F5F9',
+              padding: '20px 16px',
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '14px',
+            }}
+          >
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+              <h4 style={{ margin: 0, fontSize: '12px', fontWeight: 800, color: '#475569', textTransform: 'uppercase', letterSpacing: '0.5px', textAlign: 'left' }}>
+                Pending Invites ({pendingMembersList.length})
+              </h4>
+              <button
+                onClick={handleRemindAll}
+                style={{
+                  background: '#FFEDD5',
+                  border: 'none',
+                  borderRadius: '12px',
+                  padding: '4px 10px',
+                  color: '#EA580C',
+                  fontSize: '10px',
+                  fontWeight: 900,
+                  cursor: 'pointer',
+                  transition: '0.15s all ease',
+                }}
+                onMouseEnter={(e) => { e.currentTarget.style.background = '#FED7AA'; }}
+                onMouseLeave={(e) => { e.currentTarget.style.background = '#FFEDD5'; }}
+              >
+                Remind All
+              </button>
+            </div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+              {pendingMembersList.map((m) => (
+                <div
+                  key={m}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    padding: '8px 12px',
+                    background: '#F8FAFC',
+                    border: 'none',
+                    borderRadius: '12px',
+                    boxSizing: 'border-box',
+                  }}
+                >
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    {editingMemberName === m ? (
+                      <input
+                        autoFocus
+                        value={inlineRenameVal}
+                        onChange={(e) => setInlineRenameVal(e.target.value)}
+                        onBlur={() => handleInlineSave(m)}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter') handleInlineSave(m);
+                          if (e.key === 'Escape') setEditingMemberName(null);
+                        }}
+                        style={{
+                          fontSize: '12px',
+                          fontWeight: 'bold',
+                          padding: '2px 6px',
+                          border: '1.5px solid #6366F1',
+                          borderRadius: '6px',
+                          background: 'var(--bg)',
+                          color: 'var(--t)',
+                          outline: 'none',
+                          width: '120px',
+                          boxSizing: 'border-box',
+                        }}
+                      />
+                    ) : (
+                      <span
+                        title="Click to edit name ✏️"
+                        style={{
+                          fontWeight: 'bold',
+                          fontSize: '13px',
+                          color: '#334155',
+                          cursor: 'pointer',
+                          textDecoration: 'underline dotted rgba(0,0,0,0.1)',
+                        }}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setEditingMemberName(m);
+                          setInlineRenameVal(m);
+                        }}
+                      >
+                        {checkIsMe(m) ? 'You' : m.replace(/\s*\(me\)$/i, '')} {checkIsAdmin(m) && <span style={{ fontSize: '10px', fontWeight: 800, color: '#7C3AED', background: '#F5F3FF', padding: '1px 6px', borderRadius: '4px', marginLeft: '6px' }}>Admin</span>} <span style={{ fontSize: '11px', marginLeft: '8px', opacity: 0.6 }}>✏️</span>
+                      </span>
+                    )}
+                  </div>
+
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <button
+                      onClick={async (e) => {
+                        e.stopPropagation();
+                        if (onRemindMember) {
+                          onRemindMember(m);
+                        } else {
+                          const inviteLink = `${window.location.origin}/?joinGroupId=${selectedId}`;
+                          await navigator.clipboard.writeText(inviteLink);
+                          alert(`Invite link for "${m}" copied to clipboard! 📋`);
+                        }
+                      }}
+                      style={{
+                        background: '#FFEDD5',
+                        border: 'none',
+                        borderRadius: '8px',
+                        padding: '5px 10px',
+                        color: '#EA580C',
+                        fontSize: '11px',
+                        fontWeight: 800,
+                        cursor: 'pointer',
+                        transition: '0.15s all ease',
+                      }}
+                      onMouseEnter={(e) => { e.currentTarget.style.background = '#FED7AA'; }}
+                      onMouseLeave={(e) => { e.currentTarget.style.background = '#FFEDD5'; }}
+                    >
+                      Remind
+                    </button>
+                    {selectedId !== 'STANDALONE' && (isAdmin || checkIsMe(m)) && (
+                      <span
+                        style={{ cursor: 'pointer', opacity: 0.6, fontSize: '13px', color: '#EF4444', fontWeight: 'bold', padding: '0 4px' }}
+                        title="Cancel invite"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          const promptMsg = checkIsMe(m)
+                            ? `Leave group? You won't see new updates.`
+                            : `Cancel the invite for "${m}"? They haven't joined yet, so this removes them completely.`;
+                          if (confirm(promptMsg)) {
+                            if (onRemoveMember) {
+                              onRemoveMember(m);
+                            } else {
+                              setGroups(
+                                groups.map((g) =>
+                                  String(g.id) === String(selectedId)
+                                    ? { ...g, members: g.members.map((mem) => (mem === m ? m + ' (Left)' : mem)), pendingMembers: g.pendingMembers?.filter((mem) => mem !== m) }
+                                    : g
+                                )
+                              );
+                            }
+                          }
+                        }}
+                      >
+                        ✕
+                      </span>
+                    )}
+                  </div>
+                </div>
+              ))}
             </div>
           </div>
+        )}
 
-          {/* 2. Pending Members */}
-          {selectedGroup.pendingMembers && selectedGroup.pendingMembers.length > 0 && (
-            <div style={{ marginTop: '24px' }}>
-              <h4 style={{ margin: '0 0 8px 0', fontSize: '12px', fontWeight: 800, color: '#475569', textTransform: 'uppercase', letterSpacing: '0.5px', textAlign: 'left' }}>
-                Pending Invites ({selectedGroup.pendingMembers.length})
-              </h4>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-                {selectedGroup.pendingMembers.map((m) => (
+        {/* 3. Past Members Card */}
+        {leftMembersList.length > 0 && (
+          <div
+            className="card"
+            style={{
+              background: 'var(--w)',
+              borderRadius: '24px',
+              border: '1.5px solid #F1F5F9',
+              padding: '20px 16px',
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '14px',
+            }}
+          >
+            <h4 style={{ margin: 0, fontSize: '12px', fontWeight: 800, color: '#475569', textTransform: 'uppercase', letterSpacing: '0.5px', textAlign: 'left' }}>
+              Past Members ({leftMembersList.length})
+            </h4>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+              {leftMembersList.map((m) => {
+                const cleanName = m.replace(' (Left)', '');
+                return (
                   <div
                     key={m}
                     style={{
@@ -276,205 +470,70 @@ export const GroupMemberList: React.FC<GroupMemberListProps> = ({
                       justifyContent: 'space-between',
                       padding: '8px 12px',
                       background: '#F8FAFC',
-                      border: 'none',
                       borderRadius: '12px',
                       boxSizing: 'border-box',
+                      opacity: 0.7,
                     }}
                   >
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                      {editingMemberName === m ? (
-                        <input
-                          autoFocus
-                          value={inlineRenameVal}
-                          onChange={(e) => setInlineRenameVal(e.target.value)}
-                          onBlur={() => handleInlineSave(m)}
-                          onKeyDown={(e) => {
-                            if (e.key === 'Enter') handleInlineSave(m);
-                            if (e.key === 'Escape') setEditingMemberName(null);
+                    <span style={{ fontWeight: 'bold', fontSize: '12px', color: '#64748B', textDecoration: 'line-through' }}>
+                      {checkIsMe(cleanName) ? 'You' : cleanName} {checkIsAdmin(cleanName) && <span style={{ fontSize: '10px', fontWeight: 800, color: '#7C3AED', background: '#F5F3FF', padding: '1px 6px', borderRadius: '4px', marginLeft: '6px' }}>Admin</span>}
+                    </span>
+                    
+                    {isAdmin && (
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        <button
+                          onClick={async (e) => {
+                            e.stopPropagation();
+                            const inviteUrl = `${window.location.origin}/?joinGroupId=${selectedGroup.id}&rejoinName=${encodeURIComponent(cleanName)}`;
+                            if (onReinviteMember) {
+                              onReinviteMember(cleanName, inviteUrl);
+                            } else {
+                              await navigator.clipboard.writeText(inviteUrl);
+                              alert(`Rejoin invite link for "${cleanName}" copied to clipboard! 📋\nSend this to them to rejoin: \n\n${inviteUrl}`);
+                            }
                           }}
                           style={{
-                            fontSize: '12px',
-                            fontWeight: 'bold',
-                            padding: '2px 6px',
-                            border: '1.5px solid #6366F1',
-                            borderRadius: '6px',
-                            background: 'var(--bg)',
-                            color: 'var(--t)',
-                            outline: 'none',
-                            width: '120px',
-                            boxSizing: 'border-box',
-                          }}
-                        />
-                      ) : (
-                        <span
-                          title="Click to edit name ✏️"
-                          style={{
-                            fontWeight: 'bold',
-                            fontSize: '13px',
-                            color: '#334155',
+                            background: 'rgba(99, 102, 241, 0.1)',
+                            border: 'none',
+                            borderRadius: '8px',
+                            padding: '5px 10px',
+                            color: '#4F46E6',
+                            fontSize: '11px',
+                            fontWeight: 800,
                             cursor: 'pointer',
-                            textDecoration: 'underline dotted rgba(0,0,0,0.1)',
+                            transition: '0.15s all ease',
                           }}
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            setEditingMemberName(m);
-                            setInlineRenameVal(m);
-                          }}
+                          onMouseEnter={(e) => { e.currentTarget.style.background = 'rgba(99, 102, 241, 0.2)'; }}
+                          onMouseLeave={(e) => { e.currentTarget.style.background = 'rgba(99, 102, 241, 0.1)'; }}
                         >
-                          {checkIsMe(m) ? 'You' : m.replace(/\s*\(me\)$/i, '')} {checkIsAdmin(m) && <span style={{ fontSize: '10px', fontWeight: 800, color: '#7C3AED', background: '#F5F3FF', padding: '1px 6px', borderRadius: '4px', marginLeft: '6px' }}>Admin</span>} <span style={{ fontSize: '11px', marginLeft: '8px', opacity: 0.6 }}>✏️</span>
-                        </span>
-                      )}
-                    </div>
-
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                      <button
-                        onClick={async (e) => {
-                          e.stopPropagation();
-                          if (onRemindMember) {
-                            onRemindMember(m);
-                          } else {
-                            const inviteLink = `${window.location.origin}/?joinGroupId=${selectedId}`;
-                            await navigator.clipboard.writeText(inviteLink);
-                            alert(`Invite link for "${m}" copied to clipboard! 📋`);
-                          }
-                        }}
-                        style={{
-                          background: '#FFEDD5',
-                          border: 'none',
-                          borderRadius: '8px',
-                          padding: '5px 10px',
-                          color: '#EA580C',
-                          fontSize: '11px',
-                          fontWeight: 800,
-                          cursor: 'pointer',
-                          transition: '0.15s all ease',
-                        }}
-                        onMouseEnter={(e) => { e.currentTarget.style.background = '#FED7AA'; }}
-                        onMouseLeave={(e) => { e.currentTarget.style.background = '#FFEDD5'; }}
-                      >
-                        Remind
-                      </button>
-                      {selectedId !== 'STANDALONE' && (isAdmin || checkIsMe(m)) && (
+                          🔗 Invite again
+                        </button>
+                        
                         <span
-                          style={{ cursor: 'pointer', opacity: 0.6, fontSize: '13px', color: '#EF4444', fontWeight: 'bold' }}
-                          title="Remove member"
+                          title="Delete past member"
                           onClick={(e) => {
                             e.stopPropagation();
-                             const promptMsg = checkIsMe(m)
-                               ? `Leave group? You won't see new updates.`
-                               : `Cancel the invite for "${m}"? They haven't joined yet, so this removes them completely.`;
-                            if (confirm(promptMsg)) {
+                            if (confirm(`Permanently remove "${cleanName}" from the group's history?`)) {
                               if (onRemoveMember) {
                                 onRemoveMember(m);
-                              } else {
-                                setGroups(
-                                  groups.map((g) =>
-                                    String(g.id) === String(selectedId)
-                                      ? { ...g, members: g.members.map((mem) => (mem === m ? m + ' (Left)' : mem)), pendingMembers: g.pendingMembers?.filter((mem) => mem !== m) }
-                                      : g
-                                  )
-                                );
                               }
                             }
                           }}
+                          style={{ cursor: 'pointer', opacity: 0.6, fontSize: '13px', color: '#EF4444', fontWeight: 'bold', padding: '0 4px' }}
                         >
                           ✕
                         </span>
-                      )}
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {/* 3. Left Members */}
-          {(() => {
-            const left = selectedGroup.members.filter((m) => m.endsWith(' (Left)'));
-            if (left.length === 0) return null;
-            return (
-              <div style={{ marginTop: '24px' }}>
-                <h4 style={{ margin: '0 0 8px 0', fontSize: '12px', fontWeight: 800, color: '#475569', textTransform: 'uppercase', letterSpacing: '0.5px', textAlign: 'left' }}>
-                  Past Members ({left.length})
-                </h4>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-                  {left.map((m) => {
-                    const cleanName = m.replace(' (Left)', '');
-                    return (
-                      <div
-                        key={m}
-                        style={{
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'space-between',
-                          padding: '8px 12px',
-                          background: '#F8FAFC',
-                          borderRadius: '12px',
-                          boxSizing: 'border-box',
-                          opacity: 0.7,
-                        }}
-                      >
-                        <span style={{ fontWeight: 'bold', fontSize: '12px', color: '#64748B', textDecoration: 'line-through' }}>
-                           {checkIsMe(cleanName) ? 'You' : cleanName} {checkIsAdmin(cleanName) && <span style={{ fontSize: '10px', fontWeight: 800, color: '#7C3AED', background: '#F5F3FF', padding: '1px 6px', borderRadius: '4px', marginLeft: '6px' }}>Admin</span>}
-                        </span>
-                        
-                        {isAdmin && (
-                          <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                            <button
-                              onClick={async (e) => {
-                                e.stopPropagation();
-                                const inviteUrl = `${window.location.origin}/?joinGroupId=${selectedGroup.id}&rejoinName=${encodeURIComponent(cleanName)}`;
-                                if (onReinviteMember) {
-                                  onReinviteMember(cleanName, inviteUrl);
-                                } else {
-                                  await navigator.clipboard.writeText(inviteUrl);
-                                  alert(`Rejoin invite link for "${cleanName}" copied to clipboard! 📋\nSend this to them to rejoin: \n\n${inviteUrl}`);
-                                }
-                              }}
-                              style={{
-                                background: 'rgba(99, 102, 241, 0.1)',
-                                border: 'none',
-                                borderRadius: '8px',
-                                padding: '4px 8px',
-                                color: '#4F46E6',
-                                fontSize: '10px',
-                                fontWeight: 800,
-                                cursor: 'pointer',
-                                transition: '0.15s all ease',
-                              }}
-                              onMouseEnter={(e) => { e.currentTarget.style.background = 'rgba(99, 102, 241, 0.2)'; }}
-                              onMouseLeave={(e) => { e.currentTarget.style.background = 'rgba(99, 102, 241, 0.1)'; }}
-                            >
-                              🔗 Invite again
-                            </button>
-
-                            <span
-                              title="Delete past member"
-                              onClick={(e) => {
-                                  e.stopPropagation();
-                                  if (confirm(`Permanently remove "${cleanName}" from the group's history?`)) {
-                                    if (onRemoveMember) {
-                                      onRemoveMember(m);
-                                    }
-                                  }
-                              }}
-                              style={{ cursor: 'pointer', opacity: 0.9, fontSize: '13px', color: '#EF4444', fontWeight: 'bold', marginLeft: '6px' }}
-                            >
-                              ✕
-                            </span>
-                          </div>
-                        )}
                       </div>
-                    );
-                  })}
-                </div>
-              </div>
-            );
-          })()}
-        </div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        )}
 
-
-        <div style={{ borderTop: '1px solid #F1F5F9', paddingTop: '12px', marginTop: '4px', display: 'flex', justifyContent: 'center' }}>
+        {/* BOTTOM ACTION BUTTON */}
+        <div style={{ display: 'flex', justifyContent: 'center', marginTop: '10px' }}>
           <button
             style={{
               padding: '12px 36px',
