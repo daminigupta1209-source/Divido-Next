@@ -549,47 +549,81 @@ export const MobileHeader: React.FC<MobileHeaderProps> = ({
                     return dStr;
                   };
 
-                  return (
+                  return createPortal(
                     <div
-                      className="card shadow-lg"
-                      onClick={(e) => e.stopPropagation()}
+                      onClick={() => setShowMobileBellMenu(false)}
                       style={{
-                        position: 'absolute',
-                        right: '12px',
-                        top: 'calc(100% + 4px)',
-                        padding: '12px',
-                        borderRadius: '16px',
+                        position: 'fixed',
+                        inset: 0,
                         background: '#FFFFFF',
-                        border: '1px solid #E2E8F0',
-                        boxShadow: '0 10px 25px -5px rgba(0, 0, 0, 0.08), 0 8px 10px -6px rgba(0, 0, 0, 0.08)',
-                        zIndex: 99999,
-                        width: '230px',
-                        maxHeight: '260px',
-                        overflowY: 'auto',
+                        zIndex: 100000,
+                        display: 'flex',
+                        flexDirection: 'column',
+                        animation: 'fadeSlideIn 0.2s ease-out',
                       }}
                     >
-                      <div style={{ fontSize: '11px', fontWeight: 800, color: '#475569', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '8px', borderBottom: '1px solid #F1F5F9', paddingBottom: '6px', textAlign: 'left' }}>
-                        Updates Log 🔔
+                      {/* Screen header */}
+                      <div
+                        onClick={(e) => e.stopPropagation()}
+                        style={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '12px',
+                          padding: '18px 18px 14px',
+                          borderBottom: '1px solid #F1F5F9',
+                          flexShrink: 0,
+                        }}
+                      >
+                        <button
+                          onClick={() => setShowMobileBellMenu(false)}
+                          style={{
+                            border: 'none',
+                            background: 'none',
+                            cursor: 'pointer',
+                            padding: 0,
+                            display: 'flex',
+                            alignItems: 'center',
+                            color: '#475569',
+                          }}
+                          aria-label="Back"
+                        >
+                          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                            <polyline points="15 18 9 12 15 6" />
+                          </svg>
+                        </button>
+                        <h2 className="nunito" style={{ margin: 0, fontSize: '19px', fontWeight: 950, letterSpacing: '-0.3px', color: '#1E293B' }}>
+                          Updates Log 🔔
+                        </h2>
                       </div>
-                      {systemLogs.length === 0 ? (
-                        <div style={{ padding: '16px 8px', fontSize: '12px', color: '#94A3B8', textAlign: 'center' }}>
-                          No recent updates
-                        </div>
-                      ) : (
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-                          {systemLogs.slice().reverse().map((log, idx) => (
-                            <div key={idx} style={{ display: 'flex', flexDirection: 'column', gap: '2px', padding: '6px 8px', borderRadius: '8px', background: '#F8FAFC', border: '1px solid #F1F5F9', textAlign: 'left' }}>
-                              <div style={{ fontSize: '11px', color: '#334155', fontWeight: 700 }}>
-                                {getSystemTitle(log.title)}
+
+                      {/* Screen body */}
+                      <div
+                        onClick={(e) => e.stopPropagation()}
+                        style={{ flex: 1, overflowY: 'auto', padding: '16px 18px', boxSizing: 'border-box' }}
+                      >
+                        {systemLogs.length === 0 ? (
+                          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '10px', padding: '80px 20px', color: '#94A3B8' }}>
+                            <span style={{ fontSize: '38px' }}>🔔</span>
+                            <p style={{ margin: 0, fontSize: '14px', fontWeight: 700 }}>No recent updates</p>
+                            <p style={{ margin: 0, fontSize: '12px', textAlign: 'center' }}>Membership changes for this group will show up here.</p>
+                          </div>
+                        ) : (
+                          <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                            {systemLogs.slice().reverse().map((log, idx) => (
+                              <div key={idx} style={{ display: 'flex', flexDirection: 'column', gap: '4px', padding: '12px 14px', borderRadius: '14px', background: '#F8FAFC', border: '1px solid #F1F5F9', textAlign: 'left' }}>
+                                <div style={{ fontSize: '13px', color: '#334155', fontWeight: 800 }}>
+                                  {getSystemTitle(log.title)}
+                                </div>
+                                <div style={{ fontSize: '11px', color: '#94A3B8', fontWeight: 600 }}>
+                                  {formatDateMobile(log.date)}
+                                </div>
                               </div>
-                              <div style={{ fontSize: '8.5px', color: '#94A3B8', textAlign: 'right' }}>
-                                {formatDateMobile(log.date)}
-                              </div>
-                            </div>
-                          ))}
-                        </div>
-                      )}
-                    </div>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    </div>,
+                    document.body
                   );
                 })()}
 
