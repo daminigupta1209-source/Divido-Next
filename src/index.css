@@ -137,10 +137,9 @@ body {
 }
 .nunito { font-family: 'Nunito', sans-serif; font-weight: 900; }
 
-::-webkit-scrollbar { width: 8px; }
-::-webkit-scrollbar-track { background: var(--bg); }
-::-webkit-scrollbar-thumb { background: #E5E5E5; border-radius: 10px; }
-::-webkit-scrollbar-thumb:hover { background: var(--p); }
+/* Hide scrollbars app-wide (scrolling stays fully functional) */
+* { scrollbar-width: none; -ms-overflow-style: none; }
+::-webkit-scrollbar { width: 0; height: 0; display: none; }
 
 @keyframes shake {
     0%, 100% { transform: translateX(0); }

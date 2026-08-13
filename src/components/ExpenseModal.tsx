@@ -1800,7 +1800,7 @@ export const ExpenseModal: React.FC<ExpenseModalProps> = ({
             title="Add attachment"
             style={{
               position: 'absolute',
-              right: '-2px',
+              right: '14px',
               bottom: 'calc(100% + 22px)',
               width: '38px',
               height: '38px',
