@@ -117,22 +117,28 @@ export const SearchableCurrencyPicker: React.FC<SearchableCurrencyPickerProps> =
             ✕
           </button>
         </div>
-        <div style={{ position: 'relative', marginBottom: '10px' }}>
+        <div
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: '10px',
+            padding: '0 14px',
+            borderRadius: '12px',
+            border: '1.5px solid #F1F5F9',
+            background: 'var(--bg)',
+            marginBottom: '10px',
+          }}
+        >
           <svg
-            style={{
-              position: 'absolute',
-              left: '16px',
-              top: '50%',
-              transform: 'translateY(-50%)',
-              opacity: 0.4,
-              color: 'var(--t)',
-            }}
+            style={{ opacity: 0.4, color: 'var(--t)', flexShrink: 0 }}
             width="15"
             height="15"
             viewBox="0 0 24 24"
             fill="none"
             stroke="currentColor"
             strokeWidth="3"
+            strokeLinecap="round"
+            strokeLinejoin="round"
           >
             <circle cx="11" cy="11" r="8"></circle>
             <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
@@ -149,15 +155,15 @@ export const SearchableCurrencyPicker: React.FC<SearchableCurrencyPickerProps> =
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             style={{
-              width: '100%',
-              padding: '10px 10px 10px 36px',
-              borderRadius: '12px',
-              border: '1.5px solid #F1F5F9',
+              flex: 1,
+              minWidth: 0,
+              padding: '10px 0',
+              border: 'none',
+              background: 'transparent',
               fontSize: '13px',
               fontWeight: 700,
-              background: 'var(--bg)',
+              color: 'var(--t)',
               outline: 'none',
-              transition: '0.2s all',
             }}
           />
         </div>
