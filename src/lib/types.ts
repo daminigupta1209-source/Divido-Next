@@ -13,6 +13,11 @@ export interface Group {
     requestName: string;
     requestEmail: string;
   }>;
+  // Hidden per-person identity for each member NAME in this group.
+  // Value = person_id (for deliberately linked/separated placeholders) OR the
+  // member's email (signed-in) OR the name itself (legacy, unlinked). Used only
+  // for cross-group balance bucketing so two same-named people don't merge.
+  memberIdentities?: Record<string, string>;
 }
 
 export interface PendingMatchPrompt {

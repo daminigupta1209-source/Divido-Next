@@ -275,6 +275,16 @@ export function useSupabaseSync({
           
           const members = Array.from(new Set(activeMems.map((m: any) => m.name)));
 
+          // Build the hidden identity for each member name: prefer an explicit
+          // person_id, else the signed-in email, else fall back to the name
+          // itself (legacy members keep merging by name — no behaviour change).
+          const memberIdentities: Record<string, string> = {};
+          activeMems.forEach((m: any) => {
+            const cleanName = m.name.replace(/\s*\(Left\)$/i, '');
+            const identity = m.person_id || m.user_email || cleanName;
+            if (!memberIdentities[m.name]) memberIdentities[m.name] = identity;
+          });
+
           // Hydrate this device's identity for this group from the account, so a
           // person's per-group name (e.g. "didi") resolves correctly on ANY device
           // — not only the one where they first claimed it.
@@ -322,6 +332,7 @@ export function useSupabaseSync({
               members,
               pendingMembers,
               pendingLinkRequests,
+              memberIdentities,
             });
           }
 
