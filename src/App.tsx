@@ -1945,8 +1945,16 @@ function App() {
   };
 
   const handleUpdateGroup = async (groupId: string | number, groupData: { name: string; currency: string; members: string[]; emoji: string; createdDate?: string }) => {
-    // 1. Update local groups state
-    setGroups(groups.map(g => String(g.id) === String(groupId) ? { ...g, ...groupData } : g));
+    // 1. Update local groups state. Names added during the edit are brand-new
+    // invitees, so mark them pending so they show under "Pending Invites".
+    setGroups(groups.map(g => {
+      if (String(g.id) !== String(groupId)) return g;
+      const prevMembers = g.members || [];
+      const meClean = me.replace(/\s*\(me\)$/i, '').replace(/\s*\(Left\)$/i, '').toLowerCase();
+      const newlyAdded = groupData.members.filter(m => !prevMembers.includes(m) && m.toLowerCase() !== meClean);
+      const pendingMembers = Array.from(new Set([...(g.pendingMembers || []), ...newlyAdded]));
+      return { ...g, ...groupData, pendingMembers };
+    }));
     
     // Reset editing state and return to detail view
     setEditingGroupId(null);
