@@ -90,6 +90,15 @@ export function useGroupDetailForm({
     return () => window.removeEventListener('click', closeDrop);
   }, []);
 
+  // "Manage members" in Edit Group sets this flag before navigating back to the
+  // detail view; open the members card once we land here.
+  useEffect(() => {
+    if (selectedGroup && sessionStorage.getItem('divido_open_members') === '1') {
+      sessionStorage.removeItem('divido_open_members');
+      setTimeout(() => setShowFriendsList(true), 120);
+    }
+  }, [selectedId, selectedGroup]);
+
   const handleExportCSV = () => {
     if (!selectedGroup) return;
     const currentGId = String(selectedId);

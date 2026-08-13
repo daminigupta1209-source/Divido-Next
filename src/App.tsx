@@ -2297,6 +2297,13 @@ function App() {
             groups={groups}
             userName={userName}
             editingGroup={editingGroupId ? groups.find(g => String(g.id) === String(editingGroupId)) : undefined}
+            onManageMembers={() => {
+              const gid = editingGroupId;
+              sessionStorage.setItem('divido_open_members', '1');
+              setEditingGroupId(null);
+              if (gid) setSelectedId(gid);
+              setView('detail');
+            }}
           />
         ) : (
           <GroupDetail

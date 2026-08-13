@@ -11,6 +11,7 @@ interface CreateGroupViewProps {
   groups: Group[];
   userName: string;
   editingGroup?: Group;
+  onManageMembers?: () => void;
 }
 
 export const CreateGroupView: React.FC<CreateGroupViewProps> = ({
@@ -21,16 +22,38 @@ export const CreateGroupView: React.FC<CreateGroupViewProps> = ({
   groups,
   userName,
   editingGroup,
+  onManageMembers,
 }) => {
   const [title, setTitle] = useState(editingGroup ? editingGroup.name : '');
   const [selectedEmoji, setSelectedEmoji] = useState((editingGroup && editingGroup.emoji) ? editingGroup.emoji : ''); // Stores base64 group DP URL only; empty means show name initials
   const [selectedCurrency, setSelectedCurrency] = useState(editingGroup ? editingGroup.currency : (myDefaultCurrency || '₹'));
   const [showCurrencyPicker, setShowCurrencyPicker] = useState(false);
   const [participants, setParticipants] = useState<string[]>(editingGroup ? editingGroup.members : [me]);
-  // In Edit mode the group's existing members are shown read-only (info only);
-  // only names added during THIS session are editable/removable and flow into
-  // pending invites on save. In Create mode everything after "me" is new.
-  const originalMemberCount = editingGroup ? editingGroup.members.length : 1;
+
+  // Read-only member rows for Edit mode, tagged by category. Actions (remove /
+  // remind / invite-again) live on the group members card, opened via
+  // "Manage members" — so Edit Group stays a clean settings + info screen.
+  const meClean = me.replace(/\s*\(me\)$/i, '').replace(/\s*\(Left\)$/i, '').trim().toLowerCase();
+  const editMemberRows = editingGroup
+    ? (editingGroup.members || []).map((m) => {
+        const isLeft = /\s*\(left\)$/i.test(m);
+        const clean = m.replace(/\s*\(Left\)$/i, '');
+        const isMe = clean.toLowerCase() === meClean;
+        const isPending = (editingGroup.pendingMembers || []).includes(m);
+        const status = isMe ? 'Admin' : isLeft ? 'Left' : isPending ? 'Pending' : 'Joined';
+        return { name: clean, status };
+      })
+    : [];
+  const statusChip = (status: string): React.CSSProperties => {
+    const map: Record<string, { c: string; bg: string }> = {
+      Admin: { c: '#7C3AED', bg: '#EDE9FE' },
+      Joined: { c: '#059669', bg: '#D1FAE5' },
+      Pending: { c: '#B45309', bg: '#FEF3C7' },
+      Left: { c: '#64748B', bg: '#F1F5F9' },
+    };
+    const cfg = map[status] || map.Joined;
+    return { fontSize: '10px', fontWeight: 800, color: cfg.c, background: cfg.bg, padding: '2px 9px', borderRadius: '999px', flexShrink: 0 };
+  };
   const [nameError, setNameError] = useState('');
   const [createdDate, setCreatedDate] = useState(() => editingGroup?.createdDate || new Date().toISOString().split('T')[0]);
 
@@ -331,95 +354,157 @@ export const CreateGroupView: React.FC<CreateGroupViewProps> = ({
           </div>
         </div>
 
-        {/* PARTICIPANTS SECTION */}
+        {/* PARTICIPANTS / MEMBERS SECTION */}
         <div>
           <label style={{ display: 'block', fontSize: '12px', fontWeight: 850, color: 'var(--g)', marginBottom: '8px', textTransform: 'uppercase', letterSpacing: '0.8px' }}>
             Friends
           </label>
-          <div
-            style={{
-              borderRadius: '16px',
-              background: '#FFFFFF',
-              border: '1.5px solid var(--border)',
-              padding: '8px',
-              display: 'flex',
-              flexDirection: 'column',
-              gap: '8px',
-              boxShadow: '0 4px 10px rgba(0,0,0,0.02)',
-            }}
-          >
-            {participants.map((participant, index) => (
+
+          {editingGroup ? (
+            /* EDIT MODE — read-only member list tagged by category; manage on the members card */
+            <>
               <div
-                key={index}
                 style={{
+                  borderRadius: '16px',
+                  background: '#FFFFFF',
+                  border: '1.5px solid var(--border)',
+                  padding: '4px',
                   display: 'flex',
-                  alignItems: 'center',
-                  gap: '8px',
-                  background: 'var(--bg)',
-                  borderRadius: '12px',
-                  padding: '4px 12px',
+                  flexDirection: 'column',
+                  boxShadow: '0 4px 10px rgba(0,0,0,0.02)',
                 }}
               >
-                <input
-                  type="text"
-                  value={index === 0 && participant === me ? userName : participant}
-                  placeholder={index === 0 ? "Your name" : `Friend ${index + 1}`}
-                  onChange={(e) => handleParticipantChange(index, e.target.value)}
-                  disabled={index === 0 || index < originalMemberCount} // yourself + existing members are read-only info
-                  style={{
-                    flex: 1,
-                    height: '36px',
-                    border: 'none',
-                    background: 'transparent',
-                    outline: 'none',
-                    fontSize: '14px',
-                    fontWeight: 700,
-                    color: (index === 0 || index < originalMemberCount) ? 'var(--g)' : 'var(--t)',
-                    fontFamily: 'Nunito',
-                  }}
-                />
-                {index >= originalMemberCount && (
-                  <button
-                    type="button"
-                    onClick={() => handleRemoveParticipant(index)}
+                {editMemberRows.map((row, i) => (
+                  <div
+                    key={i}
                     style={{
-                      background: 'none',
-                      border: 'none',
-                      color: '#94A3B8',
-                      fontSize: '16px',
-                      cursor: 'pointer',
-                      padding: '4px',
                       display: 'flex',
                       alignItems: 'center',
+                      gap: '8px',
+                      padding: '11px 12px',
+                      borderBottom: i < editMemberRows.length - 1 ? '1px solid #F1F5F9' : 'none',
                     }}
                   >
-                    ✕
-                  </button>
-                )}
+                    <span style={{ flex: 1, fontSize: '14px', fontWeight: 700, color: row.status === 'Left' ? 'var(--g)' : 'var(--t)', fontFamily: 'Nunito', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                      {row.name}
+                    </span>
+                    <span style={statusChip(row.status)}>{row.status}</span>
+                  </div>
+                ))}
               </div>
-            ))}
 
-            {/* Add Friend Button Link */}
-            <button
-              type="button"
-              onClick={handleAddParticipant}
+              <button
+                type="button"
+                onClick={() => onManageMembers && onManageMembers()}
+                style={{
+                  marginTop: '10px',
+                  width: '100%',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: '6px',
+                  padding: '11px',
+                  borderRadius: '12px',
+                  border: '1.5px solid var(--border)',
+                  background: '#FFFFFF',
+                  color: '#2563EB',
+                  fontSize: '13px',
+                  fontWeight: 800,
+                  cursor: 'pointer',
+                  fontFamily: 'Nunito',
+                }}
+              >
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" /><circle cx="9" cy="7" r="4" /><path d="M23 21v-2a4 4 0 0 0-3-3.87" /><path d="M16 3.13a4 4 0 0 1 0 7.75" /></svg>
+                Manage members →
+              </button>
+            </>
+          ) : (
+            /* CREATE MODE — editable list to add initial members */
+            <div
               style={{
-                background: 'none',
-                border: 'none',
-                color: '#3B82F6',
-                fontWeight: 800,
-                fontSize: '13px',
-                padding: '10px 12px',
-                cursor: 'pointer',
-                textAlign: 'left',
-                display: 'inline-flex',
-                alignItems: 'center',
-                fontFamily: 'Nunito',
+                borderRadius: '16px',
+                background: '#FFFFFF',
+                border: '1.5px solid var(--border)',
+                padding: '8px',
+                display: 'flex',
+                flexDirection: 'column',
+                gap: '8px',
+                boxShadow: '0 4px 10px rgba(0,0,0,0.02)',
               }}
             >
-              + Add Friend
-            </button>
-          </div>
+              {participants.map((participant, index) => (
+                <div
+                  key={index}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '8px',
+                    background: 'var(--bg)',
+                    borderRadius: '12px',
+                    padding: '4px 12px',
+                  }}
+                >
+                  <input
+                    type="text"
+                    value={index === 0 && participant === me ? userName : participant}
+                    placeholder={index === 0 ? "Your name" : `Friend ${index + 1}`}
+                    onChange={(e) => handleParticipantChange(index, e.target.value)}
+                    disabled={index === 0}
+                    style={{
+                      flex: 1,
+                      height: '36px',
+                      border: 'none',
+                      background: 'transparent',
+                      outline: 'none',
+                      fontSize: '14px',
+                      fontWeight: 700,
+                      color: index === 0 ? 'var(--g)' : 'var(--t)',
+                      fontFamily: 'Nunito',
+                    }}
+                  />
+                  {index > 0 && (
+                    <button
+                      type="button"
+                      onClick={() => handleRemoveParticipant(index)}
+                      style={{
+                        background: 'none',
+                        border: 'none',
+                        color: '#94A3B8',
+                        fontSize: '16px',
+                        cursor: 'pointer',
+                        padding: '4px',
+                        display: 'flex',
+                        alignItems: 'center',
+                      }}
+                    >
+                      ✕
+                    </button>
+                  )}
+                </div>
+              ))}
+
+              {/* Add Friend Button Link */}
+              <button
+                type="button"
+                onClick={handleAddParticipant}
+                style={{
+                  background: 'none',
+                  border: 'none',
+                  color: '#3B82F6',
+                  fontWeight: 800,
+                  fontSize: '13px',
+                  padding: '10px 12px',
+                  cursor: 'pointer',
+                  textAlign: 'left',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  fontFamily: 'Nunito',
+                }}
+              >
+                + Add Friend
+              </button>
+            </div>
+          )}
         </div>
 
         {/* DATE SECTION (SMALL PILL BADGE AT BOTTOM LEFT) */}
