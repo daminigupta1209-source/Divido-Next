@@ -66,7 +66,28 @@ function App() {
   const [editingExpense, setEditingExpense] = useState<Expense | null>(null);
   const [showAddFriendModal, setShowAddFriendModal] = useState<boolean>(false);
   const [addFriendShareOnly, setAddFriendShareOnly] = useState<boolean>(false);
-  const openGroupShareLink = () => { setAddFriendShareOnly(true); setShowAddFriendModal(true); };
+  // Prefer the phone's native share sheet (all apps open directly). Only fall
+  // back to the in-app share popup when the device has no Web Share (desktop).
+  const openGroupShareLink = async () => {
+    const link = `${window.location.origin}/?joinGroupId=${selectedId || 'STANDALONE'}`;
+    const grp = groups.find((g) => String(g.id) === String(selectedId));
+    const grpName = grp?.name;
+    if (typeof navigator !== 'undefined' && (navigator as any).share) {
+      try {
+        await (navigator as any).share({
+          title: grpName ? `Join "${grpName}" on Divido` : 'Join my group on Divido',
+          text: `Hey! Join ${grpName ? `"${grpName}"` : 'my group'} on Divido to split expenses 💸`,
+          url: link,
+        });
+        return;
+      } catch {
+        // User dismissed the share sheet (or it failed) — do nothing.
+        return;
+      }
+    }
+    setAddFriendShareOnly(true);
+    setShowAddFriendModal(true);
+  };
   const [matchPrompt, setMatchPrompt] = useState<PendingMatchPrompt | null>(null);
   const [showMembersHealth, setShowMembersHealth] = useState<boolean>(false);
   const [globalSettleData, setGlobalSettleData] = useState<{ name: string; gId?: string | number | null; identity?: string; groups?: string[]; balances?: any } | null>(null);
