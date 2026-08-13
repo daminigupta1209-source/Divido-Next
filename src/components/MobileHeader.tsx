@@ -219,14 +219,57 @@ export const MobileHeader: React.FC<MobileHeaderProps> = ({
     return `${Math.floor(day / 7)}w ago`;
   };
 
+  // Absolute clock time (e.g. "2:30 PM") to show alongside the relative time.
+  const clockTime = (dateStr: string) => {
+    const d = new Date(dateStr);
+    if (isNaN(d.getTime())) return '';
+    return d.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
+  };
+
+  // Clean line-icon badge per notification type (replaces the emoji icons).
   const notifIcon = (type: string) => {
-    if (type === 'reminder') return '⏰';
-    if (type === 'payment_request') return '💸';
-    if (type === 'group_add' || type === 'join') return '👥';
-    if (type === 'link_request') return '🔗';
-    if (type === 'rename_request') return '✏️';
-    if (type === 'admin_transfer') return '👑';
-    return '🔔';
+    const map: Record<string, { bg: string; color: string; path: React.ReactNode }> = {
+      reminder: {
+        bg: '#FEF3C7', color: '#D97706',
+        path: (<><circle cx="12" cy="13" r="8" /><path d="M12 9v4l2 2" /><path d="M5 3 2 6" /><path d="m22 6-3-3" /></>),
+      },
+      payment_request: {
+        bg: '#D1FAE5', color: '#059669',
+        path: (<><rect x="2" y="5" width="20" height="14" rx="3" /><circle cx="12" cy="12" r="2.5" /><path d="M6 12h.01M18 12h.01" /></>),
+      },
+      group_add: {
+        bg: '#E0E7FF', color: '#4F46E5',
+        path: (<><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" /><circle cx="9" cy="7" r="4" /><path d="M19 8v6M22 11h-6" /></>),
+      },
+      join: {
+        bg: '#E0E7FF', color: '#4F46E5',
+        path: (<><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" /><circle cx="9" cy="7" r="4" /><path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75" /></>),
+      },
+      link_request: {
+        bg: '#DBEAFE', color: '#2563EB',
+        path: (<><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71" /><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71" /></>),
+      },
+      rename_request: {
+        bg: '#EDE9FE', color: '#7C3AED',
+        path: (<><path d="M12 20h9" /><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z" /></>),
+      },
+      admin_transfer: {
+        bg: '#FEF3C7', color: '#D97706',
+        path: (<><path d="M3 7l4 4 5-6 5 6 4-4v10a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1Z" /></>),
+      },
+      removed: {
+        bg: '#FEE2E2', color: '#DC2626',
+        path: (<><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" /><circle cx="9" cy="7" r="4" /><path d="M17 8l5 5M22 8l-5 5" /></>),
+      },
+    };
+    const cfg = map[type] || { bg: '#F1F5F9', color: '#64748B', path: (<><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" /><path d="M13.73 21a2 2 0 0 1-3.46 0" /></>) };
+    return (
+      <span style={{ width: '36px', height: '36px', borderRadius: '50%', background: cfg.bg, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke={cfg.color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          {cfg.path}
+        </svg>
+      </span>
+    );
   };
 
   return (
@@ -1022,11 +1065,11 @@ export const MobileHeader: React.FC<MobileHeaderProps> = ({
                     borderBottom: '0.5px solid #F6F1EA', background: n.isRead ? '#FFFFFF' : '#FBF6EF',
                   }}
                 >
-                  <span style={{ fontSize: '20px', flexShrink: 0, lineHeight: 1.2 }}>{notifIcon(n.type)}</span>
+                  {notifIcon(n.type)}
                   <div style={{ minWidth: 0, flex: 1 }}>
                     <div style={{ fontSize: '14px', fontWeight: 700, color: '#2E2A25' }}>{n.title}</div>
                     {n.body && <div style={{ fontSize: '13px', color: '#6B6259', marginTop: '2px', lineHeight: 1.4 }}>{n.body}</div>}
-                    <div style={{ fontSize: '11px', color: '#B0A79C', marginTop: '4px' }}>{relTime(n.createdAt)}</div>
+                    <div style={{ fontSize: '11px', color: '#B0A79C', marginTop: '4px' }}>{relTime(n.createdAt)} · {clockTime(n.createdAt)}</div>
                     {n.type === 'rename_request' && (
                       <div style={{ display: 'flex', gap: '8px', marginTop: '10px' }}>
                         <button
