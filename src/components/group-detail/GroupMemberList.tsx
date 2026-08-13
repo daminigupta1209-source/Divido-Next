@@ -148,6 +148,7 @@ export const GroupMemberList: React.FC<GroupMemberListProps> = ({
 
   return (
     <div
+      onClick={(e) => e.stopPropagation()}
       style={{
         position: 'fixed',
         top: 0,
