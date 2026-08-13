@@ -52,7 +52,20 @@ export const FriendsView: React.FC<FriendsViewProps> = ({
   const [manualRates, setManualRates] = useState(false);
   const [sourceCurr, setSourceCurr] = useState<string>('ALL');
 
+  // Balances are bucketed by a hidden IDENTITY (person_id / email / name) rather
+  // than the raw name, so two different people who share a name don't merge.
   const masterBal: Record<string, Record<string, number>> = {};
+  const idMeta: Record<string, { name: string; groups: Set<string> }> = {};
+  // Resolve a member NAME within a group to its identity (falls back to the name
+  // itself for legacy/unlinked members — preserving old merge-by-name behaviour).
+  const resolveId = (g: any, nm: string) =>
+    (g?.memberIdentities?.[nm]) || (g?.memberIdentities?.[nm + ' (Left)']) || nm;
+  const bumpBal = (id: string, name: string, groupName: string | null, curr: string, delta: number) => {
+    if (!masterBal[id]) masterBal[id] = {};
+    masterBal[id][curr] = (masterBal[id][curr] || 0) + delta;
+    if (!idMeta[id]) idMeta[id] = { name, groups: new Set() };
+    if (groupName) idMeta[id].groups.add(groupName);
+  };
   // Everyone you share expenses with, regardless of whether a balance is outstanding.
   // Lets us tell "all settled up" apart from "genuinely no friends".
   const allSharedMembers = new Set<string>();
@@ -154,15 +167,15 @@ export const FriendsView: React.FC<FriendsViewProps> = ({
     groupTransactions.forEach((t) => {
       if (t.from === me) {
         const friend = t.to;
-        if (!masterBal[friend]) masterBal[friend] = {};
+        const id = resolveId(g, friend);
         Object.entries(t.balances).forEach(([curr, val]) => {
-          masterBal[friend][curr] = (masterBal[friend][curr] || 0) - val;
+          bumpBal(id, friend, g.name, curr, -val);
         });
       } else if (t.to === me) {
         const friend = t.from;
-        if (!masterBal[friend]) masterBal[friend] = {};
+        const id = resolveId(g, friend);
         Object.entries(t.balances).forEach(([curr, val]) => {
-          masterBal[friend][curr] = (masterBal[friend][curr] || 0) + val;
+          bumpBal(id, friend, g.name, curr, val);
         });
       }
     });
@@ -184,29 +197,36 @@ export const FriendsView: React.FC<FriendsViewProps> = ({
     if (e.paid === me) {
       splitters.forEach((m) => {
         if (m === me) return;
-        if (!masterBal[m]) masterBal[m] = {};
         const otherShare =
           !e.mode || e.mode === 'Equally'
             ? amount / splitters.length
             : e.mode === 'Unequally'
             ? parseFloat(e.shares?.[m]?.toString() || '0')
             : (amount * parseFloat(e.shares?.[m]?.toString() || '0')) / 100;
-        masterBal[m][c] = (masterBal[m][c] || 0) + otherShare;
+        bumpBal(m, m, null, c, otherShare);
       });
     } else if (splitters.includes(me)) {
       const payer = e.paid;
-      if (!masterBal[payer]) masterBal[payer] = {};
       const myShare =
         !e.mode || e.mode === 'Equally'
           ? amount / splitters.length
           : e.mode === 'Unequally'
           ? parseFloat(e.shares?.[me]?.toString() || '0')
           : (amount * parseFloat(e.shares?.[me]?.toString() || '0')) / 100;
-      masterBal[payer][c] = (masterBal[payer][c] || 0) - myShare;
+      bumpBal(payer, payer, null, c, -myShare);
     }
   });
 
-  const friends = Object.entries(masterBal).map(([name, bals]) => ({ name, bals }));
+  const friends = Object.entries(masterBal).map(([id, bals]) => ({
+    id,
+    name: idMeta[id]?.name || id,
+    groups: idMeta[id] ? Array.from(idMeta[id].groups) : [],
+    bals,
+  }));
+  // Only show the group label to disambiguate people who share a display name.
+  const dupNameCount: Record<string, number> = {};
+  friends.forEach((f) => { const n = f.name.toLowerCase(); dupNameCount[n] = (dupNameCount[n] || 0) + 1; });
+  const isDupName = (name: string) => (dupNameCount[name.toLowerCase()] || 0) > 1;
 
   // Distinct currencies present across all friend balances
   const distinctCurrencies = Array.from(
@@ -295,20 +315,24 @@ export const FriendsView: React.FC<FriendsViewProps> = ({
     const isOwe = Object.values(f.bals).some((v) => v < -0.01);
     const q = (search || searchQuery || '').trim().toLowerCase();
     if (q && !f.name.toLowerCase().includes(q)) return false;
-    if (selectedFriends.length > 0 && !selectedFriends.includes(f.name)) return false;
+    if (selectedFriends.length > 0 && !selectedFriends.includes(f.id)) return false;
     if (balanceFilter === 'owed' && !isOwed) return false;
     if (balanceFilter === 'owe' && !isOwe) return false;
     return true;
   });
 
-  const toggleFriend = (name: string) => {
+  const toggleFriend = (id: string) => {
     setSelectedFriends((prev) =>
-      prev.includes(name) ? prev.filter((n) => n !== name) : [...prev, name]
+      prev.includes(id) ? prev.filter((n) => n !== id) : [...prev, id]
     );
   };
 
   const balanceLabel = balanceFilter === 'all' ? 'All Balances' : balanceFilter === 'owed' ? 'To Collect' : 'To Pay';
-  const friendsLabel = selectedFriends.length === 0 ? 'All Friends' : selectedFriends.length === 1 ? selectedFriends[0] : `${selectedFriends.length} Friends`;
+  const friendsLabel = selectedFriends.length === 0
+    ? 'All Friends'
+    : selectedFriends.length === 1
+    ? (friends.find((f) => f.id === selectedFriends[0])?.name || 'Friend')
+    : `${selectedFriends.length} Friends`;
 
   const dropdownStyle: React.CSSProperties = {
     position: 'relative',
@@ -399,11 +423,16 @@ export const FriendsView: React.FC<FriendsViewProps> = ({
                     <span>All Friends</span>
                   </div>
                   {friends.map((f) => (
-                    <div key={f.name} style={optionStyle(selectedFriends.includes(f.name))} onClick={() => toggleFriend(f.name)}>
-                      <div style={{ width: '16px', height: '16px', borderRadius: '4px', border: `2px solid ${selectedFriends.includes(f.name) ? '#16A34A' : '#CBD5E1'}`, background: selectedFriends.includes(f.name) ? '#16A34A' : '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                        {selectedFriends.includes(f.name) && <span style={{ color: '#fff', fontSize: '10px', fontWeight: 900 }}>✓</span>}
+                    <div key={f.id} style={optionStyle(selectedFriends.includes(f.id))} onClick={() => toggleFriend(f.id)}>
+                      <div style={{ width: '16px', height: '16px', borderRadius: '4px', border: `2px solid ${selectedFriends.includes(f.id) ? '#16A34A' : '#CBD5E1'}`, background: selectedFriends.includes(f.id) ? '#16A34A' : '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                        {selectedFriends.includes(f.id) && <span style={{ color: '#fff', fontSize: '10px', fontWeight: 900 }}>✓</span>}
                       </div>
-                      {f.name}
+                      <span style={{ display: 'flex', flexDirection: 'column', minWidth: 0 }}>
+                        <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{f.name}</span>
+                        {isDupName(f.name) && f.groups.length > 0 && (
+                          <span style={{ fontSize: '10px', color: '#94A3B8', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{f.groups.join(', ')}</span>
+                        )}
+                      </span>
                     </div>
                   ))}
                 </div>
@@ -575,7 +604,12 @@ export const FriendsView: React.FC<FriendsViewProps> = ({
           };
 
           const AV_COLORS = ['#B39DDB', '#F48FB1', '#80CBC4', '#FFB74D', '#9FA8DA', '#A5D6A7', '#EF9A9A', '#7FC8CE'];
-          const avBg = AV_COLORS[(f.name.charCodeAt(0) || 0) % AV_COLORS.length];
+          // Colour by identity when a name is shared (so two same-named people look
+          // distinct); otherwise keep the original name-based colour unchanged.
+          const avSeed = isDupName(f.name)
+            ? (f.id || f.name).split('').reduce((s, ch) => s + ch.charCodeAt(0), 0)
+            : (f.name.charCodeAt(0) || 0);
+          const avBg = AV_COLORS[avSeed % AV_COLORS.length];
 
           const pillBase: React.CSSProperties = {
             padding: '4px 12px',
@@ -588,9 +622,9 @@ export const FriendsView: React.FC<FriendsViewProps> = ({
 
           return (
             <div
-              key={f.name}
+              key={f.id}
               className="hover-up-mini"
-              onClick={() => { if (active) setGlobalSettleData({ name: f.name, balances: activeBals }); }}
+              onClick={() => { if (active) setGlobalSettleData({ name: f.name, identity: f.id, groups: f.groups, balances: activeBals }); }}
               style={{
                 padding: '10px 16px',
                 background: '#FFFFFF',
@@ -610,8 +644,11 @@ export const FriendsView: React.FC<FriendsViewProps> = ({
               </div>
 
               {/* Name */}
-              <div style={{ minWidth: 0, flex: 1, display: 'flex', alignItems: 'center', gap: '6px' }}>
+              <div style={{ minWidth: 0, flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center', gap: '1px' }}>
                 <h3 className="nunito" style={{ fontSize: '17px', fontWeight: 800, color: '#2E2A25', margin: 0, textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap', textTransform: 'capitalize' }}>{f.name}</h3>
+                {isDupName(f.name) && f.groups.length > 0 && (
+                  <span style={{ fontSize: '11px', color: '#94A3B8', fontWeight: 600, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{f.groups.join(', ')}</span>
+                )}
               </div>
 
               {/* Balance pills */}

@@ -69,7 +69,7 @@ function App() {
   const openGroupShareLink = () => { setAddFriendShareOnly(true); setShowAddFriendModal(true); };
   const [matchPrompt, setMatchPrompt] = useState<PendingMatchPrompt | null>(null);
   const [showMembersHealth, setShowMembersHealth] = useState<boolean>(false);
-  const [globalSettleData, setGlobalSettleData] = useState<{ name: string; gId?: string | number | null } | null>(null);
+  const [globalSettleData, setGlobalSettleData] = useState<{ name: string; gId?: string | number | null; identity?: string; groups?: string[]; balances?: any } | null>(null);
   const [showSettleModal, setShowSettleModal] = useState(false);
   const [editingSettle, setEditingSettle] = useState<Expense | null>(null);
   const [localSettleEdits, setLocalSettleEdits] = useState<any[]>([]);
