@@ -461,7 +461,7 @@ export const GroupGallery: React.FC<GroupGalleryProps> = ({
           style={{
             position: 'fixed',
             top: 0, right: 0, bottom: 0, left: 0,
-            background: 'rgba(255, 255, 255, 0.88)',
+            background: 'rgba(255, 255, 255, 0.4)',
             backdropFilter: 'blur(20px)',
             WebkitBackdropFilter: 'blur(20px)',
             zIndex: 1000,
