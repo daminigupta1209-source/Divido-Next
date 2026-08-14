@@ -490,30 +490,7 @@ export const Analytics: React.FC<AnalyticsProps> = ({ expenses, groups, me, user
         marginBottom: '20px',
         padding: '4px 0',
       }}>
-        {/* Back arrow */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-          {onBack && (
-            <button
-              onClick={onBack}
-              className="hover-up-mini"
-              style={{
-                background: 'none',
-                border: 'none',
-                padding: '8px',
-                cursor: 'pointer',
-                fontSize: '22px',
-                lineHeight: 1,
-                color: 'var(--t)',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-              }}
-              title="Go back"
-            >
-              ←
-            </button>
-          )}
-        </div>
+
 
         {/* Group name dropdown */}
         <div style={{ position: 'relative' }}>
