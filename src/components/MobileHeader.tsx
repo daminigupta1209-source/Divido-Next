@@ -886,11 +886,33 @@ export const MobileHeader: React.FC<MobileHeaderProps> = ({
             )}
             
             {!(isHomeStyle && isHeaderSearchActive) && (
-              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', flex: 1, minWidth: 0 }}>
+              <div
+                style={{
+                  position: 'absolute',
+                  left: (view === 'profile' || view === 'gallery' || view === 'detail' || view === 'analytics') ? '44px' : '52px',
+                  top: '50%',
+                  transform: 'translateY(-50%)',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  alignItems: 'flex-start',
+                  justifyContent: 'center',
+                  minWidth: 0,
+                  pointerEvents: 'none'
+                }}
+              >
                 <h1
-                  className={`nunito ${isHomeStyle ? 'home-header-title' : ''}`}
+                  className="nunito"
                   style={{
-                    fontSize: '22px', fontWeight: 950, letterSpacing: '-0.5px', color: 'var(--t)', margin: 0, display: 'flex', alignItems: 'center', gap: '6px',
+                    fontSize: '21px',
+                    fontWeight: 800,
+                    letterSpacing: '-0.4px',
+                    color: 'var(--t)',
+                    margin: 0,
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '6px',
+                    lineHeight: 1.1,
+                    pointerEvents: 'auto'
                   }}
                 >
                   <span>
@@ -920,13 +942,15 @@ export const MobileHeader: React.FC<MobileHeaderProps> = ({
                   <span
                     className="nunito"
                     style={{
-                      fontSize: '12px',
+                      fontSize: '11px',
                       fontWeight: 800,
                       color: '#64748B',
                       letterSpacing: '0.3px',
                       textTransform: 'capitalize',
                       marginTop: '2px',
-                      textAlign: 'left'
+                      textAlign: 'left',
+                      lineHeight: 1.1,
+                      pointerEvents: 'auto'
                     }}
                   >
                     {selectedGroup.name}
