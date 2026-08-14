@@ -182,7 +182,11 @@ export const GroupMemberList: React.FC<GroupMemberListProps> = ({
           <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
             <button
               type="button"
-              onClick={() => setShowFriendsList(false)}
+              onClick={() => {
+                setInlineAddVal('');
+                setIsAddingInline(false);
+                setShowFriendsList(false);
+              }}
               style={{
                 background: 'none',
                 border: 'none',
@@ -589,7 +593,8 @@ export const GroupMemberList: React.FC<GroupMemberListProps> = ({
 
             {(!isAddingInline || inlineAddVal.length > 0) && (
               <div style={{ display: 'flex', justifyContent: 'flex-start', marginTop: '10px' }}>
-                <span
+                <button
+                  type="button"
                   onClick={() => {
                     if (isAddingInline) {
                       handleInlineAdd();
@@ -601,19 +606,36 @@ export const GroupMemberList: React.FC<GroupMemberListProps> = ({
                     }
                   }}
                   style={{
-                    color: '#4F46E6',
-                    fontSize: '13px',
-                    fontWeight: 800,
+                    background: '#F97316',
+                    color: '#FFFFFF',
+                    border: 'none',
+                    padding: '6px 16px',
+                    borderRadius: '999px',
+                    fontFamily: 'inherit',
+                    fontWeight: 600,
+                    fontSize: '12px',
+                    letterSpacing: '0.2px',
+                    lineHeight: 1,
                     cursor: 'pointer',
-                    userSelect: 'none',
-                    transition: 'opacity 0.2s',
-                    fontFamily: 'Nunito',
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: '5px',
+                    boxShadow: '0 2px 8px rgba(249, 115, 22, 0.3)',
+                    transition: 'all 0.2s ease',
                   }}
-                  onMouseEnter={(e) => { e.currentTarget.style.opacity = '0.8'; }}
-                  onMouseLeave={(e) => { e.currentTarget.style.opacity = '1'; }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.transform = 'scale(1.02)';
+                    e.currentTarget.style.boxShadow = '0 4px 12px rgba(249, 115, 22, 0.4)';
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.transform = 'scale(1)';
+                    e.currentTarget.style.boxShadow = '0 2px 8px rgba(249, 115, 22, 0.3)';
+                  }}
                 >
-                  + Add Friend
-                </span>
+                  <span style={{ fontSize: '14px', fontWeight: 600, lineHeight: 1, color: '#FFFFFF', display: 'flex', alignItems: 'center' }}>+</span>
+                  <span style={{ color: '#FFFFFF', lineHeight: 1, display: 'flex', alignItems: 'center' }}>Friend</span>
+                </button>
               </div>
             )}
           </div>
