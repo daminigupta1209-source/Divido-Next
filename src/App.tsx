@@ -2733,22 +2733,7 @@ function App() {
       </main>
 
 
-      {view !== 'detail' && (
-        <div style={{
-          position: 'fixed',
-          bottom: '80px',
-          right: 0,
-          width: '100px',
-          height: '125px',
-          background: 'linear-gradient(to top left, var(--bg) 40%, rgba(255,255,255,0) 100%)',
-          pointerEvents: 'none',
-          zIndex: 999,
-          opacity: 0.9,
-          backdropFilter: 'blur(4px)',
-          maskImage: 'linear-gradient(to top left, black 40%, transparent 100%)',
-          WebkitMaskImage: 'linear-gradient(to top left, black 40%, transparent 100%)'
-        }} />
-      )}
+
 
       {/* Unified Floating Action Button (FAB) Menu */}
       {view !== 'create_group' && (
