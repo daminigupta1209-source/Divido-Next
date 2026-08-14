@@ -485,6 +485,25 @@ export const GroupGallery: React.FC<GroupGalleryProps> = ({
             ✕
           </button>
 
+           <div
+            style={{
+              color: '#FFF',
+              marginBottom: '20px',
+              textAlign: 'center',
+              maxWidth: '420px',
+              padding: '0 16px',
+              flexShrink: 0
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <h4 style={{ margin: '0 0 4px 0', fontSize: '18px', fontWeight: 800 }}>
+              {filteredPhotos[activePhotoIndex].expense.title}
+            </h4>
+            <p style={{ margin: 0, fontSize: '13px', color: '#94A3B8', fontWeight: 600 }}>
+              Paid by {filteredPhotos[activePhotoIndex].expense.paid} • {filteredPhotos[activePhotoIndex].expense.currency || '₹'}{filteredPhotos[activePhotoIndex].expense.amt}
+            </p>
+          </div>
+
           <div
             style={{
               maxWidth: '95%', maxHeight: '72vh', display: 'flex', alignItems: 'center', justifyContent: 'center'
@@ -500,16 +519,12 @@ export const GroupGallery: React.FC<GroupGalleryProps> = ({
 
           <div
             style={{
-              color: '#FFF', marginTop: '24px', textAlign: 'center', maxWidth: '420px', padding: '0 16px'
+              marginTop: '20px',
+              textAlign: 'center',
+              flexShrink: 0
             }}
             onClick={(e) => e.stopPropagation()}
           >
-            <h4 style={{ margin: '0 0 4px 0', fontSize: '18px', fontWeight: 800 }}>
-              {filteredPhotos[activePhotoIndex].expense.title}
-            </h4>
-            <p style={{ margin: '0 0 20px 0', fontSize: '13px', color: '#94A3B8', fontWeight: 600 }}>
-              Paid by {filteredPhotos[activePhotoIndex].expense.paid} • {filteredPhotos[activePhotoIndex].expense.currency || '₹'}{filteredPhotos[activePhotoIndex].expense.amt}
-            </p>
             <button
               onClick={() => handleViewExpense(filteredPhotos[activePhotoIndex].expense)}
               style={{
