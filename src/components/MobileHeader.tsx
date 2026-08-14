@@ -15,6 +15,7 @@ interface MobileHeaderProps {
   setIsSidebarOpen: (b: boolean) => void;
   onEditGroup?: (id: string | number) => void;
   setView: (v: string) => void;
+  setSelectedId?: (id: any) => void;
   headerRenaming: boolean;
   setHeaderRenaming: (b: boolean) => void;
   headerNewName: string;
@@ -79,6 +80,7 @@ export const MobileHeader: React.FC<MobileHeaderProps> = ({
   mobileShowGroupOptionsMenu,
   setMobileShowGroupOptionsMenu,
   setShowConvertModalId,
+  setSelectedId,
   handleMobileExportCSV,
   setAnalyticsGroupId,
   handleDeleteGroup,
@@ -827,9 +829,16 @@ export const MobileHeader: React.FC<MobileHeaderProps> = ({
           </div>
         ) : (
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: '100%', position: 'relative', height: '100%' }}>
-            {(view === 'profile' || view === 'gallery') ? (
+            {(view === 'profile' || view === 'gallery' || view === 'detail' || view === 'analytics') ? (
               <span
-                onClick={() => setView(view === 'gallery' ? 'detail' : 'summary')}
+                onClick={() => {
+                  if (view === 'gallery' || view === 'analytics') {
+                    setView('detail');
+                  } else {
+                    if (setSelectedId) setSelectedId(null);
+                    setView('summary');
+                  }
+                }}
                 style={{
                   position: 'absolute',
                   left: '4px',

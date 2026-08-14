@@ -2146,6 +2146,7 @@ function App() {
               setView('create_group');
             }}
             setView={setView}
+            setSelectedId={setSelectedId}
             headerRenaming={headerRenaming}
             setHeaderRenaming={setHeaderRenaming}
             headerNewName={headerNewName}
@@ -3660,31 +3661,23 @@ function App() {
 
       {view !== 'create_group' && !isPhotoViewerOpen && (
         <nav className="bottom-nav">
-          {((view === 'detail' || view === 'gallery' || view === 'analytics') && selectedId) ? (
-            <div className={`b-nav-btn ${view === 'detail' && groupDetailTab === 'expenses' ? 'active' : ''}`} onClick={() => { setView('detail'); setGroupDetailTab('expenses'); }}>
-              <span className="b-nav-icon" style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: '24px', height: '24px' }}>
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" style={{ width: '22px', height: '22px' }}>
-                  <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
-                  <circle cx="9" cy="7" r="4" />
-                  <path d="M22 21v-2a4 4 0 0 0-3-3.87" />
-                  <path d="M16 3.13a4 4 0 0 1 0 7.75" />
-                </svg>
-              </span>
-              <span>Group</span>
-            </div>
-          ) : (
-            <div className={`b-nav-btn ${view === 'summary' ? 'active' : ''}`} onClick={() => { setSelectedId(null); setView('summary'); }}>
-              <span className="b-nav-icon" style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: '24px', height: '24px' }}>
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" style={{ width: '22px', height: '22px' }}>
-                  <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
-                  <circle cx="9" cy="7" r="4" />
-                  <path d="M22 21v-2a4 4 0 0 0-3-3.87" />
-                  <path d="M16 3.13a4 4 0 0 1 0 7.75" />
-                </svg>
-              </span>
-              <span>Groups</span>
-            </div>
-          )}
+          <div
+            className={`b-nav-btn ${view === 'summary' || (view === 'detail' && groupDetailTab === 'expenses') ? 'active' : ''}`}
+            onClick={() => {
+              setSelectedId(null);
+              setView('summary');
+            }}
+          >
+            <span className="b-nav-icon" style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: '24px', height: '24px' }}>
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" style={{ width: '22px', height: '22px' }}>
+                <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
+                <circle cx="9" cy="7" r="4" />
+                <path d="M22 21v-2a4 4 0 0 0-3-3.87" />
+                <path d="M16 3.13a4 4 0 0 1 0 7.75" />
+              </svg>
+            </span>
+            <span>Groups</span>
+          </div>
           {((view === 'detail' || view === 'gallery' || view === 'analytics') && selectedId) ? (
             <div className={`b-nav-btn ${view === 'detail' && groupDetailTab === 'balances' ? 'active' : ''}`} onClick={() => { setView('detail'); setGroupDetailTab('balances'); }}>
               <span className="b-nav-icon" style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: '24px', height: '24px' }}>
