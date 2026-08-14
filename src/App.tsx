@@ -3736,7 +3736,7 @@ function App() {
                   justifyContent: 'center', 
                   position: 'relative', 
                   top: '-16px',
-                  width: '68px',
+                  flex: 1,
                   height: '68px',
                   zIndex: 10
                 }}
