@@ -456,13 +456,12 @@ export const GroupGallery: React.FC<GroupGalleryProps> = ({
         )}
       </div>
 
-      {/* Fullscreen Lightbox / Viewer */}
       {activePhotoIndex !== null && filteredPhotos[activePhotoIndex] && (
         <div
           style={{
             position: 'fixed',
             top: 0, right: 0, bottom: 0, left: 0,
-            background: 'rgba(0, 0, 0, 0.96)',
+            background: '#FFFFFF',
             zIndex: 1000,
             display: 'flex',
             flexDirection: 'column',
@@ -477,17 +476,17 @@ export const GroupGallery: React.FC<GroupGalleryProps> = ({
             onClick={() => setActivePhotoIndex(null)}
             style={{
               position: 'absolute', top: '24px', right: '24px',
-              background: 'rgba(255,255,255,0.15)', border: 'none', color: '#FFF', fontSize: '20px', cursor: 'pointer',
+              background: '#F1F5F9', border: 'none', color: '#475569', fontSize: '20px', cursor: 'pointer',
               width: '40px', height: '40px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center',
-              backdropFilter: 'blur(4px)',
+              boxShadow: '0 2px 8px rgba(0,0,0,0.05)',
             }}
           >
             ✕
           </button>
 
-           <div
+          <div
             style={{
-              color: '#FFF',
+              color: '#1E293B',
               marginBottom: '20px',
               textAlign: 'center',
               maxWidth: '420px',
@@ -499,7 +498,7 @@ export const GroupGallery: React.FC<GroupGalleryProps> = ({
             <h4 style={{ margin: '0 0 4px 0', fontSize: '18px', fontWeight: 800 }}>
               {filteredPhotos[activePhotoIndex].expense.title}
             </h4>
-            <p style={{ margin: 0, fontSize: '13px', color: '#94A3B8', fontWeight: 600 }}>
+            <p style={{ margin: 0, fontSize: '13px', color: '#64748B', fontWeight: 600 }}>
               Paid by {filteredPhotos[activePhotoIndex].expense.paid} • {filteredPhotos[activePhotoIndex].expense.currency || '₹'}{filteredPhotos[activePhotoIndex].expense.amt}
             </p>
           </div>
@@ -507,7 +506,7 @@ export const GroupGallery: React.FC<GroupGalleryProps> = ({
           <div
             style={{
               width: '100%',
-              height: '58vh',
+              height: '62vh',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
@@ -524,7 +523,7 @@ export const GroupGallery: React.FC<GroupGalleryProps> = ({
                 height: '100%',
                 objectFit: 'contain',
                 borderRadius: '12px',
-                boxShadow: '0 10px 30px rgba(0,0,0,0.5)'
+                boxShadow: '0 6px 24px rgba(0,0,0,0.06)'
               }}
             />
           </div>
@@ -568,28 +567,33 @@ export const GroupGallery: React.FC<GroupGalleryProps> = ({
                 }}
                 style={{
                   position: 'absolute',
-                  left: '16px',
+                  left: '12px',
                   top: '50%',
                   transform: 'translateY(-50%)',
-                  background: 'rgba(255,255,255,0.12)',
-                  color: '#FFF',
+                  background: 'none',
+                  color: '#475569',
                   border: 'none',
-                  borderRadius: '50%',
-                  width: '44px',
-                  height: '44px',
+                  borderRadius: '0',
+                  width: '48px',
+                  height: '48px',
                   cursor: 'pointer',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
-                  backdropFilter: 'blur(8px)',
-                  transition: 'background 0.2s',
+                  transition: 'transform 0.2s, color 0.2s',
                   zIndex: 1010,
                 }}
-                onMouseEnter={(e) => { e.currentTarget.style.background = 'rgba(255,255,255,0.22)'; }}
-                onMouseLeave={(e) => { e.currentTarget.style.background = 'rgba(255,255,255,0.12)'; }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.transform = 'translateY(-50%) scale(1.2)';
+                  e.currentTarget.style.color = '#000000';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.transform = 'translateY(-50%) scale(1)';
+                  e.currentTarget.style.color = '#475569';
+                }}
                 aria-label="Previous Photo"
               >
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.8" strokeLinecap="round" strokeLinejoin="round">
+                <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.8" strokeLinecap="round" strokeLinejoin="round">
                   <polyline points="15 18 9 12 15 6" />
                 </svg>
               </button>
@@ -602,28 +606,33 @@ export const GroupGallery: React.FC<GroupGalleryProps> = ({
                 }}
                 style={{
                   position: 'absolute',
-                  right: '16px',
+                  right: '12px',
                   top: '50%',
                   transform: 'translateY(-50%)',
-                  background: 'rgba(255,255,255,0.12)',
-                  color: '#FFF',
+                  background: 'none',
+                  color: '#475569',
                   border: 'none',
-                  borderRadius: '50%',
-                  width: '44px',
-                  height: '44px',
+                  borderRadius: '0',
+                  width: '48px',
+                  height: '48px',
                   cursor: 'pointer',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
-                  backdropFilter: 'blur(8px)',
-                  transition: 'background 0.2s',
+                  transition: 'transform 0.2s, color 0.2s',
                   zIndex: 1010,
                 }}
-                onMouseEnter={(e) => { e.currentTarget.style.background = 'rgba(255,255,255,0.22)'; }}
-                onMouseLeave={(e) => { e.currentTarget.style.background = 'rgba(255,255,255,0.12)'; }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.transform = 'translateY(-50%) scale(1.2)';
+                  e.currentTarget.style.color = '#000000';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.transform = 'translateY(-50%) scale(1)';
+                  e.currentTarget.style.color = '#475569';
+                }}
                 aria-label="Next Photo"
               >
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.8" strokeLinecap="round" strokeLinejoin="round">
+                <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.8" strokeLinecap="round" strokeLinejoin="round">
                   <polyline points="9 18 15 12 9 6" />
                 </svg>
               </button>
