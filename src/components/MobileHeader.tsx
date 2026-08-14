@@ -858,7 +858,7 @@ export const MobileHeader: React.FC<MobileHeaderProps> = ({
                 }}
                 style={{
                   position: 'absolute',
-                  left: '4px',
+                  left: '-6px',
                   top: '50%',
                   transform: 'translateY(-50%)',
                   cursor: 'pointer',
@@ -891,7 +891,7 @@ export const MobileHeader: React.FC<MobileHeaderProps> = ({
               <div
                 style={{
                   position: 'absolute',
-                  left: (view === 'profile' || view === 'gallery' || view === 'detail' || view === 'analytics') ? '44px' : '52px',
+                  left: (view === 'profile' || view === 'gallery' || view === 'detail' || view === 'analytics') ? '34px' : '52px',
                   top: '50%',
                   transform: 'translateY(-50%)',
                   display: 'flex',
