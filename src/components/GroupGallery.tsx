@@ -532,20 +532,75 @@ export const GroupGallery: React.FC<GroupGalleryProps> = ({
           </div>
 
           {filteredPhotos.length > 1 && (
-            <div style={{ display: 'flex', gap: '20px', marginTop: '24px' }} onClick={(e) => e.stopPropagation()}>
+            <>
+              {/* Left side screen arrow */}
               <button
-                onClick={() => setActivePhotoIndex((prev) => (prev === 0 ? filteredPhotos.length - 1 : prev! - 1))}
-                style={{ background: 'rgba(255,255,255,0.12)', color: '#FFF', border: 'none', borderRadius: '50%', width: '44px', height: '44px', cursor: 'pointer', fontSize: '20px', fontWeight: 900, display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setActivePhotoIndex((prev) => (prev === 0 ? filteredPhotos.length - 1 : prev! - 1));
+                }}
+                style={{
+                  position: 'absolute',
+                  left: '16px',
+                  top: '50%',
+                  transform: 'translateY(-50%)',
+                  background: 'rgba(255,255,255,0.12)',
+                  color: '#FFF',
+                  border: 'none',
+                  borderRadius: '50%',
+                  width: '44px',
+                  height: '44px',
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  backdropFilter: 'blur(8px)',
+                  transition: 'background 0.2s',
+                  zIndex: 1010,
+                }}
+                onMouseEnter={(e) => { e.currentTarget.style.background = 'rgba(255,255,255,0.22)'; }}
+                onMouseLeave={(e) => { e.currentTarget.style.background = 'rgba(255,255,255,0.12)'; }}
+                aria-label="Previous Photo"
               >
-                ←
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.8" strokeLinecap="round" strokeLinejoin="round">
+                  <polyline points="15 18 9 12 15 6" />
+                </svg>
               </button>
+
+              {/* Right side screen arrow */}
               <button
-                onClick={() => setActivePhotoIndex((prev) => (prev === filteredPhotos.length - 1 ? 0 : prev! + 1))}
-                style={{ background: 'rgba(255,255,255,0.12)', color: '#FFF', border: 'none', borderRadius: '50%', width: '44px', height: '44px', cursor: 'pointer', fontSize: '20px', fontWeight: 900, display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setActivePhotoIndex((prev) => (prev === filteredPhotos.length - 1 ? 0 : prev! + 1));
+                }}
+                style={{
+                  position: 'absolute',
+                  right: '16px',
+                  top: '50%',
+                  transform: 'translateY(-50%)',
+                  background: 'rgba(255,255,255,0.12)',
+                  color: '#FFF',
+                  border: 'none',
+                  borderRadius: '50%',
+                  width: '44px',
+                  height: '44px',
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  backdropFilter: 'blur(8px)',
+                  transition: 'background 0.2s',
+                  zIndex: 1010,
+                }}
+                onMouseEnter={(e) => { e.currentTarget.style.background = 'rgba(255,255,255,0.22)'; }}
+                onMouseLeave={(e) => { e.currentTarget.style.background = 'rgba(255,255,255,0.12)'; }}
+                aria-label="Next Photo"
               >
-                →
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.8" strokeLinecap="round" strokeLinejoin="round">
+                  <polyline points="9 18 15 12 9 6" />
+                </svg>
               </button>
-            </div>
+            </>
           )}
         </div>
       )}
