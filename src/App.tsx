@@ -3681,7 +3681,7 @@ function App() {
             </span>
             <span>Groups</span>
           </div>
-          {selectedId ? (
+          {((view === 'detail' || view === 'gallery' || view === 'analytics') && selectedId) ? (
             <div className={`b-nav-btn ${view === 'analytics' ? 'active' : ''}`} onClick={() => { setAnalyticsGroupId(selectedId); setView('analytics'); }}>
               <span className="b-nav-icon" style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: '24px', height: '24px' }}>
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" style={{ width: '22px', height: '22px' }}>
