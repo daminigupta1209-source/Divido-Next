@@ -88,11 +88,6 @@ export const FloatingAddMenu: React.FC<FloatingAddMenuProps> = ({
         onMouseEnter={(e) => { e.currentTarget.style.transform = 'scale(1.03)'; }}
         onMouseLeave={(e) => { e.currentTarget.style.transform = 'scale(1)'; }}
       >
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ width: '16px', height: '16px', color: '#FFFFFF' }}>
-          <path d="M4 2v20l2-1 2 1 2-1 2 1 2-1 2 1 2-1 2 1V2l-2 1-2-1-2 1-2-1-2 1-2-1-2 1-2-1Z" />
-          <path d="M16 8H8" />
-          <path d="M16 12H8" />
-        </svg>
         <span style={{ fontSize: '13.5px', fontWeight: 800, color: '#FFFFFF', whiteSpace: 'nowrap', fontFamily: 'inherit' }}>
           + Expense
         </span>
