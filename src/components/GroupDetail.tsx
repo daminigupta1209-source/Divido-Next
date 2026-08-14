@@ -148,6 +148,15 @@ export const GroupDetail: React.FC<GroupDetailProps> = ({
     finalTransactions,
     hasExpenses,
     groupUniqueTags,
+  } = useGroupDetailForm({
+    selectedId,
+    groups,
+    expenses,
+    getMemberBalance,
+    setView,
+    setGroups,
+    setExpenses,
+    me,
   });
 
   const activeTab = propActiveTab !== undefined ? propActiveTab : hookActiveTab;
