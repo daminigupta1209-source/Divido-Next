@@ -902,23 +902,6 @@ export const MobileHeader: React.FC<MobileHeaderProps> = ({
                   pointerEvents: 'none'
                 }}
               >
-                {(view === 'gallery' || view === 'analytics') && selectedGroup && (
-                  <span
-                    className="nunito"
-                    style={{
-                      fontSize: '9px',
-                      fontWeight: 900,
-                      color: '#94A3B8',
-                      letterSpacing: '1.2px',
-                      textTransform: 'uppercase',
-                      marginBottom: '1px',
-                      lineHeight: 1,
-                      pointerEvents: 'auto'
-                    }}
-                  >
-                    {selectedGroup.name}
-                  </span>
-                )}
                 <h1
                   className="nunito"
                   style={{
@@ -958,6 +941,23 @@ export const MobileHeader: React.FC<MobileHeaderProps> = ({
                     </span>
                   )}
                 </h1>
+                {(view === 'gallery' || view === 'analytics') && selectedGroup && (
+                  <span
+                    className="nunito"
+                    style={{
+                      fontSize: '9px',
+                      fontWeight: 900,
+                      color: '#94A3B8',
+                      letterSpacing: '1.2px',
+                      textTransform: 'uppercase',
+                      marginTop: '2px',
+                      lineHeight: 1,
+                      pointerEvents: 'auto'
+                    }}
+                  >
+                    {selectedGroup.name}
+                  </span>
+                )}
               </div>
             )}
 
