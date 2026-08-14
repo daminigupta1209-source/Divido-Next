@@ -895,9 +895,7 @@ export const MobileHeader: React.FC<MobileHeaderProps> = ({
                   top: '50%',
                   transform: 'translateY(-50%)',
                   display: 'flex',
-                  flexDirection: 'column',
-                  alignItems: 'flex-start',
-                  justifyContent: 'center',
+                  alignItems: 'center',
                   minWidth: 0,
                   pointerEvents: 'none'
                 }}
@@ -914,17 +912,35 @@ export const MobileHeader: React.FC<MobileHeaderProps> = ({
                     alignItems: 'center',
                     gap: '6px',
                     lineHeight: 1.1,
-                    pointerEvents: 'auto'
+                    pointerEvents: 'auto',
+                    whiteSpace: 'nowrap',
                   }}
                 >
-                  <span>
-                    {view === 'summary' && `Hi ${me}!`}
-                    {view === 'groups' && 'Your Groups'}
-                    {view === 'friends' && 'Settle All'}
-                    {view === 'activity' && 'All Activities'}
-                    {view === 'analytics' && 'Analytics'}
-                    {view === 'profile' && 'Profile'}
-                    {view === 'gallery' && 'Gallery'}
+                  <span style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                    <span>
+                      {view === 'summary' && `Hi ${me}!`}
+                      {view === 'groups' && 'Your Groups'}
+                      {view === 'friends' && 'Settle All'}
+                      {view === 'activity' && 'All Activities'}
+                      {view === 'analytics' && 'Analytics'}
+                      {view === 'profile' && 'Profile'}
+                      {view === 'gallery' && 'Gallery'}
+                    </span>
+                    {(view === 'gallery' || view === 'analytics') && selectedGroup && (
+                      <>
+                        <span style={{ color: '#94A3B8', fontWeight: 500, fontSize: '18px', margin: '0 2px' }}>·</span>
+                        <span
+                          style={{
+                            fontSize: '17px',
+                            fontWeight: 700,
+                            color: '#64748B',
+                            textTransform: 'capitalize',
+                          }}
+                        >
+                          {selectedGroup.name}
+                        </span>
+                      </>
+                    )}
                   </span>
                   {view !== 'gallery' && view !== 'analytics' && (
                     <span
@@ -940,24 +956,6 @@ export const MobileHeader: React.FC<MobileHeaderProps> = ({
                     </span>
                   )}
                 </h1>
-                {(view === 'gallery' || view === 'analytics') && selectedGroup && (
-                  <span
-                    className="nunito"
-                    style={{
-                      fontSize: '11px',
-                      fontWeight: 800,
-                      color: '#64748B',
-                      letterSpacing: '0.3px',
-                      textTransform: 'capitalize',
-                      marginTop: '2px',
-                      textAlign: 'left',
-                      lineHeight: 1.1,
-                      pointerEvents: 'auto'
-                    }}
-                  >
-                    {selectedGroup.name}
-                  </span>
-                )}
               </div>
             )}
 
