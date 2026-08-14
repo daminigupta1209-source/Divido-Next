@@ -511,14 +511,23 @@ export const GroupGallery: React.FC<GroupGalleryProps> = ({
               Paid by {filteredPhotos[activePhotoIndex].expense.paid} • {filteredPhotos[activePhotoIndex].expense.currency || '₹'}{filteredPhotos[activePhotoIndex].expense.amt}
             </p>
             <button
-              className="btn-indigo"
               onClick={() => handleViewExpense(filteredPhotos[activePhotoIndex].expense)}
               style={{
-                padding: '10px 20px', borderRadius: '12px', fontSize: '13px', fontWeight: 900, border: 'none', cursor: 'pointer',
-                boxShadow: '0 4px 12px rgba(99, 102, 241, 0.3)',
+                padding: '10px 20px',
+                borderRadius: '12px',
+                fontSize: '13.5px',
+                fontWeight: 900,
+                border: 'none',
+                cursor: 'pointer',
+                background: '#10B981',
+                color: '#FFFFFF',
+                boxShadow: '0 4px 12px rgba(16, 185, 129, 0.3)',
+                transition: 'transform 0.2s',
               }}
+              onMouseEnter={(e) => { e.currentTarget.style.transform = 'scale(1.02)'; }}
+              onMouseLeave={(e) => { e.currentTarget.style.transform = 'scale(1)'; }}
             >
-              🔎 View Expense Details
+              View Expense Details
             </button>
           </div>
 
