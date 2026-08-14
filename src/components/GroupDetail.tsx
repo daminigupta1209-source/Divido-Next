@@ -53,6 +53,8 @@ interface GroupDetailProps {
   onRequestRejoin?: () => Promise<void>;
   wasRemovedByAdmin?: boolean;
   onCreateGroup?: () => void;
+  activeTab?: 'expenses' | 'balances';
+  setActiveTab?: (tab: 'expenses' | 'balances') => void;
 }
 
 export const GroupDetail: React.FC<GroupDetailProps> = ({
@@ -97,6 +99,8 @@ export const GroupDetail: React.FC<GroupDetailProps> = ({
   onRequestRejoin,
   wasRemovedByAdmin,
   onCreateGroup,
+  activeTab: propActiveTab,
+  setActiveTab: propSetActiveTab,
 }) => {
   const {
     currentId,
@@ -125,8 +129,8 @@ export const GroupDetail: React.FC<GroupDetailProps> = ({
     setShowPaybackPlan,
     showInfo,
     setShowInfo,
-    activeTab,
-    setActiveTab,
+    activeTab: hookActiveTab,
+    setActiveTab: hookSetActiveTab,
     filterFriend,
     setFilterFriend,
     filterType,
@@ -144,16 +148,10 @@ export const GroupDetail: React.FC<GroupDetailProps> = ({
     finalTransactions,
     hasExpenses,
     groupUniqueTags,
-  } = useGroupDetailForm({
-    selectedId,
-    groups,
-    expenses,
-    getMemberBalance,
-    setView,
-    setGroups,
-    setExpenses,
-    me,
   });
+
+  const activeTab = propActiveTab !== undefined ? propActiveTab : hookActiveTab;
+  const setActiveTab = propSetActiveTab !== undefined ? propSetActiveTab : hookSetActiveTab;
 
   const activeMembers = selectedGroup ? selectedGroup.members.filter((m) => !m.endsWith(' (Left)')) : [];
   const isAdmin = selectedGroup ? (activeMembers[0] === me || activeMembers[0] === 'You') : false;
@@ -616,50 +614,58 @@ export const GroupDetail: React.FC<GroupDetailProps> = ({
 
 
 
-      <div style={{
-        display: 'flex',
-        borderBottom: '1.5px solid #F1F5F9',
-        marginBottom: '20px',
-        marginTop: '10px',
-      }}>
-        {(['expenses', 'balances'] as const).map((tab) => {
-          const isActive = activeTab === tab;
-          return (
-            <button
-              key={tab}
-              onClick={() => setActiveTab(tab)}
-              style={{
-                flex: 1,
-                position: 'relative',
-                background: 'transparent',
-                border: 'none',
-                padding: '10px 4px 12px',
-                fontSize: '14px',
-                fontWeight: isActive ? 800 : 600,
-                cursor: 'pointer',
-                color: isActive ? '#1E293B' : '#94A3B8',
-                transition: '0.2s all',
-              }}
-            >
-              {tab === 'expenses' ? 'Activities' : 'Balances'}
-              <span
-                style={{
-                  position: 'absolute',
-                  left: '50%',
-                  bottom: '-1.5px',
-                  transform: `translateX(-50%) scaleX(${isActive ? 1 : 0})`,
-                  transformOrigin: 'center',
-                  width: '60%',
-                  height: '3px',
-                  borderRadius: '3px 3px 0 0',
-                  background: '#F97316',
-                  transition: 'transform 0.25s cubic-bezier(0.4, 0, 0.2, 1)',
+      {activeTab !== 'balances' && (
+        <div style={{
+          display: 'flex',
+          borderBottom: '1.5px solid #F1F5F9',
+          marginBottom: '20px',
+          marginTop: '10px',
+        }}>
+          {(['expenses', 'photos'] as const).map((tab) => {
+            const isActive = tab === 'expenses';
+            return (
+              <button
+                key={tab}
+                onClick={() => {
+                  if (tab === 'photos') {
+                    setView('gallery');
+                  } else {
+                    setActiveTab('expenses');
+                  }
                 }}
-              />
-            </button>
-          );
-        })}
-      </div>
+                style={{
+                  flex: 1,
+                  position: 'relative',
+                  background: 'transparent',
+                  border: 'none',
+                  padding: '10px 4px 12px',
+                  fontSize: '14px',
+                  fontWeight: isActive ? 800 : 600,
+                  cursor: 'pointer',
+                  color: isActive ? '#1E293B' : '#94A3B8',
+                  transition: '0.2s all',
+                }}
+              >
+                {tab === 'expenses' ? 'Activities' : 'Photos'}
+                <span
+                  style={{
+                    position: 'absolute',
+                    left: '50%',
+                    bottom: '-1.5px',
+                    transform: `translateX(-50%) scaleX(${isActive ? 1 : 0})`,
+                    transformOrigin: 'center',
+                    width: '60%',
+                    height: '3px',
+                    borderRadius: '3px 3px 0 0',
+                    background: '#F97316',
+                    transition: 'transform 0.25s cubic-bezier(0.4, 0, 0.2, 1)',
+                  }}
+                />
+              </button>
+            );
+          })}
+        </div>
+      )}
 
       {activeTab === 'balances' && (() => {
         // Calculate group balances directly from our finalized transactions to stay 100% in sync
