@@ -506,14 +506,26 @@ export const GroupGallery: React.FC<GroupGalleryProps> = ({
 
           <div
             style={{
-              maxWidth: '95%', maxHeight: '72vh', display: 'flex', alignItems: 'center', justifyContent: 'center'
+              width: '100%',
+              height: '58vh',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              padding: '0 8px',
+              boxSizing: 'border-box',
             }}
             onClick={(e) => e.stopPropagation()}
           >
             <img
               src={filteredPhotos[activePhotoIndex].url}
               alt="fullscreen attachment"
-              style={{ maxWidth: '100%', maxHeight: '72vh', objectFit: 'contain', borderRadius: '12px', boxShadow: '0 10px 30px rgba(0,0,0,0.5)' }}
+              style={{
+                width: '100%',
+                height: '100%',
+                objectFit: 'contain',
+                borderRadius: '12px',
+                boxShadow: '0 10px 30px rgba(0,0,0,0.5)'
+              }}
             />
           </div>
 
