@@ -732,9 +732,10 @@ export const GroupMemberList: React.FC<GroupMemberListProps> = ({
 
 
         {/* BOTTOM SAVE BUTTON */}
-        <div style={{ display: 'flex', justifyContent: 'center', marginTop: '20px', paddingBottom: '30px' }}>
+        <div style={{ marginTop: 'auto', paddingTop: '10px', paddingBottom: '20px' }}>
           <button
             type="button"
+            className="btn-green"
             onClick={() => {
               if (isAddingInline && inlineAddVal.trim()) {
                 handleInlineAdd();
@@ -742,24 +743,23 @@ export const GroupMemberList: React.FC<GroupMemberListProps> = ({
               setShowFriendsList(false);
             }}
             style={{
-              background: '#6366F1',
-              color: '#FFFFFF',
-              border: 'none',
-              padding: '12px 48px',
+              width: '100%',
+              padding: '14px',
               fontSize: '15px',
               fontWeight: 800,
-              borderRadius: '999px',
+              borderRadius: '18px',
               cursor: 'pointer',
+              border: 'none',
               transition: 'all 0.2s ease',
-              boxShadow: '0 4px 12px rgba(99, 102, 241, 0.15)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
             }}
             onMouseEnter={(e) => {
-              e.currentTarget.style.transform = 'scale(1.03)';
-              e.currentTarget.style.background = '#4F46E6';
+              e.currentTarget.style.transform = 'scale(1.01)';
             }}
             onMouseLeave={(e) => {
               e.currentTarget.style.transform = 'scale(1)';
-              e.currentTarget.style.background = '#6366F1';
             }}
           >
             Save Changes
