@@ -61,6 +61,7 @@ function App() {
   const [selectedId, setSelectedId] = useState<string | number | null>(null);
   const [editingGroupId, setEditingGroupId] = useState<string | number | null>(null);
   const [groupDetailTab, setGroupDetailTab] = useState<'expenses' | 'balances'>('expenses');
+  const [isPhotoViewerOpen, setIsPhotoViewerOpen] = useState<boolean>(false);
   const [showCurrPickerId, setShowCurrPickerId] = useState<string | null>(null);
   const [showExpModal, setShowExpModal] = useState<boolean>(false);
   const [autoOpenScanner, setAutoOpenScanner] = useState<boolean>(false);
@@ -2300,6 +2301,7 @@ function App() {
             setShowExpModal={setShowExpModalSecure}
             setEditingSettle={setEditingSettle}
             setShowSettleModal={setShowSettleModalSecure}
+            onPhotoViewerChange={setIsPhotoViewerOpen}
           />
         ) : view === 'create_group' ? (
           <CreateGroupView
@@ -2739,7 +2741,7 @@ function App() {
 
 
       {/* Unified Floating Action Button (FAB) Menu */}
-      {view !== 'create_group' && (
+      {view !== 'create_group' && !isPhotoViewerOpen && (
         <FloatingAddMenu
           view={view}
           setView={setView}
@@ -3656,7 +3658,7 @@ function App() {
 
 
 
-      {view !== 'create_group' && (
+      {view !== 'create_group' && !isPhotoViewerOpen && (
         <nav className="bottom-nav">
           {((view === 'detail' || view === 'gallery' || view === 'analytics') && selectedId) ? (
             <div className={`b-nav-btn ${view === 'detail' && groupDetailTab === 'expenses' ? 'active' : ''}`} onClick={() => { setView('detail'); setGroupDetailTab('expenses'); }}>

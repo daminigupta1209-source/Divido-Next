@@ -13,6 +13,7 @@ interface GroupGalleryProps {
   setShowExpModal: (b: boolean) => void;
   setEditingSettle: (exp: Expense | null) => void;
   setShowSettleModal: (b: boolean) => void;
+  onPhotoViewerChange?: (isOpen: boolean) => void;
 }
 
 const galleryFilterBtnStyle: React.CSSProperties = {
@@ -36,8 +37,15 @@ export const GroupGallery: React.FC<GroupGalleryProps> = ({
   setShowExpModal,
   setEditingSettle,
   setShowSettleModal,
+  onPhotoViewerChange,
 }) => {
   const [activePhotoIndex, setActivePhotoIndex] = useState<number | null>(null);
+
+  React.useEffect(() => {
+    if (onPhotoViewerChange) {
+      onPhotoViewerChange(activePhotoIndex !== null);
+    }
+  }, [activePhotoIndex, onPhotoViewerChange]);
 
   // Filter states
   const [searchQuery, setSearchQuery] = useState('');
