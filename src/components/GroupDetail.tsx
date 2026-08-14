@@ -441,8 +441,8 @@ export const GroupDetail: React.FC<GroupDetailProps> = ({
                     if (onShareGroupLink) onShareGroupLink();
                   }}
                   style={{
-                    background: '#DBEAFE',
-                    color: '#2563EB',
+                    background: '#1877F2',
+                    color: '#FFFFFF',
                     border: 'none',
                     padding: '6px 16px',
                     borderRadius: '999px',
@@ -456,18 +456,18 @@ export const GroupDetail: React.FC<GroupDetailProps> = ({
                     alignItems: 'center',
                     justifyContent: 'center',
                     gap: '6px',
-                    boxShadow: '0 2px 8px rgba(37, 99, 235, 0.15)',
+                    boxShadow: '0 2px 8px rgba(24, 119, 242, 0.25)',
                     transition: 'all 0.2s ease',
                   }}
                   onMouseEnter={(e) => {
                     e.currentTarget.style.transform = 'scale(1.02)';
-                    e.currentTarget.style.background = '#BFDBFE';
-                    e.currentTarget.style.boxShadow = '0 4px 12px rgba(37, 99, 235, 0.25)';
+                    e.currentTarget.style.background = '#166FE5';
+                    e.currentTarget.style.boxShadow = '0 4px 12px rgba(24, 119, 242, 0.4)';
                   }}
                   onMouseLeave={(e) => {
                     e.currentTarget.style.transform = 'scale(1)';
-                    e.currentTarget.style.background = '#DBEAFE';
-                    e.currentTarget.style.boxShadow = '0 2px 8px rgba(37, 99, 235, 0.15)';
+                    e.currentTarget.style.background = '#1877F2';
+                    e.currentTarget.style.boxShadow = '0 2px 8px rgba(24, 119, 242, 0.25)';
                   }}
                 >
                   <svg
