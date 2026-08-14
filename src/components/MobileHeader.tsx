@@ -861,17 +861,19 @@ export const MobileHeader: React.FC<MobileHeaderProps> = ({
                   left: '4px',
                   top: '50%',
                   transform: 'translateY(-50%)',
-                  fontSize: '24px',
                   cursor: 'pointer',
-                  opacity: 0.5,
+                  opacity: 0.7,
                   padding: '8px',
-                  lineHeight: 1,
-                  color: 'var(--t)',
-                  fontWeight: 900,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  color: '#475569',
                   userSelect: 'none',
                 }}
               >
-                ←
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.8" strokeLinecap="round" strokeLinejoin="round">
+                  <polyline points="15 18 9 12 15 6" />
+                </svg>
               </span>
             ) : (
               <button
