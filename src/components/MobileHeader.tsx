@@ -468,15 +468,7 @@ export const MobileHeader: React.FC<MobileHeaderProps> = ({
                   </button>
                 )}
 
-                {/* Mobile Attachment Paperclip Button */}
-                <input
-                  ref={uploadInputRef}
-                  id="mobile-gallery-upload-input"
-                  type="file"
-                  accept="image/*"
-                  style={{ display: 'none' }}
-                  onChange={handleFileChange}
-                />
+
                 <button
                   onClick={() => setShowAttachMenu(true)}
                   style={{
@@ -997,6 +989,17 @@ export const MobileHeader: React.FC<MobileHeaderProps> = ({
           </div>
         )}
       </div>
+
+      {selectedGroup && (
+        <input
+          ref={uploadInputRef}
+          id="mobile-gallery-upload-input"
+          type="file"
+          accept="image/*"
+          style={{ display: 'none' }}
+          onChange={handleFileChange}
+        />
+      )}
 
       {/* Notifications full screen */}
       {showNotifPanel && createPortal(
