@@ -731,6 +731,40 @@ export const GroupMemberList: React.FC<GroupMemberListProps> = ({
         )}
 
 
+        {/* BOTTOM SAVE BUTTON */}
+        <div style={{ display: 'flex', justifyContent: 'center', marginTop: '20px', paddingBottom: '30px' }}>
+          <button
+            type="button"
+            onClick={() => {
+              if (isAddingInline && inlineAddVal.trim()) {
+                handleInlineAdd();
+              }
+              setShowFriendsList(false);
+            }}
+            style={{
+              background: '#6366F1',
+              color: '#FFFFFF',
+              border: 'none',
+              padding: '12px 48px',
+              fontSize: '15px',
+              fontWeight: 800,
+              borderRadius: '999px',
+              cursor: 'pointer',
+              transition: 'all 0.2s ease',
+              boxShadow: '0 4px 12px rgba(99, 102, 241, 0.15)',
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.transform = 'scale(1.03)';
+              e.currentTarget.style.background = '#4F46E6';
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.transform = 'scale(1)';
+              e.currentTarget.style.background = '#6366F1';
+            }}
+          >
+            Save Changes
+          </button>
+        </div>
       </div>
     </div>
   );
