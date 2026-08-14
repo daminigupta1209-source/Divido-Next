@@ -38,7 +38,7 @@ export const FloatingAddMenu: React.FC<FloatingAddMenuProps> = ({
   return (
     <div
       ref={containerRef}
-      style={{ position: 'fixed', bottom: '96px', right: '20px', zIndex: 1000, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '10px' }}
+      style={{ position: 'fixed', bottom: '96px', right: '20px', zIndex: 1000, display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '10px' }}
     >
       {/* Floating Scan Button — active inside group view */}
       <button
@@ -69,8 +69,8 @@ export const FloatingAddMenu: React.FC<FloatingAddMenuProps> = ({
       <button
         onClick={() => handleAddExpense(false)}
         style={{
-          width: '48px',
-          height: '40px',
+          height: '42px',
+          padding: '0 16px',
           borderRadius: '12px',
           background: 'linear-gradient(135deg, #10B981 0%, #059669 100%)',
           border: 'none',
@@ -79,27 +79,23 @@ export const FloatingAddMenu: React.FC<FloatingAddMenuProps> = ({
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
+          gap: '6px',
           cursor: 'pointer',
           transition: '0.2s all cubic-bezier(0.175, 0.885, 0.32, 1.275)',
         }}
         title="Add Expense"
         aria-label="Add Expense"
+        onMouseEnter={(e) => { e.currentTarget.style.transform = 'scale(1.03)'; }}
+        onMouseLeave={(e) => { e.currentTarget.style.transform = 'scale(1)'; }}
       >
-        {/* Receipt (wavy top & bottom) with a "+" merged at the bottom-right; the
-            receipt is trimmed away around the plus (mask) so it reads clearly. */}
-        <svg viewBox="-2 0 24 24" style={{ width: '26px', height: '26px' }}>
-          <defs>
-            <mask id="addExpReceiptCut">
-              <rect width="24" height="24" fill="#fff" />
-              <circle cx="16.6" cy="18.4" r="6.4" fill="#000" />
-            </mask>
-          </defs>
-          <g mask="url(#addExpReceiptCut)" fill="none" stroke="#FFFFFF" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round">
-            <path d="M3 3 L4.4 3.9 L5.8 3 L7.2 3.9 L8.6 3 L10 3.9 L11.4 3 L12.8 3.9 L14 3 L14 18.4 L12.6 19.3 L11.2 18.4 L9.8 19.3 L8.4 18.4 L7 19.3 L5.6 18.4 L4.2 19.3 L3 18.4 Z" />
-            <path d="M5.8 7.5h5.4 M5.8 10.3h5.4" />
-          </g>
-          <path stroke="#FFFFFF" strokeWidth="2.3" strokeLinecap="round" d="M16.6 15v6.8 M13.2 18.4h6.8" />
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ width: '16px', height: '16px', color: '#FFFFFF' }}>
+          <path d="M4 2v20l2-1 2 1 2-1 2 1 2-1 2 1 2-1 2 1V2l-2 1-2-1-2 1-2-1-2 1-2-1-2 1-2-1Z" />
+          <path d="M16 8H8" />
+          <path d="M16 12H8" />
         </svg>
+        <span style={{ fontSize: '13.5px', fontWeight: 800, color: '#FFFFFF', whiteSpace: 'nowrap', fontFamily: 'inherit' }}>
+          + Expense
+        </span>
       </button>
     </div>
   );
