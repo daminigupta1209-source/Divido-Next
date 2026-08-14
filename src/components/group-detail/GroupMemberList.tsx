@@ -732,7 +732,20 @@ export const GroupMemberList: React.FC<GroupMemberListProps> = ({
 
 
         {/* BOTTOM SAVE BUTTON */}
-        <div style={{ marginTop: 'auto', paddingTop: '10px', paddingBottom: '20px' }}>
+        <div
+          style={{
+            position: 'fixed',
+            bottom: 0,
+            left: '50%',
+            transform: 'translateX(-50%)',
+            width: '100%',
+            maxWidth: '540px',
+            padding: '16px 16px 24px 16px',
+            backgroundColor: 'var(--bg)',
+            boxSizing: 'border-box',
+            zIndex: 10000,
+          }}
+        >
           <button
             type="button"
             className="btn-green"
