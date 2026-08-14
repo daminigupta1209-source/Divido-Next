@@ -621,16 +621,15 @@ export const GroupMemberList: React.FC<GroupMemberListProps> = ({
                     alignItems: 'center',
                     justifyContent: 'center',
                     gap: '5px',
-                    boxShadow: '0 2px 8px rgba(249, 115, 22, 0.3)',
                     transition: 'all 0.2s ease',
                   }}
                   onMouseEnter={(e) => {
                     e.currentTarget.style.transform = 'scale(1.02)';
-                    e.currentTarget.style.boxShadow = '0 4px 12px rgba(249, 115, 22, 0.4)';
+                    e.currentTarget.style.background = '#EA580C';
                   }}
                   onMouseLeave={(e) => {
                     e.currentTarget.style.transform = 'scale(1)';
-                    e.currentTarget.style.boxShadow = '0 2px 8px rgba(249, 115, 22, 0.3)';
+                    e.currentTarget.style.background = '#F97316';
                   }}
                 >
                   <span style={{ fontSize: '16px', fontWeight: 600, lineHeight: 1, color: '#FFFFFF', display: 'flex', alignItems: 'center' }}>+</span>
