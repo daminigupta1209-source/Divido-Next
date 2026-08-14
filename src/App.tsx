@@ -3684,15 +3684,16 @@ function App() {
             </div>
           )}
           {((view === 'detail' || view === 'gallery' || view === 'analytics') && selectedId) ? (
-            <div className={`b-nav-btn ${view === 'analytics' ? 'active' : ''}`} onClick={() => { setAnalyticsGroupId(selectedId); setView('analytics'); }}>
+            <div className={`b-nav-btn ${view === 'detail' && groupDetailTab === 'balances' ? 'active' : ''}`} onClick={() => { setView('detail'); setGroupDetailTab('balances'); }}>
               <span className="b-nav-icon" style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: '24px', height: '24px' }}>
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" style={{ width: '22px', height: '22px' }}>
-                  <line x1="18" y1="20" x2="18" y2="10" />
-                  <line x1="12" y1="20" x2="12" y2="4" />
-                  <line x1="6" y1="20" x2="6" y2="14" />
+                  <line x1="12" y1="2" x2="12" y2="22" />
+                  <line x1="5" y1="7" x2="19" y2="7" />
+                  <path d="M5 9c0 3 1.5 5 3.5 5S12 12 12 9" />
+                  <path d="M12 9c0 3 1.5 5 3.5 5S19 12 19 9" />
                 </svg>
               </span>
-              <span>Analytics</span>
+              <span>Balances</span>
             </div>
           ) : (
             <div className={`b-nav-btn ${view === 'friends' ? 'active' : ''}`} onClick={() => setView('friends')}>
@@ -3786,16 +3787,15 @@ function App() {
           })()}
 
           {((view === 'detail' || view === 'gallery' || view === 'analytics') && selectedId) ? (
-            <div className={`b-nav-btn ${view === 'detail' && groupDetailTab === 'balances' ? 'active' : ''}`} onClick={() => { setView('detail'); setGroupDetailTab('balances'); }}>
+            <div className={`b-nav-btn ${view === 'analytics' ? 'active' : ''}`} onClick={() => { setAnalyticsGroupId(selectedId); setView('analytics'); }}>
               <span className="b-nav-icon" style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: '24px', height: '24px' }}>
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" style={{ width: '22px', height: '22px' }}>
-                  <line x1="12" y1="2" x2="12" y2="22" />
-                  <line x1="5" y1="7" x2="19" y2="7" />
-                  <path d="M5 9c0 3 1.5 5 3.5 5S12 12 12 9" />
-                  <path d="M12 9c0 3 1.5 5 3.5 5S19 12 19 9" />
+                  <line x1="18" y1="20" x2="18" y2="10" />
+                  <line x1="12" y1="20" x2="12" y2="4" />
+                  <line x1="6" y1="20" x2="6" y2="14" />
                 </svg>
               </span>
-              <span>Balances</span>
+              <span>Analytics</span>
             </div>
           ) : (
             <div className={`b-nav-btn ${view === 'activity' ? 'active' : ''}`} onClick={() => setView('activity')}>
