@@ -16,6 +16,8 @@ interface MobileHeaderProps {
   onEditGroup?: (id: string | number) => void;
   setView: (v: string) => void;
   setSelectedId?: (id: any) => void;
+  groupDetailTab?: 'expenses' | 'balances';
+  setGroupDetailTab?: (tab: 'expenses' | 'balances') => void;
   headerRenaming: boolean;
   setHeaderRenaming: (b: boolean) => void;
   headerNewName: string;
@@ -81,6 +83,8 @@ export const MobileHeader: React.FC<MobileHeaderProps> = ({
   setMobileShowGroupOptionsMenu,
   setShowConvertModalId,
   setSelectedId,
+  groupDetailTab,
+  setGroupDetailTab,
   handleMobileExportCSV,
   setAnalyticsGroupId,
   handleDeleteGroup,
@@ -834,6 +838,8 @@ export const MobileHeader: React.FC<MobileHeaderProps> = ({
                 onClick={() => {
                   if (view === 'gallery' || view === 'analytics') {
                     setView('detail');
+                  } else if (view === 'detail' && groupDetailTab === 'balances') {
+                    if (setGroupDetailTab) setGroupDetailTab('expenses');
                   } else {
                     if (setSelectedId) setSelectedId(null);
                     setView('summary');

@@ -2147,6 +2147,8 @@ function App() {
             }}
             setView={setView}
             setSelectedId={setSelectedId}
+            groupDetailTab={groupDetailTab}
+            setGroupDetailTab={setGroupDetailTab}
             headerRenaming={headerRenaming}
             setHeaderRenaming={setHeaderRenaming}
             headerNewName={headerNewName}
