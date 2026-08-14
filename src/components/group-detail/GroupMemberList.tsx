@@ -609,11 +609,11 @@ export const GroupMemberList: React.FC<GroupMemberListProps> = ({
                     background: '#F97316',
                     color: '#FFFFFF',
                     border: 'none',
-                    padding: '6px 16px',
+                    padding: '8px 22px',
                     borderRadius: '999px',
                     fontFamily: 'inherit',
                     fontWeight: 600,
-                    fontSize: '12px',
+                    fontSize: '13.5px',
                     letterSpacing: '0.2px',
                     lineHeight: 1,
                     cursor: 'pointer',
@@ -633,7 +633,7 @@ export const GroupMemberList: React.FC<GroupMemberListProps> = ({
                     e.currentTarget.style.boxShadow = '0 2px 8px rgba(249, 115, 22, 0.3)';
                   }}
                 >
-                  <span style={{ fontSize: '14px', fontWeight: 600, lineHeight: 1, color: '#FFFFFF', display: 'flex', alignItems: 'center' }}>+</span>
+                  <span style={{ fontSize: '16px', fontWeight: 600, lineHeight: 1, color: '#FFFFFF', display: 'flex', alignItems: 'center' }}>+</span>
                   <span style={{ color: '#FFFFFF', lineHeight: 1, display: 'flex', alignItems: 'center' }}>Friend</span>
                 </button>
               </div>
@@ -731,42 +731,7 @@ export const GroupMemberList: React.FC<GroupMemberListProps> = ({
           </div>
         )}
 
-        {/* BOTTOM ACTION BUTTON */}
-        <div style={{ display: 'flex', justifyContent: 'center', marginTop: '10px' }}>
-          <button
-            style={{
-              padding: '12px 36px',
-              fontSize: '15px',
-              fontWeight: 900,
-              borderRadius: '28px',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              gap: '6px',
-              background: 'transparent',
-              color: '#6366F1',
-              border: '1.5px solid #6366F1',
-              cursor: 'pointer',
-              transition: '0.2s all ease',
-            }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.transform = 'scale(1.03)';
-              e.currentTarget.style.background = 'rgba(99, 102, 241, 0.04)';
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.transform = 'scale(1)';
-              e.currentTarget.style.background = 'transparent';
-            }}
-            onClick={() => {
-              setIsAddingInline(true);
-              setTimeout(() => {
-                inlineInputRef.current?.focus();
-              }, 50);
-            }}
-          >
-            + Friend
-          </button>
-        </div>
+
       </div>
     </div>
   );
