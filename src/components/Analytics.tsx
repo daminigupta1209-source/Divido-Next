@@ -201,6 +201,8 @@ export const Analytics: React.FC<AnalyticsProps> = ({ expenses, groups, me, user
     setShowTrendTooltip,
     lastExpenses,
     maxAmt,
+    timeframe,
+    setTimeframe,
   } = useAnalytics({
     expenses,
     groups,
@@ -492,95 +494,46 @@ export const Analytics: React.FC<AnalyticsProps> = ({ expenses, groups, me, user
       }}>
 
 
-        {/* Group name dropdown */}
-        <div style={{ position: 'relative' }}>
-          {showGroupDropdown && (
-            <div onClick={() => setShowGroupDropdown(false)} style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, zIndex: 299 }} />
-          )}
-          {/* Trigger */}
-          <button
-            onClick={() => setShowGroupDropdown(p => !p)}
-            style={{
-              display: 'flex', alignItems: 'center', gap: '6px',
-              padding: '8px 12px 8px 10px',
-              borderRadius: '20px',
-              border: '1.5px solid #E2E8F0',
-              background: 'var(--w)',
-              cursor: 'pointer',
-              fontSize: '12px', fontWeight: 900, color: '#1E293B',
-              boxShadow: '0 1px 4px rgba(0,0,0,0.06)',
-              whiteSpace: 'nowrap', maxWidth: '200px',
-            }}
-          >
-             <span style={{ fontSize: '14px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-              {(() => {
-                if (selectedGroupId === 'ALL') return '📊';
-                if (selectedGroupId === 'STANDALONE') return '👤';
-                const found = groups.find(g => String(g.id) === String(selectedGroupId));
-                if (!found) return '👥';
-                if (found.emoji && (found.emoji.startsWith('data:image/') || found.emoji.startsWith('http'))) {
-                  return <img src={found.emoji} style={{ width: '16px', height: '16px', borderRadius: '50%', objectFit: 'cover' }} alt="" />;
-                }
-                return found.name?.charAt(0).toUpperCase() || '👥';
-              })()}
-            </span>
-            <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: '140px' }}>
-              {selectedGroupId === 'ALL' ? 'All Groups & Expenses' : selectedGroupId === 'STANDALONE' ? 'Standalone' : (groups.find(g => String(g.id) === String(selectedGroupId))?.name || 'Select')}
-            </span>
-            <span style={{ fontSize: '8px', color: '#94A3B8', marginLeft: '2px', transition: 'transform 0.2s', display: 'inline-block', transform: showGroupDropdown ? 'rotate(180deg)' : 'rotate(0deg)' }}>▼</span>
-          </button>
-
-          {showGroupDropdown && (
-            <div style={{
-              position: 'absolute', top: 'calc(100% + 8px)', left: 0,
-              background: 'var(--w)', border: '1.5px solid #F1F5F9',
-              borderRadius: '16px', boxShadow: '0 12px 32px rgba(0,0,0,0.12)',
-              zIndex: 300, minWidth: '210px', padding: '8px',
-            }}>
-              {/* All */}
-              {[{ id: 'ALL', label: 'All Groups & Expenses', emoji: '📊', sub: 'Everything combined' }, { id: 'STANDALONE', label: 'Standalone', emoji: '👤', sub: 'Friends only' }].map(opt => {
-                const isActive = String(selectedGroupId) === opt.id;
-                return (
-                  <div key={opt.id} onClick={() => { setSelectedGroupId(opt.id); setShowGroupDropdown(false); }}
-                    style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '9px 12px', borderRadius: '10px', cursor: 'pointer', background: isActive ? '#F0FDF4' : 'transparent', marginBottom: '2px' }}>
-                    <div style={{ width: '30px', height: '30px', borderRadius: '8px', background: isActive ? '#DCFCE7' : '#F8FAFC', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '14px', flexShrink: 0 }}>{opt.emoji}</div>
-                    <div style={{ flex: 1 }}>
-                      <div style={{ fontSize: '12px', fontWeight: 900, color: isActive ? '#16A34A' : '#1E293B' }}>{opt.label}</div>
-                      <div style={{ fontSize: '10px', color: '#94A3B8', fontWeight: 600 }}>{opt.sub}</div>
-                    </div>
-                    {isActive && <span style={{ color: '#16A34A', fontSize: '14px' }}>✓</span>}
-                  </div>
-                );
-              })}
-
-              {/* Groups section */}
-              {groups.filter(g => g.name.trim() !== '' || expenses.some(e => String(e.gId) === String(g.id)) || g.members.length > 1).length > 0 && (
-                <div style={{ fontSize: '9px', fontWeight: 800, color: '#94A3B8', letterSpacing: '0.8px', textTransform: 'uppercase', padding: '6px 12px 4px' }}>Groups</div>
-              )}
-              {groups
-                .filter(g => g.name.trim() !== '' || expenses.some(e => String(e.gId) === String(g.id)) || g.members.length > 1)
-                .map(g => {
-                  const isActive = String(selectedGroupId) === String(g.id);
-                  return (
-                    <div key={g.id} onClick={() => { setSelectedGroupId(g.id); setShowGroupDropdown(false); }}
-                      style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '9px 12px', borderRadius: '10px', cursor: 'pointer', background: isActive ? '#F0FDF4' : 'transparent', marginBottom: '2px' }}>
-                      <div style={{ width: '30px', height: '30px', borderRadius: '8px', background: isActive ? '#DCFCE7' : '#F8FAFC', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '14px', flexShrink: 0, overflow: 'hidden' }}>
-                        {g.emoji && (g.emoji.startsWith('data:image/') || g.emoji.startsWith('http')) ? (
-                          <img src={g.emoji} style={{ width: '100%', height: '100%', objectFit: 'cover' }} alt="" />
-                        ) : (
-                          g.name.charAt(0).toUpperCase() || '👥'
-                        )}
-                      </div>
-                      <div style={{ flex: 1, minWidth: 0 }}>
-                        <div style={{ fontSize: '12px', fontWeight: 900, color: isActive ? '#16A34A' : '#1E293B', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{g.name}</div>
-                        <div style={{ fontSize: '10px', color: '#94A3B8', fontWeight: 600 }}>{g.members.length} members · {g.currency || '₹'}</div>
-                      </div>
-                      {isActive && <span style={{ color: '#3B82F6', fontSize: '14px', flexShrink: 0 }}>✓</span>}
-                    </div>
-                  );
-                })}
-            </div>
-          )}
+        {/* Timeframe Selector tabs */}
+        <div style={{
+          display: 'flex',
+          background: '#F1F5F9',
+          borderRadius: '24px',
+          padding: '4px',
+          width: '100%',
+          maxWidth: '340px',
+          boxSizing: 'border-box',
+        }}>
+          {([
+            { id: 'month', label: 'This Month' },
+            { id: '30days', label: 'Last 30 Days' },
+            { id: 'overall', label: 'Overall' }
+          ] as const).map((tab) => {
+            const isActive = timeframe === tab.id;
+            return (
+              <button
+                key={tab.id}
+                onClick={() => setTimeframe(tab.id)}
+                style={{
+                  flex: 1,
+                  border: 'none',
+                  background: isActive ? 'var(--w)' : 'transparent',
+                  color: isActive ? 'var(--purple-text)' : '#64748B',
+                  fontWeight: 900,
+                  fontSize: '11px',
+                  padding: '8px 12px',
+                  borderRadius: '20px',
+                  cursor: 'pointer',
+                  transition: '0.2s all cubic-bezier(0.4, 0, 0.2, 1)',
+                  boxShadow: isActive ? '0 2px 8px rgba(0,0,0,0.06)' : 'none',
+                  outline: 'none',
+                  whiteSpace: 'nowrap',
+                }}
+              >
+                {tab.label}
+              </button>
+            );
+          })}
         </div>
       </div>
 

@@ -926,7 +926,7 @@ export const MobileHeader: React.FC<MobileHeaderProps> = ({
                     {view === 'profile' && 'Profile'}
                     {view === 'gallery' && 'Gallery'}
                   </span>
-                  {view !== 'gallery' && (
+                  {view !== 'gallery' && view !== 'analytics' && (
                     <span
                       className="home-page-info"
                       style={{ fontSize: '16px', color: 'var(--g)', cursor: 'pointer', opacity: 0.6, userSelect: 'none' }}
@@ -940,7 +940,7 @@ export const MobileHeader: React.FC<MobileHeaderProps> = ({
                     </span>
                   )}
                 </h1>
-                {view === 'gallery' && selectedGroup && (
+                {(view === 'gallery' || view === 'analytics') && selectedGroup && (
                   <span
                     className="nunito"
                     style={{

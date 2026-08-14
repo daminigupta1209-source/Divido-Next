@@ -76,10 +76,24 @@ export function useAnalytics({
     }
   }, [initialGroupId]);
 
+  const [timeframe, setTimeframe] = useState<'month' | '30days' | 'overall'>('month');
+
   const filteredExpenses = useMemo(() => {
-    if (selectedGroupId === 'ALL') return expenses;
-    return expenses.filter((e) => String(e.gId) === String(selectedGroupId));
-  }, [expenses, selectedGroupId]);
+    const base = selectedGroupId === 'ALL' ? expenses : expenses.filter((e) => String(e.gId) === String(selectedGroupId));
+    const now = new Date();
+    return base.filter((e) => {
+      const expDate = new Date(e.date);
+      if (timeframe === 'month') {
+        const currentMonthKey = now.toISOString().slice(0, 7);
+        return e.date.startsWith(currentMonthKey);
+      } else if (timeframe === '30days') {
+        const thirtyDaysAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+        thirtyDaysAgo.setHours(0, 0, 0, 0);
+        return expDate >= thirtyDaysAgo;
+      }
+      return true;
+    });
+  }, [expenses, selectedGroupId, timeframe]);
 
   const [analyticsDetail, setAnalyticsDetail] = useState<AnalyticsDetail | null>(null);
   const [hoveredCategory, setHoveredCategory] = useState<string | null>(null);
@@ -212,5 +226,7 @@ export function useAnalytics({
     setShowTrendTooltip,
     lastExpenses,
     maxAmt,
+    timeframe,
+    setTimeframe,
   };
 }
