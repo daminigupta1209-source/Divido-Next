@@ -14,6 +14,9 @@ interface GroupGalleryProps {
   setEditingSettle: (exp: Expense | null) => void;
   setShowSettleModal: (b: boolean) => void;
   onPhotoViewerChange?: (isOpen: boolean) => void;
+  searchQuery?: string;
+  showFilters?: boolean;
+  setShowFilters?: (b: boolean) => void;
 }
 
 const galleryFilterBtnStyle: React.CSSProperties = {
@@ -38,6 +41,9 @@ export const GroupGallery: React.FC<GroupGalleryProps> = ({
   setEditingSettle,
   setShowSettleModal,
   onPhotoViewerChange,
+  searchQuery: propSearchQuery,
+  showFilters: propShowFilters,
+  setShowFilters: propSetShowFilters,
 }) => {
   const [activePhotoIndex, setActivePhotoIndex] = useState<number | null>(null);
 
@@ -48,8 +54,11 @@ export const GroupGallery: React.FC<GroupGalleryProps> = ({
   }, [activePhotoIndex, onPhotoViewerChange]);
 
   // Filter states
-  const [searchQuery, setSearchQuery] = useState('');
-  const [showFilters, setShowFilters] = useState(false);
+  const [localSearchQuery, setLocalSearchQuery] = useState('');
+  const [localShowFilters, setLocalShowFilters] = useState(false);
+  const searchQuery = propSearchQuery !== undefined ? propSearchQuery : localSearchQuery;
+  const showFilters = propShowFilters !== undefined ? propShowFilters : localShowFilters;
+  const setShowFilters = propSetShowFilters !== undefined ? propSetShowFilters : setLocalShowFilters;
   const [filterType, setFilterType] = useState('all'); // 'all', 'expenses', 'settlements'
   const [dateFilter, setDateFilter] = useState('all'); // 'all', 'today', 'week', 'month', 'custom'
   const [customStartDate, setCustomStartDate] = useState('');
@@ -154,81 +163,7 @@ export const GroupGallery: React.FC<GroupGalleryProps> = ({
   return (
     <div className="content-width-limit" style={{ paddingBottom: '24px', boxSizing: 'border-box' }}>
       
-      {/* Search bar & Filter funnel icon */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '16px', position: 'relative' }}>
-        <div style={{ flex: 1, position: 'relative' }}>
-          <svg
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2.5"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            style={{
-              position: 'absolute',
-              left: '12px',
-              top: '50%',
-              transform: 'translateY(-50%)',
-              width: '13px',
-              height: '13px',
-              opacity: 0.4,
-              pointerEvents: 'none',
-              color: '#64748B',
-              zIndex: 2,
-            }}
-          >
-            <circle cx="11" cy="11" r="8" />
-            <line x1="21" y1="21" x2="16.65" y2="16.65" />
-          </svg>
-          <input
-            type="text"
-            placeholder="Search photos..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            style={{
-              display: 'block',
-              width: '100%',
-              height: '38px',
-              lineHeight: 'normal',
-              fontSize: '13px',
-              margin: 0,
-              padding: '0 12px 0 34px',
-              borderRadius: '24px',
-              border: '2px solid #F1F5F9',
-              outline: 'none',
-              fontWeight: 600,
-              background: 'var(--w)',
-              color: '#475569',
-              boxSizing: 'border-box',
-              verticalAlign: 'top',
-            }}
-          />
-        </div>
 
-        <button
-          onClick={(e) => { e.stopPropagation(); setShowFilters(!showFilters); }}
-          title="Filters"
-          style={{
-            background: 'none',
-            border: 'none',
-            cursor: 'pointer',
-            width: '44px',
-            height: '44px',
-            padding: 0,
-            opacity: showFilters || filterType !== 'all' || dateFilter !== 'all' || selectedTag !== 'all' ? 1 : 0.55,
-            transition: '0.2s all',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            color: filterType !== 'all' || dateFilter !== 'all' || selectedTag !== 'all' ? '#F59E0B' : '#475569',
-            flexShrink: 0,
-          }}
-        >
-          <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" style={{ width: '18px', height: '18px' }}>
-            <path d="M22 3H2L10 12.46V19L14 21V12.46L22 3Z" stroke="currentColor" strokeWidth="2" strokeLinejoin="round" strokeLinecap="round" />
-          </svg>
-        </button>
-      </div>
 
       {/* Filter dropdown pills */}
       {showFilters && (

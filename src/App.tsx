@@ -62,6 +62,7 @@ function App() {
   const [editingGroupId, setEditingGroupId] = useState<string | number | null>(null);
   const [groupDetailTab, setGroupDetailTab] = useState<'expenses' | 'balances'>('expenses');
   const [isPhotoViewerOpen, setIsPhotoViewerOpen] = useState<boolean>(false);
+  const [showGalleryFilters, setShowGalleryFilters] = useState<boolean>(false);
   const [showCurrPickerId, setShowCurrPickerId] = useState<string | null>(null);
   const [showExpModal, setShowExpModal] = useState<boolean>(false);
   const [autoOpenScanner, setAutoOpenScanner] = useState<boolean>(false);
@@ -2149,6 +2150,8 @@ function App() {
             setSelectedId={setSelectedId}
             groupDetailTab={groupDetailTab}
             setGroupDetailTab={setGroupDetailTab}
+            showGalleryFilters={showGalleryFilters}
+            onToggleGalleryFilters={() => setShowGalleryFilters(prev => !prev)}
             headerRenaming={headerRenaming}
             setHeaderRenaming={setHeaderRenaming}
             headerNewName={headerNewName}
@@ -2305,6 +2308,9 @@ function App() {
             setEditingSettle={setEditingSettle}
             setShowSettleModal={setShowSettleModalSecure}
             onPhotoViewerChange={setIsPhotoViewerOpen}
+            searchQuery={globalSearchQuery}
+            showFilters={showGalleryFilters}
+            setShowFilters={setShowGalleryFilters}
           />
         ) : view === 'create_group' ? (
           <CreateGroupView

@@ -49,6 +49,8 @@ interface MobileHeaderProps {
   setSearchQuery?: (val: string) => void;
   isHeaderSearchActive?: boolean;
   setIsHeaderSearchActive?: (val: boolean) => void;
+  showGalleryFilters?: boolean;
+  onToggleGalleryFilters?: () => void;
   onOpenConvert?: () => void;
   headerHidden?: boolean;
   expenses?: Expense[];
@@ -103,6 +105,8 @@ export const MobileHeader: React.FC<MobileHeaderProps> = ({
   setSearchQuery = () => {},
   isHeaderSearchActive = false,
   setIsHeaderSearchActive = () => {},
+  showGalleryFilters = false,
+  onToggleGalleryFilters,
   onOpenConvert = () => {},
   headerHidden = false,
   expenses = [],
@@ -882,41 +886,58 @@ export const MobileHeader: React.FC<MobileHeaderProps> = ({
             )}
             
             {!(isHomeStyle && isHeaderSearchActive) && (
-              <h1
-                className={`nunito ${isHomeStyle && view !== 'gallery' ? 'home-header-title' : ''}`}
-                style={{
-                  fontSize: '22px', fontWeight: 950, letterSpacing: '-0.5px', color: 'var(--t)', margin: 0, display: 'flex', alignItems: 'center', gap: '6px',
-                  ...(view === 'gallery' ? { position: 'absolute', left: '50%', transform: 'translateX(-50%)', whiteSpace: 'nowrap' } : {}),
-                }}
-              >
-                <span>
-                  {view === 'summary' && `Hi ${me}!`}
-                  {view === 'groups' && 'Your Groups'}
-                  {view === 'friends' && 'Settle All'}
-                  {view === 'activity' && 'All Activities'}
-                  {view === 'analytics' && 'Analytics'}
-                  {view === 'profile' && 'Profile'}
-                  {view === 'gallery' && 'Gallery'}
-                </span>
-                {view !== 'gallery' && (
+              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', flex: 1, minWidth: 0 }}>
+                <h1
+                  className={`nunito ${isHomeStyle ? 'home-header-title' : ''}`}
+                  style={{
+                    fontSize: '22px', fontWeight: 950, letterSpacing: '-0.5px', color: 'var(--t)', margin: 0, display: 'flex', alignItems: 'center', gap: '6px',
+                  }}
+                >
+                  <span>
+                    {view === 'summary' && `Hi ${me}!`}
+                    {view === 'groups' && 'Your Groups'}
+                    {view === 'friends' && 'Settle All'}
+                    {view === 'activity' && 'All Activities'}
+                    {view === 'analytics' && 'Analytics'}
+                    {view === 'profile' && 'Profile'}
+                    {view === 'gallery' && 'Gallery'}
+                  </span>
+                  {view !== 'gallery' && (
+                    <span
+                      className="home-page-info"
+                      style={{ fontSize: '16px', color: 'var(--g)', cursor: 'pointer', opacity: 0.6, userSelect: 'none' }}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setShowInfo(!showInfo);
+                      }}
+                      title="What is this page?"
+                    >
+                      ⓘ
+                    </span>
+                  )}
+                </h1>
+                {view === 'gallery' && selectedGroup && (
                   <span
-                    className="home-page-info"
-                    style={{ fontSize: '16px', color: 'var(--g)', cursor: 'pointer', opacity: 0.6, userSelect: 'none' }}
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      setShowInfo(!showInfo);
+                    className="nunito"
+                    style={{
+                      fontSize: '12px',
+                      fontWeight: 800,
+                      color: '#64748B',
+                      letterSpacing: '0.3px',
+                      textTransform: 'capitalize',
+                      marginTop: '2px',
+                      textAlign: 'left'
                     }}
-                    title="What is this page?"
                   >
-                    ⓘ
+                    {selectedGroup.name}
                   </span>
                 )}
-              </h1>
+              </div>
             )}
 
             {isHomeStyle && (
               <div className="home-header-actions" aria-label="Home actions" onClick={(e) => e.stopPropagation()} style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', flex: 1, marginLeft: isHeaderSearchActive ? '40px' : '0px', minWidth: 0 }}>
-                {isHeaderSearchActive && view === 'summary' && (
+                {isHeaderSearchActive && (view === 'summary' || view === 'gallery') && (
                   <input
                     type="search"
                     autoComplete="one-time-code"
@@ -924,7 +945,7 @@ export const MobileHeader: React.FC<MobileHeaderProps> = ({
                     spellCheck="false"
                     data-1p-ignore
                     data-lpignore="true"
-                    placeholder="Search groups..."
+                    placeholder={view === 'gallery' ? "Search photos..." : "Search groups..."}
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
                     onKeyDown={(e) => {
@@ -960,7 +981,7 @@ export const MobileHeader: React.FC<MobileHeaderProps> = ({
                     autoFocus
                   />
                 )}
-                {view === 'summary' && (
+                {(view === 'summary' || view === 'gallery') && (
                   <button
                     type="button"
                     className="home-header-icon"
@@ -992,6 +1013,28 @@ export const MobileHeader: React.FC<MobileHeaderProps> = ({
                     onClick={(e) => { e.stopPropagation(); onOpenConvert(); }}
                   >
                     <span style={{ fontSize: '17px', lineHeight: 1 }}>💱</span>
+                  </button>
+                )}
+                {view === 'gallery' && (
+                  <button
+                    type="button"
+                    className="home-header-icon"
+                    aria-label="Filter gallery"
+                    title="Filter gallery"
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      color: showGalleryFilters ? '#F59E0B' : '#475569',
+                    }}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      if (onToggleGalleryFilters) onToggleGalleryFilters();
+                    }}
+                  >
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinejoin="round" strokeLinecap="round" style={{ width: '18px', height: '18px' }}>
+                      <path d="M22 3H2L10 12.46V19L14 21V12.46L22 3Z" />
+                    </svg>
                   </button>
                 )}
                 <button type="button" className="home-header-icon" aria-label="Notifications" style={{ position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'center' }} onClick={(e) => { e.stopPropagation(); onOpenNotifications(); }}>
@@ -1123,22 +1166,7 @@ export const MobileHeader: React.FC<MobileHeaderProps> = ({
       )}
 
 
-      {view === 'gallery' && selectedGroup && (
-        <div style={{ display: 'flex', justifyContent: 'center', marginTop: '-12px' }}>
-          <span
-            className="nunito"
-            style={{
-              fontSize: '12px',
-              fontWeight: 800,
-              color: '#64748B',
-              letterSpacing: '0.3px',
-              textTransform: 'capitalize',
-            }}
-          >
-            {selectedGroup.name}
-          </span>
-        </div>
-      )}
+
       {showInfo && (
         <div style={{
           fontSize: '11px',
