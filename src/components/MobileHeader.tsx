@@ -471,6 +471,7 @@ export const MobileHeader: React.FC<MobileHeaderProps> = ({
                 {/* Mobile Attachment Paperclip Button */}
                 <input
                   ref={uploadInputRef}
+                  id="mobile-gallery-upload-input"
                   type="file"
                   accept="image/*"
                   style={{ display: 'none' }}

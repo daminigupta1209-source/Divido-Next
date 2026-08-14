@@ -353,9 +353,38 @@ export const GroupGallery: React.FC<GroupGalleryProps> = ({
           <div style={{ textAlign: 'center', padding: '80px 20px', background: 'var(--w)', borderRadius: '24px', border: '1.5px solid #F1F5F9' }}>
             <div style={{ fontSize: '56px', marginBottom: '16px' }}>📸</div>
             <h3 className="nunito" style={{ margin: 0, fontSize: '16px', fontWeight: 800, color: 'var(--t)' }}>No photos found</h3>
-            <p style={{ margin: '6px 0 0 0', fontSize: '12px', color: '#94A3B8', fontWeight: 600, lineHeight: 1.4 }}>
+            <p style={{ margin: '6px 0 14px 0', fontSize: '12px', color: '#94A3B8', fontWeight: 600, lineHeight: 1.4 }}>
               Try adjusting your search queries or filter choices.
             </p>
+            <button
+              type="button"
+              onClick={() => {
+                (document.getElementById('mobile-gallery-upload-input') as HTMLInputElement)?.click();
+              }}
+              style={{
+                background: '#10B981',
+                color: '#FFFFFF',
+                border: 'none',
+                padding: '8px 20px',
+                borderRadius: '12px',
+                fontWeight: 800,
+                fontSize: '13px',
+                cursor: 'pointer',
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '6px',
+                transition: 'transform 0.2s',
+              }}
+              onMouseEnter={(e) => { e.currentTarget.style.transform = 'scale(1.02)'; }}
+              onMouseLeave={(e) => { e.currentTarget.style.transform = 'scale(1)'; }}
+            >
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                <polyline points="17 8 12 3 7 8" />
+                <line x1="12" y1="3" x2="12" y2="15" />
+              </svg>
+              <span>Upload Photo</span>
+            </button>
           </div>
         ) : (
           <div style={{ display: 'flex', flexDirection: 'column', gap: '22px' }}>
