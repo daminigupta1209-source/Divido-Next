@@ -3694,9 +3694,16 @@ function App() {
 
           {/* Central Button */}
           {(() => {
-            const isInsideGroup = view === 'detail' && selectedGroup;
+            const isInsideGroup = (view === 'detail' || view === 'gallery' || view === 'analytics') && selectedGroup;
             const isUploadTheme = isInsideGroup;
-            const clickHandler = isUploadTheme ? () => (document.querySelector('[title="Add attachment"]') as HTMLButtonElement)?.click() : createGroupSecure;
+            const clickHandler = isUploadTheme ? () => {
+              const inp = document.getElementById('mobile-gallery-upload-input');
+              if (inp) {
+                (inp as HTMLInputElement).click();
+              } else {
+                (document.querySelector('[title="Add attachment"]') as HTMLButtonElement)?.click();
+              }
+            } : createGroupSecure;
             const buttonColor = isUploadTheme ? '#059669' : '#F97316';
             const iconSvg = isUploadTheme ? (
               // Custom Clean Vector Upload SVG (Emerald theme background)
