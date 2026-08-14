@@ -592,7 +592,7 @@ export const GroupMemberList: React.FC<GroupMemberListProps> = ({
             </div>
 
             {(!isAddingInline || inlineAddVal.length > 0) && (
-              <div style={{ display: 'flex', justifyContent: 'flex-start', marginTop: '10px' }}>
+              <div style={{ display: 'flex', justifyContent: 'center', marginTop: '10px' }}>
                 <button
                   type="button"
                   onClick={() => {
