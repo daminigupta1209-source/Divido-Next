@@ -284,7 +284,14 @@ export const MobileHeader: React.FC<MobileHeaderProps> = ({
         {view === 'detail' && selectedGroup ? (
           <div style={{ display: 'flex', alignItems: 'center', width: '100%', height: '100%', gap: '10px' }}>
             <button
-              onClick={() => setView('summary')}
+              onClick={() => {
+                if (groupDetailTab === 'balances') {
+                  if (setGroupDetailTab) setGroupDetailTab('expenses');
+                } else {
+                  if (setSelectedId) setSelectedId(null);
+                  setView('summary');
+                }
+              }}
               style={{
                 border: 'none',
                 background: 'transparent',
