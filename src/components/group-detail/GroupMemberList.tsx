@@ -757,10 +757,10 @@ export const GroupMemberList: React.FC<GroupMemberListProps> = ({
             }}
             style={{
               width: '100%',
-              padding: '14px',
-              fontSize: '15px',
+              padding: '12px',
+              fontSize: '14px',
               fontWeight: 800,
-              borderRadius: '18px',
+              borderRadius: '14px',
               cursor: 'pointer',
               border: 'none',
               transition: 'all 0.2s ease',
