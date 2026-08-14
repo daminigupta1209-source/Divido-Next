@@ -522,8 +522,8 @@ export const GroupGallery: React.FC<GroupGalleryProps> = ({
                 width: '100%',
                 height: '100%',
                 objectFit: 'contain',
-                borderRadius: '12px',
-                boxShadow: '0 6px 24px rgba(0,0,0,0.06)'
+                borderRadius: '0',
+                boxShadow: 'none'
               }}
             />
           </div>
