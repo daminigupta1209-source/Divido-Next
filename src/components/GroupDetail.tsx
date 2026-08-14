@@ -438,16 +438,16 @@ export const GroupDetail: React.FC<GroupDetailProps> = ({
                 <button
                   onClick={(e) => {
                     e.stopPropagation();
-                    setShowAddFriendModal(true);
+                    if (onShareGroupLink) onShareGroupLink();
                   }}
                   style={{
-                    background: '#F97316',
-                    color: '#FFFFFF',
+                    background: '#DBEAFE',
+                    color: '#2563EB',
                     border: 'none',
                     padding: '6px 16px',
                     borderRadius: '999px',
                     fontFamily: 'inherit',
-                    fontWeight: 600,
+                    fontWeight: 700,
                     fontSize: '12px',
                     letterSpacing: '0.2px',
                     lineHeight: 1,
@@ -455,13 +455,37 @@ export const GroupDetail: React.FC<GroupDetailProps> = ({
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
-                    gap: '5px',
-                    boxShadow: '0 2px 8px rgba(249, 115, 22, 0.3)',
+                    gap: '6px',
+                    boxShadow: '0 2px 8px rgba(37, 99, 235, 0.15)',
                     transition: 'all 0.2s ease',
                   }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.transform = 'scale(1.02)';
+                    e.currentTarget.style.background = '#BFDBFE';
+                    e.currentTarget.style.boxShadow = '0 4px 12px rgba(37, 99, 235, 0.25)';
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.transform = 'scale(1)';
+                    e.currentTarget.style.background = '#DBEAFE';
+                    e.currentTarget.style.boxShadow = '0 2px 8px rgba(37, 99, 235, 0.15)';
+                  }}
                 >
-                  <span style={{ fontSize: '14px', fontWeight: 600, lineHeight: 1, color: '#FFFFFF', display: 'flex', alignItems: 'center' }}>+</span>
-                  <span style={{ color: '#FFFFFF', lineHeight: 1, display: 'flex', alignItems: 'center' }}>Friend</span>
+                  <svg
+                    width="12"
+                    height="12"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2.8"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    style={{ color: 'inherit', display: 'flex', alignItems: 'center' }}
+                  >
+                    <path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8" />
+                    <polyline points="16 6 12 2 8 6" />
+                    <line x1="12" y1="2" x2="12" y2="15" />
+                  </svg>
+                  <span style={{ color: 'inherit', lineHeight: 1, display: 'flex', alignItems: 'center' }}>Invite</span>
                 </button>
               ) : (
                 <button
