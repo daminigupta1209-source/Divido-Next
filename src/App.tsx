@@ -2780,7 +2780,7 @@ function App() {
           aria-label="New group"
           style={{
             position: 'fixed',
-            bottom: '92px',
+            bottom: '100px',
             right: '20px',
             zIndex: 1000,
             height: '38px',
