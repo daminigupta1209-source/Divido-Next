@@ -397,14 +397,49 @@ export const BillScanner: React.FC<BillScannerProps> = ({
     }
   };
 
+  // Downscale large photos before sending. Camera images are often several MB;
+  // shrinking to ~1280px and JPEG-compressing cuts the upload + AI time a lot
+  // while keeping receipt text readable. Non-images (e.g. PDFs) pass through.
+  const prepareScanImage = (file: File): Promise<string> =>
+    new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onerror = reject;
+      if (!file.type.startsWith('image/')) {
+        reader.onload = () => resolve(reader.result as string);
+        reader.readAsDataURL(file);
+        return;
+      }
+      reader.onload = () => {
+        const img = new Image();
+        img.onload = () => {
+          const MAX = 1280;
+          let width = img.width;
+          let height = img.height;
+          if (width > MAX || height > MAX) {
+            if (width >= height) { height = Math.round((height * MAX) / width); width = MAX; }
+            else { width = Math.round((width * MAX) / height); height = MAX; }
+          }
+          const canvas = document.createElement('canvas');
+          canvas.width = width;
+          canvas.height = height;
+          const ctx = canvas.getContext('2d');
+          if (!ctx) { resolve(reader.result as string); return; }
+          ctx.drawImage(img, 0, 0, width, height);
+          resolve(canvas.toDataURL('image/jpeg', 0.72));
+        };
+        img.onerror = () => resolve(reader.result as string);
+        img.src = reader.result as string;
+      };
+      reader.readAsDataURL(file);
+    });
+
   const runGeminiScan = (file: File, apiKey: string) => {
     setScanProgress(10);
-    setScannerStatus('AI Scanner: Reading receipt file...');
-    const reader = new FileReader();
-    reader.onload = () => {
-      const result = reader.result as string;
+    setScannerStatus('AI Scanner: Preparing image...');
+    prepareScanImage(file)
+      .then((result) => {
       const base64Data = result.split(',')[1];
-      const mimeType = file.type || 'image/jpeg';
+      const mimeType = result.substring(5, result.indexOf(';')) || 'image/jpeg';
       setScanProgress(40);
       setScannerStatus('AI Scanner: Analyzing receipt structure with Gemini...');
 
@@ -443,7 +478,7 @@ If a valid receipt: {"title": "Sunrise Foods", "amount": 5445.30, "notes": "Groc
       setScannerStatus('AI Scanner: Extracting merchant name, total, and notes...');
 
       fetch(
-        `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`,
+        `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-lite:generateContent?key=${apiKey}`,
         {
           method: 'POST',
           headers: {
@@ -500,12 +535,11 @@ If a valid receipt: {"title": "Sunrise Foods", "amount": 5445.30, "notes": "Groc
             runLocalTesseractOCR(file);
           }, 1000);
         });
-    };
-    reader.onerror = (err) => {
-      console.error('File reader error:', err);
-      runLocalTesseractOCR(file);
-    };
-    reader.readAsDataURL(file);
+      })
+      .catch((err) => {
+        console.error('Image preparation error:', err);
+        runLocalTesseractOCR(file);
+      });
   };
 
   const runLocalTesseractOCR = (file: File) => {
