@@ -731,20 +731,15 @@ export const ExpenseModal: React.FC<ExpenseModalProps> = ({
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                padding: 0,
+                padding: '6px',
+                color: 'var(--t)',
+                opacity: 0.7,
               }}
-              onClick={() => {
-                if (isValid && title) {
-                  handleSave();
-                } else {
-                  setShowValidationErrorPopup(true);
-                  triggerShake();
-                }
-              }}
-              title="Record Expense"
+              onClick={() => setShowAttachMenu(true)}
+              title="Add attachment"
             >
-              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#10B981" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
-                <polyline points="20 6 9 17 4 12" />
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48" />
               </svg>
             </button>
           </div>
@@ -1826,33 +1821,7 @@ export const ExpenseModal: React.FC<ExpenseModalProps> = ({
 
         <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginTop: '10px', position: 'relative' }}>
           {/* Floating Add Attachment button — sits at the bottom-right, above the submit button */}
-          <button
-            onClick={() => setShowAttachMenu(true)}
-            title="Add attachment"
-            style={{
-              position: 'absolute',
-              right: '14px',
-              bottom: 'calc(100% + 22px)',
-              width: '38px',
-              height: '38px',
-              borderRadius: '12px',
-              border: 'none',
-              background: 'linear-gradient(135deg, #10B981 0%, #059669 100%)',
-              boxShadow: '0 6px 16px rgba(5, 150, 105, 0.3)',
-              cursor: 'pointer',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              zIndex: 5,
-              transition: '0.2s all',
-            }}
-            onMouseEnter={(e) => { e.currentTarget.style.transform = 'scale(1.06)'; }}
-            onMouseLeave={(e) => { e.currentTarget.style.transform = 'scale(1)'; }}
-          >
-            <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48" />
-            </svg>
-          </button>
+
           {/* Modal Footer Submit Button */}
           <button
             id="save-expense-btn"
