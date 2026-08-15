@@ -799,10 +799,7 @@ export const MobileHeader: React.FC<MobileHeaderProps> = ({
                           label: 'Export Data',
                           onClick: () => { setMobileShowGroupOptionsMenu(false); handleMobileExportCSV(); }
                         },
-                        {
-                          label: 'Analytics',
-                          onClick: () => { setMobileShowGroupOptionsMenu(false); setAnalyticsGroupId(selectedId); setView('analytics'); }
-                        },
+
                         ...(isActiveMember && selectedId !== 'STANDALONE' ? [{
                           label: activeMembersCount > 1 ? 'Leave Group' : 'Delete Group',
                           onClick: () => { setMobileShowGroupOptionsMenu(false); handleDeleteGroup(selectedId || ''); },
