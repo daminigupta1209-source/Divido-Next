@@ -168,16 +168,20 @@ export const CreateGroupView: React.FC<CreateGroupViewProps> = ({
             style={{
               background: 'none',
               border: 'none',
-              fontSize: '24px',
               cursor: 'pointer',
               color: 'var(--t)',
               padding: 0,
-              lineHeight: 1,
               display: 'inline-flex',
               alignItems: 'center',
+              justifyContent: 'center',
+              width: '32px',
+              height: '32px',
+              marginLeft: '-6px',
             }}
           >
-            ←
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.8" strokeLinecap="round" strokeLinejoin="round" style={{ width: '18px', height: '18px' }}>
+              <polyline points="15 18 9 12 15 6" />
+            </svg>
           </button>
           <h1 style={{ fontSize: '20px', fontWeight: 950, color: 'var(--t)', margin: 0, fontFamily: 'Nunito' }}>
             {editingGroup ? 'Edit Group' : 'New Group'}
