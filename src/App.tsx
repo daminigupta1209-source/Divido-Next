@@ -3776,7 +3776,7 @@ function App() {
             }}
           >
             <button
-              onClick={addExpenseFromNav}
+              onClick={() => addExpenseFromNav()}
               className="pulse-button"
               aria-label="Add expense"
               style={{
