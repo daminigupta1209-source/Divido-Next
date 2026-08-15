@@ -2130,7 +2130,16 @@ export const ExpenseModal: React.FC<ExpenseModalProps> = ({
         }>
           <BillScanner
             showScannerModal={showScannerModal}
-            setShowScannerModal={setShowScannerModal}
+            setShowScannerModal={(show) => {
+              setShowScannerModal(show);
+              if (!show) {
+                const hasNoData = !title.trim() && (!amt || parseFloat(amt.toString()) === 0);
+                const isNew = !editingExpense || !editingExpense.id;
+                if (hasNoData && isNew) {
+                  setShowExpModal(false);
+                }
+              }
+            }}
             curr={curr}
             onScanComplete={handleScanComplete}
           />
