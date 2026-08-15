@@ -160,7 +160,16 @@ export function useSupabaseSync({
 
         const nonDraftGroups = groups.filter(g => g.name.trim() !== '' && typeof g.id === 'number' && g.id <= 2147483647);
         const nonDraftPrevGroups = prevGroupsRef.current.filter(g => g.name.trim() !== '' && typeof g.id === 'number' && g.id <= 2147483647);
-        const hasUnsyncedGroups = JSON.stringify(normalizeGroupsForDiff(nonDraftGroups)) !== JSON.stringify(normalizeGroupsForDiff(nonDraftPrevGroups));
+        // A real-DB-id group present locally but absent from the last-synced
+        // snapshot is a group we just JOINED (via an invite) or that otherwise
+        // appeared from the server — real ids only ever come FROM the server, so
+        // it needs a LOAD, not protection. Excluding these newly-appeared groups
+        // from the "unsynced" check stops the guard from permanently blocking an
+        // invitee's expenses from ever loading. Genuine local edits/removals to
+        // groups that ARE in the snapshot are still protected.
+        const prevGroupIds = new Set(nonDraftPrevGroups.map(g => g.id));
+        const localGroupsForDiff = nonDraftGroups.filter(g => prevGroupIds.has(g.id as number));
+        const hasUnsyncedGroups = JSON.stringify(normalizeGroupsForDiff(localGroupsForDiff)) !== JSON.stringify(normalizeGroupsForDiff(nonDraftPrevGroups));
         const hasUnsyncedExpenses = JSON.stringify(expenses) !== JSON.stringify(prevExpensesRef.current);
         if (hasUnsyncedGroups || hasUnsyncedExpenses) {
           console.log('Unsynced offline changes detected. Skipping load until sync is complete.', 'groups mismatch:', hasUnsyncedGroups, 'expenses mismatch:', hasUnsyncedExpenses);
