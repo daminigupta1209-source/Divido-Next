@@ -1492,18 +1492,41 @@ export const ExpenseModal: React.FC<ExpenseModalProps> = ({
           {/* MEMBER LIST WITH TICK/UNTICK */}
           {friendsToSelect.length > 0 && (
             <div className="step-container" style={{ gap: '6px' }}>
-              <label
-                style={{
-                  fontSize: '9px',
-                  fontWeight: 950,
-                  color: '#94A3B8',
-                  textTransform: 'uppercase',
-                  letterSpacing: '1.2px',
-                  marginBottom: '2px',
-                }}
-              >
-                Paid For
-              </label>
+              {(() => {
+                const cleanedMembers = friendsToSelect.map((m) => m.replace(' (Left)', ''));
+                const allSelected =
+                  cleanedMembers.length > 0 && cleanedMembers.every((m) => selectedSplitters.includes(m));
+                return (
+                  <div
+                    onClick={() =>
+                      setSelectedSplitters(allSelected ? [] : Array.from(new Set(cleanedMembers)))
+                    }
+                    style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '2px', cursor: 'pointer' }}
+                  >
+                    <div style={{
+                      width: '18px', height: '18px', borderRadius: '5px',
+                      background: allSelected ? '#16A34A' : '#fff',
+                      border: `2px solid ${allSelected ? '#16A34A' : '#CBD5E1'}`,
+                      display: 'flex', alignItems: 'center', justifyContent: 'center',
+                      flexShrink: 0,
+                    }}>
+                      {allSelected && <span style={{ color: '#fff', fontSize: '11px', fontWeight: 900 }}>✓</span>}
+                    </div>
+                    <label
+                      style={{
+                        fontSize: '9px',
+                        fontWeight: 950,
+                        color: '#94A3B8',
+                        textTransform: 'uppercase',
+                        letterSpacing: '1.2px',
+                        cursor: 'pointer',
+                      }}
+                    >
+                      Paid For
+                    </label>
+                  </div>
+                );
+              })()}
               {friendsToSelect.map((member) => {
                 const cleanMember = member.replace(' (Left)', '');
                 const isSelected = selectedSplitters.includes(cleanMember);
