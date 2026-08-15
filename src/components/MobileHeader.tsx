@@ -59,6 +59,7 @@ interface MobileHeaderProps {
   setEditingExpense?: (exp: Expense | null) => void;
   onRequestRejoin?: () => void;
   onCreateGroup?: () => void;
+  onScan?: () => void;
 }
 
 export const MobileHeader: React.FC<MobileHeaderProps> = ({
@@ -115,6 +116,7 @@ export const MobileHeader: React.FC<MobileHeaderProps> = ({
   setEditingExpense = () => {},
   onRequestRejoin,
   onCreateGroup,
+  onScan,
 }) => {
   // View-only guard: a member who has left this group can browse but not edit it.
   const amIPastMember = (() => {
@@ -1032,6 +1034,24 @@ export const MobileHeader: React.FC<MobileHeaderProps> = ({
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.1" strokeLinecap="round">
                       <circle cx="10.8" cy="10.8" r="6.6" />
                       <path d="m16 16 4.2 4.2" />
+                    </svg>
+                  </button>
+                )}
+                {view === 'summary' && !isHeaderSearchActive && onScan && (
+                  <button
+                    type="button"
+                    className="home-header-icon"
+                    aria-label="Scan receipt"
+                    title="Scan receipt"
+                    style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                    onClick={(e) => { e.stopPropagation(); onScan(); }}
+                  >
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.1" strokeLinecap="round" strokeLinejoin="round" style={{ width: '19px', height: '19px' }}>
+                      <path d="M4 8V6a2 2 0 0 1 2-2h2" />
+                      <path d="M16 4h2a2 2 0 0 1 2 2v2" />
+                      <path d="M20 16v2a2 2 0 0 1-2 2h-2" />
+                      <path d="M8 20H6a2 2 0 0 1-2-2v-2" />
+                      <path d="M4 12h16" />
                     </svg>
                   </button>
                 )}

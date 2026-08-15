@@ -1958,11 +1958,11 @@ function App() {
   // Unified "Add Expense" entry used by the center of the bottom nav. Same action
   // everywhere: standalone expense on the home screens, group expense when inside
   // a group. Scanner stays off — it lives as a small icon inside the expense screen.
-  const addExpenseFromNav = () => {
+  const addExpenseFromNav = (scan: boolean = false) => {
     if (!requireSignInToCreate()) return;
     const insideGroup = (view === 'detail' || view === 'gallery' || view === 'analytics') && selectedId;
     const gId = insideGroup ? selectedId : 'STANDALONE';
-    setAutoOpenScanner(false);
+    setAutoOpenScanner(scan);
     setEditingExpenseSecure({ id: null, gId, title: '', amt: 0, date: new Date().toISOString().split('T')[0], splitters: [], paid: me } as any);
     setShowExpModalSecure(true);
   };
@@ -2203,6 +2203,7 @@ function App() {
             setShowExpModal={setShowExpModalSecure}
             setEditingExpense={setEditingExpenseSecure}
             onCreateGroup={createGroupSecure}
+            onScan={() => addExpenseFromNav(true)}
           />
         )}
 
