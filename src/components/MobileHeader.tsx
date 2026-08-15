@@ -787,56 +787,119 @@ export const MobileHeader: React.FC<MobileHeaderProps> = ({
                       const activeMembersCount = (selectedGroup?.members || []).filter(m => !m.toLowerCase().endsWith(' (left)')).length;
 
                       const actionItems = [
-                        ...(isPastMember ? [] : [{ emoji: '💱', label: 'Convert Currency', onClick: () => { setMobileShowGroupOptionsMenu(false); setShowConvertModalId(selectedId); } }]),
-                        { emoji: '➕', label: 'Create New Group', onClick: () => { setMobileShowGroupOptionsMenu(false); onCreateGroup && onCreateGroup(); } },
-                        { emoji: '📤', label: 'Export Data', onClick: () => { setMobileShowGroupOptionsMenu(false); handleMobileExportCSV(); } },
-                        { emoji: '📊', label: 'Analytics', onClick: () => { setMobileShowGroupOptionsMenu(false); setAnalyticsGroupId(selectedId); setView('analytics'); } },
-                        ...(isActiveMember && selectedId !== 'STANDALONE' ? [{ 
-                          emoji: activeMembersCount > 1 ? '🚪' : '🗑️', 
-                          label: activeMembersCount > 1 ? 'Leave Group' : 'Delete Group', 
-                          onClick: () => { setMobileShowGroupOptionsMenu(false); handleDeleteGroup(selectedId || ''); }, 
-                          danger: true 
+                        ...(isPastMember ? [] : [{
+                          icon: (color: string) => (
+                            <svg viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2.1" strokeLinecap="round" strokeLinejoin="round" style={{ width: '14px', height: '14px' }}>
+                              <circle cx="8" cy="8" r="3" />
+                              <circle cx="16" cy="16" r="3" />
+                              <path d="M16 8a4 4 0 0 0-4 4v2" />
+                              <path d="M12 14v-2a4 4 0 0 0-4-4" />
+                              <path d="m13 6 3 2-3 2" />
+                              <path d="m11 18-3-2 3-2" />
+                            </svg>
+                          ),
+                          label: 'Convert Currency',
+                          onClick: () => { setMobileShowGroupOptionsMenu(false); setShowConvertModalId(selectedId); }
+                        }]),
+                        {
+                          icon: (color: string) => (
+                            <svg viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2.1" strokeLinecap="round" strokeLinejoin="round" style={{ width: '14px', height: '14px' }}>
+                              <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
+                              <circle cx="9" cy="7" r="4" />
+                              <line x1="19" y1="8" x2="19" y2="14" />
+                              <line x1="16" y1="11" x2="22" y2="11" />
+                            </svg>
+                          ),
+                          label: 'Create New Group',
+                          onClick: () => { setMobileShowGroupOptionsMenu(false); onCreateGroup && onCreateGroup(); }
+                        },
+                        {
+                          icon: (color: string) => (
+                            <svg viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2.1" strokeLinecap="round" strokeLinejoin="round" style={{ width: '14px', height: '14px' }}>
+                              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                              <polyline points="7 10 12 15 17 10" />
+                              <line x1="12" y1="15" x2="12" y2="3" />
+                            </svg>
+                          ),
+                          label: 'Export Data',
+                          onClick: () => { setMobileShowGroupOptionsMenu(false); handleMobileExportCSV(); }
+                        },
+                        {
+                          icon: (color: string) => (
+                            <svg viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2.1" strokeLinecap="round" strokeLinejoin="round" style={{ width: '14px', height: '14px' }}>
+                              <line x1="18" y1="20" x2="18" y2="10" />
+                              <line x1="12" y1="20" x2="12" y2="4" />
+                              <line x1="6" y1="20" x2="6" y2="14" />
+                            </svg>
+                          ),
+                          label: 'Analytics',
+                          onClick: () => { setMobileShowGroupOptionsMenu(false); setAnalyticsGroupId(selectedId); setView('analytics'); }
+                        },
+                        ...(isActiveMember && selectedId !== 'STANDALONE' ? [{
+                          icon: (color: string) => activeMembersCount > 1 ? (
+                            <svg viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2.1" strokeLinecap="round" strokeLinejoin="round" style={{ width: '14px', height: '14px' }}>
+                              <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
+                              <polyline points="16 17 21 12 16 7" />
+                              <line x1="21" y1="12" x2="9" y2="12" />
+                            </svg>
+                          ) : (
+                            <svg viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2.1" strokeLinecap="round" strokeLinejoin="round" style={{ width: '14px', height: '14px' }}>
+                              <polyline points="3 6 5 6 21 6" />
+                              <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
+                            </svg>
+                          ),
+                          label: activeMembersCount > 1 ? 'Leave Group' : 'Delete Group',
+                          onClick: () => { setMobileShowGroupOptionsMenu(false); handleDeleteGroup(selectedId || ''); },
+                          danger: true
                         }] : []),
-                        ...(isPastMember && selectedId !== 'STANDALONE' ? [{ 
-                           emoji: '🗑️', 
-                           label: 'Delete Group for Me', 
-                           onClick: () => { setMobileShowGroupOptionsMenu(false); handleDeleteGroup(selectedId || ''); }, 
-                           danger: true 
-                         }] : []),
+                        ...(isPastMember && selectedId !== 'STANDALONE' ? [{
+                          icon: (color: string) => (
+                            <svg viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2.1" strokeLinecap="round" strokeLinejoin="round" style={{ width: '14px', height: '14px' }}>
+                              <polyline points="3 6 5 6 21 6" />
+                              <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
+                            </svg>
+                          ),
+                          label: 'Delete Group for Me',
+                          onClick: () => { setMobileShowGroupOptionsMenu(false); handleDeleteGroup(selectedId || ''); },
+                          danger: true
+                        }] : []),
                       ];
 
                       return actionItems.map((item) => (
                         <button
                           key={item.label}
                           onClick={item.onClick}
-                        style={{
-                          display: 'flex',
-                          alignItems: 'center',
-                          gap: '8px',
-                          padding: '7px 10px',
-                          border: 'none',
-                          background: 'none',
-                          width: '100%',
-                          textAlign: 'left',
-                          cursor: 'pointer',
-                          borderRadius: '10px',
-                          fontSize: '11px',
-                          fontWeight: 800,
-                          color: item.danger ? '#DC2626' : '#374151',
-                          transition: '0.15s all',
-                        }}
-                        onMouseEnter={(e) => {
-                          e.currentTarget.style.background = item.danger ? '#FEF2F2' : 'rgba(249, 250, 251, 0.6)';
-                          e.currentTarget.style.color = item.danger ? '#B91C1C' : '#111827';
-                        }}
-                        onMouseLeave={(e) => {
-                          e.currentTarget.style.background = 'none';
-                          e.currentTarget.style.color = item.danger ? '#DC2626' : '#374151';
-                        }}
-                      >
-                        <span style={{ fontSize: '13px' }}>{item.emoji}</span> {item.label}
-                      </button>
-                    ))})()}
+                          style={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '10px',
+                            padding: '8px 10px',
+                            border: 'none',
+                            background: 'none',
+                            width: '100%',
+                            textAlign: 'left',
+                            cursor: 'pointer',
+                            borderRadius: '10px',
+                            fontSize: '11px',
+                            fontWeight: 800,
+                            color: item.danger ? '#DC2626' : '#475569',
+                            transition: '0.15s all',
+                          }}
+                          onMouseEnter={(e) => {
+                            e.currentTarget.style.background = item.danger ? '#FEF2F2' : 'rgba(241, 245, 249, 0.6)';
+                            e.currentTarget.style.color = item.danger ? '#B91C1C' : '#0F172A';
+                          }}
+                          onMouseLeave={(e) => {
+                            e.currentTarget.style.background = 'none';
+                            e.currentTarget.style.color = item.danger ? '#DC2626' : '#475569';
+                          }}
+                        >
+                          <span style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}>
+                            {item.icon(item.danger ? '#DC2626' : '#64748B')}
+                          </span>
+                          <span>{item.label}</span>
+                        </button>
+                      ))})()}
                   </div>
                 )}
               </div>
