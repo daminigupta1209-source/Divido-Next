@@ -2441,8 +2441,14 @@ function App() {
                   }
 
                   alert('Member successfully approved and linked! 🎉');
-                  // Trigger reload
-                  setGroups((prev) => [...prev]);
+                  // Drop the handled request from local state immediately so the
+                  // approve control can't be re-triggered before the cloud sync
+                  // reconciles (same double-action cause as the rejoin modal).
+                  setGroups((prev) => prev.map((g) =>
+                    String(g.id) === String(mem.group_id)
+                      ? { ...g, pendingLinkRequests: (g.pendingLinkRequests || []).filter((r) => String(r.id) !== String(memberRecordId)) }
+                      : g
+                  ));
                 }
               } catch (err) {
                 console.error(err);
@@ -2478,7 +2484,11 @@ function App() {
                   }
                   
                   alert('Link request declined.');
-                  setGroups((prev) => [...prev]);
+                  setGroups((prev) => prev.map((g) =>
+                    String(g.id) === String(mem.group_id)
+                      ? { ...g, pendingLinkRequests: (g.pendingLinkRequests || []).filter((r) => String(r.id) !== String(memberRecordId)) }
+                      : g
+                  ));
                 }
               } catch (err) {
                 console.error(err);
@@ -4489,8 +4499,15 @@ function App() {
                       .eq('id', adminRejoinRequest.id);
 
                     alert('Rejoin request declined.');
+                    // Remove the handled request from local state so the
+                    // auto-open effect (keyed on groups) doesn't immediately
+                    // re-open this modal — that was the "needs 2 clicks" bug.
+                    setGroups((prev) => prev.map((g) =>
+                      String(g.id) === String(adminRejoinRequest.groupId)
+                        ? { ...g, pendingLinkRequests: (g.pendingLinkRequests || []).filter((r) => String(r.id) !== String(adminRejoinRequest.id)) }
+                        : g
+                    ));
                     setAdminRejoinRequest(null);
-                    setGroups((prev) => [...prev]);
                   } catch (err) {
                     console.error('Failed to decline rejoin request:', err);
                   }
@@ -4543,8 +4560,16 @@ function App() {
                     }
 
                     alert('Rejoin request approved! 🎉');
+                    // Remove the handled request from local state so the
+                    // auto-open effect (keyed on groups) doesn't immediately
+                    // re-open this modal — that was the "needs 2 clicks" bug.
+                    // The full member state is reconciled on the next cloud sync.
+                    setGroups((prev) => prev.map((g) =>
+                      String(g.id) === String(adminRejoinRequest.groupId)
+                        ? { ...g, pendingLinkRequests: (g.pendingLinkRequests || []).filter((r) => String(r.id) !== String(adminRejoinRequest.id)) }
+                        : g
+                    ));
                     setAdminRejoinRequest(null);
-                    setGroups((prev) => [...prev]);
                   } catch (err) {
                     console.error('Failed to approve rejoin request:', err);
                   }
