@@ -34,7 +34,6 @@ import { useSupabaseSync } from './hooks/useSupabaseSync';
 import { useAppHotkeys } from './hooks/useAppHotkeys';
 import { useUndoStack } from './hooks/useUndoStack';
 import { MobileHeader } from './components/MobileHeader';
-import { FloatingAddMenu } from './components/FloatingAddMenu';
 import { InstallPrompt } from './components/InstallPrompt';
 import { useExportCSV } from './hooks/useExportCSV';
 
@@ -1956,6 +1955,18 @@ function App() {
     setView('create_group');
   };
 
+  // Unified "Add Expense" entry used by the center of the bottom nav. Same action
+  // everywhere: standalone expense on the home screens, group expense when inside
+  // a group. Scanner stays off — it lives as a small icon inside the expense screen.
+  const addExpenseFromNav = () => {
+    if (!requireSignInToCreate()) return;
+    const insideGroup = (view === 'detail' || view === 'gallery' || view === 'analytics') && selectedId;
+    const gId = insideGroup ? selectedId : 'STANDALONE';
+    setAutoOpenScanner(false);
+    setEditingExpenseSecure({ id: null, gId, title: '', amt: 0, date: new Date().toISOString().split('T')[0], splitters: [], paid: me } as any);
+    setShowExpModalSecure(true);
+  };
+
   const handleCreateGroup = (groupData: { name: string; currency: string; members: string[]; emoji: string; createdDate?: string }) => {
     const id = Date.now() + Math.random();
     const newGroup = {
@@ -2756,20 +2767,9 @@ function App() {
 
 
 
-      {/* Unified Floating Action Button (FAB) Menu */}
-      {view !== 'create_group' && !isPhotoViewerOpen && (
-        <FloatingAddMenu
-          view={view}
-          setView={setView}
-          setSelectedId={setSelectedId}
-          selectedId={selectedId}
-          setEditingExpense={setEditingExpenseSecure}
-          setAutoOpenScanner={setAutoOpenScanner}
-          setShowExpModal={setShowExpModalSecure}
-          me={me}
-          onRequireSignIn={requireSignInToCreate}
-        />
-      )}
+      {/* Floating Scan / + Expense pills removed — the bottom-nav centre button
+          now handles Add Expense everywhere, and scanning lives inside the
+          expense screen. */}
 
 
 
@@ -3720,81 +3720,59 @@ function App() {
             </div>
           )}
 
-          {/* Central Button */}
-          {(() => {
-            const isInsideGroup = (view === 'detail' || view === 'gallery' || view === 'analytics') && selectedGroup;
-            const isUploadTheme = isInsideGroup;
-            const clickHandler = isUploadTheme ? () => {
-              const inp = document.getElementById('mobile-gallery-upload-input');
-              if (inp) {
-                (inp as HTMLInputElement).click();
-              } else {
-                (document.querySelector('[title="Add attachment"]') as HTMLButtonElement)?.click();
-              }
-            } : createGroupSecure;
-            const buttonColor = isUploadTheme ? '#059669' : '#F97316';
-            const iconSvg = isUploadTheme ? (
-              // Custom Clean Vector Upload SVG (Emerald theme background)
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.8" strokeLinecap="round" strokeLinejoin="round" style={{ width: '18px', height: '18px', color: '#FFFFFF' }}>
-                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
-                <polyline points="17 8 12 3 7 8" />
-                <line x1="12" y1="3" x2="12" y2="15" />
-              </svg>
-            ) : (
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ width: '22px', height: '22px', color: '#FFFFFF' }}>
+          {/* Central Button — always "Add Expense", the single most-used action.
+              Same icon, colour and position on every screen so it never shifts
+              meaning. Create Group lives in the home header; photo upload lives
+              in the group's Photos tab. */}
+          <div
+            style={{
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              justifyContent: 'center',
+              position: 'relative',
+              top: '-16px',
+              flex: 1,
+              height: '68px',
+              zIndex: 10
+            }}
+          >
+            <button
+              onClick={addExpenseFromNav}
+              className="pulse-button"
+              aria-label="Add expense"
+              style={{
+                width: '56px',
+                height: '56px',
+                borderRadius: '50%',
+                background: '#10B981',
+                border: 'none',
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                boxShadow: '0 8px 16px rgba(0,0,0,0.15)',
+                transition: 'all 0.2s',
+                padding: 0,
+              }}
+            >
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ width: '24px', height: '24px', color: '#FFFFFF' }}>
                 <line x1="12" y1="5" x2="12" y2="19" />
                 <line x1="5" y1="12" x2="19" y2="12" />
               </svg>
-            );
-
-            return (
-              <div 
-                style={{ 
-                  display: 'flex', 
-                  flexDirection: 'column', 
-                  alignItems: 'center', 
-                  justifyContent: 'center', 
-                  position: 'relative', 
-                  top: '-16px',
-                  flex: 1,
-                  height: '68px',
-                  zIndex: 10
-                }}
-              >
-                <button
-                  onClick={clickHandler}
-                  className="pulse-button"
-                  style={{
-                    width: '56px',
-                    height: '56px',
-                    borderRadius: '50%',
-                    background: buttonColor,
-                    border: 'none',
-                    cursor: 'pointer',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    boxShadow: '0 8px 16px rgba(0,0,0,0.15)',
-                    transition: 'all 0.2s',
-                    padding: 0,
-                  }}
-                >
-                  {iconSvg}
-                </button>
-                <span 
-                  style={{ 
-                    fontSize: '10px', 
-                    fontWeight: 700, 
-                    color: 'var(--g)', 
-                    marginTop: '2px',
-                    whiteSpace: 'nowrap'
-                  }}
-                >
-                  {isUploadTheme ? 'Upload' : 'Group'}
-                </span>
-              </div>
-            );
-          })()}
+            </button>
+            <span
+              style={{
+                fontSize: '10px',
+                fontWeight: 700,
+                color: 'var(--g)',
+                marginTop: '2px',
+                whiteSpace: 'nowrap'
+              }}
+            >
+              Expense
+            </span>
+          </div>
 
           {((view === 'detail' || view === 'gallery' || view === 'analytics') && selectedId) ? (
             <div className={`b-nav-btn ${view === 'analytics' ? 'active' : ''}`} onClick={() => { setAnalyticsGroupId(selectedId); setView('analytics'); }}>
