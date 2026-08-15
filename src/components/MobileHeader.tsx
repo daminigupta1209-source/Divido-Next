@@ -176,7 +176,7 @@ export const MobileHeader: React.FC<MobileHeaderProps> = ({
     const newPhotoExpense: Expense = {
       id: 'photo-' + Date.now(),
       gId: selectedGroup.id,
-      title: photoCaption.trim() || 'Gallery Photo',
+      title: photoCaption.trim() || 'Photo',
       amt: 0,
       currency: selectedGroup.currency || '₹',
       paid: me,
