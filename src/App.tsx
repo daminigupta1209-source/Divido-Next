@@ -1963,7 +1963,9 @@ function App() {
     const insideGroup = (view === 'detail' || view === 'gallery' || view === 'analytics') && selectedId;
     const gId = insideGroup ? selectedId : 'STANDALONE';
     setAutoOpenScanner(scan);
-    setEditingExpenseSecure({ id: null, gId, title: '', amt: 0, date: new Date().toISOString().split('T')[0], splitters: [], paid: me } as any);
+    // A new expense needs a temp- id so the save path treats it as an ADD, not
+    // an edit of an existing row (id: null made saves silently do nothing).
+    setEditingExpenseSecure({ id: 'temp-' + Date.now(), gId, title: '', amt: 0, date: new Date().toISOString().split('T')[0], splitters: [], paid: me } as any);
     setShowExpModalSecure(true);
   };
 
