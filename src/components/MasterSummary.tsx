@@ -39,6 +39,7 @@ interface MasterSummaryProps {
   searchNonce?: number;
   searchQuery?: string;
   setSearchQuery?: (val: string) => void;
+  onCreateGroup?: () => void;
 }
 
 export const MasterSummary: React.FC<MasterSummaryProps> = ({
@@ -64,6 +65,7 @@ export const MasterSummary: React.FC<MasterSummaryProps> = ({
   searchNonce,
   searchQuery = '',
   setSearchQuery = () => {},
+  onCreateGroup,
 }) => {
   const [openDropdownId, setOpenDropdownId] = useState<string | number | null>(null);
   const [timeFilter, setTimeFilter] = useState<'all' | '30days' | '7days'>('all');
@@ -605,6 +607,39 @@ export const MasterSummary: React.FC<MasterSummaryProps> = ({
             </svg>
           </button>
         </div>
+
+        {/* Create-group entry: pinned directly under the "Your Groups" title,
+            above the first card, so it's always visible. Dashed "add" style. */}
+        {onCreateGroup && (
+          <button
+            type="button"
+            onClick={onCreateGroup}
+            className="hover-up-mini"
+            style={{
+              width: '100%',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: '8px',
+              padding: '15px',
+              background: 'transparent',
+              borderRadius: '16px',
+              border: '1.5px dashed #D8CEC1',
+              color: '#059669',
+              fontSize: '14px',
+              fontWeight: 700,
+              fontFamily: 'inherit',
+              cursor: 'pointer',
+              transition: '0.2s all ease',
+            }}
+          >
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" style={{ width: '18px', height: '18px' }}>
+              <line x1="12" y1="5" x2="12" y2="19" />
+              <line x1="5" y1="12" x2="19" y2="12" />
+            </svg>
+            New Group
+          </button>
+        )}
 
         {/* Filters (search + pills), revealed by funnel */}
         {showFilters && (

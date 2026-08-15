@@ -2236,6 +2236,7 @@ function App() {
             searchNonce={homeSearchNonce}
             searchQuery={globalSearchQuery}
             setSearchQuery={setGlobalSearchQuery}
+            onCreateGroup={createGroupSecure}
           />
         ) : view === 'groups' ? (
           <GroupsView
