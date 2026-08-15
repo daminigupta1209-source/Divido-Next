@@ -2780,7 +2780,7 @@ function App() {
           aria-label="New group"
           style={{
             position: 'fixed',
-            bottom: '108px',
+            bottom: '92px',
             right: '20px',
             zIndex: 1000,
             height: '38px',
@@ -2804,7 +2804,7 @@ function App() {
             <line x1="12" y1="5" x2="12" y2="19" />
             <line x1="5" y1="12" x2="19" y2="12" />
           </svg>
-          <span style={{ fontSize: '14px', fontWeight: 600, whiteSpace: 'nowrap' }}>Group</span>
+          <span style={{ fontSize: '14px', fontWeight: 800, whiteSpace: 'nowrap' }}>Group</span>
         </button>
       )}
 
