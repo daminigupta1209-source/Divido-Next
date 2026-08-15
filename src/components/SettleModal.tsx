@@ -404,7 +404,8 @@ export const SettleModal: React.FC<SettleModalProps> = ({
                           ? parseFloat(e.shares?.[s]?.toString() || '0')
                           : (e.amt * parseFloat(e.shares?.[s]?.toString() || '0')) / 100;
                       if (amtVal > 0.01) {
-                        const key = `${s}-${e.paid}`;
+                        // \x1f delimiter so hyphenated names survive the split below.
+                        const key = `${s}\x1f${e.paid}`;
                         if (!pairDebts[key]) pairDebts[key] = {};
                         pairDebts[key][c] = (pairDebts[key][c] || 0) + amtVal;
                       }
@@ -416,8 +417,8 @@ export const SettleModal: React.FC<SettleModalProps> = ({
                 const processedPairs = new Set<string>();
 
                 Object.keys(pairDebts).forEach((key) => {
-                  const [from, to] = key.split('-');
-                  const reverseKey = `${to}-${from}`;
+                  const [from, to] = key.split('\x1f');
+                  const reverseKey = `${to}\x1f${from}`;
                   if (processedPairs.has(key)) return;
                   const currencies = new Set([
                     ...Object.keys(pairDebts[key] || {}),

@@ -442,10 +442,14 @@ export function useExpenseForm({
   // Reset unequal splits to Equal split if the total amount is modified from the saved/default amount
   useEffect(() => {
     if (splitMode === 'Unequally') {
+      // For a brand-new expense the "original amount" is 0, so entering the total
+      // (e.g. in the shares popup, which is bound to amt) would always trip the
+      // reset and wipe the unequal split the user is building. Only reset when a
+      // SAVED expense's amount is actually changed.
+      const isNewExpense = !editingExpense?.id || String(editingExpense.id).startsWith('temp-');
+      if (isNewExpense) return;
       const parsedAmt = parseFloat(amt) || 0;
       const originalAmt = editingExpense?.amt || 0;
-      
-      // If the user changed the amount from the original value
       if (Math.abs(parsedAmt - originalAmt) > 0.01) {
         setSplitMode('Equally');
         setShares({});

@@ -698,7 +698,7 @@ export const ExpenseModal: React.FC<ExpenseModalProps> = ({
               </div>
             )}
             
-            {editingExpense && editingExpense.id != null && (
+            {editingExpense && editingExpense.id != null && !String(editingExpense.id).startsWith('temp-') && (
               <button
                 style={{
                   border: 'none',
