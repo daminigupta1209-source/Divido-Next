@@ -178,6 +178,10 @@ export const ExpenseModal: React.FC<ExpenseModalProps> = ({
 
   // Header attachment button: save a photo/file as a receipt attachment (no OCR).
   const uploadInputRef = React.useRef<HTMLInputElement>(null);
+  // Set true when a scan just filled the form. The scanner-close handler reads
+  // title/amt from a stale render closure, so right after a successful scan they
+  // still look empty; this flag tells the close handler not to discard the modal.
+  const scanJustCompletedRef = React.useRef(false);
   const [showAttachMenu, setShowAttachMenu] = React.useState(false);
   const [showCameraCapture, setShowCameraCapture] = React.useState(false);
   const addAttachmentDataUrl = (dataUrl: string) => {
@@ -2102,6 +2106,12 @@ export const ExpenseModal: React.FC<ExpenseModalProps> = ({
             setShowScannerModal={(show) => {
               setShowScannerModal(show);
               if (!show) {
+                // A successful scan just populated the form — keep the modal open
+                // even though title/amt still read empty in this stale closure.
+                if (scanJustCompletedRef.current) {
+                  scanJustCompletedRef.current = false;
+                  return;
+                }
                 const hasNoData = !title.trim() && (!amt || parseFloat(amt.toString()) === 0);
                 const isNew = !editingExpense || !editingExpense.id;
                 if (hasNoData && isNew) {
@@ -2110,7 +2120,10 @@ export const ExpenseModal: React.FC<ExpenseModalProps> = ({
               }
             }}
             curr={curr}
-            onScanComplete={handleScanComplete}
+            onScanComplete={(data) => {
+              scanJustCompletedRef.current = true;
+              handleScanComplete(data);
+            }}
           />
         </React.Suspense>
       )}
