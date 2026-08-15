@@ -57,6 +57,8 @@ interface GroupDetailProps {
   activeTab?: 'expenses' | 'balances' | 'photos';
   setActiveTab?: (tab: 'expenses' | 'balances' | 'photos') => void;
   onPhotoViewerChange?: (isOpen: boolean) => void;
+  showFriendsList?: boolean;
+  setShowFriendsList?: (b: boolean) => void;
 }
 
 export const GroupDetail: React.FC<GroupDetailProps> = ({
@@ -104,6 +106,8 @@ export const GroupDetail: React.FC<GroupDetailProps> = ({
   activeTab: propActiveTab,
   setActiveTab: propSetActiveTab,
   onPhotoViewerChange,
+  showFriendsList: propShowFriendsList,
+  setShowFriendsList: propSetShowFriendsList,
 }) => {
   const {
     currentId,
@@ -126,8 +130,8 @@ export const GroupDetail: React.FC<GroupDetailProps> = ({
     setOpenExpId,
     showExportMenu,
     setShowExportMenu,
-    showFriendsList,
-    setShowFriendsList,
+    showFriendsList: hookShowFriendsList,
+    setShowFriendsList: hookSetShowFriendsList,
     showPaybackPlan,
     setShowPaybackPlan,
     showInfo,
@@ -164,6 +168,8 @@ export const GroupDetail: React.FC<GroupDetailProps> = ({
 
   const activeTab = propActiveTab !== undefined ? propActiveTab : hookActiveTab;
   const setActiveTab = propSetActiveTab !== undefined ? propSetActiveTab : hookSetActiveTab;
+  const showFriendsList = propShowFriendsList !== undefined ? propShowFriendsList : hookShowFriendsList;
+  const setShowFriendsList = propSetShowFriendsList !== undefined ? propSetShowFriendsList : hookSetShowFriendsList;
 
   const activeMembers = selectedGroup ? selectedGroup.members.filter((m) => !m.endsWith(' (Left)')) : [];
   const isAdmin = selectedGroup ? (activeMembers[0] === me || activeMembers[0] === 'You') : false;

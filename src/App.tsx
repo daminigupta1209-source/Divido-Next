@@ -68,6 +68,7 @@ function App() {
   const [autoOpenScanner, setAutoOpenScanner] = useState<boolean>(false);
   const [editingExpense, setEditingExpense] = useState<Expense | null>(null);
   const [showAddFriendModal, setShowAddFriendModal] = useState<boolean>(false);
+  const [showFriendsList, setShowFriendsList] = useState<boolean>(false);
   const [addFriendShareOnly, setAddFriendShareOnly] = useState<boolean>(false);
   // Prefer the phone's native share sheet (all apps open directly). Only fall
   // back to the in-app share popup when the device has no Web Share (desktop).
@@ -312,6 +313,7 @@ function App() {
     mobileShowGroupOptionsMenu,
     editingSettle,
     globalSettleData,
+    showFriendsList,
     confirmState: {
       show: confirmState?.show || false,
       title: confirmState?.title || '',
@@ -341,6 +343,7 @@ function App() {
         setMobileShowGroupOptionsMenu(!!ui.mobileShowGroupOptionsMenu);
         setEditingSettle(ui.editingSettle || null);
         setGlobalSettleData(ui.globalSettleData || null);
+        setShowFriendsList(!!ui.showFriendsList);
         setConfirmState({ show: false });
       } else {
         const currentUi = getUiState();
@@ -360,7 +363,7 @@ function App() {
   }, [
     view, selectedId, showExpModal, showSettleModal, showAddFriendModal,
     showGroupSettleList, showMembersHealth, qrModalData, showConvertModalId,
-    showNotifPanel, mobileShowGroupOptionsMenu, editingSettle, globalSettleData, confirmState
+    showNotifPanel, mobileShowGroupOptionsMenu, editingSettle, globalSettleData, showFriendsList, confirmState
   ]);
 
   // 2. Watch for user changes and push states
@@ -393,6 +396,7 @@ function App() {
         prev.showConvertModalId !== currentUi.showConvertModalId ||
         prev.showNotifPanel !== currentUi.showNotifPanel ||
         prev.mobileShowGroupOptionsMenu !== currentUi.mobileShowGroupOptionsMenu ||
+        prev.showFriendsList !== currentUi.showFriendsList ||
         JSON.stringify(prev.editingSettle) !== JSON.stringify(currentUi.editingSettle) ||
         JSON.stringify(prev.globalSettleData) !== JSON.stringify(currentUi.globalSettleData) ||
         JSON.stringify(prev.confirmState) !== JSON.stringify(currentUi.confirmState);
@@ -404,7 +408,7 @@ function App() {
   }, [
     view, selectedId, showExpModal, showSettleModal, showAddFriendModal,
     showGroupSettleList, showMembersHealth, qrModalData, showConvertModalId,
-    showNotifPanel, mobileShowGroupOptionsMenu, editingSettle, globalSettleData, confirmState
+    showNotifPanel, mobileShowGroupOptionsMenu, editingSettle, globalSettleData, showFriendsList, confirmState
   ]);
 
   // Header search should never linger — close it when leaving the home / settle pages.
@@ -2342,6 +2346,8 @@ function App() {
           <GroupDetail
             activeTab={groupDetailTab}
             setActiveTab={setGroupDetailTab}
+            showFriendsList={showFriendsList}
+            setShowFriendsList={setShowFriendsList}
             onPhotoViewerChange={setIsPhotoViewerOpen}
             onShareGroupLink={openGroupShareLink}
             selectedId={selectedId}
