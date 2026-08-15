@@ -1870,7 +1870,7 @@ export const ExpenseModal: React.FC<ExpenseModalProps> = ({
               }
             }}
           >
-            {editingExpense ? 'Save Changes' : 'Record Expense'}
+            {editingExpense && editingExpense.id && !String(editingExpense.id).startsWith('temp-') ? 'Save Changes' : 'Record Expense'}
           </button>
         </div>
       </div>
