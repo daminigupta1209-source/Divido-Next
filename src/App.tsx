@@ -3690,13 +3690,13 @@ function App() {
             <div className={`b-nav-btn ${view === 'detail' && groupDetailTab === 'balances' ? 'active' : ''}`} onClick={() => { setView('detail'); setGroupDetailTab('balances'); }}>
               <span className="b-nav-icon" style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: '24px', height: '24px' }}>
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" style={{ width: '22px', height: '22px' }}>
-                  <line x1="12" y1="2" x2="12" y2="22" />
-                  <line x1="5" y1="7" x2="19" y2="7" />
-                  <path d="M5 9c0 3 1.5 5 3.5 5S12 12 12 9" />
-                  <path d="M12 9c0 3 1.5 5 3.5 5S19 12 19 9" />
+                  <path d="M20 17H4" />
+                  <path d="m8 21-4-4 4-4" />
+                  <path d="M4 7h16" />
+                  <path d="m16 3 4 4-4 4" />
                 </svg>
               </span>
-              <span>Balances</span>
+              <span>Settle</span>
             </div>
           ) : (
             <div className={`b-nav-btn ${view === 'friends' ? 'active' : ''}`} onClick={() => setView('friends')}>
