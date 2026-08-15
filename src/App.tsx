@@ -2772,6 +2772,42 @@ function App() {
           now handles Add Expense everywhere, and scanning lives inside the
           expense screen. */}
 
+      {/* Floating "+ Group" button — home screen only. Orange so it stands apart
+          from the green Add Expense actions; sits above the bottom nav. */}
+      {view === 'summary' && !isPhotoViewerOpen && (
+        <button
+          onClick={createGroupSecure}
+          aria-label="New group"
+          style={{
+            position: 'fixed',
+            bottom: '92px',
+            right: '20px',
+            zIndex: 1000,
+            height: '46px',
+            padding: '0 18px',
+            borderRadius: '23px',
+            background: 'linear-gradient(135deg, #FB923C 0%, #F97316 100%)',
+            border: 'none',
+            color: '#FFFFFF',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            gap: '6px',
+            cursor: 'pointer',
+            boxShadow: '0 6px 16px rgba(249, 115, 22, 0.35)',
+            transition: '0.2s all cubic-bezier(0.175, 0.885, 0.32, 1.275)',
+          }}
+          onMouseEnter={(e) => { e.currentTarget.style.transform = 'scale(1.04)'; }}
+          onMouseLeave={(e) => { e.currentTarget.style.transform = 'scale(1)'; }}
+        >
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.6" strokeLinecap="round" strokeLinejoin="round" style={{ width: '18px', height: '18px' }}>
+            <line x1="12" y1="5" x2="12" y2="19" />
+            <line x1="5" y1="12" x2="19" y2="12" />
+          </svg>
+          <span style={{ fontSize: '14px', fontWeight: 800, whiteSpace: 'nowrap' }}>Group</span>
+        </button>
+      )}
+
 
 
       {showExpModal && (
