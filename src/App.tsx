@@ -2800,11 +2800,11 @@ function App() {
           onMouseEnter={(e) => { e.currentTarget.style.transform = 'scale(1.04)'; }}
           onMouseLeave={(e) => { e.currentTarget.style.transform = 'scale(1)'; }}
         >
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.6" strokeLinecap="round" strokeLinejoin="round" style={{ width: '18px', height: '18px' }}>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.6" strokeLinecap="round" strokeLinejoin="round" style={{ width: '18px', height: '18px', display: 'block', flexShrink: 0 }}>
             <line x1="12" y1="5" x2="12" y2="19" />
             <line x1="5" y1="12" x2="19" y2="12" />
           </svg>
-          <span style={{ fontSize: '14px', fontWeight: 800, whiteSpace: 'nowrap' }}>Group</span>
+          <span style={{ fontSize: '14px', fontWeight: 800, whiteSpace: 'nowrap', lineHeight: 1, display: 'block' }}>Group</span>
         </button>
       )}
 
