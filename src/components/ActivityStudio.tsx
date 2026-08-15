@@ -636,58 +636,7 @@ export const ActivityStudio: React.FC<ActivityStudioProps> = ({
                           {e.currency || '₹'} {formatCompactAmount(parseFloat(e.amt.toString()) || 0)}
                         </span>
                       </div>
-                      <div className="dropdown" style={{ position: 'relative' }} onClick={(ev) => ev.stopPropagation()}>
-                        <div
-                          style={{ fontSize: '20px', color: 'var(--g)', padding: '6px', cursor: 'pointer', opacity: 0.4 }}
-                          onClick={() => setOpenDropdownId(openDropdownId === e.id ? null : e.id)}
-                        >
-                          ⋮
-                        </div>
-                        {openDropdownId === e.id && (
-                          <div
-                            className="card shadow-xl"
-                            style={{
-                              position: 'absolute',
-                              right: 0,
-                              top: '100%',
-                              background: 'var(--w)',
-                              zIndex: 100,
-                              minWidth: '120px',
-                              padding: '6px',
-                              borderRadius: '12px',
-                              border: '1.5px solid #F1F5F9',
-                            }}
-                          >
-                            <div
-                              onClick={() => {
-                                handleEdit(e);
-                                setOpenDropdownId(null);
-                              }}
-                              style={{ padding: '8px 10px', fontSize: '12px', fontWeight: 800, cursor: 'pointer', borderRadius: '8px' }}
-                              className="hover-bg"
-                            >
-                              ✏️ Edit
-                            </div>
-                            <div
-                              onClick={() => {
-                                if (confirm('Delete this activity?')) deleteExpense(e.id);
-                                setOpenDropdownId(null);
-                              }}
-                              style={{
-                                padding: '8px 10px',
-                                fontSize: '12px',
-                                fontWeight: 800,
-                                cursor: 'pointer',
-                                color: '#DB2777',
-                                borderRadius: '8px',
-                              }}
-                              className="hover-bg"
-                            >
-                              🗑️ Delete
-                            </div>
-                          </div>
-                        )}
-                      </div>
+
                     </div>
                   </div>
                 )}
