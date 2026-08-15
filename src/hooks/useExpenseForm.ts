@@ -84,11 +84,13 @@ export function useExpenseForm({
   }, [localGId, groups, expenses, me, defaultCurrency]);
 
   const [selectedSplitters, setSelectedSplitters] = useState<string[]>(() => {
-    if (editingExpense && Array.isArray(editingExpense.splitters)) {
+    // Only reuse a saved selection when it actually has members. A new expense
+    // is created with splitters: [], which should default to "everyone selected".
+    if (editingExpense && Array.isArray(editingExpense.splitters) && editingExpense.splitters.length > 0) {
       return editingExpense.splitters;
     }
     if (activeGroup && Array.isArray(activeGroup.members)) {
-      return localGId === 'STANDALONE' ? [me] : Array.from(new Set(activeGroup.members));
+      return localGId === 'STANDALONE' ? [me] : Array.from(new Set(activeGroup.members)).filter((m) => !m.endsWith(' (Left)'));
     }
     return [me];
   });
@@ -312,8 +314,15 @@ export function useExpenseForm({
     if (!activeGroup) return;
 
     if (editingExpense && String(localGId) === String(editingExpense.gId)) {
-      // Back on the expense's original group — restore its original selection
-      setSelectedSplitters(Array.isArray(editingExpense.splitters) ? editingExpense.splitters : [me]);
+      // Back on the expense's original group — restore its saved selection, but
+      // a new expense has an empty splitters list, so fall back to all members.
+      setSelectedSplitters(
+        Array.isArray(editingExpense.splitters) && editingExpense.splitters.length > 0
+          ? editingExpense.splitters
+          : localGId === 'STANDALONE'
+          ? [me]
+          : Array.from(new Set(activeGroup.members)).filter((m) => !m.endsWith(' (Left)'))
+      );
       setShares(editingExpense.shares || {});
       setManualEdits(new Set());
       setPayer(editingExpense.paid || me);
