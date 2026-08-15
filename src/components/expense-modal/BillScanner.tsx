@@ -607,8 +607,11 @@ If a valid receipt: {"title": "Sunrise Foods", "amount": 5445.30, "notes": "Groc
       setScanPreview(null);
     }
 
+    // Prefer a locally-saved key, else the build-time env key. No hard-coded
+    // fallback — an invalid key just causes 401s. With no key we skip Gemini
+    // and go straight to local OCR.
     const savedApiKey = localStorage.getItem('divido_gemini_api_key');
-    const apiKey = savedApiKey || 'AQ.Ab8RN6JN1JsYhCdTl3JsabQgBhP1qLFGNDv3qpmYbWXeicY9yw';
+    const apiKey = savedApiKey || import.meta.env.VITE_GEMINI_API_KEY || '';
     if (apiKey) {
       runGeminiScan(file, apiKey);
     } else {
