@@ -62,7 +62,7 @@ export function useGroupDetailForm({
   const [showFriendsList, setShowFriendsList] = useState(false);
   const [showPaybackPlan, setShowPaybackPlan] = useState(false);
   const [showInfo, setShowInfo] = useState(false);
-  const [activeTab, setActiveTab] = useState<'expenses' | 'balances'>('expenses');
+  const [activeTab, setActiveTab] = useState<'expenses' | 'balances' | 'photos'>('expenses');
   const [filterFriend, setFilterFriend] = useState<string>('all');
   const [filterType, setFilterType] = useState<string>('all');
   const [showGroupOptionsMenu, setShowGroupOptionsMenu] = useState(false);

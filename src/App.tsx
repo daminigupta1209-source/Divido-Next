@@ -60,7 +60,7 @@ function App() {
   const [view, setView] = useState<string>('summary');
   const [selectedId, setSelectedId] = useState<string | number | null>(null);
   const [editingGroupId, setEditingGroupId] = useState<string | number | null>(null);
-  const [groupDetailTab, setGroupDetailTab] = useState<'expenses' | 'balances'>('expenses');
+  const [groupDetailTab, setGroupDetailTab] = useState<'expenses' | 'balances' | 'photos'>('expenses');
   const [isPhotoViewerOpen, setIsPhotoViewerOpen] = useState<boolean>(false);
   const [showGalleryFilters, setShowGalleryFilters] = useState<boolean>(false);
   const [showCurrPickerId, setShowCurrPickerId] = useState<string | null>(null);
@@ -2342,6 +2342,7 @@ function App() {
           <GroupDetail
             activeTab={groupDetailTab}
             setActiveTab={setGroupDetailTab}
+            onPhotoViewerChange={setIsPhotoViewerOpen}
             onShareGroupLink={openGroupShareLink}
             selectedId={selectedId}
             groups={groups}

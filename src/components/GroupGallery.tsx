@@ -162,10 +162,81 @@ export const GroupGallery: React.FC<GroupGalleryProps> = ({
 
   return (
     <div className="content-width-limit" style={{ paddingBottom: '24px', boxSizing: 'border-box' }}>
-      
+      {/* Search and filter row - matching Activities */}
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', paddingLeft: '8px', paddingRight: '8px', marginBottom: '14px' }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '12px', position: 'relative', width: '100%' }}>
+          {/* Search bar */}
+          <div style={{ position: 'relative', flex: 1, maxWidth: '240px', lineHeight: 0, fontSize: 0 }}>
+            <svg
+              viewBox="0 0 24 24" fill="none"
+              stroke="currentColor" strokeWidth="2.5"
+              strokeLinecap="round" strokeLinejoin="round"
+              style={{
+                position: 'absolute',
+                left: '12px',
+                top: '50%',
+                transform: 'translateY(-50%)',
+                width: '13px',
+                height: '13px',
+                opacity: 0.4,
+                pointerEvents: 'none',
+                color: '#64748B',
+                zIndex: 2,
+              }}
+            >
+              <circle cx="11" cy="11" r="8" />
+              <line x1="21" y1="21" x2="16.65" y2="16.65" />
+            </svg>
+            <input
+              type="text"
+              placeholder="Search photos..."
+              value={searchQuery}
+              onChange={(e) => propSearchQuery !== undefined ? {} : setLocalSearchQuery(e.target.value)}
+              style={{
+                display: 'block',
+                width: '100%',
+                height: '38px',
+                lineHeight: 'normal',
+                fontSize: '13px',
+                padding: '0 12px 0 34px',
+                borderRadius: '24px',
+                border: '2px solid #F1F5F9',
+                outline: 'none',
+                fontWeight: 600,
+                margin: 0,
+                background: 'var(--w)',
+                color: '#475569',
+                boxSizing: 'border-box',
+                verticalAlign: 'top',
+              }}
+            />
+          </div>
 
-
-      {/* Filter dropdown pills */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexShrink: 0 }}>
+            <button
+              onClick={() => setShowFilters(!showFilters)}
+              title="Filter Photos"
+              style={{
+                background: showFilters ? '#F0FDF4' : 'none',
+                border: showFilters ? '1.5px solid #BBF7D0' : 'none',
+                padding: '8px',
+                cursor: 'pointer',
+                borderRadius: '8px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                color: showFilters ? '#16A34A' : '#64748B',
+                width: '38px',
+                height: '38px',
+              }}
+            >
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" style={{ width: '18px', height: '18px' }}>
+                <polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3" />
+              </svg>
+            </button>
+          </div>
+        </div>
+      </div>
       {showFilters && (
         <div style={{ display: 'flex', gap: '8px', animation: 'fadeIn 0.2s ease-out', marginBottom: '16px', flexWrap: 'wrap' }}>
           <StyledDropdown

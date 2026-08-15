@@ -16,8 +16,8 @@ interface MobileHeaderProps {
   onEditGroup?: (id: string | number) => void;
   setView: (v: string) => void;
   setSelectedId?: (id: any) => void;
-  groupDetailTab?: 'expenses' | 'balances';
-  setGroupDetailTab?: (tab: 'expenses' | 'balances') => void;
+  groupDetailTab?: 'expenses' | 'balances' | 'photos';
+  setGroupDetailTab?: (tab: 'expenses' | 'balances' | 'photos') => void;
   headerRenaming: boolean;
   setHeaderRenaming: (b: boolean) => void;
   headerNewName: string;
@@ -289,7 +289,7 @@ export const MobileHeader: React.FC<MobileHeaderProps> = ({
           <div style={{ display: 'flex', alignItems: 'center', width: '100%', height: '100%', gap: '10px' }}>
             <button
               onClick={() => {
-                if (groupDetailTab === 'balances') {
+                if (groupDetailTab === 'balances' || groupDetailTab === 'photos') {
                   if (setGroupDetailTab) setGroupDetailTab('expenses');
                 } else {
                   if (setSelectedId) setSelectedId(null);

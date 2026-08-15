@@ -10,6 +10,7 @@ import { GroupHeader } from './group-detail/GroupHeader';
 import { GroupMemberList } from './group-detail/GroupMemberList';
 import { PaybackPlan } from './group-detail/PaybackPlan';
 import { ExpenseList } from './group-detail/ExpenseList';
+import { GroupGallery } from './GroupGallery';
 
 interface GroupDetailProps {
   selectedId: string | number | null;
@@ -53,8 +54,9 @@ interface GroupDetailProps {
   onRequestRejoin?: () => Promise<void>;
   wasRemovedByAdmin?: boolean;
   onCreateGroup?: () => void;
-  activeTab?: 'expenses' | 'balances';
-  setActiveTab?: (tab: 'expenses' | 'balances') => void;
+  activeTab?: 'expenses' | 'balances' | 'photos';
+  setActiveTab?: (tab: 'expenses' | 'balances' | 'photos') => void;
+  onPhotoViewerChange?: (isOpen: boolean) => void;
 }
 
 export const GroupDetail: React.FC<GroupDetailProps> = ({
@@ -101,6 +103,7 @@ export const GroupDetail: React.FC<GroupDetailProps> = ({
   onCreateGroup,
   activeTab: propActiveTab,
   setActiveTab: propSetActiveTab,
+  onPhotoViewerChange,
 }) => {
   const {
     currentId,
@@ -195,10 +198,12 @@ export const GroupDetail: React.FC<GroupDetailProps> = ({
     const dx = t.clientX - swipeStart.current.x;
     const dy = t.clientY - swipeStart.current.y;
     swipeStart.current = null;
-    // Only treat as a horizontal swipe when it's clearly sideways, not a scroll.
     if (Math.abs(dx) > 60 && Math.abs(dx) > Math.abs(dy) * 1.5) {
-      if (dx < 0) setActiveTab('balances');
-      else setActiveTab('expenses');
+      if (dx < 0) {
+        if (activeTab === 'expenses' && setActiveTab) setActiveTab('photos');
+      } else {
+        if (activeTab === 'photos' && setActiveTab) setActiveTab('expenses');
+      }
     }
   };
 
@@ -631,16 +636,12 @@ export const GroupDetail: React.FC<GroupDetailProps> = ({
           marginTop: '10px',
         }}>
           {(['expenses', 'photos'] as const).map((tab) => {
-            const isActive = tab === 'expenses';
+            const isActive = tab === activeTab;
             return (
               <button
                 key={tab}
                 onClick={() => {
-                  if (tab === 'photos') {
-                    setView('gallery');
-                  } else {
-                    setActiveTab('expenses');
-                  }
+                  if (setActiveTab) setActiveTab(tab);
                 }}
                 style={{
                   flex: 1,
@@ -1161,6 +1162,21 @@ export const GroupDetail: React.FC<GroupDetailProps> = ({
           selectedTag={selectedTag}
           setSelectedTag={setSelectedTag}
           groupUniqueTags={groupUniqueTags}
+        />
+      )}
+
+      {activeTab === 'photos' && (
+        <GroupGallery
+          selectedId={selectedId}
+          groups={groups}
+          expenses={expenses}
+          me={me}
+          setView={setView}
+          setEditingExpense={setEditingExpense}
+          setShowExpModal={setShowExpModal}
+          setEditingSettle={setEditingSettle}
+          setShowSettleModal={setShowSettleModal}
+          onPhotoViewerChange={onPhotoViewerChange}
         />
       )}
 
