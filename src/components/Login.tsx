@@ -226,14 +226,6 @@ export const Login: React.FC<LoginProps> = ({ onLoginSuccess, currentTheme }) =>
           {loading ? 'Signing in...' : 'Continue with Google'}
         </button>
 
-        {/* Some mobile browsers show an "Install" prompt that can swallow the
-            first tap, and Google is stricter about sign-in inside a plain
-            browser tab. Installing the app (a trusted full-screen window) makes
-            sign-in reliable, so point stuck users to that escape hatch. */}
-        <p style={{ fontSize: '12px', color: '#94A3B8', lineHeight: '1.5', marginTop: '16px', fontWeight: 600 }}>
-          📲 Sign-in stuck? Install the app from your browser menu, then open it from your home screen.
-        </p>
-
         <p style={{ fontSize: '11px', color: '#64748B', lineHeight: '1.5', marginTop: '36px' }}>
           By continuing, you accept our <span style={{ textDecoration: 'underline', cursor: 'pointer' }}>Privacy Policy</span> and <span style={{ textDecoration: 'underline', cursor: 'pointer' }}>Terms of Use</span>.
         </p>
