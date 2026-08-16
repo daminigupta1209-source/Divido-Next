@@ -2818,14 +2818,13 @@ function App() {
             <span
               style={{
                 position: 'absolute',
-                left: '7.5px',
-                right: '7.5px',
+                left: '3px',
+                right: '3px',
                 top: '5px',
                 height: '2px',
-                background: '#FFFFFF',
+                background: 'linear-gradient(90deg, transparent, #FFFFFF, transparent)',
                 borderRadius: '2px',
-                boxShadow: '0 0 6px rgba(255,255,255,0.9)',
-                animation: 'divido-scanline 1.4s ease-in-out infinite',
+                animation: 'divido-scanline 1.5s ease-in-out infinite',
               }}
             />
           </span>
