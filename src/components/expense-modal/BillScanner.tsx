@@ -339,7 +339,10 @@ export const BillScanner: React.FC<BillScannerProps> = ({
   const [scanProgress, setScanProgress] = useState<number>(0);
   const [scannerStatus, setScannerStatus] = useState<string>('');
   const [scanError, setScanError] = useState<string>('');
-  const [isCameraLive, setIsCameraLive] = useState<boolean>(true);
+  // Default false so the scanner opens on the Camera / Upload choice screen,
+  // where "Camera" uses the phone's native camera. (The old in-app live feed
+  // defaulted to true and opened straight into a low-quality video.)
+  const [isCameraLive, setIsCameraLive] = useState<boolean>(false);
   const [cameraError, setCameraError] = useState<string>('');
 
   const videoRef = useRef<HTMLVideoElement | null>(null);
