@@ -347,6 +347,22 @@ export const BillScanner: React.FC<BillScannerProps> = ({
 
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const streamRef = useRef<MediaStream | null>(null);
+  const autoPickedRef = useRef(false);
+
+  // Open the phone's native picker (Camera + Gallery + Files in one sheet) as
+  // soon as the scanner opens — same one-tap flow as the attachment button. If
+  // the browser blocks the programmatic open (no user gesture), the underlying
+  // Camera / Upload choice screen is still there as a fallback.
+  useEffect(() => {
+    if (!showScannerModal) {
+      autoPickedRef.current = false;
+      return;
+    }
+    if (!scanFile && !autoPickedRef.current) {
+      autoPickedRef.current = true;
+      document.getElementById('receipt-file-input')?.click();
+    }
+  }, [showScannerModal, scanFile]);
 
   useEffect(() => {
     if (isCameraLive) {
