@@ -2779,6 +2779,59 @@ function App() {
         </button>
       )}
 
+      {/* Floating Scan button — inside a group only. Squarish, orange (distinct
+          from the green + Expense), with an animated scan line. */}
+      {((view === 'detail' || view === 'gallery' || view === 'analytics') && selectedId) && !isPhotoViewerOpen && (
+        <button
+          onClick={() => addExpenseFromNav(true)}
+          aria-label="Scan receipt"
+          style={{
+            position: 'fixed',
+            bottom: '100px',
+            right: '20px',
+            zIndex: 1000,
+            width: '48px',
+            height: '48px',
+            borderRadius: '15px',
+            background: 'linear-gradient(135deg, #FB923C 0%, #F97316 100%)',
+            border: 'none',
+            cursor: 'pointer',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            boxShadow: '0 6px 16px rgba(249, 115, 22, 0.35)',
+            transition: '0.2s all cubic-bezier(0.175, 0.885, 0.32, 1.275)',
+          }}
+          onMouseEnter={(e) => { e.currentTarget.style.transform = 'scale(1.05)'; }}
+          onMouseLeave={(e) => { e.currentTarget.style.transform = 'scale(1)'; }}
+        >
+          <style>{`@keyframes divido-scanline{0%{transform:translateY(0)}50%{transform:translateY(14px)}100%{transform:translateY(0)}}`}</style>
+          <span style={{ position: 'relative', width: '24px', height: '24px', display: 'block' }}>
+            {/* Viewfinder corner brackets */}
+            <svg viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" style={{ width: '24px', height: '24px', display: 'block' }}>
+              <path d="M4 8V6a2 2 0 0 1 2-2h2" />
+              <path d="M16 4h2a2 2 0 0 1 2 2v2" />
+              <path d="M20 16v2a2 2 0 0 1-2 2h-2" />
+              <path d="M8 20H6a2 2 0 0 1-2-2v-2" />
+            </svg>
+            {/* Animated scan line sweeping up and down */}
+            <span
+              style={{
+                position: 'absolute',
+                left: '4px',
+                right: '4px',
+                top: '5px',
+                height: '2px',
+                background: '#FFFFFF',
+                borderRadius: '2px',
+                boxShadow: '0 0 6px rgba(255,255,255,0.9)',
+                animation: 'divido-scanline 1.4s ease-in-out infinite',
+              }}
+            />
+          </span>
+        </button>
+      )}
+
 
 
       {showExpModal && (
