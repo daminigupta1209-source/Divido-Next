@@ -739,7 +739,7 @@ export const ExpenseModal: React.FC<ExpenseModalProps> = ({
                 color: 'var(--t)',
                 opacity: 0.7,
               }}
-              onClick={() => setShowAttachMenu(true)}
+              onClick={() => uploadInputRef.current?.click()}
               title="Add attachment"
             >
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
@@ -2340,7 +2340,7 @@ export const ExpenseModal: React.FC<ExpenseModalProps> = ({
             <div style={{ display: 'flex', gap: '10px', alignItems: 'center', marginTop: '4px' }}>
               <button
                 type="button"
-                onClick={() => setShowAttachMenu(true)}
+                onClick={() => uploadInputRef.current?.click()}
                 title="Attach another photo"
                 style={{
                   display: 'flex',
