@@ -717,58 +717,15 @@ function App() {
     const cleanNew = newName.trim();
     if (!cleanNew) return;
 
-    const oldFirstName = userName.split(' ')[0];
-    const newFirstName = cleanNew.split(' ')[0];
-
-    if (oldFirstName !== newFirstName) {
-      // Update groups
-      const updatedGroups = groups.map((g) => {
-        const newMembers = g.members.map((m) => (m === oldFirstName ? newFirstName : m));
-        return { ...g, members: newMembers };
-      });
-      setGroups(updatedGroups);
-
-      // Update expenses
-      const updatedExpenses = expenses.map((e) => {
-        const newPaid = e.paid === oldFirstName ? newFirstName : e.paid;
-        const newSplitters = e.splitters
-          ? e.splitters.map((m) => (m === oldFirstName ? newFirstName : m))
-          : [];
-
-        let newShares = e.shares;
-        if (e.shares && e.shares[oldFirstName] !== undefined) {
-          newShares = { ...e.shares };
-          newShares[newFirstName] = newShares[oldFirstName];
-          delete newShares[oldFirstName];
-        }
-
-        return {
-          ...e,
-          paid: newPaid,
-          splitters: newSplitters,
-          shares: newShares,
-        } as Expense;
-      });
-      setExpenses(updatedExpenses);
-    }
-
+    // Option 3: a profile-name change is account-only. It no longer reaches into
+    // groups — each group keeps its own member name (set when you join/create it,
+    // or changed by the group admin). This stops a profile rename from (a)
+    // overwriting a custom per-group name, and (b) leaving old expenses pointing
+    // at a stale name (ghosts). Your name INSIDE a group is resolved from that
+    // group's own member row (see `me` and the divido_identity hydration on
+    // load), so balances are unaffected by this change.
     setUserName(cleanNew);
     localStorage.setItem('divido_username', cleanNew);
-
-    // Sync profile name change to Supabase group_members to prevent duplicates
-    if (userEmail) {
-      try {
-        const { error } = await supabase
-          .from('group_members')
-          .update({ name: cleanNew })
-          .eq('user_email', userEmail);
-        if (error) {
-          console.error('Failed to sync profile name change to Supabase group_members:', error);
-        }
-      } catch (err) {
-        console.error('Error syncing profile name change to Supabase:', err);
-      }
-    }
   };
 
   // When a user signs in after having claimed a guest identity, adopt those
