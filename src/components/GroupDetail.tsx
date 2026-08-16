@@ -542,7 +542,7 @@ export const GroupDetail: React.FC<GroupDetailProps> = ({
         />
       </div>
 
-      {(activeTab === 'expenses' || activeTab === 'photos') && (() => {
+      {(activeTab === 'expenses' || activeTab === 'photos' || activeTab === 'balances') && (() => {
         const groupBalForCard: Record<string, number> = {};
         finalTransactions.forEach((t) => {
           if (t.from === me) {
