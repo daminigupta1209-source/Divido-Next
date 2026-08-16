@@ -535,19 +535,8 @@ function App() {
         setUserName(newName);
       }
 
-      // 5. Audit note in the group activity
-      await supabase.from('expenses').insert({
-        group_id: groupId,
-        title: `📝 "${oldName}" is now "${newName}"`,
-        amt: 0,
-        paid: newName,
-        date: new Date().toISOString().split('T')[0],
-        category: 'System note',
-        mode: 'Equally',
-        splitters: [newName],
-      });
-
-      // 6. Let the other joined members know
+      // 5. Let the other joined members know (via notification only — a name
+      // change should not clutter the group's expense/activity feed).
       try {
         const { pushNotification } = await import('./lib/notifications');
         const grp = groups.find((g) => String(g.id) === String(groupId));
