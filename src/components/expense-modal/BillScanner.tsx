@@ -339,10 +339,7 @@ export const BillScanner: React.FC<BillScannerProps> = ({
   const [scanProgress, setScanProgress] = useState<number>(0);
   const [scannerStatus, setScannerStatus] = useState<string>('');
   const [scanError, setScanError] = useState<string>('');
-  // Default false so the scanner opens on the Camera / Upload choice screen,
-  // where "Camera" uses the phone's native camera. (The old in-app live feed
-  // defaulted to true and opened straight into a low-quality video.)
-  const [isCameraLive, setIsCameraLive] = useState<boolean>(false);
+  const [isCameraLive, setIsCameraLive] = useState<boolean>(true);
   const [cameraError, setCameraError] = useState<string>('');
 
   const videoRef = useRef<HTMLVideoElement | null>(null);
@@ -856,11 +853,9 @@ If a valid receipt: {"title": "Sunrise Foods", "amount": 5445.30, "notes": "Groc
         ) : (
           <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', padding: '4px 0' }}>
-              {/* Camera Option — uses the phone's native camera (higher quality
-                  than the in-app live feed). capture="environment" jumps straight
-                  to the rear camera on a phone; on desktop it's a normal picker. */}
+              {/* Camera Option */}
               <div
-                onClick={() => document.getElementById('receipt-camera-input')?.click()}
+                onClick={() => setIsCameraLive(true)}
                 className="hover-bg"
                 style={{
                   display: 'flex',
@@ -953,25 +948,11 @@ If a valid receipt: {"title": "Sunrise Foods", "amount": 5445.30, "notes": "Groc
           </div>
         )}
         
-        {/* File Input shared across scanner views (gallery / files, incl. PDF) */}
+        {/* File Input shared across scanner views */}
         <input
           id="receipt-file-input"
           type="file"
           accept="image/*,application/pdf"
-          onChange={(e) => {
-            const filesList = e.target.files;
-            if (filesList && filesList.length > 0) {
-              handleScannerImageUpload(filesList[0]);
-            }
-          }}
-          style={{ display: 'none' }}
-        />
-        {/* Native camera input — opens the phone's real camera directly. */}
-        <input
-          id="receipt-camera-input"
-          type="file"
-          accept="image/*"
-          capture="environment"
           onChange={(e) => {
             const filesList = e.target.files;
             if (filesList && filesList.length > 0) {
