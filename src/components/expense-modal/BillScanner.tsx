@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import Tesseract from 'tesseract.js';
+import { downscaleImageFile } from '../../lib/imageUtils';
 
 interface BillScannerProps {
   showScannerModal: boolean;
@@ -399,41 +400,10 @@ export const BillScanner: React.FC<BillScannerProps> = ({
     }
   };
 
-  // Downscale large photos before sending. Camera images are often several MB;
-  // shrinking to ~1280px and JPEG-compressing cuts the upload + AI time a lot
-  // while keeping receipt text readable. Non-images (e.g. PDFs) pass through.
-  const prepareScanImage = (file: File): Promise<string> =>
-    new Promise((resolve, reject) => {
-      const reader = new FileReader();
-      reader.onerror = reject;
-      if (!file.type.startsWith('image/')) {
-        reader.onload = () => resolve(reader.result as string);
-        reader.readAsDataURL(file);
-        return;
-      }
-      reader.onload = () => {
-        const img = new Image();
-        img.onload = () => {
-          const MAX = 1280;
-          let width = img.width;
-          let height = img.height;
-          if (width > MAX || height > MAX) {
-            if (width >= height) { height = Math.round((height * MAX) / width); width = MAX; }
-            else { width = Math.round((width * MAX) / height); height = MAX; }
-          }
-          const canvas = document.createElement('canvas');
-          canvas.width = width;
-          canvas.height = height;
-          const ctx = canvas.getContext('2d');
-          if (!ctx) { resolve(reader.result as string); return; }
-          ctx.drawImage(img, 0, 0, width, height);
-          resolve(canvas.toDataURL('image/jpeg', 0.72));
-        };
-        img.onerror = () => resolve(reader.result as string);
-        img.src = reader.result as string;
-      };
-      reader.readAsDataURL(file);
-    });
+  // Downscale via the memory-safe helper (createImageBitmap) — full-res camera
+  // photos otherwise crash lower-RAM phones. 1000px @ 0.65 keeps receipt text
+  // readable while staying small.
+  const prepareScanImage = (file: File): Promise<string> => downscaleImageFile(file, 1000, 0.65);
 
   const runGeminiScan = (file: File, apiKey: string) => {
     setScanProgress(10);
@@ -442,6 +412,9 @@ export const BillScanner: React.FC<BillScannerProps> = ({
       .then((result) => {
       const base64Data = result.split(',')[1];
       const mimeType = result.substring(5, result.indexOf(';')) || 'image/jpeg';
+      // Use the small compressed image for the on-screen preview too (holding the
+      // full-res data URL is what pushed memory over the edge).
+      setScanPreview(result);
       setScanProgress(40);
       setScannerStatus('AI Scanner: Analyzing receipt structure with Gemini...');
 
@@ -633,15 +606,10 @@ If a valid receipt: {"title": "Sunrise Foods", "amount": 5445.30, "notes": "Groc
   const handleScannerImageUpload = (file: File) => {
     setScanFile(file);
     setScanError('');
-    if (file.type.startsWith('image/')) {
-      const reader = new FileReader();
-      reader.onload = (e) => {
-        setScanPreview(e.target?.result as string);
-      };
-      reader.readAsDataURL(file);
-    } else {
-      setScanPreview(null);
-    }
+    // Preview is set from the small compressed image during the scan (see
+    // runGeminiScan). We deliberately do NOT read the full-res file here — that
+    // extra big data URL is what tipped lower-RAM phones into "low memory".
+    setScanPreview(null);
 
     // Prefer a locally-saved key, else the build-time env key. No hard-coded
     // fallback — an invalid key just causes 401s. With no key we skip Gemini

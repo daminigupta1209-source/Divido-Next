@@ -1,5 +1,6 @@
 import React from 'react';
 import { Group, Expense } from '../lib/types';
+import { downscaleImageFile } from '../lib/imageUtils';
 import { formatDate, GROUP_COLORS } from '../lib/utils';
 import { SearchableCurrencyPicker } from './SearchableCurrencyPicker';
 // Lazy-loaded: BillScanner pulls in tesseract.js (OCR), which is large. Loading
@@ -191,13 +192,19 @@ export const ExpenseModal: React.FC<ExpenseModalProps> = ({
     setActiveAttachmentIndex(newIndex);
     setShowAttachmentsPreview(true);
   };
-  const handlePhotoCapture = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
+  const handlePhotoCapture = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const input = e.target;
+    const file = input.files?.[0];
     if (!file) return;
-    const reader = new FileReader();
-    reader.onload = () => addAttachmentDataUrl(reader.result as string);
-    reader.readAsDataURL(file);
-    e.target.value = ''; // allow selecting the same file again
+    input.value = ''; // allow selecting the same file again
+    // Downscale first — full-res native-camera photos otherwise crash lower-RAM
+    // phones ("low memory") and bloat storage/sync.
+    try {
+      const dataUrl = await downscaleImageFile(file, 1280, 0.72);
+      addAttachmentDataUrl(dataUrl);
+    } catch (err) {
+      console.error('Attachment processing failed:', err);
+    }
   };
 
   return (
