@@ -271,6 +271,16 @@ function App() {
     setShowInfo(false);
   }, [view, selectedId]);
 
+  // Entering a group always defaults to the Activities tab. Keyed on selectedId
+  // only (not view), so tapping "Settle" — which changes the tab but not the
+  // selected group — is left alone; but leaving to home and re-entering the
+  // group resets it, instead of re-showing the Settle page.
+  useEffect(() => {
+    if (selectedId && selectedId !== 'STANDALONE') {
+      setGroupDetailTab('expenses');
+    }
+  }, [selectedId]);
+
   // Hide the header on scroll-down, reveal it the moment you scroll up (MakeMyTrip-style).
   useEffect(() => {
     const el = mainContentRef.current;
