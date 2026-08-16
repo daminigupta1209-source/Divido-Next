@@ -1238,7 +1238,10 @@ function App() {
   // Gated on profileSyncReady so we never push empty local defaults before the
   // server profile has loaded on a fresh device.
   useEffect(() => {
-    if (!userId || !profileSyncReady.current) return;
+    // Only write the profile when actually signed in. Without the isAuthenticated
+    // gate, a lingering userId (from a prior session) fires this on the login
+    // screen and the DB rejects it (401 / RLS) — noisy and pointless.
+    if (!isAuthenticated || !userId || !profileSyncReady.current) return;
     const key = userName.split(' ')[0];
     const md = userMetadata[key] || {};
     const upi = md.upiId || localStorage.getItem('divido_global_upi_id') || null;
@@ -1260,7 +1263,7 @@ function App() {
         });
     }, 800);
     return () => clearTimeout(t);
-  }, [userId, userName, userMetadata]);
+  }, [isAuthenticated, userId, userName, userMetadata]);
   useEffect(() => {
     document.body.setAttribute('data-theme', theme);
     localStorage.setItem('divido_theme', theme);
