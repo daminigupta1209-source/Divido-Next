@@ -681,7 +681,9 @@ If a valid receipt: {"title": "Sunrise Foods", "amount": 5445.30, "notes": "Groc
           background: 'rgba(255, 255, 255, 0.98)',
           border: '1.5px solid rgba(226, 232, 240, 0.8)',
           borderRadius: '20px',
-          width: '260px',
+          // Expand to a large, near-full-screen card while the live camera is on
+          // so the viewfinder is big and usable; stay compact otherwise.
+          width: isCameraLive ? 'min(94vw, 460px)' : '260px',
           padding: '10px',
           boxShadow: '0 25px 50px -12px rgba(0,0,0,0.25)',
           display: 'flex',
@@ -768,7 +770,7 @@ If a valid receipt: {"title": "Sunrise Foods", "amount": 5445.30, "notes": "Groc
           </div>
         ) : isCameraLive ? (
           <div style={{ display: 'flex', flexDirection: 'column', gap: '14px', alignItems: 'center' }}>
-            <div style={{ position: 'relative', width: '100%', height: '220px', borderRadius: '16px', overflow: 'hidden', background: '#000', border: '2px solid #10B981' }}>
+            <div style={{ position: 'relative', width: '100%', height: '68vh', maxHeight: '560px', borderRadius: '16px', overflow: 'hidden', background: '#000', border: '2px solid #10B981' }}>
               <video
                 ref={videoRef}
                 autoPlay
