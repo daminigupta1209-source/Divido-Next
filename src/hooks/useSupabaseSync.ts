@@ -2,7 +2,7 @@ import { useEffect, useRef, useState, useMemo } from 'react';
 import { supabase, uploadAttachment } from '../lib/supabaseClient';
 import { Group, Expense } from '../lib/types';
 import { checkIfDemoMode } from '../lib/demoMode';
-import { ensureArray, ensureObject } from '../lib/utils';
+import { ensureArray, ensureObject, isLegacyRenameLog } from '../lib/utils';
 
 // Fresh hidden person id for a new name-only member, so two people who share a
 // name in different groups stay separate. Signed-in members are left null and
@@ -484,7 +484,9 @@ export function useSupabaseSync({
           const belongsToSyncedGroup = mergedGroups.some(g => String(g.id) === String(e.gId));
           return belongsToSyncedGroup;
         });
-        const mergedExpenses = [...loadedExpenses, ...localOnlyExpenses];
+        // Drop legacy "X is now Y" name-change log rows so they can't reappear
+        // from a local cache or re-upload after being deleted.
+        const mergedExpenses = [...loadedExpenses, ...localOnlyExpenses].filter((e) => !isLegacyRenameLog(e));
 
         prevGroupsRef.current = loadedGroups;
         localStorage.setItem('divido_last_synced_groups', JSON.stringify(loadedGroups));

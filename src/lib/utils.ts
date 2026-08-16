@@ -4,6 +4,17 @@ export interface Currency {
   c: string; // Code (e.g. 'USD')
 }
 
+// Legacy "📝 \"X\" is now \"Y\"" name-change log entries were once written into
+// the expenses table. We stopped creating them, but old ones linger in local
+// caches (and re-upload as unsynced). Filter them out everywhere so they can't
+// show or come back.
+export const isLegacyRenameLog = (e: any): boolean => {
+  if (!e) return false;
+  if (e.category === 'System note') return true;
+  const t = String(e.title || '');
+  return t.startsWith('📝') && t.includes(' is now ');
+};
+
 export const worldCurrencies: Currency[] = [
   { s: 'AED', n: 'UAE Dirham', c: 'AED' },
   { s: 'AFN', n: 'Afghan Afghani', c: 'AFN' },

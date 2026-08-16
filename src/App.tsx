@@ -29,7 +29,7 @@ import { NetPayableModal } from './components/NetPayableModal';
 import { CurrencySetupModal } from './components/CurrencySetupModal';
 import { GroupGallery } from './components/GroupGallery';
 import { checkIfDemoMode } from './lib/demoMode';
-import { ensureArray, ensureObject } from './lib/utils';
+import { ensureArray, ensureObject, isLegacyRenameLog } from './lib/utils';
 import { useSupabaseSync } from './hooks/useSupabaseSync';
 import { useAppHotkeys } from './hooks/useAppHotkeys';
 import { useUndoStack } from './hooks/useUndoStack';
@@ -704,7 +704,7 @@ function App() {
     try {
       const saved = localStorage.getItem('divido_expenses');
       const parsed = saved && saved !== 'undefined' ? JSON.parse(saved) : [];
-      return parsed.map((e: any) => {
+      return parsed.filter((e: any) => !isLegacyRenameLog(e)).map((e: any) => {
         const splitters = ensureArray(e.splitters);
         const shares = ensureObject(e.shares);
         return { ...e, splitters, shares, amt: parseFloat(e.amt) || 0 };
