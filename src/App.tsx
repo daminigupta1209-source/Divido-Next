@@ -2818,8 +2818,8 @@ function App() {
             <span
               style={{
                 position: 'absolute',
-                left: '4px',
-                right: '4px',
+                left: '7.5px',
+                right: '7.5px',
                 top: '5px',
                 height: '2px',
                 background: '#FFFFFF',
