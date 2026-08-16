@@ -853,9 +853,11 @@ If a valid receipt: {"title": "Sunrise Foods", "amount": 5445.30, "notes": "Groc
         ) : (
           <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', padding: '4px 0' }}>
-              {/* Camera Option */}
+              {/* Camera Option — uses the phone's native camera (higher quality
+                  than the in-app live feed). capture="environment" jumps straight
+                  to the rear camera on a phone; on desktop it's a normal picker. */}
               <div
-                onClick={() => setIsCameraLive(true)}
+                onClick={() => document.getElementById('receipt-camera-input')?.click()}
                 className="hover-bg"
                 style={{
                   display: 'flex',
@@ -948,11 +950,25 @@ If a valid receipt: {"title": "Sunrise Foods", "amount": 5445.30, "notes": "Groc
           </div>
         )}
         
-        {/* File Input shared across scanner views */}
+        {/* File Input shared across scanner views (gallery / files, incl. PDF) */}
         <input
           id="receipt-file-input"
           type="file"
           accept="image/*,application/pdf"
+          onChange={(e) => {
+            const filesList = e.target.files;
+            if (filesList && filesList.length > 0) {
+              handleScannerImageUpload(filesList[0]);
+            }
+          }}
+          style={{ display: 'none' }}
+        />
+        {/* Native camera input — opens the phone's real camera directly. */}
+        <input
+          id="receipt-camera-input"
+          type="file"
+          accept="image/*"
+          capture="environment"
           onChange={(e) => {
             const filesList = e.target.files;
             if (filesList && filesList.length > 0) {
