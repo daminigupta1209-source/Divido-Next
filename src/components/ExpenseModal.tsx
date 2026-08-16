@@ -178,6 +178,7 @@ export const ExpenseModal: React.FC<ExpenseModalProps> = ({
 
   // Header attachment button: save a photo/file as a receipt attachment (no OCR).
   const uploadInputRef = React.useRef<HTMLInputElement>(null);
+  const cameraInputRef = React.useRef<HTMLInputElement>(null);
   // Set true when a scan just filled the form. The scanner-close handler reads
   // title/amt from a stale render closure, so right after a successful scan they
   // still look empty; this flag tells the close handler not to discard the modal.
@@ -625,6 +626,14 @@ export const ExpenseModal: React.FC<ExpenseModalProps> = ({
               style={{ display: 'none' }}
               onChange={handlePhotoCapture}
             />
+            <input
+              ref={cameraInputRef}
+              type="file"
+              accept="image/*"
+              capture="environment"
+              style={{ display: 'none' }}
+              onChange={handlePhotoCapture}
+            />
             {showAttachMenu && (
               <div
                 className="modal-overlay"
@@ -668,7 +677,7 @@ export const ExpenseModal: React.FC<ExpenseModalProps> = ({
                   <div
                     onClick={() => {
                       setShowAttachMenu(false);
-                      setShowCameraCapture(true);
+                      cameraInputRef.current?.click();
                     }}
                     className="hover-bg"
                     style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '12px', borderRadius: '12px', cursor: 'pointer' }}
@@ -739,7 +748,7 @@ export const ExpenseModal: React.FC<ExpenseModalProps> = ({
                 color: 'var(--t)',
                 opacity: 0.7,
               }}
-              onClick={() => uploadInputRef.current?.click()}
+              onClick={() => setShowAttachMenu(true)}
               title="Add attachment"
             >
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
@@ -2340,7 +2349,7 @@ export const ExpenseModal: React.FC<ExpenseModalProps> = ({
             <div style={{ display: 'flex', gap: '10px', alignItems: 'center', marginTop: '4px' }}>
               <button
                 type="button"
-                onClick={() => uploadInputRef.current?.click()}
+                onClick={() => setShowAttachMenu(true)}
                 title="Attach another photo"
                 style={{
                   display: 'flex',
