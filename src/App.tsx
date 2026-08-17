@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useLayoutEffect, useRef } from 'react';
 import { Login } from './components/Login';
 import { supabase } from './lib/supabaseClient';
 import { Sidebar } from './components/Sidebar';
@@ -905,7 +905,10 @@ function App() {
     };
   }, []);
 
-  useEffect(() => {
+  // useLayoutEffect so the settle items populate BEFORE the modal paints —
+  // otherwise the footer briefly shows one button then flips to two once items
+  // load, making the reminder button visibly jump.
+  useLayoutEffect(() => {
     if (globalSettleData) {
       const initial: any[] = [];
       const m = globalSettleData.name;
