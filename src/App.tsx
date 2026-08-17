@@ -3756,7 +3756,6 @@ function App() {
               return (
                 <div style={{ display: 'flex', gap: '12px', marginTop: '8px' }}>
                   <button
-                    className="hover-up"
                     style={{
                       flex: 1,
                       padding: '10px 14px',
@@ -3767,7 +3766,6 @@ function App() {
                       color: '#475569',
                       border: '1.5px solid #E2E8F0',
                       cursor: 'pointer',
-                      transition: '0.2s all',
                     }}
                     onClick={handleFinalGlobalSettle}
                   >
@@ -3775,7 +3773,6 @@ function App() {
                   </button>
                   <button
                     id="global-settle-submit-btn"
-                    className="hover-up"
                     style={{
                       flex: 1.2,
                       padding: '10px 14px',
@@ -3787,7 +3784,6 @@ function App() {
                       border: 'none',
                       cursor: 'pointer',
                       boxShadow: '0 4px 14px rgba(13, 148, 136, 0.1)',
-                      transition: '0.2s all',
                     }}
                     onClick={clickHandler}
                   >
