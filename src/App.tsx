@@ -65,14 +65,24 @@ const SettleAmountInput: React.FC<{
 }> = ({ inputId, amount, maxAmt, disabled, shake, onCommit, onExceed }) => {
   const toStr = (a: number | string) =>
     a === '' || a == null ? '' : String(typeof a === 'number' ? Math.round(a * 100) / 100 : a);
-  const [text, setText] = React.useState<string>(toStr(amount));
-  // Adopt an external change (e.g. the Max button) without clobbering live typing.
+  const ref = React.useRef<HTMLInputElement>(null);
+  const lastTyped = React.useRef<string>(toStr(amount));
+  // UNCONTROLLED input: the browser owns the text and caret, so no React
+  // re-render can ever move the cursor or clear/cross-wire the field while you
+  // type. We only push the DOM value from the prop when it changed externally
+  // (e.g. the Max button) AND the field isn't focused — never mid-type.
   React.useEffect(() => {
+    const el = ref.current;
+    if (!el || document.activeElement === el) return;
     const s = toStr(amount);
-    setText((cur) => (cur !== s ? s : cur));
+    if (s !== lastTyped.current && el.value !== s) {
+      el.value = s;
+      lastTyped.current = s;
+    }
   }, [amount]);
   return (
     <input
+      ref={ref}
       id={inputId}
       type="text"
       inputMode="decimal"
@@ -81,21 +91,26 @@ const SettleAmountInput: React.FC<{
       spellCheck="false"
       data-1p-ignore
       data-lpignore="true"
-      value={text}
+      defaultValue={toStr(amount)}
       disabled={disabled}
       onChange={(e) => {
         const v = e.target.value;
         if (v === '' || /^\d*\.?\d*$/.test(v)) {
           const cleaned = v.replace(/^0+(?=\d)/, '');
-          setText(cleaned);
+          if (cleaned !== v) e.target.value = cleaned;
+          lastTyped.current = cleaned;
           onCommit(cleaned);
+        } else {
+          // Reject invalid char: revert DOM to last good value.
+          e.target.value = lastTyped.current;
         }
       }}
-      onBlur={() => {
-        const num = parseFloat(text) || 0;
+      onBlur={(e) => {
+        const num = parseFloat(e.target.value) || 0;
         if (num > maxAmt) {
           onExceed();
-          setText(String(maxAmt));
+          e.target.value = String(maxAmt);
+          lastTyped.current = String(maxAmt);
           onCommit(maxAmt);
         }
       }}
