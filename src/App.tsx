@@ -51,6 +51,73 @@ const pageDescriptions: Record<string, string> = {
   detail: "View members, track expenses, and settle debts for this group."
 };
 
+// Editable amount box for the settle view. Owns its own text state so typing is
+// smooth (no cursor jumps, no cross-row edits from parent re-renders). Commits
+// the raw text to the parent for calculations; enforces the max on blur.
+const SettleAmountInput: React.FC<{
+  inputId: string;
+  amount: number | string;
+  maxAmt: number;
+  disabled: boolean;
+  shake: boolean;
+  onCommit: (v: number | string) => void;
+  onExceed: () => void;
+}> = ({ inputId, amount, maxAmt, disabled, shake, onCommit, onExceed }) => {
+  const toStr = (a: number | string) =>
+    a === '' || a == null ? '' : String(typeof a === 'number' ? Math.round(a * 100) / 100 : a);
+  const [text, setText] = React.useState<string>(toStr(amount));
+  // Adopt an external change (e.g. the Max button) without clobbering live typing.
+  React.useEffect(() => {
+    const s = toStr(amount);
+    setText((cur) => (cur !== s ? s : cur));
+  }, [amount]);
+  return (
+    <input
+      id={inputId}
+      type="text"
+      inputMode="decimal"
+      autoComplete="off"
+      autoCorrect="off"
+      spellCheck="false"
+      data-1p-ignore
+      data-lpignore="true"
+      value={text}
+      disabled={disabled}
+      onChange={(e) => {
+        const v = e.target.value;
+        if (v === '' || /^\d*\.?\d*$/.test(v)) {
+          const cleaned = v.replace(/^0+(?=\d)/, '');
+          setText(cleaned);
+          onCommit(cleaned);
+        }
+      }}
+      onBlur={() => {
+        const num = parseFloat(text) || 0;
+        if (num > maxAmt) {
+          onExceed();
+          setText(String(maxAmt));
+          onCommit(maxAmt);
+        }
+      }}
+      style={{
+        width: '76px',
+        height: '32px',
+        padding: '0 8px 0 20px',
+        margin: 0,
+        borderRadius: '8px',
+        border: `1.5px solid ${shake ? '#EF4444' : '#CBD5E1'}`,
+        background: disabled ? '#F1F5F9' : '#FFFFFF',
+        fontSize: '13px',
+        fontWeight: 700,
+        color: '#1E293B',
+        outline: 'none',
+        textAlign: 'left',
+        boxSizing: 'border-box',
+      }}
+    />
+  );
+};
+
 function App() {
   const [theme, setTheme] = useState<'lavender' | 'sunset'>(() => {
     const saved = localStorage.getItem('divido_theme');
@@ -3598,56 +3665,18 @@ function App() {
                         >
                           {item.curr}
                         </span>
-                        <input
-                          id={`global-settle-val-${idx}`}
-                          type="text"
-                          inputMode="decimal"
-                          autoComplete="off"
-                          autoCorrect="off"
-                          spellCheck="false"
-                          data-1p-ignore
-                          data-lpignore="true"
-                          value={typeof item.amt === 'number' ? String(Math.round(item.amt * 100) / 100) : item.amt}
+                        <SettleAmountInput
+                          inputId={`global-settle-val-${idx}`}
+                          amount={item.amt}
+                          maxAmt={typeof item.maxAmt === 'number' ? item.maxAmt : Number.POSITIVE_INFINITY}
                           disabled={!isSelected}
-                          onChange={(e) => {
-                            const val = e.target.value;
-                            // While typing, just keep the raw text (validated) — no
-                            // capping/reformatting here, so the cursor never jumps
-                            // and editing feels normal. Use a functional update so
-                            // rapid keystrokes never act on stale state.
-                            if (val === '' || /^\d*\.?\d*$/.test(val)) {
-                              const cleanedVal = val.replace(/^0+(?=\d)/, '');
-                              setLocalSettleEdits((prev) =>
-                                prev.map((it, i) => (i === idx ? { ...it, amt: cleanedVal } : it))
-                              );
-                            }
-                          }}
-                          onBlur={(e) => {
-                            // Enforce the max only when the user finishes editing.
-                            const num = parseFloat((e.target.value || '').replace(/^0+(?=\d)/, '')) || 0;
-                            const max = typeof item.maxAmt === 'number' ? item.maxAmt : num;
-                            if (num > max) {
-                              setSettleShakeIdx(idx);
-                              window.setTimeout(() => setSettleShakeIdx((cur) => (cur === idx ? null : cur)), 450);
-                              setLocalSettleEdits((prev) =>
-                                prev.map((it, i) => (i === idx ? { ...it, amt: max } : it))
-                              );
-                            }
-                          }}
-                          style={{
-                            width: '76px',
-                            height: '32px',
-                            padding: '0 8px 0 18px',
-                            margin: 0,
-                            borderRadius: '8px',
-                            border: `1.5px solid ${settleShakeIdx === idx ? '#EF4444' : '#CBD5E1'}`,
-                            background: isSelected ? '#FFFFFF' : '#F1F5F9',
-                            fontSize: '13px',
-                            fontWeight: 700,
-                            color: '#1E293B',
-                            outline: 'none',
-                            textAlign: 'right',
-                            boxSizing: 'border-box',
+                          shake={settleShakeIdx === idx}
+                          onCommit={(v) =>
+                            setLocalSettleEdits((prev) => prev.map((it, i) => (i === idx ? { ...it, amt: v } : it)))
+                          }
+                          onExceed={() => {
+                            setSettleShakeIdx(idx);
+                            window.setTimeout(() => setSettleShakeIdx((cur) => (cur === idx ? null : cur)), 450);
                           }}
                         />
                         <style>{`@keyframes divido-shake{0%,100%{transform:translateX(0)}20%{transform:translateX(-4px)}40%{transform:translateX(4px)}60%{transform:translateX(-3px)}80%{transform:translateX(3px)}}`}</style>
