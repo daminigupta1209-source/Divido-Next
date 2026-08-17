@@ -658,8 +658,8 @@ function App() {
   };
 
   const handleOpenReceivablePopup = (friendName: string, amt: number, curr: string) => {
-    setNetReceivablePopup({ friendName, amt, curr });
-    // Send an in-app reminder to the friend (if they've joined)
+    // Send an in-app reminder to the friend (if they've joined). Fire-and-forget
+    // so it doesn't consume the tap's user-activation before navigator.share.
     notifyFriend(friendName, {
       type: 'reminder',
       title: `${userName} sent you a reminder`,
@@ -667,6 +667,26 @@ function App() {
       amount: amt,
       currency: curr,
     });
+
+    // Build the reminder message (+ a tappable UPI pay link when it's an INR
+    // debt and a UPI id is set — UPI is INR-only, so skip the link otherwise).
+    const myUpi = localStorage.getItem('divido_global_upi_id') || userMetadata[me]?.upiId || '';
+    const isINR = curr === '₹';
+    const baseMsg = `Hey ${friendName}, just a quick reminder to settle our net balance of ${curr}${amt.toFixed(2)} on Divido.${myUpi ? ` Pay me at UPI: ${myUpi}` : ''} Thank you!`;
+    const upiLink = (myUpi && isINR)
+      ? `upi://pay?pa=${myUpi.trim()}&pn=${encodeURIComponent(me)}&am=${amt.toFixed(2)}&cu=INR&tn=Divido Settle`
+      : '';
+    const shareMessage = upiLink ? `${baseMsg}\n\nPay instantly: ${upiLink}` : baseMsg;
+
+    // Mobile: open the phone's own share sheet directly (all apps), like the
+    // invite-friends flow — no in-app share card. Runs inside the tap.
+    if (typeof navigator !== 'undefined' && (navigator as any).share) {
+      (navigator as any).share({ title: 'Divido reminder', text: shareMessage }).catch(() => {});
+      return;
+    }
+
+    // Desktop / no native share: fall back to the in-app reminder card (with QR).
+    setNetReceivablePopup({ friendName, amt, curr });
   };
 
   const [groups, setGroups] = useState<Group[]>(() => {
