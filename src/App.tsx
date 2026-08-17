@@ -3081,13 +3081,17 @@ function App() {
                               ts: Date.now(),
                             }));
                           } catch { /* storage full — non-fatal */ }
-                          await supabase.auth.signInWithOAuth({
-                            provider: 'google',
-                            options: {
-                              redirectTo: window.location.href,
-                              queryParams: { prompt: 'select_account' },
-                            },
-                          });
+                          {
+                            const _join = new URL(window.location.href).searchParams.get('joinGroupId');
+                            const cleanRedirect = window.location.origin + window.location.pathname + (_join ? `?joinGroupId=${_join}` : '');
+                            await supabase.auth.signInWithOAuth({
+                              provider: 'google',
+                              options: {
+                                redirectTo: cleanRedirect,
+                                queryParams: { prompt: 'select_account' },
+                              },
+                            });
+                          }
                           setSubmittingLinkRequest(false);
                           return;
                         }

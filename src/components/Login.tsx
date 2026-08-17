@@ -40,10 +40,16 @@ export const Login: React.FC<LoginProps> = ({ onLoginSuccess, currentTheme }) =>
 
     try {
       setLoading(true);
+      // Redirect back to a CLEAN url (origin + path, keeping only an invite id).
+      // Using window.location.href re-fed leftover OAuth junk (?error=…#access_token=…)
+      // from a failed attempt into the next one, causing "bad_oauth_state / state
+      // has expired" loops.
+      const _join = new URL(window.location.href).searchParams.get('joinGroupId');
+      const cleanRedirect = window.location.origin + window.location.pathname + (_join ? `?joinGroupId=${_join}` : '');
       const { error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
-          redirectTo: window.location.href,
+          redirectTo: cleanRedirect,
           // Always show Google's account picker instead of silently reusing the
           // active Google session — so a signed-out/deleted user can pick a
           // different account and always sees which one they're logging in with.
