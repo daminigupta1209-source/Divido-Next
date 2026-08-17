@@ -3389,20 +3389,25 @@ function App() {
       {globalSettleData && (
         <div
           className="modal-overlay"
-          style={{ zIndex: 4000, display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+          style={{ zIndex: 4000, display: 'flex', alignItems: 'stretch', justifyContent: 'stretch', padding: 0 }}
           onClick={() => setGlobalSettleData(null)}
         >
           <div
-            className="card shadow-xl"
+            className="card"
             style={{
-              width: '90%',
-              maxWidth: '400px',
-              padding: '24px 20px',
-              borderRadius: '24px',
+              width: '100%',
+              maxWidth: '520px',
+              margin: '0 auto',
+              height: '100%',
+              padding: 'calc(20px + env(safe-area-inset-top)) 18px calc(24px + env(safe-area-inset-bottom))',
+              borderRadius: 0,
               position: 'relative',
-              animation: 'slideUp 0.3s ease-out',
+              animation: 'slideUp 0.28s ease-out',
               background: '#FFFFFF',
-              border: '1px solid rgba(0,0,0,0.05)',
+              border: 'none',
+              overflowY: 'auto',
+              WebkitOverflowScrolling: 'touch',
+              boxSizing: 'border-box',
             }}
             onClick={(e) => e.stopPropagation()}
           >
@@ -3412,16 +3417,22 @@ function App() {
             <div
               onClick={() => setGlobalSettleData(null)}
               style={{
-                position: 'absolute',
-                top: '14px',
-                right: '14px',
+                position: 'fixed',
+                top: 'calc(14px + env(safe-area-inset-top))',
+                right: '16px',
+                zIndex: 4100,
                 cursor: 'pointer',
                 fontSize: '18px',
-                opacity: 0.3,
-                transition: '0.2s all',
+                color: '#475569',
+                width: '34px',
+                height: '34px',
+                borderRadius: '50%',
+                background: 'rgba(241,245,249,0.9)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                boxShadow: '0 2px 8px rgba(0,0,0,0.08)',
               }}
-              onMouseEnter={(e) => (e.currentTarget.style.opacity = '0.8')}
-              onMouseLeave={(e) => (e.currentTarget.style.opacity = '0.3')}
             >
               ✕
             </div>
