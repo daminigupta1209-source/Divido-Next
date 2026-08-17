@@ -658,16 +658,6 @@ function App() {
   };
 
   const handleOpenReceivablePopup = (friendName: string, amt: number, curr: string) => {
-    // Send an in-app reminder to the friend (if they've joined). Fire-and-forget
-    // so it doesn't consume the tap's user-activation before navigator.share.
-    notifyFriend(friendName, {
-      type: 'reminder',
-      title: `${userName} sent you a reminder`,
-      body: `Please settle ${curr}${amt.toFixed(0)}`,
-      amount: amt,
-      currency: curr,
-    });
-
     // Build the reminder message (+ a tappable UPI pay link when it's an INR
     // debt and a UPI id is set — UPI is INR-only, so skip the link otherwise).
     const myUpi = localStorage.getItem('divido_global_upi_id') || userMetadata[me]?.upiId || '';
@@ -678,15 +668,30 @@ function App() {
       : '';
     const shareMessage = upiLink ? `${baseMsg}\n\nPay instantly: ${upiLink}` : baseMsg;
 
-    // Mobile: open the phone's own share sheet directly (all apps), like the
-    // invite-friends flow — no in-app share card. Runs inside the tap.
-    if (typeof navigator !== 'undefined' && (navigator as any).share) {
-      (navigator as any).share({ title: 'Divido reminder', text: shareMessage }).catch(() => {});
-      return;
+    const nativeShare = typeof navigator !== 'undefined' && (navigator as any).share;
+
+    // Mobile: open the phone's own share sheet FIRST — before any other work —
+    // so nothing consumes the tap's user-activation (that caused the first tap
+    // to no-op and only the second to work).
+    if (nativeShare) {
+      try {
+        (navigator as any).share({ title: 'Divido reminder', text: shareMessage }).catch(() => {});
+      } catch { /* older browsers */ }
     }
 
+    // In-app reminder notification (fire-and-forget) after the share is launched.
+    notifyFriend(friendName, {
+      type: 'reminder',
+      title: `${userName} sent you a reminder`,
+      body: `Please settle ${curr}${amt.toFixed(0)}`,
+      amount: amt,
+      currency: curr,
+    });
+
     // Desktop / no native share: fall back to the in-app reminder card (with QR).
-    setNetReceivablePopup({ friendName, amt, curr });
+    if (!nativeShare) {
+      setNetReceivablePopup({ friendName, amt, curr });
+    }
   };
 
   const [groups, setGroups] = useState<Group[]>(() => {
