@@ -1314,7 +1314,7 @@ function App() {
     localStorage.setItem('divido_expenses', JSON.stringify(expenses));
   }, [expenses]);
 
-  const { syncStatus, isInitialLoadDone } = useSupabaseSync({
+  const { syncStatus } = useSupabaseSync({
     groups,
     setGroups,
     expenses,
@@ -1326,14 +1326,6 @@ function App() {
     setMatchPrompt,
     userEmail,
   });
-
-  // Safety net: never keep the initial "Syncing…" loader up forever. If the
-  // first cloud load stalls, hide the loader after 5s and show cached content.
-  const [bootLoaderExpired, setBootLoaderExpired] = useState(false);
-  useEffect(() => {
-    const t = window.setTimeout(() => setBootLoaderExpired(true), 5000);
-    return () => window.clearTimeout(t);
-  }, []);
 
   useAppHotkeys({
     groups,
@@ -2105,29 +2097,6 @@ function App() {
           animation: 'spin 0.8s linear infinite',
         }} />
         <div style={{ fontSize: '14px', fontWeight: 700, opacity: 0.7 }}>Opening your invite…</div>
-        <style>{`@keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }`}</style>
-      </div>
-    );
-  }
-
-  // On a fresh sign-in the local cache is empty and the cloud data hasn't loaded
-  // yet, so the home screen would flash empty for a beat. Show a brief loader
-  // until the first load completes (only while the list is genuinely empty, so
-  // returning users with cached data see their groups instantly). The 5s safety
-  // timeout guarantees this never traps the user.
-  if (!isInitialLoadDone && !bootLoaderExpired && groups.length === 0) {
-    return (
-      <div style={{
-        position: 'fixed', inset: 0, display: 'flex', flexDirection: 'column',
-        alignItems: 'center', justifyContent: 'center', gap: '18px',
-        background: 'var(--bg)', color: 'var(--t)', zIndex: 10000,
-      }}>
-        <div style={{
-          width: '44px', height: '44px', borderRadius: '50%',
-          border: '4px solid rgba(99, 102, 241, 0.2)', borderTopColor: '#6366F1',
-          animation: 'spin 0.8s linear infinite',
-        }} />
-        <div style={{ fontSize: '14px', fontWeight: 700, opacity: 0.7 }}>Syncing your groups…</div>
         <style>{`@keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }`}</style>
       </div>
     );
