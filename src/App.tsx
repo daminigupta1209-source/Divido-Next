@@ -1314,7 +1314,7 @@ function App() {
     localStorage.setItem('divido_expenses', JSON.stringify(expenses));
   }, [expenses]);
 
-  const { syncStatus } = useSupabaseSync({
+  const { syncStatus, isInitialLoadDone } = useSupabaseSync({
     groups,
     setGroups,
     expenses,
@@ -2229,6 +2229,7 @@ function App() {
             searchQuery={globalSearchQuery}
             setSearchQuery={setGlobalSearchQuery}
             onCreateGroup={createGroupSecure}
+            loading={!isInitialLoadDone && groups.length === 0}
           />
         ) : view === 'groups' ? (
           <GroupsView

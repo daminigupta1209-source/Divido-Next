@@ -40,6 +40,7 @@ interface MasterSummaryProps {
   searchQuery?: string;
   setSearchQuery?: (val: string) => void;
   onCreateGroup?: () => void;
+  loading?: boolean;
 }
 
 export const MasterSummary: React.FC<MasterSummaryProps> = ({
@@ -66,6 +67,7 @@ export const MasterSummary: React.FC<MasterSummaryProps> = ({
   searchQuery = '',
   setSearchQuery = () => {},
   onCreateGroup,
+  loading = false,
 }) => {
   const [openDropdownId, setOpenDropdownId] = useState<string | number | null>(null);
   const [timeFilter, setTimeFilter] = useState<'all' | '30days' | '7days'>('all');
@@ -732,6 +734,24 @@ export const MasterSummary: React.FC<MasterSummaryProps> = ({
             <span style={{ fontSize: '18px', color: '#CFC6BB', fontWeight: 900, lineHeight: 1, userSelect: 'none', flexShrink: 0 }}>›</span>
           </div>
         </div>
+
+        {/* Loading skeletons — while the first cloud load runs and there are no
+            groups yet, show shimmer placeholders instead of an empty list, so a
+            fresh sign-in never looks like "your groups are gone". */}
+        {loading && filteredGroups.length === 0 && (
+          <>
+            <style>{`@keyframes sk-pulse{0%,100%{opacity:1}50%{opacity:.45}}`}</style>
+            {[0, 1, 2].map((i) => (
+              <div key={`sk-${i}`} style={{ padding: '14px 16px', background: '#FFFFFF', borderRadius: '16px', border: '0.5px solid #EFE7DC', display: 'flex', alignItems: 'center', gap: '12px', animation: 'sk-pulse 1.2s ease-in-out infinite' }}>
+                <div style={{ width: '44px', height: '44px', borderRadius: '50%', background: '#EEE9E2', flexShrink: 0 }} />
+                <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                  <div style={{ height: '12px', width: '55%', borderRadius: '6px', background: '#EEE9E2' }} />
+                  <div style={{ height: '10px', width: '35%', borderRadius: '6px', background: '#F1ECE4' }} />
+                </div>
+              </div>
+            ))}
+          </>
+        )}
 
         {/* Group Cards List */}
         {filteredGroups.map((g, i) => {
