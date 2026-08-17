@@ -3,6 +3,10 @@ import { createRoot } from 'react-dom/client'
 import './index.css'
 import App from './App.tsx'
 
+// Build marker — check the console to confirm which version is actually loaded
+// (helps tell a fresh deploy apart from a stale service-worker cache).
+console.log('[Divido] build 2026-08-17-settle-v3');
+
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
     <App />

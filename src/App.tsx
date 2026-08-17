@@ -95,24 +95,23 @@ const SettleAmountInput: React.FC<{
       disabled={disabled}
       onChange={(e) => {
         const v = e.target.value;
-        if (v === '' || /^\d*\.?\d*$/.test(v)) {
-          const cleaned = v.replace(/^0+(?=\d)/, '');
-          if (cleaned !== v) e.target.value = cleaned;
-          lastTyped.current = cleaned;
-          onCommit(cleaned);
-        } else {
-          // Reject invalid char: revert DOM to last good value.
+        // Reject invalid characters — revert to the last good value.
+        if (!(v === '' || /^\d*\.?\d*$/.test(v))) {
           e.target.value = lastTyped.current;
+          return;
         }
-      }}
-      onBlur={(e) => {
-        const num = parseFloat(e.target.value) || 0;
+        const cleaned = v.replace(/^0+(?=\d)/, '');
+        const num = parseFloat(cleaned) || 0;
+        // Block going above the owed amount immediately (shake for feedback).
+        // Reducing (backspace) is always allowed since it can't exceed the max.
         if (num > maxAmt) {
+          e.target.value = lastTyped.current;
           onExceed();
-          e.target.value = String(maxAmt);
-          lastTyped.current = String(maxAmt);
-          onCommit(maxAmt);
+          return;
         }
+        if (cleaned !== v) e.target.value = cleaned;
+        lastTyped.current = cleaned;
+        onCommit(cleaned);
       }}
       style={{
         width: '76px',
