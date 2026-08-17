@@ -3502,7 +3502,7 @@ function App() {
 
                 return (
                   <div
-                    key={idx}
+                    key={item.gId != null ? String(item.gId) : idx}
                     style={{
                       background: isSelected ? '#F8FAFC' : '#FFFFFF',
                       padding: '10px 12px',
@@ -3607,27 +3607,30 @@ function App() {
                           spellCheck="false"
                           data-1p-ignore
                           data-lpignore="true"
-                          value={typeof item.amt === 'number' ? Math.round(item.amt * 100) / 100 : item.amt}
+                          value={typeof item.amt === 'number' ? String(Math.round(item.amt * 100) / 100) : item.amt}
                           disabled={!isSelected}
                           onChange={(e) => {
                             const val = e.target.value;
+                            // While typing, just keep the raw text (validated) — no
+                            // capping/reformatting here, so the cursor never jumps
+                            // and editing feels normal. Use a functional update so
+                            // rapid keystrokes never act on stale state.
                             if (val === '' || /^\d*\.?\d*$/.test(val)) {
                               const cleanedVal = val.replace(/^0+(?=\d)/, '');
-                              const newAmt = parseFloat(cleanedVal) || 0;
-                              // You can't settle more than what's actually owed —
-                              // cap at this row's max and shake the box if exceeded.
-                              const max = typeof item.maxAmt === 'number' ? item.maxAmt : newAmt;
-                              const exceeded = newAmt > max;
-                              if (exceeded) {
-                                setSettleShakeIdx(idx);
-                                window.setTimeout(() => setSettleShakeIdx((cur) => (cur === idx ? null : cur)), 450);
-                              }
-                              // Store the RAW text the user typed (not a re-parsed
-                              // number) so the field doesn't reformat mid-edit and
-                              // jump the cursor. Calculations parseFloat this later.
-                              const nextVal = exceeded ? String(max) : cleanedVal;
-                              setLocalSettleEdits(
-                                localSettleEdits.map((it, i) => (i === idx ? { ...it, amt: nextVal } : it))
+                              setLocalSettleEdits((prev) =>
+                                prev.map((it, i) => (i === idx ? { ...it, amt: cleanedVal } : it))
+                              );
+                            }
+                          }}
+                          onBlur={(e) => {
+                            // Enforce the max only when the user finishes editing.
+                            const num = parseFloat((e.target.value || '').replace(/^0+(?=\d)/, '')) || 0;
+                            const max = typeof item.maxAmt === 'number' ? item.maxAmt : num;
+                            if (num > max) {
+                              setSettleShakeIdx(idx);
+                              window.setTimeout(() => setSettleShakeIdx((cur) => (cur === idx ? null : cur)), 450);
+                              setLocalSettleEdits((prev) =>
+                                prev.map((it, i) => (i === idx ? { ...it, amt: max } : it))
                               );
                             }
                           }}
