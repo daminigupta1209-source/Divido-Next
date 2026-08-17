@@ -3547,29 +3547,36 @@ function App() {
                       >
                         {isSelected && '✓'}
                       </div>
-                      <span
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          if (item.gId) {
-                            setSelectedId(item.gId === 'STANDALONE' ? 'STANDALONE' : item.gId);
-                            setView('detail');
-                            setGlobalSettleData(null);
-                          }
-                        }}
-                        className="clickable-group-name"
-                        style={{
-                          fontSize: '13px',
-                          fontWeight: 700,
-                          color: '#2563EB',
-                          textOverflow: 'ellipsis',
-                          overflow: 'hidden',
-                          whiteSpace: 'nowrap',
-                          cursor: 'pointer',
-                        }}
-                        title={`Go to ${item.gName}`}
-                      >
-                        {item.gName}
-                      </span>
+                      <div style={{ display: 'flex', flexDirection: 'column', minWidth: 0 }}>
+                        <span
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            if (item.gId) {
+                              setSelectedId(item.gId === 'STANDALONE' ? 'STANDALONE' : item.gId);
+                              setView('detail');
+                              setGlobalSettleData(null);
+                            }
+                          }}
+                          className="clickable-group-name"
+                          style={{
+                            fontSize: '13px',
+                            fontWeight: 700,
+                            color: '#2563EB',
+                            textOverflow: 'ellipsis',
+                            overflow: 'hidden',
+                            whiteSpace: 'nowrap',
+                            cursor: 'pointer',
+                          }}
+                          title={`Go to ${item.gName}`}
+                        >
+                          {item.gName}
+                        </span>
+                        {/* Direction of this row, so a mixed net (you pay in one
+                            group, collect in another) reads correctly. */}
+                        <span style={{ fontSize: '10px', fontWeight: 800, marginTop: '1px', color: item.paidBy === me ? '#DB2777' : '#10B981' }}>
+                          {item.paidBy === me ? 'You owe' : 'Owes you'}
+                        </span>
+                      </div>
                     </div>
 
                     {/* Right: Input and MAX button */}
