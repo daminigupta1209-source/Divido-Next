@@ -96,16 +96,24 @@ export function useAppHotkeys({
     }
   }, [globalSettleData, setGlobalSettleData]);
 
-  // Focus and key navigation for Global Settle Popup
+  // Auto-focus the first field ONCE when the settle popup opens. Keyed on
+  // globalSettleData only — NOT on localSettleEdits — otherwise every keystroke
+  // (which updates localSettleEdits) re-ran this and stole focus back to the
+  // first box mid-typing, which is exactly the "backspace jumps to box 1" bug.
   useEffect(() => {
     if (!globalSettleData) return;
-
-    setTimeout(() => {
+    const t = setTimeout(() => {
       const firstInput =
         document.getElementById('global-settle-val-0') ||
         document.getElementById('global-settle-submit-btn');
       firstInput?.focus();
     }, 50);
+    return () => clearTimeout(t);
+  }, [globalSettleData]);
+
+  // Arrow / Enter key navigation for the Global Settle Popup.
+  useEffect(() => {
+    if (!globalSettleData) return;
 
     const handleKey = (e: KeyboardEvent) => {
       if (

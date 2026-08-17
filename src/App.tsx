@@ -180,27 +180,6 @@ function App() {
   const [localSettleEdits, setLocalSettleEdits] = useState<any[]>([]);
   // Row index whose amount box should shake (user tried to exceed the max).
   const [settleShakeIdx, setSettleShakeIdx] = useState<number | null>(null);
-  // TEMP diagnostic: capture focus/key/input events while the settle screen is
-  // open, shown in an on-screen panel, to trace the reported backspace bug on a
-  // real device. Remove once diagnosed.
-  const [settleDbg, setSettleDbg] = useState<string[]>([]);
-  useEffect(() => {
-    if (!globalSettleData) return;
-    setSettleDbg([]);
-    const id = (t: any) => (t && (t.id || t.tagName)) || '?';
-    const push = (s: string) => setSettleDbg((prev) => [...prev.slice(-9), s]);
-    const onFocusIn = (e: any) => push('focus→ ' + id(e.target));
-    const onKey = (e: any) => push('key ' + e.key + ' @' + id(e.target));
-    const onInput = (e: any) => push('input ' + id(e.target) + '="' + (e.target && e.target.value) + '"');
-    document.addEventListener('focusin', onFocusIn, true);
-    document.addEventListener('keydown', onKey, true);
-    document.addEventListener('input', onInput, true);
-    return () => {
-      document.removeEventListener('focusin', onFocusIn, true);
-      document.removeEventListener('keydown', onKey, true);
-      document.removeEventListener('input', onInput, true);
-    };
-  }, [globalSettleData]);
   const [qrModalData, setQrModalData] = useState<{ payee: string; amt: number; currency: string; requestFrom?: string } | null>(null);
   const [isGroupsExpanded, setIsGroupsExpanded] = useState<boolean>(false);
   const [showConvertModalId, setShowConvertModalId] = useState<string | number | null>(null);
@@ -3561,10 +3540,6 @@ function App() {
               }}
             >
               ✕
-            </div>
-            {/* TEMP diagnostic panel — remove after tracing the backspace bug */}
-            <div style={{ position: 'fixed', left: '8px', bottom: '8px', right: '8px', zIndex: 4200, background: 'rgba(15,23,42,0.92)', color: '#A7F3D0', fontSize: '10px', lineHeight: 1.35, fontFamily: 'monospace', padding: '8px 10px', borderRadius: '8px', maxHeight: '140px', overflow: 'auto', pointerEvents: 'none', whiteSpace: 'pre-wrap' }}>
-              {settleDbg.length ? settleDbg.join('\n') : 'edit a box…'}
             </div>
             <h3 className="nunito" style={{
               fontSize: '20px',
