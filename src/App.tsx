@@ -670,12 +670,19 @@ function App() {
 
     const nativeShare = typeof navigator !== 'undefined' && (navigator as any).share;
 
+    // Dismiss any focused field so the mobile keyboard doesn't cover the modal.
+    const dropKeyboard = () => { try { (document.activeElement as HTMLElement | null)?.blur?.(); } catch {} };
+    dropKeyboard();
+
     // Mobile: open the phone's own share sheet FIRST — before any other work —
     // so nothing consumes the tap's user-activation (that caused the first tap
-    // to no-op and only the second to work).
+    // to no-op and only the second to work). Blur again after the sheet closes,
+    // because the browser tends to refocus the last input and re-open the keyboard.
     if (nativeShare) {
       try {
-        (navigator as any).share({ title: 'Divido reminder', text: shareMessage }).catch(() => {});
+        (navigator as any).share({ title: 'Divido reminder', text: shareMessage })
+          .then(() => { setTimeout(dropKeyboard, 50); })
+          .catch(() => { setTimeout(dropKeyboard, 50); });
       } catch { /* older browsers */ }
     }
 
@@ -3756,6 +3763,7 @@ function App() {
               return (
                 <div style={{ display: 'flex', gap: '12px', marginTop: '8px' }}>
                   <button
+                    type="button"
                     style={{
                       flex: 1,
                       padding: '10px 14px',
@@ -3772,6 +3780,7 @@ function App() {
                     Mark as Settled
                   </button>
                   <button
+                    type="button"
                     id="global-settle-submit-btn"
                     style={{
                       flex: 1.2,
