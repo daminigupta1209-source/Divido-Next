@@ -3574,7 +3574,7 @@ function App() {
 
                     {/* Right: Input and MAX button */}
                     <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexShrink: 0 }}>
-                      <div style={{ position: 'relative', display: 'flex', alignItems: 'center', height: '32px' }}>
+                      <div style={{ position: 'relative', display: 'flex', alignItems: 'center', height: '32px', animation: settleShakeIdx === idx ? 'divido-shake 0.4s ease-in-out' : undefined }}>
                         <span
                           style={{
                             position: 'absolute',
@@ -3639,7 +3639,6 @@ function App() {
                             outline: 'none',
                             textAlign: 'right',
                             boxSizing: 'border-box',
-                            animation: settleShakeIdx === idx ? 'divido-shake 0.4s ease-in-out' : undefined,
                           }}
                         />
                         <style>{`@keyframes divido-shake{0%,100%{transform:translateX(0)}20%{transform:translateX(-4px)}40%{transform:translateX(4px)}60%{transform:translateX(-3px)}80%{transform:translateX(3px)}}`}</style>
