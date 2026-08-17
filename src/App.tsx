@@ -97,6 +97,8 @@ function App() {
   const [showSettleModal, setShowSettleModal] = useState(false);
   const [editingSettle, setEditingSettle] = useState<Expense | null>(null);
   const [localSettleEdits, setLocalSettleEdits] = useState<any[]>([]);
+  // Row index whose amount box should shake (user tried to exceed the max).
+  const [settleShakeIdx, setSettleShakeIdx] = useState<number | null>(null);
   const [qrModalData, setQrModalData] = useState<{ payee: string; amt: number; currency: string; requestFrom?: string } | null>(null);
   const [isGroupsExpanded, setIsGroupsExpanded] = useState<boolean>(false);
   const [showConvertModalId, setShowConvertModalId] = useState<string | number | null>(null);
@@ -3609,9 +3611,15 @@ function App() {
                               const cleanedVal = val.replace(/^0+(?=\d)/, '');
                               const newAmt = parseFloat(cleanedVal) || 0;
                               // You can't settle more than what's actually owed —
-                              // cap the entry at this row's max amount.
+                              // cap the entry at this row's max amount and shake
+                              // the box so the user sees it was limited.
                               const max = typeof item.maxAmt === 'number' ? item.maxAmt : newAmt;
-                              const capped = newAmt > max ? max : newAmt;
+                              const exceeded = newAmt > max;
+                              const capped = exceeded ? max : newAmt;
+                              if (exceeded) {
+                                setSettleShakeIdx(idx);
+                                window.setTimeout(() => setSettleShakeIdx((cur) => (cur === idx ? null : cur)), 450);
+                              }
                               setLocalSettleEdits(
                                 localSettleEdits.map((it, i) => (i === idx ? { ...it, amt: val === '' ? '' : capped } : it))
                               );
@@ -3623,7 +3631,7 @@ function App() {
                             padding: '0 8px 0 18px',
                             margin: 0,
                             borderRadius: '8px',
-                            border: '1.5px solid #CBD5E1',
+                            border: `1.5px solid ${settleShakeIdx === idx ? '#EF4444' : '#CBD5E1'}`,
                             background: isSelected ? '#FFFFFF' : '#F1F5F9',
                             fontSize: '13px',
                             fontWeight: 700,
@@ -3631,8 +3639,10 @@ function App() {
                             outline: 'none',
                             textAlign: 'right',
                             boxSizing: 'border-box',
+                            animation: settleShakeIdx === idx ? 'divido-shake 0.4s ease-in-out' : undefined,
                           }}
                         />
+                        <style>{`@keyframes divido-shake{0%,100%{transform:translateX(0)}20%{transform:translateX(-4px)}40%{transform:translateX(4px)}60%{transform:translateX(-3px)}80%{transform:translateX(3px)}}`}</style>
                       </div>
                       <button
                         id={`global-settle-max-${idx}`}
