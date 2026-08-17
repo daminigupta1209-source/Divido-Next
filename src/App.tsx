@@ -927,12 +927,25 @@ function App() {
       const initial: any[] = [];
       const m = globalSettleData.name;
 
+      // When opened from the Friends list, globalSettleData carries the tapped
+      // person's identity and their specific groups (by name). Two people who
+      // share a name (e.g. two "Didi" in different groups) are distinct identities
+      // with distinct group lists — so restrict the breakdown to THIS person's
+      // groups instead of merging every same-named member across all groups.
+      const targetGroupNames: string[] | null =
+        Array.isArray(globalSettleData.groups) && globalSettleData.groups.length > 0
+          ? globalSettleData.groups.map((n: string) => String(n))
+          : null;
+
       const allVirtualGroups = [
         { id: 'STANDALONE', name: 'Non-Group Expenses', members: [] as string[], currency: '₹' },
         ...groups,
       ].filter((g) => {
         if (globalSettleData.gId !== undefined && globalSettleData.gId !== null) {
           return String(g.id) === String(globalSettleData.gId);
+        }
+        if (targetGroupNames) {
+          return targetGroupNames.includes(String(g.name));
         }
         return true;
       });
