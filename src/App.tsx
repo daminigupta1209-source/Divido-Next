@@ -3574,7 +3574,7 @@ function App() {
                         {/* Direction of this row, so a mixed net (you pay in one
                             group, collect in another) reads correctly. */}
                         <span style={{ fontSize: '10px', fontWeight: 800, marginTop: '1px', color: item.paidBy === me ? '#DB2777' : '#10B981' }}>
-                          {item.paidBy === me ? 'You owe' : 'Owes you'}
+                          {item.paidBy === me ? 'You are Paying' : 'You are Collecting'}
                         </span>
                       </div>
                     </div>
