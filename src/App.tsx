@@ -3608,8 +3608,12 @@ function App() {
                             if (val === '' || /^\d*\.?\d*$/.test(val)) {
                               const cleanedVal = val.replace(/^0+(?=\d)/, '');
                               const newAmt = parseFloat(cleanedVal) || 0;
+                              // You can't settle more than what's actually owed —
+                              // cap the entry at this row's max amount.
+                              const max = typeof item.maxAmt === 'number' ? item.maxAmt : newAmt;
+                              const capped = newAmt > max ? max : newAmt;
                               setLocalSettleEdits(
-                                localSettleEdits.map((it, i) => (i === idx ? { ...it, amt: val === '' ? '' : newAmt } : it))
+                                localSettleEdits.map((it, i) => (i === idx ? { ...it, amt: val === '' ? '' : capped } : it))
                               );
                             }
                           }}
