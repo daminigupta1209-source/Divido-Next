@@ -69,6 +69,10 @@ export function useSupabaseSync({
 
   const [isOnline, setIsOnline] = useState(navigator.onLine);
   const [isInitialLoadDone, setIsInitialLoadDone] = useState(false);
+  // True once a real cloud load has populated data. Used to avoid wiping already
+  // loaded groups when a later refresh pass momentarily returns an empty
+  // membership list (a transient result that caused groups to flash empty).
+  const hasSyncedOnceRef = useRef(false);
 
   useEffect(() => {
     const handleOnlineStatus = () => setIsOnline(true);
@@ -223,6 +227,15 @@ export function useSupabaseSync({
 
         if (groupIds.length === 0) {
           if (!resolvedEmail) {
+            initialLoadDoneRef.current = true;
+            setIsInitialLoadDone(true);
+            return;
+          }
+          // If we've already loaded real data, an empty membership result on a
+          // later refresh pass is almost certainly transient — don't wipe the
+          // loaded groups (that caused the "groups flash empty" glitch). Only
+          // clear on the very first load, when the user genuinely has none.
+          if (hasSyncedOnceRef.current) {
             initialLoadDoneRef.current = true;
             setIsInitialLoadDone(true);
             return;
@@ -495,6 +508,7 @@ export function useSupabaseSync({
 
         setGroups(mergedGroups);
         setExpenses(mergedExpenses);
+        hasSyncedOnceRef.current = true;
         initialLoadDoneRef.current = true;
         setIsInitialLoadDone(true);
       } catch (err) {
