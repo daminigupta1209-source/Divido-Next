@@ -3618,17 +3618,19 @@ function App() {
                               const cleanedVal = val.replace(/^0+(?=\d)/, '');
                               const newAmt = parseFloat(cleanedVal) || 0;
                               // You can't settle more than what's actually owed —
-                              // cap the entry at this row's max amount and shake
-                              // the box so the user sees it was limited.
+                              // cap at this row's max and shake the box if exceeded.
                               const max = typeof item.maxAmt === 'number' ? item.maxAmt : newAmt;
                               const exceeded = newAmt > max;
-                              const capped = exceeded ? max : newAmt;
                               if (exceeded) {
                                 setSettleShakeIdx(idx);
                                 window.setTimeout(() => setSettleShakeIdx((cur) => (cur === idx ? null : cur)), 450);
                               }
+                              // Store the RAW text the user typed (not a re-parsed
+                              // number) so the field doesn't reformat mid-edit and
+                              // jump the cursor. Calculations parseFloat this later.
+                              const nextVal = exceeded ? String(max) : cleanedVal;
                               setLocalSettleEdits(
-                                localSettleEdits.map((it, i) => (i === idx ? { ...it, amt: val === '' ? '' : capped } : it))
+                                localSettleEdits.map((it, i) => (i === idx ? { ...it, amt: nextVal } : it))
                               );
                             }
                           }}
