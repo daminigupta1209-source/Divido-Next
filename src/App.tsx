@@ -925,7 +925,7 @@ function App() {
   useLayoutEffect(() => {
     if (globalSettleData) {
       const initial: any[] = [];
-      const m = globalSettleData.name;
+      const baseName = globalSettleData.name;
 
       // When opened from the Friends list, globalSettleData carries the tapped
       // person's identity and their specific groups (by name). Two people who
@@ -952,6 +952,15 @@ function App() {
 
       allVirtualGroups.forEach((g) => {
         const isStandalone = g.id === 'STANDALONE';
+        // Resolve THIS group's member name for the tapped identity. A merged
+        // person can appear under a different name in each group, so matching a
+        // single name would miss some groups (e.g. showing only Denmark and
+        // dropping Zilo). Fall back to the tapped name when no identity match.
+        const resolveId = (nm: string) =>
+          ((g as any).memberIdentities?.[nm]) || ((g as any).memberIdentities?.[nm + ' (Left)']) || nm;
+        const m = (globalSettleData.identity && !isStandalone
+          ? (g.members || []).find((nm) => resolveId(nm) === globalSettleData.identity)
+          : null) || baseName;
         const groupExps = expenses.filter((e) => String(e.gId) === String(g.id));
         const members = isStandalone
           ? Array.from(new Set([
