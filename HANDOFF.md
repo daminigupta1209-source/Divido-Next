@@ -1,64 +1,89 @@
 # Divido — Session Handoff
 
-_Last updated: 2026-08-14_
+_Last updated: 2026-08-18_
 
 ## Project basics
 - React + Vite + TypeScript PWA for splitting expenses.
-- **Deploy:** push to `main` → Vercel auto-builds & deploys. After a push, wait ~1–2 min then hard-refresh (Ctrl+Shift+R). PWA service worker may cache an old version — refresh again if needed.
-- **Backend:** Supabase (auth via Google sign-in, `groups` / `group_members` / `expenses` tables, plus a `profiles` table and a `person_id` column added this session).
-- Verify logged-in flows on a **real account** — the local dev preview can't log in.
+- **Deploy:** push to `main` → Vercel auto-builds & deploys (~1–2 min).
+- **Build check:** always run `npm run build` (`tsc -b && vite build`) before pushing — NOT just `tsc --noEmit`. A failed `tsc -b` makes Vercel keep the OLD version live (silent). This bit us this session.
+- **PWA cache:** the service worker (`public/sw.js`) now **auto-reloads on a new deploy** (`src/main.tsx` reloads on `controllerchange`), so updates apply on the first reopen. `main.tsx` logs a build marker to the console (`[Divido] build …`) — use it to confirm which build is loaded. If a user reports a fix "not working", suspect stale cache first: hard-refresh / DevTools → Application → Clear site data / fully reopen the PWA.
+- **Backend:** Supabase (Google sign-in; `groups` / `group_members` / `expenses` / `profiles` tables; `group_members.person_id` for identity). RLS is ON for all three data tables (`expenses` read allowed to members).
+- **Testing past the login wall:** in the local preview, inject a guest session + data via localStorage (no cloud wipe). See `.claude` memory `divido-testing-and-cache.md` for the exact snippet — this let us reproduce & verify logged-in flows.
 
-## What was done this session (all pushed to `main`)
+## Session 2026-08-18 (all pushed to `main`)
 
-### UI / UX polish
-- **Mobile group header:** replaced the hamburger with a circular group **DP avatar**; moved the back button to the left of the DP; removed the peach header bar app-wide so every screen uses a flat `var(--bg)` background.
-- **Group name avatars:** stopped saving the default house emoji — groups with no uploaded photo now show **name initials** everywhere.
-- **Activities/Balances tabs:** now an underline-style tab bar with a sliding **orange indicator**, plus **swipe left/right** to toggle (touch gesture in `GroupDetail.tsx`).
-- **Bottom nav:** inside a group, "Activities" becomes **"Photos"** (opens the group gallery). Removed the gallery icon from the activities funnel row. **Friends** tab now uses a **handshake** icon (Lucide) to differ from Groups.
-- **Notifications:** the home bell and the group updates-log now open as **full-screen** views (not cramped dropdowns). Notification rows use clean **line-icon badges** (no emojis) and show exact clock time (e.g. `6d ago · 2:30 PM`).
-- **Expense editor:** attachment paperclip moved from the header to a **floating green square** button above Save; added a **red delete icon** left of the top-right tick (only for already-created activities); removed the redundant ⋮ menu from expense cards.
-- **Undo toast:** redesigned as a clean white card with a green **depleting countdown bar** (6s).
-- **Scrollbars hidden app-wide** (scroll still works).
-- **+Friend / Rejoin buttons:** orange filled pills, white text.
-- **Past-member banner:** compact pill chip; link-request & budget banners slimmed down.
-- **Currency picker search:** icon aligned with text via flex row.
-- **Group share icon:** now opens the phone's **native share sheet** directly (in-app popup only as desktop fallback).
+### Bottom nav + entry points
+- **Center nav button is now "Add Expense" everywhere** (green +), same action on home and inside a group. Removed the shape-shifting Group/Upload center button and the floating Scan/+Expense pills (deleted `FloatingAddMenu.tsx`).
+- **"+ Group"**: floating orange pill on the home screen (bottom-right).
+- **Scan icon** added to the home header (between search and notifications) → opens the scanner.
+- **Floating Scan button inside a group**: squarish, orange, with an animated soft-fade scan line.
 
-### Edit Group card (settings vs members)
-- Edit Group is **settings + read-only member list** (each name tagged Admin / Joined / Pending / Left) with a single **"Manage members →"** button that returns to the group and auto-opens the members card (via `sessionStorage['divido_open_members']`, handled in `useGroupDetailForm.ts`). Create mode keeps the editable add-list. All member actions live on the group members card (the hub).
+### Scanner (`BillScanner.tsx`, `useExpenseForm.ts`)
+- Gemini key now read from `localStorage['divido_gemini_api_key']` or `VITE_GEMINI_API_KEY` (removed the invalid hard-coded `AQ.` token that was causing 401s). **User must set `VITE_GEMINI_API_KEY` in Vercel** for AI scan.
+- Fixed scan results not applying: a stale-closure "close modal if empty" check discarded them (`scanJustCompletedRef` in `ExpenseModal.tsx`).
+- Faster scans: downscale image before upload + model `gemini-2.5-flash-lite`.
+- **Low-memory crash fix:** full-res camera photos crashed lower-RAM phones. New `src/lib/imageUtils.ts` `downscaleImageFile()` (uses `createImageBitmap`, memory-safe) is used by the scanner and by attachment capture.
+- Scanner still opens the in-app live camera (user preferred the original). Native-camera route was tried and reverted per request.
 
-### Profile sync (cross-device)
-- Profile (name, UPI, currency, photo, budgets) now syncs via a Supabase **`profiles`** table keyed to the auth user id (`App.tsx` `loadProfileFromSupabase` + a debounced save effect). Previously local-only, causing phone/desktop mismatches. **SQL already run.**
+### Expense create/edit (`useExpenseForm.ts`, `ExpenseModal.tsx`)
+- **New expenses now save** — the nav handler was creating drafts with `id: null`; now uses a `temp-` id like the other entry points (id:null made saves silently no-op).
+- Button label: "Record Expense" for new, "Save Changes" for existing.
+- **Paid For**: all group members auto-selected by default for a new expense; added a **select-all checkbox** next to the "Paid For" label.
+- Fixed new-expense "Unequally" split being wiped when the total was entered; hid the delete/trash icon for unsaved (temp) expenses.
 
-### Person-identity feature (stop same-named people merging) — COMPLETE, user testing
-See `.claude` memory `divido-person-identity.md` for detail. Summary:
-- **Rule:** identity = **email** (signed-in) → else **`person_id`** → else **name** (legacy fallback, so existing data is unchanged).
-- `group_members.person_id` column added (**SQL already run**). New name-only members get a fresh `person_id`; signed-in members use email.
-- Settle-All (`FriendsView.tsx`) buckets by identity; shows a group label + distinct color only for duplicate names.
-- **"Same person / Different?"** prompt (`App.tsx`) fires when adding a name that already exists elsewhere; "Same" links via `localStorage['divido_person_link']` which the sync insert consumes; "Which one?" list when 2+ candidates.
-- Reverse case (3 different "Pooja" inviters) auto-separates by email — no prompt.
+### Balances / settle
+- **Hyphenated names** ("Jean-Paul") balance fix — pair keys now use the `\x1f` delimiter in `App.tsx` and `SettleModal.tsx` (matches `calculations.ts`).
+- **Settle view is now full-screen** and scrollable (pinned ✕), so the keyboard doesn't hide content.
+- Net Balance card also shows on the **Settle tab** (not just Activities).
+- Net balance colors darkened/brightened: green `#10B981`, pink `#DB2777`.
+- Per-row **direction labels**: "You are Paying" (pink) / "You are Collecting" (green), so a mixed net reads correctly.
+- **Settle amount box:** capped at the owed max with a **shake** (whole box shakes so the ₹ stays); rewritten as an **uncontrolled input** (`SettleAmountInput` in `App.tsx`) for reliable caret.
+- **Settle reminder** now opens the phone's **native share sheet** (with a UPI pay link for INR); desktop falls back to the in-app card.
+- **Focus-steal bug fixed (`useAppHotkeys.ts`):** the popup's auto-focus effect had `localSettleEdits` in its deps, so every keystroke re-focused the FIRST box (backspace jumped to box 1). Auto-focus now runs only when the popup opens (deps `[globalSettleData]`); arrow-key nav is a separate effect. Diagnosed via a temporary on-screen event log (since removed).
 
-### Performance, leave-group & duplicates (Claude Code session, same day)
-_Separate Claude Code session — all pushed to `main`. Touches `useSupabaseSync.ts`/`App.tsx` too, so pull latest before editing those._
-- **Faster first load (`b6cea4e`):** Google Fonts no longer block first paint (`preload` + `media="print"` onload-swap, `<noscript>` fallback). Removed a dead `qrcode` import from `App.tsx` and lazy-loaded `UPIQRModal` + `NetReceivableModal` so the `qrcode` lib leaves the main bundle (loads only when a QR/payment popup opens). Main entry chunk 100.75 kB → 86.63 kB gzip (~14% smaller).
-- **Leave group keeps you inside (`3168d80`):** leaving a group no longer bounces you to the groups list when the group lives on as history — you stay on it and see the "You left this group. Showing past history." banner + Rejoin. Only navigates away when the group is actually gone (standalone clear, or delete with no members left). Applied to both the "Leave Group?" menu action and self-removal via the member list (`onRemoveMember`); removing someone else as admin is unchanged.
-- **Duplicate-group prevention + auto-heal (`d6ba8fe`):** the type-time name check in `CreateGroupView` only sees this device's in-memory list, so it can't catch a twin made by a slow-network sync retry or a second device. Added (1) a **save-time guard** — before inserting a new group, adopt an existing same-named cloud group the user already belongs to instead of inserting a twin; and (2) a **load-time self-heal** in `useSupabaseSync.ts` that collapses duplicate same-named groups (never deletes a group with expenses, always keeps ≥1 per name — only empty twins go). Added `api/dedupe_groups.sql` for one-time manual cleanup.
-- **Compact dates (`8aeae7d`):** shared `formatDate` (`lib/utils.ts`) now renders `13 Aug 26'` (2-digit year + apostrophe) everywhere.
+### Identity (same-named people) — settle correctness
+- **Different people, same name** (two "didi" in different groups): settle now restricts to the tapped person's own groups (`globalSettleData.groups`), so they don't merge.
+- **Merged person across groups:** settle resolves the member name **per group** from the identity, so all their groups are included (fixed a case where a group was dropped).
+- The "same person / different?" prompt on add (`App.tsx` `findPersonCandidates` / `resolvePersonChoice`, and the sync `MatchPromptModal`) was reviewed and is intact.
 
-## Still to verify (on a real account)
-1. Person-identity: add a duplicate name → prompt appears; Same merges, Different separates in Settle-All.
-2. "Manage members →" from Edit Group lands on the group with the members card open.
-3. Native share sheet opens from the group share icon on a phone.
-4. Profile edits on one device appear on another.
-5. Leaving a 2+ member group stays on the group with the "You left…" banner (not bounced to the list).
-6. Duplicate same-named groups auto-collapse on load (owner's empty "parel"/"Kota" twins should disappear).
+### Sharing / sync / login
+- **Invitee saw an empty group:** the "skip cloud load while unsynced" guard treated a just-joined group as unsynced and never fetched its expenses. Real-DB-id groups absent from the last-synced snapshot are now excluded from that check (they load). Also: a transient empty membership result no longer wipes already-loaded groups.
+- **OAuth login loop fixed:** `signInWithOAuth` used `redirectTo: window.location.href`, re-feeding stale `?error…#access_token…` and causing `bad_oauth_state`. Now redirects to a clean origin+path (keeps only `joinGroupId`).
+- Stopped the `profiles` write firing on the sign-in page (401/RLS console noise) — gated on `isAuthenticated`.
+- **Fresh-login UX:** brief **cat splash** (`/divido_laughing_cat_mascot_*.png`) instead of an empty "Your Groups" while the first cloud load runs (5s safety timeout). (A "Syncing…" loader and skeletons were tried; splash is the current choice.)
+
+### Cleanups
+- **Name changes no longer post a ₹0 "X is now Y" activity** (notification only). Legacy "is now" and "X rejoined" ₹0 rows are filtered out of local cache + sync (`isLegacyRenameLog` in `lib/utils.ts`) and were deleted from the DB.
+- **Profile rename is account-only** (Option 3): it no longer reaches into groups, so it can't overwrite a custom per-group name or leave ghosts. Your name inside a group comes from that group's member row.
+- Sign-in page: removed the long PWA install hint. New Group card color iterations ended as the floating orange pill.
+
+### Balances note
+- A "Denmark ₹450 → ₹383.33" question was **not a bug**: it's the correct net given the current expenses (two "Billo" ₹100 entries reduced it). Possible accidental duplicate Billo (ids 726 & 728) — user to decide whether to delete.
+
+## Prior session (2026-08-14) — summary
+UI polish (group DP avatar header, initials avatars, sliding tab indicator + swipe, Photos tab, handshake Friends icon, full-screen notifications, floating attachment button, undo countdown toast, hidden scrollbars), Edit Group = settings + read-only members with "Manage members →", cross-device **profile sync** via `profiles` table, the **person-identity** feature (email → person_id → name; `person_id` column; Settle-All bucketing; same-person prompt), and a Claude Code sub-session: faster first load (font preload, lazy QR modals), leave-group-stays-inside, duplicate-group prevention + auto-heal (`api/dedupe_groups.sql`), compact `formatDate`. **SQL for `profiles` and `person_id` already run.**
+
+## Planned next (not started)
+- **Native app (Capacitor)** for an Instagram-style full-screen camera + inline photo-gallery picker — a web app can't do that grid; the web in-app camera quality is poor. Targeted ~2026-08-18+. See `.claude` memory `divido-native-camera-plan.md`.
+- Optional: lock the Gemini API key in Google Cloud (restrict to Generative Language API + app referrer) since a `VITE_` key ships in the browser.
+
+## Still to verify (on a real account, fresh build)
+1. Settle amount boxes edit smoothly & independently (the focus-steal fix — the last big bug).
+2. New expense from the center button saves and appears.
+3. Scanner works once `VITE_GEMINI_API_KEY` is set in Vercel.
+4. Invitee sees the group's expenses (not empty) on first join.
+5. Login is smooth (no OAuth loop, cat splash then groups).
 
 ## Key files
-- `src/App.tsx` — top-level state, auth, add-friend + same-person prompt, profile sync, share.
-- `src/hooks/useSupabaseSync.ts` — DB load/insert, `person_id` assignment, identity read.
+- `src/App.tsx` — top-level state, auth/OAuth, add-friend + same-person prompt, profile sync, share, the global settle modal + `SettleAmountInput`, floating +Group / scan buttons, cat splash.
+- `src/hooks/useSupabaseSync.ts` — DB load/insert, `person_id`, the unsynced-load guard, legacy-log filter, duplicate self-heal.
+- `src/hooks/useAppHotkeys.ts` — settle popup focus/keyboard nav (auto-focus only on open).
+- `src/hooks/useExpenseForm.ts` — expense form/save/split, member auto-select, handleScanComplete.
+- `src/components/expense-modal/BillScanner.tsx` — scanner (Gemini + local OCR), image downscale.
+- `src/components/ExpenseModal.tsx` — expense editor, attachment capture, scanner-close guard.
 - `src/components/FriendsView.tsx` — Settle-All identity bucketing.
-- `src/components/CreateGroupView.tsx` — Edit/Create group card.
-- `src/components/group-detail/` — GroupDetail, ExpenseList, ExpenseRow, GroupMemberList (the members hub).
-- `src/components/MobileHeader.tsx` — mobile header, notifications, updates log.
-- `src/lib/utils.ts` — shared helpers incl. `formatDate` (compact `13 Aug 26'` format).
-- `api/dedupe_groups.sql` — one-time manual cleanup for duplicate same-named groups (inspect, then delete by id).
+- `src/components/GroupDetail.tsx` — group tabs, net balance card.
+- `src/lib/imageUtils.ts` — memory-safe image downscaler.
+- `src/lib/utils.ts` — `formatDate`, `isLegacyRenameLog`.
+- `public/sw.js` + `src/main.tsx` — service worker (auto-update) + build marker.
+- `api/dedupe_groups.sql` — one-time duplicate-group cleanup.
