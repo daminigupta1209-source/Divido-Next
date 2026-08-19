@@ -368,7 +368,7 @@ export const FriendsView: React.FC<FriendsViewProps> = ({
   return (
     <div className="content-width-limit">
       {/* Back + search + funnel row (mirrors the All Activities page) */}
-      <div style={{ display: 'flex', gap: '10px', alignItems: 'center', marginBottom: '8px', width: '100%' }}>
+      <div style={{ display: 'flex', gap: '10px', alignItems: 'center', marginBottom: '16px', width: '100%' }}>
         <span
           onClick={() => setView('summary')}
           style={{ fontSize: '22px', cursor: 'pointer', opacity: 0.4, display: 'flex', alignItems: 'center', justifyContent: 'center', height: '38px', width: '24px', flexShrink: 0 }}

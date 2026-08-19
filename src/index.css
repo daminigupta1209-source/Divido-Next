@@ -628,8 +628,8 @@ input[type=number] { -moz-appearance: textfield; }
         position: sticky;
         top: 0;
         z-index: 999;
-        height: 64px;
-        margin-bottom: 8px;
+        height: 72px;
+        margin-bottom: 24px;
         margin-left: -16px;
         margin-right: -16px;
     }
@@ -637,8 +637,8 @@ input[type=number] { -moz-appearance: textfield; }
     .mobile-header-bar--home {
         background: var(--bg);
         border-bottom: none;
-        height: 56px;
-        margin-bottom: 8px;
+        height: 64px;
+        margin-bottom: 12px;
     }
 
     .home-header-title {
