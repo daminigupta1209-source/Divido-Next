@@ -513,7 +513,7 @@ export const FriendsView: React.FC<FriendsViewProps> = ({
             style={{
               flex: '1 1 auto',
               minWidth: 0,
-              background: '#B91C1C',
+              background: '#E57373',
               color: '#FFFFFF',
               display: 'flex',
               alignItems: 'center',
