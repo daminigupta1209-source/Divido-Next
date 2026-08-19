@@ -270,7 +270,7 @@ export const ExpenseRow: React.FC<ExpenseRowProps> = ({
         }}
         style={{
           position: 'relative',
-          padding: '14px 16px',
+          padding: '14px 24px 14px 16px',
           background: '#FFFFFF',
           border: '0.5px solid #EFE7DC',
           boxShadow: '0 2px 10px rgba(0,0,0,0.03)',
@@ -393,7 +393,7 @@ export const ExpenseRow: React.FC<ExpenseRowProps> = ({
       }}
       style={{
         position: 'relative',
-        padding: '14px 16px',
+        padding: '14px 24px 14px 16px',
         background: '#FFFFFF',
         border: '0.5px solid #EFE7DC',
         boxShadow: '0 2px 10px rgba(0,0,0,0.03)',
