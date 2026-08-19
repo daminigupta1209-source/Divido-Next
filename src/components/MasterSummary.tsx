@@ -514,7 +514,7 @@ export const MasterSummary: React.FC<MasterSummaryProps> = ({
           return `${curr}${formatCompactAmount(val)}`;
         };
 
-        const PINK = '#DC2626';
+        const PINK = '#B91C1C';
         const GREEN = '#059669';
 
         // Original single-line look (regular weight, no uppercase). Segments size
