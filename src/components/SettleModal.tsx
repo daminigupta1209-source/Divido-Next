@@ -480,7 +480,7 @@ export const SettleModal: React.FC<SettleModalProps> = ({
                         <p style={{ fontSize: '11px', fontWeight: 900, color: 'var(--g)' }}>
                           {t.from === me ? `💸 You pay ${t.to}` : `💸 You get back from ${t.from}`}
                         </p>
-                        <p style={{ fontSize: '18px', fontWeight: 950, color: t.from === me ? '#EF4444' : '#10B981' }}>
+                        <p style={{ fontSize: '18px', fontWeight: 950, color: t.from === me ? '#DC2626' : '#059669' }}>
                           {t.currency}
                           {formatCompactAmount(t.amount)}
                         </p>

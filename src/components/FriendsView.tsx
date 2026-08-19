@@ -513,7 +513,7 @@ export const FriendsView: React.FC<FriendsViewProps> = ({
             style={{
               flex: '1 1 auto',
               minWidth: 0,
-              background: '#EF4444',
+              background: '#DC2626',
               color: '#FFFFFF',
               display: 'flex',
               alignItems: 'center',
@@ -550,7 +550,7 @@ export const FriendsView: React.FC<FriendsViewProps> = ({
             style={{
               flex: '1 1 auto',
               minWidth: 0,
-              background: '#10B981',
+              background: '#059669',
               color: '#FFFFFF',
               display: 'flex',
               alignItems: 'center',
@@ -654,17 +654,17 @@ export const FriendsView: React.FC<FriendsViewProps> = ({
               {/* Balance pills */}
               <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', alignItems: 'flex-end', flexShrink: 0 }}>
                 {!active ? (
-                  <span style={{ ...pillBase, color: '#10B981' }}>Settled up</span>
+                  <span style={{ ...pillBase, color: '#047857' }}>Settled up</span>
                 ) : (
                   <>
                     {payList.length > 0 && (
-                      <span style={{ ...pillBase, color: '#EF4444', display: 'inline-flex', alignItems: 'center', justifyContent: 'flex-end', gap: '5px' }}>
+                      <span style={{ ...pillBase, color: '#B91C1C', display: 'inline-flex', alignItems: 'center', justifyContent: 'flex-end', gap: '5px' }}>
                         {joinPrimary(payList)} to pay
                         {payList.length > 1 && <span style={cardChip}>+{payList.length - 1}</span>}
                       </span>
                     )}
                     {collectList.length > 0 && (
-                      <span style={{ ...pillBase, color: '#10B981', display: 'inline-flex', alignItems: 'center', justifyContent: 'flex-end', gap: '5px' }}>
+                      <span style={{ ...pillBase, color: '#047857', display: 'inline-flex', alignItems: 'center', justifyContent: 'flex-end', gap: '5px' }}>
                         {joinPrimary(collectList)} to collect
                         {collectList.length > 1 && <span style={cardChip}>+{collectList.length - 1}</span>}
                       </span>
