@@ -285,7 +285,7 @@ export const MobileHeader: React.FC<MobileHeaderProps> = ({
   };
 
   return (
-    <div className={`mobile-header-bar ${isHomeStyle ? 'mobile-header-bar--home' : ''}`} style={{ display: 'flex', flexDirection: 'column', height: 'auto', gap: '10px', padding: '16px 20px', marginBottom: '24px', transform: headerHidden ? 'translateY(-110%)' : 'translateY(0)', transition: 'transform 0.28s cubic-bezier(0.4, 0, 0.2, 1)' }}>
+    <div className={`mobile-header-bar ${isHomeStyle ? 'mobile-header-bar--home' : ''}`} style={{ display: 'flex', flexDirection: 'column', height: 'auto', gap: '10px', padding: '12px 20px 4px 20px', marginBottom: '8px', transform: headerHidden ? 'translateY(-110%)' : 'translateY(0)', transition: 'transform 0.28s cubic-bezier(0.4, 0, 0.2, 1)' }}>
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: '100%', position: 'relative', height: '40px' }}>
         {view === 'detail' && selectedGroup ? (
           <div style={{ display: 'flex', alignItems: 'center', width: '100%', height: '100%', gap: '10px' }}>
