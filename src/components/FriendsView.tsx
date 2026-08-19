@@ -658,7 +658,7 @@ export const FriendsView: React.FC<FriendsViewProps> = ({
                 ) : (
                   <>
                     {payList.length > 0 && (
-                      <span style={{ ...pillBase, color: '#D8608A', display: 'inline-flex', alignItems: 'center', justifyContent: 'flex-end', gap: '5px' }}>
+                      <span style={{ ...pillBase, color: '#DE7093', display: 'inline-flex', alignItems: 'center', justifyContent: 'flex-end', gap: '5px' }}>
                         {joinPrimary(payList)} to pay
                         {payList.length > 1 && <span style={cardChip}>+{payList.length - 1}</span>}
                       </span>
