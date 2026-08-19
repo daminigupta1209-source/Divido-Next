@@ -3966,7 +3966,7 @@ function App() {
                   <path d="M3 4h8" />
                 </svg>
               </span>
-              <span>Friends</span>
+              <span>Settle Up</span>
             </div>
           )}
 
