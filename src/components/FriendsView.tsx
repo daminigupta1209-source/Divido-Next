@@ -513,13 +513,13 @@ export const FriendsView: React.FC<FriendsViewProps> = ({
             style={{
               flex: '1 1 auto',
               minWidth: 0,
-              background: '#E11D48',
+              background: '#DE7093',
               color: '#FFFFFF',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
               fontSize: '14px',
-              fontWeight: 600,
+              fontWeight: 500,
               gap: '6px',
               cursor: 'pointer',
               transition: 'opacity 0.2s',
@@ -550,13 +550,13 @@ export const FriendsView: React.FC<FriendsViewProps> = ({
             style={{
               flex: '1 1 auto',
               minWidth: 0,
-              background: '#10B981',
+              background: '#6FC7A4',
               color: '#FFFFFF',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
               fontSize: '14px',
-              fontWeight: 600,
+              fontWeight: 500,
               gap: '6px',
               cursor: 'pointer',
               transition: 'opacity 0.2s',
@@ -654,17 +654,17 @@ export const FriendsView: React.FC<FriendsViewProps> = ({
               {/* Balance pills */}
               <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', alignItems: 'flex-end', flexShrink: 0 }}>
                 {!active ? (
-                  <span style={{ ...pillBase, color: '#16A34A' }}>Settled up</span>
+                  <span style={{ ...pillBase, color: '#3FA97C' }}>Settled up</span>
                 ) : (
                   <>
                     {payList.length > 0 && (
-                      <span style={{ ...pillBase, color: '#DC2626', display: 'inline-flex', alignItems: 'center', justifyContent: 'flex-end', gap: '5px' }}>
+                      <span style={{ ...pillBase, color: '#D8608A', display: 'inline-flex', alignItems: 'center', justifyContent: 'flex-end', gap: '5px' }}>
                         {joinPrimary(payList)} to pay
                         {payList.length > 1 && <span style={cardChip}>+{payList.length - 1}</span>}
                       </span>
                     )}
                     {collectList.length > 0 && (
-                      <span style={{ ...pillBase, color: '#16A34A', display: 'inline-flex', alignItems: 'center', justifyContent: 'flex-end', gap: '5px' }}>
+                      <span style={{ ...pillBase, color: '#3FA97C', display: 'inline-flex', alignItems: 'center', justifyContent: 'flex-end', gap: '5px' }}>
                         {joinPrimary(collectList)} to collect
                         {collectList.length > 1 && <span style={cardChip}>+{collectList.length - 1}</span>}
                       </span>
