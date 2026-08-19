@@ -2940,9 +2940,8 @@ function App() {
           now handles Add Expense everywhere, and scanning lives inside the
           expense screen. */}
 
-      {/* Floating "+ Group" button — on all screens. Orange so it stands apart
-          from the green Add Expense actions; sits above the bottom nav. */}
-      {view !== 'create_group' && !isPhotoViewerOpen && (
+      {/* Floating "+ Group" button — on all screens (except inside specific group detail views where Scan appears). */}
+      {view !== 'create_group' && !((view === 'detail' || view === 'gallery' || view === 'analytics') && selectedId) && !isPhotoViewerOpen && (
         <button
           onClick={createGroupSecure}
           aria-label="New group"
