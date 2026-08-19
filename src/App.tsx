@@ -2940,9 +2940,9 @@ function App() {
           now handles Add Expense everywhere, and scanning lives inside the
           expense screen. */}
 
-      {/* Floating "+ Group" button — home screen only. Orange so it stands apart
+      {/* Floating "+ Group" button — on all screens. Orange so it stands apart
           from the green Add Expense actions; sits above the bottom nav. */}
-      {view === 'summary' && !isPhotoViewerOpen && (
+      {view !== 'create_group' && !isPhotoViewerOpen && (
         <button
           onClick={createGroupSecure}
           aria-label="New group"
@@ -3925,39 +3925,6 @@ function App() {
       )}
 
 
-
-      {/* Floating Orange + Group Button (on non-home screens) */}
-      {view !== 'summary' && view !== 'create_group' && !isPhotoViewerOpen && (
-        <button
-          onClick={() => setView('create_group')}
-          className="hover-up"
-          style={{
-            position: 'fixed',
-            right: '18px',
-            bottom: '90px',
-            zIndex: 90,
-            display: 'flex',
-            alignItems: 'center',
-            gap: '6px',
-            padding: '12px 18px',
-            background: 'linear-gradient(135deg, #F97316 0%, #EA580C 100%)',
-            color: '#FFFFFF',
-            borderRadius: '999px',
-            border: 'none',
-            fontSize: '14px',
-            fontWeight: 900,
-            cursor: 'pointer',
-            boxShadow: '0 8px 20px rgba(249, 115, 22, 0.4)',
-            transition: 'all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275)',
-          }}
-        >
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.8" strokeLinecap="round" strokeLinejoin="round">
-            <line x1="12" y1="5" x2="12" y2="19" />
-            <line x1="5" y1="12" x2="19" y2="12" />
-          </svg>
-          <span>Group</span>
-        </button>
-      )}
 
       {view !== 'create_group' && !isPhotoViewerOpen && (
         <nav className="bottom-nav">
