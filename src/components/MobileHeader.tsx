@@ -448,8 +448,9 @@ export const MobileHeader: React.FC<MobileHeaderProps> = ({
                   </h1>
                 </>
               )}
-            </div>
- 
+            {/* ⋮ Vertical three-dots button — positioned at the rightmost edge */}
+            {selectedGroup && (
+              <div style={{ zIndex: 9999, display: 'inline-flex', alignItems: 'center', flexShrink: 0, marginLeft: 'auto' }}>
                 {/* Create New Group Floating Button */}
                 <button
                   onClick={() => { onCreateGroup && onCreateGroup(); }}
