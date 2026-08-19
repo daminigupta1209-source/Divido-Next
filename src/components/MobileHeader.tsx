@@ -450,9 +450,37 @@ export const MobileHeader: React.FC<MobileHeaderProps> = ({
               )}
             </div>
  
-            {/* ⋮ Vertical three-dots button — positioned at the rightmost edge */}
-            {selectedGroup && (
-              <div style={{ zIndex: 9999, display: 'inline-flex', alignItems: 'center', flexShrink: 0, marginLeft: 'auto' }}>
+                {/* Create New Group Floating Button */}
+                <button
+                  onClick={() => { onCreateGroup && onCreateGroup(); }}
+                  style={{
+                    background: '#FFF7ED',
+                    border: '1.5px solid #FDBA74',
+                    cursor: 'pointer',
+                    color: '#C2410C',
+                    height: '34px',
+                    padding: '0 10px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: '4px',
+                    flexShrink: 0,
+                    borderRadius: '12px',
+                    fontSize: '12px',
+                    fontWeight: 800,
+                    transition: '0.15s all',
+                    marginRight: '4px',
+                    boxShadow: '0 2px 6px rgba(249, 115, 22, 0.12)',
+                  }}
+                  title="Create New Group"
+                >
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                    <line x1="12" y1="5" x2="12" y2="19" />
+                    <line x1="5" y1="12" x2="19" y2="12" />
+                  </svg>
+                  <span>Group</span>
+                </button>
+
                 {/* Share Group Link Button */}
                 {!amIPastMember && (
                   <button
@@ -1035,6 +1063,35 @@ export const MobileHeader: React.FC<MobileHeaderProps> = ({
                       <circle cx="10.8" cy="10.8" r="6.6" />
                       <path d="m16 16 4.2 4.2" />
                     </svg>
+                  </button>
+                )}
+                {onCreateGroup && (
+                  <button
+                    type="button"
+                    onClick={(e) => { e.stopPropagation(); onCreateGroup(); }}
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '4px',
+                      padding: '5px 10px',
+                      background: '#FDECDD',
+                      border: '1.5px solid #F97316',
+                      color: '#C2410C',
+                      borderRadius: '12px',
+                      fontSize: '11px',
+                      fontWeight: 800,
+                      cursor: 'pointer',
+                      marginRight: '6px',
+                      transition: 'all 0.15s ease',
+                      boxShadow: '0 2px 6px rgba(249, 115, 22, 0.12)',
+                    }}
+                    title="Create New Group"
+                  >
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ width: '13px', height: '13px' }}>
+                      <line x1="12" y1="5" x2="12" y2="19" />
+                      <line x1="5" y1="12" x2="19" y2="12" />
+                    </svg>
+                    <span>Group</span>
                   </button>
                 )}
                 {view === 'summary' && !isHeaderSearchActive && onScan && (
