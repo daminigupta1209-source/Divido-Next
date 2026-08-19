@@ -3943,7 +3943,7 @@ function App() {
                 <path d="M16 3.13a4 4 0 0 1 0 7.75" />
               </svg>
             </span>
-            <span>Groups</span>
+            <span>Home</span>
           </div>
           {((view === 'detail' || view === 'gallery' || view === 'analytics') && selectedId) ? (
             <div className={`b-nav-btn ${view === 'detail' && groupDetailTab === 'balances' ? 'active' : ''}`} onClick={() => { setView('detail'); setGroupDetailTab('balances'); }}>
