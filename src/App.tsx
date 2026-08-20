@@ -1629,7 +1629,6 @@ function App() {
       : groups.find((x) => String(x.id) === String(id));
     if (!g) return;
 
-    console.log('[DEBUG] handleDeleteGroup:', { id, me, members: g.members });
     const isActiveMember = !isStandalone && g.members.some(m => m.toLowerCase() === me.toLowerCase());
     const cleanMe = me.replace(/\s*\(Left\)$/i, '').toLowerCase();
     const isPastMember = !isStandalone && !isActiveMember && g.members.some(m => {
@@ -4214,10 +4213,6 @@ function App() {
               <button
                 id="delete-confirm-btn"
                 onClick={async () => {
-                  if (feedback.trim()) {
-                    console.log('User feedback note before deletion:', feedback);
-                  }
-
                   if (userEmail) {
                     try {
                       // 1. Find all group memberships linked to this email

@@ -534,7 +534,6 @@ If a valid receipt: {"title": "Sunrise Foods", "amount": 5445.30, "notes": "Groc
       },
     })
       .then(({ data: { text } }) => {
-        console.log('OCR text extracted:', text);
         setScanProgress(100);
         setScannerStatus('Data matching & extraction completed! 🎉');
 
