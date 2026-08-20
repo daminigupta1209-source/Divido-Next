@@ -461,8 +461,9 @@ export const MasterSummary: React.FC<MasterSummaryProps> = ({
           return `${curr}${formatCompactAmount(val)}`;
         };
 
-        const PINK = '#EF4444';
-        const GREEN = '#6FC7A4';
+        // Match the in-group net-balance pill (GroupDetail) for a consistent look.
+        const PINK = '#DB2777';
+        const GREEN = '#10B981';
 
         // Original single-line look (regular weight, no uppercase). Segments size
         // to content so the longer side gets room; ellipsis is the safety net.
