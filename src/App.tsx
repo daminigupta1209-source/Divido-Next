@@ -390,6 +390,18 @@ function App() {
 
   const isNavigatingHistory = React.useRef(false);
 
+  // When a name being added already exists elsewhere, ask whether it's the same
+  // person. "Same" links to that person's identity (via divido_person_link, which
+  // the sync layer consumes on insert); "Different" gets a fresh id by default.
+  // Declared here (above the history effects) so the back-gesture system can
+  // register it and dismiss the prompt on a back-swipe.
+  const [samePersonPrompt, setSamePersonPrompt] = useState<null | {
+    groupId: string | number;
+    queue: { name: string; candidates: { identity: string; name: string; groups: string[] }[] }[];
+    index: number;
+    addNames: string[];
+  }>(null);
+
   // Helper to get current UI state for history syncing
   const getUiState = () => ({
     view,
@@ -406,6 +418,7 @@ function App() {
     editingSettle,
     globalSettleData,
     showFriendsList,
+    samePersonPrompt,
     confirmState: {
       show: confirmState?.show || false,
       title: confirmState?.title || '',
@@ -436,6 +449,7 @@ function App() {
         setEditingSettle(ui.editingSettle || null);
         setGlobalSettleData(ui.globalSettleData || null);
         setShowFriendsList(!!ui.showFriendsList);
+        setSamePersonPrompt(ui.samePersonPrompt || null);
         setConfirmState({ show: false });
       } else {
         const currentUi = getUiState();
@@ -455,7 +469,7 @@ function App() {
   }, [
     view, selectedId, showExpModal, showSettleModal, showAddFriendModal,
     showGroupSettleList, showMembersHealth, qrModalData, showConvertModalId,
-    showNotifPanel, mobileShowGroupOptionsMenu, editingSettle, globalSettleData, showFriendsList, confirmState
+    showNotifPanel, mobileShowGroupOptionsMenu, editingSettle, globalSettleData, showFriendsList, samePersonPrompt, confirmState
   ]);
 
   // 2. Watch for user changes and push states
@@ -489,6 +503,7 @@ function App() {
         prev.showNotifPanel !== currentUi.showNotifPanel ||
         prev.mobileShowGroupOptionsMenu !== currentUi.mobileShowGroupOptionsMenu ||
         prev.showFriendsList !== currentUi.showFriendsList ||
+        JSON.stringify(prev.samePersonPrompt) !== JSON.stringify(currentUi.samePersonPrompt) ||
         JSON.stringify(prev.editingSettle) !== JSON.stringify(currentUi.editingSettle) ||
         JSON.stringify(prev.globalSettleData) !== JSON.stringify(currentUi.globalSettleData) ||
         JSON.stringify(prev.confirmState) !== JSON.stringify(currentUi.confirmState);
@@ -500,7 +515,7 @@ function App() {
   }, [
     view, selectedId, showExpModal, showSettleModal, showAddFriendModal,
     showGroupSettleList, showMembersHealth, qrModalData, showConvertModalId,
-    showNotifPanel, mobileShowGroupOptionsMenu, editingSettle, globalSettleData, showFriendsList, confirmState
+    showNotifPanel, mobileShowGroupOptionsMenu, editingSettle, globalSettleData, showFriendsList, samePersonPrompt, confirmState
   ]);
 
   // Header search should never linger — close it when leaving the home / settle pages.
@@ -1934,16 +1949,6 @@ function App() {
   }, [allGroupBalances]);
 
   // ── "Same person?" prompt (Step 4b) ────────────────────────────────────────
-  // When a name being added already exists elsewhere, ask whether it's the same
-  // person. "Same" links to that person's identity (via divido_person_link, which
-  // the sync layer consumes on insert); "Different" gets a fresh id by default.
-  const [samePersonPrompt, setSamePersonPrompt] = useState<null | {
-    groupId: string | number;
-    queue: { name: string; candidates: { identity: string; name: string; groups: string[] }[] }[];
-    index: number;
-    addNames: string[];
-  }>(null);
-
   const findPersonCandidates = (name: string, excludeGroupId: string | number) => {
     const clean = name.replace(/\s*\(Left\)$/i, '').trim().toLowerCase();
     if (!clean) return [];
@@ -3128,20 +3133,27 @@ function App() {
         const multiple = samePersonPrompt.queue.length > 1;
         return (
           <div
-            onClick={() => resolvePersonChoice(null)}
+            onClick={() => setSamePersonPrompt(null)}
             style={{ position: 'fixed', inset: 0, background: 'rgba(15, 23, 42, 0.5)', backdropFilter: 'blur(6px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 100000, padding: '20px', boxSizing: 'border-box' }}
           >
             <div
               onClick={(e) => e.stopPropagation()}
               style={{ background: '#FFFFFF', borderRadius: '20px', width: '100%', maxWidth: '340px', padding: '20px', boxShadow: '0 20px 40px rgba(0,0,0,0.18)', animation: 'fadeIn 0.2s ease-out' }}
             >
-              <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '6px' }}>
+              <div style={{ display: 'flex', alignItems: 'flex-start', gap: '10px', marginBottom: '6px' }}>
                 <span style={{ width: '36px', height: '36px', borderRadius: '50%', background: '#FEF3C7', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
                   <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#D97706" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" /><circle cx="9" cy="7" r="4" /><path d="M23 21v-2a4 4 0 0 0-3-3.87" /><path d="M16 3.13a4 4 0 0 1 0 7.75" /></svg>
                 </span>
-                <div style={{ fontSize: '15px', fontWeight: 900, color: '#1E293B' }}>
+                <div style={{ fontSize: '15px', fontWeight: 900, color: '#1E293B', flex: 1, minWidth: 0 }}>
                   {multiple ? `Which "${item.name}"?` : `You already have a "${item.name}"`}
                 </div>
+                <button
+                  onClick={() => setSamePersonPrompt(null)}
+                  aria-label="Close"
+                  style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '2px', margin: '-2px -4px 0 0', color: '#94A3B8', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}
+                >
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" /></svg>
+                </button>
               </div>
               <p style={{ fontSize: '12.5px', color: '#64748B', margin: '0 0 14px', lineHeight: 1.5 }}>
                 Is this the same person, or someone different who happens to share the name?
