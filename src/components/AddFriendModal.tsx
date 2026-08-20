@@ -279,6 +279,7 @@ export const AddFriendModal: React.FC<AddFriendModalProps> = ({
               </p>
               <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                 <input
+                  id="dv-invite"
                   type="search"
                   autoComplete="off"
                   autoCorrect="off"

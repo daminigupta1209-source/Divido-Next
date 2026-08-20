@@ -548,6 +548,7 @@ export const GroupMemberList: React.FC<GroupMemberListProps> = ({
                 >
                   <input
                     ref={inlineInputRef}
+                    id="dv-member-add"
                     autoFocus
                     type="text"
                     autoComplete="off"

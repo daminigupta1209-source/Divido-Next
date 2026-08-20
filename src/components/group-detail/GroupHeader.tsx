@@ -184,6 +184,7 @@ export const GroupHeader: React.FC<GroupHeaderProps> = ({
                   <label style={{ fontSize: '8px', fontWeight: 900, color: 'var(--g)', textTransform: 'uppercase', letterSpacing: '1.2px', marginBottom: '-4px' }}>Group Name</label>
                   <input
                     ref={renameInputRef}
+                    id="dv-grp-rename"
                     type="search"
                     autoComplete="off"
                     autoCorrect="off"
