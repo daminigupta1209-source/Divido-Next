@@ -777,23 +777,14 @@ input[type=number] { -moz-appearance: textfield; }
     .b-nav-btn:hover {
         opacity: 1;
         color: #0F172A;
-        transform: translateY(-3px) scale(1.08);
     }
-    .b-nav-btn.active { 
-        color: #4F46E5; 
-        opacity: 1; 
-        transform: translateY(-4px) scale(1.05); 
+    .b-nav-btn.active {
+        color: #4F46E5;
+        opacity: 1;
     }
-    .b-nav-icon { 
-        font-size: 22px; 
-        margin-bottom: 2px; 
-        transition: transform 0.2s ease;
-    }
-    .b-nav-btn:hover .b-nav-icon {
-        transform: scale(1.15) rotate(5deg);
-    }
-    .b-nav-btn.active .b-nav-icon {
-        transform: scale(1.2);
+    .b-nav-icon {
+        font-size: 22px;
+        margin-bottom: 2px;
     }
     .content-width-limit { max-width: 100%; }
 }
