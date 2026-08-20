@@ -36,11 +36,6 @@ export const AddFriendModal: React.FC<AddFriendModalProps> = ({
   const [copied, setCopied] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
-  // The field starts readOnly so the Android system autofill service (the dark
-  // key/card/pin bar) never attaches to it; the guard lifts the instant the
-  // user focuses/taps, so typing is unaffected. Experiment: if this reliably
-  // kills the autofill bar we roll it out to the other inputs.
-  const [autofillGuard, setAutofillGuard] = useState(true);
 
   const getInviteLink = () =>
     customRejoinLink || `${window.location.origin}/?joinGroupId=${selectedId || 'STANDALONE'}`;
@@ -290,12 +285,10 @@ export const AddFriendModal: React.FC<AddFriendModalProps> = ({
                   spellCheck="false"
                   data-1p-ignore
                   data-lpignore="true"
-                  readOnly={autofillGuard}
-                  onFocus={() => setAutofillGuard(false)}
                   placeholder="e.g. Rahul S, Priya..."
                   value={name}
                   onChange={(e) => { e.stopPropagation(); setName(e.target.value); setError(null); }}
-                  onClick={(e) => { e.stopPropagation(); setAutofillGuard(false); }}
+                  onClick={(e) => e.stopPropagation()}
                   onKeyDown={(e) => { e.stopPropagation(); if (e.key === 'Enter') { e.preventDefault(); handleAddName(); } }}
                   ref={inputRef}
                   style={{
