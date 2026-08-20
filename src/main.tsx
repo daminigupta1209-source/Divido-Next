@@ -6,7 +6,7 @@ import { ErrorBoundary } from './components/ErrorBoundary'
 
 // Build marker — check the console to confirm which version is actually loaded
 // (helps tell a fresh deploy apart from a stale service-worker cache).
-console.log('[Divido] build 2026-08-17-settle-v3');
+console.log('[Divido] build 2026-08-20-cache-v3');
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
