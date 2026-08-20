@@ -39,18 +39,23 @@ export const simplifyMultiCurrencyDebts = (
       const splitters = e.splitters || members;
       if (splitters.length === 0) return;
 
+      // Coerce the amount defensively: a null/undefined/NaN amt would otherwise
+      // spread NaN through every balance. Number('12.5') and Number(12.5) are
+      // unaffected, so valid amounts pass through untouched.
+      const amt = Number(e.amt) || 0;
+
       // Credit the payer
-      balances[e.paid] = (balances[e.paid] || 0) + e.amt;
+      balances[e.paid] = (balances[e.paid] || 0) + amt;
 
       // Debit splitters
       splitters.forEach(s => {
         let share = 0;
         if (!e.mode || e.mode === 'Equally') {
-          share = e.amt / splitters.length;
+          share = amt / splitters.length;
         } else if (e.mode === 'Unequally') {
           share = parseFloat(e.shares?.[s]?.toString() || '0');
         } else if (e.mode === 'Percentage') {
-          share = (e.amt * parseFloat(e.shares?.[s]?.toString() || '0')) / 100;
+          share = (amt * parseFloat(e.shares?.[s]?.toString() || '0')) / 100;
         }
         balances[s] = (balances[s] || 0) - share;
       });
@@ -113,6 +118,87 @@ export const simplifyMultiCurrencyDebts = (
   });
 
   return transactionsList;
+};
+
+/**
+ * Computes raw (non-simplified) pairwise debts between members, netting each
+ * pair against its reverse so A↔B collapses to a single directed transaction.
+ *
+ * This is the shared implementation for the non-"simplify debts" balance path.
+ * It uses a control-char delimiter (\x1f) that cannot occur in a member name,
+ * so names containing '-' (e.g. "Jean-Paul") survive the key round-trip.
+ */
+export const computeRawPairwiseTransactions = (
+  members: string[],
+  expenses: GroupExpense[],
+  defaultCurrency: string = '₹'
+): SimplifiedTransaction[] => {
+  const pairDebts: Record<string, Record<string, number>> = {};
+  expenses.forEach((e) => {
+    const splitters = e.splitters || members;
+    const c = e.currency || defaultCurrency;
+    // Defensive coercion — see simplifyMultiCurrencyDebts above.
+    const amt = Number(e.amt) || 0;
+    splitters.forEach((s) => {
+      if (s !== e.paid) {
+        const amtVal =
+          !e.mode || e.mode === 'Equally'
+            ? amt / (splitters.length || 1)
+            : e.mode === 'Unequally'
+            ? parseFloat(e.shares?.[s]?.toString() || '0')
+            : (amt * parseFloat(e.shares?.[s]?.toString() || '0')) / 100;
+        if (amtVal > 0.01) {
+          const key = `${s}\x1f${e.paid}`;
+          if (!pairDebts[key]) pairDebts[key] = {};
+          pairDebts[key][c] = (pairDebts[key][c] || 0) + amtVal;
+        }
+      }
+    });
+  });
+
+  const rawTransactions: SimplifiedTransaction[] = [];
+  const processedPairs = new Set<string>();
+
+  Object.keys(pairDebts).forEach((key) => {
+    const [from, to] = key.split('\x1f');
+    const reverseKey = `${to}\x1f${from}`;
+    if (processedPairs.has(key)) return;
+    const currencies = new Set([
+      ...Object.keys(pairDebts[key] || {}),
+      ...Object.keys(pairDebts[reverseKey] || {}),
+    ]);
+
+    const balances: Record<string, number> = {};
+    currencies.forEach((c) => {
+      const debt = pairDebts[key]?.[c] || 0;
+      const credit = pairDebts[reverseKey]?.[c] || 0;
+      const net = debt - credit;
+      if (Math.abs(net) > 0.01) {
+        balances[c] = net;
+      }
+    });
+
+    if (Object.keys(balances).length > 0) {
+      const hasOwed = Object.values(balances).some((v) => v > 0.01);
+      const hasOwe = Object.values(balances).some((v) => v < -0.01);
+
+      if (hasOwed && !hasOwe) {
+        rawTransactions.push({ from, to, balances });
+      } else if (hasOwe && !hasOwed) {
+        const inverted: Record<string, number> = {};
+        Object.entries(balances).forEach(([k, v]) => {
+          inverted[k] = -v;
+        });
+        rawTransactions.push({ from: to, to: from, balances: inverted });
+      } else if (hasOwed && hasOwe) {
+        rawTransactions.push({ from, to, balances });
+      }
+    }
+    processedPairs.add(key);
+    processedPairs.add(reverseKey);
+  });
+
+  return rawTransactions;
 };
 
 export const calculateNextOccurrenceDate = (

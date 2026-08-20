@@ -1,11 +1,11 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { BalanceDisplay } from './BalanceDisplay';
 import { getEmoji, GROUP_COLORS, formatCompactAmount, parseExpenseId } from '../lib/utils';
 import { StyledDropdown } from './StyledDropdown';
 
 // Pill-style trigger for the compact filter dropdowns (matches the old selects).
 const filterBtnStyle: React.CSSProperties = { padding: '6px 12px', borderRadius: '20px', border: '1px solid #E2E8F0', fontSize: '12px', fontWeight: 600, background: '#F1F5F9', color: '#475569', boxShadow: 'none' };
-import { simplifyMultiCurrencyDebts } from '../lib/calculations';
+import { simplifyMultiCurrencyDebts, computeRawPairwiseTransactions } from '../lib/calculations';
 
 import { Group, Expense, UserMetadata } from '../lib/types';
 
@@ -90,7 +90,10 @@ export const MasterSummary: React.FC<MasterSummaryProps> = ({
     if (searchNonce) setShowFilters(true);
   }, [searchNonce]);
 
-  const netBalances: Record<string, number> = {};
+  // netBalances depends only on groups/expenses/me — memoize so it isn't
+  // recomputed across every group/expense on unrelated re-renders (filters, dropdowns).
+  const netBalances = useMemo(() => {
+    const netBalances: Record<string, number> = {};
   // Calculate overall netBalances by accumulating from the simplified group plans and standalone expenses
   // This guarantees perfect sync across MasterSummary and FriendsView.
   groups.forEach((g) => {
@@ -112,66 +115,7 @@ export const MasterSummary: React.FC<MasterSummaryProps> = ({
     if (useSimplify) {
       groupTransactions = simplifyMultiCurrencyDebts(effectiveMembers, groupExps, g.currency || '₹');
     } else {
-      const pairDebts: Record<string, Record<string, number>> = {};
-      groupExps.forEach((e) => {
-        const splitters = e.splitters || effectiveMembers;
-        const c = e.currency || g.currency || '₹';
-        splitters.forEach((s) => {
-          if (s !== e.paid) {
-            const amtVal =
-              !e.mode || e.mode === 'Equally'
-                ? e.amt / (splitters.length || 1)
-                : e.mode === 'Unequally'
-                ? parseFloat(e.shares?.[s]?.toString() || '0')
-                : (e.amt * parseFloat(e.shares?.[s]?.toString() || '0')) / 100;
-            if (amtVal > 0.01) {
-              const key = `${s}-${e.paid}`;
-              if (!pairDebts[key]) pairDebts[key] = {};
-              pairDebts[key][c] = (pairDebts[key][c] || 0) + amtVal;
-            }
-          }
-        });
-      });
-
-      const processedPairs = new Set<string>();
-      Object.keys(pairDebts).forEach((key) => {
-        const [from, to] = key.split('-');
-        const reverseKey = `${to}-${from}`;
-        if (processedPairs.has(key)) return;
-        const currencies = new Set([
-          ...Object.keys(pairDebts[key] || {}),
-          ...Object.keys(pairDebts[reverseKey] || {}),
-        ]);
-
-        const balances: Record<string, number> = {};
-        currencies.forEach((c) => {
-          const debt = pairDebts[key]?.[c] || 0;
-          const credit = pairDebts[reverseKey]?.[c] || 0;
-          const net = debt - credit;
-          if (Math.abs(net) > 0.01) {
-            balances[c] = net;
-          }
-        });
-
-        if (Object.keys(balances).length > 0) {
-          const hasOwed = Object.values(balances).some((v) => v > 0.01);
-          const hasOwe = Object.values(balances).some((v) => v < -0.01);
-
-          if (hasOwed && !hasOwe) {
-            groupTransactions.push({ from, to, balances });
-          } else if (hasOwe && !hasOwed) {
-            const inverted: Record<string, number> = {};
-            Object.entries(balances).forEach(([k, v]) => {
-              inverted[k] = -v;
-            });
-            groupTransactions.push({ from: to, to: from, balances: inverted });
-          } else if (hasOwed && hasOwe) {
-            groupTransactions.push({ from, to, balances });
-          }
-        }
-        processedPairs.add(key);
-        processedPairs.add(reverseKey);
-      });
+      groupTransactions = computeRawPairwiseTransactions(effectiveMembers, groupExps, g.currency || '₹');
     }
 
     groupTransactions.forEach((t) => {
@@ -186,6 +130,9 @@ export const MasterSummary: React.FC<MasterSummaryProps> = ({
       }
     });
   });
+
+    return netBalances;
+  }, [groups, expenses, me]);
 
   const isWithinRange = (dateStr: string, days: number) => {
     try {
@@ -210,7 +157,7 @@ export const MasterSummary: React.FC<MasterSummaryProps> = ({
         const curr = e.currency || '₹';
         if (!rel[curr]) rel[curr] = 0;
         const splitters = e.splitters && e.splitters.length > 0 ? e.splitters : [e.paid];
-        const amount = parseFloat(e.amt.toString()) || 0;
+        const amount = (Number(e.amt) || 0);
         const myShare = !e.mode || e.mode === 'Equally' ? amount / splitters.length : e.mode === 'Unequally' ? parseFloat(e.shares?.[me]?.toString() || '0') : (amount * parseFloat(e.shares?.[me]?.toString() || '0')) / 100;
         const otherShare = !e.mode || e.mode === 'Equally' ? amount / splitters.length : e.mode === 'Unequally' ? parseFloat(e.shares?.[m]?.toString() || '0') : (amount * parseFloat(e.shares?.[m]?.toString() || '0')) / 100;
         if (e.paid === me && splitters.includes(m)) rel[curr] += otherShare;
@@ -331,7 +278,7 @@ export const MasterSummary: React.FC<MasterSummaryProps> = ({
     const thisMonthExpenses = expenses.filter((e) => e.date.startsWith(currentMonthKey));
     const spentByCategory = thisMonthExpenses.reduce<Record<string, number>>((acc, e) => {
       const emoji = e.category || getEmoji(e.title) || '⚡';
-      acc[emoji] = (acc[emoji] || 0) + (parseFloat(e.amt.toString()) || 0);
+      acc[emoji] = (acc[emoji] || 0) + ((Number(e.amt) || 0));
       return acc;
     }, {});
 

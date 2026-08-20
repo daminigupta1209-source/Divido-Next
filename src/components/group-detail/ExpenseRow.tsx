@@ -337,7 +337,7 @@ export const ExpenseRow: React.FC<ExpenseRowProps> = ({
         >
           <div style={{ textAlign: 'right' }}>
             <span style={{ fontSize: '14px', fontWeight: 800, color: 'var(--t)', fontFamily: '"Nunito", sans-serif' }}>
-              {e.currency || selectedGroup.currency || '₹'} {formatCompactAmount(parseFloat(e.amt.toString()) || 0)}
+              {e.currency || selectedGroup.currency || '₹'} {formatCompactAmount((Number(e.amt) || 0))}
             </span>
           </div>
           <div

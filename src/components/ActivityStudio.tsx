@@ -631,7 +631,7 @@ export const ActivityStudio: React.FC<ActivityStudioProps> = ({
                     <div style={{ display: 'flex', alignItems: 'center', gap: '16px', flexShrink: 0 }}>
                       <div style={{ textAlign: 'right' }}>
                         <span style={{ fontSize: '14px', fontWeight: 800, color: 'var(--t)', fontFamily: '"Nunito", sans-serif' }}>
-                          {e.currency || '₹'} {formatCompactAmount(parseFloat(e.amt.toString()) || 0)}
+                          {e.currency || '₹'} {formatCompactAmount((Number(e.amt) || 0))}
                         </span>
                       </div>
 

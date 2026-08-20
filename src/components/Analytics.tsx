@@ -819,7 +819,7 @@ export const Analytics: React.FC<AnalyticsProps> = ({ expenses, groups, me, user
               .map((g) => {
                 const gExps = expenses.filter((e) => String(e.gId) === String(g.id));
                 const count = gExps.length;
-                const gTotal = gExps.reduce((acc, e) => acc + (parseFloat(e.amt.toString()) || 0), 0);
+                const gTotal = gExps.reduce((acc, e) => acc + ((Number(e.amt) || 0)), 0);
                 return (
                   <div
                     key={g.id}

@@ -1,8 +1,8 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useMemo } from 'react';
 import { BalanceDisplay } from './BalanceDisplay';
 
 import { Group, Expense, UserMetadata } from '../lib/types';
-import { simplifyMultiCurrencyDebts } from '../lib/calculations';
+import { simplifyMultiCurrencyDebts, computeRawPairwiseTransactions } from '../lib/calculations';
 import { worldCurrencies, formatCompactAmount } from '../lib/utils';
 import { SearchableCurrencyPicker } from './SearchableCurrencyPicker';
 import { StyledDropdown } from './StyledDropdown';
@@ -52,6 +52,10 @@ export const FriendsView: React.FC<FriendsViewProps> = ({
   const [manualRates, setManualRates] = useState(false);
   const [sourceCurr, setSourceCurr] = useState<string>('ALL');
 
+  // Heavy balance derivation depends only on groups/expenses/me, so memoize it
+  // to avoid recomputing every friend's balance on unrelated re-renders (typing
+  // in the search box, opening a dropdown, etc.).
+  const { friends, isDupName, distinctCurrencies, allSharedMembers } = useMemo(() => {
   // Balances are bucketed by a hidden IDENTITY (person_id / email / name) rather
   // than the raw name, so two different people who share a name don't merge.
   const masterBal: Record<string, Record<string, number>> = {};
@@ -101,66 +105,7 @@ export const FriendsView: React.FC<FriendsViewProps> = ({
       groupTransactions = simplifyMultiCurrencyDebts(effectiveMembers, groupExps, g.currency || '₹');
     } else {
       // Manual non-simplified calculation path matching GroupDetail.tsx
-      const pairDebts: Record<string, Record<string, number>> = {};
-      groupExps.forEach((e) => {
-        const splitters = e.splitters || effectiveMembers;
-        const c = e.currency || g.currency || '₹';
-        splitters.forEach((s) => {
-          if (s !== e.paid) {
-            const amtVal =
-              !e.mode || e.mode === 'Equally'
-                ? e.amt / (splitters.length || 1)
-                : e.mode === 'Unequally'
-                ? parseFloat(e.shares?.[s]?.toString() || '0')
-                : (e.amt * parseFloat(e.shares?.[s]?.toString() || '0')) / 100;
-            if (amtVal > 0.01) {
-              const key = `${s}-${e.paid}`;
-              if (!pairDebts[key]) pairDebts[key] = {};
-              pairDebts[key][c] = (pairDebts[key][c] || 0) + amtVal;
-            }
-          }
-        });
-      });
-
-      const processedPairs = new Set<string>();
-      Object.keys(pairDebts).forEach((key) => {
-        const [from, to] = key.split('-');
-        const reverseKey = `${to}-${from}`;
-        if (processedPairs.has(key)) return;
-        const currencies = new Set([
-          ...Object.keys(pairDebts[key] || {}),
-          ...Object.keys(pairDebts[reverseKey] || {}),
-        ]);
-
-        const balances: Record<string, number> = {};
-        currencies.forEach((c) => {
-          const debt = pairDebts[key]?.[c] || 0;
-          const credit = pairDebts[reverseKey]?.[c] || 0;
-          const net = debt - credit;
-          if (Math.abs(net) > 0.01) {
-            balances[c] = net;
-          }
-        });
-
-        if (Object.keys(balances).length > 0) {
-          const hasOwed = Object.values(balances).some((v) => v > 0.01);
-          const hasOwe = Object.values(balances).some((v) => v < -0.01);
-
-          if (hasOwed && !hasOwe) {
-            groupTransactions.push({ from, to, balances });
-          } else if (hasOwe && !hasOwed) {
-            const inverted: Record<string, number> = {};
-            Object.entries(balances).forEach(([k, v]) => {
-              inverted[k] = -v;
-            });
-            groupTransactions.push({ from: to, to: from, balances: inverted });
-          } else if (hasOwed && hasOwe) {
-            groupTransactions.push({ from, to, balances });
-          }
-        }
-        processedPairs.add(key);
-        processedPairs.add(reverseKey);
-      });
+      groupTransactions = computeRawPairwiseTransactions(effectiveMembers, groupExps, g.currency || '₹');
     }
 
     // Accumulate transactions involving me
@@ -232,6 +177,9 @@ export const FriendsView: React.FC<FriendsViewProps> = ({
   const distinctCurrencies = Array.from(
     new Set(friends.flatMap((f) => Object.entries(f.bals).filter(([_, v]) => Math.abs(v) > 0.01).map(([c]) => c)))
   );
+
+    return { friends, isDupName, distinctCurrencies, allSharedMembers };
+  }, [groups, expenses, me]);
 
   // Fetch live rates (er-api, same source as the group converter) for every currency → target
   const fetchRatesTo = async (target: string) => {

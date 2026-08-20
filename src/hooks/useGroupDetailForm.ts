@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo } from 'react';
 import { Group, Expense, UserMetadata } from '../lib/types';
-import { simplifyMultiCurrencyDebts } from '../lib/calculations';
+import { simplifyMultiCurrencyDebts, computeRawPairwiseTransactions } from '../lib/calculations';
 import { getEmoji } from '../lib/utils';
 
 export interface UseGroupDetailFormProps {
@@ -154,68 +154,11 @@ export function useGroupDetailForm({
       return { name: m, balance: bal };
     });
 
-    const pairDebts: Record<string, Record<string, number>> = {};
-    groupExpenses.forEach((e) => {
-      const splitters = e.splitters || selectedGroup.members;
-      const c = e.currency || selectedGroup.currency || '₹';
-      splitters.forEach((s) => {
-        if (s !== e.paid) {
-          const amtVal =
-            !e.mode || e.mode === 'Equally'
-              ? e.amt / (splitters.length || 1)
-              : e.mode === 'Unequally'
-              ? parseFloat(e.shares?.[s]?.toString() || '0')
-              : (e.amt * parseFloat(e.shares?.[s]?.toString() || '0')) / 100;
-          if (amtVal > 0.01) {
-            const key = `${s}-${e.paid}`;
-            if (!pairDebts[key]) pairDebts[key] = {};
-            pairDebts[key][c] = (pairDebts[key][c] || 0) + amtVal;
-          }
-        }
-      });
-    });
-
-    const rawTransactions: { from: string; to: string; balances: Record<string, number> }[] = [];
-    const processedPairs = new Set<string>();
-
-    Object.keys(pairDebts).forEach((key) => {
-      const [from, to] = key.split('-');
-      const reverseKey = `${to}-${from}`;
-      if (processedPairs.has(key)) return;
-      const currencies = new Set([
-        ...Object.keys(pairDebts[key] || {}),
-        ...Object.keys(pairDebts[reverseKey] || {}),
-      ]);
-
-      const balances: Record<string, number> = {};
-      currencies.forEach((c) => {
-        const debt = pairDebts[key]?.[c] || 0;
-        const credit = pairDebts[reverseKey]?.[c] || 0;
-        const net = debt - credit;
-        if (Math.abs(net) > 0.01) {
-          balances[c] = net;
-        }
-      });
-
-      if (Object.keys(balances).length > 0) {
-        const hasOwed = Object.values(balances).some((v) => v > 0.01);
-        const hasOwe = Object.values(balances).some((v) => v < -0.01);
-
-        if (hasOwed && !hasOwe) {
-          rawTransactions.push({ from, to, balances });
-        } else if (hasOwe && !hasOwed) {
-          const inverted: Record<string, number> = {};
-          Object.entries(balances).forEach(([k, v]) => {
-            inverted[k] = -v;
-          });
-          rawTransactions.push({ from: to, to: from, balances: inverted });
-        } else if (hasOwed && hasOwe) {
-          rawTransactions.push({ from, to, balances });
-        }
-      }
-      processedPairs.add(key);
-      processedPairs.add(reverseKey);
-    });
+    const rawTransactions = computeRawPairwiseTransactions(
+      selectedGroup.members,
+      groupExpenses,
+      selectedGroup.currency || '₹'
+    );
 
     const simplifiedTransactions = simplifyMultiCurrencyDebts(
       selectedGroup.members,
@@ -532,71 +475,14 @@ export function useGroupDetailForm({
 
   const { savedTransCount, myTrans, otherTrans, finalTransactions } = useMemo(() => {
     if (!selectedGroup) return { savedTransCount: 0, myTrans: [], otherTrans: [], finalTransactions: [] };
-    const pairDebts: Record<string, Record<string, number>> = {};
     const currentGId = String(selectedId);
     const groupExpenses = expenses.filter((e) => String(e.gId) === currentGId);
-    
-    groupExpenses.forEach((e) => {
-      const splitters = e.splitters || selectedGroup.members || [];
-      const c = e.currency || selectedGroup.currency || '₹';
-      splitters.forEach((s) => {
-        if (s !== e.paid) {
-          const amtVal =
-            !e.mode || e.mode === 'Equally'
-              ? e.amt / (splitters.length || 1)
-              : e.mode === 'Unequally'
-              ? parseFloat(e.shares?.[s]?.toString() || '0')
-              : (e.amt * parseFloat(e.shares?.[s]?.toString() || '0')) / 100;
-          if (amtVal > 0.01) {
-            const key = `${s}-${e.paid}`;
-            if (!pairDebts[key]) pairDebts[key] = {};
-            pairDebts[key][c] = (pairDebts[key][c] || 0) + amtVal;
-          }
-        }
-      });
-    });
 
-    const rawTransactions: { from: string; to: string; balances: Record<string, number> }[] = [];
-    const processedPairs = new Set<string>();
-
-    Object.keys(pairDebts).forEach((key) => {
-      const [from, to] = key.split('-');
-      const reverseKey = `${to}-${from}`;
-      if (processedPairs.has(key)) return;
-      const currencies = new Set([
-        ...Object.keys(pairDebts[key] || {}),
-        ...Object.keys(pairDebts[reverseKey] || {}),
-      ]);
-
-      const balances: Record<string, number> = {};
-      currencies.forEach((c) => {
-        const debt = pairDebts[key]?.[c] || 0;
-        const credit = pairDebts[reverseKey]?.[c] || 0;
-        const net = debt - credit;
-        if (Math.abs(net) > 0.01) {
-          balances[c] = net;
-        }
-      });
-
-      if (Object.keys(balances).length > 0) {
-        const hasOwed = Object.values(balances).some((v) => v > 0.01);
-        const hasOwe = Object.values(balances).some((v) => v < -0.01);
-
-        if (hasOwed && !hasOwe) {
-          rawTransactions.push({ from, to, balances });
-        } else if (hasOwe && !hasOwed) {
-          const inverted: Record<string, number> = {};
-          Object.entries(balances).forEach(([k, v]) => {
-            inverted[k] = -v;
-          });
-          rawTransactions.push({ from: to, to: from, balances: inverted });
-        } else if (hasOwed && hasOwe) {
-          rawTransactions.push({ from, to, balances });
-        }
-      }
-      processedPairs.add(key);
-      processedPairs.add(reverseKey);
-    });
+    const rawTransactions = computeRawPairwiseTransactions(
+      selectedGroup.members || [],
+      groupExpenses,
+      selectedGroup.currency || '₹'
+    );
 
     const simplifiedTransactions = simplifyMultiCurrencyDebts(
       selectedGroup.members || [],

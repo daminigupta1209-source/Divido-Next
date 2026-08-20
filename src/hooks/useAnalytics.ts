@@ -116,7 +116,7 @@ export function useAnalytics({
         const emoji = getEmoji(e.title);
         const name = getCatName(emoji);
         if (!acc[name]) acc[name] = { name, emoji, amount: 0, items: [] };
-        acc[name].amount += parseFloat(e.amt.toString()) || 0;
+        acc[name].amount += (Number(e.amt) || 0);
         acc[name].items.push(e);
         return acc;
       },
@@ -133,13 +133,13 @@ export function useAnalytics({
     const thisMonthExpenses = filteredExpenses.filter((e) => e.date.startsWith(currentMonthKey));
     return thisMonthExpenses.reduce<Record<string, number>>((acc, e) => {
       const emoji = e.category || getEmoji(e.title) || '⚡';
-      acc[emoji] = (acc[emoji] || 0) + (parseFloat(e.amt.toString()) || 0);
+      acc[emoji] = (acc[emoji] || 0) + ((Number(e.amt) || 0));
       return acc;
     }, {});
   }, [filteredExpenses]);
 
   const totalSpentVal = useMemo(() => {
-    return filteredExpenses.reduce((acc, e) => acc + (parseFloat(e.amt.toString()) || 0), 0);
+    return filteredExpenses.reduce((acc, e) => acc + ((Number(e.amt) || 0)), 0);
   }, [filteredExpenses]);
 
   const avgExpense = useMemo(() => {

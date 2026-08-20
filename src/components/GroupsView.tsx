@@ -70,7 +70,7 @@ export const GroupsView: React.FC<GroupsViewProps> = ({
         const curr = e.currency || '₹';
         if (!rel[curr]) rel[curr] = 0;
         const splitters = e.splitters && e.splitters.length > 0 ? e.splitters : [e.paid];
-        const amount = parseFloat(e.amt.toString()) || 0;
+        const amount = (Number(e.amt) || 0);
         const myShare = !e.mode || e.mode === 'Equally' ? amount / splitters.length : e.mode === 'Unequally' ? parseFloat(e.shares?.[me]?.toString() || '0') : (amount * parseFloat(e.shares?.[me]?.toString() || '0')) / 100;
         const otherShare = !e.mode || e.mode === 'Equally' ? amount / splitters.length : e.mode === 'Unequally' ? parseFloat(e.shares?.[m]?.toString() || '0') : (amount * parseFloat(e.shares?.[m]?.toString() || '0')) / 100;
         if (e.paid === me && splitters.includes(m)) rel[curr] += otherShare;
