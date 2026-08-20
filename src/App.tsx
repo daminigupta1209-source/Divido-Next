@@ -3540,9 +3540,11 @@ function App() {
             }}
             onClick={(e) => e.stopPropagation()}
           >
-            {/* Invisible decoy inputs to trick browser autofill heuristics */}
+            {/* Invisible decoy input to trick browser autofill heuristics.
+                NOTE: no type="password" decoy — a password field (even hidden)
+                makes mobile Chrome treat the modal as a login form and pop the
+                password-manager bar over the real inputs. */}
             <input type="text" name="username" style={{ display: 'none' }} tabIndex={-1} autoComplete="off" />
-            <input type="password" name="password" style={{ display: 'none' }} tabIndex={-1} autoComplete="off" />
             <div
               onClick={() => setGlobalSettleData(null)}
               style={{
