@@ -114,8 +114,10 @@ export const Profile: React.FC<ProfileProps> = ({
     <div className="content-width-limit animate-fade-in" style={{ maxWidth: '440px', margin: '0 auto', padding: '0 16px 32px', boxSizing: 'border-box' }}>
       <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
         
-        {/* Avatar / Photo Header Block */}
-        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', margin: '10px 0 6px' }}>
+        {/* Avatar / Photo Header Block. Negative top margin trims the empty gap
+            between the page header and the avatar (the header already leaves a
+            24px margin below it). */}
+        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', margin: '-16px 0 6px' }}>
           <div style={{ position: 'relative' }}>
             <div
               onClick={() => fileInputRef.current?.click()}
