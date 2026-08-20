@@ -4008,7 +4008,9 @@ function App() {
                 width: '56px',
                 height: '56px',
                 borderRadius: '50%',
-                background: '#10B981',
+                // Slightly deeper than the net-balance green (#10B981) so the small
+                // circle on the white nav reads as the same green (optical match).
+                background: '#059669',
                 border: 'none',
                 cursor: 'pointer',
                 display: 'flex',
