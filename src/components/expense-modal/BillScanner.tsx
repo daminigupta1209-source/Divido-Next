@@ -632,7 +632,9 @@ If a valid receipt: {"title": "Sunrise Foods", "amount": 5445.30, "notes": "Groc
         left: 0,
         right: 0,
         bottom: 0,
-        background: 'rgba(15, 23, 42, 0.5)',
+        // Near-opaque so the expense card behind isn't visible through the
+        // scanner — otherwise it reads as a glitchy transparent form.
+        background: 'rgba(15, 23, 42, 0.92)',
         backdropFilter: 'blur(8px)',
         display: 'flex',
         alignItems: 'center',
