@@ -367,7 +367,7 @@ export const MobileHeader: React.FC<MobileHeaderProps> = ({
                   <input
                     ref={renameInputRef}
                     type="search"
-                    autoComplete="one-time-code"
+                    autoComplete="off"
                     autoCorrect="off"
                     spellCheck="false"
                     data-1p-ignore
@@ -974,7 +974,7 @@ export const MobileHeader: React.FC<MobileHeaderProps> = ({
                 {isHeaderSearchActive && (view === 'summary' || view === 'gallery') && (
                   <input
                     type="search"
-                    autoComplete="one-time-code"
+                    autoComplete="off"
                     autoCorrect="off"
                     spellCheck="false"
                     data-1p-ignore

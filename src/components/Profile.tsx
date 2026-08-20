@@ -223,7 +223,7 @@ export const Profile: React.FC<ProfileProps> = ({
               </label>
               <input
                 type="search"
-                autoComplete="one-time-code"
+                autoComplete="off"
                 autoCorrect="off"
                 spellCheck="false"
                 data-1p-ignore

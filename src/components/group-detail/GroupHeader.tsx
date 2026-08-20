@@ -185,7 +185,7 @@ export const GroupHeader: React.FC<GroupHeaderProps> = ({
                   <input
                     ref={renameInputRef}
                     type="search"
-                    autoComplete="one-time-code"
+                    autoComplete="off"
                     autoCorrect="off"
                     spellCheck="false"
                     data-1p-ignore

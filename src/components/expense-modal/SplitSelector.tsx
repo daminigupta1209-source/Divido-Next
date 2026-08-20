@@ -307,7 +307,7 @@ export const SplitSelector: React.FC<SplitSelectorProps> = ({
                   <input
                     id={`share-input-${friend}`}
                     type="number"
-                    autoComplete="one-time-code"
+                    autoComplete="off"
                     autoCorrect="off"
                     spellCheck="false"
                     data-1p-ignore

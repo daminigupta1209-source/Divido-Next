@@ -697,7 +697,7 @@ export const SettleModal: React.FC<SettleModalProps> = ({
                 id="settle-txt-input"
                 ref={settleNotesRef}
                 type="search"
-                autoComplete="one-time-code"
+                autoComplete="off"
                 autoCorrect="off"
                 spellCheck="false"
                 data-1p-ignore

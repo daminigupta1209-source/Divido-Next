@@ -221,7 +221,7 @@ export const UPIQRModal: React.FC<UPIQRModalProps> = ({
                 placeholder="e.g. name@okhdfcbank"
                 value={localUpi}
                 onChange={(e) => setLocalUpi(e.target.value)}
-                autoComplete="one-time-code"
+                autoComplete="off"
                 style={{
                   padding: '10px 12px',
                   fontSize: '13px',

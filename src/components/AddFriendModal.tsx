@@ -280,7 +280,7 @@ export const AddFriendModal: React.FC<AddFriendModalProps> = ({
               <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                 <input
                   type="search"
-                  autoComplete="one-time-code"
+                  autoComplete="off"
                   autoCorrect="off"
                   spellCheck="false"
                   data-1p-ignore

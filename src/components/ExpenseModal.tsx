@@ -1183,7 +1183,7 @@ export const ExpenseModal: React.FC<ExpenseModalProps> = ({
                     setOverrideEmoji(null);
                   }}
                   type="search"
-                  autoComplete="one-time-code"
+                  autoComplete="off"
                   autoCorrect="off"
                   spellCheck="false"
                   data-1p-ignore

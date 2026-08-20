@@ -212,7 +212,7 @@ export const GroupsView: React.FC<GroupsViewProps> = ({
             </svg>
             <input
               type="search"
-              autoComplete="one-time-code"
+              autoComplete="off"
               autoCorrect="off"
               spellCheck="false"
               data-1p-ignore
