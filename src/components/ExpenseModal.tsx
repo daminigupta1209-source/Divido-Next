@@ -1550,6 +1550,8 @@ export const ExpenseModal: React.FC<ExpenseModalProps> = ({
                 const isSelected = selectedSplitters.includes(cleanMember);
                 const share = splitMode === 'Equally'
                   ? selectedSplitters.length > 0 ? (parseFloat(amt) || 0) / selectedSplitters.length : 0
+                  : splitMode === 'Percentage'
+                  ? ((parseFloat(amt) || 0) * (shares[cleanMember] || 0)) / 100
                   : shares[cleanMember] || 0;
                 const displayName = member === me ? (userName === 'You' ? 'You' : `You (${userName})`) : member;
                 return (
