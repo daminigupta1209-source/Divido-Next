@@ -16,7 +16,7 @@ import { StyledDropdown } from './StyledDropdown';
 import { CameraCaptureModal } from './CameraCaptureModal';
 
 // Borderless trigger — the wrapping div already provides the pill/border/shadow.
-const emInlineBtnStyle: React.CSSProperties = { border: 'none', background: 'transparent', boxShadow: 'none', borderRadius: '19px', height: '100%', fontSize: '12px', fontWeight: 800, color: '#1E293B', padding: '6px 16px' };
+const emInlineBtnStyle: React.CSSProperties = { border: '1.5px solid #EAEFF4', background: 'var(--w, #fff)', boxShadow: '0 1px 3px rgba(0,0,0,0.03)', borderRadius: '19px', height: '38px', width: '100%', fontSize: '12px', fontWeight: 800, color: '#1E293B', padding: '0 16px' };
 
 interface ExpenseModalProps {
   setShowExpModal: (show: boolean) => void;
@@ -1422,20 +1422,7 @@ export const ExpenseModal: React.FC<ExpenseModalProps> = ({
               >
                 Paid by
               </label>
-              <div
-                style={{
-                  marginTop: '2px',
-                  height: '38px',
-                  position: 'relative',
-                  background: 'var(--w)',
-                  borderRadius: '19px',
-                  border: '1.5px solid #E2E8F0',
-                  boxShadow: '0 1px 4px rgba(0,0,0,0.04)',
-                  display: 'flex',
-                  alignItems: 'center',
-                  transition: '0.2s all ease',
-                }}
-              >
+              <div style={{ marginTop: '2px' }}>
                 <StyledDropdown
                   id="payer-select"
                   fullWidth
@@ -1464,20 +1451,7 @@ export const ExpenseModal: React.FC<ExpenseModalProps> = ({
               >
                 Split Mode
               </label>
-              <div
-                style={{
-                  marginTop: '2px',
-                  height: '38px',
-                  position: 'relative',
-                  background: 'var(--w)',
-                  borderRadius: '19px',
-                  border: '1.5px solid #E2E8F0',
-                  boxShadow: '0 1px 4px rgba(0,0,0,0.04)',
-                  display: 'flex',
-                  alignItems: 'center',
-                  transition: '0.2s all ease',
-                }}
-              >
+              <div style={{ marginTop: '2px' }}>
                 <StyledDropdown
                   id="split-mode-select"
                   fullWidth
