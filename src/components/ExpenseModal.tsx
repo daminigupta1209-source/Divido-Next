@@ -2130,7 +2130,10 @@ export const ExpenseModal: React.FC<ExpenseModalProps> = ({
                   return;
                 }
                 const hasNoData = !title.trim() && (!amt || parseFloat(amt.toString()) === 0);
-                const isNew = !editingExpense || !editingExpense.id;
+                // A freshly-created expense carries a 'temp-' id, so treat that as
+                // new too — otherwise cancelling the scanner leaves an empty
+                // expense card open behind it.
+                const isNew = !editingExpense || !editingExpense.id || String(editingExpense.id).startsWith('temp-');
                 if (hasNoData && isNew) {
                   setShowExpModal(false);
                 }
