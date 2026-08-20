@@ -45,6 +45,9 @@ export const GroupMemberList: React.FC<GroupMemberListProps> = ({
   const [isAddingInline, setIsAddingInline] = React.useState(false);
   const [inlineAddVal, setInlineAddVal] = React.useState('');
   const inlineInputRef = React.useRef<HTMLInputElement>(null);
+  // readOnly until focus keeps the Android system autofill bar (key/card/pin)
+  // from attaching; the guard lifts on focus/tap so typing is unaffected.
+  const [autofillGuard, setAutofillGuard] = React.useState(true);
 
   if (selectedId === 'STANDALONE' || !showFriendsList) return null;
 
@@ -550,9 +553,17 @@ export const GroupMemberList: React.FC<GroupMemberListProps> = ({
                     ref={inlineInputRef}
                     autoFocus
                     type="text"
+                    autoComplete="off"
+                    autoCorrect="off"
+                    spellCheck="false"
+                    data-1p-ignore
+                    data-lpignore="true"
+                    readOnly={autofillGuard}
+                    onFocus={() => setAutofillGuard(false)}
                     placeholder="Enter name..."
                     value={inlineAddVal}
                     onChange={(e) => setInlineAddVal(e.target.value)}
+                    onClick={() => setAutofillGuard(false)}
                     onKeyDown={(e) => {
                       if (e.key === 'Enter') handleInlineAdd();
                       if (e.key === 'Escape') {
