@@ -1,13 +1,14 @@
 import React from 'react';
 import { BalanceDisplay } from '../BalanceDisplay';
+import { SimplifiedTransaction } from '../../lib/calculations';
 
 interface PaybackPlanProps {
   showPaybackPlan: boolean;
   setShowPaybackPlan: (b: boolean) => void;
   savedTransCount: number;
-  finalTransactions: any[];
-  myTrans: any[];
-  otherTrans: any[];
+  finalTransactions: SimplifiedTransaction[];
+  myTrans: SimplifiedTransaction[];
+  otherTrans: SimplifiedTransaction[];
   me: string;
   selectedId: string | number | null;
   setGlobalSettleData: (data: { name: string; gId?: string | number | null } | null) => void;
