@@ -1,7 +1,7 @@
 import React from 'react';
 import { GROUP_COLORS, getEmoji } from '../lib/utils';
 
-import { Group } from '../lib/types';
+import { Group, Expense, ConfirmState } from '../lib/types';
 import { supabase } from '../lib/supabaseClient';
 import { SidebarProfile } from './SidebarProfile';
 
@@ -13,13 +13,13 @@ interface SidebarProps {
   groups: Group[];
   selectedId: string | number | null;
   setSelectedId: (id: string | number | null) => void;
-  expenses: any[];
+  expenses: Expense[];
   isGroupsExpanded: boolean;
   setIsGroupsExpanded: (b: boolean) => void;
   handleRenameGroup: (id: string | number) => void;
   handleDeleteGroup: (id: string | number) => void;
   setGroups: React.Dispatch<React.SetStateAction<Group[]>>;
-  setConfirmState: (state: any) => void;
+  setConfirmState: (state: ConfirmState) => void;
   setIsAuthenticated: (b: boolean) => void;
   defaultCurrency: string;
   handleLogout: () => void;

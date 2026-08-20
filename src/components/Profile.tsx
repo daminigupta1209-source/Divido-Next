@@ -1,21 +1,21 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { supabase } from '../lib/supabaseClient';
-import { Group } from '../lib/types';
+import { Group, Expense, UserMetadata } from '../lib/types';
 import { SearchableCurrencyPicker } from './SearchableCurrencyPicker';
 import { UpiSection } from './UpiSection';
 import { worldCurrencies } from '../lib/utils';
 
 interface ProfileProps {
   groups: Group[];
-  expenses: any[];
+  expenses: Expense[];
   currentTheme: 'lavender' | 'sunset';
   onThemeChange: (t: 'lavender' | 'sunset') => void;
   userName: string;
   setUserName: (n: string) => void;
   me: string;
   setShowDeleteAccountModal: (b: boolean) => void;
-  userMetadata: Record<string, any>;
-  setUserMetadata: (m: Record<string, any>) => void;
+  userMetadata: UserMetadata;
+  setUserMetadata: (m: UserMetadata) => void;
   handleLogout: () => void;
   userEmail: string;
 }

@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect, useMemo } from 'react';
 import { BalanceDisplay } from './BalanceDisplay';
 
-import { Group, Expense, UserMetadata } from '../lib/types';
+import { Group, Expense, UserMetadata, GlobalSettleData } from '../lib/types';
 import { simplifyMultiCurrencyDebts, computeRawPairwiseTransactions } from '../lib/calculations';
 import { worldCurrencies, formatCompactAmount } from '../lib/utils';
 import { SearchableCurrencyPicker } from './SearchableCurrencyPicker';
@@ -16,7 +16,7 @@ interface FriendsViewProps {
   me: string;
   setView: (view: string) => void;
   setSelectedId: (id: string | number | null) => void;
-  setGlobalSettleData: (data: any) => void;
+  setGlobalSettleData: (data: GlobalSettleData | null) => void;
   userMetadata: Record<string, UserMetadata>;
   setUserMetadata: (meta: Record<string, UserMetadata>) => void;
   searchQuery?: string;
@@ -32,6 +32,7 @@ export const FriendsView: React.FC<FriendsViewProps> = ({
   setSelectedId,
   setGlobalSettleData,
   userMetadata,
+  setUserMetadata,
   searchQuery = '',
   showConvertModal = false,
   setShowConvertModal = () => {},
@@ -62,7 +63,7 @@ export const FriendsView: React.FC<FriendsViewProps> = ({
   const idMeta: Record<string, { name: string; groups: Set<string> }> = {};
   // Resolve a member NAME within a group to its identity (falls back to the name
   // itself for legacy/unlinked members — preserving old merge-by-name behaviour).
-  const resolveId = (g: any, nm: string) =>
+  const resolveId = (g: Group, nm: string) =>
     (g?.memberIdentities?.[nm]) || (g?.memberIdentities?.[nm + ' (Left)']) || nm;
   const bumpBal = (id: string, name: string, groupName: string | null, curr: string, delta: number) => {
     if (!masterBal[id]) masterBal[id] = {};

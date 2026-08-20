@@ -1,6 +1,7 @@
 import React from 'react';
 import { BalanceDisplay } from '../BalanceDisplay';
 import { SimplifiedTransaction } from '../../lib/calculations';
+import { GlobalSettleData } from '../../lib/types';
 
 interface PaybackPlanProps {
   showPaybackPlan: boolean;
@@ -11,7 +12,7 @@ interface PaybackPlanProps {
   otherTrans: SimplifiedTransaction[];
   me: string;
   selectedId: string | number | null;
-  setGlobalSettleData: (data: { name: string; gId?: string | number | null } | null) => void;
+  setGlobalSettleData: (data: GlobalSettleData | null) => void;
 }
 
 export const PaybackPlan: React.FC<PaybackPlanProps> = ({

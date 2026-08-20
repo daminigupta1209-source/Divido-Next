@@ -1,6 +1,6 @@
 import { useEffect } from 'react';
 import { escManager } from '../lib/escManager';
-import { Group } from '../lib/types';
+import { Group, GlobalSettleData } from '../lib/types';
 
 interface UseAppHotkeysProps {
   groups: Group[];
@@ -9,8 +9,8 @@ interface UseAppHotkeysProps {
   showDeleteAccountModal: boolean;
   setShowDeleteAccountModal: (show: boolean) => void;
   setFeedback: (feedback: string) => void;
-  globalSettleData: { name: string; gId?: string | number | null } | null;
-  setGlobalSettleData: (data: any) => void;
+  globalSettleData: GlobalSettleData | null;
+  setGlobalSettleData: (data: GlobalSettleData | null) => void;
   localSettleEdits: any[];
   me: string;
 }

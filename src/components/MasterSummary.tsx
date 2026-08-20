@@ -7,7 +7,7 @@ import { StyledDropdown } from './StyledDropdown';
 const filterBtnStyle: React.CSSProperties = { padding: '6px 12px', borderRadius: '20px', border: '1px solid #E2E8F0', fontSize: '12px', fontWeight: 600, background: '#F1F5F9', color: '#475569', boxShadow: 'none' };
 import { simplifyMultiCurrencyDebts, computeRawPairwiseTransactions } from '../lib/calculations';
 
-import { Group, Expense, UserMetadata } from '../lib/types';
+import { Group, Expense, UserMetadata, GlobalSettleData } from '../lib/types';
 
 interface MasterSummaryProps {
   groups: Group[];
@@ -24,18 +24,18 @@ interface MasterSummaryProps {
   me: string;
   setShowExpModal: (show: boolean) => void;
   setEditingExpense: (exp: Expense | null) => void;
-  globalSettleData: any;
-  setGlobalSettleData: (data: any) => void;
+  globalSettleData: GlobalSettleData | null;
+  setGlobalSettleData: (data: GlobalSettleData | null) => void;
   userMetadata: Record<string, UserMetadata>;
   setUserMetadata: (meta: Record<string, UserMetadata>) => void;
   onShowQR: (payee: string, amt: number, curr: string) => void;
-  // Make props optional or define them to prevent typescript issues
-  timeFilter?: any;
-  setTimeFilter?: any;
-  balanceFilter?: any;
-  setBalanceFilter?: any;
-  showTimeMenu?: any;
-  setShowTimeMenu?: any;
+  // Filter state props
+  timeFilter?: 'all' | '30' | '90' | '365';
+  setTimeFilter?: (v: 'all' | '30' | '90' | '365') => void;
+  balanceFilter?: 'all' | 'owes' | 'owed' | 'settled';
+  setBalanceFilter?: (v: 'all' | 'owes' | 'owed' | 'settled') => void;
+  showTimeMenu?: boolean;
+  setShowTimeMenu?: (b: boolean) => void;
   searchNonce?: number;
   searchQuery?: string;
   setSearchQuery?: (val: string) => void;

@@ -58,6 +58,24 @@ export interface Expense {
   tags?: string[];
 }
 
+export interface ConfirmState {
+  show: boolean;
+  title?: string;
+  desc?: string;
+  onConfirm?: (() => void) | null;
+  type?: 'danger' | 'info' | 'warning';
+  confirmText?: string;
+  cancelText?: string;
+}
+
+export interface GlobalSettleData {
+  name: string;
+  gId?: string | number | null;
+  identity?: string;
+  groups?: string[];
+  balances?: Record<string, number>;
+}
+
 export interface UserMetadata {
   upiId?: string;
   [key: string]: any;
