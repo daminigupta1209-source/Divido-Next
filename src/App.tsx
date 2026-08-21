@@ -85,9 +85,10 @@ const SettleAmountInput: React.FC<{
   maxAmt: number;
   disabled: boolean;
   shake: boolean;
+  currency?: string;
   onCommit: (v: number | string) => void;
   onExceed: () => void;
-}> = ({ inputId, amount, maxAmt, disabled, shake, onCommit, onExceed }) => {
+}> = ({ inputId, amount, maxAmt, disabled, shake, currency, onCommit, onExceed }) => {
   const toStr = (a: number | string) =>
     a === '' || a == null ? '' : String(typeof a === 'number' ? Math.round(a * 100) / 100 : a);
   const ref = React.useRef<HTMLInputElement>(null);
@@ -105,6 +106,12 @@ const SettleAmountInput: React.FC<{
       lastTyped.current = s;
     }
   }, [amount]);
+
+  const currStr = currency || '';
+  const paddingLeft = Math.max(20, currStr.length * 8 + 12);
+  const valLen = toStr(amount).length;
+  const inputWidth = Math.max(90, paddingLeft + valLen * 8 + 14);
+
   return (
     <input
       ref={ref}
@@ -139,9 +146,9 @@ const SettleAmountInput: React.FC<{
         onCommit(cleaned);
       }}
       style={{
-        width: '76px',
+        width: `${inputWidth}px`,
         height: '32px',
-        padding: '0 8px 0 20px',
+        padding: `0 8px 0 ${paddingLeft}px`,
         margin: 0,
         borderRadius: '8px',
         border: `1.5px solid ${shake ? '#EF4444' : '#CBD5E1'}`,
@@ -152,6 +159,7 @@ const SettleAmountInput: React.FC<{
         outline: 'none',
         textAlign: 'left',
         boxSizing: 'border-box',
+        transition: 'width 0.15s ease, padding 0.15s ease',
       }}
     />
   );
@@ -3824,6 +3832,7 @@ function App() {
                           maxAmt={typeof item.maxAmt === 'number' ? item.maxAmt : Number.POSITIVE_INFINITY}
                           disabled={!isSelected}
                           shake={settleShakeIdx === idx}
+                          currency={item.curr}
                           onCommit={(v) =>
                             setLocalSettleEdits((prev) => prev.map((it, i) => (i === idx ? { ...it, amt: v } : it)))
                           }
