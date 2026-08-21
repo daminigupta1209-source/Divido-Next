@@ -43,6 +43,7 @@ interface ExpenseModalProps {
   setAutoOpenScanner?: (val: boolean) => void;
   onRequireSignIn?: () => boolean;
   deleteExpense?: (id: string | number) => void;
+  onExpenseSaved?: (savedExpense: Expense, activeGroup?: Group) => void;
 }
 
 export const ExpenseModal: React.FC<ExpenseModalProps> = ({
@@ -70,6 +71,7 @@ export const ExpenseModal: React.FC<ExpenseModalProps> = ({
   setAutoOpenScanner,
   onRequireSignIn,
   deleteExpense,
+  onExpenseSaved,
 }) => {
   const {
     localGId,

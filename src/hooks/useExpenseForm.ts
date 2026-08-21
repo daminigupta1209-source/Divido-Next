@@ -27,6 +27,7 @@ export interface UseExpenseFormProps {
   defaultCurrency: string;
   autoOpenScanner?: boolean;
   setAutoOpenScanner?: (val: boolean) => void;
+  onExpenseSaved?: (savedExpense: Expense, activeGroup?: Group) => void;
 }
 
 export function useExpenseForm({
@@ -52,6 +53,7 @@ export function useExpenseForm({
   defaultCurrency,
   autoOpenScanner = false,
   setAutoOpenScanner,
+  onExpenseSaved,
 }: UseExpenseFormProps) {
   const [localGId, setLocalGId] = useState<string | number>(() => {
     if (editingExpense) return editingExpense.gId;
@@ -432,6 +434,9 @@ export function useExpenseForm({
           ? (prev) => prev.map((e) => (e.id === editingExpense.id ? savedExp : e))
           : (prev) => [savedExp, ...prev]
       );
+      if (onExpenseSaved) {
+        onExpenseSaved(savedExp, activeGroup);
+      }
       setShowExpModal(false);
       setEditingExpense(null);
     } else {

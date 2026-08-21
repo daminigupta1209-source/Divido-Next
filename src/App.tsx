@@ -21,6 +21,7 @@ import { Group, Expense, PendingMatchPrompt, GlobalSettleData, ConfirmState } fr
 import { CurrencyConverterModal } from './components/CurrencyConverterModal';
 import { AddFriendModal } from './components/AddFriendModal';
 import { MatchPromptModal } from './components/MatchPromptModal';
+import { PostExpenseShareSheet, getUnregisteredParticipantShares } from './components/PostExpenseShareSheet';
 import { SearchableCurrencyPicker } from './components/SearchableCurrencyPicker';
 import { BalanceDisplay } from './components/BalanceDisplay';
 import { PremiumConfirm } from './components/PremiumConfirm';
@@ -208,6 +209,11 @@ function App() {
     type: 'danger',
   });
   const [toastMsg, setToastMsg] = useState<string | null>(null);
+  const [postExpenseShareData, setPostExpenseShareData] = useState<{
+    expense: Expense;
+    group: Group;
+    unregisteredShares: { name: string; shareAmount: number }[];
+  } | null>(null);
   const [isSidebarOpen, setIsSidebarOpen] = useState<boolean>(false);
 
   const [showRejoinRequestModal, setShowRejoinRequestModal] = useState(false);
@@ -3098,6 +3104,19 @@ function App() {
           setAutoOpenScanner={setAutoOpenScanner}
           onRequireSignIn={requireSignInToCreate}
           deleteExpense={deleteExpenseSecure}
+          onExpenseSaved={(savedExp, activeGrp) => {
+            const targetGroup = activeGrp || groups.find(g => String(g.id) === String(savedExp.gId));
+            if (targetGroup) {
+              const unregisteredShares = getUnregisteredParticipantShares(savedExp, targetGroup, me);
+              if (unregisteredShares.length > 0) {
+                setPostExpenseShareData({
+                  expense: savedExp,
+                  group: targetGroup,
+                  unregisteredShares,
+                });
+              }
+            }
+          }}
         />
         </React.Suspense>
       )}
@@ -4499,6 +4518,15 @@ function App() {
           onMouseLeave={(e) => { e.currentTarget.style.color = '#D97706'; }}
           >✕</span>
         </div>
+      )}
+
+      {postExpenseShareData && (
+        <PostExpenseShareSheet
+          expense={postExpenseShareData.expense}
+          group={postExpenseShareData.group}
+          unregisteredShares={postExpenseShareData.unregisteredShares}
+          onClose={() => setPostExpenseShareData(null)}
+        />
       )}
 
       <SettleModal
