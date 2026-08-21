@@ -3105,16 +3105,19 @@ function App() {
           onRequireSignIn={requireSignInToCreate}
           deleteExpense={deleteExpenseSecure}
           onExpenseSaved={(savedExp, activeGrp) => {
-            const targetGroup = activeGrp || groups.find(g => String(g.id) === String(savedExp.gId));
-            if (targetGroup) {
-              const unregisteredShares = getUnregisteredParticipantShares(savedExp, targetGroup, me);
-              if (unregisteredShares.length > 0) {
-                setPostExpenseShareData({
-                  expense: savedExp,
-                  group: targetGroup,
-                  unregisteredShares,
-                });
-              }
+            const targetGroup = activeGrp || groups.find(g => String(g.id) === String(savedExp.gId)) || {
+              id: savedExp.gId || 'STANDALONE',
+              name: 'Non-Group Expenses',
+              members: savedExp.splitters || [],
+              currency: savedExp.currency || myDefaultCurrency || '₹',
+            };
+            const unregisteredShares = getUnregisteredParticipantShares(savedExp, targetGroup, me);
+            if (unregisteredShares.length > 0) {
+              setPostExpenseShareData({
+                expense: savedExp,
+                group: targetGroup,
+                unregisteredShares,
+              });
             }
           }}
         />
