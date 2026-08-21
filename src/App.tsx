@@ -5,18 +5,43 @@ import { Sidebar } from './components/Sidebar';
 import { GroupDetail } from './components/GroupDetail';
 import { GroupsView } from './components/GroupsView';
 import { CreateGroupView } from './components/CreateGroupView';
+function safeLazy<T extends React.ComponentType<any>>(
+  factory: () => Promise<{ default: T }>
+) {
+  return React.lazy(() =>
+    factory().catch((err) => {
+      console.error('[Divido] Lazy chunk load failed:', err);
+      const msg = err?.message || '';
+      const isChunkError =
+        msg.includes('dynamically imported module') ||
+        msg.includes('Loading chunk') ||
+        msg.includes('Failed to fetch');
+
+      if (isChunkError && typeof window !== 'undefined') {
+        const reloaded = sessionStorage.getItem('divido_chunk_reloaded');
+        if (!reloaded) {
+          sessionStorage.setItem('divido_chunk_reloaded', '1');
+          window.location.reload();
+          return new Promise<never>(() => {});
+        }
+      }
+      throw err;
+    })
+  );
+}
+
 // Lazy-loaded heavy screens/modals: only fetched when the user actually opens
 // them, keeping the initial app bundle (and first paint) smaller.
-const MasterSummary = React.lazy(() => import('./components/MasterSummary').then((m) => ({ default: m.MasterSummary })));
-const FriendsView = React.lazy(() => import('./components/FriendsView').then((m) => ({ default: m.FriendsView })));
-const Analytics = React.lazy(() => import('./components/Analytics').then((m) => ({ default: m.Analytics })));
-const ActivityStudio = React.lazy(() => import('./components/ActivityStudio').then((m) => ({ default: m.ActivityStudio })));
-const Profile = React.lazy(() => import('./components/Profile').then((m) => ({ default: m.Profile })));
-const ExpenseModal = React.lazy(() => import('./components/ExpenseModal').then((m) => ({ default: m.ExpenseModal })));
+const MasterSummary = safeLazy(() => import('./components/MasterSummary').then((m) => ({ default: m.MasterSummary })));
+const FriendsView = safeLazy(() => import('./components/FriendsView').then((m) => ({ default: m.FriendsView })));
+const Analytics = safeLazy(() => import('./components/Analytics').then((m) => ({ default: m.Analytics })));
+const ActivityStudio = safeLazy(() => import('./components/ActivityStudio').then((m) => ({ default: m.ActivityStudio })));
+const Profile = safeLazy(() => import('./components/Profile').then((m) => ({ default: m.Profile })));
+const ExpenseModal = safeLazy(() => import('./components/ExpenseModal').then((m) => ({ default: m.ExpenseModal })));
 // QR modals pull in the qrcode library — keep it out of the main bundle by
 // loading these only when a user actually opens a payment/QR popup.
-const UPIQRModal = React.lazy(() => import('./components/UPIQRModal').then((m) => ({ default: m.UPIQRModal })));
-const NetReceivableModal = React.lazy(() => import('./components/NetReceivableModal').then((m) => ({ default: m.NetReceivableModal })));
+const UPIQRModal = safeLazy(() => import('./components/UPIQRModal').then((m) => ({ default: m.UPIQRModal })));
+const NetReceivableModal = safeLazy(() => import('./components/NetReceivableModal').then((m) => ({ default: m.NetReceivableModal })));
 import { Group, Expense, PendingMatchPrompt, GlobalSettleData, ConfirmState } from './lib/types';
 import { CurrencyConverterModal } from './components/CurrencyConverterModal';
 import { AddFriendModal } from './components/AddFriendModal';
@@ -986,6 +1011,10 @@ function App() {
       profileSyncReady.current = true;
     }
   };
+
+  useEffect(() => {
+    try { sessionStorage.removeItem('divido_chunk_reloaded'); } catch {}
+  }, []);
 
   useEffect(() => {
     // Listen to changes in auth state from Supabase
