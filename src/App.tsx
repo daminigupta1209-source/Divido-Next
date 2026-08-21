@@ -56,7 +56,7 @@ import { NetPayableModal } from './components/NetPayableModal';
 import { CurrencySetupModal } from './components/CurrencySetupModal';
 import { GroupGallery } from './components/GroupGallery';
 import { checkIfDemoMode } from './lib/demoMode';
-import { ensureArray, ensureObject, isLegacyRenameLog } from './lib/utils';
+import { ensureArray, ensureObject, isLegacyRenameLog, formatCompactAmount } from './lib/utils';
 import { useSupabaseSync } from './hooks/useSupabaseSync';
 import { useAppHotkeys } from './hooks/useAppHotkeys';
 import { useUndoStack } from './hooks/useUndoStack';
@@ -147,6 +147,7 @@ const SettleAmountInput: React.FC<{
       }}
       style={{
         width: `${inputWidth}px`,
+        maxWidth: '135px',
         height: '32px',
         padding: `0 8px 0 ${paddingLeft}px`,
         margin: 0,
@@ -3912,14 +3913,14 @@ function App() {
                           <span>
                             You pay <strong>{friendName}</strong> a net of{' '}
                             <strong style={{ color: '#E11D48', fontSize: '14.5px', fontWeight: 700, marginLeft: '2px' }}>
-                              {curr}{absoluteAmt.toFixed(2)}
+                              {curr}{absoluteAmt >= 1000000 ? formatCompactAmount(absoluteAmt) : absoluteAmt.toFixed(2)}
                             </strong>
                           </span>
                         ) : (
                           <span>
                             You get back a net of{' '}
                             <strong style={{ color: '#10B981', fontSize: '14.5px', fontWeight: 700, marginRight: '2px' }}>
-                              {curr}{absoluteAmt.toFixed(2)}
+                              {curr}{absoluteAmt >= 1000000 ? formatCompactAmount(absoluteAmt) : absoluteAmt.toFixed(2)}
                             </strong>{' '}
                             from <strong>{friendName}</strong>
                           </span>
@@ -3958,10 +3959,11 @@ function App() {
                 const curr = Object.keys(netBalances)[0] || '₹';
                 const netVal = netBalances[curr] || 0;
                 const absoluteAmt = Math.abs(netVal);
+                const displayAmtStr = absoluteAmt >= 1000000 ? formatCompactAmount(absoluteAmt) : absoluteAmt.toFixed(2);
                 isOwed = netVal < 0;
 
                 if (isOwed) {
-                  buttonText = `Settle All Net (Pay ${curr}{absoluteAmt.toFixed(2)})`;
+                  buttonText = `Settle All Net (Pay ${curr}${displayAmtStr})`;
                   clickHandler = () => handleOpenPayablePopup(friendName, absoluteAmt, curr);
                 } else {
                   buttonText = `Settle All Net (Send Reminder)`;

@@ -1,7 +1,7 @@
 import React from 'react';
 import { Group, Expense } from '../lib/types';
 import { downscaleImageFile } from '../lib/imageUtils';
-import { formatDate, GROUP_COLORS } from '../lib/utils';
+import { formatDate, GROUP_COLORS, formatCompactAmount } from '../lib/utils';
 import { SearchableCurrencyPicker } from './SearchableCurrencyPicker';
 // Lazy-loaded: BillScanner pulls in tesseract.js (OCR), which is large. Loading
 // it on demand (only when the user opens the scanner) keeps it out of the main
@@ -1566,8 +1566,8 @@ export const ExpenseModal: React.FC<ExpenseModalProps> = ({
                       <span style={{ fontSize: '13px', fontWeight: 700, color: '#1E293B' }}>{displayName}</span>
                     </div>
                     {isSelected && amt && (
-                      <span style={{ fontSize: '13px', fontWeight: 800, color: '#16A34A' }}>
-                        {curr}{share.toFixed(2)}
+                      <span style={{ fontSize: '13px', fontWeight: 800, color: '#16A34A', whiteSpace: 'nowrap' }}>
+                        {curr}{share >= 1000000 ? formatCompactAmount(share) : share.toFixed(2)}
                       </span>
                     )}
                   </div>
