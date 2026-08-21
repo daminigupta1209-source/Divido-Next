@@ -10,10 +10,11 @@ Next.js / React + Vite expense-splitting PWA. Backend: Supabase. Deploy: push to
 5. Verify every change with `npm run build` (runs `tsc -b && vite build`) — a failed build silently leaves the old version live on Vercel.
 6. Push straight to `main` (I don't use preview links). Compensate with careful build + logic verification.
 
-## Current state (all pushed to main, latest commit 233e4c0)
+## Current state (all pushed to main, latest commit 572c1e0)
 Everything below is live on Vercel.
 
 ### Fixed this session
+- **Guest identity linking query batching & startup deduplication** — batched `group_members` queries in `linkGuestIdentities()` ([src/App.tsx](file:///c:/Users/damin/OneDrive/Documents/divido-next/src/App.tsx)) into a single `.in('group_id', groupIds)` call and added a ref guard to eliminate duplicate startup network round-trips.
 - **Group-switch 0ms performance fix** — removed `selectedId` from load and realtime effect dependency arrays in `src/hooks/useSupabaseSync.ts`. Group switching is now 0ms instant and no longer triggers unnecessary network re-fetches or destroys/re-creates WebSocket channels.
 - **Core type safety & `any`-cleanup** — defined `GlobalSettleData` and `ConfirmState` interfaces in `src/lib/types.ts`. Replaced loose `any` usages with strict types in `src/App.tsx`, `src/components/FriendsView.tsx`, `src/components/MasterSummary.tsx`, `src/components/Profile.tsx`, `src/components/Sidebar.tsx`, `src/components/GroupGallery.tsx`, and `src/hooks/useExpenseForm.ts`.
 - **Native Capacitor setup** — configured `androidScheme: 'https'` in `capacitor.config.ts`, added Camera & Storage permissions in `android/app/src/main/AndroidManifest.xml`, verified production build (`npm run build`), and synced native assets (`npx cap copy`).
