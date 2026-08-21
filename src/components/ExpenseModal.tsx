@@ -1349,8 +1349,9 @@ export const ExpenseModal: React.FC<ExpenseModalProps> = ({
                   style={{
                     width: '100%',
                     height: '100%',
-                    padding: '0 12px 0 4px',
-                    fontSize: '18px',
+                    paddingLeft: '6px',
+                    paddingRight: '64px',
+                    fontSize: amt.length > 12 ? '14px' : amt.length > 8 ? '16px' : '18px',
                     fontWeight: '700',
                     textAlign: 'left',
                     border: 'none',
@@ -1360,7 +1361,6 @@ export const ExpenseModal: React.FC<ExpenseModalProps> = ({
                     opacity: amt ? 1 : 0.45,
                     boxSizing: 'border-box',
                     margin: 0,
-                    paddingRight: '40px',
                   }}
                 />
                 <div style={{ position: 'absolute', right: '6px', top: '50%', transform: 'translateY(-50%)', display: 'flex', alignItems: 'center', gap: '4px' }}>
