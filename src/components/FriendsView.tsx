@@ -606,18 +606,26 @@ export const FriendsView: React.FC<FriendsViewProps> = ({
                   <span style={{ ...pillBase, color: '#047857' }}>Settled up</span>
                 ) : (
                   <>
-                    {payList.length > 0 && (
-                      <span style={{ ...pillBase, color: '#B91C1C', display: 'inline-flex', alignItems: 'center', justifyContent: 'flex-end', gap: '5px' }}>
-                        {joinPrimary(payList)} to pay
-                        {payList.length > 1 && <span style={cardChip}>+{payList.length - 1}</span>}
-                      </span>
-                    )}
-                    {collectList.length > 0 && (
-                      <span style={{ ...pillBase, color: '#047857', display: 'inline-flex', alignItems: 'center', justifyContent: 'flex-end', gap: '5px' }}>
-                        {joinPrimary(collectList)} to collect
-                        {collectList.length > 1 && <span style={cardChip}>+{collectList.length - 1}</span>}
-                      </span>
-                    )}
+                    {payList.length > 0 && (() => {
+                      const textStr = `${joinPrimary(payList)} to pay`;
+                      const fSize = textStr.length > 22 ? '9.5px' : textStr.length > 17 ? '11px' : '13px';
+                      return (
+                        <span style={{ ...pillBase, fontSize: fSize, color: '#B91C1C', display: 'inline-flex', alignItems: 'center', justifyContent: 'flex-end', gap: '5px', maxWidth: '145px' }}>
+                          <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{textStr}</span>
+                          {payList.length > 1 && <span style={{...cardChip, flexShrink: 0}}>+{payList.length - 1}</span>}
+                        </span>
+                      );
+                    })()}
+                    {collectList.length > 0 && (() => {
+                      const textStr = `${joinPrimary(collectList)} to collect`;
+                      const fSize = textStr.length > 22 ? '9.5px' : textStr.length > 17 ? '11px' : '13px';
+                      return (
+                        <span style={{ ...pillBase, fontSize: fSize, color: '#047857', display: 'inline-flex', alignItems: 'center', justifyContent: 'flex-end', gap: '5px', maxWidth: '145px' }}>
+                          <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{textStr}</span>
+                          {collectList.length > 1 && <span style={{...cardChip, flexShrink: 0}}>+{collectList.length - 1}</span>}
+                        </span>
+                      );
+                    })()}
                   </>
                 )}
               </div>

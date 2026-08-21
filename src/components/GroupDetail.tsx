@@ -949,18 +949,26 @@ export const GroupDetail: React.FC<GroupDetailProps> = ({
                           </div>
 
                           <div style={{ display: 'flex', flexDirection: 'column', gap: '2px', alignItems: 'flex-end', flexShrink: 0 }}>
-                            {payList.length > 0 && (
-                              <span style={{ ...balPillBase, color: '#D8608A' }}>
-                                {balPrimary(payList)} to pay
-                                {payList.length > 1 && <span style={balCardChip}>+{payList.length - 1}</span>}
-                              </span>
-                            )}
-                            {collectList.length > 0 && (
-                              <span style={{ ...balPillBase, color: '#3FA97C' }}>
-                                {balPrimary(collectList)} to collect
-                                {collectList.length > 1 && <span style={balCardChip}>+{collectList.length - 1}</span>}
-                              </span>
-                            )}
+                            {payList.length > 0 && (() => {
+                              const textStr = `${balPrimary(payList)} to pay`;
+                              const fSize = textStr.length > 22 ? '9.5px' : textStr.length > 17 ? '11px' : '13px';
+                              return (
+                                <span style={{ ...balPillBase, fontSize: fSize, color: '#D8608A', maxWidth: '145px', overflow: 'hidden' }}>
+                                  <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{textStr}</span>
+                                  {payList.length > 1 && <span style={{...balCardChip, flexShrink: 0}}>+{payList.length - 1}</span>}
+                                </span>
+                              );
+                            })()}
+                            {collectList.length > 0 && (() => {
+                              const textStr = `${balPrimary(collectList)} to collect`;
+                              const fSize = textStr.length > 22 ? '9.5px' : textStr.length > 17 ? '11px' : '13px';
+                              return (
+                                <span style={{ ...balPillBase, fontSize: fSize, color: '#3FA97C', maxWidth: '145px', overflow: 'hidden' }}>
+                                  <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{textStr}</span>
+                                  {collectList.length > 1 && <span style={{...balCardChip, flexShrink: 0}}>+{collectList.length - 1}</span>}
+                                </span>
+                              );
+                            })()}
                           </div>
 
                           <span style={{ fontSize: '18px', color: '#C9BEB2', fontWeight: 900, lineHeight: 1, flexShrink: 0 }}>›</span>
