@@ -944,33 +944,56 @@ function App() {
     localStorage.setItem('divido_username', cleanNew);
   };
 
+  const guestIdentitiesLinkedRef = useRef<string | null>(null);
+
   // When a user signs in after having claimed a guest identity, adopt those
   // unlinked guest membership rows into their account so the groups load by email
   // (across reloads and devices). Idempotent: once linked, the rows have an email
   // and are skipped. Runs before setIsAuthenticated so the first load sees them.
   const linkGuestIdentities = async (email: string) => {
+    if (!email || guestIdentitiesLinkedRef.current === email) return;
+    guestIdentitiesLinkedRef.current = email;
     try {
+      const items: { groupId: string; claimedName: string }[] = [];
       for (let i = 0; i < localStorage.length; i++) {
         const key = localStorage.key(i);
         if (!key || !key.startsWith('divido_identity_')) continue;
         const groupId = key.replace('divido_identity_', '');
         const claimedName = localStorage.getItem(key);
-        if (!groupId || groupId === 'STANDALONE' || !claimedName) continue;
-        const { data: rows } = await supabase
-          .from('group_members')
-          .select('id, user_email')
-          .eq('group_id', groupId)
-          .ilike('name', claimedName)
-          .limit(1);
-        if (rows && rows[0]) {
-          const currentDbEmail = rows[0].user_email;
+        if (groupId && groupId !== 'STANDALONE' && claimedName) {
+          items.push({ groupId, claimedName });
+        }
+      }
+      if (items.length === 0) return;
+
+      const groupIds = Array.from(new Set(items.map((it) => it.groupId)));
+      const { data: rows } = await supabase
+        .from('group_members')
+        .select('id, group_id, name, user_email')
+        .in('group_id', groupIds);
+
+      if (!rows || rows.length === 0) return;
+
+      const toUpdateIds: number[] = [];
+      for (const item of items) {
+        const matched = rows.find(
+          (r: any) =>
+            String(r.group_id) === String(item.groupId) &&
+            r.name.trim().toLowerCase() === item.claimedName.trim().toLowerCase()
+        );
+        if (matched) {
+          const currentDbEmail = matched.user_email;
           if (!currentDbEmail || currentDbEmail.startsWith('guest-') || currentDbEmail.includes('@divido.app')) {
-            await supabase
-              .from('group_members')
-              .update({ user_email: email, is_pending: false })
-              .eq('id', rows[0].id);
+            toUpdateIds.push(matched.id);
           }
         }
+      }
+
+      if (toUpdateIds.length > 0) {
+        await supabase
+          .from('group_members')
+          .update({ user_email: email, is_pending: false })
+          .in('id', toUpdateIds);
       }
     } catch (e) {
       console.error('Failed to link guest identities to account:', e);
