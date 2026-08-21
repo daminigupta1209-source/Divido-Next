@@ -9,7 +9,7 @@ import { SearchableCurrencyPicker } from './SearchableCurrencyPicker';
 const BillScanner = React.lazy(() =>
   import('./expense-modal/BillScanner').then((m) => ({ default: m.BillScanner }))
 );
-import { SplitSelector } from './expense-modal/SplitSelector';
+
 import { RecurrenceSelector } from './expense-modal/RecurrenceSelector';
 import { useExpenseForm } from '../hooks/useExpenseForm';
 import { StyledDropdown } from './StyledDropdown';
@@ -179,6 +179,8 @@ export const ExpenseModal: React.FC<ExpenseModalProps> = ({
     setAutoOpenScanner,
     onExpenseSaved,
   });
+
+  const [shakingFriend, setShakingFriend] = React.useState<string | null>(null);
 
   // Header attachment button: save a photo/file as a receipt attachment (no OCR).
   const uploadInputRef = React.useRef<HTMLInputElement>(null);
@@ -1522,6 +1524,17 @@ export const ExpenseModal: React.FC<ExpenseModalProps> = ({
                   </div>
                 );
               })()}
+              <style>{`
+                /* Disable spin buttons */
+                .inline-share-input::-webkit-outer-spin-button,
+                .inline-share-input::-webkit-inner-spin-button {
+                  -webkit-appearance: none;
+                  margin: 0;
+                }
+                .inline-share-input {
+                  -moz-appearance: textfield !important;
+                }
+              `}</style>
               {friendsToSelect.map((member) => {
                 const cleanMember = member.replace(' (Left)', '');
                 const isSelected = selectedSplitters.includes(cleanMember);
@@ -1566,9 +1579,83 @@ export const ExpenseModal: React.FC<ExpenseModalProps> = ({
                       <span style={{ fontSize: '13px', fontWeight: 700, color: '#1E293B' }}>{displayName}</span>
                     </div>
                     {isSelected && amt && (
-                      <span style={{ fontSize: '13px', fontWeight: 800, color: '#16A34A', whiteSpace: 'nowrap' }}>
-                        {curr}{share >= 1000000 ? formatCompactAmount(share) : share.toFixed(2)}
-                      </span>
+                      splitMode === 'Equally' ? (
+                        <span style={{ fontSize: '13px', fontWeight: 800, color: '#16A34A', whiteSpace: 'nowrap' }}>
+                          {curr}{share >= 1000000 ? formatCompactAmount(share) : share.toFixed(2)}
+                        </span>
+                      ) : (
+                        <div
+                          className={shakingFriend === cleanMember ? 'shake' : ''}
+                          style={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            borderBottom: '1.5px solid transparent',
+                            padding: '2px 0',
+                            width: '85px',
+                            transition: 'border-color 0.2s',
+                            justifyContent: 'flex-end',
+                          }}
+                          onClick={(e) => e.stopPropagation()}
+                          onFocusCapture={(e) => { e.currentTarget.style.borderColor = '#10B981'; }}
+                          onBlurCapture={(e) => { e.currentTarget.style.borderColor = 'transparent'; }}
+                        >
+                          {splitMode === 'Unequally' && (
+                            <span style={{ fontSize: '13px', fontWeight: 800, color: '#94A3B8', marginRight: '4px', userSelect: 'none' }}>{curr}</span>
+                          )}
+                          <input
+                            type="number"
+                            className="inline-share-input"
+                            value={shares[cleanMember] === undefined ? '' : shares[cleanMember]}
+                            onChange={(e) => {
+                              const inputVal = e.target.value;
+                              const numVal = parseFloat(inputVal) || 0;
+                              
+                              if (splitMode === 'Unequally') {
+                                const totalAmt = parseFloat(amt) || 0;
+                                const otherManualSum = selectedSplitters
+                                  .filter((m) => m !== cleanMember && manualEdits.has(m))
+                                  .reduce((sum, m) => sum + (shares[m] || 0), 0);
+                                const maxAllowed = totalAmt - otherManualSum;
+                                if (numVal > maxAllowed) {
+                                  setShakingFriend(cleanMember);
+                                  setTimeout(() => setShakingFriend(null), 500);
+                                  return;
+                                }
+                              }
+                              
+                              if (splitMode === 'Percentage') {
+                                const otherManualSum = selectedSplitters
+                                  .filter((m) => m !== cleanMember && manualEdits.has(m))
+                                  .reduce((sum, m) => sum + (shares[m] || 0), 0);
+                                const maxAllowed = 100 - otherManualSum;
+                                if (numVal > maxAllowed) {
+                                  setShakingFriend(cleanMember);
+                                  setTimeout(() => setShakingFriend(null), 500);
+                                  return;
+                                }
+                              }
+                              
+                              handleShareChange(cleanMember, inputVal);
+                            }}
+                            placeholder="0.00"
+                            style={{
+                              width: '100%',
+                              background: 'transparent',
+                              border: 'none',
+                              outline: 'none',
+                              fontSize: '13px',
+                              fontWeight: 800,
+                              color: '#16A34A',
+                              padding: 0,
+                              margin: 0,
+                              textAlign: 'right'
+                            }}
+                          />
+                          {splitMode === 'Percentage' && (
+                            <span style={{ fontSize: '13px', fontWeight: 800, color: '#94A3B8', marginLeft: '4px', userSelect: 'none' }}>%</span>
+                          )}
+                        </div>
+                      )
                     )}
                   </div>
                 );
@@ -1579,7 +1666,6 @@ export const ExpenseModal: React.FC<ExpenseModalProps> = ({
           {/* Conditional Splitter Shares Details Summary Banner */}
           {selectedSplitters.length > 0 && splitMode !== 'Equally' && (
             <div
-              onClick={() => setShowSharesPopup(true)}
               style={{
                 display: 'flex',
                 justifyContent: 'space-between',
@@ -1602,12 +1688,8 @@ export const ExpenseModal: React.FC<ExpenseModalProps> = ({
                     ? '1.5px solid #BFDBFE'
                     : '1.5px solid #FECDD3',
                 borderRadius: '14px',
-                cursor: 'pointer',
-                transition: 'all 0.2s',
                 marginTop: '4px',
               }}
-              className="hover-up-mini"
-              title="Click to edit split details"
             >
               <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
                 <span
@@ -1662,7 +1744,6 @@ export const ExpenseModal: React.FC<ExpenseModalProps> = ({
                   )}
                 </span>
               </div>
-              <span style={{ fontSize: '14px', color: '#3B82F6' }}>✏️</span>
             </div>
           )}
 
@@ -1887,38 +1968,7 @@ export const ExpenseModal: React.FC<ExpenseModalProps> = ({
         current={curr}
       />
 
-      <SplitSelector
-        showSharesPopup={showSharesPopup}
-        setShowSharesPopup={(isOpen) => {
-          if (!isOpen) {
-            const isSplitValid =
-              splitMode === 'Unequally'
-                ? Math.abs(totalShares - (parseFloat(amt) || 0)) < 0.01
-                : Math.abs(totalShares - 100) < 0.01;
-            if (!isSplitValid) {
-              setSplitMode('Equally');
-              setShares({});
-              setManualEdits(new Set());
-            }
-          }
-          setShowSharesPopup(isOpen);
-        }}
-        splitMode={splitMode}
-        setSplitMode={setSplitMode}
-        curr={curr}
-        amt={amt}
-        setAmt={setAmt}
-        selectedSplitters={selectedSplitters}
-        shares={shares}
-        setShares={setShares}
-        manualEdits={manualEdits}
-        setManualEdits={setManualEdits}
-        me={me}
-        handleShareChange={handleShareChange}
-        totalShares={totalShares}
-        getShareAmt={getShareAmt}
-        groupMembers={friendsToSelect}
-      />
+
 
       {/* Notes Textarea Popup */}
       {showDatePopup && (
