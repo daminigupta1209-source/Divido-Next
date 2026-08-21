@@ -2357,6 +2357,7 @@ function App() {
         syncStatus={syncStatus}
         profilePhoto={userMetadata[me]?.profilePhoto}
         onRequireSignIn={requireSignInToCreate}
+        onAddExpense={addExpenseFromNav}
       />
 
       {isSidebarOpen && (

@@ -229,9 +229,42 @@ export const GroupHeader: React.FC<GroupHeaderProps> = ({
               )}
             </div>
 
-            {/* RIGHT: Horizontal ellipsis options button */}
+            {/* RIGHT: Options & Add Expense buttons */}
              {selectedId !== 'STANDALONE' && (
-              <div style={{ position: 'absolute', right: '-12px', display: 'inline-flex', alignItems: 'center' }}>
+              <div style={{ position: 'absolute', right: '-12px', display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
+                {!amIPastMember && (
+                  <button
+                    onClick={() => {
+                      setEditingExpense({ id: 'temp-' + Date.now(), gId: selectedId, title: '', amt: 0, date: new Date().toISOString().split('T')[0], splitters: [], paid: me } as any);
+                      setShowExpModal(true);
+                    }}
+                    style={{
+                      background: 'linear-gradient(135deg, #059669 0%, #10B981 100%)',
+                      color: '#FFFFFF',
+                      border: 'none',
+                      borderRadius: '20px',
+                      padding: '7px 14px',
+                      fontSize: '13px',
+                      fontWeight: 800,
+                      cursor: 'pointer',
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: '6px',
+                      boxShadow: '0 4px 12px rgba(16, 185, 129, 0.25)',
+                      transition: '0.2s all',
+                      marginRight: '4px',
+                    }}
+                    onMouseEnter={(e) => { e.currentTarget.style.transform = 'translateY(-1px)'; }}
+                    onMouseLeave={(e) => { e.currentTarget.style.transform = 'translateY(0)'; }}
+                    title="Add Expense to this group"
+                  >
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.8" strokeLinecap="round" strokeLinejoin="round">
+                      <line x1="12" y1="5" x2="12" y2="19" />
+                      <line x1="5" y1="12" x2="19" y2="12" />
+                    </svg>
+                    <span>Add Expense</span>
+                  </button>
+                )}
                 {/* Share Group Link Button */}
                 {!amIPastMember && (
                   <button
