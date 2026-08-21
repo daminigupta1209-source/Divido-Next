@@ -454,7 +454,7 @@ export const FriendsView: React.FC<FriendsViewProps> = ({
         <span style={{ fontSize: '11px', fontWeight: 700, letterSpacing: '1.5px', textTransform: 'uppercase', color: '#B0A79C', marginBottom: '10px', marginLeft: '2px', display: 'block' }}>
           {balanceFilter === 'owe' ? 'Net Payable' : balanceFilter === 'owed' ? 'Net Receivable' : 'Net Balance'}
         </span>
-        <div style={{ position: 'relative', display: 'flex', borderRadius: '999px', overflow: 'hidden', height: '36px', width: '100%', boxShadow: '0 6px 16px rgba(0,0,0,0.06)' }}>
+        <div style={{ position: 'relative', display: 'flex', borderRadius: '999px', overflow: 'hidden', height: '44px', width: '100%', boxShadow: '0 6px 16px rgba(0,0,0,0.06)' }}>
           {/* Left section: to pay */}
           {balanceFilter !== 'owed' && (
           <div
@@ -473,7 +473,7 @@ export const FriendsView: React.FC<FriendsViewProps> = ({
               cursor: 'pointer',
               transition: 'opacity 0.2s',
               userSelect: 'none',
-              padding: '0 10px',
+              padding: '0 18px',
               whiteSpace: 'nowrap',
               overflow: 'hidden',
             }}
@@ -510,7 +510,7 @@ export const FriendsView: React.FC<FriendsViewProps> = ({
               cursor: 'pointer',
               transition: 'opacity 0.2s',
               userSelect: 'none',
-              padding: '0 10px',
+              padding: '0 18px',
               whiteSpace: 'nowrap',
               overflow: 'hidden',
             }}
@@ -530,7 +530,7 @@ export const FriendsView: React.FC<FriendsViewProps> = ({
           </div>
           )}
           {(Object.keys(totalPayable).length > 0 || Object.keys(totalReceivable).length > 0) && (
-            <span style={{ position: 'absolute', right: '14px', top: '50%', transform: 'translateY(-50%)', color: '#FFFFFF', fontSize: '20px', fontWeight: 900, lineHeight: 1, pointerEvents: 'none', opacity: 0.9 }}>›</span>
+            <span style={{ position: 'absolute', right: '16px', top: '50%', transform: 'translateY(-50%)', color: '#FFFFFF', fontSize: '20px', fontWeight: 900, lineHeight: 1, pointerEvents: 'none', opacity: 0.9 }}>›</span>
           )}
         </div>
       </div>

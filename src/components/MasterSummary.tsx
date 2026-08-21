@@ -473,14 +473,14 @@ export const MasterSummary: React.FC<MasterSummaryProps> = ({
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
-          gap: '5px',
+          gap: '6px',
           color: '#FFFFFF',
           fontSize: '14px',
-          fontWeight: 500,
+          fontWeight: 600,
           whiteSpace: 'nowrap',
           overflow: 'hidden',
           textOverflow: 'ellipsis',
-          padding: '0 10px',
+          padding: '0 18px',
           cursor: 'pointer',
         };
         // Small translucent count chip for extra currencies (e.g. "+1").
@@ -492,7 +492,7 @@ export const MasterSummary: React.FC<MasterSummaryProps> = ({
               Net Balance
             </div>
 
-            <div onClick={() => hasActiveBalancesForCard && setView('friends')} style={{ position: 'relative', display: 'flex', height: '36px', borderRadius: '999px', overflow: 'hidden', boxShadow: '0 6px 16px rgba(0,0,0,0.06)', cursor: hasActiveBalancesForCard ? 'pointer' : 'default' }}>
+            <div onClick={() => hasActiveBalancesForCard && setView('friends')} style={{ position: 'relative', display: 'flex', height: '44px', borderRadius: '999px', overflow: 'hidden', boxShadow: '0 6px 16px rgba(0,0,0,0.06)', cursor: hasActiveBalancesForCard ? 'pointer' : 'default' }}>
               {!hasActiveBalancesForCard ? (
                 <div style={{ ...segStyle, background: GREEN, cursor: 'default' }}>All settled up</div>
               ) : (
@@ -518,7 +518,7 @@ export const MasterSummary: React.FC<MasterSummaryProps> = ({
                 </>
               )}
               {hasActiveBalancesForCard && (
-                <span style={{ position: 'absolute', right: '14px', top: '50%', transform: 'translateY(-50%)', color: '#FFFFFF', fontSize: '20px', fontWeight: 900, lineHeight: 1, pointerEvents: 'none', opacity: 0.9 }}>›</span>
+                <span style={{ position: 'absolute', right: '16px', top: '50%', transform: 'translateY(-50%)', color: '#FFFFFF', fontSize: '20px', fontWeight: 900, lineHeight: 1, pointerEvents: 'none', opacity: 0.9 }}>›</span>
               )}
             </div>
           </div>
