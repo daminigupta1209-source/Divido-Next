@@ -4030,7 +4030,7 @@ function App() {
       {view !== 'create_group' && !isPhotoViewerOpen && (
         <nav className="bottom-nav">
           <div
-            className={`b-nav-btn ${view === 'summary' || (view === 'detail' && groupDetailTab === 'expenses') ? 'active' : ''}`}
+            className={`b-nav-btn ${view === 'summary' || view === 'detail' ? 'active' : ''}`}
             onClick={() => {
               setSelectedId(null);
               setView('summary');
@@ -4045,37 +4045,20 @@ function App() {
             </span>
             <span>Home</span>
           </div>
-          {((view === 'detail' || view === 'gallery' || view === 'analytics') && selectedId) ? (
-            <div className={`b-nav-btn ${view === 'detail' && groupDetailTab === 'balances' ? 'active' : ''}`} onClick={() => { setView('detail'); setGroupDetailTab('balances'); }}>
-              <span className="b-nav-icon" style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: '24px', height: '24px' }}>
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" style={{ width: '22px', height: '22px' }}>
-                  <path d="M20 17H4" />
-                  <path d="m8 21-4-4 4-4" />
-                  <path d="M4 7h16" />
-                  <path d="m16 3 4 4-4 4" />
-                </svg>
-              </span>
-              <span>Settle</span>
-            </div>
-          ) : (
-            <div className={`b-nav-btn ${view === 'friends' ? 'active' : ''}`} onClick={() => setView('friends')}>
-              <span className="b-nav-icon" style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: '24px', height: '24px' }}>
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" style={{ width: '22px', height: '22px' }}>
-                  <path d="m11 17 2 2a1 1 0 1 0 3-3" />
-                  <path d="m14 14 2.5 2.5a1 1 0 1 0 3-3l-3.88-3.88a3 3 0 0 0-4.24 0l-.88.88a1 1 0 1 1-3-3l2.81-2.81a5.79 5.79 0 0 1 7.06-.87l.47.28a2 2 0 0 0 1.42.25L21 4" />
-                  <path d="m21 3 1 11h-2" />
-                  <path d="M3 3 2 14l6.5 6.5a1 1 0 1 0 3-3" />
-                  <path d="M3 4h8" />
-                </svg>
-              </span>
-              <span>Balances</span>
-            </div>
-          )}
 
-          {/* Central Button — always "Add Expense", the single most-used action.
-              Same icon, colour and position on every screen so it never shifts
-              meaning. Create Group lives in the home header; photo upload lives
-              in the group's Photos tab. */}
+          <div className={`b-nav-btn ${view === 'friends' ? 'active' : ''}`} onClick={() => setView('friends')}>
+            <span className="b-nav-icon" style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: '24px', height: '24px' }}>
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" style={{ width: '22px', height: '22px' }}>
+                <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
+                <circle cx="9" cy="7" r="4" />
+                <path d="M23 21v-2a4 4 0 0 0-3-3.87" />
+                <path d="M16 3.13a4 4 0 0 1 0 7.75" />
+              </svg>
+            </span>
+            <span>Balances</span>
+          </div>
+
+          {/* Central Button — always "Add Expense", the single most-used action. */}
           <div
             style={{
               display: 'flex',
@@ -4097,8 +4080,6 @@ function App() {
                 width: '56px',
                 height: '56px',
                 borderRadius: '50%',
-                // Slightly deeper than the net-balance green (#10B981) so the small
-                // circle on the white nav reads as the same green (optical match).
                 background: '#059669',
                 border: 'none',
                 cursor: 'pointer',
@@ -4128,27 +4109,15 @@ function App() {
             </span>
           </div>
 
-          {((view === 'detail' || view === 'gallery' || view === 'analytics') && selectedId) ? (
-            <div className={`b-nav-btn ${view === 'analytics' ? 'active' : ''}`} onClick={() => { setAnalyticsGroupId(selectedId); setView('analytics'); }}>
-              <span className="b-nav-icon" style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: '24px', height: '24px' }}>
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" style={{ width: '22px', height: '22px' }}>
-                  <line x1="18" y1="20" x2="18" y2="10" />
-                  <line x1="12" y1="20" x2="12" y2="4" />
-                  <line x1="6" y1="20" x2="6" y2="14" />
-                </svg>
-              </span>
-              <span>Analytics</span>
-            </div>
-          ) : (
-            <div className={`b-nav-btn ${view === 'activity' ? 'active' : ''}`} onClick={() => setView('activity')}>
-              <span className="b-nav-icon" style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: '24px', height: '24px' }}>
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" style={{ width: '22px', height: '22px' }}>
-                  <polyline points="22 12 18 12 15 21 9 3 6 12 2 12" />
-                </svg>
-              </span>
-              <span>Activities</span>
-            </div>
-          )}
+          <div className={`b-nav-btn ${view === 'activity' ? 'active' : ''}`} onClick={() => setView('activity')}>
+            <span className="b-nav-icon" style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: '24px', height: '24px' }}>
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" style={{ width: '22px', height: '22px' }}>
+                <polyline points="22 12 18 12 15 21 9 3 6 12 2 12" />
+              </svg>
+            </span>
+            <span>Activities</span>
+          </div>
+
           <div className={`b-nav-btn ${view === 'profile' ? 'active' : ''}`} onClick={() => setView('profile')}>
             <span className="b-nav-icon" style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: '24px', height: '24px' }}>
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" style={{ width: '22px', height: '22px' }}>
