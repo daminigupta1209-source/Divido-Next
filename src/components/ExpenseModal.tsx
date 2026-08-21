@@ -177,6 +177,7 @@ export const ExpenseModal: React.FC<ExpenseModalProps> = ({
     defaultCurrency,
     autoOpenScanner,
     setAutoOpenScanner,
+    onExpenseSaved,
   });
 
   // Header attachment button: save a photo/file as a receipt attachment (no OCR).
