@@ -206,7 +206,7 @@ export function useSupabaseSync({
         // If guest mode (no session email), load the invite group details specifically
         if (groupIds.length === 0) {
           const urlParams = new URLSearchParams(window.location.search);
-          const inviteGroupId = urlParams.get('joinGroupId') || selectedId;
+          const inviteGroupId = urlParams.get('joinGroupId') || selectedIdRef.current;
           
           const parsedId = inviteGroupId ? parseInt(String(inviteGroupId), 10) : NaN;
           const isValidDbId = !isNaN(parsedId) && parsedId <= 2147483647;
@@ -520,13 +520,13 @@ export function useSupabaseSync({
     };
 
     loadData();
-  }, [isAuthenticated, hasCloudSession, setGroups, setExpenses, selectedId, loadTrigger]);
+  }, [isAuthenticated, hasCloudSession, setGroups, setExpenses, loadTrigger]);
 
   // Realtime: detect when a friend joins, updates name, or creates expenses and sync immediately
   useEffect(() => {
     if (checkIfDemoMode()) return;
     if (!hasCloudSession) return;
-    if (!isAuthenticated && typeof selectedId !== 'number') return;
+    if (!isAuthenticated && typeof selectedIdRef.current !== 'number') return;
 
     // The subscription receives EVERY change on these tables across the whole
     // database. Reloading the entire account on each one (incl. strangers'
@@ -605,7 +605,7 @@ export function useSupabaseSync({
       if (reloadTimer) clearTimeout(reloadTimer);
       supabase.removeChannel(channel);
     };
-  }, [isAuthenticated, hasCloudSession, selectedId, setGroups, setMatchPrompt, setLoadTrigger, userEmail]);
+  }, [isAuthenticated, hasCloudSession, setGroups, setMatchPrompt, setLoadTrigger, userEmail]);
 
   // Sync groups to Supabase in real-time
   useEffect(() => {
