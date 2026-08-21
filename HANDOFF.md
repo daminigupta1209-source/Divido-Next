@@ -10,7 +10,7 @@ Next.js / React + Vite expense-splitting PWA. Backend: Supabase. Deploy: push to
 5. Verify every change with `npm run build` (runs `tsc -b && vite build`) — a failed build silently leaves the old version live on Vercel.
 6. Push straight to `main` (I don't use preview links). Compensate with careful build + logic verification.
 
-## Current state (all pushed to main, latest commit 27ee194)
+## Current state (all pushed to main, latest commit 40dc039)
 Everything below is live on Vercel.
 
 ### Fixed this session
