@@ -4093,7 +4093,56 @@ function App() {
             <span>Balances</span>
           </div>
 
-
+          {/* Central Button — always "Add Expense", the single most-used action. */}
+          <div
+            style={{
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              justifyContent: 'center',
+              position: 'relative',
+              top: '-16px',
+              flex: 1,
+              height: '68px',
+              zIndex: 10
+            }}
+          >
+            <button
+              onClick={() => addExpenseFromNav()}
+              className="pulse-button"
+              aria-label="Add expense"
+              style={{
+                width: '56px',
+                height: '56px',
+                borderRadius: '50%',
+                background: '#059669',
+                border: 'none',
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                boxShadow: '0 8px 16px rgba(0,0,0,0.15)',
+                transition: 'all 0.2s',
+                padding: 0,
+              }}
+            >
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ width: '24px', height: '24px', color: '#FFFFFF' }}>
+                <line x1="12" y1="5" x2="12" y2="19" />
+                <line x1="5" y1="12" x2="19" y2="12" />
+              </svg>
+            </button>
+            <span
+              style={{
+                fontSize: '10px',
+                fontWeight: 700,
+                color: 'var(--g)',
+                marginTop: '2px',
+                whiteSpace: 'nowrap'
+              }}
+            >
+              Expense
+            </span>
+          </div>
 
           <div className={`b-nav-btn ${view === 'activity' ? 'active' : ''}`} onClick={() => setView('activity')}>
             <span className="b-nav-icon" style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: '24px', height: '24px' }}>
