@@ -9,7 +9,7 @@ interface PremiumConfirmProps {
   onCancel: () => void;
   confirmText?: string;
   cancelText?: string;
-  type?: 'danger' | 'logout' | 'success';
+  type?: 'danger' | 'logout' | 'success' | 'info' | 'warning';
 }
 
 export const PremiumConfirm: React.FC<PremiumConfirmProps> = ({

@@ -8,7 +8,7 @@ interface GroupGalleryProps {
   groups: Group[];
   expenses: Expense[];
   me: string;
-  setView: (v: any) => void;
+  setView: (v: string) => void;
   setEditingExpense: (exp: Expense | null) => void;
   setShowExpModal: (b: boolean) => void;
   setEditingSettle: (exp: Expense | null) => void;

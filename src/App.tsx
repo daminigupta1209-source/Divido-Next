@@ -17,6 +17,7 @@ const ExpenseModal = React.lazy(() => import('./components/ExpenseModal').then((
 // loading these only when a user actually opens a payment/QR popup.
 const UPIQRModal = React.lazy(() => import('./components/UPIQRModal').then((m) => ({ default: m.UPIQRModal })));
 const NetReceivableModal = React.lazy(() => import('./components/NetReceivableModal').then((m) => ({ default: m.NetReceivableModal })));
+import { Group, Expense, PendingMatchPrompt, GlobalSettleData, ConfirmState } from './lib/types';
 import { CurrencyConverterModal } from './components/CurrencyConverterModal';
 import { AddFriendModal } from './components/AddFriendModal';
 import { MatchPromptModal } from './components/MatchPromptModal';
@@ -36,8 +37,6 @@ import { useUndoStack } from './hooks/useUndoStack';
 import { MobileHeader } from './components/MobileHeader';
 import { InstallPrompt } from './components/InstallPrompt';
 import { useExportCSV } from './hooks/useExportCSV';
-
-import { Group, Expense, PendingMatchPrompt } from './lib/types';
 import { AppNotification, fetchNotifications, markAllNotificationsRead, subscribeNotifications, clearAllNotifications } from './lib/notifications';
 import { calculateNextOccurrenceDate, simplifyMultiCurrencyDebts } from './lib/calculations';
 
@@ -174,7 +173,7 @@ function App() {
   };
   const [matchPrompt, setMatchPrompt] = useState<PendingMatchPrompt | null>(null);
   const [showMembersHealth, setShowMembersHealth] = useState<boolean>(false);
-  const [globalSettleData, setGlobalSettleData] = useState<{ name: string; gId?: string | number | null; identity?: string; groups?: string[]; balances?: any } | null>(null);
+  const [globalSettleData, setGlobalSettleData] = useState<GlobalSettleData | null>(null);
   const [showSettleModal, setShowSettleModal] = useState(false);
   const [editingSettle, setEditingSettle] = useState<Expense | null>(null);
   const [localSettleEdits, setLocalSettleEdits] = useState<any[]>([]);
@@ -185,7 +184,7 @@ function App() {
   const [showConvertModalId, setShowConvertModalId] = useState<string | number | null>(null);
   const [analyticsGroupId, setAnalyticsGroupId] = useState<string | number | null>(null);
   const [showGroupSettleList, setShowGroupSettleList] = useState(false);
-  const [confirmState, setConfirmState] = useState<any>({
+  const [confirmState, setConfirmState] = useState<ConfirmState>({
     show: false,
     title: '',
     desc: '',
@@ -1882,7 +1881,7 @@ function App() {
 
       groupExps.forEach((e) => {
         const c = e.currency || defaultCurr;
-        const amount = parseFloat(e.amt as any) || 0;
+        const amount = Number(e.amt) || 0;
         const splitters = e.splitters || gMembers || [];
 
         // Add payment to payer
@@ -1899,8 +1898,8 @@ function App() {
             !e.mode || e.mode === 'Equally'
               ? amount / (splitters.length || 1)
               : e.mode === 'Unequally'
-              ? parseFloat(e.shares?.[s] as any) || 0
-              : (amount * (parseFloat(e.shares?.[s] as any) || 0)) / 100;
+              ? Number(e.shares?.[s]) || 0
+              : (amount * (Number(e.shares?.[s]) || 0)) / 100;
           balances[s][c] = (balances[s][c] || 0) - share;
         });
       });
@@ -1915,7 +1914,7 @@ function App() {
 
     standaloneExps.forEach((e) => {
       const c = e.currency || '₹';
-      const amount = parseFloat(e.amt as any) || 0;
+      const amount = Number(e.amt) || 0;
       const splitters = e.splitters || [];
 
       // Payer gets credit
@@ -1932,8 +1931,8 @@ function App() {
           !e.mode || e.mode === 'Equally'
             ? amount / (splitters.length || 1)
             : e.mode === 'Unequally'
-            ? parseFloat(e.shares?.[s] as any) || 0
-            : (amount * (parseFloat(e.shares?.[s] as any) || 0)) / 100;
+            ? Number(e.shares?.[s]) || 0
+            : (amount * (Number(e.shares?.[s]) || 0)) / 100;
         standaloneBalances[s][c] = (standaloneBalances[s][c] || 0) - share;
       });
     });
@@ -4074,10 +4073,10 @@ function App() {
 
       <PremiumConfirm
         show={confirmState.show}
-        title={confirmState.title}
-        desc={confirmState.desc}
+        title={confirmState.title || ''}
+        desc={confirmState.desc || ''}
         type={confirmState.type}
-        onConfirm={confirmState.onConfirm}
+        onConfirm={confirmState.onConfirm || (() => {})}
         onCancel={() => setConfirmState({ show: false })}
       />
 
@@ -4471,7 +4470,7 @@ function App() {
         }}
         editingSettle={editingSettle}
         setEditingSettle={setEditingSettle}
-        selectedGroup={selectedGroup || { id: '', name: 'Default Group', members: [me], currency: '₹', emoji: '🏡', simplifyDebts: false } as any}
+        selectedGroup={selectedGroup || { id: '', name: 'Default Group', members: [me], currency: '₹', emoji: '🏡', simplifyDebts: false }}
         selectedId={selectedId}
         expenses={expenses}
         setExpenses={setExpenses}

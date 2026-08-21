@@ -63,7 +63,7 @@ export interface ConfirmState {
   title?: string;
   desc?: string;
   onConfirm?: (() => void) | null;
-  type?: 'danger' | 'info' | 'warning';
+  type?: 'danger' | 'logout' | 'success' | 'info' | 'warning';
   confirmText?: string;
   cancelText?: string;
 }

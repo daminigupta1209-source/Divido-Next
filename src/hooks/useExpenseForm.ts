@@ -297,7 +297,7 @@ export function useExpenseForm({
         if (emoji && emoji.length > 0 && emoji.length <= 4) {
           setOverrideEmoji(emoji);
         }
-      } catch (err: any) {
+      } catch (err) {
         console.error('Gemini emoji generation failed:', err);
       }
     }, 450);
