@@ -172,7 +172,7 @@ export const GroupHeader: React.FC<GroupHeaderProps> = ({
 
   return (
     <>
-      <div className="group-detail-header-row" style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginBottom: '16px' }}>
+      <div className="group-detail-header-row">
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: '100%', position: 'relative', minHeight: '44px' }}>
 
 

@@ -570,7 +570,7 @@ input[type=number] { -moz-appearance: textfield; }
 
 /* Mobile Header Bar & Backdrop */
 .mobile-header-bar {
-    display: none;
+    display: none !important;
 }
 .sidebar-backdrop {
     position: fixed;
@@ -619,16 +619,16 @@ input[type=number] { -moz-appearance: textfield; }
 
 @media (max-width: 768px) {
     .mobile-header-bar {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
+        display: flex !important;
+        flex-direction: column;
+        height: auto;
+        gap: 10px;
         padding: 16px 20px;
         background: var(--w);
         border-bottom: 1.5px solid #F1F5F9;
         position: sticky;
         top: 0;
         z-index: 999;
-        height: 72px;
         margin-bottom: 24px;
         margin-left: -16px;
         margin-right: -16px;
@@ -1143,6 +1143,13 @@ input[type=number] { -moz-appearance: textfield; }
 }
 .add-friend-svg-anim {
     transition: transform 0.2s ease-in-out;
+}
+
+.group-detail-header-row {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin-bottom: 16px;
 }
 
 @media (max-width: 768px) {
