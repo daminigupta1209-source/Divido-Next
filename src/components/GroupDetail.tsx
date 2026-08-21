@@ -599,7 +599,7 @@ export const GroupDetail: React.FC<GroupDetailProps> = ({
               Net Balance
             </div>
 
-            <div onClick={() => hasActiveBalancesForCard && setActiveTab('balances')} style={{ position: 'relative', display: 'flex', height: '44px', borderRadius: '999px', overflow: 'hidden', boxShadow: '0 6px 16px rgba(0,0,0,0.06)', cursor: hasActiveBalancesForCard ? 'pointer' : 'default' }}>
+            <div onClick={() => hasActiveBalancesForCard && setActiveTab('balances')} style={{ position: 'relative', display: 'flex', height: '38px', borderRadius: '999px', overflow: 'hidden', boxShadow: '0 6px 16px rgba(0,0,0,0.06)', cursor: hasActiveBalancesForCard ? 'pointer' : 'default' }}>
               {!hasActiveBalancesForCard ? (
                 <div style={{ ...segStyle, background: GREEN, cursor: 'default' }}>All settled up</div>
               ) : (

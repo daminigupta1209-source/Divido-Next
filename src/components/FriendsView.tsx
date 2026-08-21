@@ -454,7 +454,7 @@ export const FriendsView: React.FC<FriendsViewProps> = ({
         <span style={{ fontSize: '11px', fontWeight: 700, letterSpacing: '1.5px', textTransform: 'uppercase', color: '#B0A79C', marginBottom: '10px', marginLeft: '2px', display: 'block' }}>
           {balanceFilter === 'owe' ? 'Net Payable' : balanceFilter === 'owed' ? 'Net Receivable' : 'Net Balance'}
         </span>
-        <div style={{ position: 'relative', display: 'flex', borderRadius: '999px', overflow: 'hidden', height: '44px', width: '100%', boxShadow: '0 6px 16px rgba(0,0,0,0.06)' }}>
+        <div style={{ position: 'relative', display: 'flex', borderRadius: '999px', overflow: 'hidden', height: '38px', width: '100%', boxShadow: '0 6px 16px rgba(0,0,0,0.06)' }}>
           {/* Left section: to pay */}
           {balanceFilter !== 'owed' && (
           <div
