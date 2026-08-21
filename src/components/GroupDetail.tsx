@@ -580,7 +580,7 @@ export const GroupDetail: React.FC<GroupDetailProps> = ({
           justifyContent: 'center',
           gap: '6px',
           color: '#FFFFFF',
-          fontSize: '14px',
+          fontSize: '13px',
           fontWeight: 600,
           whiteSpace: 'nowrap',
           overflow: 'hidden',
