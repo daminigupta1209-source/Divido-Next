@@ -141,7 +141,11 @@ export function useSupabaseSync({
 
   // Load data from Supabase on authentication / guest invite join
   useEffect(() => {
-    if (checkIfDemoMode() || !isAuthenticated || !hasCloudSession) return;
+    if (checkIfDemoMode() || !isAuthenticated || !hasCloudSession) {
+      initialLoadDoneRef.current = true;
+      setIsInitialLoadDone(true);
+      return;
+    }
 
     const loadData = async () => {
       try {

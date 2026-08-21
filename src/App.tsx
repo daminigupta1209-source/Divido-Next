@@ -2281,7 +2281,7 @@ function App() {
   // Divido cat) until the first cloud load finishes — so users never see an
   // empty "Your Groups" and get scared. Returning users with cached groups skip
   // this entirely (groups.length > 0). 5s safety timeout so it can't hang.
-  if (!isInitialLoadDone && !bootLoaderExpired && groups.length === 0) {
+  if (!isInitialLoadDone && !bootLoaderExpired && groups.length === 0 && isAuthenticated && !!userEmail) {
     return (
       <div style={{
         position: 'fixed', inset: 0, display: 'flex', flexDirection: 'column',
