@@ -364,12 +364,8 @@ export const GroupGallery: React.FC<GroupGalleryProps> = ({
       {/* Grid gallery content — grouped by date, captioned tiles */}
       <div style={{ flex: 1 }}>
         {filteredPhotos.length === 0 ? (
-          <div style={{ textAlign: 'center', padding: '80px 20px', background: 'var(--w)', borderRadius: '24px', border: '1.5px solid #F1F5F9' }}>
-            <div style={{ fontSize: '56px', marginBottom: '16px' }}>📸</div>
-            <h3 className="nunito" style={{ margin: 0, fontSize: '16px', fontWeight: 800, color: 'var(--t)' }}>No photos found</h3>
-            <p style={{ margin: '6px 0 14px 0', fontSize: '12px', color: '#94A3B8', fontWeight: 600, lineHeight: 1.4 }}>
-              Try adjusting your search queries or filter choices.
-            </p>
+          <div style={{ textAlign: 'center', padding: '60px 20px', background: 'var(--w)', borderRadius: '24px', border: '1.5px solid #F1F5F9' }}>
+            <div style={{ fontSize: '56px', marginBottom: '20px' }}>📸</div>
             <button
               type="button"
               onClick={() => {
@@ -379,10 +375,10 @@ export const GroupGallery: React.FC<GroupGalleryProps> = ({
                 background: '#10B981',
                 color: '#FFFFFF',
                 border: 'none',
-                padding: '8px 20px',
+                padding: '10px 24px',
                 borderRadius: '12px',
                 fontWeight: 800,
-                fontSize: '13px',
+                fontSize: '14px',
                 cursor: 'pointer',
                 display: 'inline-flex',
                 alignItems: 'center',
