@@ -929,7 +929,7 @@ export const MobileHeader: React.FC<MobileHeaderProps> = ({
                   <span>
                     {view === 'summary' && `Hi ${me}!`}
                     {view === 'groups' && 'Your Groups'}
-                    {view === 'friends' && 'Settle All'}
+                    {view === 'friends' && 'All balances'}
                     {view === 'activity' && 'All Activities'}
                     {view === 'analytics' && 'Analytics'}
                     {view === 'profile' && 'Profile'}

@@ -497,7 +497,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
           </div>
 
           {[
-            { id: 'friends', n: 'Settle All', e: '🤝', c: ['#10B981', '#059669'] },
+            { id: 'friends', n: 'All balances', e: '🤝', c: ['#10B981', '#059669'] },
             { id: 'activity', n: 'All Activities', e: '📜', c: ['#2DD4BF', '#14B8A6'] },
             { id: 'analytics', n: 'Analytics', e: '📈', c: ['#A78BFA', '#8B5CF6'] },
           ].map((it) => {
