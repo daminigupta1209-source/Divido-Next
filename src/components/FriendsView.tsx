@@ -473,7 +473,7 @@ export const FriendsView: React.FC<FriendsViewProps> = ({
               cursor: 'pointer',
               transition: 'opacity 0.2s',
               userSelect: 'none',
-              padding: '0 18px',
+              padding: balanceFilter === 'owe' || (balanceFilter === 'all' && Object.keys(totalReceivable).length === 0) ? '0 34px 0 18px' : '0 18px',
               whiteSpace: 'nowrap',
               overflow: 'hidden',
             }}
@@ -510,7 +510,7 @@ export const FriendsView: React.FC<FriendsViewProps> = ({
               cursor: 'pointer',
               transition: 'opacity 0.2s',
               userSelect: 'none',
-              padding: '0 18px',
+              padding: '0 34px 0 18px',
               whiteSpace: 'nowrap',
               overflow: 'hidden',
             }}
@@ -530,7 +530,7 @@ export const FriendsView: React.FC<FriendsViewProps> = ({
           </div>
           )}
           {(Object.keys(totalPayable).length > 0 || Object.keys(totalReceivable).length > 0) && (
-            <span style={{ position: 'absolute', right: '16px', top: '50%', transform: 'translateY(-50%)', color: '#FFFFFF', fontSize: '20px', fontWeight: 900, lineHeight: 1, pointerEvents: 'none', opacity: 0.9 }}>›</span>
+            <span style={{ position: 'absolute', right: '14px', top: '50%', transform: 'translateY(-50%)', color: '#FFFFFF', fontSize: '18px', fontWeight: 900, lineHeight: 1, pointerEvents: 'none', opacity: 0.9 }}>›</span>
           )}
         </div>
       </div>

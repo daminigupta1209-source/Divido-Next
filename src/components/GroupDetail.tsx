@@ -606,7 +606,7 @@ export const GroupDetail: React.FC<GroupDetailProps> = ({
                 <>
                   {payBacks.length > 0 && (
                     <div
-                      style={{ ...segStyle, background: PINK }}
+                      style={{ ...segStyle, background: PINK, paddingRight: getBacks.length > 0 ? '18px' : '34px' }}
                       onClick={() => setActiveTab('balances')}
                     >
                       <span style={{ overflow: 'hidden', textOverflow: 'ellipsis' }}>{primaryAmt(payBacks)} to pay</span>
@@ -615,7 +615,7 @@ export const GroupDetail: React.FC<GroupDetailProps> = ({
                   )}
                   {getBacks.length > 0 && (
                     <div
-                      style={{ ...segStyle, background: GREEN }}
+                      style={{ ...segStyle, background: GREEN, paddingRight: '34px' }}
                       onClick={() => setActiveTab('balances')}
                     >
                       <span style={{ overflow: 'hidden', textOverflow: 'ellipsis' }}>{primaryAmt(getBacks)} to collect</span>
@@ -625,7 +625,7 @@ export const GroupDetail: React.FC<GroupDetailProps> = ({
                 </>
               )}
               {hasActiveBalancesForCard && (
-                <span style={{ position: 'absolute', right: '16px', top: '50%', transform: 'translateY(-50%)', color: '#FFFFFF', fontSize: '20px', fontWeight: 900, lineHeight: 1, pointerEvents: 'none', opacity: 0.9 }}>›</span>
+                <span style={{ position: 'absolute', right: '14px', top: '50%', transform: 'translateY(-50%)', color: '#FFFFFF', fontSize: '18px', fontWeight: 900, lineHeight: 1, pointerEvents: 'none', opacity: 0.9 }}>›</span>
               )}
             </div>
           </div>
