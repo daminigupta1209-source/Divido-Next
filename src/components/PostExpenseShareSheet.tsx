@@ -79,11 +79,11 @@ export const PostExpenseShareSheet: React.FC<PostExpenseShareSheetProps> = ({
     return unregister;
   }, [onClose]);
 
-  // Auto-dismiss after 15 seconds if user doesn't interact
+  // Auto-dismiss after 20 seconds so user has plenty of time to view & share
   useEffect(() => {
     const timer = setTimeout(() => {
       onClose();
-    }, 15000);
+    }, 20000);
     return () => clearTimeout(timer);
   }, [onClose]);
 
@@ -128,12 +128,20 @@ export const PostExpenseShareSheet: React.FC<PostExpenseShareSheetProps> = ({
     onClose();
   };
 
+  const unregisteredText = unregisteredShares.length === 1
+    ? `${unregisteredShares[0].name} is not on Divido yet`
+    : `${unregisteredShares.length} members are not on Divido yet`;
+
   return (
     <>
       <style>{`
         @keyframes postExpSlideUp {
           0% { transform: translate(-50%, 60px); opacity: 0; }
           100% { transform: translate(-50%, 0); opacity: 1; }
+        }
+        @keyframes invitePulseGlow {
+          0%, 100% { box-shadow: 0 0 0 0 rgba(245, 158, 11, 0.4); }
+          50% { box-shadow: 0 0 0 8px rgba(245, 158, 11, 0); }
         }
       `}</style>
       <div
@@ -154,8 +162,8 @@ export const PostExpenseShareSheet: React.FC<PostExpenseShareSheetProps> = ({
             background: '#0F172A',
             color: '#FFFFFF',
             borderRadius: '24px',
-            padding: '18px 20px',
-            boxShadow: '0 20px 45px -10px rgba(15, 23, 42, 0.5), 0 0 0 1.5px rgba(255, 255, 255, 0.12)',
+            padding: '20px 22px',
+            boxShadow: '0 25px 50px -12px rgba(15, 23, 42, 0.6), 0 0 0 1.5px rgba(245, 158, 11, 0.35)',
             display: 'flex',
             flexDirection: 'column',
             gap: '14px',
@@ -163,29 +171,39 @@ export const PostExpenseShareSheet: React.FC<PostExpenseShareSheetProps> = ({
         >
           {/* Top Header Row */}
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
               <div
                 style={{
-                  width: '36px',
-                  height: '36px',
-                  borderRadius: '12px',
-                  background: 'linear-gradient(135deg, #10B981, #059669)',
+                  width: '42px',
+                  height: '42px',
+                  borderRadius: '14px',
+                  background: 'linear-gradient(135deg, #F59E0B, #D97706)',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
-                  fontSize: '18px',
+                  fontSize: '20px',
+                  boxShadow: '0 4px 12px rgba(245, 158, 11, 0.35)',
                 }}
               >
-                💸
+                📲
               </div>
-              <div>
-                <div style={{ fontSize: '14px', fontWeight: 800, color: '#F8FAFC' }}>
-                  Expense Recorded!
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
+                {/* PROMINENT HIGH-CONTRAST HEADLINE */}
+                <div
+                  style={{
+                    fontSize: '15px',
+                    fontWeight: 900,
+                    color: '#FCD34D', // Bright amber highlight
+                    letterSpacing: '-0.2px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '6px',
+                  }}
+                >
+                  <span>{unregisteredText}</span>
                 </div>
-                <div style={{ fontSize: '11px', color: '#94A3B8', fontWeight: 600 }}>
-                  {unregisteredShares.length === 1
-                    ? `${unregisteredShares[0].name} is not on Divido yet`
-                    : `${unregisteredShares.length} members are not on Divido yet`}
+                <div style={{ fontSize: '12px', color: '#94A3B8', fontWeight: 600 }}>
+                  Expense recorded! Send a 1-tap invite link
                 </div>
               </div>
             </div>
@@ -196,41 +214,59 @@ export const PostExpenseShareSheet: React.FC<PostExpenseShareSheetProps> = ({
                 background: 'rgba(255, 255, 255, 0.1)',
                 border: 'none',
                 borderRadius: '50%',
-                width: '26px',
-                height: '26px',
+                width: '28px',
+                height: '28px',
                 color: '#94A3B8',
                 cursor: 'pointer',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                fontSize: '12px',
+                fontSize: '13px',
                 fontWeight: 'bold',
+                marginTop: '-2px',
               }}
             >
               ✕
             </button>
           </div>
 
-          {/* Member breakdown pill list */}
+          {/* Unregistered Member breakdown pill list */}
           <div
             style={{
-              background: 'rgba(255, 255, 255, 0.06)',
-              borderRadius: '14px',
-              padding: '10px 14px',
+              background: 'linear-gradient(135deg, rgba(245, 158, 11, 0.12) 0%, rgba(15, 23, 42, 0.4) 100%)',
+              border: '1px solid rgba(245, 158, 11, 0.25)',
+              borderRadius: '16px',
+              padding: '12px 14px',
               display: 'flex',
               flexDirection: 'column',
-              gap: '6px',
+              gap: '8px',
             }}
           >
             {unregisteredShares.map((item) => (
               <div
                 key={item.name}
-                style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '12px' }}
+                style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '13px' }}
               >
-                <span style={{ fontWeight: 700, color: '#E2E8F0' }}>
-                  👤 {item.name}
-                </span>
-                <span style={{ fontWeight: 800, color: '#10B981' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                  <span style={{ fontSize: '14px' }}>👤</span>
+                  <span style={{ fontWeight: 800, color: '#F8FAFC' }}>
+                    {item.name}
+                  </span>
+                  <span
+                    style={{
+                      fontSize: '10px',
+                      fontWeight: 800,
+                      background: 'rgba(245, 158, 11, 0.25)',
+                      color: '#FCD34D',
+                      padding: '2px 7px',
+                      borderRadius: '6px',
+                      textTransform: 'uppercase',
+                    }}
+                  >
+                    Guest
+                  </span>
+                </div>
+                <span style={{ fontWeight: 900, color: '#10B981', fontSize: '14px' }}>
                   {currencySymbol}{item.shareAmount.toFixed(2)}
                 </span>
               </div>
@@ -244,33 +280,33 @@ export const PostExpenseShareSheet: React.FC<PostExpenseShareSheetProps> = ({
                 onClick={handleWhatsAppShare}
                 style={{
                   flex: 1,
-                  padding: '12px',
+                  padding: '13px',
                   borderRadius: '14px',
                   border: 'none',
                   background: '#25D366',
                   color: '#FFFFFF',
-                  fontSize: '13px',
-                  fontWeight: 800,
+                  fontSize: '13.5px',
+                  fontWeight: 900,
                   cursor: 'pointer',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
                   gap: '8px',
-                  boxShadow: '0 4px 12px rgba(37, 211, 102, 0.3)',
+                  boxShadow: '0 4px 14px rgba(37, 211, 102, 0.4)',
                 }}
               >
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="white">
+                <svg width="19" height="19" viewBox="0 0 24 24" fill="white">
                   <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/>
                   <path d="M12 0C5.373 0 0 5.373 0 12c0 2.127.558 4.121 1.532 5.849L.057 23.5l5.797-1.452A11.955 11.955 0 0012 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 22c-1.891 0-3.658-.497-5.188-1.367l-.372-.214-3.437.813.874-3.329-.242-.384A9.954 9.954 0 012 12C2 6.477 6.477 2 12 2s10 4.477 10 10-4.477 10-10 10z"/>
                 </svg>
-                Share via WhatsApp
+                Share Invite Link
               </button>
 
               {canNativeShare ? (
                 <button
                   onClick={handleNativeShare}
                   style={{
-                    padding: '12px 16px',
+                    padding: '13px 16px',
                     borderRadius: '14px',
                     border: 'none',
                     background: '#6366F1',
@@ -289,7 +325,7 @@ export const PostExpenseShareSheet: React.FC<PostExpenseShareSheetProps> = ({
                 <button
                   onClick={() => setShowShareGrid(true)}
                   style={{
-                    padding: '12px 16px',
+                    padding: '13px 16px',
                     borderRadius: '14px',
                     border: 'none',
                     background: 'rgba(255, 255, 255, 0.12)',
