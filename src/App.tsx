@@ -131,23 +131,39 @@ const SettleAmountInput: React.FC<{
   );
 };
 
+const getSavedUiState = () => {
+  try {
+    const st = window.history.state;
+    if (st && st._divido && st.uiState) {
+      return st.uiState;
+    }
+    const saved = sessionStorage.getItem('divido_ui_state');
+    if (saved) {
+      return JSON.parse(saved);
+    }
+  } catch {}
+  return null;
+};
+
 function App() {
+  const initialSavedState = React.useMemo(() => getSavedUiState(), []);
+
   const [theme, setTheme] = useState<'lavender' | 'sunset'>(() => {
     const saved = localStorage.getItem('divido_theme');
     return saved === 'lavender' || saved === 'sunset' ? saved : 'lavender';
   });
-  const [view, setView] = useState<string>('summary');
-  const [selectedId, setSelectedId] = useState<string | number | null>(null);
+  const [view, setView] = useState<string>(() => initialSavedState?.view || 'summary');
+  const [selectedId, setSelectedId] = useState<string | number | null>(() => initialSavedState?.selectedId ?? null);
   const [editingGroupId, setEditingGroupId] = useState<string | number | null>(null);
-  const [groupDetailTab, setGroupDetailTab] = useState<'expenses' | 'balances' | 'photos'>('expenses');
+  const [groupDetailTab, setGroupDetailTab] = useState<'expenses' | 'balances' | 'photos'>(() => initialSavedState?.groupDetailTab || 'expenses');
   const [isPhotoViewerOpen, setIsPhotoViewerOpen] = useState<boolean>(false);
   const [showGalleryFilters, setShowGalleryFilters] = useState<boolean>(false);
   const [showCurrPickerId, setShowCurrPickerId] = useState<string | null>(null);
-  const [showExpModal, setShowExpModal] = useState<boolean>(false);
+  const [showExpModal, setShowExpModal] = useState<boolean>(() => !!initialSavedState?.showExpModal);
   const [autoOpenScanner, setAutoOpenScanner] = useState<boolean>(false);
   const [editingExpense, setEditingExpense] = useState<Expense | null>(null);
-  const [showAddFriendModal, setShowAddFriendModal] = useState<boolean>(false);
-  const [showFriendsList, setShowFriendsList] = useState<boolean>(false);
+  const [showAddFriendModal, setShowAddFriendModal] = useState<boolean>(() => !!initialSavedState?.showAddFriendModal);
+  const [showFriendsList, setShowFriendsList] = useState<boolean>(() => !!initialSavedState?.showFriendsList);
   const [addFriendShareOnly, setAddFriendShareOnly] = useState<boolean>(false);
   // Prefer the phone's native share sheet (all apps open directly). Only fall
   // back to the in-app share popup when the device has no Web Share (desktop).
@@ -172,18 +188,18 @@ function App() {
     setShowAddFriendModal(true);
   };
   const [matchPrompt, setMatchPrompt] = useState<PendingMatchPrompt | null>(null);
-  const [showMembersHealth, setShowMembersHealth] = useState<boolean>(false);
-  const [globalSettleData, setGlobalSettleData] = useState<GlobalSettleData | null>(null);
-  const [showSettleModal, setShowSettleModal] = useState(false);
-  const [editingSettle, setEditingSettle] = useState<Expense | null>(null);
+  const [showMembersHealth, setShowMembersHealth] = useState<boolean>(() => !!initialSavedState?.showMembersHealth);
+  const [globalSettleData, setGlobalSettleData] = useState<GlobalSettleData | null>(() => initialSavedState?.globalSettleData || null);
+  const [showSettleModal, setShowSettleModal] = useState<boolean>(() => !!initialSavedState?.showSettleModal);
+  const [editingSettle, setEditingSettle] = useState<Expense | null>(() => initialSavedState?.editingSettle || null);
   const [localSettleEdits, setLocalSettleEdits] = useState<any[]>([]);
   // Row index whose amount box should shake (user tried to exceed the max).
   const [settleShakeIdx, setSettleShakeIdx] = useState<number | null>(null);
-  const [qrModalData, setQrModalData] = useState<{ payee: string; amt: number; currency: string; requestFrom?: string } | null>(null);
+  const [qrModalData, setQrModalData] = useState<{ payee: string; amt: number; currency: string; requestFrom?: string } | null>(() => initialSavedState?.qrModalData || null);
   const [isGroupsExpanded, setIsGroupsExpanded] = useState<boolean>(false);
-  const [showConvertModalId, setShowConvertModalId] = useState<string | number | null>(null);
-  const [analyticsGroupId, setAnalyticsGroupId] = useState<string | number | null>(null);
-  const [showGroupSettleList, setShowGroupSettleList] = useState(false);
+  const [showConvertModalId, setShowConvertModalId] = useState<string | number | null>(() => initialSavedState?.showConvertModalId || null);
+  const [analyticsGroupId, setAnalyticsGroupId] = useState<string | number | null>(() => initialSavedState?.analyticsGroupId ?? null);
+  const [showGroupSettleList, setShowGroupSettleList] = useState<boolean>(() => !!initialSavedState?.showGroupSettleList);
   const [confirmState, setConfirmState] = useState<ConfirmState>({
     show: false,
     title: '',
@@ -357,9 +373,13 @@ function App() {
   // only (not view), so tapping "Settle" — which changes the tab but not the
   // selected group — is left alone; but leaving to home and re-entering the
   // group resets it, instead of re-showing the Settle page.
+  const prevSelectedIdRef = React.useRef(selectedId);
   useEffect(() => {
-    if (selectedId && selectedId !== 'STANDALONE') {
-      setGroupDetailTab('expenses');
+    if (prevSelectedIdRef.current !== selectedId) {
+      prevSelectedIdRef.current = selectedId;
+      if (selectedId && selectedId !== 'STANDALONE') {
+        setGroupDetailTab('expenses');
+      }
     }
   }, [selectedId]);
 
@@ -405,6 +425,7 @@ function App() {
   const getUiState = () => ({
     view,
     selectedId,
+    groupDetailTab,
     showExpModal,
     showSettleModal,
     showAddFriendModal,
@@ -418,6 +439,7 @@ function App() {
     globalSettleData,
     showFriendsList,
     samePersonPrompt,
+    analyticsGroupId,
     confirmState: {
       show: confirmState?.show || false,
       title: confirmState?.title || '',
@@ -436,6 +458,7 @@ function App() {
         
         setView(ui.view || 'summary');
         setSelectedId(ui.selectedId ?? null);
+        if (ui.groupDetailTab) setGroupDetailTab(ui.groupDetailTab);
         setShowExpModal(!!ui.showExpModal);
         setShowSettleModal(!!ui.showSettleModal);
         setShowAddFriendModal(!!ui.showAddFriendModal);
@@ -449,10 +472,18 @@ function App() {
         setGlobalSettleData(ui.globalSettleData || null);
         setShowFriendsList(!!ui.showFriendsList);
         setSamePersonPrompt(ui.samePersonPrompt || null);
+        if (ui.analyticsGroupId !== undefined) setAnalyticsGroupId(ui.analyticsGroupId);
         setConfirmState({ show: false });
+
+        try {
+          sessionStorage.setItem('divido_ui_state', JSON.stringify(ui));
+        } catch {}
       } else {
         const currentUi = getUiState();
         window.history.pushState({ _divido: true, uiState: currentUi }, '');
+        try {
+          sessionStorage.setItem('divido_ui_state', JSON.stringify(currentUi));
+        } catch {}
       }
     };
 
@@ -462,13 +493,16 @@ function App() {
     if (!window.history.state?._divido) {
       const initialUi = getUiState();
       window.history.replaceState({ _divido: true, uiState: initialUi }, '');
+      try {
+        sessionStorage.setItem('divido_ui_state', JSON.stringify(initialUi));
+      } catch {}
     }
 
     return () => window.removeEventListener('popstate', onPopState);
   }, [
-    view, selectedId, showExpModal, showSettleModal, showAddFriendModal,
+    view, selectedId, groupDetailTab, showExpModal, showSettleModal, showAddFriendModal,
     showGroupSettleList, showMembersHealth, qrModalData, showConvertModalId,
-    showNotifPanel, mobileShowGroupOptionsMenu, editingSettle, globalSettleData, showFriendsList, samePersonPrompt, confirmState
+    showNotifPanel, mobileShowGroupOptionsMenu, editingSettle, globalSettleData, showFriendsList, samePersonPrompt, analyticsGroupId, confirmState
   ]);
 
   // 2. Watch for user changes and push states
@@ -492,6 +526,7 @@ function App() {
       const hasChanged =
         prev.view !== currentUi.view ||
         !isSameId(prev.selectedId, currentUi.selectedId) ||
+        prev.groupDetailTab !== currentUi.groupDetailTab ||
         prev.showExpModal !== currentUi.showExpModal ||
         prev.showSettleModal !== currentUi.showSettleModal ||
         prev.showAddFriendModal !== currentUi.showAddFriendModal ||
@@ -502,6 +537,7 @@ function App() {
         prev.showNotifPanel !== currentUi.showNotifPanel ||
         prev.mobileShowGroupOptionsMenu !== currentUi.mobileShowGroupOptionsMenu ||
         prev.showFriendsList !== currentUi.showFriendsList ||
+        !isSameId(prev.analyticsGroupId, currentUi.analyticsGroupId) ||
         JSON.stringify(prev.samePersonPrompt) !== JSON.stringify(currentUi.samePersonPrompt) ||
         JSON.stringify(prev.editingSettle) !== JSON.stringify(currentUi.editingSettle) ||
         JSON.stringify(prev.globalSettleData) !== JSON.stringify(currentUi.globalSettleData) ||
@@ -511,10 +547,13 @@ function App() {
     }
 
     window.history.pushState({ _divido: true, uiState: currentUi }, '');
+    try {
+      sessionStorage.setItem('divido_ui_state', JSON.stringify(currentUi));
+    } catch {}
   }, [
-    view, selectedId, showExpModal, showSettleModal, showAddFriendModal,
+    view, selectedId, groupDetailTab, showExpModal, showSettleModal, showAddFriendModal,
     showGroupSettleList, showMembersHealth, qrModalData, showConvertModalId,
-    showNotifPanel, mobileShowGroupOptionsMenu, editingSettle, globalSettleData, showFriendsList, samePersonPrompt, confirmState
+    showNotifPanel, mobileShowGroupOptionsMenu, editingSettle, globalSettleData, showFriendsList, samePersonPrompt, analyticsGroupId, confirmState
   ]);
 
   // Header search should never linger — close it when leaving the home / settle pages.
