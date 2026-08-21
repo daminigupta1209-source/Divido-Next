@@ -364,8 +364,7 @@ export const GroupGallery: React.FC<GroupGalleryProps> = ({
       {/* Grid gallery content — grouped by date, captioned tiles */}
       <div style={{ flex: 1 }}>
         {filteredPhotos.length === 0 ? (
-          <div style={{ textAlign: 'center', padding: '60px 20px', background: 'var(--w)', borderRadius: '24px', border: '1.5px solid #F1F5F9' }}>
-            <div style={{ fontSize: '56px', marginBottom: '20px' }}>📸</div>
+          <div style={{ textAlign: 'center', padding: '40px 20px', background: 'var(--w)', borderRadius: '24px', border: '1.5px solid #F1F5F9' }}>
             <button
               type="button"
               onClick={() => {
