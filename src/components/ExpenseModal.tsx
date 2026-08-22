@@ -1533,6 +1533,11 @@ export const ExpenseModal: React.FC<ExpenseModalProps> = ({
                 }
                 .inline-share-input {
                   -moz-appearance: textfield !important;
+                  border-bottom: 1.5px solid #CBD5E1 !important;
+                  transition: border-color 0.2s;
+                }
+                .inline-share-input:focus {
+                  border-bottom-color: #10B981 !important;
                 }
                 .inline-share-input::placeholder {
                   color: #94A3B8 !important;
@@ -1594,19 +1599,15 @@ export const ExpenseModal: React.FC<ExpenseModalProps> = ({
                           style={{
                             display: 'flex',
                             alignItems: 'center',
-                            borderBottom: '1.5px solid #CBD5E1',
                             padding: '0',
                             height: '28px',
                             width: '85px',
-                            transition: 'border-color 0.2s',
                             justifyContent: 'flex-start',
                           }}
                           onClick={(e) => e.stopPropagation()}
-                          onFocusCapture={(e) => { e.currentTarget.style.borderColor = '#10B981'; }}
-                          onBlurCapture={(e) => { e.currentTarget.style.borderColor = '#CBD5E1'; }}
                         >
                           {splitMode === 'Unequally' && (
-                            <span style={{ fontSize: '13px', fontWeight: 800, color: '#0F172A', opacity: 0.7, marginRight: '4px', userSelect: 'none' }}>{curr}</span>
+                            <span style={{ fontSize: '13px', fontWeight: 800, color: '#0F172A', opacity: 0.7, marginRight: '6px', userSelect: 'none' }}>{curr}</span>
                           )}
                           <input
                             type="text"
