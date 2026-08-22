@@ -1666,9 +1666,8 @@ function App() {
         const myEmail = session?.user?.email || userEmail;
 
         if (rejoinName && myEmail) {
-          const matchLeftMember = existingMembers.find((m: any) => 
-            m.name.toLowerCase() === (rejoinName + ' (Left)').toLowerCase() ||
-            (m.name.toLowerCase() === rejoinName.toLowerCase() && m.is_pending)
+          const matchLeftMember = existingMembers.find((m: any) =>
+            m.name.toLowerCase() === (rejoinName + ' (Left)').toLowerCase()
           );
           if (matchLeftMember) {
             setLinkRequestGroup(groupData);
@@ -3395,10 +3394,14 @@ function App() {
                         }
                       }
 
+                      // A row is a "rejoin" ONLY when it reflects real past-member
+                      // state: the name carries the " (Left)" suffix, or the invite
+                      // link explicitly targets THIS name via ?rejoinName=. Never
+                      // classify a fresh pending member as a rejoin just because its
+                      // name happens to match this device's stale saved identity.
+                      const rejoinParam = new URLSearchParams(window.location.search).get('rejoinName');
                       const isRejoin = p.name.endsWith(' (Left)') ||
-                        !!new URLSearchParams(window.location.search).get('rejoinName') ||
-                        (localStorage.getItem('divido_username') && p.name.toLowerCase() === localStorage.getItem('divido_username')?.toLowerCase()) ||
-                        (localStorage.getItem(`divido_identity_${linkRequestGroup.id}`) && p.name.toLowerCase() === localStorage.getItem(`divido_identity_${linkRequestGroup.id}`)?.toLowerCase());
+                        (!!rejoinParam && rejoinParam.toLowerCase() === p.name.replace(' (Left)', '').toLowerCase());
                       const cleanName = isRejoin ? p.name.replace(' (Left)', '') : p.name;
 
                       if (isRejoin) {
@@ -3550,10 +3553,12 @@ function App() {
                     textAlign: 'center',
                   }}
                 >
-                  {p.name.endsWith(' (Left)') ||
-                  !!new URLSearchParams(window.location.search).get('rejoinName') ||
-                  (localStorage.getItem('divido_username') && p.name.toLowerCase() === localStorage.getItem('divido_username')?.toLowerCase()) ||
-                  (localStorage.getItem(`divido_identity_${linkRequestGroup.id}`) && p.name.toLowerCase() === localStorage.getItem(`divido_identity_${linkRequestGroup.id}`)?.toLowerCase()) ? `Rejoin as "${p.name.replace(' (Left)', '')}"` : `Claim "${p.name}"`}
+                  {(() => {
+                    const rejoinParam = new URLSearchParams(window.location.search).get('rejoinName');
+                    const isRejoinLabel = p.name.endsWith(' (Left)') ||
+                      (!!rejoinParam && rejoinParam.toLowerCase() === p.name.replace(' (Left)', '').toLowerCase());
+                    return isRejoinLabel ? `Rejoin as "${p.name.replace(' (Left)', '')}"` : `Claim "${p.name}"`;
+                  })()}
                 </button>
               ))}
             </div>
