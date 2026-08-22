@@ -1603,11 +1603,15 @@ export const ExpenseModal: React.FC<ExpenseModalProps> = ({
                             <span style={{ fontSize: '13px', fontWeight: 800, color: '#0F172A', opacity: 0.7, marginRight: '4px', userSelect: 'none' }}>{curr}</span>
                           )}
                           <input
-                            type="number"
+                            type="search"
+                            inputMode="decimal"
                             className="inline-share-input"
                             value={shares[cleanMember] === undefined ? '' : shares[cleanMember]}
                             onChange={(e) => {
                               const inputVal = e.target.value;
+                              // Allow intermediate typing states like "" or "."
+                              if (inputVal !== '' && !/^\d*\.?\d*$/.test(inputVal)) return;
+                              
                               const numVal = parseFloat(inputVal) || 0;
                               
                               if (splitMode === 'Unequally') {
@@ -1645,11 +1649,12 @@ export const ExpenseModal: React.FC<ExpenseModalProps> = ({
                               outline: 'none',
                               fontSize: '15px',
                               fontWeight: 800,
-                              color: shares[cleanMember] ? '#0F172A' : '#94A3B8',
-                              caretColor: '#0F172A',
+                              color: '#0F172A',
+                              opacity: shares[cleanMember] ? 1 : 0.6,
                               padding: 0,
                               margin: 0,
-                              textAlign: 'left'
+                              textAlign: 'left',
+                              caretColor: '#0F172A'
                             }}
                           />
                           {splitMode === 'Percentage' && (
