@@ -1720,11 +1720,11 @@ export const ExpenseModal: React.FC<ExpenseModalProps> = ({
                 marginTop: '4px',
               }}
             >
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
                 <span
                   style={{
                     fontSize: '11px',
-                    fontWeight: 900,
+                    fontWeight: 800,
                     color:
                       splitMode === 'Unequally'
                         ? Math.abs(totalShares - (parseFloat(amt) || 0)) < 0.01
@@ -1735,40 +1735,17 @@ export const ExpenseModal: React.FC<ExpenseModalProps> = ({
                         : '#9F1239',
                   }}
                 >
-                  ⚖️ Split Shares Details ({splitMode})
-                </span>
-                <span
-                  style={{
-                    fontSize: '10px',
-                    color:
-                      splitMode === 'Unequally'
-                        ? Math.abs(totalShares - (parseFloat(amt) || 0)) < 0.01
-                          ? '#2563EB'
-                          : '#B91C1C'
-                        : Math.abs(totalShares - 100) < 0.01
-                        ? '#2563EB'
-                        : '#B91C1C',
-                    fontWeight: 800,
-                  }}
-                >
-                  {selectedSplitters.length} friends •{' '}
-                  {splitMode === 'Unequally' ? (
+                  ⚖️ {splitMode === 'Unequally' ? (
                     Math.abs(totalShares - (parseFloat(amt) || 0)) < 0.01 ? (
-                      `Perfect split of ${curr}${totalShares.toFixed(2)}.`
+                      `Perfect split of ${curr}${totalShares.toFixed(2)}`
                     ) : (
-                      `Split: ${curr}${totalShares.toFixed(2)} of ${curr}${(parseFloat(amt) || 0).toFixed(2)} (${
-                        totalShares > (parseFloat(amt) || 0)
-                          ? `over by ${curr}${Math.abs(totalShares - (parseFloat(amt) || 0)).toFixed(2)}`
-                          : `short by ${curr}${Math.abs(totalShares - (parseFloat(amt) || 0)).toFixed(2)}`
-                      })`
+                      `${totalShares > (parseFloat(amt) || 0) ? 'Over' : 'Short'} by ${curr}${Math.abs(totalShares - (parseFloat(amt) || 0)).toFixed(2)} (${curr}${totalShares.toFixed(2)} / ${curr}${(parseFloat(amt) || 0).toFixed(2)})`
                     )
                   ) : (
                     Math.abs(totalShares - 100) < 0.01 ? (
-                      'Perfect split of 100%.'
+                      'Perfect split of 100%'
                     ) : (
-                      `Split: ${totalShares.toFixed(1)}% of 100% (${
-                        totalShares > 100 ? `over by ${(totalShares - 100).toFixed(1)}%` : `short by ${(100 - totalShares).toFixed(1)}%`
-                      })`
+                      `${totalShares > 100 ? 'Over' : 'Short'} by ${(Math.abs(totalShares - 100)).toFixed(1)}% (${totalShares.toFixed(1)}% / 100%)`
                     )
                   )}
                 </span>
