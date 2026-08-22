@@ -10,10 +10,14 @@ Next.js / React + Vite expense-splitting PWA. Backend: Supabase. Deploy: push to
 5. Verify every change with `npm run build` (runs `tsc -b && vite build`) — a failed build silently leaves the old version live on Vercel.
 6. Push straight to `main` (I don't use preview links). Compensate with careful build + logic verification.
 
-## Current state (all pushed to main, latest commit 40dc039)
+## Current state (all pushed to main, latest commit 3d529ba)
 Everything below is live on Vercel.
 
 ### Fixed this session
+- **Inline Expense Split Inputs** — removed the `SplitSelector` popup-based input system. "Unequally" and "Percentage" split inputs are now rendered directly inline inside `ExpenseModal.tsx`.
+- **iOS Safari Split Input Fixes** — swapped `<input type="number">` for `<input type="text" inputMode="decimal">` to fix iOS WebKit cursor scaling issues. Stripped native `-webkit-appearance` and border box styling, creating a clean inline underlined UI.
+- **Percentage UI Polish** — dynamically render absolute calculated amounts alongside percentage inputs (omitting trailing `.00` for whole numbers) and shortened the split status details banner to a single line.
+- **Bottom Navigation Refinement** — restored the "Expense" (+) FAB to the mobile bottom navigation bar, removing it from the desktop sidebar.
 - **Photos section empty state cleanup** — removed title, description, and camera icon from `GroupGallery.tsx` ([src/components/GroupGallery.tsx](file:///c:/Users/damin/OneDrive/Documents/divido-next/src/components/GroupGallery.tsx)), keeping only the Upload Photo button.
 - **Guest identity linking query batching & startup deduplication** — batched `group_members` queries in `linkGuestIdentities()` ([src/App.tsx](file:///c:/Users/damin/OneDrive/Documents/divido-next/src/App.tsx)) into a single `.in('group_id', groupIds)` call and added a ref guard to eliminate duplicate startup network round-trips.
 - **Group-switch 0ms performance fix** — removed `selectedId` from load and realtime effect dependency arrays in `src/hooks/useSupabaseSync.ts`. Group switching is now 0ms instant and no longer triggers unnecessary network re-fetches or destroys/re-creates WebSocket channels.
