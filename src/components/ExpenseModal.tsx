@@ -1602,80 +1602,87 @@ export const ExpenseModal: React.FC<ExpenseModalProps> = ({
                           {curr}{share >= 1000000 ? formatCompactAmount(share) : share.toFixed(2)}
                         </span>
                       ) : (
-                        <div
-                          className={shakingFriend === cleanMember ? 'shake' : ''}
-                          style={{
-                            display: 'flex',
-                            alignItems: 'center',
-                            padding: '0',
-                            height: '28px',
-                            width: '85px',
-                            justifyContent: 'flex-start',
-                          }}
-                          onClick={(e) => e.stopPropagation()}
-                        >
-                          {splitMode === 'Unequally' && (
-                            <span style={{ fontSize: '13px', fontWeight: 800, color: '#0F172A', opacity: 0.7, marginRight: '6px', userSelect: 'none' }}>{curr}</span>
-                          )}
-                          <input
-                            type="text"
-                            inputMode="decimal"
-                            className="inline-share-input"
-                            value={shares[cleanMember] === undefined ? '' : shares[cleanMember]}
-                            onChange={(e) => {
-                              const inputVal = e.target.value;
-                              // Allow intermediate typing states like "" or "."
-                              if (inputVal !== '' && !/^\d*\.?\d*$/.test(inputVal)) return;
-                              
-                              const numVal = parseFloat(inputVal) || 0;
-                              
-                              if (splitMode === 'Unequally') {
-                                const totalAmt = parseFloat(amt) || 0;
-                                const otherManualSum = selectedSplitters
-                                  .filter((m) => m !== cleanMember && manualEdits.has(m))
-                                  .reduce((sum, m) => sum + (shares[m] || 0), 0);
-                                const maxAllowed = totalAmt - otherManualSum;
-                                if (numVal > maxAllowed) {
-                                  setShakingFriend(cleanMember);
-                                  setTimeout(() => setShakingFriend(null), 500);
-                                  return;
-                                }
-                              }
-                              
-                              if (splitMode === 'Percentage') {
-                                const otherManualSum = selectedSplitters
-                                  .filter((m) => m !== cleanMember && manualEdits.has(m))
-                                  .reduce((sum, m) => sum + (shares[m] || 0), 0);
-                                const maxAllowed = 100 - otherManualSum;
-                                if (numVal > maxAllowed) {
-                                  setShakingFriend(cleanMember);
-                                  setTimeout(() => setShakingFriend(null), 500);
-                                  return;
-                                }
-                              }
-                              
-                              handleShareChange(cleanMember, inputVal);
-                            }}
-                            placeholder="0.00"
-                            style={{
-                              width: '100%',
-                              height: '100%',
-                              lineHeight: 'normal',
-                              background: 'transparent',
-                              border: 'none',
-                              outline: 'none',
-                              fontSize: '15px',
-                              fontWeight: 800,
-                              color: '#0F172A',
-                              padding: 0,
-                              margin: 0,
-                              textAlign: 'left',
-                              caretColor: '#0F172A'
-                            }}
-                          />
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                           {splitMode === 'Percentage' && (
-                            <span style={{ fontSize: '13px', fontWeight: 800, color: '#0F172A', opacity: 0.7, marginLeft: '4px', userSelect: 'none' }}>%</span>
+                             <span style={{ fontSize: '11px', fontWeight: 700, color: '#94A3B8', whiteSpace: 'nowrap' }}>
+                               {curr}{share >= 1000000 ? formatCompactAmount(share) : share.toFixed(2)}
+                             </span>
                           )}
+                          <div
+                            className={shakingFriend === cleanMember ? 'shake' : ''}
+                            style={{
+                              display: 'flex',
+                              alignItems: 'center',
+                              padding: '0',
+                              height: '28px',
+                              width: '85px',
+                              justifyContent: 'flex-start',
+                            }}
+                            onClick={(e) => e.stopPropagation()}
+                          >
+                            {splitMode === 'Unequally' && (
+                              <span style={{ fontSize: '13px', fontWeight: 800, color: '#0F172A', opacity: 0.7, marginRight: '6px', userSelect: 'none' }}>{curr}</span>
+                            )}
+                            <input
+                              type="text"
+                              inputMode="decimal"
+                              className="inline-share-input"
+                              value={shares[cleanMember] === undefined ? '' : shares[cleanMember]}
+                              onChange={(e) => {
+                                const inputVal = e.target.value;
+                                // Allow intermediate typing states like "" or "."
+                                if (inputVal !== '' && !/^\d*\.?\d*$/.test(inputVal)) return;
+                                
+                                const numVal = parseFloat(inputVal) || 0;
+                                
+                                if (splitMode === 'Unequally') {
+                                  const totalAmt = parseFloat(amt) || 0;
+                                  const otherManualSum = selectedSplitters
+                                    .filter((m) => m !== cleanMember && manualEdits.has(m))
+                                    .reduce((sum, m) => sum + (shares[m] || 0), 0);
+                                  const maxAllowed = totalAmt - otherManualSum;
+                                  if (numVal > maxAllowed) {
+                                    setShakingFriend(cleanMember);
+                                    setTimeout(() => setShakingFriend(null), 500);
+                                    return;
+                                  }
+                                }
+                                
+                                if (splitMode === 'Percentage') {
+                                  const otherManualSum = selectedSplitters
+                                    .filter((m) => m !== cleanMember && manualEdits.has(m))
+                                    .reduce((sum, m) => sum + (shares[m] || 0), 0);
+                                  const maxAllowed = 100 - otherManualSum;
+                                  if (numVal > maxAllowed) {
+                                    setShakingFriend(cleanMember);
+                                    setTimeout(() => setShakingFriend(null), 500);
+                                    return;
+                                  }
+                                }
+                                
+                                handleShareChange(cleanMember, inputVal);
+                              }}
+                              placeholder="0.00"
+                              style={{
+                                width: '100%',
+                                height: '100%',
+                                lineHeight: 'normal',
+                                background: 'transparent',
+                                border: 'none',
+                                outline: 'none',
+                                fontSize: '15px',
+                                fontWeight: 800,
+                                color: '#0F172A',
+                                padding: 0,
+                                margin: 0,
+                                textAlign: 'left',
+                                caretColor: '#0F172A'
+                              }}
+                            />
+                            {splitMode === 'Percentage' && (
+                              <span style={{ fontSize: '13px', fontWeight: 800, color: '#0F172A', opacity: 0.7, marginLeft: '4px', userSelect: 'none' }}>%</span>
+                            )}
+                          </div>
                         </div>
                       )
                     )}
