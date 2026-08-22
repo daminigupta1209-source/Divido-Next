@@ -1534,6 +1534,10 @@ export const ExpenseModal: React.FC<ExpenseModalProps> = ({
                 .inline-share-input {
                   -moz-appearance: textfield !important;
                 }
+                .inline-share-input::placeholder {
+                  color: #94A3B8 !important;
+                  opacity: 0.7 !important;
+                }
               `}</style>
               {friendsToSelect.map((member) => {
                 const cleanMember = member.replace(' (Left)', '');
@@ -1603,7 +1607,7 @@ export const ExpenseModal: React.FC<ExpenseModalProps> = ({
                             <span style={{ fontSize: '13px', fontWeight: 800, color: '#0F172A', opacity: 0.7, marginRight: '4px', userSelect: 'none' }}>{curr}</span>
                           )}
                           <input
-                            type="search"
+                            type="text"
                             inputMode="decimal"
                             className="inline-share-input"
                             value={shares[cleanMember] === undefined ? '' : shares[cleanMember]}
@@ -1650,7 +1654,6 @@ export const ExpenseModal: React.FC<ExpenseModalProps> = ({
                               fontSize: '15px',
                               fontWeight: 800,
                               color: '#0F172A',
-                              opacity: shares[cleanMember] ? 1 : 0.6,
                               padding: 0,
                               margin: 0,
                               textAlign: 'left',
