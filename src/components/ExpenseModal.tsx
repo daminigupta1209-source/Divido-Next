@@ -1615,7 +1615,7 @@ export const ExpenseModal: React.FC<ExpenseModalProps> = ({
                               alignItems: 'center',
                               padding: '0',
                               height: '28px',
-                              width: '85px',
+                              width: splitMode === 'Percentage' ? '45px' : '85px',
                               justifyContent: 'flex-start',
                             }}
                             onClick={(e) => e.stopPropagation()}
