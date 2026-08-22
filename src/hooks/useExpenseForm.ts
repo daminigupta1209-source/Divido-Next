@@ -61,6 +61,26 @@ export function useExpenseForm({
     return selectedId || 'STANDALONE';
   });
 
+  // A newly-created group starts with a temporary local id and is reassigned a
+  // permanent Supabase id once it syncs. For a brand-new expense being added to
+  // the active group, follow that id change — otherwise an expense saved after
+  // the remap keeps the dead temp id, gets stranded from its group, and can no
+  // longer be matched (e.g. the "is this member in any expense?" check misses
+  // it, so removing that member orphans the expense).
+  useEffect(() => {
+    const isNewExpense = !editingExpense || String(editingExpense.id ?? '').startsWith('temp-');
+    if (
+      isNewExpense &&
+      selectedId &&
+      selectedId !== 'STANDALONE' &&
+      localGId !== 'STANDALONE' &&
+      String(localGId) !== String(selectedId)
+    ) {
+      setLocalGId(selectedId);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedId]);
+
   const activeGroup = useMemo(() => {
     if (localGId === 'STANDALONE') {
       const standaloneParticipants = expenses

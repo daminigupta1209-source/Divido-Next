@@ -2938,10 +2938,18 @@ function App() {
               // as a phantom person. Tombstone them as "(Left)" instead — the same path an
               // active member takes on leaving — so history is preserved and they stay
               // rejoinable.
-              const hasExpenseHistory = expenses.some((e) =>
-                String(e.gId) === String(selectedId) &&
-                (e.paid === memberName || (Array.isArray(e.splitters) && e.splitters.includes(memberName)))
-              );
+              const hasExpenseHistory = expenses.some((e) => {
+                const referencesMember =
+                  e.paid === memberName || (Array.isArray(e.splitters) && e.splitters.includes(memberName));
+                if (!referencesMember) return false;
+                if (String(e.gId) === String(selectedId)) return true;
+                // Safety net: an expense may be stranded on a temporary (pre-sync)
+                // group id after the group was reassigned a permanent DB id. Its gId
+                // then won't equal selectedId, but it still references this member —
+                // treat that as history so removal never orphans it. Temp ids are
+                // Date.now()-based floats, far above any real DB id.
+                return Number(e.gId) > 2147483647;
+              });
               // Anyone with NO expense footprint has no history to protect — a pending
               // invite that was never used, or a fully-joined member who was never in a
               // single expense. Delete them outright rather than leaving a "(Left)"
