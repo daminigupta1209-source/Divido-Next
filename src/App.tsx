@@ -929,6 +929,11 @@ function App() {
     }
   });
   
+  // Always-current mirror of `groups` so deferred callbacks (e.g. the delayed
+  // remove-sweep) can read the latest state instead of a stale closure.
+  const groupsRef = useRef(groups);
+  useEffect(() => { groupsRef.current = groups; }, [groups]);
+
   const { handleMobileExportCSV } = useExportCSV({ groups, expenses, selectedId });
   const { undoStack, deleteExpense, performUndo } = useUndoStack({ expenses, setExpenses });
   const deleteExpenseSecure = (id: string | number) => {
@@ -2195,6 +2200,12 @@ function App() {
 
   const handleCreateGroup = (groupData: { name: string; currency: string; members: string[]; emoji: string; createdDate?: string }) => {
     const id = Date.now() + Math.random();
+    // Everyone added at creation except me is a not-yet-claimed invitee, so they
+    // must start as pending. The member list buckets Joined vs Pending purely on
+    // this array — omitting it made fresh invitees (e.g. Ram) show as Joined
+    // immediately, before they ever claimed their name via the join link.
+    const meClean = me.replace(/\s*\(me\)$/i, '').replace(/\s*\(Left\)$/i, '').toLowerCase();
+    const pendingMembers = groupData.members.filter((m) => m.toLowerCase() !== meClean);
     const newGroup = {
       id,
       name: groupData.name,
@@ -2203,6 +2214,7 @@ function App() {
       emoji: groupData.emoji,
       simplifyDebts: false,
       createdDate: groupData.createdDate || new Date().toISOString().split('T')[0],
+      pendingMembers,
     };
     setGroups([...groups, newGroup]);
     setSelectedId(id);
@@ -2946,6 +2958,27 @@ function App() {
                       .delete()
                       .eq('group_id', selectedId)
                       .ilike('name', memberName);
+                    // Race guard: a just-added pending member may not have been
+                    // flushed to group_members yet when ✕ is clicked, so the delete
+                    // above matches zero rows. The deferred add-sync then inserts the
+                    // row and realtime reads it back — the member "reappears" until a
+                    // later delete finally catches it (the "works after 2-3 refreshes"
+                    // symptom). Re-run the delete once the add-sync would have flushed,
+                    // but only if they're still meant to be gone locally (guards against
+                    // a same-name re-add in the meantime).
+                    const sweepGroupId = selectedId;
+                    const sweepName = memberName;
+                    setTimeout(async () => {
+                      const g = groupsRef.current.find((gg) => String(gg.id) === String(sweepGroupId));
+                      const stillGone = !g || (!g.members.includes(sweepName) && !(g.pendingMembers || []).includes(sweepName));
+                      if (stillGone) {
+                        await supabase
+                          .from('group_members')
+                          .delete()
+                          .eq('group_id', sweepGroupId)
+                          .ilike('name', sweepName);
+                      }
+                    }, 1500);
                   } else if (!isPastMember) {
                     // Active member OR a pending invite that still has expense history.
                     // 1. Rename membership row to preserve history, keep email, set is_pending: true
@@ -3003,9 +3036,10 @@ function App() {
                   console.error('Failed to remove member on Supabase:', err);
                 }
               }
-              // Update local state
-              setGroups(
-                groups.map((g) =>
+              // Update local state (functional form — never map over a stale
+              // `groups` closure, or an interleaved add/remove can clobber each other)
+              setGroups((prev) =>
+                prev.map((g) =>
                   String(g.id) === String(selectedId)
                     ? {
                         ...g,
