@@ -1602,10 +1602,10 @@ export const ExpenseModal: React.FC<ExpenseModalProps> = ({
                           {curr}{share >= 1000000 ? formatCompactAmount(share) : share.toFixed(2)}
                         </span>
                       ) : (
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '24px' }}>
                           {splitMode === 'Percentage' && (
                              <span style={{ fontSize: '11px', fontWeight: 700, color: '#94A3B8', whiteSpace: 'nowrap' }}>
-                               {curr}{share >= 1000000 ? formatCompactAmount(share) : share.toFixed(2)}
+                               {curr}{share >= 1000000 ? formatCompactAmount(share) : (share % 1 === 0 ? share.toString() : share.toFixed(2))}
                              </span>
                           )}
                           <div
@@ -1662,7 +1662,7 @@ export const ExpenseModal: React.FC<ExpenseModalProps> = ({
                                 
                                 handleShareChange(cleanMember, inputVal);
                               }}
-                              placeholder="0.00"
+                              placeholder="0"
                               style={{
                                 width: '100%',
                                 height: '100%',
