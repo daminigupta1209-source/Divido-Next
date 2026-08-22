@@ -1648,8 +1648,8 @@ export const ExpenseModal: React.FC<ExpenseModalProps> = ({
                             placeholder="0.00"
                             style={{
                               width: '100%',
-                              height: '100%',
-                              lineHeight: 'normal',
+                              height: '20px',
+                              lineHeight: '20px',
                               background: 'transparent',
                               border: 'none',
                               outline: 'none',
