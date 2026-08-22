@@ -1593,14 +1593,14 @@ export const ExpenseModal: React.FC<ExpenseModalProps> = ({
                             padding: '2px 0',
                             width: '85px',
                             transition: 'border-color 0.2s',
-                            justifyContent: 'flex-end',
+                            justifyContent: 'flex-start',
                           }}
                           onClick={(e) => e.stopPropagation()}
                           onFocusCapture={(e) => { e.currentTarget.style.borderColor = '#10B981'; }}
                           onBlurCapture={(e) => { e.currentTarget.style.borderColor = 'transparent'; }}
                         >
                           {splitMode === 'Unequally' && (
-                            <span style={{ fontSize: '13px', fontWeight: 800, color: '#94A3B8', marginRight: '4px', userSelect: 'none' }}>{curr}</span>
+                            <span style={{ fontSize: '13px', fontWeight: 800, color: '#0F172A', opacity: 0.7, marginRight: '4px', userSelect: 'none' }}>{curr}</span>
                           )}
                           <input
                             type="number"
@@ -1645,14 +1645,14 @@ export const ExpenseModal: React.FC<ExpenseModalProps> = ({
                               outline: 'none',
                               fontSize: '13px',
                               fontWeight: 800,
-                              color: '#16A34A',
+                              color: shares[cleanMember] ? '#0F172A' : '#94A3B8',
                               padding: 0,
                               margin: 0,
-                              textAlign: 'right'
+                              textAlign: 'left'
                             }}
                           />
                           {splitMode === 'Percentage' && (
-                            <span style={{ fontSize: '13px', fontWeight: 800, color: '#94A3B8', marginLeft: '4px', userSelect: 'none' }}>%</span>
+                            <span style={{ fontSize: '13px', fontWeight: 800, color: '#0F172A', opacity: 0.7, marginLeft: '4px', userSelect: 'none' }}>%</span>
                           )}
                         </div>
                       )
