@@ -31,6 +31,32 @@ const pickPersonId = (groupId: string | number, name: string): string => {
   return genPersonId();
 };
 
+// A group is born with a temporary local id (Date.now()+Math.random(), a float
+// far above any real DB id) and is later reassigned a permanent Supabase id.
+// Any expense saved carrying the old temp id would otherwise be stranded — it no
+// longer matches its group, breaking balances and getting dropped on reload. We
+// persist temp->DB id remaps here so stranded expenses can always be re-linked,
+// even across sessions/reloads.
+const GID_MAP_KEY = 'divido_gid_map';
+const isTempGroupId = (id: any): boolean => Number(id) > 2147483647;
+
+const rememberGidRemap = (tempId: any, dbId: any): void => {
+  try {
+    if (!isTempGroupId(tempId) || dbId == null || isTempGroupId(dbId)) return;
+    const map = JSON.parse(localStorage.getItem(GID_MAP_KEY) || '{}');
+    map[String(tempId)] = dbId;
+    localStorage.setItem(GID_MAP_KEY, JSON.stringify(map));
+  } catch { /* ignore */ }
+};
+
+export const getGidRemap = (): Record<string, any> => {
+  try {
+    return JSON.parse(localStorage.getItem(GID_MAP_KEY) || '{}');
+  } catch {
+    return {};
+  }
+};
+
 interface UseSupabaseSyncProps {
   groups: Group[];
   setGroups: React.Dispatch<React.SetStateAction<Group[]>>;
@@ -493,7 +519,15 @@ export function useSupabaseSync({
         // Merge: keep any local expenses that are NOT in the cloud yet (pending upload)
         // These have temporary IDs (timestamp-based, > 2147483647) or belong to unsynced groups
         const cloudExpenseIds = new Set(loadedExpenses.map((e: any) => String(e.id)));
-        const localOnlyExpenses = expenses.filter(e => {
+        // Heal any expense stranded on a temp (pre-sync) group id using the
+        // recorded temp->DB map, BEFORE the belongsToSyncedGroup filter — otherwise
+        // a stranded expense matches no synced group and gets silently dropped.
+        const gidMap = getGidRemap();
+        const healedExpenses = expenses.map(e => {
+          const mapped = gidMap[String(e.gId)];
+          return mapped != null && String(mapped) !== String(e.gId) ? { ...e, gId: mapped } : e;
+        });
+        const localOnlyExpenses = healedExpenses.filter(e => {
           // Keep if this expense doesn't exist in cloud AND belongs to a valid group
           if (cloudExpenseIds.has(String(e.id))) return false; // already in cloud
           if (e.gId === 'STANDALONE') return true; // standalone expenses are local-only
@@ -695,6 +729,7 @@ export function useSupabaseSync({
                   sessionStorage.removeItem(lockKey);
                   const adoptedId = existing.group_id;
                   const oldGroupId = g.id;
+                  rememberGidRemap(oldGroupId, adoptedId);
                   nextGroups[i] = { ...g, id: adoptedId };
                   nextExpenses = nextExpenses.map((exp) =>
                     String(exp.gId) === String(oldGroupId) ? { ...exp, gId: adoptedId } : exp
@@ -730,6 +765,7 @@ export function useSupabaseSync({
                 sessionStorage.removeItem(lockKey); // release lock on success
                 const newGroupId = data[0].id;
               const oldGroupId = g.id;
+              rememberGidRemap(oldGroupId, newGroupId);
 
               // Link creator and other group members
               const memberInserts = g.members.map((m, idx) => {

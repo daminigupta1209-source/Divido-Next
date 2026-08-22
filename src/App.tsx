@@ -57,7 +57,7 @@ import { CurrencySetupModal } from './components/CurrencySetupModal';
 import { GroupGallery } from './components/GroupGallery';
 import { checkIfDemoMode } from './lib/demoMode';
 import { ensureArray, ensureObject, isLegacyRenameLog, formatCompactAmount } from './lib/utils';
-import { useSupabaseSync } from './hooks/useSupabaseSync';
+import { useSupabaseSync, getGidRemap } from './hooks/useSupabaseSync';
 import { useAppHotkeys } from './hooks/useAppHotkeys';
 import { useUndoStack } from './hooks/useUndoStack';
 import { MobileHeader } from './components/MobileHeader';
@@ -933,6 +933,29 @@ function App() {
   // remove-sweep) can read the latest state instead of a stale closure.
   const groupsRef = useRef(groups);
   useEffect(() => { groupsRef.current = groups; }, [groups]);
+
+  // Live heal: when a group's temporary id is remapped to a permanent Supabase id,
+  // re-link any expense still carrying the old temp id (e.g. one saved during the
+  // remap window). Without this it stays stranded until a reload — unmatched by its
+  // group and skipped for cloud insert. Runs on group changes; no-ops when nothing
+  // needs remapping, so it can't loop.
+  useEffect(() => {
+    const gidMap = getGidRemap();
+    if (!gidMap || Object.keys(gidMap).length === 0) return;
+    setExpenses((prev) => {
+      let changed = false;
+      const next = prev.map((e) => {
+        const mapped = gidMap[String(e.gId)];
+        if (mapped != null && String(mapped) !== String(e.gId)) {
+          changed = true;
+          return { ...e, gId: mapped };
+        }
+        return e;
+      });
+      return changed ? next : prev;
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [groups]);
 
   const { handleMobileExportCSV } = useExportCSV({ groups, expenses, selectedId });
   const { undoStack, deleteExpense, performUndo } = useUndoStack({ expenses, setExpenses });
