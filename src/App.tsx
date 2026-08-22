@@ -1692,12 +1692,9 @@ function App() {
             return;
           }
 
-          // If they are already an active member, direct them straight in —
-          // unless they explicitly asked to switch names (?switch=1), in which
-          // case fall through to the claim card so they can fix a wrong claim.
-          const wantsSwitch = urlParams.get('switch') === '1';
+          // If they are already an active member, direct them straight in
           const alreadyMember = existingMembers.some((m: any) => m.user_email === myEmail);
-          if (alreadyMember && !wantsSwitch) {
+          if (alreadyMember) {
             localStorage.removeItem('divido_pending_join');
             setSelectedId(joinGroupId);
             setView('detail');
@@ -1712,7 +1709,7 @@ function App() {
         // the claim list again — just open the group as that identity. Prevents a
         // guest from re-opening the invite link and claiming someone else's name.
         const claimedIdentity = localStorage.getItem(`divido_identity_${joinGroupId}`);
-        if (claimedIdentity && urlParams.get('switch') !== '1') {
+        if (claimedIdentity) {
           const stillActive = existingMembers.some(
             (m: any) => m.name.toLowerCase() === claimedIdentity.toLowerCase() && !m.is_pending
           );
@@ -3609,66 +3606,6 @@ function App() {
                 </button>
               ))}
             </div>
-
-            {/* Escape hatch: if this device has already claimed a name in this group
-                (e.g. the user claimed the WRONG name), let them release it and pick
-                again — without a developer having to detach the email in the DB.
-                Releasing sets the row back to pending (is_pending:true, no email) so
-                the freed name becomes claimable by its real owner again. */}
-            {(() => {
-              const storedName = linkRequestGroup && localStorage.getItem(`divido_identity_${linkRequestGroup.id}`);
-              if (!storedName) return null;
-              return (
-                <button
-                  disabled={submittingLinkRequest}
-                  onClick={async () => {
-                    if (!confirm(`You're currently "${storedName}" in this group. Release that name and pick a different one?`)) return;
-                    setSubmittingLinkRequest(true);
-                    try {
-                      await supabase
-                        .from('group_members')
-                        .update({ is_pending: true, user_email: null })
-                        .eq('group_id', linkRequestGroup.id)
-                        .ilike('name', storedName);
-                    } catch (e) {
-                      console.error('Failed to release claimed identity:', e);
-                    }
-                    localStorage.removeItem(`divido_identity_${linkRequestGroup.id}`);
-                    if ((localStorage.getItem('divido_username') || '').toLowerCase() === storedName.toLowerCase()) {
-                      localStorage.removeItem('divido_username');
-                    }
-                    // Refresh the claimable list so the freed name reappears.
-                    try {
-                      const { data: gm } = await supabase
-                        .from('group_members')
-                        .select('*')
-                        .eq('group_id', linkRequestGroup.id);
-                      const placeholders = (gm || []).filter(
-                        (m: any) => m.is_pending && !m.user_email && !m.name.endsWith(' (Left)')
-                      );
-                      setLinkRequestPlaceholders(placeholders);
-                    } catch (e) {
-                      console.error('Failed to refresh claim list:', e);
-                    }
-                    setSubmittingLinkRequest(false);
-                  }}
-                  style={{
-                    width: '100%',
-                    padding: '11px',
-                    borderRadius: '12px',
-                    border: '1px solid #FCA5A5',
-                    background: '#FEF2F2',
-                    color: '#B91C1C',
-                    fontWeight: 800,
-                    fontSize: '13px',
-                    cursor: 'pointer',
-                    marginBottom: '8px',
-                  }}
-                >
-                  Not "{storedName}"? Switch name
-                </button>
-              );
-            })()}
 
             <button
               onClick={() => {
