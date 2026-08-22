@@ -2920,21 +2920,23 @@ function App() {
             onRemoveMember={async (memberName) => {
               if (!selectedId || selectedId === 'STANDALONE') return;
               const isPastMember = memberName.endsWith(' (Left)');
-              // A pending invite is someone who never actually joined. Removing them
-              // should delete the invite outright, not tombstone them as a past member.
-              const currentGroup = groups.find((g) => String(g.id) === String(selectedId));
-              const isPendingInvite = !isPastMember && !!currentGroup?.pendingMembers?.includes(memberName);
               // Orphan guard: a member referenced by ANY expense (as payer or splitter)
               // must never be hard-deleted. Removing their row leaves their name dangling
               // in those expenses, and the balance engine then renders the leftover shares
               // as a phantom person. Tombstone them as "(Left)" instead — the same path an
               // active member takes on leaving — so history is preserved and they stay
-              // rejoinable. Only members with no expense footprint are safe to hard-delete.
+              // rejoinable.
               const hasExpenseHistory = expenses.some((e) =>
                 String(e.gId) === String(selectedId) &&
                 (e.paid === memberName || (Array.isArray(e.splitters) && e.splitters.includes(memberName)))
               );
-              const hardDelete = (isPastMember || isPendingInvite) && !hasExpenseHistory;
+              // Anyone with NO expense footprint has no history to protect — a pending
+              // invite that was never used, or a fully-joined member who was never in a
+              // single expense. Delete them outright rather than leaving a "(Left)"
+              // tombstone that just clutters Past Members. Balance need not be checked
+              // separately: a non-zero balance can only come from an expense, so it is
+              // already implied by hasExpenseHistory.
+              const hardDelete = !hasExpenseHistory;
               if (!checkIfDemoMode() && isAuthenticated) {
                 try {
                   if (hardDelete) {
