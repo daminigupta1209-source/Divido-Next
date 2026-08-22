@@ -226,17 +226,10 @@ export const AddFriendModal: React.FC<AddFriendModalProps> = ({
       finalPending.forEach((n) => { if (!newMembers.includes(n)) newMembers.push(n); });
       setGroups(groups.map((g) => (g.id === selectedGroup.id ? { ...g, members: newMembers } : g)));
     }
-    if (canNativeShare) {
-      // Mobile: open the phone's own share sheet directly and DON'T show our
-      // share card. This runs inside the button tap, so the browser permits it.
-      // handleNativeShare swallows its own errors, so this resolves whether the
-      // user shares or dismisses — either way we close the modal.
-      await handleNativeShare();
-      setShowAddFriendModal(false);
-    } else {
-      // Desktop / no native share sheet: fall back to our in-app share card.
-      setInvited(true);
-    }
+    // The friend is now added to the group — that's the whole job. Inviting them
+    // to install the app is optional, so we never auto-fire the OS share sheet.
+    // We land on a confirmation card that shows sharing as a choice, not a step.
+    setInvited(true);
   };
 
   return (
@@ -257,7 +250,7 @@ export const AddFriendModal: React.FC<AddFriendModalProps> = ({
         {/* Header */}
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <h2 className="nunito" style={{ fontSize: '17px', fontWeight: 900, color: '#0F172A', margin: 0 }}>
-            {invited ? 'Share Invite Link 🚀' : 'Invite Friends 🎉'}
+            {invited ? 'Invite to app? (optional) 🚀' : 'Add Friends 🎉'}
           </h2>
           <button
             onClick={() => setShowAddFriendModal(false)}
@@ -275,7 +268,7 @@ export const AddFriendModal: React.FC<AddFriendModalProps> = ({
             {/* Step 1 — name input */}
             <div>
               <p style={{ margin: '0 0 8px 0', fontSize: '11px', fontWeight: 700, color: '#94A3B8', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
-                Who are you inviting?
+                Who are you adding?
               </p>
               <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                 <input
@@ -383,7 +376,7 @@ export const AddFriendModal: React.FC<AddFriendModalProps> = ({
                   : customRejoinLink ? `🎉 ${confirmedNames.join(', ')} Invited!` : `🎉 ${confirmedNames.join(', ')} Added!`}
               </p>
               <p style={{ margin: '0 0 16px 0', fontSize: '11px', fontWeight: 700, color: '#94A3B8', textTransform: 'uppercase', letterSpacing: '0.5px', textAlign: 'center' }}>
-                {confirmedNames.length === 0 ? 'Friends join by claiming their name' : 'Send them the invite link to join'}
+                {confirmedNames.length === 0 ? 'Friends join by claiming their name' : "They're in the group. Share a link only if you want them on the app too."}
               </p>
               {canNativeShare && (
                 <button
