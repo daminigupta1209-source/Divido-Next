@@ -1532,8 +1532,16 @@ export const ExpenseModal: React.FC<ExpenseModalProps> = ({
                   margin: 0;
                 }
                 .inline-share-input {
+                  -webkit-appearance: none !important;
                   -moz-appearance: textfield !important;
+                  appearance: none !important;
+                  border-top: none !important;
+                  border-left: none !important;
+                  border-right: none !important;
+                  border-radius: 0 !important;
                   border-bottom: 1.5px solid #CBD5E1 !important;
+                  box-shadow: none !important;
+                  background: transparent !important;
                   transition: border-color 0.2s;
                 }
                 .inline-share-input:focus {
