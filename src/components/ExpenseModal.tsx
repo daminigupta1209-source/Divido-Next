@@ -1537,6 +1537,7 @@ export const ExpenseModal: React.FC<ExpenseModalProps> = ({
                 .inline-share-input::placeholder {
                   color: #94A3B8 !important;
                   opacity: 0.7 !important;
+                  font-size: 13px !important;
                 }
               `}</style>
               {friendsToSelect.map((member) => {
@@ -1593,7 +1594,7 @@ export const ExpenseModal: React.FC<ExpenseModalProps> = ({
                           style={{
                             display: 'flex',
                             alignItems: 'center',
-                            borderBottom: '1.5px solid transparent',
+                            borderBottom: '1.5px solid #CBD5E1',
                             padding: '0',
                             height: '28px',
                             width: '85px',
@@ -1602,7 +1603,7 @@ export const ExpenseModal: React.FC<ExpenseModalProps> = ({
                           }}
                           onClick={(e) => e.stopPropagation()}
                           onFocusCapture={(e) => { e.currentTarget.style.borderColor = '#10B981'; }}
-                          onBlurCapture={(e) => { e.currentTarget.style.borderColor = 'transparent'; }}
+                          onBlurCapture={(e) => { e.currentTarget.style.borderColor = '#CBD5E1'; }}
                         >
                           {splitMode === 'Unequally' && (
                             <span style={{ fontSize: '13px', fontWeight: 800, color: '#0F172A', opacity: 0.7, marginRight: '4px', userSelect: 'none' }}>{curr}</span>
