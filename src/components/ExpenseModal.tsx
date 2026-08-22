@@ -1643,9 +1643,10 @@ export const ExpenseModal: React.FC<ExpenseModalProps> = ({
                               background: 'transparent',
                               border: 'none',
                               outline: 'none',
-                              fontSize: '13px',
+                              fontSize: '15px',
                               fontWeight: 800,
                               color: shares[cleanMember] ? '#0F172A' : '#94A3B8',
+                              caretColor: '#0F172A',
                               padding: 0,
                               margin: 0,
                               textAlign: 'left'
