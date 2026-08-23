@@ -487,25 +487,40 @@ export const CreateGroupView: React.FC<CreateGroupViewProps> = ({
                 </div>
               ))}
 
-              {/* Add Friend Button Link */}
+              {/* Add Friend button — orange pill, matching existing groups */}
               <button
                 type="button"
                 onClick={handleAddParticipant}
                 style={{
-                  background: 'none',
+                  background: '#F97316',
+                  color: '#FFFFFF',
                   border: 'none',
-                  color: '#3B82F6',
-                  fontWeight: 800,
-                  fontSize: '13px',
-                  padding: '10px 12px',
+                  padding: '8px 22px',
+                  borderRadius: '999px',
+                  fontFamily: 'inherit',
+                  fontWeight: 600,
+                  fontSize: '13.5px',
+                  letterSpacing: '0.2px',
+                  lineHeight: 1,
                   cursor: 'pointer',
-                  textAlign: 'left',
                   display: 'inline-flex',
                   alignItems: 'center',
-                  fontFamily: 'Nunito',
+                  justifyContent: 'center',
+                  gap: '5px',
+                  alignSelf: 'flex-start',
+                  transition: 'all 0.2s ease',
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.transform = 'scale(1.02)';
+                  e.currentTarget.style.background = '#EA580C';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.transform = 'scale(1)';
+                  e.currentTarget.style.background = '#F97316';
                 }}
               >
-                + Add Friend
+                <span style={{ fontSize: '16px', fontWeight: 600, lineHeight: 1, color: '#FFFFFF', display: 'flex', alignItems: 'center' }}>+</span>
+                <span style={{ color: '#FFFFFF', lineHeight: 1, display: 'flex', alignItems: 'center' }}>Friend</span>
               </button>
             </div>
           )}
