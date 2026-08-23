@@ -121,10 +121,19 @@ export const CreateGroupView: React.FC<CreateGroupViewProps> = ({
     setParticipants(updated);
   };
 
+  // Shake the Group Name box when the user tries to save without a name, so
+  // it's obvious what's blocking them (rather than the tick silently doing nothing).
+  const [shakeName, setShakeName] = useState(false);
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     const trimmedTitle = title.trim();
-    if (!trimmedTitle) return;
+    if (!trimmedTitle) {
+      setShakeName(true);
+      titleInputRef.current?.focus();
+      setTimeout(() => setShakeName(false), 450);
+      return;
+    }
 
     // Check duplicate group name
     const isDuplicate = groups.some(
@@ -199,18 +208,18 @@ export const CreateGroupView: React.FC<CreateGroupViewProps> = ({
           </h1>
         </div>
 
-        {/* Submit Tick Button */}
+        {/* Submit Tick Button — always clickable; when the name is empty it
+            shakes the Group Name box instead of silently doing nothing. */}
         <button
           type="submit"
-          disabled={!title.trim()}
           style={{
             background: 'none',
             border: 'none',
-            color: '#064E3B',
-            cursor: title.trim() ? 'pointer' : 'not-allowed',
+            color: '#10B981',
+            cursor: 'pointer',
             padding: '4px 0px',
             marginRight: '-6px',
-            opacity: title.trim() ? 1 : 0.35,
+            opacity: title.trim() ? 1 : 0.6,
             display: 'inline-flex',
             alignItems: 'center',
             justifyContent: 'center',
@@ -238,7 +247,7 @@ export const CreateGroupView: React.FC<CreateGroupViewProps> = ({
           <label style={{ display: 'block', fontSize: '12px', fontWeight: 850, color: 'var(--g)', marginBottom: '8px', textTransform: 'uppercase', letterSpacing: '0.8px' }}>
             Group Name
           </label>
-          <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
+          <div className={shakeName ? 'shake' : ''} style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
             {/* DP Upload Circle Container */}
             <div
               onClick={() => fileInputRef.current?.click()}
