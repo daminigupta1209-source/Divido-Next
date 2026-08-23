@@ -4720,6 +4720,9 @@ function App() {
         const adminLabel = showAdminName ? <> (<span style={{ color: '#0F172A', fontWeight: 800 }}>{adminName}</span>)</> : null;
         const cleanMeName = me.replace(/\s*\(me\)$/i, '').replace(/\s*\(Left\)$/i, '').toLowerCase();
         const currentGroup = groups.find((g) => String(g.id) === String(selectedId));
+        // No active (non-left) member => dormant group. Rejoin self-approves
+        // (no admin to ask), so the copy/CTA must not promise "approval".
+        const noActiveAdmin = !adminRaw;
         const pendingReqs = currentGroup?.pendingLinkRequests || [];
         const hasPendingRejoin = !!pendingReqs.find((req: any) =>
           (req.placeholderName || '').replace(/\s*\(Left\)$/i, '').toLowerCase() === cleanMeName ||
@@ -4765,11 +4768,13 @@ function App() {
               )}
             </div>
             <h3 className="nunito" style={{ fontSize: '18px', fontWeight: 900, color: '#0F172A', margin: '0 0 8px 0' }}>
-              {hasPendingRejoin ? 'Waiting for approval' : 'Rejoin this group?'}
+              {hasPendingRejoin ? 'Waiting for approval' : noActiveAdmin ? 'Rejoin instantly?' : 'Rejoin this group?'}
             </h3>
             <p style={{ fontSize: '14px', color: '#64748B', fontWeight: 600, margin: '0 0 20px 0', lineHeight: 1.4 }}>
               {hasPendingRejoin
                 ? <>Your request was sent to the group admin{adminLabel}. You'll get access once it's approved.</>
+                : noActiveAdmin
+                ? <>No one's active in this group right now, so you'll rejoin straight away and become the admin.</>
                 : <>The group admin{adminLabel} needs to approve.</>}
             </p>
             {hasPendingRejoin ? (
@@ -4913,7 +4918,7 @@ function App() {
                 boxShadow: '0 4px 12px rgba(5, 150, 105, 0.2)',
               }}
             >
-              Send request
+              {noActiveAdmin ? 'Rejoin now' : 'Send request'}
             </button>
             )}
           </div>
