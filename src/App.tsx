@@ -4797,6 +4797,42 @@ function App() {
                       .maybeSingle();
 
                     if (matched) {
+                      // Dormant group with NO active member/admin to approve a
+                      // rejoin request: reactivate directly instead of sending a
+                      // request nobody can ever approve. The rejoiner becomes the
+                      // sole active member (and thus the new admin), reviving the
+                      // group. Safe — it's their own identity, and there's no one to
+                      // gate it against.
+                      const grpForRejoin = groups.find((g) => String(g.id) === String(selectedId));
+                      const activeMems = (grpForRejoin?.members || []).filter((m) => !m.endsWith(' (Left)'));
+                      if (activeMems.length === 0) {
+                        const cleanName = me.replace(/\s*\(Left\)$/i, '');
+                        await supabase
+                          .from('group_members')
+                          .update({
+                            name: cleanName,
+                            user_email: myEmail,
+                            is_pending: false,
+                            link_request_email: null,
+                            link_request_name: null,
+                          })
+                          .eq('id', matched.id);
+                        localStorage.setItem('divido_username', cleanName);
+                        localStorage.setItem(`divido_identity_${selectedId}`, cleanName);
+                        setGroups(groups.map((g) =>
+                          String(g.id) === String(selectedId)
+                            ? {
+                                ...g,
+                                members: g.members.map((m) => (m === searchName ? cleanName : m)),
+                                pendingLinkRequests: (g.pendingLinkRequests || []).filter((r) => r.requestEmail !== myEmail),
+                              }
+                            : g
+                        ));
+                        setToastMsg(`Welcome back! You rejoined ${grpForRejoin?.name || 'the group'}.`);
+                        setTimeout(() => setToastMsg(null), 3000);
+                        return;
+                      }
+
                       await supabase
                         .from('group_members')
                         .update({
