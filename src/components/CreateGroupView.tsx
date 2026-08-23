@@ -471,7 +471,7 @@ export const CreateGroupView: React.FC<CreateGroupViewProps> = ({
                   <input
                     type="text"
                     ref={index === participants.length - 1 ? lastFieldRef : null}
-                    value={index === 0 && participant === me ? userName : participant}
+                    value={index === 0 ? `${(participant && participant !== me ? participant : userName).replace(/\s*\(you\)$/i, '')} (You)` : participant}
                     placeholder={index === 0 ? "Your name" : `Friend ${index + 1}`}
                     onChange={(e) => handleParticipantChange(index, e.target.value)}
                     disabled={index === 0}
