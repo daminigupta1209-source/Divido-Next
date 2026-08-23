@@ -2323,45 +2323,14 @@ function App() {
         
         if (groupErr) console.error('Failed to update group table in Supabase:', groupErr);
 
-        // Fetch existing group members in DB
-        const { data: existingMems, error: fetchErr } = await supabase
-          .from('group_members')
-          .select('user_email')
-          .eq('group_id', groupId);
-
-        if (fetchErr) {
-          console.error('Failed to fetch existing members from Supabase:', fetchErr);
-          return;
-        }
-
-        if (existingMems) {
-          const existingEmails = new Set(existingMems.map(m => m.user_email.toLowerCase()));
-          const targetEmails = groupData.members.map(m => m.toLowerCase());
-
-          // Identify new members to insert
-          const toAdd = groupData.members.filter(email => !existingEmails.has(email.toLowerCase()));
-          if (toAdd.length > 0) {
-            const memberInserts = toAdd.map(email => ({
-              group_id: groupId,
-              user_email: email,
-              user_name: email.split('@')[0], // fallback name
-              joined_at: new Date().toISOString()
-            }));
-            const { error: insertErr } = await supabase.from('group_members').insert(memberInserts);
-            if (insertErr) console.error('Failed to insert new members:', insertErr);
-          }
-
-          // Identify members to remove
-          const toRemove = Array.from(existingEmails).filter(email => !targetEmails.includes(email));
-          if (toRemove.length > 0) {
-            const { error: deleteErr } = await supabase
-              .from('group_members')
-              .delete()
-              .eq('group_id', groupId)
-              .in('user_email', toRemove);
-            if (deleteErr) console.error('Failed to remove members:', deleteErr);
-          }
-        }
+        // NOTE: member add/removal is intentionally NOT handled here. The old
+        // code in this spot compared member NAMES against email addresses, which
+        // could compute "remove everyone" and delete all member rows on a simple
+        // rename (data loss). Member inserts are handled correctly by the sync
+        // engine (useSupabaseSync diffs new members and inserts them with the
+        // right columns / is_pending / person_id); member removal goes through
+        // the member-list ✕ (onRemoveMember), which tombstones instead of
+        // orphaning. This function now only updates the group's own fields.
       } catch (err) {
         console.error('Failed to sync group edits to Supabase:', err);
       }
