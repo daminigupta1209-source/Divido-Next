@@ -94,8 +94,19 @@ export const CreateGroupView: React.FC<CreateGroupViewProps> = ({
     reader.readAsDataURL(file);
   };
 
+  // Focus the newly-added name field so the user can type immediately.
+  const lastFieldRef = useRef<HTMLInputElement>(null);
+  const [focusLastField, setFocusLastField] = useState(false);
+  useEffect(() => {
+    if (focusLastField) {
+      lastFieldRef.current?.focus();
+      setFocusLastField(false);
+    }
+  }, [focusLastField, participants.length]);
+
   const handleAddParticipant = () => {
     setParticipants([...participants, '']);
+    setFocusLastField(true);
   };
 
   const handleParticipantChange = (index: number, val: string) => {
@@ -450,6 +461,7 @@ export const CreateGroupView: React.FC<CreateGroupViewProps> = ({
                 >
                   <input
                     type="text"
+                    ref={index === participants.length - 1 ? lastFieldRef : null}
                     value={index === 0 && participant === me ? userName : participant}
                     placeholder={index === 0 ? "Your name" : `Friend ${index + 1}`}
                     onChange={(e) => handleParticipantChange(index, e.target.value)}
@@ -487,35 +499,42 @@ export const CreateGroupView: React.FC<CreateGroupViewProps> = ({
                 </div>
               ))}
 
-              {/* Add Friend button — dashed outline, matching the "New Group"
-                  card on the home page for a consistent, calmer look. */}
+              {/* Add Friend button — orange pill, centered. Clicking it adds a
+                  new name field and focuses it so the user can type right away. */}
               <button
                 type="button"
                 onClick={handleAddParticipant}
-                className="hover-up-mini"
                 style={{
-                  width: '100%',
-                  display: 'flex',
+                  background: '#F97316',
+                  color: '#FFFFFF',
+                  border: 'none',
+                  padding: '9px 24px',
+                  borderRadius: '999px',
+                  fontFamily: 'inherit',
+                  fontWeight: 700,
+                  fontSize: '14px',
+                  letterSpacing: '0.2px',
+                  lineHeight: 1,
+                  cursor: 'pointer',
+                  display: 'inline-flex',
                   alignItems: 'center',
                   justifyContent: 'center',
-                  gap: '8px',
-                  padding: '15px',
-                  background: '#FFFFFF',
-                  borderRadius: '16px',
-                  border: '1.5px dashed #CBD5E1',
-                  color: '#475569',
-                  fontSize: '14px',
-                  fontWeight: 700,
-                  fontFamily: 'inherit',
-                  cursor: 'pointer',
-                  transition: '0.2s all ease',
+                  gap: '6px',
+                  alignSelf: 'center',
+                  margin: '6px auto 0',
+                  transition: 'all 0.2s ease',
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.transform = 'scale(1.03)';
+                  e.currentTarget.style.background = '#EA580C';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.transform = 'scale(1)';
+                  e.currentTarget.style.background = '#F97316';
                 }}
               >
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" style={{ width: '18px', height: '18px', display: 'block', flexShrink: 0 }}>
-                  <line x1="12" y1="5" x2="12" y2="19" />
-                  <line x1="5" y1="12" x2="19" y2="12" />
-                </svg>
-                <span style={{ lineHeight: 1, display: 'block' }}>Add Friend</span>
+                <span style={{ fontSize: '17px', fontWeight: 700, lineHeight: 1, display: 'flex', alignItems: 'center' }}>+</span>
+                <span style={{ lineHeight: 1, display: 'flex', alignItems: 'center' }}>Friend</span>
               </button>
             </div>
           )}
