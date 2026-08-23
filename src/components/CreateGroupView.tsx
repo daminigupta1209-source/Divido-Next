@@ -517,24 +517,24 @@ export const CreateGroupView: React.FC<CreateGroupViewProps> = ({
                   background: '#F97316',
                   color: '#FFFFFF',
                   border: 'none',
-                  padding: '9px 24px',
+                  padding: '8px 22px',
                   borderRadius: '999px',
                   fontFamily: 'inherit',
-                  fontWeight: 700,
-                  fontSize: '14px',
+                  fontWeight: 600,
+                  fontSize: '13.5px',
                   letterSpacing: '0.2px',
                   lineHeight: 1,
                   cursor: 'pointer',
                   display: 'inline-flex',
                   alignItems: 'center',
                   justifyContent: 'center',
-                  gap: '6px',
+                  gap: '5px',
                   alignSelf: 'center',
                   margin: '6px auto 0',
                   transition: 'all 0.2s ease',
                 }}
                 onMouseEnter={(e) => {
-                  e.currentTarget.style.transform = 'scale(1.03)';
+                  e.currentTarget.style.transform = 'scale(1.02)';
                   e.currentTarget.style.background = '#EA580C';
                 }}
                 onMouseLeave={(e) => {
@@ -542,8 +542,8 @@ export const CreateGroupView: React.FC<CreateGroupViewProps> = ({
                   e.currentTarget.style.background = '#F97316';
                 }}
               >
-                <span style={{ fontSize: '17px', fontWeight: 700, lineHeight: 1, display: 'flex', alignItems: 'center' }}>+</span>
-                <span style={{ lineHeight: 1, display: 'flex', alignItems: 'center' }}>Friend</span>
+                <span style={{ fontSize: '16px', fontWeight: 600, lineHeight: 1, color: '#FFFFFF', display: 'flex', alignItems: 'center' }}>+</span>
+                <span style={{ color: '#FFFFFF', lineHeight: 1, display: 'flex', alignItems: 'center' }}>Friend</span>
               </button>
             </div>
           )}
