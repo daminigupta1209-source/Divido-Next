@@ -449,7 +449,7 @@ export const CreateGroupView: React.FC<CreateGroupViewProps> = ({
                 borderRadius: '16px',
                 background: '#FFFFFF',
                 border: '1.5px solid var(--border)',
-                padding: '8px 8px 22px',
+                padding: '8px 8px 16px',
                 display: 'flex',
                 flexDirection: 'column',
                 gap: '8px',
@@ -530,7 +530,7 @@ export const CreateGroupView: React.FC<CreateGroupViewProps> = ({
                   justifyContent: 'center',
                   gap: '5px',
                   alignSelf: 'center',
-                  margin: '6px auto 0',
+                  margin: '8px auto 0',
                   transition: 'all 0.2s ease',
                 }}
                 onMouseEnter={(e) => {
