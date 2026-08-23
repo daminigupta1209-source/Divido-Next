@@ -449,7 +449,7 @@ export const CreateGroupView: React.FC<CreateGroupViewProps> = ({
                 borderRadius: '16px',
                 background: '#FFFFFF',
                 border: '1.5px solid var(--border)',
-                padding: '8px',
+                padding: '8px 8px 22px',
                 display: 'flex',
                 flexDirection: 'column',
                 gap: '8px',
