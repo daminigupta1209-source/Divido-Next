@@ -122,8 +122,8 @@ export function useSupabaseSync({
         emoji: g.emoji || null,
         simplifyDebts: !!g.simplifyDebts,
       }));
-    const nonDraft = groups.filter(g => g.name.trim() !== '' && typeof g.id === 'number' && g.id <= 2147483647);
-    const nonDraftPrev = prevGroupsRef.current.filter(g => g.name.trim() !== '' && typeof g.id === 'number' && g.id <= 2147483647);
+    const nonDraft = groups.filter(g => g.name.trim() !== '' && !g.pendingSync);
+    const nonDraftPrev = prevGroupsRef.current.filter(g => g.name.trim() !== '' && !g.pendingSync);
     const hasUnsyncedGroups = JSON.stringify(normalize(nonDraft)) !== JSON.stringify(normalize(nonDraftPrev));
     const hasUnsyncedExpenses = JSON.stringify(expenses) !== JSON.stringify(prevExpensesRef.current);
     return (hasUnsyncedGroups || hasUnsyncedExpenses) ? 'syncing' : 'synced';
@@ -192,8 +192,8 @@ export function useSupabaseSync({
             simplifyDebts: !!g.simplifyDebts,
           }));
 
-        const nonDraftGroups = groups.filter(g => g.name.trim() !== '' && typeof g.id === 'number' && g.id <= 2147483647);
-        const nonDraftPrevGroups = prevGroupsRef.current.filter(g => g.name.trim() !== '' && typeof g.id === 'number' && g.id <= 2147483647);
+        const nonDraftGroups = groups.filter(g => g.name.trim() !== '' && !g.pendingSync);
+        const nonDraftPrevGroups = prevGroupsRef.current.filter(g => g.name.trim() !== '' && !g.pendingSync);
         // A real-DB-id group present locally but absent from the last-synced
         // snapshot is a group we just JOINED (via an invite) or that otherwise
         // appeared from the server — real ids only ever come FROM the server, so
@@ -238,10 +238,11 @@ export function useSupabaseSync({
           const urlParams = new URLSearchParams(window.location.search);
           const inviteGroupId = urlParams.get('joinGroupId') || selectedIdRef.current;
           
-          const parsedId = inviteGroupId ? parseInt(String(inviteGroupId), 10) : NaN;
-          const isValidDbId = !isNaN(parsedId) && parsedId <= 2147483647;
+          // Group ids are permanent UUID strings — any non-empty, non-STANDALONE
+          // value is a real group to load.
+          const isValidDbId = !!inviteGroupId && inviteGroupId !== 'STANDALONE';
 
-          if (isValidDbId && inviteGroupId !== 'STANDALONE') {
+          if (isValidDbId) {
             const { data: gp } = await supabase
               .from('groups')
               .select('*')
@@ -270,7 +271,7 @@ export function useSupabaseSync({
             setIsInitialLoadDone(true);
             return;
           }
-          const unsynced = groups.filter(g => typeof g.id === 'number' && g.id > 2147483647);
+          const unsynced = groups.filter(g => g.pendingSync);
           setGroups(unsynced);
           setExpenses([]);
           initialLoadDoneRef.current = true;
@@ -497,9 +498,10 @@ export function useSupabaseSync({
           if (localExpenses) localStorage.setItem('divido_backup_expenses', localExpenses);
         } catch (e) { /* quota exceeded — ignore */ }
 
-        const unsynced = groups.filter(g => typeof g.id === 'number' && g.id > 2147483647);
-        // Deduplicate: if a local temp group has the same name as a group fetched from the database,
-        // it means the sync succeeded. Remove the local temp copy so it doesn't double-render.
+        const unsynced = groups.filter(g => g.pendingSync);
+        // Deduplicate: if a local not-yet-synced group has the same name as a group
+        // fetched from the database, the sync succeeded. Remove the local copy so it
+        // doesn't double-render.
         const cleanUnsynced = unsynced.filter(u => {
           const alreadySynced = loadedGroups.some(l => 
             l.name.trim().toLowerCase() === u.name.trim().toLowerCase()
@@ -687,13 +689,12 @@ export function useSupabaseSync({
               continue;
             }
 
-            // A group with a real (small) DB id that isn't in our synced list was
-            // JOINED via an invite — or already exists in the cloud — not created
-            // on this device (locally-created groups carry large temporary ids).
-            // Re-inserting it triggers a duplicate-key 409, so adopt it as-is; it
-            // gets folded into prevGroupsRef at the end of this sync pass, which
-            // also unblocks the initial cloud load.
-            if (typeof g.id === 'number' && g.id <= 2147483647) {
+            // Only groups CREATED on this device (pendingSync) need inserting. A
+            // group that isn't flagged but also isn't in our synced snapshot was
+            // JOINED via an invite / appeared from the server — inserting it would
+            // trigger a duplicate-key 409, so skip; it gets folded into
+            // prevGroupsRef at the end of this pass, unblocking the cloud load.
+            if (!g.pendingSync) {
               continue;
             }
 
@@ -730,7 +731,7 @@ export function useSupabaseSync({
                   const adoptedId = existing.group_id;
                   const oldGroupId = g.id;
                   rememberGidRemap(oldGroupId, adoptedId);
-                  nextGroups[i] = { ...g, id: adoptedId };
+                  nextGroups[i] = { ...g, id: adoptedId, pendingSync: false };
                   nextExpenses = nextExpenses.map((exp) =>
                     String(exp.gId) === String(oldGroupId) ? { ...exp, gId: adoptedId } : exp
                   );
@@ -742,8 +743,9 @@ export function useSupabaseSync({
                 }
               }
 
-              // Insert new group
-              const insertId = typeof g.id === 'number' && g.id < 2147483647 ? g.id : undefined;
+              // Insert new group with its PERMANENT client-generated id (no
+              // temp->DB swap anymore — the id we send is the id forever).
+              const insertId = g.id;
               const { data, error } = await supabase
                 .from('groups')
                 .insert({
@@ -783,11 +785,14 @@ export function useSupabaseSync({
               const { error: memErr } = await supabase.from('group_members').insert(memberInserts);
               if (memErr) throw memErr;
 
-              // Update in local state variables
-              nextGroups[i] = { ...g, id: newGroupId };
-              
+              // Update in local state variables. The id is unchanged (we sent it),
+              // so clearing pendingSync is the meaningful change — it marks the
+              // group as now living in the cloud.
+              nextGroups[i] = { ...g, id: newGroupId, pendingSync: false };
+
               // Rewrite associated expenses to map from oldGroupId to newGroupId
-              nextExpenses = nextExpenses.map(exp => 
+              // (a no-op when ids match, kept for the id-adoption edge case).
+              nextExpenses = nextExpenses.map(exp =>
                 String(exp.gId) === String(oldGroupId) ? { ...exp, gId: newGroupId } : exp
               );
 
@@ -853,7 +858,7 @@ export function useSupabaseSync({
             uniqueNextGroups.push(g);
           }
 
-          const syncedGroups = uniqueNextGroups.filter(g => typeof g.id === 'number' && g.id <= 2147483647);
+          const syncedGroups = uniqueNextGroups.filter(g => g.name.trim() !== '' && !g.pendingSync);
           prevGroupsRef.current = syncedGroups;
           localStorage.setItem('divido_last_synced_groups', JSON.stringify(syncedGroups));
 
@@ -864,7 +869,7 @@ export function useSupabaseSync({
           setExpenses(nextExpenses);
           setSelectedId(nextSelectedId);
         } else {
-          const syncedGroups = groups.filter(g => typeof g.id === 'number' && g.id <= 2147483647);
+          const syncedGroups = groups.filter(g => g.name.trim() !== '' && !g.pendingSync);
           prevGroupsRef.current = syncedGroups;
           localStorage.setItem('divido_last_synced_groups', JSON.stringify(syncedGroups));
         }        // Trigger load data once queue is fully caught up
@@ -953,8 +958,11 @@ export function useSupabaseSync({
           const old = prev.find(p => p.id === updatedExpense.id);
           if (!old || old.gId === 'STANDALONE') {
             // Insert new expense (also covers a Non-Group expense moved into a group — it has no cloud row yet)
-            // If the group ID is still a temporary ID (too large), skip it until the group syncs and updates the ID
-            if (typeof updatedExpense.gId === 'number' && updatedExpense.gId > 2147483647) {
+            // If this expense's group hasn't been inserted into the cloud yet, skip
+            // for now — inserting the expense first would violate the group_id
+            // foreign key. It syncs on the next pass once the group row exists.
+            const grpForExpense = groups.find(gr => String(gr.id) === String(updatedExpense.gId));
+            if (grpForExpense && grpForExpense.pendingSync) {
               continue;
             }
 

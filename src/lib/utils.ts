@@ -4,6 +4,15 @@ export interface Currency {
   c: string; // Code (e.g. 'USD')
 }
 
+// A permanent, globally-unique group id generated on the client at creation.
+// Because the client mints it, the id NEVER changes (no temp->DB swap), which
+// removes the whole class of stranded/orphaned/vanished-expense bugs that the
+// old "temporary float id, swapped for a DB integer on sync" model caused.
+export const genGroupId = (): string =>
+  (typeof crypto !== 'undefined' && (crypto as any).randomUUID)
+    ? (crypto as any).randomUUID()
+    : `gid-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 10)}`;
+
 // Legacy "📝 \"X\" is now \"Y\"" name-change log entries were once written into
 // the expenses table. We stopped creating them, but old ones linger in local
 // caches (and re-upload as unsynced). Filter them out everywhere so they can't

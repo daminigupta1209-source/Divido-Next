@@ -56,7 +56,7 @@ import { NetPayableModal } from './components/NetPayableModal';
 import { CurrencySetupModal } from './components/CurrencySetupModal';
 import { GroupGallery } from './components/GroupGallery';
 import { checkIfDemoMode } from './lib/demoMode';
-import { ensureArray, ensureObject, isLegacyRenameLog, formatCompactAmount } from './lib/utils';
+import { ensureArray, ensureObject, isLegacyRenameLog, formatCompactAmount, genGroupId } from './lib/utils';
 import { useSupabaseSync, getGidRemap } from './hooks/useSupabaseSync';
 import { useAppHotkeys } from './hooks/useAppHotkeys';
 import { useUndoStack } from './hooks/useUndoStack';
@@ -346,10 +346,9 @@ function App() {
     try {
       if (checkIfDemoMode()) return false;
       const param = new URLSearchParams(window.location.search).get('joinGroupId');
-      if (param) {
-        const n = parseInt(param, 10);
-        if (!isNaN(n) && n <= 2147483647 && !param.includes('.')) return true;
-      }
+      // A group id is now a permanent UUID string; any non-empty, non-STANDALONE
+      // value is a real invite target (no more numeric/temp-float validation).
+      if (param && param !== 'STANDALONE') return true;
       const savedRaw = localStorage.getItem('divido_pending_join');
       if (savedRaw) {
         const saved = JSON.parse(savedRaw);
@@ -894,11 +893,9 @@ function App() {
       const seenIds = new Set<any>();
       const uniqueParsed = parsed.filter((g: any) => {
         if (!g.id) return false;
-        // If it's a valid DB ID, ensure it is unique
-        if (typeof g.id === 'number' && g.id <= 2147483647) {
-          if (seenIds.has(g.id)) return false;
-          seenIds.add(g.id);
-        }
+        // Group ids are permanent and unique — dedupe by id regardless of type.
+        if (seenIds.has(String(g.id))) return false;
+        seenIds.add(String(g.id));
         return true;
       });
       return uniqueParsed.map((g: any) => {
@@ -1484,7 +1481,7 @@ function App() {
       const key = String(g.id);
       if (g.id !== 'STANDALONE' && seen.has(key)) {
         changed = true;
-        return { ...g, id: Date.now() + Math.random() };
+        return { ...g, id: genGroupId(), pendingSync: true };
       }
       seen.add(key);
       return g;
@@ -1706,8 +1703,9 @@ function App() {
 
         if (!joinGroupId) return;
 
-        const parsedGroupId = parseInt(String(joinGroupId), 10);
-        const isValidDbId = !isNaN(parsedGroupId) && parsedGroupId <= 2147483647 && !String(joinGroupId).includes('.');
+        // Group ids are permanent UUID strings now — any non-empty, non-STANDALONE
+        // value is a valid join target.
+        const isValidDbId = !!joinGroupId && String(joinGroupId) !== 'STANDALONE';
         if (!isValidDbId) return;
 
         // Persist the invite the moment the link is opened, BEFORE any sign-in.
@@ -2270,7 +2268,7 @@ function App() {
   };
 
   const handleCreateGroup = (groupData: { name: string; currency: string; members: string[]; emoji: string; createdDate?: string }) => {
-    const id = Date.now() + Math.random();
+    const id = genGroupId();
     // Everyone added at creation except me is a not-yet-claimed invitee, so they
     // must start as pending. The member list buckets Joined vs Pending purely on
     // this array — omitting it made fresh invitees (e.g. Ram) show as Joined
@@ -2286,6 +2284,7 @@ function App() {
       simplifyDebts: false,
       createdDate: groupData.createdDate || new Date().toISOString().split('T')[0],
       pendingMembers,
+      pendingSync: true,
     };
     setGroups([...groups, newGroup]);
     setSelectedId(id);
@@ -3347,8 +3346,8 @@ function App() {
                    alert('A group with that name already exists. Please pick a different name.');
                    return;
                  }
-                 const id = Date.now() + Math.random();
-                 setGroups([...groups, { id, name, members: [me, ...names], currency: myDefaultCurrency }]);
+                 const id = genGroupId();
+                 setGroups([...groups, { id, name, members: [me, ...names], currency: myDefaultCurrency, pendingMembers: names, pendingSync: true }]);
                  setSelectedId(id);
                }
              }

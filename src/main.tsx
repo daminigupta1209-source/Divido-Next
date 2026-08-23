@@ -8,6 +8,27 @@ import { ErrorBoundary } from './components/ErrorBoundary'
 // (helps tell a fresh deploy apart from a stale service-worker cache).
 console.log('[Divido] build 2026-08-20-cache-v3');
 
+// One-time local reset for the permanent-group-id migration. The old model
+// stored groups/expenses with temporary float ids that no longer fit the new
+// UUID scheme; clear cached local copies once so every device starts clean on
+// the fresh-reset cloud. Runs before React reads localStorage, so the app boots
+// from an empty, consistent state and re-hydrates from the cloud.
+try {
+  const SCHEMA_VERSION = 'v2-uuid-gid';
+  if (localStorage.getItem('divido_schema_version') !== SCHEMA_VERSION) {
+    [
+      'divido_groups',
+      'divido_expenses',
+      'divido_last_synced_groups',
+      'divido_last_synced_expenses',
+      'divido_backup_groups',
+      'divido_backup_expenses',
+      'divido_gid_map',
+    ].forEach((k) => localStorage.removeItem(k));
+    localStorage.setItem('divido_schema_version', SCHEMA_VERSION);
+  }
+} catch { /* localStorage unavailable — nothing to reset */ }
+
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
     <ErrorBoundary>

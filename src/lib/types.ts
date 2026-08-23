@@ -1,5 +1,11 @@
 export interface Group {
   id: string | number;
+  // True only for a group created on THIS device that has not yet been inserted
+  // into the cloud. Set at creation, cleared once the group's row exists in
+  // Supabase. Replaces the old "temp float id vs real DB int id" heuristic as the
+  // signal for "needs a cloud insert" — the id itself is now a permanent UUID
+  // that never changes. Client-only; never persisted to the database.
+  pendingSync?: boolean;
   name: string;
   members: string[];
   currency: string;

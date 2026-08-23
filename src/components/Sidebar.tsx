@@ -1,5 +1,5 @@
 import React from 'react';
-import { GROUP_COLORS, getEmoji } from '../lib/utils';
+import { GROUP_COLORS, getEmoji, genGroupId } from '../lib/utils';
 
 import { Group, Expense, ConfirmState } from '../lib/types';
 import { supabase } from '../lib/supabaseClient';
@@ -453,10 +453,10 @@ export const Sidebar: React.FC<SidebarProps> = ({
                 <button
                   onClick={() => {
                     if (onRequireSignIn && !onRequireSignIn()) return;
-                    const id = Date.now() + Math.random();
+                    const id = genGroupId();
                     setGroups([
                       ...groups,
-                      { id, name: '', members: [me], currency: defaultCurrency },
+                      { id, name: '', members: [me], currency: defaultCurrency, pendingSync: true },
                     ]);
                     setSelectedId(id);
                     setView('detail');
