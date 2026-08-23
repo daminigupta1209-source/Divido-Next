@@ -1594,6 +1594,54 @@ function App() {
     userEmail,
   });
 
+  // One-time auto-repair for expenses left behind by the old hard-delete bug:
+  // a member who was in an expense could be removed from the group entirely,
+  // leaving their name inside the expense (paid/splitters/shares) with no
+  // matching member — a "phantom" that shows a leftover share nobody can see or
+  // fix (e.g. "Hot Bath" showing ₹5 for a member who vanished). Here we scan
+  // each group's expenses and re-add any referenced name that isn't a current
+  // member (case-insensitively), with its EXACT stored spelling, so the expense
+  // reconnects and the balance is whole again. Runs once per load; no-ops when
+  // there's nothing to repair, and never touches names already present.
+  const phantomRepairDoneRef = useRef(false);
+  useEffect(() => {
+    if (!isInitialLoadDone || phantomRepairDoneRef.current) return;
+    phantomRepairDoneRef.current = true;
+    const meClean = me.replace(/\s*\(me\)$/i, '').replace(/\s*\(Left\)$/i, '').trim().toLowerCase();
+    const norm = (n: string) => n.replace(/\s*\(Left\)$/i, '').trim().toLowerCase();
+    setGroups((prevGroups) => {
+      let changed = false;
+      const next = prevGroups.map((g) => {
+        if (!g || g.id === 'STANDALONE') return g;
+        const known = new Set([meClean, ...(g.members || []).map(norm)]);
+        const missing: string[] = [];
+        const seenMissing = new Set<string>();
+        expenses.forEach((e) => {
+          if (String(e.gId) !== String(g.id)) return;
+          const consider = (raw?: string) => {
+            if (!raw || raw === 'SYSTEM' || raw === 'STANDALONE') return;
+            const key = norm(raw);
+            if (known.has(key) || seenMissing.has(key)) return;
+            seenMissing.add(key);
+            missing.push(raw);
+          };
+          consider(e.paid);
+          if (Array.isArray(e.splitters)) e.splitters.forEach(consider);
+          if (e.shares) Object.keys(e.shares).forEach(consider);
+        });
+        if (missing.length === 0) return g;
+        changed = true;
+        return {
+          ...g,
+          members: [...(g.members || []), ...missing],
+          pendingMembers: Array.from(new Set([...(g.pendingMembers || []), ...missing])),
+        };
+      });
+      return changed ? next : prevGroups;
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isInitialLoadDone]);
+
   // Safety net: never keep the branded splash up forever. If the first cloud
   // load stalls, hide it after 5s and show whatever we have.
   const [bootLoaderExpired, setBootLoaderExpired] = useState(false);
