@@ -135,6 +135,7 @@ export const GroupSettingsModal: React.FC<GroupSettingsModalProps> = ({
               style={{
                 display: 'flex',
                 alignItems: 'center',
+                justifyContent: 'center',
                 padding: '12px 16px',
                 background: '#F8FAFC',
                 borderRadius: '14px',
@@ -143,7 +144,6 @@ export const GroupSettingsModal: React.FC<GroupSettingsModalProps> = ({
                 fontSize: '15px',
                 fontWeight: 800,
                 color: '#1E293B',
-                textAlign: 'left',
                 transition: 'background-color 0.15s',
               }}
               onMouseEnter={(e) => (e.currentTarget.style.background = '#F1F5F9')}
@@ -158,6 +158,7 @@ export const GroupSettingsModal: React.FC<GroupSettingsModalProps> = ({
             style={{
               display: 'flex',
               alignItems: 'center',
+              justifyContent: 'center',
               padding: '12px 16px',
               background: '#F8FAFC',
               borderRadius: '14px',
@@ -166,7 +167,6 @@ export const GroupSettingsModal: React.FC<GroupSettingsModalProps> = ({
               fontSize: '15px',
               fontWeight: 800,
               color: '#1E293B',
-              textAlign: 'left',
               transition: 'background-color 0.15s',
             }}
             onMouseEnter={(e) => (e.currentTarget.style.background = '#F1F5F9')}
@@ -181,6 +181,7 @@ export const GroupSettingsModal: React.FC<GroupSettingsModalProps> = ({
               style={{
                 display: 'flex',
                 alignItems: 'center',
+                justifyContent: 'center',
                 padding: '12px 16px',
                 background: '#FEF2F2',
                 borderRadius: '14px',
@@ -189,7 +190,6 @@ export const GroupSettingsModal: React.FC<GroupSettingsModalProps> = ({
                 fontSize: '15px',
                 fontWeight: 800,
                 color: '#DC2626',
-                textAlign: 'left',
                 transition: 'background-color 0.15s',
                 marginTop: '12px',
               }}
