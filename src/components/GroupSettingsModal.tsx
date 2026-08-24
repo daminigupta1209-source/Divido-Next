@@ -98,8 +98,8 @@ export const GroupSettingsModal: React.FC<GroupSettingsModalProps> = ({
           
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 16px', background: '#F8FAFC', borderRadius: '12px' }}>
             <div style={{ display: 'flex', flexDirection: 'column' }}>
-              <span style={{ fontSize: '14px', fontWeight: 800, color: '#1E293B' }}>Simplify Debts</span>
-              <span style={{ fontSize: '11px', fontWeight: 600, color: '#94A3B8' }}>Minimizes total transactions</span>
+              <span style={{ fontSize: '13px', fontWeight: 800, color: '#1E293B' }}>Simplify Debts</span>
+              <span style={{ fontSize: '10px', fontWeight: 600, color: '#94A3B8' }}>Minimizes total transactions</span>
             </div>
             <div
               onClick={onSimplifyToggle}
@@ -141,7 +141,7 @@ export const GroupSettingsModal: React.FC<GroupSettingsModalProps> = ({
               borderRadius: '12px',
               border: 'none',
               cursor: 'pointer',
-              fontSize: '14px',
+              fontSize: '13px',
               fontWeight: 800,
               color: '#1E293B',
               transition: 'background-color 0.15s',
@@ -164,7 +164,7 @@ export const GroupSettingsModal: React.FC<GroupSettingsModalProps> = ({
                 borderRadius: '12px',
                 border: 'none',
                 cursor: 'pointer',
-                fontSize: '14px',
+                fontSize: '13px',
                 fontWeight: 800,
                 color: '#1E293B',
                 transition: 'background-color 0.15s',
@@ -187,7 +187,7 @@ export const GroupSettingsModal: React.FC<GroupSettingsModalProps> = ({
               borderRadius: '12px',
               border: 'none',
               cursor: 'pointer',
-              fontSize: '14px',
+              fontSize: '13px',
               fontWeight: 800,
               color: '#1E293B',
               transition: 'background-color 0.15s',
@@ -210,7 +210,7 @@ export const GroupSettingsModal: React.FC<GroupSettingsModalProps> = ({
                 borderRadius: '12px',
                 border: 'none',
                 cursor: 'pointer',
-                fontSize: '14px',
+                fontSize: '13px',
                 fontWeight: 800,
                 color: '#DC2626',
                 transition: 'background-color 0.15s',
