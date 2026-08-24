@@ -86,34 +86,6 @@ const MiniMetric: React.FC<MiniMetricProps> = ({ label, value, icon, color, sub,
         >
           {label}
         </span>
-        <button
-          type="button"
-          onClick={(e) => {
-            e.stopPropagation();
-            setShowTooltip(!showTooltip);
-          }}
-          onMouseDown={(e) => e.stopPropagation()}
-          style={{
-            display: 'inline-flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            width: '13px',
-            height: '13px',
-            borderRadius: '50%',
-            background: '#FFFFFF',
-            border: '1px solid #78350F',
-            color: '#78350F',
-            fontSize: '9px',
-            fontWeight: 'bold',
-            cursor: 'pointer',
-            padding: 0,
-            lineHeight: 1,
-            userSelect: 'none',
-            transition: '0.2s all',
-          }}
-        >
-          i
-        </button>
       </div>
       <h4 className="nunito" style={{ fontSize: '14px', fontWeight: 900, color: 'var(--t)', margin: 0, wordBreak: 'break-word', overflow: 'hidden', textOverflow: 'ellipsis', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', maxWidth: '100%' }}>
         {value}
