@@ -649,19 +649,14 @@ export const GroupDetail: React.FC<GroupDetailProps> = ({
         {([
           { id: 'expenses', label: 'Expenses' },
           { id: 'balances', label: 'Settle' },
-          { id: 'photos', label: 'Photos' },
-          { id: 'analytics', label: 'Analytics' }
+          { id: 'photos', label: 'Photos' }
         ] as const).map((tab) => {
           const isActive = tab.id === activeTab;
           return (
             <button
               key={tab.id}
               onClick={() => {
-                if (tab.id === 'analytics') {
-                  if (onOpenAnalytics && selectedId) onOpenAnalytics(selectedId);
-                } else {
-                  if (setActiveTab) setActiveTab(tab.id as 'expenses' | 'balances' | 'photos');
-                }
+                if (setActiveTab) setActiveTab(tab.id as 'expenses' | 'balances' | 'photos');
               }}
               style={{
                 flex: 1,
