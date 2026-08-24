@@ -65,7 +65,7 @@ import { MobileHeader } from './components/MobileHeader';
 import { InstallPrompt } from './components/InstallPrompt';
 import { useExportCSV } from './hooks/useExportCSV';
 import { AppNotification, fetchNotifications, markAllNotificationsRead, subscribeNotifications, clearAllNotifications } from './lib/notifications';
-import { calculateNextOccurrenceDate, simplifyMultiCurrencyDebts } from './lib/calculations';
+import { calculateNextOccurrenceDate, simplifyMultiCurrencyDebts, computeRawPairwiseTransactions } from './lib/calculations';
 
 const pageDescriptions: Record<string, string> = {
   summary: "Track net balances, scan bills, and quickly settle with friends.",
@@ -1846,6 +1846,46 @@ function App() {
     const t = setTimeout(() => setIsResolvingInvite(false), 5000);
     return () => clearTimeout(t);
   }, [isResolvingInvite]);
+  // Write off a past member's outstanding balance: record settlement-style
+  // entries that cancel every pairwise amount they still have to pay/collect, so
+  // their balance closes to zero (recorded as "written off", not silently
+  // deleted). Reuses the app's pairwise math so the group's books stay balanced.
+  const performWriteOff = (groupId: string | number, memberRow: string) => {
+    const g = groups.find((x) => String(x.id) === String(groupId));
+    if (!g) return;
+    const cleanName = memberRow.replace(/\s*\(Left\)$/i, '');
+    const groupExps = expenses.filter((e) => String(e.gId) === String(groupId));
+    const members = Array.from(new Set((g.members || []).map((x) => x.replace(/\s*\(Left\)$/i, ''))));
+    const txs = computeRawPairwiseTransactions(members, groupExps, g.currency || '₹');
+    const today = new Date().toISOString().split('T')[0];
+    const writeOffs: any[] = [];
+    txs.forEach((t: any) => {
+      if (t.from !== cleanName && t.to !== cleanName) return;
+      Object.entries(t.balances as Record<string, number>).forEach(([curr, val]) => {
+        const absVal = Math.abs(val);
+        if (absVal <= 0.01) return;
+        const payer = val > 0 ? t.from : t.to;
+        const receiver = val > 0 ? t.to : t.from;
+        writeOffs.push({
+          id: Date.now() + Math.random() + writeOffs.length,
+          gId: groupId,
+          title: `🧾 Written off: ${payer} → ${receiver}`,
+          amt: Math.round(absVal * 100) / 100,
+          paid: payer,
+          splitters: [receiver],
+          date: today,
+          notes: 'Written off',
+          currency: curr,
+          category: '🧾',
+          mode: 'Equally' as const,
+          shares: {},
+        });
+      });
+    });
+    if (writeOffs.length === 0) return;
+    setExpenses((prev) => [...writeOffs, ...prev]);
+  };
+
   const handleDeleteGroup = (id: string | number) => {
     const isStandalone = String(id) === 'STANDALONE';
     const g = isStandalone
@@ -3035,6 +3075,7 @@ function App() {
               setActiveRejoinLink(null);
               setShowAddFriendModal(true);
             }}
+            onWriteOff={(memberName: string) => { if (selectedId && selectedId !== 'STANDALONE') performWriteOff(selectedId, memberName); }}
             onRemoveMember={async (memberName) => {
               if (!selectedId || selectedId === 'STANDALONE') return;
               const isPastMember = memberName.endsWith(' (Left)');

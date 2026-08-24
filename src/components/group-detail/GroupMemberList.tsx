@@ -16,6 +16,7 @@ interface GroupMemberListProps {
   onRenameMember?: (oldName: string, newName: string) => void;
   onRemindMember?: (memberName: string) => void;
   onRemoveMember?: (memberName: string) => void;
+  onWriteOff?: (memberName: string) => void;
   onReinviteMember?: (memberName: string, inviteUrl: string) => void;
   onRemindAllPending?: (pendingNames: string[]) => void;
   onAddMembers?: (names: string[]) => void;
@@ -35,6 +36,7 @@ export const GroupMemberList: React.FC<GroupMemberListProps> = ({
   onRenameMember,
   onRemindMember,
   onRemoveMember,
+  onWriteOff,
   onReinviteMember,
   onRemindAllPending,
   onAddMembers,
@@ -716,6 +718,36 @@ export const GroupMemberList: React.FC<GroupMemberListProps> = ({
                     
                     {isAdmin && (
                       <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        {onWriteOff && Math.abs(getMemberBalance(cleanName)) >= 0.5 && (() => {
+                          const wb = getMemberBalance(cleanName);
+                          const sym = selectedGroup.currency || '₹';
+                          return (
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setActionCard({
+                                  title: `Write off ${sym}${Math.abs(wb).toFixed(0)}?`,
+                                  desc: 'Clears it for good.',
+                                  primaryLabel: 'Write off',
+                                  primaryColor: '#F59E0B',
+                                  onPrimary: () => { setActionCard(null); onWriteOff && onWriteOff(m); },
+                                });
+                              }}
+                              style={{
+                                background: 'rgba(245, 158, 11, 0.12)',
+                                border: 'none',
+                                borderRadius: '8px',
+                                padding: '5px 10px',
+                                color: '#B45309',
+                                fontSize: '11px',
+                                fontWeight: 800,
+                                cursor: 'pointer',
+                              }}
+                            >
+                              Write off
+                            </button>
+                          );
+                        })()}
                         <button
                           onClick={async (e) => {
                             e.stopPropagation();
