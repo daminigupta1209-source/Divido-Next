@@ -689,23 +689,43 @@ function App() {
   // (paid + splitters), local identity, and let the other members know.
   const applyRename = async (groupId: string | number, oldName: string, newName: string) => {
     if (!oldName || !newName || oldName === newName) return;
+    // Rename a member's key inside a shares/origShares map (used by Unequally /
+    // Percentage splits). Previously these were NOT rewritten on rename, so the
+    // renamed person's share got orphaned and their balance broke.
+    const renameShareKey = (obj: Record<string, number> | undefined | null, oldN: string, newN: string) => {
+      if (!obj || !(oldN in obj)) return obj;
+      const next: Record<string, number> = {};
+      for (const k of Object.keys(obj)) next[k === oldN ? newN : k] = obj[k];
+      return next;
+    };
     try {
       // 1. Member row
       await supabase.from('group_members').update({ name: newName, pending_name: null }).eq('group_id', groupId).ilike('name', oldName);
 
-      // 2. Historical expenses in this group (DB)
+      // 2. Historical expenses in this group (DB) — paid, splitters AND shares
       const { data: exps } = await supabase.from('expenses').select('*').eq('group_id', groupId);
       for (const e of exps || []) {
         const paidNew = e.paid === oldName ? newName : e.paid;
         const splittersNew = Array.isArray(e.splitters) ? e.splitters.map((s: string) => (s === oldName ? newName : s)) : e.splitters;
-        if (paidNew !== e.paid || JSON.stringify(splittersNew) !== JSON.stringify(e.splitters)) {
-          await supabase.from('expenses').update({ paid: paidNew, splitters: splittersNew }).eq('id', e.id);
+        const sharesNew = renameShareKey(e.shares, oldName, newName);
+        if (
+          paidNew !== e.paid ||
+          JSON.stringify(splittersNew) !== JSON.stringify(e.splitters) ||
+          JSON.stringify(sharesNew) !== JSON.stringify(e.shares)
+        ) {
+          await supabase.from('expenses').update({ paid: paidNew, splitters: splittersNew, shares: sharesNew }).eq('id', e.id);
         }
       }
 
-      // 3. Local state
+      // 3. Local state (paid, splitters, shares, origShares)
       setExpenses((prev) => prev.map((e) => (String(e.gId) === String(groupId)
-        ? { ...e, paid: e.paid === oldName ? newName : e.paid, splitters: (e.splitters || []).map((s) => (s === oldName ? newName : s)) }
+        ? {
+            ...e,
+            paid: e.paid === oldName ? newName : e.paid,
+            splitters: (e.splitters || []).map((s) => (s === oldName ? newName : s)),
+            shares: renameShareKey(e.shares, oldName, newName) as any,
+            origShares: renameShareKey(e.origShares, oldName, newName) as any,
+          }
         : e)));
       setGroups((prev) => prev.map((g) => (String(g.id) === String(groupId)
         ? { ...g, members: (g.members || []).map((m) => (m === oldName ? newName : m)) }
