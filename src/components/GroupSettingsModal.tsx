@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { Group } from '../lib/types';
 import { escManager } from '../lib/escManager';
 
@@ -47,7 +48,7 @@ export const GroupSettingsModal: React.FC<GroupSettingsModalProps> = ({
   });
   const activeMembersCount = (group?.members || []).filter(m => !m.toLowerCase().endsWith(' (left)')).length;
 
-  return (
+  return createPortal(
     <div
       className="modal-overlay"
       style={{
@@ -57,6 +58,11 @@ export const GroupSettingsModal: React.FC<GroupSettingsModalProps> = ({
         display: 'flex',
         alignItems: 'flex-end',
         justifyContent: 'center',
+        position: 'fixed',
+        top: 0,
+        left: 0,
+        right: 0,
+        bottom: 0,
       }}
       onClick={handleClose}
     >
@@ -227,6 +233,7 @@ export const GroupSettingsModal: React.FC<GroupSettingsModalProps> = ({
 
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 };
