@@ -211,16 +211,31 @@ export function useAnalytics({
   const maxAmt = useMemo(() => Math.max(...lastExpenses.map(e => e.amt), 1), [lastExpenses]);
 
   const dynamicInsight = useMemo(() => {
-    if (categoryList.length > 0 && totalSpentVal > 0) {
-      const topCat = categoryList[0];
+    if (totalSpentVal === 0) return "Track your expenses to see insights here.";
+
+    const meaningfulCategories = categoryList.filter(c => c.name !== 'General / Other');
+    
+    if (meaningfulCategories.length > 0) {
+      const topCat = meaningfulCategories[0];
       const pct = ((topCat.amount / totalSpentVal) * 100).toFixed(0);
-      return `${topCat.name} makes up ${pct}% of your spending.`;
+      if (Number(pct) > 10) {
+         return `${topCat.name} makes up ${pct}% of your spending.`;
+      }
     }
-    if (totalSpentVal > 0) {
-      return `Your typical cost per bill is ₹${avgExpense.toFixed(0)}.`;
+
+    if (filteredExpenses.length > 0) {
+       const largestExpense = [...filteredExpenses].sort((a, b) => (Number(b.amt) || 0) - (Number(a.amt) || 0))[0];
+       if (largestExpense && largestExpense.amt > (avgExpense * 1.5)) {
+          return `Your largest expense is ${largestExpense.title} at ₹${largestExpense.amt}.`;
+       }
     }
-    return "Track your expenses to see insights here.";
-  }, [categoryList, totalSpentVal, avgExpense]);
+
+    if (mostActiveGroup && mostActiveGroup.name !== 'Non-Group Expenses' && mostActiveGroup.name !== 'Untitled Group') {
+       return `You are most active in ${mostActiveGroup.name}.`;
+    }
+
+    return `Your typical cost per bill is ₹${avgExpense.toFixed(0)}.`;
+  }, [categoryList, totalSpentVal, avgExpense, filteredExpenses, mostActiveGroup]);
 
   return {
     selectedGroupId,
