@@ -50,43 +50,41 @@ export const GroupSettingsModal: React.FC<GroupSettingsModalProps> = ({
 
   return createPortal(
     <div
-      className="modal-overlay"
       style={{
         zIndex: 5000,
-        backgroundColor: isVisible ? 'rgba(0, 0, 0, 0.4)' : 'transparent',
-        transition: 'background-color 0.3s ease',
-        display: 'flex',
-        alignItems: 'flex-end',
-        justifyContent: 'center',
+        backgroundColor: '#FFFFFF',
         position: 'fixed',
         top: 0,
         left: 0,
         right: 0,
         bottom: 0,
+        transform: isVisible ? 'translateX(0)' : 'translateX(100%)',
+        transition: 'transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1)',
+        display: 'flex',
+        flexDirection: 'column',
+        overflowY: 'auto',
       }}
-      onClick={handleClose}
     >
       <div
-        className="card"
         style={{
           width: '100%',
           maxWidth: '480px',
-          background: '#FFFFFF',
-          borderTopLeftRadius: '24px',
-          borderTopRightRadius: '24px',
+          margin: '0 auto',
           padding: '24px',
           paddingBottom: 'max(24px, env(safe-area-inset-bottom))',
-          transform: isVisible ? 'translateY(0)' : 'translateY(100%)',
-          transition: 'transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1)',
-          boxShadow: '0 -10px 40px rgba(0,0,0,0.1)',
           display: 'flex',
           flexDirection: 'column',
           gap: '24px',
         }}
-        onClick={(e) => e.stopPropagation()}
       >
-        <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '-8px' }}>
-          <div style={{ width: '40px', height: '5px', background: '#E2E8F0', borderRadius: '10px' }} />
+        {/* Header with Back Button */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '16px', marginBottom: '8px' }}>
+          <button onClick={handleClose} style={{ background: 'none', border: 'none', padding: 0, cursor: 'pointer', display: 'flex', alignItems: 'center', color: '#0F172A' }}>
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+              <polyline points="15 18 9 12 15 6" />
+            </svg>
+          </button>
+          <h1 className="nunito" style={{ fontSize: '20px', fontWeight: 900, color: '#0F172A', margin: 0 }}>Group Settings</h1>
         </div>
 
         {/* Profile Section */}
