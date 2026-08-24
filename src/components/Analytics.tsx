@@ -160,6 +160,74 @@ const MiniMetric: React.FC<MiniMetricProps> = ({ label, value, icon, color, sub,
   );
 };
 
+const InsightCarousel = ({ insights }: { insights: string[] }) => {
+  const [currentIndex, setCurrentIndex] = useState(0);
+
+  useEffect(() => {
+    if (insights.length <= 1) return;
+    const timer = setInterval(() => {
+      setCurrentIndex((prev) => (prev + 1) % insights.length);
+    }, 4000);
+    return () => clearInterval(timer);
+  }, [insights.length]);
+
+  const handleNext = () => setCurrentIndex((prev) => (prev + 1) % insights.length);
+  const handlePrev = () => setCurrentIndex((prev) => (prev - 1 + insights.length) % insights.length);
+
+  return (
+    <div 
+      style={{
+        background: 'rgba(255, 255, 255, 0.8)',
+        backdropFilter: 'blur(10px)',
+        borderRadius: '20px',
+        padding: '24px 20px',
+        marginBottom: '20px',
+        boxShadow: '0 4px 24px rgba(0,0,0,0.04)',
+        textAlign: 'center',
+        animation: 'fadeSlideIn 0.3s ease-out',
+        position: 'relative'
+      }}
+    >
+      <span style={{ fontSize: '11px', fontWeight: 900, color: 'var(--g)', textTransform: 'uppercase', letterSpacing: '1px', display: 'block', marginBottom: '12px' }}>
+        Insights
+      </span>
+      
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '12px' }}>
+        {insights.length > 1 ? (
+          <button onClick={handlePrev} style={{ background: 'none', border: 'none', color: 'var(--g)', cursor: 'pointer', padding: '4px', fontSize: '14px', flexShrink: 0 }}>❮</button>
+        ) : <div style={{ width: '24px' }} />}
+        
+        <div style={{ flex: 1, minHeight: '54px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+           <h2 className="nunito" style={{ fontSize: '17px', fontWeight: 900, color: 'var(--t)', margin: 0, lineHeight: 1.4, animation: 'fadeIn 0.4s ease-out' }} key={currentIndex}>
+             {insights[currentIndex]}
+           </h2>
+        </div>
+
+        {insights.length > 1 ? (
+          <button onClick={handleNext} style={{ background: 'none', border: 'none', color: 'var(--g)', cursor: 'pointer', padding: '4px', fontSize: '14px', flexShrink: 0 }}>❯</button>
+        ) : <div style={{ width: '24px' }} />}
+      </div>
+
+      {insights.length > 1 && (
+        <div style={{ display: 'flex', justifyContent: 'center', gap: '8px', marginTop: '16px' }}>
+          {insights.map((_, idx) => (
+            <div 
+              key={idx} 
+              onClick={() => setCurrentIndex(idx)}
+              style={{ 
+                width: '6px', height: '6px', borderRadius: '50%', 
+                background: currentIndex === idx ? '#6366F1' : '#E2E8F0',
+                cursor: 'pointer',
+                transition: '0.3s all'
+              }} 
+            />
+          ))}
+        </div>
+      )}
+    </div>
+  );
+};
+
 export const Analytics: React.FC<AnalyticsProps> = ({ expenses, groups, me, userMetadata, setUserMetadata, initialGroupId, onBack }) => {
   const {
     selectedGroupId,
@@ -526,52 +594,7 @@ export const Analytics: React.FC<AnalyticsProps> = ({ expenses, groups, me, user
         </div>
       </div>
 
-      {/* Dynamic Insight Card */}
-      <div 
-        style={{
-          background: 'rgba(255, 255, 255, 0.8)',
-          backdropFilter: 'blur(10px)',
-          borderRadius: '20px',
-          padding: '24px 0',
-          marginBottom: '20px',
-          boxShadow: '0 4px 24px rgba(0,0,0,0.04)',
-          textAlign: 'center',
-          animation: 'fadeSlideIn 0.3s ease-out',
-          position: 'relative'
-        }}
-      >
-        <span style={{ fontSize: '11px', fontWeight: 900, color: 'var(--g)', textTransform: 'uppercase', letterSpacing: '1px', display: 'block', marginBottom: '8px' }}>
-          Insights {dynamicInsights.length > 1 && '(Swipe 👉)'}
-        </span>
-        <div 
-          className="hide-scrollbar"
-          style={{
-            display: 'flex',
-            overflowX: 'auto',
-            scrollSnapType: 'x mandatory',
-            scrollBehavior: 'smooth',
-            WebkitOverflowScrolling: 'touch',
-            scrollbarWidth: 'none',
-            msOverflowStyle: 'none',
-          }}
-        >
-          {dynamicInsights.map((insight, idx) => (
-            <div 
-              key={idx}
-              style={{
-                flex: '0 0 100%',
-                scrollSnapAlign: 'center',
-                padding: '0 20px',
-                boxSizing: 'border-box'
-              }}
-            >
-              <h2 className="nunito" style={{ fontSize: '18px', fontWeight: 900, color: 'var(--t)', margin: 0, lineHeight: 1.4 }}>
-                {insight}
-              </h2>
-            </div>
-          ))}
-        </div>
-      </div>
+      <InsightCarousel insights={dynamicInsights} />
 
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '14px', marginBottom: '32px' }}>
         <MiniMetric
