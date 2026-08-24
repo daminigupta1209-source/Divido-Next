@@ -857,7 +857,12 @@ export const MobileHeader: React.FC<MobileHeaderProps> = ({
               <span
                 onClick={() => {
                   if (view === 'gallery' || view === 'analytics') {
-                    setView('detail');
+                    if (selectedId && selectedId !== 'STANDALONE') {
+                      setView('detail');
+                    } else {
+                      if (setSelectedId) setSelectedId(null);
+                      setView('summary');
+                    }
                   } else if (view === 'detail' && groupDetailTab === 'balances') {
                     if (setGroupDetailTab) setGroupDetailTab('expenses');
                   } else {
@@ -950,7 +955,7 @@ export const MobileHeader: React.FC<MobileHeaderProps> = ({
                     </span>
                   )}
                 </h1>
-                {(view === 'gallery' || view === 'analytics') && selectedGroup && (
+                {view === 'gallery' && selectedGroup && (
                   <span
                     className="nunito"
                     style={{
