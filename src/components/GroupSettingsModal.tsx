@@ -80,34 +80,33 @@ export const GroupSettingsModal: React.FC<GroupSettingsModalProps> = ({
           background: '#FFFFFF',
           borderTopLeftRadius: '24px',
           borderTopRightRadius: '24px',
-          padding: '24px',
-          paddingBottom: 'max(24px, env(safe-area-inset-bottom))',
+          padding: '20px',
+          paddingBottom: 'max(20px, env(safe-area-inset-bottom))',
           transform: isVisible ? 'translateY(0)' : 'translateY(100%)',
           transition: 'transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1)',
           boxShadow: '0 -10px 40px rgba(0,0,0,0.1)',
           display: 'flex',
           flexDirection: 'column',
-          gap: '24px',
+          gap: '16px',
         }}
         onClick={(e) => e.stopPropagation()}
       >
         <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '-8px' }}>
           <div style={{ width: '40px', height: '5px', background: '#E2E8F0', borderRadius: '10px' }} />
         </div>
-        {/* Settings List */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
           
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 16px', background: '#F8FAFC', borderRadius: '16px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 16px', background: '#F8FAFC', borderRadius: '12px' }}>
             <div style={{ display: 'flex', flexDirection: 'column' }}>
-              <span style={{ fontSize: '15px', fontWeight: 800, color: '#1E293B' }}>Simplify Debts</span>
-              <span style={{ fontSize: '12px', fontWeight: 600, color: '#94A3B8' }}>Minimizes total transactions</span>
+              <span style={{ fontSize: '14px', fontWeight: 800, color: '#1E293B' }}>Simplify Debts</span>
+              <span style={{ fontSize: '11px', fontWeight: 600, color: '#94A3B8' }}>Minimizes total transactions</span>
             </div>
             <div
               onClick={onSimplifyToggle}
               style={{
-                width: '44px',
-                height: '24px',
-                borderRadius: '24px',
+                width: '36px',
+                height: '20px',
+                borderRadius: '20px',
                 background: group.simplifyDebts ? '#10B981' : '#CBD5E1',
                 position: 'relative',
                 cursor: 'pointer',
@@ -117,13 +116,13 @@ export const GroupSettingsModal: React.FC<GroupSettingsModalProps> = ({
             >
               <div
                 style={{
-                  width: '20px',
-                  height: '20px',
+                  width: '16px',
+                  height: '16px',
                   borderRadius: '50%',
                   background: '#FFFFFF',
                   position: 'absolute',
                   top: '2px',
-                  left: group.simplifyDebts ? '22px' : '2px',
+                  left: group.simplifyDebts ? '18px' : '2px',
                   transition: 'left 0.2s',
                   boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
                 }}
@@ -137,12 +136,12 @@ export const GroupSettingsModal: React.FC<GroupSettingsModalProps> = ({
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              padding: '12px 16px',
+              padding: '10px 16px',
               background: '#F8FAFC',
-              borderRadius: '14px',
+              borderRadius: '12px',
               border: 'none',
               cursor: 'pointer',
-              fontSize: '15px',
+              fontSize: '14px',
               fontWeight: 800,
               color: '#1E293B',
               transition: 'background-color 0.15s',
@@ -160,12 +159,12 @@ export const GroupSettingsModal: React.FC<GroupSettingsModalProps> = ({
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                padding: '12px 16px',
+                padding: '10px 16px',
                 background: '#F8FAFC',
-                borderRadius: '14px',
+                borderRadius: '12px',
                 border: 'none',
                 cursor: 'pointer',
-                fontSize: '15px',
+                fontSize: '14px',
                 fontWeight: 800,
                 color: '#1E293B',
                 transition: 'background-color 0.15s',
@@ -183,12 +182,12 @@ export const GroupSettingsModal: React.FC<GroupSettingsModalProps> = ({
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              padding: '12px 16px',
+              padding: '10px 16px',
               background: '#F8FAFC',
-              borderRadius: '14px',
+              borderRadius: '12px',
               border: 'none',
               cursor: 'pointer',
-              fontSize: '15px',
+              fontSize: '14px',
               fontWeight: 800,
               color: '#1E293B',
               transition: 'background-color 0.15s',
@@ -206,12 +205,12 @@ export const GroupSettingsModal: React.FC<GroupSettingsModalProps> = ({
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                padding: '12px 16px',
+                padding: '10px 16px',
                 background: '#FEF2F2',
-                borderRadius: '14px',
+                borderRadius: '12px',
                 border: 'none',
                 cursor: 'pointer',
-                fontSize: '15px',
+                fontSize: '14px',
                 fontWeight: 800,
                 color: '#DC2626',
                 transition: 'background-color 0.15s',
