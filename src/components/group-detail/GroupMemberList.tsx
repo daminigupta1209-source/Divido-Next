@@ -17,6 +17,7 @@ interface GroupMemberListProps {
   onRemindMember?: (memberName: string) => void;
   onRemoveMember?: (memberName: string) => void;
   onWriteOff?: (memberName: string) => void;
+  onLeaveGroup?: () => void;
   onReinviteMember?: (memberName: string, inviteUrl: string) => void;
   onRemindAllPending?: (pendingNames: string[]) => void;
   onAddMembers?: (names: string[]) => void;
@@ -37,6 +38,7 @@ export const GroupMemberList: React.FC<GroupMemberListProps> = ({
   onRemindMember,
   onRemoveMember,
   onWriteOff,
+  onLeaveGroup,
   onReinviteMember,
   onRemindAllPending,
   onAddMembers,
@@ -358,11 +360,9 @@ export const GroupMemberList: React.FC<GroupMemberListProps> = ({
                             ? `${m} still has ${sym}${Math.abs(bal).toFixed(0)} to ${bal < 0 ? 'pay' : 'collect'}. It stays saved.`
                             : 'They move to Past Members and history is kept.';
                           if (checkIsMe(m)) {
-                            // Leaving (self) — keep the simple confirm.
-                            const meBal = Math.abs(bal) >= 0.5
-                              ? ` You still have ${sym}${Math.abs(bal).toFixed(0)} to ${bal < 0 ? 'pay' : 'collect'}. It stays saved.`
-                              : '';
-                            if (confirm(`Leave group?${meBal}`) && onRemoveMember) onRemoveMember(m);
+                            // Leaving (self) → App's bespoke leave card.
+                            if (onLeaveGroup) onLeaveGroup();
+                            else if (confirm('Leave group?') && onRemoveMember) onRemoveMember(m);
                             return;
                           }
                           // Removing someone else — bespoke card (warn, don't block).
@@ -538,22 +538,36 @@ export const GroupMemberList: React.FC<GroupMemberListProps> = ({
                         title="Cancel invite"
                         onClick={(e) => {
                           e.stopPropagation();
-                          const promptMsg = checkIsMe(m)
-                            ? `Leave group? You won't see new updates.`
-                            : `Cancel the invite for "${m}"? They haven't joined yet, so this removes them completely.`;
-                          if (confirm(promptMsg)) {
-                            if (onRemoveMember) {
-                              onRemoveMember(m);
-                            } else {
-                              setGroups(
-                                groups.map((g) =>
-                                  String(g.id) === String(selectedId)
-                                    ? { ...g, members: g.members.map((mem) => (mem === m ? m + ' (Left)' : mem)), pendingMembers: g.pendingMembers?.filter((mem) => mem !== m) }
-                                    : g
-                                )
-                              );
-                            }
+                          if (checkIsMe(m)) {
+                            if (onLeaveGroup) onLeaveGroup();
+                            else if (confirm('Leave group?') && onRemoveMember) onRemoveMember(m);
+                            return;
                           }
+                          const bal = getMemberBalance(m);
+                          const sym = selectedGroup.currency || '₹';
+                          const desc = Math.abs(bal) >= 0.5
+                            ? `${m} still has ${sym}${Math.abs(bal).toFixed(0)} to ${bal < 0 ? 'pay' : 'collect'}. It stays saved.`
+                            : "They haven't joined yet — this removes them.";
+                          setActionCard({
+                            title: `Remove "${m}"?`,
+                            desc,
+                            primaryLabel: 'Remove anyway',
+                            primaryColor: '#F97316',
+                            onPrimary: () => {
+                              setActionCard(null);
+                              if (onRemoveMember) {
+                                onRemoveMember(m);
+                              } else {
+                                setGroups(
+                                  groups.map((g) =>
+                                    String(g.id) === String(selectedId)
+                                      ? { ...g, members: g.members.map((mem) => (mem === m ? m + ' (Left)' : mem)), pendingMembers: g.pendingMembers?.filter((mem) => mem !== m) }
+                                      : g
+                                  )
+                                );
+                              }
+                            },
+                          });
                         }}
                       >
                         ✕

@@ -1932,15 +1932,17 @@ function App() {
     }
 
     // Warn (don't block) if you still have money to pay/collect here.
+    // Lists every currency you have an outstanding amount in.
     let leaveBalLine = '';
     if (!isStandalone && hasOthers) {
       const myBal = getMemberBalance(id, me);
+      const parts: string[] = [];
       for (const [cur, amt] of Object.entries(myBal)) {
         if (Math.abs(amt as number) >= 0.5) {
-          leaveBalLine = ` You still have ${cur}${Math.abs(amt as number).toFixed(0)} to ${(amt as number) < 0 ? 'pay' : 'collect'} here. It stays saved.`;
-          break;
+          parts.push(`${cur}${Math.abs(amt as number).toFixed(0)} to ${(amt as number) < 0 ? 'pay' : 'collect'}`);
         }
       }
+      if (parts.length) leaveBalLine = ` You still have ${parts.join(', ')} here. It stays saved.`;
     }
     // Extracted so both the plain confirm (delete/standalone) and the bespoke
     // leave card run the exact same leave/delete logic.
@@ -3076,6 +3078,7 @@ function App() {
               setShowAddFriendModal(true);
             }}
             onWriteOff={(memberName: string) => { if (selectedId && selectedId !== 'STANDALONE') performWriteOff(selectedId, memberName); }}
+            onLeaveGroup={() => { if (selectedId && selectedId !== 'STANDALONE') handleDeleteGroup(selectedId); }}
             onRemoveMember={async (memberName) => {
               if (!selectedId || selectedId === 'STANDALONE') return;
               const isPastMember = memberName.endsWith(' (Left)');
