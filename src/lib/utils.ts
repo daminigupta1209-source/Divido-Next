@@ -13,6 +13,15 @@ export const genGroupId = (): string =>
     ? (crypto as any).randomUUID()
     : `gid-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 10)}`;
 
+// Permanent, client-generated expense id — same idea as genGroupId. Because the
+// client mints it, there's no temp-id -> DB-id swap, which removes the race where
+// editing/deleting a just-created expense could duplicate it, lose the edit, or
+// resurrect a delete.
+export const genExpenseId = (): string =>
+  (typeof crypto !== 'undefined' && (crypto as any).randomUUID)
+    ? (crypto as any).randomUUID()
+    : `eid-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 10)}`;
+
 // Legacy "📝 \"X\" is now \"Y\"" name-change log entries were once written into
 // the expenses table. We stopped creating them, but old ones linger in local
 // caches (and re-upload as unsynced). Filter them out everywhere so they can't

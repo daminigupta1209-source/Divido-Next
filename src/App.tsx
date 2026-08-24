@@ -56,7 +56,7 @@ import { NetPayableModal } from './components/NetPayableModal';
 import { CurrencySetupModal } from './components/CurrencySetupModal';
 import { GroupGallery } from './components/GroupGallery';
 import { checkIfDemoMode } from './lib/demoMode';
-import { ensureArray, ensureObject, isLegacyRenameLog, formatCompactAmount, genGroupId } from './lib/utils';
+import { ensureArray, ensureObject, isLegacyRenameLog, formatCompactAmount, genGroupId, genExpenseId } from './lib/utils';
 import { useSupabaseSync, getGidRemap } from './hooks/useSupabaseSync';
 import { BalanceActionCard } from './components/BalanceActionCard';
 import { useAppHotkeys } from './hooks/useAppHotkeys';
@@ -1365,7 +1365,7 @@ function App() {
     const newSettlements = localSettleEdits
       .filter((it) => it.selected && it.amt > 0)
       .map((it) => ({
-        id: Date.now() + Math.random(),
+        id: genExpenseId(),
         gId: it.gId,
         title: `🤝 Settlement: ${it.paidBy} paid ${it.receivedBy}`,
         amt: parseFloat(it.amt) || 0,
@@ -1432,7 +1432,7 @@ function App() {
         while (currentNext <= todayStr) {
           const copy: Expense = {
             ...e,
-            id: Date.now() + Math.random() + localSpawned.length,
+            id: genExpenseId(),
             date: currentNext,
             isRecurring: false,
             recurrence: undefined,
@@ -1867,7 +1867,7 @@ function App() {
         const payer = val > 0 ? t.from : t.to;
         const receiver = val > 0 ? t.to : t.from;
         writeOffs.push({
-          id: Date.now() + Math.random() + writeOffs.length,
+          id: genExpenseId(),
           gId: groupId,
           title: `🧾 Written off: ${payer} → ${receiver}`,
           amt: Math.round(absVal * 100) / 100,

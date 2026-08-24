@@ -911,9 +911,10 @@ export function useSupabaseSync({
           console.warn(`Safety: blocked mass-deletion of ${deleted.length} expenses. This looks like a state reset, not intentional deletion.`);
         } else {
           for (const e of deleted) {
-            // Only delete from DB if it has a valid DB id (not a local temp id)
-            if (typeof e.id === 'number' && e.id <= 2147483647) {
-              const { error } = await supabase.from('expenses').delete().eq('id', e.id);
+            // Expense ids are permanent client-generated ids now; delete by id.
+            // (A never-synced id simply matches no row — a harmless no-op.)
+            if (e.id != null) {
+              const { error } = await supabase.from('expenses').delete().eq('id', String(e.id));
               if (error) throw error;
             }
           }
@@ -929,7 +930,7 @@ export function useSupabaseSync({
             // Moved from a group to Non-Group: remove the cloud row so it doesn't reappear in the old group
             const old = prev.find(p => p.id === e.id);
             if (old && old.gId !== 'STANDALONE') {
-              const { error } = await supabase.from('expenses').delete().eq('id', e.id);
+              const { error } = await supabase.from('expenses').delete().eq('id', String(e.id));
               if (error) throw error;
             }
             continue;
@@ -966,8 +967,9 @@ export function useSupabaseSync({
               continue;
             }
 
-            const insertId = typeof updatedExpense.id === 'number' && updatedExpense.id < 2147483647 ? updatedExpense.id : undefined;
-            const { data, error } = await supabase
+            // Send the permanent client id (as text) — no temp->DB swap anymore.
+            const insertId = updatedExpense.id != null ? String(updatedExpense.id) : undefined;
+            const { error } = await supabase
               .from('expenses')
               .insert({
                 id: insertId,
@@ -986,16 +988,10 @@ export function useSupabaseSync({
                 is_recurring: updatedExpense.isRecurring || false,
                 recurrence: updatedExpense.recurrence || 'none',
                 next_occurrence: updatedExpense.nextOccurrence
-              })
-              .select();
+              });
 
             if (error) throw error;
-
-            if (data && data[0]) {
-              const newExpId = data[0].id;
-              nextExpenses[i] = { ...updatedExpense, id: newExpId };
-              localStateUpdated = true;
-            }
+            // No id remap needed — the id we sent is permanent.
           } else if (
             String(old.gId) !== String(updatedExpense.gId) ||
             old.title !== updatedExpense.title ||
@@ -1033,7 +1029,7 @@ export function useSupabaseSync({
                 recurrence: updatedExpense.recurrence || 'none',
                 next_occurrence: updatedExpense.nextOccurrence
               })
-              .eq('id', updatedExpense.id);
+              .eq('id', String(updatedExpense.id));
             if (error) throw error;
           }
         }

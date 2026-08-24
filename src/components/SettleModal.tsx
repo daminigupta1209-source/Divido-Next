@@ -3,7 +3,7 @@ import { SearchableCurrencyPicker } from './SearchableCurrencyPicker';
 
 import { Group, Expense, UserMetadata } from '../lib/types';
 import { escManager } from '../lib/escManager';
-import { formatCompactAmount, toCurrencyCode } from '../lib/utils';
+import { formatCompactAmount, toCurrencyCode, genExpenseId } from '../lib/utils';
 import { StyledDropdown } from './StyledDropdown';
 
 const settleBtnStyle: React.CSSProperties = { padding: '12px', borderRadius: '14px', border: '2px solid #F1F1F1', fontSize: '14px', fontWeight: 700, background: 'var(--w, #fff)', marginTop: '4px', boxShadow: 'none', color: '#1E293B' };
@@ -181,7 +181,7 @@ export const SettleModal: React.FC<SettleModalProps> = ({
       );
     } else {
       const newExp: Expense = {
-        id: Date.now(),
+        id: genExpenseId(),
         gId: selectedId || 'STANDALONE',
         title: `🤝 Settlement: ${settleFromRef.current} paid ${to}`,
         amt: amount,

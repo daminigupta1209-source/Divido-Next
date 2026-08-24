@@ -1,7 +1,7 @@
 import React from 'react';
 import { Group, Expense } from '../lib/types';
 import { downscaleImageFile } from '../lib/imageUtils';
-import { formatDate, GROUP_COLORS, formatCompactAmount } from '../lib/utils';
+import { formatDate, GROUP_COLORS, formatCompactAmount, genGroupId } from '../lib/utils';
 import { SearchableCurrencyPicker } from './SearchableCurrencyPicker';
 // Lazy-loaded: BillScanner pulls in tesseract.js (OCR), which is large. Loading
 // it on demand (only when the user opens the scanner) keeps it out of the main
@@ -609,8 +609,8 @@ export const ExpenseModal: React.FC<ExpenseModalProps> = ({
                             alert('A group with that name already exists. Please pick a different name.');
                             return;
                           }
-                          const id = Date.now() + Math.random();
-                          const newG = { id, name, members: [me], currency: '₹' };
+                          const id = genGroupId();
+                          const newG = { id, name, members: [me], currency: '₹', pendingSync: true };
                           setGroups([...groups, newG]);
                           setLocalGId(id);
                           setSelectedSplitters([me]);

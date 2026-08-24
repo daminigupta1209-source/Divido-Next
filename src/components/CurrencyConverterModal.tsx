@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { worldCurrencies } from '../lib/utils';
+import { worldCurrencies, genExpenseId } from '../lib/utils';
 import { SearchableCurrencyPicker } from './SearchableCurrencyPicker';
 import { StyledDropdown } from './StyledDropdown';
 
@@ -255,7 +255,7 @@ export const CurrencyConverterModal: React.FC<CurrencyConverterModalProps> = ({
 
       return [
         {
-          id: Date.now(),
+          id: genExpenseId(),
           gId: group.id,
           title: `Currency Conversion to ${targetCurr} 💎`,
           amt: 0,

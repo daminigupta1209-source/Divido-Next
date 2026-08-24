@@ -2,7 +2,7 @@ import { useState, useEffect, useRef, useMemo } from 'react';
 import { escManager } from '../lib/escManager';
 import { Group, Expense } from '../lib/types';
 import { calculateNextOccurrenceDate } from '../lib/calculations';
-import { getEmoji, parseExpenseId } from '../lib/utils';
+import { getEmoji, parseExpenseId, genExpenseId } from '../lib/utils';
 
 export interface UseExpenseFormProps {
   setShowExpModal: (show: boolean) => void;
@@ -430,7 +430,7 @@ export function useExpenseForm({
     if (isValid && localGId) {
       const isTemporaryNewExpense = editingExpense?.id && String(editingExpense.id).startsWith('temp-');
       const savedExp: Expense = {
-        id: (editingExpense && !isTemporaryNewExpense) ? editingExpense.id : Date.now(),
+        id: (editingExpense && !isTemporaryNewExpense) ? editingExpense.id : genExpenseId(),
         gId: localGId,
         title,
         amt: parseFloat(amt) || 0,
