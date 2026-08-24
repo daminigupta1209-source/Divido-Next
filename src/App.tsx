@@ -2641,6 +2641,7 @@ function App() {
             setEditingExpense={setEditingExpenseSecure}
             onCreateGroup={createGroupSecure}
             onScan={() => addExpenseFromNav(true)}
+            userMetadata={userMetadata}
           />
         )}
 

@@ -12,6 +12,8 @@ interface GroupSettingsModalProps {
   onExportData: () => void;
   onLeaveOrDeleteGroup: () => void;
   onEditGroup: () => void;
+  onEditUserProfile: () => void;
+  userMetadata?: Record<string, any>;
 }
 
 export const GroupSettingsModal: React.FC<GroupSettingsModalProps> = ({
@@ -23,6 +25,8 @@ export const GroupSettingsModal: React.FC<GroupSettingsModalProps> = ({
   onExportData,
   onLeaveOrDeleteGroup,
   onEditGroup,
+  onEditUserProfile,
+  userMetadata = {},
 }) => {
   const [isVisible, setIsVisible] = useState(false);
 
@@ -133,12 +137,69 @@ export const GroupSettingsModal: React.FC<GroupSettingsModalProps> = ({
             )}
           </div>
           <div style={{ display: 'flex', flexDirection: 'column', flex: 1, minWidth: 0 }}>
+            <span style={{ fontSize: '11px', fontWeight: 800, color: '#94A3B8', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '2px' }}>Group Profile</span>
             <h2 className="nunito" style={{ fontSize: '20px', fontWeight: 900, color: '#0F172A', margin: 0, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
               {group.name || 'Untitled Group'}
             </h2>
             <span style={{ fontSize: '13px', fontWeight: 600, color: '#64748B', marginTop: '2px' }}>
               {activeMembersCount} {activeMembersCount === 1 ? 'member' : 'members'}
             </span>
+          </div>
+          <div style={{ color: '#94A3B8', display: 'flex', alignItems: 'center' }}>
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+              <polyline points="9 18 15 12 9 6" />
+            </svg>
+          </div>
+        </div>
+
+        {/* User Profile Card */}
+        <div
+          onClick={() => { handleClose(); onEditUserProfile(); }}
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: '16px',
+            background: '#FFFFFF',
+            padding: '16px',
+            borderRadius: '20px',
+            cursor: 'pointer',
+            border: '1px solid #F1F5F9',
+            boxShadow: '0 2px 10px rgba(0,0,0,0.02)',
+            transition: 'background-color 0.2s, transform 0.1s',
+            marginTop: '-12px',
+          }}
+          onMouseEnter={(e) => (e.currentTarget.style.background = '#F8FAFC')}
+          onMouseLeave={(e) => (e.currentTarget.style.background = '#FFFFFF')}
+          onMouseDown={(e) => (e.currentTarget.style.transform = 'scale(0.98)')}
+          onMouseUp={(e) => (e.currentTarget.style.transform = 'scale(1)')}
+        >
+          <div
+            style={{
+              width: '48px',
+              height: '48px',
+              borderRadius: '50%',
+              background: '#F1F5F9',
+              color: '#64748B',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              fontSize: '20px',
+              fontWeight: 900,
+              overflow: 'hidden',
+              flexShrink: 0,
+            }}
+          >
+            {userMetadata?.[me]?.profilePhoto ? (
+              <img src={userMetadata[me].profilePhoto} style={{ width: '100%', height: '100%', objectFit: 'cover' }} alt="" />
+            ) : (
+              me.charAt(0).toUpperCase()
+            )}
+          </div>
+          <div style={{ display: 'flex', flexDirection: 'column', flex: 1, minWidth: 0 }}>
+            <span style={{ fontSize: '11px', fontWeight: 800, color: '#94A3B8', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '2px' }}>Your Profile</span>
+            <h3 className="nunito" style={{ fontSize: '16px', fontWeight: 900, color: '#0F172A', margin: 0, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+              {me}
+            </h3>
           </div>
           <div style={{ color: '#94A3B8', display: 'flex', alignItems: 'center' }}>
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">

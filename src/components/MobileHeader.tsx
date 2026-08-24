@@ -58,9 +58,10 @@ interface MobileHeaderProps {
   setExpenses?: React.Dispatch<React.SetStateAction<Expense[]>>;
   setShowExpModal?: (b: boolean) => void;
   setEditingExpense?: (exp: Expense | null) => void;
-  onRequestRejoin?: () => void;
+  onRequestRejoin?: (groupId: string | number) => void;
   onCreateGroup?: () => void;
   onScan?: () => void;
+  userMetadata?: Record<string, any>;
   analyticsGroupId?: string | number | null;
 }
 
@@ -120,6 +121,7 @@ export const MobileHeader: React.FC<MobileHeaderProps> = ({
   onRequestRejoin,
   onCreateGroup,
   onScan,
+  userMetadata = {},
 }) => {
   // View-only guard: a member who has left this group can browse but not edit it.
   const amIPastMember = (() => {
@@ -326,7 +328,7 @@ export const MobileHeader: React.FC<MobileHeaderProps> = ({
             <div
               onClick={() => {
                 if (selectedId === 'STANDALONE') return;
-                if (amIPastMember) { onRequestRejoin && onRequestRejoin(); return; }
+                if (amIPastMember) { onRequestRejoin && selectedGroup && onRequestRejoin(selectedGroup.id); return; }
                 if (onEditGroup && selectedGroup) {
                   onEditGroup(selectedGroup.id);
                 }
@@ -433,7 +435,7 @@ export const MobileHeader: React.FC<MobileHeaderProps> = ({
                     }}
                     onClick={() => {
                       if (selectedId === 'STANDALONE') return;
-                      if (amIPastMember) { onRequestRejoin && onRequestRejoin(); return; }
+                      if (amIPastMember) { onRequestRejoin && selectedGroup && onRequestRejoin(selectedGroup.id); return; }
                       if (onEditGroup && selectedGroup) {
                         onEditGroup(selectedGroup.id);
                       }
@@ -714,10 +716,11 @@ export const MobileHeader: React.FC<MobileHeaderProps> = ({
                     <line x1="14" y1="18" x2="20" y2="18" />
                   </svg>
                 </button>
-                {mobileShowGroupOptionsMenu && (
+                {mobileShowGroupOptionsMenu && selectedGroup && (
                   <GroupSettingsModal
                     group={selectedGroup}
                     me={me}
+                    userMetadata={userMetadata}
                     onClose={() => setMobileShowGroupOptionsMenu(false)}
                     onSimplifyToggle={() => {
                       setGroups(groups.map((g) => String(g.id) === String(selectedId) ? { ...g, simplifyDebts: !g.simplifyDebts } : g));
@@ -737,6 +740,10 @@ export const MobileHeader: React.FC<MobileHeaderProps> = ({
                     onEditGroup={() => {
                       setMobileShowGroupOptionsMenu(false);
                       if (onEditGroup && selectedGroup) onEditGroup(selectedGroup.id);
+                    }}
+                    onEditUserProfile={() => {
+                      setMobileShowGroupOptionsMenu(false);
+                      setView('profile');
                     }}
                   />
                 )}
