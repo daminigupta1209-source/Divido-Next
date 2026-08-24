@@ -4,6 +4,7 @@ import { Group, Expense } from '../lib/types';
 import { formatDate } from '../lib/utils';
 import { AppNotification } from '../lib/notifications';
 import { CameraCaptureModal } from './CameraCaptureModal';
+import { GroupSettingsModal } from './GroupSettingsModal';
 
 interface MobileHeaderProps {
   view: string;
@@ -707,148 +708,33 @@ export const MobileHeader: React.FC<MobileHeaderProps> = ({
                   }}
                   title="Group options"
                 >
-                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ color: '#475569' }}>
-                    <circle cx="12" cy="5" r="1.5" fill="currentColor" stroke="none" />
-                    <circle cx="12" cy="12" r="1.5" fill="currentColor" stroke="none" />
-                    <circle cx="12" cy="19" r="1.5" fill="currentColor" stroke="none" />
+                  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ color: '#475569' }}>
+                    <line x1="4" y1="6" x2="20" y2="6" />
+                    <line x1="10" y1="12" x2="20" y2="12" />
+                    <line x1="14" y1="18" x2="20" y2="18" />
                   </svg>
                 </button>
                 {mobileShowGroupOptionsMenu && (
-                  <div
-                    className="card"
-                    onClick={(e) => e.stopPropagation()}
-                    style={{
-                      position: 'absolute',
-                      right: '-8px',
-                      top: 'calc(100% + 6px)',
-                      padding: '6px',
-                      borderRadius: '16px',
-                      background: '#FFFFFF',
-                      border: '1.5px solid rgba(226, 232, 240, 1)',
-                      display: 'flex',
-                      flexDirection: 'column',
-                      gap: '2px',
-                      minWidth: '180px',
-                      boxShadow: '0 10px 30px -5px rgba(0,0,0,0.08), 0 4px 12px -2px rgba(0,0,0,0.03)',
-                      zIndex: 9999,
-                      animation: 'slideUp 0.15s cubic-bezier(0.175, 0.885, 0.32, 1.1)',
+                  <GroupSettingsModal
+                    group={selectedGroup}
+                    me={me}
+                    onClose={() => setMobileShowGroupOptionsMenu(false)}
+                    onSimplifyToggle={() => {
+                      setGroups(groups.map((g) => String(g.id) === String(selectedId) ? { ...g, simplifyDebts: !g.simplifyDebts } : g));
                     }}
-                  >
-                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '8px', padding: '6px 8px', borderBottom: '1px solid rgba(241, 245, 249, 0.7)', marginBottom: '2px' }}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-                        <span style={{ fontSize: '12px', fontWeight: 900, color: '#111827', whiteSpace: 'nowrap' }}>Simplify Debts</span>
-                        <span
-                          style={{ fontSize: '11px', color: '#94A3B8', cursor: 'pointer', userSelect: 'none', padding: '0 2px' }}
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            alert("Simplify Debts automatically reduces the total number of transactions needed to settle up. Net balances remain unchanged.");
-                          }}
-                          title="What is this?"
-                        >ⓘ</span>
-                      </div>
-                      <div
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          setGroups(groups.map((g) => String(g.id) === String(selectedId) ? { ...g, simplifyDebts: !g.simplifyDebts } : g));
-                        }}
-                        style={{
-                          width: '32px',
-                          height: '18px',
-                          borderRadius: '20px',
-                          background: selectedGroup?.simplifyDebts ? '#10B981' : '#CBD5E1',
-                          position: 'relative',
-                          cursor: 'pointer',
-                          transition: 'background-color 0.2s',
-                          flexShrink: 0,
-                        }}
-                      >
-                        <div
-                          style={{
-                            width: '14px',
-                            height: '14px',
-                            borderRadius: '50%',
-                            background: '#FFFFFF',
-                            position: 'absolute',
-                            top: '2px',
-                            left: selectedGroup?.simplifyDebts ? '16px' : '2px',
-                            transition: 'left 0.2s',
-                            boxShadow: '0 1px 2px rgba(0,0,0,0.15)',
-                          }}
-                        />
-                      </div>
-                    </div>
-
-                    {/* Action Buttons */}
-                    {(() => {
-                      const cleanMe = me.replace(/\s*\(me\)$/i, '').replace(/\s*\(Left\)$/i, '').toLowerCase();
-                      const isActiveMember = selectedGroup?.members?.some(m => {
-                        const cleanM = m.replace(/\s*\(me\)$/i, '').replace(/\s*\(Left\)$/i, '').toLowerCase();
-                        return cleanM === cleanMe && !m.toLowerCase().endsWith(' (left)');
-                      });
-                      const isPastMember = selectedGroup?.members?.some(m => {
-                        const cleanM = m.replace(/\s*\(me\)$/i, '').replace(/\s*\(Left\)$/i, '').toLowerCase();
-                        return cleanM === cleanMe && m.toLowerCase().endsWith(' (left)');
-                      });
-                      const activeMembersCount = (selectedGroup?.members || []).filter(m => !m.toLowerCase().endsWith(' (left)')).length;
-
-                      const actionItems = [
-                        ...(isPastMember ? [] : [{
-                          label: 'Convert Currency',
-                          onClick: () => { setMobileShowGroupOptionsMenu(false); setShowConvertModalId(selectedId); }
-                        }]),
-                        {
-                          label: 'Create New Group',
-                          onClick: () => { setMobileShowGroupOptionsMenu(false); onCreateGroup && onCreateGroup(); }
-                        },
-                        {
-                          label: 'Export Data',
-                          onClick: () => { setMobileShowGroupOptionsMenu(false); handleMobileExportCSV(); }
-                        },
-
-                        ...(isActiveMember && selectedId !== 'STANDALONE' ? [{
-                          label: activeMembersCount > 1 ? 'Leave Group' : 'Delete Group',
-                          onClick: () => { setMobileShowGroupOptionsMenu(false); handleDeleteGroup(selectedId || ''); },
-                          danger: true
-                        }] : []),
-                        ...(isPastMember && selectedId !== 'STANDALONE' ? [{
-                          label: 'Delete Group for Me',
-                          onClick: () => { setMobileShowGroupOptionsMenu(false); handleDeleteGroup(selectedId || ''); },
-                          danger: true
-                        }] : []),
-                      ];
-
-                      return actionItems.map((item) => (
-                        <button
-                          key={item.label}
-                          onClick={item.onClick}
-                          style={{
-                            display: 'flex',
-                            alignItems: 'center',
-                            padding: '8px 12px',
-                            border: 'none',
-                            background: 'none',
-                            width: '100%',
-                            textAlign: 'left',
-                            cursor: 'pointer',
-                            borderRadius: '10px',
-                            fontSize: '11px',
-                            fontWeight: 800,
-                            color: item.danger ? '#DC2626' : '#475569',
-                            transition: '0.15s all',
-                          }}
-                          onMouseEnter={(e) => {
-                            e.currentTarget.style.background = item.danger ? '#FEF2F2' : 'rgba(241, 245, 249, 0.6)';
-                            e.currentTarget.style.color = item.danger ? '#B91C1C' : '#0F172A';
-                          }}
-                          onMouseLeave={(e) => {
-                            e.currentTarget.style.background = 'none';
-                            e.currentTarget.style.color = item.danger ? '#DC2626' : '#475569';
-                          }}
-                        >
-                          <span>{item.label}</span>
-                        </button>
-                      ))})()}
-                  </div>
+                    onConvertCurrency={() => {
+                      setMobileShowGroupOptionsMenu(false);
+                      setShowConvertModalId(selectedId);
+                    }}
+                    onExportData={() => {
+                      setMobileShowGroupOptionsMenu(false);
+                      handleMobileExportCSV();
+                    }}
+                    onLeaveOrDeleteGroup={() => {
+                      setMobileShowGroupOptionsMenu(false);
+                      handleDeleteGroup(selectedId || '');
+                    }}
+                  />
                 )}
               </div>
             )}
