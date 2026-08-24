@@ -208,20 +208,20 @@ export const GroupSettingsModal: React.FC<GroupSettingsModalProps> = ({
               justifyContent: 'center',
               gap: '6px',
               padding: '10px 16px',
-              background: '#F8FAFC',
+              background: '#EFF6FF',
               borderRadius: '12px',
               border: 'none',
               cursor: 'pointer',
               fontSize: '13px',
               fontWeight: 800,
-              color: '#1E293B',
+              color: '#2563EB',
               transition: 'background-color 0.15s',
             }}
-            onMouseEnter={(e) => (e.currentTarget.style.background = '#F1F5F9')}
-            onMouseLeave={(e) => (e.currentTarget.style.background = '#F8FAFC')}
+            onMouseEnter={(e) => (e.currentTarget.style.background = '#DBEAFE')}
+            onMouseLeave={(e) => (e.currentTarget.style.background = '#EFF6FF')}
           >
             Share Link
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ width: '16px', height: '16px', color: '#1E293B' }}>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ width: '16px', height: '16px', color: '#2563EB' }}>
               <circle cx="18" cy="5" r="3" />
               <circle cx="6" cy="12" r="3" />
               <circle cx="18" cy="19" r="3" />
