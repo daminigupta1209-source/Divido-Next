@@ -847,15 +847,20 @@ export const Analytics: React.FC<AnalyticsProps> = ({ expenses, groups, me, user
             Monthly Spending Budgets
           </h3>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-            {[
-              { emoji: '🍕', label: 'Food & Dining' },
-              { emoji: '🚕', label: 'Travel & Transport' },
-              { emoji: '🏠', label: 'Rent & Utilities' },
-              { emoji: '🛒', label: 'Groceries' },
-              { emoji: '🍻', label: 'Drinks & Nightlife' },
-              { emoji: '🛍️', label: 'Shopping' },
-              { emoji: '⚡', label: 'Others' }
-            ].map(({ emoji, label }) => {
+            {(() => {
+              const defaultCategories = [
+                { emoji: '🍕', label: 'Food & Dining' },
+                { emoji: '🚕', label: 'Travel & Transport' },
+                { emoji: '🏠', label: 'Rent & Utilities' },
+                { emoji: '🛒', label: 'Groceries' },
+                { emoji: '🍻', label: 'Drinks & Nightlife' },
+                { emoji: '🛍️', label: 'Shopping' },
+                { emoji: '⚡', label: 'Others' }
+              ];
+              const customCategories = userMetadata[me]?.customBudgetCategories || [];
+              const allCategories = [...defaultCategories, ...customCategories];
+
+              return allCategories.map(({ emoji, label }) => {
               const currentBudget = userMetadata[me]?.budgets?.[emoji] || '';
               const budgetAmt = parseFloat(String(currentBudget)) || 0;
               const spentAmt = monthlySpendingByCategory[emoji] || 0;
@@ -948,7 +953,42 @@ export const Analytics: React.FC<AnalyticsProps> = ({ expenses, groups, me, user
                   )}
                 </div>
               );
-            })}
+            })})()}
+            <button
+              onClick={() => {
+                const label = window.prompt('Enter category name (e.g., Pets)');
+                if (!label) return;
+                const emoji = window.prompt('Enter an emoji for this category (e.g., 🐶)') || '📌';
+                const customBudgetCategories = userMetadata[me]?.customBudgetCategories || [];
+                setUserMetadata({
+                  ...userMetadata,
+                  [me]: {
+                    ...userMetadata[me],
+                    customBudgetCategories: [...customBudgetCategories, { label, emoji }],
+                  },
+                });
+              }}
+              style={{
+                marginTop: '8px',
+                padding: '12px',
+                background: '#F8FAFC',
+                border: '1px dashed #CBD5E1',
+                borderRadius: '12px',
+                color: '#64748B',
+                fontWeight: 800,
+                fontSize: '13px',
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: '8px',
+                transition: 'all 0.2s'
+              }}
+              onMouseEnter={(e) => { e.currentTarget.style.background = '#F1F5F9'; e.currentTarget.style.color = '#0F172A'; }}
+              onMouseLeave={(e) => { e.currentTarget.style.background = '#F8FAFC'; e.currentTarget.style.color = '#64748B'; }}
+            >
+              + Add Custom Category
+            </button>
           </div>
         </div>
       </div>
