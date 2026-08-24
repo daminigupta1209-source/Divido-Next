@@ -1631,6 +1631,30 @@ function App() {
   // member (case-insensitively), with its EXACT stored spelling, so the expense
   // reconnects and the balance is whole again. Runs once per load; no-ops when
   // there's nothing to repair, and never touches names already present.
+  // One-time heal for legacy write-off entries created before the label change:
+  // strip the old "🧾 Written off: X → Y" title / leftover notes / category so
+  // they show a single clean "Written off" line (no emoji, no duplicate chip).
+  const writeOffHealDoneRef = useRef(false);
+  useEffect(() => {
+    if (!isInitialLoadDone || writeOffHealDoneRef.current) return;
+    writeOffHealDoneRef.current = true;
+    setExpenses((prev) => {
+      let changed = false;
+      const next = prev.map((e) => {
+        const t = typeof e.title === 'string' ? e.title : '';
+        const isWriteOff = t.startsWith('🧾 Written off') || t === 'Written off';
+        const needsHeal = isWriteOff && (t !== 'Written off' || !!e.notes || !!e.category);
+        if (needsHeal) {
+          changed = true;
+          return { ...e, title: 'Written off', notes: '', category: '' };
+        }
+        return e;
+      });
+      return changed ? next : prev;
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isInitialLoadDone]);
+
   const phantomRepairDoneRef = useRef(false);
   useEffect(() => {
     if (!isInitialLoadDone || phantomRepairDoneRef.current) return;
