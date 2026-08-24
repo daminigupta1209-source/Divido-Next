@@ -750,6 +750,10 @@ export const MobileHeader: React.FC<MobileHeaderProps> = ({
                       if (setAnalyticsGroupId) setAnalyticsGroupId(selectedId);
                       setView('analytics');
                     }}
+                    onShareLink={() => {
+                      setMobileShowGroupOptionsMenu(false);
+                      if (onInviteFriend) onInviteFriend();
+                    }}
                   />
                 )}
               </div>

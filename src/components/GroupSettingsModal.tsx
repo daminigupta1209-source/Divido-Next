@@ -14,6 +14,7 @@ interface GroupSettingsModalProps {
   onEditGroup: () => void;
   onEditUserProfile: () => void;
   onOpenAnalytics?: () => void;
+  onShareLink?: () => void;
   userMetadata?: Record<string, any>;
 }
 
@@ -28,6 +29,7 @@ export const GroupSettingsModal: React.FC<GroupSettingsModalProps> = ({
   onEditGroup,
   onEditUserProfile,
   onOpenAnalytics,
+  onShareLink,
   userMetadata = {},
 }) => {
   const [isVisible, setIsVisible] = useState(false);
@@ -196,6 +198,36 @@ export const GroupSettingsModal: React.FC<GroupSettingsModalProps> = ({
             onMouseLeave={(e) => (e.currentTarget.style.background = '#F8FAFC')}
           >
             Export Data
+          </button>
+
+          <button
+            onClick={() => { handleClose(); onShareLink?.(); }}
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: '6px',
+              padding: '10px 16px',
+              background: '#F8FAFC',
+              borderRadius: '12px',
+              border: 'none',
+              cursor: 'pointer',
+              fontSize: '13px',
+              fontWeight: 800,
+              color: '#1E293B',
+              transition: 'background-color 0.15s',
+            }}
+            onMouseEnter={(e) => (e.currentTarget.style.background = '#F1F5F9')}
+            onMouseLeave={(e) => (e.currentTarget.style.background = '#F8FAFC')}
+          >
+            Share Link
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ width: '16px', height: '16px', color: '#1E293B' }}>
+              <circle cx="18" cy="5" r="3" />
+              <circle cx="6" cy="12" r="3" />
+              <circle cx="18" cy="19" r="3" />
+              <line x1="8.59" y1="13.51" x2="15.42" y2="17.49" />
+              <line x1="15.41" y1="6.51" x2="8.59" y2="10.49" />
+            </svg>
           </button>
 
           {(isActiveMember || isPastMember) && (
