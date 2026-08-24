@@ -797,44 +797,52 @@ export const Analytics: React.FC<AnalyticsProps> = ({ expenses, groups, me, user
                       display: 'flex',
                       justifyContent: 'space-between',
                       alignItems: 'center',
-                      padding: '24px',
+                      padding: '16px 20px',
                       background: 'var(--bg)',
-                      borderRadius: '24px',
-                      border: '1.5px solid #F1F5F9',
+                      borderRadius: '20px',
+                      border: '1px solid #F1F5F9',
                       transition: '0.3s all',
                       cursor: 'pointer',
                     }}
                   >
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '20px' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
                       <div
                         style={{
-                          fontSize: '32px',
-                          width: '64px',
-                          height: '64px',
-                          background: 'var(--w)',
-                          borderRadius: '18px',
+                          width: '44px',
+                          height: '44px',
+                          background: 'linear-gradient(135deg, #F0F9FF 0%, #E0F2FE 100%)',
+                          borderRadius: '12px',
                           display: 'flex',
                           alignItems: 'center',
                           justifyContent: 'center',
-                          boxShadow: '0 4px 6px -1px rgba(0,0,0,0.05)',
+                          boxShadow: '0 2px 4px rgba(14, 165, 233, 0.1)',
                         }}
                       >
-                        <div style={{ fontSize: '20px', fontWeight: 900, color: 'var(--g)' }}>
+                        <div style={{ fontSize: '18px', fontWeight: 800, color: '#0284C7' }}>
                           {g.name ? g.name.charAt(0).toUpperCase() : 'G'}
                         </div>
                       </div>
-                      <div>
-                        <span style={{ fontWeight: 900, fontSize: '18px', color: '#1F2937', display: 'block' }}>
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
+                        <span style={{ fontWeight: 800, fontSize: '16px', color: '#0F172A' }}>
                           {g.name || 'Untitled Group'}
                         </span>
-                        <span style={{ fontSize: '11px', color: 'var(--g)', fontWeight: 800 }}>
-                          {g.members.length} Members active
+                        <span style={{ fontSize: '11px', color: '#64748B', fontWeight: 700 }}>
+                          {g.members.length} Member{g.members.length !== 1 ? 's' : ''}
                         </span>
                       </div>
                     </div>
                     <div style={{ textAlign: 'right' }}>
-                      <div className="pill blue" style={{ padding: '8px 20px', fontSize: '12px', fontWeight: 900 }}>
-                        {count} Events
+                      <div style={{ 
+                        background: '#EEF2FF', 
+                        color: '#6366F1', 
+                        padding: '6px 12px', 
+                        borderRadius: '20px', 
+                        fontSize: '12px', 
+                        fontWeight: 800, 
+                        whiteSpace: 'nowrap',
+                        display: 'inline-block'
+                      }}>
+                        {count} Event{count !== 1 ? 's' : ''}
                       </div>
                     </div>
                   </div>
