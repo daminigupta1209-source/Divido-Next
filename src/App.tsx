@@ -2573,6 +2573,7 @@ function App() {
         profilePhoto={userMetadata[me]?.profilePhoto}
         onRequireSignIn={requireSignInToCreate}
         onAddExpense={addExpenseFromNav}
+        setAnalyticsGroupId={setAnalyticsGroupId}
       />
 
       {isSidebarOpen && (

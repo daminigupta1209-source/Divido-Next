@@ -29,6 +29,7 @@ interface SidebarProps {
   profilePhoto?: string;
   onRequireSignIn?: () => boolean;
   onAddExpense?: () => void;
+  setAnalyticsGroupId?: (id: string | number | null) => void;
 }
 
 export const Sidebar: React.FC<SidebarProps> = ({
@@ -55,6 +56,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
   profilePhoto,
   onRequireSignIn,
   onAddExpense,
+  setAnalyticsGroupId,
 }) => {
   const getSyncState = () => {
     switch (syncStatus) {
@@ -527,6 +529,9 @@ export const Sidebar: React.FC<SidebarProps> = ({
                 }}
                 onClick={() => {
                   setView(it.id);
+                  if (it.id === 'analytics' && setAnalyticsGroupId) {
+                    setAnalyticsGroupId(null);
+                  }
                   setIsSidebarOpen(false);
                 }}
               >
