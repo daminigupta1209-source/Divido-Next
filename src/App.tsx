@@ -1874,7 +1874,7 @@ function App() {
           paid: payer,
           splitters: [receiver],
           date: today,
-          notes: 'Written off',
+          notes: '',
           currency: curr,
           category: '',
           mode: 'Equally' as const,
