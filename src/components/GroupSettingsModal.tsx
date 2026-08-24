@@ -58,7 +58,8 @@ export const GroupSettingsModal: React.FC<GroupSettingsModalProps> = ({
     <div
       style={{
         zIndex: 5000,
-        backgroundColor: '#FFFFFF',
+        backgroundColor: isVisible ? 'rgba(0, 0, 0, 0.4)' : 'transparent',
+        transition: 'background-color 0.3s ease',
         display: 'flex',
         alignItems: 'flex-end',
         justifyContent: 'center',
@@ -134,9 +135,9 @@ export const GroupSettingsModal: React.FC<GroupSettingsModalProps> = ({
               style={{
                 display: 'flex',
                 alignItems: 'center',
-                padding: '16px',
+                padding: '12px 16px',
                 background: '#F8FAFC',
-                borderRadius: '16px',
+                borderRadius: '14px',
                 border: 'none',
                 cursor: 'pointer',
                 fontSize: '15px',
@@ -157,9 +158,9 @@ export const GroupSettingsModal: React.FC<GroupSettingsModalProps> = ({
             style={{
               display: 'flex',
               alignItems: 'center',
-              padding: '16px',
+              padding: '12px 16px',
               background: '#F8FAFC',
-              borderRadius: '16px',
+              borderRadius: '14px',
               border: 'none',
               cursor: 'pointer',
               fontSize: '15px',
@@ -180,9 +181,9 @@ export const GroupSettingsModal: React.FC<GroupSettingsModalProps> = ({
               style={{
                 display: 'flex',
                 alignItems: 'center',
-                padding: '16px',
+                padding: '12px 16px',
                 background: '#FEF2F2',
-                borderRadius: '16px',
+                borderRadius: '14px',
                 border: 'none',
                 cursor: 'pointer',
                 fontSize: '15px',
