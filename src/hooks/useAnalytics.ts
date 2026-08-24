@@ -210,6 +210,18 @@ export function useAnalytics({
   const lastExpenses = useMemo(() => filteredExpenses.slice(-10), [filteredExpenses]);
   const maxAmt = useMemo(() => Math.max(...lastExpenses.map(e => e.amt), 1), [lastExpenses]);
 
+  const dynamicInsight = useMemo(() => {
+    if (categoryList.length > 0 && totalSpentVal > 0) {
+      const topCat = categoryList[0];
+      const pct = ((topCat.amount / totalSpentVal) * 100).toFixed(0);
+      return `${topCat.name} makes up ${pct}% of your spending.`;
+    }
+    if (totalSpentVal > 0) {
+      return `Your typical cost per bill is ₹${avgExpense.toFixed(0)}.`;
+    }
+    return "Track your expenses to see insights here.";
+  }, [categoryList, totalSpentVal, avgExpense]);
+
   return {
     selectedGroupId,
     setSelectedGroupId,
@@ -240,5 +252,6 @@ export function useAnalytics({
     maxAmt,
     timeframe,
     setTimeframe,
+    dynamicInsight,
   };
 }

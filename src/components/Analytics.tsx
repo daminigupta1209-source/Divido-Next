@@ -26,7 +26,7 @@ interface AnalyticsDetail {
 interface MiniMetricProps {
   label: string;
   value: string;
-  icon: string;
+  icon?: string;
   color: string;
   sub: string;
   onClick: () => void;
@@ -44,7 +44,7 @@ const MiniMetric: React.FC<MiniMetricProps> = ({ label, value, icon, color, sub,
 
   return (
     <div
-      className="card shadow-sm hover-up"
+      className="card hover-up"
       onClick={() => {
         if (showTooltip) {
           setShowTooltip(false);
@@ -53,14 +53,16 @@ const MiniMetric: React.FC<MiniMetricProps> = ({ label, value, icon, color, sub,
         }
       }}
       style={{
-        padding: '12px',
+        padding: '16px 12px',
         display: 'flex',
         flexDirection: 'column',
         alignItems: 'center',
         justifyContent: 'center',
         gap: '6px',
-        background: 'var(--w)',
-        border: '1.5px solid #F1F5F9',
+        background: 'rgba(255, 255, 255, 0.8)',
+        backdropFilter: 'blur(10px)',
+        border: 'none',
+        boxShadow: '0 4px 24px rgba(0,0,0,0.04)',
         borderRadius: '16px',
         cursor: 'pointer',
         textAlign: 'center',
@@ -68,28 +70,14 @@ const MiniMetric: React.FC<MiniMetricProps> = ({ label, value, icon, color, sub,
         position: 'relative',
       }}
     >
-      <div
-        style={{
-          width: '32px',
-          height: '32px',
-          borderRadius: '10px',
-          background: `${color}11`,
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          fontSize: '16px',
-          flexShrink: 0,
-        }}
-      >
-        {icon}
-      </div>
       <div 
         style={{ display: 'flex', alignItems: 'center', gap: '6px', justifyContent: 'center', width: '100%' }}
         onClick={(e) => e.stopPropagation()}
       >
+        <div style={{ width: '6px', height: '6px', borderRadius: '50%', background: color, flexShrink: 0 }} />
         <span
           style={{
-            fontSize: '8px',
+            fontSize: '9px',
             fontWeight: 900,
             color: 'var(--g)',
             textTransform: 'uppercase',
@@ -203,6 +191,7 @@ export const Analytics: React.FC<AnalyticsProps> = ({ expenses, groups, me, user
     maxAmt,
     timeframe,
     setTimeframe,
+    dynamicInsight,
   } = useAnalytics({
     expenses,
     groups,
@@ -232,8 +221,8 @@ export const Analytics: React.FC<AnalyticsProps> = ({ expenses, groups, me, user
           }}
         >
           <div>
-            <h3 className="nunito" style={{ fontSize: '13px', fontWeight: 900, display: 'flex', alignItems: 'center', gap: '6px', margin: 0, color: 'var(--t)', position: 'relative' }}>
-              <span>📈</span> Spending History Trends
+            <h3 className="nunito" style={{ fontSize: '13px', fontWeight: 900, display: 'flex', alignItems: 'center', gap: '6px', margin: 0, color: 'var(--t)', position: 'relative', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+              Recent Spending
               <button
                 type="button"
                 onClick={(e) => {
@@ -390,10 +379,10 @@ export const Analytics: React.FC<AnalyticsProps> = ({ expenses, groups, me, user
                       style={{
                         width: '100%',
                         height: `${heightPct}%`,
-                        background: isHovered ? 'linear-gradient(180deg, #4F46E5 0%, #6366F1 100%)' : 'linear-gradient(180deg, #6366F1 0%, #818CF8 100%)',
-                        borderRadius: '8px 8px 0 0',
+                        background: isHovered ? 'linear-gradient(180deg, #6366F1 0%, #8B5CF6 100%)' : 'linear-gradient(180deg, #818CF8 0%, #A78BFA 100%)',
+                        borderRadius: '12px 12px 4px 4px',
                         transition: 'all 0.25s cubic-bezier(0.4, 0, 0.2, 1)',
-                        boxShadow: isHovered ? '0 4px 12px rgba(99, 102, 241, 0.25)' : 'none',
+                        boxShadow: isHovered ? '0 8px 16px rgba(139, 92, 246, 0.3)' : '0 4px 12px rgba(139, 92, 246, 0.1)',
                       }}
                     />
                     <span
@@ -537,19 +526,38 @@ export const Analytics: React.FC<AnalyticsProps> = ({ expenses, groups, me, user
         </div>
       </div>
 
+      {/* Dynamic Insight Card */}
+      <div 
+        style={{
+          background: 'rgba(255, 255, 255, 0.8)',
+          backdropFilter: 'blur(10px)',
+          borderRadius: '20px',
+          padding: '24px 20px',
+          marginBottom: '20px',
+          boxShadow: '0 4px 24px rgba(0,0,0,0.04)',
+          textAlign: 'center',
+          animation: 'fadeSlideIn 0.3s ease-out'
+        }}
+      >
+        <span style={{ fontSize: '11px', fontWeight: 900, color: 'var(--g)', textTransform: 'uppercase', letterSpacing: '1px', display: 'block', marginBottom: '8px' }}>
+          Insights
+        </span>
+        <h2 className="nunito" style={{ fontSize: '18px', fontWeight: 900, color: 'var(--t)', margin: 0, lineHeight: 1.4 }}>
+          {dynamicInsight}
+        </h2>
+      </div>
+
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '14px', marginBottom: '32px' }}>
         <MiniMetric
           label="Total Spent"
           value={`₹${totalSpentVal.toLocaleString()}`}
-          icon="💸"
           color="#10B981"
           sub="Sum of all bills added"
           onClick={() =>
             setAnalyticsDetail({
-              title: 'Total Spent Log 💸',
+              title: 'Total Spent Log',
               items: filteredExpenses.map((e) => ({
                 text: e.title,
-                icon: getEmoji(e.title),
                 val: `₹${e.amt}`,
                 sub: groups.find((g) => g.id === e.gId)?.name || 'Non-Group',
               })),
@@ -557,49 +565,46 @@ export const Analytics: React.FC<AnalyticsProps> = ({ expenses, groups, me, user
           }
         />
         <MiniMetric
-          label="Projected"
+          label="Expected"
           value={`₹${monthlyProjected.toLocaleString()}`}
-          icon="🔥"
           color="#EF4444"
           sub="Estimated month-end spending"
           onClick={() =>
             setAnalyticsDetail({
-              title: 'Projected End 🔥',
+              title: 'Expected End',
               items: [
-                { text: 'Current Rate', icon: '📈', val: `₹${totalSpentVal.toLocaleString()}` },
-                { text: 'Projected End', icon: '📅', val: `₹${monthlyProjected.toLocaleString()}` },
-                { text: 'Logic', icon: '🎯', val: 'Based on your weekly speed' },
+                { text: 'Current Rate', val: `₹${totalSpentVal.toLocaleString()}` },
+                { text: 'Projected End', val: `₹${monthlyProjected.toLocaleString()}` },
+                { text: 'Logic', val: 'Based on your weekly speed' },
               ],
             })
           }
         />
         <MiniMetric
-          label="Avg Bill"
+          label="Typical Cost"
           value={`₹${avgExpense.toFixed(0)}`}
-          icon="⚖️"
           color="#6366F1"
-          sub="Typical cost per bill"
+          sub="Average cost per bill"
           onClick={() =>
             setAnalyticsDetail({
-              title: 'Bill Stats ⚖️',
+              title: 'Bill Stats',
               items: [
-                { text: 'Total Count', icon: '🔢', val: filteredExpenses.length },
-                { text: 'Typical Bill', icon: '📅', val: `₹${avgExpense.toFixed(0)}` },
+                { text: 'Total Count', val: filteredExpenses.length },
+                { text: 'Typical Bill', val: `₹${avgExpense.toFixed(0)}` },
               ],
             })
           }
         />
         <MiniMetric
-          label="Top Group"
+          label="Most Active"
           value={mostActiveGroup.name}
-          icon="⚡"
           color="#F59E0B"
           sub="Group where you spent most"
           onClick={() => {
             const gExps = expenses.filter((e) => String(e.gId) === String(mostActiveGroup.id));
             setAnalyticsDetail({
-              title: `Busiest Group: ${mostActiveGroup.name} ⚡`,
-              items: gExps.map((e) => ({ text: e.title, icon: getEmoji(e.title), val: `₹${e.amt}` })),
+              title: `Busiest Group: ${mostActiveGroup.name}`,
+              items: gExps.map((e) => ({ text: e.title, val: `₹${e.amt}` })),
             });
           }}
         />
@@ -617,8 +622,8 @@ export const Analytics: React.FC<AnalyticsProps> = ({ expenses, groups, me, user
               marginBottom: showCategories ? '24px' : '0px',
             }}
           >
-            <h3 className="nunito" style={{ fontSize: '13px', fontWeight: 900, display: 'flex', alignItems: 'center', gap: '6px', margin: 0, color: 'var(--t)' }}>
-              <span>🔥</span> Top Categories
+            <h3 className="nunito" style={{ fontSize: '13px', fontWeight: 900, display: 'flex', alignItems: 'center', gap: '6px', margin: 0, color: 'var(--t)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+              Spending by Category
             </h3>
             <div
               onClick={() => setShowCategories(!showCategories)}
@@ -757,7 +762,7 @@ export const Analytics: React.FC<AnalyticsProps> = ({ expenses, groups, me, user
                         }}
                       >
                         <span style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                          <span style={{ fontSize: '20px' }}>{cat.emoji}</span>
+                          <div style={{ width: '10px', height: '10px', borderRadius: '50%', background: CAT_COLORS[cat.name] || '#94A3B8' }} />
                           <span style={{ color: '#475569' }}>{cat.name}</span>
                         </span>
                         <span style={{ color: '#1F2937' }}>₹{cat.amount.toLocaleString()}</span>
@@ -805,8 +810,8 @@ export const Analytics: React.FC<AnalyticsProps> = ({ expenses, groups, me, user
         </div>
 
         <div className="card shadow-sm" style={{ padding: '32px', border: '1.5px solid rgba(0,0,0,0.02)' }}>
-          <h3 className="nunito" style={{ fontSize: '20px', fontWeight: 900, marginBottom: '32px', display: 'flex', alignItems: 'center', gap: '12px' }}>
-            <span>🏙️</span> Group Health List
+          <h3 className="nunito" style={{ fontSize: '14px', fontWeight: 900, marginBottom: '32px', display: 'flex', alignItems: 'center', gap: '12px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+            Group Health List
           </h3>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
             {groups
@@ -860,7 +865,9 @@ export const Analytics: React.FC<AnalyticsProps> = ({ expenses, groups, me, user
                           boxShadow: '0 4px 6px -1px rgba(0,0,0,0.05)',
                         }}
                       >
-                        {getEmoji(g.name) || '🏘️'}
+                        <div style={{ fontSize: '20px', fontWeight: 900, color: 'var(--g)' }}>
+                          {g.name ? g.name.charAt(0).toUpperCase() : 'G'}
+                        </div>
                       </div>
                       <div>
                         <span style={{ fontWeight: 900, fontSize: '18px', color: '#1F2937', display: 'block' }}>
@@ -883,8 +890,8 @@ export const Analytics: React.FC<AnalyticsProps> = ({ expenses, groups, me, user
         </div>
 
         <div className="card shadow-sm" style={{ padding: '24px', background: 'var(--w)' }}>
-          <h3 className="nunito" style={{ fontSize: '18px', fontWeight: 900, marginBottom: '20px', display: 'flex', alignItems: 'center', gap: '10px' }}>
-            <span>🎯</span> Monthly Spending Budgets
+          <h3 className="nunito" style={{ fontSize: '14px', fontWeight: 900, marginBottom: '20px', display: 'flex', alignItems: 'center', gap: '10px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+            Monthly Spending Budgets
           </h3>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
             {[
@@ -920,7 +927,7 @@ export const Analytics: React.FC<AnalyticsProps> = ({ expenses, groups, me, user
                 >
                   <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '16px' }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                      <span style={{ fontSize: '20px' }}>{emoji}</span>
+                      <div style={{ width: '10px', height: '10px', borderRadius: '50%', background: CAT_COLORS[label] || '#64748B' }} />
                       <span style={{ fontSize: '14px', fontWeight: 800, color: 'var(--t)' }}>{label}</span>
                     </div>
                     <div style={{ position: 'relative', width: '120px' }}>
