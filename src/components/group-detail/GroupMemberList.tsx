@@ -56,27 +56,37 @@ export const GroupMemberList: React.FC<GroupMemberListProps> = ({
 
   if (selectedId === 'STANDALONE' || !showFriendsList) return null;
 
-  const getMemberBalance = (name: string) => {
-    let balance = 0;
+  // Per-currency net for a member (positive = to collect, negative = to pay).
+  const getMemberBalanceByCurrency = (name: string): Record<string, number> => {
+    const bal: Record<string, number> = {};
     expenses.forEach((e) => {
       if (String(e.gId) !== String(selectedId)) return;
       const splitters = e.splitters || selectedGroup.members || [];
       if (!splitters.includes(name) && e.paid !== name) return;
-
+      const curr = e.currency || selectedGroup.currency || '₹';
       const share = !e.mode || e.mode === 'Equally'
         ? e.amt / (splitters.length || 1)
         : e.mode === 'Unequally'
         ? parseFloat(e.shares?.[name]?.toString() || '0')
         : (e.amt * parseFloat(e.shares?.[name]?.toString() || '0')) / 100;
-
       if (e.paid === name) {
-        balance += e.amt - (splitters.includes(name) ? share : 0);
+        bal[curr] = (bal[curr] || 0) + (e.amt - (splitters.includes(name) ? share : 0));
       } else if (splitters.includes(name)) {
-        balance -= share;
+        bal[curr] = (bal[curr] || 0) - share;
       }
     });
-    return balance;
+    return bal;
   };
+  // "₹400 to pay, $10 to collect" across every currency with a real amount.
+  const memberBalanceText = (name: string): string => {
+    const parts: string[] = [];
+    for (const [c, amt] of Object.entries(getMemberBalanceByCurrency(name))) {
+      if (Math.abs(amt) >= 0.5) parts.push(`${c}${Math.abs(amt).toFixed(0)} to ${amt < 0 ? 'pay' : 'collect'}`);
+    }
+    return parts.join(', ');
+  };
+  const memberHasBalance = (name: string): boolean =>
+    Object.values(getMemberBalanceByCurrency(name)).some((v) => Math.abs(v) >= 0.5);
 
   const activeMembers = selectedGroup.members.filter((m) => !m.endsWith(' (Left)'));
   const adminName = activeMembers[0] || selectedGroup.members[0];
@@ -354,10 +364,9 @@ export const GroupMemberList: React.FC<GroupMemberListProps> = ({
                       <span
                         onClick={async (e) => {
                           e.stopPropagation();
-                          const bal = getMemberBalance(m);
-                          const sym = selectedGroup.currency || '₹';
-                          const balLine = Math.abs(bal) >= 0.5
-                            ? `${m} still has ${sym}${Math.abs(bal).toFixed(0)} to ${bal < 0 ? 'pay' : 'collect'}. It stays saved.`
+                          const bt = memberBalanceText(m);
+                          const balLine = bt
+                            ? `${m} still has ${bt}. It stays saved.`
                             : 'They move to Past Members and history is kept.';
                           if (checkIsMe(m)) {
                             // Leaving (self) → App's bespoke leave card.
@@ -543,10 +552,9 @@ export const GroupMemberList: React.FC<GroupMemberListProps> = ({
                             else if (confirm('Leave group?') && onRemoveMember) onRemoveMember(m);
                             return;
                           }
-                          const bal = getMemberBalance(m);
-                          const sym = selectedGroup.currency || '₹';
-                          const desc = Math.abs(bal) >= 0.5
-                            ? `${m} still has ${sym}${Math.abs(bal).toFixed(0)} to ${bal < 0 ? 'pay' : 'collect'}. It stays saved.`
+                          const bt = memberBalanceText(m);
+                          const desc = bt
+                            ? `${m} still has ${bt}. It stays saved.`
                             : "They haven't joined yet — this removes them.";
                           setActionCard({
                             title: `Remove "${m}"?`,
@@ -732,15 +740,14 @@ export const GroupMemberList: React.FC<GroupMemberListProps> = ({
                     
                     {isAdmin && (
                       <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                        {onWriteOff && Math.abs(getMemberBalance(cleanName)) >= 0.5 && (() => {
-                          const wb = getMemberBalance(cleanName);
-                          const sym = selectedGroup.currency || '₹';
+                        {onWriteOff && memberHasBalance(cleanName) && (() => {
+                          const wbText = memberBalanceText(cleanName);
                           return (
                             <button
                               onClick={(e) => {
                                 e.stopPropagation();
                                 setActionCard({
-                                  title: `Write off ${sym}${Math.abs(wb).toFixed(0)}?`,
+                                  title: `Write off ${wbText}?`,
                                   desc: 'Clears it for good.',
                                   primaryLabel: 'Write off',
                                   primaryColor: '#F59E0B',
