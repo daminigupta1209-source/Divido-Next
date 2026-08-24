@@ -582,11 +582,56 @@ export const MasterSummary: React.FC<MasterSummaryProps> = ({
 
       {homeTab === 'groups' ? (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-        {/* Section header: title + funnel */}
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%', margin: '0 2px 2px' }}>
-          <span style={{ fontSize: '11px', fontWeight: 700, letterSpacing: '1.5px', textTransform: 'uppercase', color: '#B0A79C' }}>
-            Your groups · {filteredGroups.length} active
-          </span>
+        {/* Section header: search bar + funnel */}
+        <div style={{ display: 'flex', gap: '10px', alignItems: 'center', marginBottom: '8px', width: '100%' }}>
+          {/* Search Input */}
+          <div style={{ position: 'relative', flex: 1, lineHeight: 0, fontSize: 0 }}>
+            <svg
+              viewBox="0 0 24 24" fill="none"
+              stroke="currentColor" strokeWidth="2.5"
+              strokeLinecap="round" strokeLinejoin="round"
+              style={{
+                position: 'absolute',
+                left: '12px',
+                top: '50%',
+                transform: 'translateY(-50%)',
+                width: '13px',
+                height: '13px',
+                opacity: 0.4,
+                pointerEvents: 'none',
+                color: '#64748B',
+                zIndex: 2,
+              }}
+            >
+              <circle cx="11" cy="11" r="8" />
+              <line x1="21" y1="21" x2="16.65" y2="16.65" />
+            </svg>
+            <input
+              type="text"
+              placeholder="Search groups..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              style={{
+                display: 'block',
+                width: '100%',
+                height: '38px',
+                lineHeight: 'normal',
+                fontSize: '13px',
+                margin: 0,
+                padding: '0 12px 0 34px',
+                borderRadius: '24px',
+                border: '2px solid #F1F5F9',
+                outline: 'none',
+                fontWeight: 600,
+                background: 'var(--w)',
+                color: '#475569',
+                boxSizing: 'border-box',
+                verticalAlign: 'top',
+              }}
+            />
+          </div>
+
+          {/* Funnel Filter Toggle */}
           <button
             onClick={(e) => { e.stopPropagation(); setShowFilters(!showFilters); }}
             title="Filters"
@@ -596,7 +641,6 @@ export const MasterSummary: React.FC<MasterSummaryProps> = ({
               cursor: 'pointer',
               width: '44px',
               height: '44px',
-              marginRight: '-7px',
               padding: 0,
               opacity: showFilters || searchQuery || timeFilter !== 'all' || balanceFilter !== 'all' ? 1 : 0.55,
               transition: '0.2s all',
@@ -607,7 +651,7 @@ export const MasterSummary: React.FC<MasterSummaryProps> = ({
               flexShrink: 0,
             }}
           >
-            <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" style={{ width: '17px', height: '17px' }}>
+            <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" style={{ width: '18px', height: '18px' }}>
               <path d="M22 3H2L10 12.46V19L14 21V12.46L22 3Z" stroke="currentColor" strokeWidth="2" strokeLinejoin="round" strokeLinecap="round" />
             </svg>
           </button>
