@@ -124,6 +124,23 @@ export const CreateGroupView: React.FC<CreateGroupViewProps> = ({
   // Shake the Group Name box when the user tries to save without a name, so
   // it's obvious what's blocking them (rather than the tick silently doing nothing).
   const [shakeName, setShakeName] = useState(false);
+  const [shakeFriends, setShakeFriends] = useState(false);
+
+  // Names must be unique within a group (case-insensitive, ignoring surrounding
+  // space and any (Left)/(You)/(me) suffix). Flag any participant row that
+  // repeats an earlier one so we can highlight it and block save.
+  const normName = (n: string) => n.replace(/\s*\((left|you|me)\)$/i, '').trim().toLowerCase();
+  const duplicateIndices = (() => {
+    const seen = new Set<string>();
+    const dups = new Set<number>();
+    participants.forEach((p, i) => {
+      const key = normName(p);
+      if (!key) return;
+      if (seen.has(key)) dups.add(i);
+      else seen.add(key);
+    });
+    return dups;
+  })();
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -141,6 +158,13 @@ export const CreateGroupView: React.FC<CreateGroupViewProps> = ({
     );
     if (isDuplicate) {
       setNameError('This group name already exists! 🏘️');
+      return;
+    }
+
+    // Block save if two friends share a name — each needs a different one.
+    if (duplicateIndices.size > 0) {
+      setShakeFriends(true);
+      setTimeout(() => setShakeFriends(false), 450);
       return;
     }
 
@@ -445,6 +469,7 @@ export const CreateGroupView: React.FC<CreateGroupViewProps> = ({
           ) : (
             /* CREATE MODE — editable list to add initial members */
             <div
+              className={shakeFriends ? 'shake' : ''}
               style={{
                 borderRadius: '16px',
                 background: '#FFFFFF',
@@ -466,6 +491,7 @@ export const CreateGroupView: React.FC<CreateGroupViewProps> = ({
                     background: 'var(--bg)',
                     borderRadius: '12px',
                     padding: '4px 12px',
+                    border: duplicateIndices.has(index) ? '1.5px solid #EF4444' : '1.5px solid transparent',
                   }}
                 >
                   <input
@@ -545,6 +571,11 @@ export const CreateGroupView: React.FC<CreateGroupViewProps> = ({
                 <span style={{ fontSize: '16px', fontWeight: 600, lineHeight: 1, color: '#FFFFFF', display: 'flex', alignItems: 'center' }}>+</span>
                 <span style={{ color: '#FFFFFF', lineHeight: 1, display: 'flex', alignItems: 'center' }}>Friend</span>
               </button>
+              {duplicateIndices.size > 0 && (
+                <p style={{ margin: '10px 4px 0', fontSize: '12px', fontWeight: 700, color: '#EF4444', textAlign: 'center' }}>
+                  Each friend needs a different name.
+                </p>
+              )}
             </div>
           )}
         </div>
