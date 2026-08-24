@@ -3552,48 +3552,30 @@ function App() {
                       const { data: { session } } = await supabase.auth.getSession();
                       const myEmail = session?.user?.email || (localStorage.getItem('divido_e2e_testing') === 'true' ? localStorage.getItem('divido_mock_email') || 'e2e-test-guest@divido.app' : null);
 
-                      let activeEmail = myEmail;
+                      const activeEmail = myEmail;
                       if (!activeEmail) {
-                        const joinAsGuest = confirm(
-                          `How would you like to join "${linkRequestGroup.name}"?\n\n` +
-                          `• Click "OK" to join instantly as a Guest (no account needed).\n` +
-                          `• Click "Cancel" to sign in with Google (recommended, saves your data).`
-                        );
-                        if (joinAsGuest) {
-                          let guestId = localStorage.getItem('divido_guest_id');
-                          if (!guestId) {
-                            guestId = 'guest-' + Math.random().toString(36).substring(2, 11) + '-' + Date.now();
-                            localStorage.setItem('divido_guest_id', guestId);
-                          }
-                          activeEmail = guestId + '@divido.app';
-                          localStorage.setItem('divido_email', activeEmail);
-                        } else {
-                          // Remember which group/member we're claiming so the invite
-                          // survives the Google sign-in round-trip — the ?joinGroupId=
-                          // URL param gets wiped by the OAuth redirect, which would
-                          // otherwise drop us on an empty home with no claim card.
-                          // Restored by joinGroupFromQuery when we land back signed in.
-                          try {
-                            localStorage.setItem('divido_pending_join', JSON.stringify({
-                              groupId: linkRequestGroup.id,
-                              placeholderName: p.name,
-                              ts: Date.now(),
-                            }));
-                          } catch { /* storage full — non-fatal */ }
-                          {
-                            const _join = new URL(window.location.href).searchParams.get('joinGroupId');
-                            const cleanRedirect = window.location.origin + window.location.pathname + (_join ? `?joinGroupId=${_join}` : '');
-                            await supabase.auth.signInWithOAuth({
-                              provider: 'google',
-                              options: {
-                                redirectTo: cleanRedirect,
-                                queryParams: { prompt: 'select_account' },
-                              },
-                            });
-                          }
-                          setSubmittingLinkRequest(false);
-                          return;
-                        }
+                        // Google-first: no guest accounts (guests can't sync under
+                        // the group's row-level-security rules). Persist the pending
+                        // claim so it survives the OAuth round-trip, then send them to
+                        // Google sign-in. Restored by joinGroupFromQuery on return.
+                        try {
+                          localStorage.setItem('divido_pending_join', JSON.stringify({
+                            groupId: linkRequestGroup.id,
+                            placeholderName: p.name,
+                            ts: Date.now(),
+                          }));
+                        } catch { /* storage full — non-fatal */ }
+                        const _join = new URL(window.location.href).searchParams.get('joinGroupId');
+                        const cleanRedirect = window.location.origin + window.location.pathname + (_join ? `?joinGroupId=${_join}` : '');
+                        await supabase.auth.signInWithOAuth({
+                          provider: 'google',
+                          options: {
+                            redirectTo: cleanRedirect,
+                            queryParams: { prompt: 'select_account' },
+                          },
+                        });
+                        setSubmittingLinkRequest(false);
+                        return;
                       }
 
                       // A row is a "rejoin" ONLY when it reflects real past-member
