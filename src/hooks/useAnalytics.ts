@@ -71,8 +71,8 @@ export function useAnalytics({
   const [showGroupDropdown, setShowGroupDropdown] = useState(false);
 
   useEffect(() => {
-    if (initialGroupId !== undefined && initialGroupId !== null) {
-      setSelectedGroupId(initialGroupId);
+    if (initialGroupId !== undefined) {
+      setSelectedGroupId(initialGroupId ?? 'ALL');
     }
   }, [initialGroupId]);
 
