@@ -82,6 +82,17 @@ export function useAnalytics({
     const base = selectedGroupId === 'ALL' ? expenses : expenses.filter((e) => String(e.gId) === String(selectedGroupId));
     const now = new Date();
     return base.filter((e) => {
+      // Exclude non-spending entries so "Total Spent"/categories aren't inflated:
+      // settlements (🤝), write-offs (🧾) and SYSTEM notes are money movements or
+      // records, not spending.
+      const t = e.title || '';
+      if (
+        e.paid === 'SYSTEM' ||
+        e.category === '🤝' || e.category === '🧾' ||
+        t.includes('🤝 Settlement') || t.includes('🧾 Written off')
+      ) {
+        return false;
+      }
       const expDate = new Date(e.date);
       if (timeframe === 'month') {
         const currentMonthKey = now.toISOString().slice(0, 7);
