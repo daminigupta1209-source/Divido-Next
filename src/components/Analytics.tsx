@@ -218,12 +218,14 @@ export const Analytics: React.FC<AnalyticsProps> = ({ expenses, groups, me, user
     setShowCategories,
     groupedData,
     categoryList,
+    groupList,
     monthlySpendingByCategory,
     totalSpentVal,
     avgExpense,
     monthlyProjected,
     mostActiveGroup,
     donutSlices,
+    groupDonutSlices,
     showTrendTooltip,
     setShowTrendTooltip,
     lastExpenses,
@@ -239,6 +241,15 @@ export const Analytics: React.FC<AnalyticsProps> = ({ expenses, groups, me, user
     setUserMetadata,
     initialGroupId,
   });
+
+  const [showByGroup, setShowByGroup] = useState<boolean>(selectedGroupId === 'ALL');
+
+  useEffect(() => {
+    setShowByGroup(selectedGroupId === 'ALL');
+  }, [selectedGroupId]);
+
+  const activeSlices = showByGroup ? groupDonutSlices : donutSlices;
+  const activeList = showByGroup ? groupList : categoryList;
 
   const SpendingTrend = () => {
     return (
@@ -515,22 +526,40 @@ export const Analytics: React.FC<AnalyticsProps> = ({ expenses, groups, me, user
             })
           }
         />
-        <MiniMetric
-          label="Expected"
-          value={`₹${monthlyProjected.toLocaleString()}`}
-          color="#EF4444"
-          sub="Estimated month-end spending"
-          onClick={() =>
-            setAnalyticsDetail({
-              title: 'Expected End',
-              items: [
-                { text: 'Current Rate', val: `₹${totalSpentVal.toLocaleString()}` },
-                { text: 'Projected End', val: `₹${monthlyProjected.toLocaleString()}` },
-                { text: 'Logic', val: 'Based on your weekly speed' },
-              ],
-            })
-          }
-        />
+        {showByGroup ? (
+          <MiniMetric
+            label="Total Groups"
+            value={groupList.length.toString()}
+            color="#8B5CF6"
+            sub="Active spending groups"
+            onClick={() =>
+              setAnalyticsDetail({
+                title: 'Active Groups',
+                items: groupList.map((g) => ({
+                  text: g.name,
+                  val: `₹${g.amount}`,
+                })),
+              })
+            }
+          />
+        ) : (
+          <MiniMetric
+            label="Expected"
+            value={`₹${monthlyProjected.toLocaleString()}`}
+            color="#EF4444"
+            sub="Estimated month-end spending"
+            onClick={() =>
+              setAnalyticsDetail({
+                title: 'Expected End',
+                items: [
+                  { text: 'Current Rate', val: `₹${totalSpentVal.toLocaleString()}` },
+                  { text: 'Projected End', val: `₹${monthlyProjected.toLocaleString()}` },
+                  { text: 'Logic', val: 'Based on your weekly speed' },
+                ],
+              })
+            }
+          />
+        )}
         <MiniMetric
           label="Avg. Expense"
           value={`₹${avgExpense.toFixed(0)}`}
@@ -546,20 +575,37 @@ export const Analytics: React.FC<AnalyticsProps> = ({ expenses, groups, me, user
             })
           }
         />
-        <MiniMetric
-          label="Top Category"
-          value={categoryList.length > 0 ? categoryList[0].name : 'N/A'}
-          color="#F59E0B"
-          sub="Highest spending category"
-          onClick={() => {
-            if (categoryList.length === 0) return;
-            const topCat = categoryList[0];
-            setAnalyticsDetail({
-              title: `Top Category: ${topCat.name}`,
-              items: topCat.items.map((e) => ({ text: e.title, val: `₹${e.amt}` })),
-            });
-          }}
-        />
+        {showByGroup ? (
+          <MiniMetric
+            label="Top Group"
+            value={groupList.length > 0 ? groupList[0].name : 'N/A'}
+            color="#F97316"
+            sub="Highest spending group"
+            onClick={() => {
+              if (groupList.length === 0) return;
+              const topGrp = groupList[0];
+              setAnalyticsDetail({
+                title: `Top Group: ${topGrp.name}`,
+                items: topGrp.items.map((e) => ({ text: e.title, val: `₹${e.amt}` })),
+              });
+            }}
+          />
+        ) : (
+          <MiniMetric
+            label="Top Category"
+            value={categoryList.length > 0 ? categoryList[0].name : 'N/A'}
+            color="#F59E0B"
+            sub="Highest spending category"
+            onClick={() => {
+              if (categoryList.length === 0) return;
+              const topCat = categoryList[0];
+              setAnalyticsDetail({
+                title: `Top Category: ${topCat.name}`,
+                items: topCat.items.map((e) => ({ text: e.title, val: `₹${e.amt}` })),
+              });
+            }}
+          />
+        )}
       </div>
 
       <SpendingTrend />
@@ -575,7 +621,7 @@ export const Analytics: React.FC<AnalyticsProps> = ({ expenses, groups, me, user
             }}
           >
             <h3 className="nunito" style={{ fontSize: '13px', fontWeight: 900, display: 'flex', alignItems: 'center', gap: '6px', margin: 0, color: 'var(--t)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
-              Spending by Category
+              {showByGroup ? 'Groups Leaderboard' : 'Spending by Category'}
             </h3>
             <div
               onClick={() => setShowCategories(!showCategories)}
@@ -608,11 +654,11 @@ export const Analytics: React.FC<AnalyticsProps> = ({ expenses, groups, me, user
 
           {showCategories && (
             <div style={{ animation: 'fadeSlideIn 0.3s ease-out' }}>
-              {categoryList.length > 0 && (
+              {activeList.length > 0 && (
                 <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', marginBottom: '24px', position: 'relative' }}>
                   <svg width="180" height="180" viewBox="0 0 120 120" style={{ transform: 'rotate(-90deg)' }}>
                     <circle cx="60" cy="60" r="50" fill="transparent" stroke="#F1F5F9" strokeWidth="12" />
-                    {donutSlices.map((slice) => {
+                    {activeSlices.map((slice) => {
                       const strokeLength = (slice.pct / 100) * 314.16;
                       const strokeOffset = -(slice.offset / 100) * 314.16;
                       const isHovered = hoveredCategory === slice.name;
@@ -655,10 +701,10 @@ export const Analytics: React.FC<AnalyticsProps> = ({ expenses, groups, me, user
                           {hoveredCategory}
                         </span>
                         <span style={{ fontSize: '14px', fontWeight: 950, color: '#1F2937', marginTop: '2px' }}>
-                          ₹{donutSlices.find(s => s.name === hoveredCategory)?.amount?.toLocaleString(undefined, { maximumFractionDigits: 0 }) ?? '0'}
+                          ₹{activeSlices.find(s => s.name === hoveredCategory)?.amount?.toLocaleString(undefined, { maximumFractionDigits: 0 }) ?? '0'}
                         </span>
-                        <span style={{ fontSize: '9px', fontWeight: 900, color: CAT_COLORS[hoveredCategory] }}>
-                          {donutSlices.find(s => s.name === hoveredCategory)?.pct?.toFixed(0) ?? '0'}%
+                        <span style={{ fontSize: '9px', fontWeight: 900, color: activeSlices.find(s => s.name === hoveredCategory)?.color || '#000' }}>
+                          {activeSlices.find(s => s.name === hoveredCategory)?.pct?.toFixed(0) ?? '0'}%
                         </span>
                       </>
                     ) : (
@@ -672,23 +718,24 @@ export const Analytics: React.FC<AnalyticsProps> = ({ expenses, groups, me, user
                   </div>
                 </div>
               )}
-              {categoryList.length === 0 ? (
+              {activeList.length === 0 ? (
                 <p style={{ textAlign: 'center', color: 'var(--g)', padding: '40px' }}>No data harvested yet</p>
               ) : (
-                categoryList.map((cat) => {
-                  const pct = (cat.amount / (totalSpentVal || 1)) * 100 || 0;
+                activeList.map((item, idx) => {
+                  const pct = (item.amount / (totalSpentVal || 1)) * 100 || 0;
+                  const itemColor = showByGroup ? (groupDonutSlices.find(g => g.name === item.name)?.color || '#10B981') : (CAT_COLORS[item.name] || '#94A3B8');
                   return (
                     <div
-                      key={cat.name}
+                      key={item.name}
                       className="hover-up"
                       onClick={() =>
                         setAnalyticsDetail({
-                          title: `${cat.name} Expenses`,
-                          items: cat.items.map((e) => ({
+                          title: `${item.name} Expenses`,
+                          items: item.items.map((e) => ({
                             text: e.title,
                             icon: getEmoji(e.title),
                             val: `₹${e.amt}`,
-                            sub: groups.find((g) => g.id === e.gId)?.name,
+                            sub: showByGroup ? (new Date(e.date).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })) : groups.find((g) => g.id === e.gId)?.name,
                           })),
                         })
                       }
@@ -697,61 +744,46 @@ export const Analytics: React.FC<AnalyticsProps> = ({ expenses, groups, me, user
                         cursor: 'pointer',
                         padding: '8px',
                         borderRadius: '12px',
-                        background: hoveredCategory === cat.name ? '#F8FAFC' : 'transparent',
-                        border: hoveredCategory === cat.name ? '1px dashed #CBD5E1' : '1px solid transparent',
+                        background: hoveredCategory === item.name ? '#F8FAFC' : 'transparent',
+                        border: hoveredCategory === item.name ? '1px dashed #CBD5E1' : '1px solid transparent',
                         transition: 'all 0.2s',
+                        position: 'relative',
                       }}
-                      onMouseEnter={() => setHoveredCategory(cat.name)}
+                      onMouseEnter={() => setHoveredCategory(item.name)}
                       onMouseLeave={() => setHoveredCategory(null)}
                     >
-                      <div
-                        style={{
-                          display: 'flex',
-                          justifyContent: 'space-between',
-                          fontWeight: 900,
-                          fontSize: '14px',
-                          marginBottom: '12px',
-                        }}
-                      >
-                        <span style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                          <div style={{ width: '10px', height: '10px', borderRadius: '50%', background: CAT_COLORS[cat.name] || '#94A3B8' }} />
-                          <span style={{ color: '#475569' }}>{cat.name}</span>
+                      {/* Rank badge for leaderboard */}
+                      {showByGroup && (
+                        <div style={{
+                          position: 'absolute', left: '-12px', top: '16px',
+                          background: idx === 0 ? '#F59E0B' : idx === 1 ? '#94A3B8' : idx === 2 ? '#B45309' : '#E2E8F0',
+                          color: idx < 3 ? '#FFF' : '#64748B',
+                          width: '18px', height: '18px', borderRadius: '50%',
+                          display: 'flex', alignItems: 'center', justifyContent: 'center',
+                          fontSize: '10px', fontWeight: 900
+                        }}>
+                          {idx + 1}
+                        </div>
+                      )}
+                      <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px', paddingLeft: showByGroup ? '12px' : '0' }}>
+                        <span style={{ fontSize: '13px', fontWeight: 800, color: 'var(--t)' }}>
+                          <span style={{ marginRight: '6px' }}>{showByGroup ? '🏡' : ('emoji' in item ? item.emoji : '⚡')}</span>
+                          {item.name}
                         </span>
-                        <span style={{ color: '#1F2937' }}>₹{cat.amount.toLocaleString()}</span>
+                        <span style={{ fontSize: '13px', fontWeight: 900, color: 'var(--t)' }}>
+                          ₹{item.amount.toLocaleString(undefined, { maximumFractionDigits: 0 })}
+                        </span>
                       </div>
-                      <div
-                        style={{
-                          width: '100%',
-                          height: '10px',
-                          background: 'var(--bg)',
-                          borderRadius: '20px',
-                          overflow: 'hidden',
-                          position: 'relative',
-                        }}
-                      >
+                      <div style={{ width: '100%', height: '6px', background: '#F1F5F9', borderRadius: '4px', overflow: 'hidden', paddingLeft: showByGroup ? '12px' : '0' }}>
                         <div
                           style={{
                             width: `${pct}%`,
                             height: '100%',
-                            background: CAT_COLORS[cat.name] || '#94A3B8',
-                            borderRadius: '20px',
-                            transition: '1s width cubic-bezier(0.4, 0, 0.2, 1)',
+                            background: itemColor,
+                            borderRadius: '4px',
+                            transition: 'width 0.5s cubic-bezier(0.4, 0, 0.2, 1)',
                           }}
-                        ></div>
-                      </div>
-                      <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '8px' }}>
-                        <span
-                          className="pill"
-                          style={{
-                            fontSize: '10px',
-                            padding: '4px 10px',
-                            background: 'var(--w)',
-                            border: '1px solid #E2E8F0',
-                            color: '#64748B',
-                          }}
-                        >
-                          {pct.toFixed(0)}% of total
-                        </span>
+                        />
                       </div>
                     </div>
                   );

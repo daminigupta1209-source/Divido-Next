@@ -198,6 +198,45 @@ export function useAnalytics({
     });
   }, [categoryList, totalSpentVal]);
 
+  const groupData = useMemo(() => {
+    return filteredExpenses.reduce<Record<string, { id: string; name: string; amount: number; items: Expense[] }>>(
+      (acc, e) => {
+        const gId = e.gId || 'STANDALONE';
+        const group = groups.find(g => String(g.id) === String(gId));
+        const name = group?.name || 'Non-Group Expenses';
+        if (!acc[gId]) acc[gId] = { id: String(gId), name, amount: 0, items: [] };
+        acc[gId].amount += (Number(e.amt) || 0);
+        acc[gId].items.push(e);
+        return acc;
+      },
+      {}
+    );
+  }, [filteredExpenses, groups]);
+
+  const groupList = useMemo(() => {
+    return Object.values(groupData).sort((a, b) => b.amount - a.amount);
+  }, [groupData]);
+
+  const groupDonutSlices = useMemo(() => {
+    let accumulatedPercent = 0;
+    const GROUP_COLORS = ['#3B82F6', '#8B5CF6', '#EC4899', '#F97316', '#10B981', '#06B6D4', '#F59E0B', '#64748B', '#EF4444', '#14B8A6'];
+    return groupList.map((grp, i) => {
+      const pct = (grp.amount / (totalSpentVal || 1)) * 100;
+      const offset = accumulatedPercent;
+      accumulatedPercent += pct;
+      const color = GROUP_COLORS[i % GROUP_COLORS.length];
+      return {
+        id: grp.id,
+        name: grp.name,
+        amount: grp.amount,
+        pct,
+        offset,
+        color,
+        emoji: '🏡'
+      };
+    });
+  }, [groupList, totalSpentVal]);
+
   // Trend tooltips
   const [showTrendTooltip, setShowTrendTooltip] = useState(false);
   useEffect(() => {
@@ -264,12 +303,14 @@ export function useAnalytics({
     setShowCategories,
     groupedData,
     categoryList,
+    groupList,
     monthlySpendingByCategory,
     totalSpentVal,
     avgExpense,
     monthlyProjected,
     mostActiveGroup,
     donutSlices,
+    groupDonutSlices,
     showTrendTooltip,
     setShowTrendTooltip,
     lastExpenses,
