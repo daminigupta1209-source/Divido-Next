@@ -88,8 +88,9 @@ export function useAnalytics({
       const t = e.title || '';
       if (
         e.paid === 'SYSTEM' ||
-        e.category === '🤝' || e.category === '🧾' ||
-        t.includes('🤝 Settlement') || t.includes('🧾 Written off')
+        e.category === '🤝' ||
+        t.includes('🤝 Settlement') ||
+        t === 'Written off' || e.notes === 'Written off'
       ) {
         return false;
       }

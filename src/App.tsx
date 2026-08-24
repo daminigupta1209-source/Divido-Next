@@ -1869,14 +1869,14 @@ function App() {
         writeOffs.push({
           id: genExpenseId(),
           gId: groupId,
-          title: `🧾 Written off: ${payer} → ${receiver}`,
+          title: 'Written off',
           amt: Math.round(absVal * 100) / 100,
           paid: payer,
           splitters: [receiver],
           date: today,
           notes: 'Written off',
           currency: curr,
-          category: '🧾',
+          category: '',
           mode: 'Equally' as const,
           shares: {},
         });
