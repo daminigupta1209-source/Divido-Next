@@ -540,7 +540,7 @@ export const MasterSummary: React.FC<MasterSummaryProps> = ({
         <div style={{ display: 'flex', borderBottom: '1.5px solid #F1F5F9' }}>
           {([
             { id: 'groups', label: 'Groups' },
-            { id: 'activity', label: 'Activity' }
+            { id: 'activity', label: 'Activities' }
           ] as const).map((tab) => {
             const isActive = tab.id === homeTab;
             return (
@@ -967,6 +967,7 @@ export const MasterSummary: React.FC<MasterSummaryProps> = ({
             deleteExpense={deleteExpense!}
             setSelectedId={setSelectedId}
             setView={setView}
+            hideBackButton={true}
           />
         </div>
       )}

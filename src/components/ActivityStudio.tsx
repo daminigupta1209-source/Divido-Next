@@ -21,6 +21,7 @@ interface ActivityStudioProps {
   deleteExpense: (id: string | number) => void;
   setSelectedId: (id: string | number | null) => void;
   setView: (view: string) => void;
+  hideBackButton?: boolean;
 }
 
 export const ActivityStudio: React.FC<ActivityStudioProps> = ({
@@ -37,6 +38,7 @@ export const ActivityStudio: React.FC<ActivityStudioProps> = ({
   deleteExpense,
   setSelectedId,
   setView,
+  hideBackButton = false,
 }) => {
   const {
     openDropdownId,
@@ -85,16 +87,18 @@ export const ActivityStudio: React.FC<ActivityStudioProps> = ({
   return (
     <div className="content-width-limit">
       <div style={{ display: 'flex', gap: '10px', alignItems: 'center', marginBottom: '16px', width: '100%' }}>
-        <span
-          onClick={() => setView('summary')}
-          style={{
-            fontSize: '22px', cursor: 'pointer', opacity: 0.4,
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-            height: '38px', width: '24px', flexShrink: 0,
-          }}
-        >
-          ←
-        </span>
+        {!hideBackButton && (
+          <span
+            onClick={() => setView('summary')}
+            style={{
+              fontSize: '22px', cursor: 'pointer', opacity: 0.4,
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              height: '38px', width: '24px', flexShrink: 0,
+            }}
+          >
+            ←
+          </span>
+        )}
 
         {/* Search Input */}
         <div style={{ position: 'relative', flex: 1, lineHeight: 0, fontSize: 0 }}>
