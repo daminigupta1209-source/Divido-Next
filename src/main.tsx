@@ -40,15 +40,40 @@ createRoot(document.getElementById('root')!).render(
 // Register the service worker for offline support + faster loads. Uses
 // network-first for pages, so new deploys still reach users promptly.
 if ('serviceWorker' in navigator) {
-  // When a freshly-deployed service worker takes control, reload once so the
-  // new app version applies on the FIRST reopen (previously it took two —
-  // the first launch still showed the old cached build). The guard prevents
-  // any reload loop.
-  let refreshing = false;
+  // When a freshly-deployed service worker takes control, DON'T silently reload
+  // (that used to wipe whatever the user was typing in a modal). Instead show a
+  // small "New version — tap to reload" bar and let them choose when. Skipped on
+  // the very first install (no previous controller), where the page is already
+  // current and no reload is needed.
+  let bannerShown = false;
+  const hadController = !!navigator.serviceWorker.controller;
+
+  const showUpdateBanner = () => {
+    if (bannerShown || document.getElementById('dv-update-bar')) return;
+    bannerShown = true;
+    const bar = document.createElement('div');
+    bar.id = 'dv-update-bar';
+    bar.style.cssText =
+      'position:fixed;left:50%;transform:translateX(-50%);bottom:18px;z-index:2147483647;' +
+      'background:#0F172A;color:#fff;padding:10px 12px 10px 16px;border-radius:14px;' +
+      'box-shadow:0 8px 24px rgba(0,0,0,0.28);display:flex;align-items:center;gap:12px;' +
+      "font-family:Nunito,-apple-system,sans-serif;font-size:13px;font-weight:700;max-width:calc(100vw - 32px);";
+    const txt = document.createElement('span');
+    txt.textContent = 'New version available';
+    const btn = document.createElement('button');
+    btn.textContent = 'Reload';
+    btn.style.cssText =
+      'background:#10B981;color:#fff;border:none;border-radius:10px;padding:7px 16px;' +
+      'font-weight:800;font-size:13px;cursor:pointer;font-family:inherit;';
+    btn.onclick = () => window.location.reload();
+    bar.appendChild(txt);
+    bar.appendChild(btn);
+    document.body.appendChild(bar);
+  };
+
   navigator.serviceWorker.addEventListener('controllerchange', () => {
-    if (refreshing) return;
-    refreshing = true;
-    window.location.reload();
+    if (!hadController) return; // first install — nothing to update
+    showUpdateBanner();
   });
 
   window.addEventListener('load', () => {
