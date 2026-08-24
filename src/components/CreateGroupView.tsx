@@ -121,6 +121,14 @@ export const CreateGroupView: React.FC<CreateGroupViewProps> = ({
     setParticipants(updated);
   };
 
+  // In EDIT mode, members that already existed when the screen opened are
+  // read-only here — renaming or removing them must go through the member list
+  // (which safely rewrites expenses on rename and tombstones/preserves balance
+  // on remove). This screen only manages newly-added rows. In CREATE mode there
+  // are no existing members, so everything is editable.
+  const isExistingMember = (name: string) =>
+    !!editingGroup && (editingGroup.members || []).includes(name);
+
   // Shake the Group Name box when the user tries to save without a name, so
   // it's obvious what's blocking them (rather than the tick silently doing nothing).
   const [shakeName, setShakeName] = useState(false);
@@ -500,7 +508,7 @@ export const CreateGroupView: React.FC<CreateGroupViewProps> = ({
                     value={index === 0 ? `${(participant && participant !== me ? participant : userName).replace(/\s*\(you\)$/i, '')} (You)` : participant}
                     placeholder={index === 0 ? "Your name" : `Friend ${index + 1}`}
                     onChange={(e) => handleParticipantChange(index, e.target.value)}
-                    disabled={index === 0}
+                    disabled={index === 0 || isExistingMember(participant)}
                     style={{
                       flex: 1,
                       height: '36px',
@@ -513,7 +521,7 @@ export const CreateGroupView: React.FC<CreateGroupViewProps> = ({
                       fontFamily: 'Nunito',
                     }}
                   />
-                  {index > 0 && (
+                  {index > 0 && !isExistingMember(participant) && (
                     <button
                       type="button"
                       onClick={() => handleRemoveParticipant(index)}
