@@ -13,6 +13,7 @@ interface GroupSettingsModalProps {
   onLeaveOrDeleteGroup: () => void;
   onEditGroup: () => void;
   onEditUserProfile: () => void;
+  onOpenAnalytics?: () => void;
   userMetadata?: Record<string, any>;
 }
 
@@ -26,6 +27,7 @@ export const GroupSettingsModal: React.FC<GroupSettingsModalProps> = ({
   onLeaveOrDeleteGroup,
   onEditGroup,
   onEditUserProfile,
+  onOpenAnalytics,
   userMetadata = {},
 }) => {
   const [isVisible, setIsVisible] = useState(false);
@@ -128,6 +130,28 @@ export const GroupSettingsModal: React.FC<GroupSettingsModalProps> = ({
               />
             </div>
           </div>
+
+          <button
+            onClick={() => { handleClose(); onOpenAnalytics?.(); }}
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              padding: '12px 16px',
+              background: '#F8FAFC',
+              borderRadius: '14px',
+              border: 'none',
+              cursor: 'pointer',
+              fontSize: '15px',
+              fontWeight: 800,
+              color: '#1E293B',
+              transition: 'background-color 0.15s',
+            }}
+            onMouseEnter={(e) => (e.currentTarget.style.background = '#F1F5F9')}
+            onMouseLeave={(e) => (e.currentTarget.style.background = '#F8FAFC')}
+          >
+            Group Analytics
+          </button>
 
           {!isPastMember && (
             <button

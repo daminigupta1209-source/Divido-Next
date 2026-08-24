@@ -745,6 +745,11 @@ export const MobileHeader: React.FC<MobileHeaderProps> = ({
                       setMobileShowGroupOptionsMenu(false);
                       setView('profile');
                     }}
+                    onOpenAnalytics={() => {
+                      setMobileShowGroupOptionsMenu(false);
+                      if (setAnalyticsGroupId) setAnalyticsGroupId(selectedId);
+                      setView('analytics');
+                    }}
                   />
                 )}
               </div>
