@@ -431,7 +431,16 @@ export const ExpenseRow: React.FC<ExpenseRowProps> = ({
             {e.title}
           </h3>
           <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '11px', color: '#94A3B8', marginTop: '6px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-            <span style={{ color: e.paid === me ? '#16A34A' : '#DE7093', fontWeight: 700 }}>{e.paid === me ? 'You paid' : `${e.paid} paid`}</span>
+            <span style={{ color: e.paid === me ? '#16A34A' : '#DE7093', fontWeight: 700 }}>{(() => {
+              // Write-offs show "who paid whom" for a clearer picture.
+              const receiver = Array.isArray(e.splitters) ? e.splitters[0] : undefined;
+              if (e.title === 'Written off' && receiver) {
+                const payerLabel = e.paid === me ? 'You' : e.paid;
+                const receiverLabel = receiver === me ? 'you' : receiver;
+                return `${payerLabel} paid ${receiverLabel}`;
+              }
+              return e.paid === me ? 'You paid' : `${e.paid} paid`;
+            })()}</span>
             <span>•</span>
             <span>{formatDate(e.date)}</span>
             {e.tags && e.tags.length > 0 && (
