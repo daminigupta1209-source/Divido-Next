@@ -734,6 +734,10 @@ export const MobileHeader: React.FC<MobileHeaderProps> = ({
                       setMobileShowGroupOptionsMenu(false);
                       handleDeleteGroup(selectedId || '');
                     }}
+                    onEditGroup={() => {
+                      setMobileShowGroupOptionsMenu(false);
+                      if (onEditGroup && selectedGroup) onEditGroup(selectedGroup.id);
+                    }}
                   />
                 )}
               </div>

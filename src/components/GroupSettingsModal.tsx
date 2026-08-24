@@ -11,6 +11,7 @@ interface GroupSettingsModalProps {
   onConvertCurrency: () => void;
   onExportData: () => void;
   onLeaveOrDeleteGroup: () => void;
+  onEditGroup: () => void;
 }
 
 export const GroupSettingsModal: React.FC<GroupSettingsModalProps> = ({
@@ -21,6 +22,7 @@ export const GroupSettingsModal: React.FC<GroupSettingsModalProps> = ({
   onConvertCurrency,
   onExportData,
   onLeaveOrDeleteGroup,
+  onEditGroup,
 }) => {
   const [isVisible, setIsVisible] = useState(false);
 
@@ -87,8 +89,26 @@ export const GroupSettingsModal: React.FC<GroupSettingsModalProps> = ({
           <h1 className="nunito" style={{ fontSize: '20px', fontWeight: 900, color: '#0F172A', margin: 0 }}>Group Settings</h1>
         </div>
 
-        {/* Profile Section */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+        {/* Profile Card */}
+        <div
+          onClick={() => { handleClose(); onEditGroup(); }}
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: '16px',
+            background: '#F8FAFC',
+            padding: '16px',
+            borderRadius: '20px',
+            cursor: 'pointer',
+            border: '1px solid #F1F5F9',
+            boxShadow: '0 2px 10px rgba(0,0,0,0.02)',
+            transition: 'background-color 0.2s, transform 0.1s',
+          }}
+          onMouseEnter={(e) => (e.currentTarget.style.background = '#F1F5F9')}
+          onMouseLeave={(e) => (e.currentTarget.style.background = '#F8FAFC')}
+          onMouseDown={(e) => (e.currentTarget.style.transform = 'scale(0.98)')}
+          onMouseUp={(e) => (e.currentTarget.style.transform = 'scale(1)')}
+        >
           <div
             style={{
               width: '64px',
@@ -103,6 +123,7 @@ export const GroupSettingsModal: React.FC<GroupSettingsModalProps> = ({
               fontWeight: 900,
               overflow: 'hidden',
               flexShrink: 0,
+              boxShadow: '0 4px 12px rgba(0,0,0,0.08)',
             }}
           >
             {group.emoji && (group.emoji.startsWith('data:image/') || group.emoji.startsWith('http')) ? (
@@ -118,6 +139,11 @@ export const GroupSettingsModal: React.FC<GroupSettingsModalProps> = ({
             <span style={{ fontSize: '13px', fontWeight: 600, color: '#64748B', marginTop: '2px' }}>
               {activeMembersCount} {activeMembersCount === 1 ? 'member' : 'members'}
             </span>
+          </div>
+          <div style={{ color: '#94A3B8', display: 'flex', alignItems: 'center' }}>
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+              <polyline points="9 18 15 12 9 6" />
+            </svg>
           </div>
         </div>
 
