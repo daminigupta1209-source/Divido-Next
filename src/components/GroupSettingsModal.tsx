@@ -59,155 +59,38 @@ export const GroupSettingsModal: React.FC<GroupSettingsModalProps> = ({
       style={{
         zIndex: 5000,
         backgroundColor: '#FFFFFF',
+        display: 'flex',
+        alignItems: 'flex-end',
+        justifyContent: 'center',
         position: 'fixed',
         top: 0,
         left: 0,
         right: 0,
         bottom: 0,
-        transform: isVisible ? 'translateX(0)' : 'translateX(100%)',
-        transition: 'transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1)',
-        display: 'flex',
-        flexDirection: 'column',
-        overflowY: 'auto',
       }}
+      onClick={handleClose}
     >
       <div
         style={{
           width: '100%',
           maxWidth: '480px',
-          margin: '0 auto',
+          background: '#FFFFFF',
+          borderTopLeftRadius: '24px',
+          borderTopRightRadius: '24px',
           padding: '24px',
           paddingBottom: 'max(24px, env(safe-area-inset-bottom))',
+          transform: isVisible ? 'translateY(0)' : 'translateY(100%)',
+          transition: 'transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1)',
+          boxShadow: '0 -10px 40px rgba(0,0,0,0.1)',
           display: 'flex',
           flexDirection: 'column',
           gap: '24px',
         }}
+        onClick={(e) => e.stopPropagation()}
       >
-        {/* Header with Back Button */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '16px', marginBottom: '8px' }}>
-          <button onClick={handleClose} style={{ background: 'none', border: 'none', padding: 0, cursor: 'pointer', display: 'flex', alignItems: 'center', color: '#0F172A' }}>
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-              <polyline points="15 18 9 12 15 6" />
-            </svg>
-          </button>
-          <h1 className="nunito" style={{ fontSize: '20px', fontWeight: 900, color: '#0F172A', margin: 0 }}>Group Settings</h1>
+        <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '-8px' }}>
+          <div style={{ width: '40px', height: '5px', background: '#E2E8F0', borderRadius: '10px' }} />
         </div>
-
-        {/* Profile Card */}
-        <div
-          onClick={() => { handleClose(); onEditGroup(); }}
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: '16px',
-            background: '#F8FAFC',
-            padding: '16px',
-            borderRadius: '20px',
-            cursor: 'pointer',
-            border: '1px solid #F1F5F9',
-            boxShadow: '0 2px 10px rgba(0,0,0,0.02)',
-            transition: 'background-color 0.2s, transform 0.1s',
-          }}
-          onMouseEnter={(e) => (e.currentTarget.style.background = '#F1F5F9')}
-          onMouseLeave={(e) => (e.currentTarget.style.background = '#F8FAFC')}
-          onMouseDown={(e) => (e.currentTarget.style.transform = 'scale(0.98)')}
-          onMouseUp={(e) => (e.currentTarget.style.transform = 'scale(1)')}
-        >
-          <div
-            style={{
-              width: '64px',
-              height: '64px',
-              borderRadius: '50%',
-              background: 'var(--nav-bg)',
-              color: 'var(--purple-text)',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              fontSize: '28px',
-              fontWeight: 900,
-              overflow: 'hidden',
-              flexShrink: 0,
-              boxShadow: '0 4px 12px rgba(0,0,0,0.08)',
-            }}
-          >
-            {group.emoji && (group.emoji.startsWith('data:image/') || group.emoji.startsWith('http')) ? (
-              <img src={group.emoji} style={{ width: '100%', height: '100%', objectFit: 'cover' }} alt="" />
-            ) : (
-              group.name?.charAt(0).toUpperCase() || '👤'
-            )}
-          </div>
-          <div style={{ display: 'flex', flexDirection: 'column', flex: 1, minWidth: 0 }}>
-            <span style={{ fontSize: '11px', fontWeight: 800, color: '#94A3B8', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '2px' }}>Group Profile</span>
-            <h2 className="nunito" style={{ fontSize: '20px', fontWeight: 900, color: '#0F172A', margin: 0, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-              {group.name || 'Untitled Group'}
-            </h2>
-            <span style={{ fontSize: '13px', fontWeight: 600, color: '#64748B', marginTop: '2px' }}>
-              {activeMembersCount} {activeMembersCount === 1 ? 'member' : 'members'}
-            </span>
-          </div>
-          <div style={{ color: '#94A3B8', display: 'flex', alignItems: 'center' }}>
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-              <polyline points="9 18 15 12 9 6" />
-            </svg>
-          </div>
-        </div>
-
-        {/* User Profile Card */}
-        <div
-          onClick={() => { handleClose(); onEditUserProfile(); }}
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: '16px',
-            background: '#FFFFFF',
-            padding: '16px',
-            borderRadius: '20px',
-            cursor: 'pointer',
-            border: '1px solid #F1F5F9',
-            boxShadow: '0 2px 10px rgba(0,0,0,0.02)',
-            transition: 'background-color 0.2s, transform 0.1s',
-            marginTop: '-12px',
-          }}
-          onMouseEnter={(e) => (e.currentTarget.style.background = '#F8FAFC')}
-          onMouseLeave={(e) => (e.currentTarget.style.background = '#FFFFFF')}
-          onMouseDown={(e) => (e.currentTarget.style.transform = 'scale(0.98)')}
-          onMouseUp={(e) => (e.currentTarget.style.transform = 'scale(1)')}
-        >
-          <div
-            style={{
-              width: '48px',
-              height: '48px',
-              borderRadius: '50%',
-              background: '#F1F5F9',
-              color: '#64748B',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              fontSize: '20px',
-              fontWeight: 900,
-              overflow: 'hidden',
-              flexShrink: 0,
-            }}
-          >
-            {userMetadata?.[me]?.profilePhoto ? (
-              <img src={userMetadata[me].profilePhoto} style={{ width: '100%', height: '100%', objectFit: 'cover' }} alt="" />
-            ) : (
-              me.charAt(0).toUpperCase()
-            )}
-          </div>
-          <div style={{ display: 'flex', flexDirection: 'column', flex: 1, minWidth: 0 }}>
-            <span style={{ fontSize: '11px', fontWeight: 800, color: '#94A3B8', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '2px' }}>Your Profile</span>
-            <h3 className="nunito" style={{ fontSize: '16px', fontWeight: 900, color: '#0F172A', margin: 0, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-              {me}
-            </h3>
-          </div>
-          <div style={{ color: '#94A3B8', display: 'flex', alignItems: 'center' }}>
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-              <polyline points="9 18 15 12 9 6" />
-            </svg>
-          </div>
-        </div>
-
         {/* Settings List */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
           
