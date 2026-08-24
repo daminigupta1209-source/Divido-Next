@@ -2645,6 +2645,52 @@ function App() {
           />
         )}
 
+        {(view === 'summary' || view === 'activity') && (
+          <div className="content-width-limit" style={{ padding: '0 20px', marginTop: '16px', marginBottom: '8px' }}>
+            <div style={{ display: 'flex', borderBottom: '1.5px solid #F1F5F9' }}>
+              {([
+                { id: 'summary', label: 'Groups' },
+                { id: 'activity', label: 'Activity' }
+              ] as const).map((tab) => {
+                const isActive = tab.id === view;
+                return (
+                  <button
+                    key={tab.id}
+                    onClick={() => setView(tab.id)}
+                    style={{
+                      flex: 1,
+                      position: 'relative',
+                      background: 'transparent',
+                      border: 'none',
+                      padding: '10px 4px 12px',
+                      fontSize: '14px',
+                      fontWeight: isActive ? 800 : 600,
+                      cursor: 'pointer',
+                      color: isActive ? '#1E293B' : '#94A3B8',
+                      transition: '0.2s all',
+                    }}
+                  >
+                    {tab.label}
+                    <span
+                      style={{
+                        position: 'absolute',
+                        bottom: '-1.5px',
+                        left: 0,
+                        right: 0,
+                        height: '3px',
+                        background: isActive ? '#EA580C' : 'transparent',
+                        borderRadius: '3px 3px 0 0',
+                        transition: '0.2s all',
+                        opacity: isActive ? 1 : 0,
+                      }}
+                    />
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        )}
+
         <React.Suspense fallback={
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', flex: 1, padding: '60px 0' }}>
             <div style={{ width: '32px', height: '32px', borderRadius: '50%', border: '3px solid rgba(99,102,241,0.2)', borderTopColor: '#6366F1', animation: 'spin 0.8s linear infinite' }} />
