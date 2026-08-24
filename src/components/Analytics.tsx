@@ -767,7 +767,7 @@ export const Analytics: React.FC<AnalyticsProps> = ({ expenses, groups, me, user
           <h3 className="nunito" style={{ fontSize: '14px', fontWeight: 900, marginBottom: '32px', display: 'flex', alignItems: 'center', gap: '12px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
             Group Health List
           </h3>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+          <div style={{ display: 'flex', flexDirection: 'column' }}>
             {groups
               .filter(
                 (g) =>
@@ -797,50 +797,41 @@ export const Analytics: React.FC<AnalyticsProps> = ({ expenses, groups, me, user
                       display: 'flex',
                       justifyContent: 'space-between',
                       alignItems: 'center',
-                      padding: '16px 20px',
-                      background: 'var(--bg)',
-                      borderRadius: '20px',
-                      border: '1px solid #F1F5F9',
-                      transition: '0.3s all',
+                      padding: '12px 0',
+                      borderBottom: '1px solid #F8FAFC',
                       cursor: 'pointer',
                     }}
                   >
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
                       <div
                         style={{
-                          width: '44px',
-                          height: '44px',
+                          width: '36px',
+                          height: '36px',
                           background: 'linear-gradient(135deg, #F0F9FF 0%, #E0F2FE 100%)',
-                          borderRadius: '12px',
+                          borderRadius: '50%',
                           display: 'flex',
                           alignItems: 'center',
                           justifyContent: 'center',
-                          boxShadow: '0 2px 4px rgba(14, 165, 233, 0.1)',
                         }}
                       >
-                        <div style={{ fontSize: '18px', fontWeight: 800, color: '#0284C7' }}>
+                        <div style={{ fontSize: '14px', fontWeight: 800, color: '#0284C7' }}>
                           {g.name ? g.name.charAt(0).toUpperCase() : 'G'}
                         </div>
                       </div>
                       <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
-                        <span style={{ fontWeight: 800, fontSize: '16px', color: '#0F172A' }}>
+                        <span style={{ fontWeight: 800, fontSize: '14px', color: '#0F172A' }}>
                           {g.name || 'Untitled Group'}
                         </span>
-                        <span style={{ fontSize: '11px', color: '#64748B', fontWeight: 700 }}>
+                        <span style={{ fontSize: '11px', color: '#94A3B8', fontWeight: 600 }}>
                           {g.members.length} Member{g.members.length !== 1 ? 's' : ''}
                         </span>
                       </div>
                     </div>
                     <div style={{ textAlign: 'right' }}>
                       <div style={{ 
-                        background: '#EEF2FF', 
-                        color: '#6366F1', 
-                        padding: '6px 12px', 
-                        borderRadius: '20px', 
+                        color: '#64748B', 
                         fontSize: '12px', 
-                        fontWeight: 800, 
-                        whiteSpace: 'nowrap',
-                        display: 'inline-block'
+                        fontWeight: 700, 
                       }}>
                         {count} Event{count !== 1 ? 's' : ''}
                       </div>
