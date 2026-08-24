@@ -336,9 +336,15 @@ export const GroupMemberList: React.FC<GroupMemberListProps> = ({
                       <span
                         onClick={async (e) => {
                           e.stopPropagation();
-                          const promptMsg = checkIsMe(m) 
-                            ? `Leave group? You won't see new updates.`
-                            : `Remove "${m}" from the group? This will shift them to Past Members and keep past history.`;
+                          // Warn (don't block) if there's still money to pay/collect.
+                          const bal = getMemberBalance(m);
+                          const sym = selectedGroup.currency || '₹';
+                          const balLine = Math.abs(bal) >= 0.5
+                            ? ` ${checkIsMe(m) ? 'You' : m} still ${checkIsMe(m) ? 'have' : 'has'} ${sym}${Math.abs(bal).toFixed(0)} to ${bal < 0 ? 'pay' : 'collect'}. It stays saved.`
+                            : '';
+                          const promptMsg = checkIsMe(m)
+                            ? `Leave group?${balLine}`
+                            : `Remove "${m}"?${balLine ? balLine + ' They move to Past Members.' : ' They move to Past Members and history is kept.'}`;
                           if (confirm(promptMsg)) {
                             if (onRemoveMember) {
                               onRemoveMember(m);

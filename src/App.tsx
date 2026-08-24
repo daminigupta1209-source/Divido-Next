@@ -1880,13 +1880,24 @@ function App() {
       return;
     }
 
+    // Warn (don't block) if you still have money to pay/collect here.
+    let leaveBalLine = '';
+    if (!isStandalone && hasOthers) {
+      const myBal = getMemberBalance(id, me);
+      for (const [cur, amt] of Object.entries(myBal)) {
+        if (Math.abs(amt as number) >= 0.5) {
+          leaveBalLine = ` You still have ${cur}${Math.abs(amt as number).toFixed(0)} to ${(amt as number) < 0 ? 'pay' : 'collect'} here. It stays saved.`;
+          break;
+        }
+      }
+    }
     setConfirmState({
       show: true,
       title: isStandalone ? 'Clear History?' : hasOthers ? 'Leave Group?' : 'Delete Group?',
       desc: isStandalone
         ? `Are you sure you want to clear all non-group expenses?`
         : hasOthers
-        ? `Leave group? You won't see new updates.`
+        ? `Leave group?${leaveBalLine || " You won't see new updates."}`
         : `Are you sure you want to delete this group permanently?`,
       type: 'danger',
       onConfirm: async () => {
