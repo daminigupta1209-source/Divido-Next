@@ -191,7 +191,7 @@ export const Analytics: React.FC<AnalyticsProps> = ({ expenses, groups, me, user
     maxAmt,
     timeframe,
     setTimeframe,
-    dynamicInsight,
+    dynamicInsights,
   } = useAnalytics({
     expenses,
     groups,
@@ -532,19 +532,45 @@ export const Analytics: React.FC<AnalyticsProps> = ({ expenses, groups, me, user
           background: 'rgba(255, 255, 255, 0.8)',
           backdropFilter: 'blur(10px)',
           borderRadius: '20px',
-          padding: '24px 20px',
+          padding: '24px 0',
           marginBottom: '20px',
           boxShadow: '0 4px 24px rgba(0,0,0,0.04)',
           textAlign: 'center',
-          animation: 'fadeSlideIn 0.3s ease-out'
+          animation: 'fadeSlideIn 0.3s ease-out',
+          position: 'relative'
         }}
       >
         <span style={{ fontSize: '11px', fontWeight: 900, color: 'var(--g)', textTransform: 'uppercase', letterSpacing: '1px', display: 'block', marginBottom: '8px' }}>
-          Insights
+          Insights {dynamicInsights.length > 1 && '(Swipe 👉)'}
         </span>
-        <h2 className="nunito" style={{ fontSize: '18px', fontWeight: 900, color: 'var(--t)', margin: 0, lineHeight: 1.4 }}>
-          {dynamicInsight}
-        </h2>
+        <div 
+          className="hide-scrollbar"
+          style={{
+            display: 'flex',
+            overflowX: 'auto',
+            scrollSnapType: 'x mandatory',
+            scrollBehavior: 'smooth',
+            WebkitOverflowScrolling: 'touch',
+            scrollbarWidth: 'none',
+            msOverflowStyle: 'none',
+          }}
+        >
+          {dynamicInsights.map((insight, idx) => (
+            <div 
+              key={idx}
+              style={{
+                flex: '0 0 100%',
+                scrollSnapAlign: 'center',
+                padding: '0 20px',
+                boxSizing: 'border-box'
+              }}
+            >
+              <h2 className="nunito" style={{ fontSize: '18px', fontWeight: 900, color: 'var(--t)', margin: 0, lineHeight: 1.4 }}>
+                {insight}
+              </h2>
+            </div>
+          ))}
+        </div>
       </div>
 
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '14px', marginBottom: '32px' }}>

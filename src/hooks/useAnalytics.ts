@@ -210,31 +210,40 @@ export function useAnalytics({
   const lastExpenses = useMemo(() => filteredExpenses.slice(-10), [filteredExpenses]);
   const maxAmt = useMemo(() => Math.max(...lastExpenses.map(e => e.amt), 1), [lastExpenses]);
 
-  const dynamicInsight = useMemo(() => {
-    if (totalSpentVal === 0) return "Track your expenses to see insights here.";
+  const dynamicInsights = useMemo(() => {
+    if (totalSpentVal === 0) return ["Track your expenses to see insights here."];
 
+    const insights: string[] = [];
     const meaningfulCategories = categoryList.filter(c => c.name !== 'General / Other');
     
     if (meaningfulCategories.length > 0) {
       const topCat = meaningfulCategories[0];
       const pct = ((topCat.amount / totalSpentVal) * 100).toFixed(0);
       if (Number(pct) > 10) {
-         return `${topCat.name} makes up ${pct}% of your spending.`;
+         insights.push(`${topCat.name} makes up ${pct}% of your spending.`);
       }
     }
 
     if (filteredExpenses.length > 0) {
        const largestExpense = [...filteredExpenses].sort((a, b) => (Number(b.amt) || 0) - (Number(a.amt) || 0))[0];
        if (largestExpense && largestExpense.amt > (avgExpense * 1.5)) {
-          return `Your largest expense is ${largestExpense.title} at ₹${largestExpense.amt}.`;
+          insights.push(`Your largest expense is ${largestExpense.title} at ₹${largestExpense.amt}.`);
        }
     }
 
     if (mostActiveGroup && mostActiveGroup.name !== 'Non-Group Expenses' && mostActiveGroup.name !== 'Untitled Group') {
-       return `You are most active in ${mostActiveGroup.name}.`;
+       insights.push(`You are most active in ${mostActiveGroup.name}.`);
     }
 
-    return `Your typical cost per bill is ₹${avgExpense.toFixed(0)}.`;
+    if (filteredExpenses.length > 3) {
+      insights.push(`Your typical cost per bill is ₹${avgExpense.toFixed(0)} across ${filteredExpenses.length} transactions.`);
+    }
+
+    if (insights.length === 0) {
+      insights.push(`Your typical cost per bill is ₹${avgExpense.toFixed(0)}.`);
+    }
+
+    return insights;
   }, [categoryList, totalSpentVal, avgExpense, filteredExpenses, mostActiveGroup]);
 
   return {
@@ -267,6 +276,6 @@ export function useAnalytics({
     maxAmt,
     timeframe,
     setTimeframe,
-    dynamicInsight,
+    dynamicInsights,
   };
 }
