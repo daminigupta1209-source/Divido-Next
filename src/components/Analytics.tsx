@@ -644,15 +644,16 @@ export const Analytics: React.FC<AnalyticsProps> = ({ expenses, groups, me, user
           }
         />
         <MiniMetric
-          label="Top Group"
-          value={mostActiveGroup.name}
+          label="Top Category"
+          value={categoryList.length > 0 ? categoryList[0].name : 'N/A'}
           color="#F59E0B"
-          sub="Group where you spent most"
+          sub="Highest spending category"
           onClick={() => {
-            const gExps = expenses.filter((e) => String(e.gId) === String(mostActiveGroup.id));
+            if (categoryList.length === 0) return;
+            const topCat = categoryList[0];
             setAnalyticsDetail({
-              title: `Busiest Group: ${mostActiveGroup.name}`,
-              items: gExps.map((e) => ({ text: e.title, val: `₹${e.amt}` })),
+              title: `Top Category: ${topCat.name}`,
+              items: topCat.items.map((e) => ({ text: e.title, val: `₹${e.amt}` })),
             });
           }}
         />
