@@ -629,7 +629,7 @@ export const Analytics: React.FC<AnalyticsProps> = ({ expenses, groups, me, user
           }
         />
         <MiniMetric
-          label="Typical Cost"
+          label="Avg. Expense"
           value={`₹${avgExpense.toFixed(0)}`}
           color="#6366F1"
           sub="Average cost per bill"
@@ -644,7 +644,7 @@ export const Analytics: React.FC<AnalyticsProps> = ({ expenses, groups, me, user
           }
         />
         <MiniMetric
-          label="Most Active"
+          label="Top Group"
           value={mostActiveGroup.name}
           color="#F59E0B"
           sub="Group where you spent most"
