@@ -177,39 +177,38 @@ const InsightCarousel = ({ insights }: { insights: string[] }) => {
   return (
     <div 
       style={{
-        background: 'rgba(255, 255, 255, 0.8)',
-        backdropFilter: 'blur(10px)',
+        background: 'linear-gradient(135deg, #F0F9FF 0%, #E0F2FE 100%)',
         borderRadius: '20px',
-        padding: '24px 20px',
+        padding: '16px 16px',
         marginBottom: '20px',
-        boxShadow: '0 4px 24px rgba(0,0,0,0.04)',
+        boxShadow: '0 4px 16px rgba(14, 165, 233, 0.1)',
         textAlign: 'center',
         animation: 'fadeSlideIn 0.3s ease-out',
         position: 'relative'
       }}
     >
-      <span style={{ fontSize: '11px', fontWeight: 900, color: 'var(--g)', textTransform: 'uppercase', letterSpacing: '1px', display: 'block', marginBottom: '12px' }}>
+      <span style={{ fontSize: '10px', fontWeight: 800, color: '#0284C7', textTransform: 'uppercase', letterSpacing: '1px', display: 'block', marginBottom: '8px' }}>
         Insights
       </span>
       
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '12px' }}>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '8px' }}>
         {insights.length > 1 ? (
-          <button onClick={handlePrev} style={{ background: 'none', border: 'none', color: 'var(--g)', cursor: 'pointer', padding: '4px', fontSize: '14px', flexShrink: 0 }}>❮</button>
-        ) : <div style={{ width: '24px' }} />}
+          <button onClick={handlePrev} style={{ background: 'none', border: 'none', color: '#0284C7', cursor: 'pointer', padding: '4px', fontSize: '14px', flexShrink: 0 }}>❮</button>
+        ) : <div style={{ width: '20px' }} />}
         
-        <div style={{ flex: 1, minHeight: '54px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-           <h2 className="nunito" style={{ fontSize: '17px', fontWeight: 900, color: 'var(--t)', margin: 0, lineHeight: 1.4, animation: 'fadeIn 0.4s ease-out' }} key={currentIndex}>
+        <div style={{ flex: 1, minHeight: '40px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+           <h2 className="nunito" style={{ fontSize: '16px', fontWeight: 600, color: '#0F172A', margin: 0, lineHeight: 1.4, animation: 'fadeIn 0.4s ease-out' }} key={currentIndex}>
              {insights[currentIndex]}
            </h2>
         </div>
 
         {insights.length > 1 ? (
-          <button onClick={handleNext} style={{ background: 'none', border: 'none', color: 'var(--g)', cursor: 'pointer', padding: '4px', fontSize: '14px', flexShrink: 0 }}>❯</button>
-        ) : <div style={{ width: '24px' }} />}
+          <button onClick={handleNext} style={{ background: 'none', border: 'none', color: '#0284C7', cursor: 'pointer', padding: '4px', fontSize: '14px', flexShrink: 0 }}>❯</button>
+        ) : <div style={{ width: '20px' }} />}
       </div>
 
       {insights.length > 1 && (
-        <div style={{ display: 'flex', justifyContent: 'center', gap: '8px', marginTop: '16px' }}>
+        <div style={{ display: 'flex', justifyContent: 'center', gap: '8px', marginTop: '10px' }}>
           {insights.map((_, idx) => (
             <div 
               key={idx} 
