@@ -58,6 +58,7 @@ import { GroupGallery } from './components/GroupGallery';
 import { checkIfDemoMode } from './lib/demoMode';
 import { ensureArray, ensureObject, isLegacyRenameLog, formatCompactAmount, genGroupId } from './lib/utils';
 import { useSupabaseSync, getGidRemap } from './hooks/useSupabaseSync';
+import { BalanceActionCard } from './components/BalanceActionCard';
 import { useAppHotkeys } from './hooks/useAppHotkeys';
 import { useUndoStack } from './hooks/useUndoStack';
 import { MobileHeader } from './components/MobileHeader';
@@ -242,6 +243,16 @@ function App() {
     onConfirm: null,
     type: 'danger',
   });
+  // Drives the bespoke leave / remove / write-off card (BalanceActionCard).
+  const [balanceCard, setBalanceCard] = useState<null | {
+    title: string;
+    desc: string;
+    primaryLabel: string;
+    primaryColor: string;
+    onPrimary: () => void;
+    secondaryLabel?: string;
+    onSecondary?: () => void;
+  }>(null);
   const [toastMsg, setToastMsg] = useState<string | null>(null);
   const [postExpenseShareData, setPostExpenseShareData] = useState<{
     expense: Expense;
@@ -1891,16 +1902,9 @@ function App() {
         }
       }
     }
-    setConfirmState({
-      show: true,
-      title: isStandalone ? 'Clear History?' : hasOthers ? 'Leave Group?' : 'Delete Group?',
-      desc: isStandalone
-        ? `Are you sure you want to clear all non-group expenses?`
-        : hasOthers
-        ? `Leave group?${leaveBalLine || " You won't see new updates."}`
-        : `Are you sure you want to delete this group permanently?`,
-      type: 'danger',
-      onConfirm: async () => {
+    // Extracted so both the plain confirm (delete/standalone) and the bespoke
+    // leave card run the exact same leave/delete logic.
+    const performLeaveDelete = async () => {
         if (!isStandalone) {
           // Leaving is always allowed, even with an outstanding balance. The
           // member's row is kept as "(Left)" so their expenses/balances stay
@@ -2004,9 +2008,41 @@ function App() {
           setSelectedId(null);
           setView('summary');
         }
-        setConfirmState({ show: false });
-      },
-    });
+      setConfirmState({ show: false });
+      setBalanceCard(null);
+    };
+
+    if (!isStandalone && hasOthers) {
+      // Bespoke leave card (pay/collect aware): Settle up when there's a balance,
+      // otherwise a plain Leave. ✕ cancels.
+      setBalanceCard(leaveBalLine
+        ? {
+            title: `Leave "${g.name}"?`,
+            desc: leaveBalLine.trim(),
+            primaryLabel: 'Settle up →',
+            primaryColor: '#10B981',
+            onPrimary: () => { setBalanceCard(null); setGlobalSettleDataSecure({ name: me, gId: id }); },
+            secondaryLabel: 'Leave anyway',
+            onSecondary: () => { performLeaveDelete(); },
+          }
+        : {
+            title: `Leave "${g.name}"?`,
+            desc: "You won't see new updates.",
+            primaryLabel: 'Leave',
+            primaryColor: '#F97316',
+            onPrimary: () => { performLeaveDelete(); },
+          });
+    } else {
+      setConfirmState({
+        show: true,
+        title: isStandalone ? 'Clear History?' : 'Delete Group?',
+        desc: isStandalone
+          ? `Are you sure you want to clear all non-group expenses?`
+          : `Are you sure you want to delete this group permanently?`,
+        type: 'danger',
+        onConfirm: performLeaveDelete,
+      });
+    }
   };
 
   const handleLogout = () => {
@@ -4300,6 +4336,19 @@ function App() {
         onConfirm={confirmState.onConfirm || (() => {})}
         onCancel={() => setConfirmState({ show: false })}
       />
+
+      {balanceCard && (
+        <BalanceActionCard
+          title={balanceCard.title}
+          desc={balanceCard.desc}
+          primaryLabel={balanceCard.primaryLabel}
+          primaryColor={balanceCard.primaryColor}
+          onPrimary={balanceCard.onPrimary}
+          secondaryLabel={balanceCard.secondaryLabel}
+          onSecondary={balanceCard.onSecondary}
+          onClose={() => setBalanceCard(null)}
+        />
+      )}
 
       {qrModalData && (
         <React.Suspense fallback={null}>

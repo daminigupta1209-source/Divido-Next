@@ -1,5 +1,6 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Group, Expense, UserMetadata } from '../../lib/types';
+import { BalanceActionCard } from '../BalanceActionCard';
 
 interface GroupMemberListProps {
   selectedGroup: Group;
@@ -45,6 +46,9 @@ export const GroupMemberList: React.FC<GroupMemberListProps> = ({
   const [isAddingInline, setIsAddingInline] = React.useState(false);
   const [inlineAddVal, setInlineAddVal] = React.useState('');
   const inlineInputRef = React.useRef<HTMLInputElement>(null);
+  const [actionCard, setActionCard] = useState<null | {
+    title: string; desc: string; primaryLabel: string; primaryColor: string; onPrimary: () => void;
+  }>(null);
 
   if (selectedId === 'STANDALONE' || !showFriendsList) return null;
 
@@ -168,6 +172,16 @@ export const GroupMemberList: React.FC<GroupMemberListProps> = ({
         gap: '20px',
       }}
     >
+      {actionCard && (
+        <BalanceActionCard
+          title={actionCard.title}
+          desc={actionCard.desc}
+          primaryLabel={actionCard.primaryLabel}
+          primaryColor={actionCard.primaryColor}
+          onPrimary={actionCard.onPrimary}
+          onClose={() => setActionCard(null)}
+        />
+      )}
       <div
         className="content-width-limit"
         style={{
@@ -336,20 +350,27 @@ export const GroupMemberList: React.FC<GroupMemberListProps> = ({
                       <span
                         onClick={async (e) => {
                           e.stopPropagation();
-                          // Warn (don't block) if there's still money to pay/collect.
                           const bal = getMemberBalance(m);
                           const sym = selectedGroup.currency || '₹';
                           const balLine = Math.abs(bal) >= 0.5
-                            ? ` ${checkIsMe(m) ? 'You' : m} still ${checkIsMe(m) ? 'have' : 'has'} ${sym}${Math.abs(bal).toFixed(0)} to ${bal < 0 ? 'pay' : 'collect'}. It stays saved.`
-                            : '';
-                          const promptMsg = checkIsMe(m)
-                            ? `Leave group?${balLine}`
-                            : `Remove "${m}"?${balLine ? balLine + ' They move to Past Members.' : ' They move to Past Members and history is kept.'}`;
-                          if (confirm(promptMsg)) {
-                            if (onRemoveMember) {
-                              onRemoveMember(m);
-                            }
+                            ? `${m} still has ${sym}${Math.abs(bal).toFixed(0)} to ${bal < 0 ? 'pay' : 'collect'}. It stays saved.`
+                            : 'They move to Past Members and history is kept.';
+                          if (checkIsMe(m)) {
+                            // Leaving (self) — keep the simple confirm.
+                            const meBal = Math.abs(bal) >= 0.5
+                              ? ` You still have ${sym}${Math.abs(bal).toFixed(0)} to ${bal < 0 ? 'pay' : 'collect'}. It stays saved.`
+                              : '';
+                            if (confirm(`Leave group?${meBal}`) && onRemoveMember) onRemoveMember(m);
+                            return;
                           }
+                          // Removing someone else — bespoke card (warn, don't block).
+                          setActionCard({
+                            title: `Remove "${m}"?`,
+                            desc: balLine,
+                            primaryLabel: 'Remove anyway',
+                            primaryColor: '#F97316',
+                            onPrimary: () => { setActionCard(null); onRemoveMember && onRemoveMember(m); },
+                          });
                         }}
                         style={{
                           cursor: 'pointer',
