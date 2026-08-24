@@ -6,6 +6,7 @@ import { StyledDropdown } from './StyledDropdown';
 // Pill-style trigger for the compact filter dropdowns (matches the old selects).
 const filterBtnStyle: React.CSSProperties = { padding: '6px 12px', borderRadius: '20px', border: '1px solid #E2E8F0', fontSize: '12px', fontWeight: 600, background: '#F1F5F9', color: '#475569', boxShadow: 'none' };
 import { simplifyMultiCurrencyDebts, computeRawPairwiseTransactions } from '../lib/calculations';
+import { ActivityStudio } from './ActivityStudio';
 
 import { Group, Expense, UserMetadata, GlobalSettleData } from '../lib/types';
 
@@ -15,8 +16,8 @@ interface MasterSummaryProps {
   getMemberBalance: (groupId: string | number, memberName: string) => Record<string, number>;
   setSelectedId: (id: string | number | null) => void;
   setView: (view: string) => void;
-  setGroups: (groups: Group[]) => void;
-  setExpenses: (expenses: Expense[]) => void;
+  setGroups: React.Dispatch<React.SetStateAction<Group[]>>;
+  setExpenses: React.Dispatch<React.SetStateAction<Expense[]>>;
   setShowCurrPickerId: (id: string | null) => void;
   showCurrPickerId: string | null;
   handleRenameGroup: (id: string | number) => void;
@@ -24,6 +25,7 @@ interface MasterSummaryProps {
   me: string;
   setShowExpModal: (show: boolean) => void;
   setEditingExpense: (exp: Expense | null) => void;
+  setShowConvertModalId?: (id: string | number | null) => void;
   globalSettleData: GlobalSettleData | null;
   setGlobalSettleData: (data: GlobalSettleData | null) => void;
   userMetadata: Record<string, UserMetadata>;
@@ -41,6 +43,9 @@ interface MasterSummaryProps {
   setSearchQuery?: (val: string) => void;
   onCreateGroup?: () => void;
   loading?: boolean;
+  setEditingSettle?: (s: any) => void;
+  setShowSettleModal?: (b: boolean) => void;
+  deleteExpense?: (id: string | number) => void;
 }
 
 export const MasterSummary: React.FC<MasterSummaryProps> = ({
@@ -58,6 +63,7 @@ export const MasterSummary: React.FC<MasterSummaryProps> = ({
   me,
   setShowExpModal,
   setEditingExpense,
+  setShowConvertModalId,
   globalSettleData,
   setGlobalSettleData,
   userMetadata,
@@ -68,11 +74,15 @@ export const MasterSummary: React.FC<MasterSummaryProps> = ({
   setSearchQuery = () => {},
   onCreateGroup,
   loading = false,
+  setEditingSettle,
+  setShowSettleModal,
+  deleteExpense,
 }) => {
   const [openDropdownId, setOpenDropdownId] = useState<string | number | null>(null);
   const [timeFilter, setTimeFilter] = useState<'all' | '30days' | '7days'>('all');
   const [balanceFilter, setBalanceFilter] = useState<'all' | 'owe' | 'owed' | 'settled'>('all');
   const [showFilters, setShowFilters] = useState(false);
+  const [homeTab, setHomeTab] = useState<'groups' | 'activity'>('groups');
   const budgetDismissKey = `budgetBannerDismissed_${new Date().getFullYear()}_${new Date().getMonth()}`;
   const [budgetBannerDismissed, setBudgetBannerDismissed] = useState(() => localStorage.getItem(budgetDismissKey) === '1');
   const [upiBannerDismissed, setUpiBannerDismissed] = useState(() => localStorage.getItem('divido_upi_banner_dismissed') === '1');
@@ -526,7 +536,52 @@ export const MasterSummary: React.FC<MasterSummaryProps> = ({
       })()}
 
 
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+      <div style={{ marginBottom: '16px', marginTop: '4px' }}>
+        <div style={{ display: 'flex', borderBottom: '1.5px solid #F1F5F9' }}>
+          {([
+            { id: 'groups', label: 'Groups' },
+            { id: 'activity', label: 'Activity' }
+          ] as const).map((tab) => {
+            const isActive = tab.id === homeTab;
+            return (
+              <button
+                key={tab.id}
+                onClick={() => setHomeTab(tab.id)}
+                style={{
+                  flex: 1,
+                  position: 'relative',
+                  background: 'transparent',
+                  border: 'none',
+                  padding: '10px 4px 12px',
+                  fontSize: '14px',
+                  fontWeight: isActive ? 800 : 600,
+                  cursor: 'pointer',
+                  color: isActive ? '#1E293B' : '#94A3B8',
+                  transition: '0.2s all',
+                }}
+              >
+                {tab.label}
+                <span
+                  style={{
+                    position: 'absolute',
+                    bottom: '-1.5px',
+                    left: 0,
+                    right: 0,
+                    height: '3px',
+                    background: isActive ? '#EA580C' : 'transparent',
+                    borderRadius: '3px 3px 0 0',
+                    transition: '0.2s all',
+                    opacity: isActive ? 1 : 0,
+                  }}
+                />
+              </button>
+            );
+          })}
+        </div>
+      </div>
+
+      {homeTab === 'groups' ? (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
         {/* Section header: title + funnel */}
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%', margin: '0 2px 2px' }}>
           <span style={{ fontSize: '11px', fontWeight: 700, letterSpacing: '1.5px', textTransform: 'uppercase', color: '#B0A79C' }}>
@@ -895,7 +950,26 @@ export const MasterSummary: React.FC<MasterSummaryProps> = ({
             <span style={{ lineHeight: 1, display: 'block' }}>New Group</span>
           </button>
         )}
-      </div>
+        </div>
+      ) : (
+        <div style={{ marginTop: '16px' }}>
+          <ActivityStudio
+            expenses={expenses}
+            groups={groups}
+            setExpenses={setExpenses}
+            setEditingExpense={setEditingExpense}
+            setShowExpModal={setShowExpModal}
+            setEditingSettle={setEditingSettle!}
+            setShowSettleModal={setShowSettleModal!}
+            me={me}
+            setShowConvertModalId={setShowConvertModalId!}
+            setGroups={setGroups}
+            deleteExpense={deleteExpense!}
+            setSelectedId={setSelectedId}
+            setView={setView}
+          />
+        </div>
+      )}
     </div>
   );
 };
