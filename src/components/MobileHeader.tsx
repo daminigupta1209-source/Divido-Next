@@ -187,6 +187,7 @@ export const MobileHeader: React.FC<MobileHeaderProps> = ({
       attachments: [selectedPhoto],
       tags: ['Gallery'],
       mode: 'Equally',
+      splitters: [],
       shares: {}
     };
     setExpenses((prev) => [newPhotoExpense, ...prev]);

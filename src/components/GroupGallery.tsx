@@ -397,7 +397,7 @@ export const GroupGallery: React.FC<GroupGalleryProps> = ({
           </div>
         ) : (
           <div style={{ display: 'flex', flexDirection: 'column', gap: '22px' }}>
-            {photosByDate.map(([date, photos]) => (
+            {photosByDate.map(([date, photos], dateIndex) => (
               <div key={date || 'undated'}>
                 {/* Date section header */}
                 <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '10px', marginLeft: '2px' }}>
@@ -409,6 +409,30 @@ export const GroupGallery: React.FC<GroupGalleryProps> = ({
                 </div>
 
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(72px, 1fr))', gap: '8px' }}>
+                  {/* Add-more tile — same size as a photo, shown in the newest group */}
+                  {dateIndex === 0 && (
+                    <div
+                      onClick={() => (document.getElementById('mobile-gallery-upload-input') as HTMLInputElement)?.click()}
+                      className="hover-up-mini"
+                      title="Add photo"
+                      style={{
+                        aspectRatio: '1',
+                        borderRadius: '14px',
+                        cursor: 'pointer',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        background: '#F8FAFC',
+                        border: '2px dashed #CBD5E1',
+                        color: '#94A3B8',
+                      }}
+                    >
+                      <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
+                        <line x1="12" y1="5" x2="12" y2="19" />
+                        <line x1="5" y1="12" x2="19" y2="12" />
+                      </svg>
+                    </div>
+                  )}
                   {photos.map((photo) => (
                     <div
                       key={photo.idx}
