@@ -60,6 +60,7 @@ interface MobileHeaderProps {
   onRequestRejoin?: () => void;
   onCreateGroup?: () => void;
   onScan?: () => void;
+  analyticsGroupId?: string | number | null;
 }
 
 export const MobileHeader: React.FC<MobileHeaderProps> = ({
@@ -89,6 +90,7 @@ export const MobileHeader: React.FC<MobileHeaderProps> = ({
   groupDetailTab,
   setGroupDetailTab,
   handleMobileExportCSV,
+  analyticsGroupId,
   setAnalyticsGroupId,
   handleDeleteGroup,
   pageDescriptions,
@@ -937,7 +939,7 @@ export const MobileHeader: React.FC<MobileHeaderProps> = ({
                     {view === 'groups' && 'Your Groups'}
                     {view === 'friends' && 'All balances'}
                     {view === 'activity' && 'All Activities'}
-                    {view === 'analytics' && 'Analytics'}
+                    {view === 'analytics' && (analyticsGroupId === null || analyticsGroupId === 'ALL' ? 'Global Analytics' : 'Analytics')}
                     {view === 'profile' && 'Profile'}
                     {view === 'gallery' && 'Gallery'}
                   </span>

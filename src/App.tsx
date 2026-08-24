@@ -2616,6 +2616,7 @@ function App() {
             setMobileShowGroupOptionsMenu={setMobileShowGroupOptionsMenu}
             setShowConvertModalId={setShowConvertModalId}
             handleMobileExportCSV={handleMobileExportCSV}
+            analyticsGroupId={analyticsGroupId}
             setAnalyticsGroupId={setAnalyticsGroupId}
             handleDeleteGroup={handleDeleteGroup}
             pageDescriptions={pageDescriptions}
