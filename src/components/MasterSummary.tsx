@@ -95,6 +95,26 @@ export const MasterSummary: React.FC<MasterSummaryProps> = ({
     return () => window.removeEventListener('click', closeDrop);
   }, []);
 
+  const swipeStart = React.useRef<{ x: number; y: number } | null>(null);
+  const onSwipeStart = (e: React.TouchEvent) => {
+    const t = e.touches[0];
+    swipeStart.current = { x: t.clientX, y: t.clientY };
+  };
+  const onSwipeEnd = (e: React.TouchEvent) => {
+    if (!swipeStart.current) return;
+    const t = e.changedTouches[0];
+    const dx = t.clientX - swipeStart.current.x;
+    const dy = t.clientY - swipeStart.current.y;
+    swipeStart.current = null;
+    if (Math.abs(dx) > 60 && Math.abs(dx) > Math.abs(dy) * 1.5) {
+      if (dx < 0) {
+        if (homeTab === 'groups') setHomeTab('activity');
+      } else {
+        if (homeTab === 'activity') setHomeTab('groups');
+      }
+    }
+  };
+
   // Header search icon opens the filter panel (which contains the search field)
   useEffect(() => {
     if (searchNonce) setShowFilters(true);
@@ -304,7 +324,7 @@ export const MasterSummary: React.FC<MasterSummaryProps> = ({
   const hasNoUpi = !userMetadata[me]?.upiId;
 
   return (
-    <div className="content-width-limit">
+    <div className="content-width-limit" onTouchStart={onSwipeStart} onTouchEnd={onSwipeEnd}>
       {hasNoUpi && !upiBannerDismissed && (
         <div
           className="card shadow-sm hover-up-mini"
