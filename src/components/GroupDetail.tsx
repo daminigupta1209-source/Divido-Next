@@ -210,9 +210,13 @@ export const GroupDetail: React.FC<GroupDetailProps> = ({
     swipeStart.current = null;
     if (Math.abs(dx) > 60 && Math.abs(dx) > Math.abs(dy) * 1.5) {
       if (dx < 0) {
-        if (activeTab === 'expenses' && setActiveTab) setActiveTab('photos');
+        // Swipe left
+        if (activeTab === 'expenses' && setActiveTab) setActiveTab('balances');
+        else if (activeTab === 'balances' && setActiveTab) setActiveTab('photos');
       } else {
-        if (activeTab === 'photos' && setActiveTab) setActiveTab('expenses');
+        // Swipe right
+        if (activeTab === 'photos' && setActiveTab) setActiveTab('balances');
+        else if (activeTab === 'balances' && setActiveTab) setActiveTab('expenses');
       }
     }
   };
