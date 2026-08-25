@@ -4364,13 +4364,18 @@ function App() {
             </span>
           </div>
 
-          <div className={`b-nav-btn ${view === 'activity' ? 'active' : ''}`} onClick={() => setView('activity')}>
+          <div className={`b-nav-btn ${view === 'analytics' ? 'active' : ''}`} onClick={() => {
+            setAnalyticsGroupId(null);
+            setView('analytics');
+          }}>
             <span className="b-nav-icon" style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: '24px', height: '24px' }}>
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" style={{ width: '22px', height: '22px' }}>
-                <polyline points="22 12 18 12 15 21 9 3 6 12 2 12" />
+                <line x1="18" y1="20" x2="18" y2="10" />
+                <line x1="12" y1="20" x2="12" y2="4" />
+                <line x1="6" y1="20" x2="6" y2="14" />
               </svg>
             </span>
-            <span>Activities</span>
+            <span>Analytics</span>
           </div>
 
           <div className={`b-nav-btn ${view === 'profile' ? 'active' : ''}`} onClick={() => setView('profile')}>
