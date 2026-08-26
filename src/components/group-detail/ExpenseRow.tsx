@@ -423,7 +423,7 @@ export const ExpenseRow: React.FC<ExpenseRowProps> = ({
             flexShrink: 0,
           }}
         >
-          {e.title === 'Written off' ? '✂️' : (getEmoji(e.title) || (e.attachments && e.attachments.length > 0 ? '🖼️' : '⚡'))}
+          {e.title === 'Written off' ? '➖' : (getEmoji(e.title) || (e.attachments && e.attachments.length > 0 ? '🖼️' : '⚡'))}
         </div>
         <div style={{ minWidth: 0, flex: 1, marginRight: '16px' }}>
           <h3 style={{ fontSize: '14px', color: 'var(--t)', margin: 0, fontWeight: 600, display: 'flex', alignItems: 'center', gap: '4px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
