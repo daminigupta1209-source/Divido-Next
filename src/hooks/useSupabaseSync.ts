@@ -530,10 +530,19 @@ export function useSupabaseSync({
           const mapped = gidMap[String(e.gId)];
           return mapped != null && String(mapped) !== String(e.gId) ? { ...e, gId: mapped } : e;
         });
+        // Ids the cloud had at our last sync — used to tell a genuine local
+        // pending-insert apart from something that was synced then DELETED
+        // remotely (by another device/user). Without this, a delete gets
+        // re-kept here and then re-uploaded on the next sync → deletions
+        // silently resurrect for everyone.
+        const lastSyncedExpenseIds = new Set(prevExpensesRef.current.map((e: any) => String(e.id)));
         const localOnlyExpenses = healedExpenses.filter(e => {
           // Keep if this expense doesn't exist in cloud AND belongs to a valid group
           if (cloudExpenseIds.has(String(e.id))) return false; // already in cloud
           if (e.gId === 'STANDALONE') return true; // standalone expenses are local-only
+          // Was synced before but is now gone from the cloud → deleted remotely.
+          // Don't resurrect it (and don't let the next sync re-insert it).
+          if (lastSyncedExpenseIds.has(String(e.id))) return false;
           // Check if it belongs to an unsynced group (temp ID) or a synced group
           const belongsToSyncedGroup = mergedGroups.some(g => String(g.id) === String(e.gId));
           return belongsToSyncedGroup;
