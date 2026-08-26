@@ -10,6 +10,18 @@ import { StyledDropdown } from './StyledDropdown';
 // Small translucent count chip for extra currencies in the Net Balance pill.
 const pillChipStyle: React.CSSProperties = { background: 'rgba(255,255,255,0.28)', borderRadius: '999px', padding: '1px 7px', fontSize: '11px', fontWeight: 700, flexShrink: 0 };
 
+// Shrink the amount line to fit when the exact figure gets long, so big
+// balances (e.g. ₹1,250,000 to collect) always fit on one line instead of
+// overflowing or being truncated with an ellipsis — precision is never lost.
+const fitAmountFont = (text: string, base: number): number => {
+  const n = text.length;
+  if (n <= 15) return base;
+  if (n <= 19) return base - 1;
+  if (n <= 23) return base - 2;
+  if (n <= 27) return base - 3;
+  return Math.max(base - 4, 9);
+};
+
 interface FriendsViewProps {
   groups: Group[];
   expenses: Expense[];
@@ -354,8 +366,9 @@ export const FriendsView: React.FC<FriendsViewProps> = ({
               const entries = Object.entries(totalPayable);
               if (entries.length === 0) return 'Nothing to pay';
               const [c, v] = entries[0];
+              const txt = `${c}${formatExactAmount(v)} to pay`;
               return (<>
-                <span style={{ overflow: 'hidden', textOverflow: 'ellipsis' }}>{c}{formatExactAmount(v)} to pay</span>
+                <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', fontSize: `${fitAmountFont(txt, 13)}px` }}>{txt}</span>
                 {entries.length > 1 && <span style={pillChipStyle}>+{entries.length - 1}</span>}
               </>);
             })()}
@@ -391,8 +404,9 @@ export const FriendsView: React.FC<FriendsViewProps> = ({
               const entries = Object.entries(totalReceivable);
               if (entries.length === 0) return 'Nothing to collect';
               const [c, v] = entries[0];
+              const txt = `${c}${formatExactAmount(v)} to collect`;
               return (<>
-                <span style={{ overflow: 'hidden', textOverflow: 'ellipsis' }}>{c}{formatExactAmount(v)} to collect</span>
+                <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', fontSize: `${fitAmountFont(txt, 13)}px` }}>{txt}</span>
                 {entries.length > 1 && <span style={pillChipStyle}>+{entries.length - 1}</span>}
               </>);
             })()}
@@ -593,18 +607,24 @@ export const FriendsView: React.FC<FriendsViewProps> = ({
                   <span style={{ fontSize: '13px', fontWeight: 500, color: '#94A3B8' }}>Settled up</span>
                 ) : (
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '2px', minWidth: 0 }}>
-                    {payList.length > 0 && (
-                      <span style={{ fontSize: '13px', fontWeight: 500, color: '#B91C1C', display: 'inline-flex', alignItems: 'center', gap: '5px', minWidth: 0 }}>
-                        <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{`${joinPrimary(payList)} to pay`}</span>
+                    {payList.length > 0 && (() => {
+                      const txt = `${joinPrimary(payList)} to pay`;
+                      return (
+                      <span style={{ fontSize: `${fitAmountFont(txt, 13)}px`, fontWeight: 500, color: '#B91C1C', display: 'inline-flex', alignItems: 'center', gap: '5px', minWidth: 0 }}>
+                        <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{txt}</span>
                         {payList.length > 1 && <span style={{ ...cardChip, flexShrink: 0 }}>+{payList.length - 1}</span>}
                       </span>
-                    )}
-                    {collectList.length > 0 && (
-                      <span style={{ fontSize: '13px', fontWeight: 500, color: '#047857', display: 'inline-flex', alignItems: 'center', gap: '5px', minWidth: 0 }}>
-                        <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{`${joinPrimary(collectList)} to collect`}</span>
+                      );
+                    })()}
+                    {collectList.length > 0 && (() => {
+                      const txt = `${joinPrimary(collectList)} to collect`;
+                      return (
+                      <span style={{ fontSize: `${fitAmountFont(txt, 13)}px`, fontWeight: 500, color: '#047857', display: 'inline-flex', alignItems: 'center', gap: '5px', minWidth: 0 }}>
+                        <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{txt}</span>
                         {collectList.length > 1 && <span style={{ ...cardChip, flexShrink: 0 }}>+{collectList.length - 1}</span>}
                       </span>
-                    )}
+                      );
+                    })()}
                   </div>
                 )}
               </div>
