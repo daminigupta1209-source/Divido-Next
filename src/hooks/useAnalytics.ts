@@ -278,12 +278,31 @@ export function useAnalytics({
       insights.push(`Your typical cost per bill is ₹${avgExpense.toFixed(0)} across ${filteredExpenses.length} transactions.`);
     }
 
-    if (insights.length === 0) {
-      insights.push(`Your typical cost per bill is ₹${avgExpense.toFixed(0)}.`);
+    if (insights.length < 3 && filteredExpenses.length > 0) {
+      insights.push(`You have recorded ${filteredExpenses.length} transaction${filteredExpenses.length > 1 ? 's' : ''} here.`);
+    }
+
+    if (insights.length < 3 && filteredExpenses.length > 0) {
+      insights.push(`Average transaction size is ₹${avgExpense.toFixed(0)}.`);
+    }
+
+    if (insights.length < 3 && filteredExpenses.length > 0) {
+      const mostRecent = filteredExpenses[0]; // Assuming sorted descending by date
+      if (mostRecent) {
+        insights.push(`Your most recent transaction was ${mostRecent.title}.`);
+      }
+    }
+
+    if (insights.length < 3) {
+      insights.push(initialGroupId ? "Add more expenses to see detailed group trends." : "Keep tracking your spending to unlock more insights.");
+    }
+    
+    if (insights.length < 3) {
+      insights.push("Start splitting bills to see how you share expenses.");
     }
 
     return insights;
-  }, [categoryList, totalSpentVal, avgExpense, filteredExpenses, mostActiveGroup]);
+  }, [categoryList, totalSpentVal, filteredExpenses, mostActiveGroup, avgExpense, initialGroupId]);
 
   return {
     selectedGroupId,
