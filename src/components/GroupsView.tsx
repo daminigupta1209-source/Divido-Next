@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { getEmoji, GROUP_COLORS, formatCompactAmount } from '../lib/utils';
+import { getEmoji, GROUP_COLORS, formatExactAmount } from '../lib/utils';
 import { StyledDropdown } from './StyledDropdown';
 
 const filterBtnStyle: React.CSSProperties = { padding: '6px 12px', borderRadius: '20px', border: '1px solid #E2E8F0', fontSize: '12px', fontWeight: 600, background: '#F1F5F9', color: '#475569', boxShadow: 'none' };
@@ -367,7 +367,7 @@ export const GroupsView: React.FC<GroupsViewProps> = ({
                       const isLast = idx === shown.length - 1;
                       return (
                         <span key={curr} style={{ color: isOwed ? '#16A34A' : '#EF4444' }}>
-                          {isOwed ? '+' : '-'}{curr}{formatCompactAmount(val)}
+                          {isOwed ? '+' : '-'}{curr}{formatExactAmount(val)}
                           {!isLast && <span style={{ color: '#94A3B8' }}>, </span>}
                         </span>
                       );
@@ -477,7 +477,7 @@ export const GroupsView: React.FC<GroupsViewProps> = ({
                           const isLast = idx === shown.length - 1;
                           return (
                             <span key={curr} style={{ color: isOwed ? '#16A34A' : '#EF4444' }}>
-                              {isOwed ? '+' : '-'}{curr}{formatCompactAmount(val)}
+                              {isOwed ? '+' : '-'}{curr}{formatExactAmount(val)}
                               {!isLast && <span style={{ color: '#94A3B8' }}>, </span>}
                             </span>
                           );
