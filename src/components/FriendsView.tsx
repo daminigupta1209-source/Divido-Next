@@ -3,7 +3,7 @@ import { BalanceDisplay } from './BalanceDisplay';
 
 import { Group, Expense, UserMetadata, GlobalSettleData } from '../lib/types';
 import { simplifyMultiCurrencyDebts, computeRawPairwiseTransactions } from '../lib/calculations';
-import { worldCurrencies, formatExactAmount } from '../lib/utils';
+import { worldCurrencies, formatExactAmount, formatCompactAmount } from '../lib/utils';
 import { SearchableCurrencyPicker } from './SearchableCurrencyPicker';
 import { StyledDropdown } from './StyledDropdown';
 
@@ -20,6 +20,23 @@ const fitAmountFont = (text: string, base: number): number => {
   if (n <= 23) return base - 2;
   if (n <= 27) return base - 3;
   return Math.max(base - 4, 9);
+};
+
+// Prefer the exact figure and shrink it to fit; but once it would need to go
+// below a readable size, round to compact (e.g. ₹1.2M) so the number stays
+// legible instead of becoming tiny. base-2 (≈11px) is the readability floor.
+const pickAmount = (
+  value: number,
+  curr: string,
+  prefix: string,
+  suffix: string,
+  base: number,
+): { text: string; fontSize: number } => {
+  const exact = `${prefix}${curr}${formatExactAmount(value)}${suffix}`;
+  const exactFont = fitAmountFont(exact, base);
+  if (exactFont >= base - 2) return { text: exact, fontSize: exactFont };
+  const compact = `${prefix}${curr}${formatCompactAmount(value)}${suffix}`;
+  return { text: compact, fontSize: fitAmountFont(compact, base) };
 };
 
 interface FriendsViewProps {
@@ -366,9 +383,9 @@ export const FriendsView: React.FC<FriendsViewProps> = ({
               const entries = Object.entries(totalPayable);
               if (entries.length === 0) return 'Nothing to pay';
               const [c, v] = entries[0];
-              const txt = `${c}${formatExactAmount(v)} to pay`;
+              const { text: txt, fontSize } = pickAmount(v, c, '', ' to pay', 13);
               return (<>
-                <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', fontSize: `${fitAmountFont(txt, 13)}px` }}>{txt}</span>
+                <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', fontSize: `${fontSize}px` }}>{txt}</span>
                 {entries.length > 1 && <span style={pillChipStyle}>+{entries.length - 1}</span>}
               </>);
             })()}
@@ -404,9 +421,9 @@ export const FriendsView: React.FC<FriendsViewProps> = ({
               const entries = Object.entries(totalReceivable);
               if (entries.length === 0) return 'Nothing to collect';
               const [c, v] = entries[0];
-              const txt = `${c}${formatExactAmount(v)} to collect`;
+              const { text: txt, fontSize } = pickAmount(v, c, '', ' to collect', 13);
               return (<>
-                <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', fontSize: `${fitAmountFont(txt, 13)}px` }}>{txt}</span>
+                <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', fontSize: `${fontSize}px` }}>{txt}</span>
                 {entries.length > 1 && <span style={pillChipStyle}>+{entries.length - 1}</span>}
               </>);
             })()}
@@ -554,11 +571,10 @@ export const FriendsView: React.FC<FriendsViewProps> = ({
           const balEntries = Object.entries(activeBals).filter(([_, v]) => Math.abs(v) > 0.01);
           const payList = balEntries.filter(([_, v]) => v < -0.01);
           const collectList = balEntries.filter(([_, v]) => v > 0.01);
-          const joinPrimary = (entries: [string, number][]) => {
-            if (entries.length === 0) return '';
+          const fitRow = (entries: [string, number][], suffix: string) => {
             const [curr, val] = entries[0];
             const prefix = convertTo ? '≈ ' : '';
-            return `${prefix}${curr}${formatExactAmount(val)}`;
+            return pickAmount(val, curr, prefix, suffix, 13);
           };
 
           const AV_COLORS = ['#B39DDB', '#F48FB1', '#80CBC4', '#FFB74D', '#9FA8DA', '#A5D6A7', '#EF9A9A', '#7FC8CE'];
@@ -608,18 +624,18 @@ export const FriendsView: React.FC<FriendsViewProps> = ({
                 ) : (
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '2px', minWidth: 0 }}>
                     {payList.length > 0 && (() => {
-                      const txt = `${joinPrimary(payList)} to pay`;
+                      const { text: txt, fontSize } = fitRow(payList, ' to pay');
                       return (
-                      <span style={{ fontSize: `${fitAmountFont(txt, 13)}px`, fontWeight: 500, color: '#B91C1C', display: 'inline-flex', alignItems: 'center', gap: '5px', minWidth: 0 }}>
+                      <span style={{ fontSize: `${fontSize}px`, fontWeight: 500, color: '#B91C1C', display: 'inline-flex', alignItems: 'center', gap: '5px', minWidth: 0 }}>
                         <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{txt}</span>
                         {payList.length > 1 && <span style={{ ...cardChip, flexShrink: 0 }}>+{payList.length - 1}</span>}
                       </span>
                       );
                     })()}
                     {collectList.length > 0 && (() => {
-                      const txt = `${joinPrimary(collectList)} to collect`;
+                      const { text: txt, fontSize } = fitRow(collectList, ' to collect');
                       return (
-                      <span style={{ fontSize: `${fitAmountFont(txt, 13)}px`, fontWeight: 500, color: '#047857', display: 'inline-flex', alignItems: 'center', gap: '5px', minWidth: 0 }}>
+                      <span style={{ fontSize: `${fontSize}px`, fontWeight: 500, color: '#047857', display: 'inline-flex', alignItems: 'center', gap: '5px', minWidth: 0 }}>
                         <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{txt}</span>
                         {collectList.length > 1 && <span style={{ ...cardChip, flexShrink: 0 }}>+{collectList.length - 1}</span>}
                       </span>
