@@ -4365,7 +4365,11 @@ function App() {
           </div>
 
           <div className={`b-nav-btn ${view === 'analytics' ? 'active' : ''}`} onClick={() => {
-            setAnalyticsGroupId(null);
+            if (view === 'detail' && selectedId) {
+              setAnalyticsGroupId(selectedId);
+            } else {
+              setAnalyticsGroupId(null);
+            }
             setView('analytics');
           }}>
             <span className="b-nav-icon" style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: '24px', height: '24px' }}>
