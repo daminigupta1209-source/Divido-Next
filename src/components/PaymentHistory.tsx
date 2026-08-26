@@ -193,7 +193,7 @@ export const PaymentHistory: React.FC<PaymentHistoryProps> = ({
                             fontSize: '12px',
                             fontWeight: 600,
                             cursor: 'pointer',
-                            color: '#DB2777',
+                            color: '#E11D48',
                             borderRadius: '8px',
                           }}
                           className="hover-bg"

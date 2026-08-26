@@ -492,7 +492,7 @@ export const MasterSummary: React.FC<MasterSummaryProps> = ({
         };
 
         // Match the in-group net-balance pill (GroupDetail) for a consistent look.
-        const PINK = '#DB2777';
+        const PINK = '#E11D48';
         const GREEN = '#10B981';
 
         // Original single-line look (regular weight, no uppercase). Segments size
@@ -957,7 +957,7 @@ export const MasterSummary: React.FC<MasterSummaryProps> = ({
                       const textStr = `${joinGroupPrimary(payList)} to pay`;
                       const fSize = textStr.length > 22 ? '9.5px' : textStr.length > 17 ? '11px' : '13px';
                       return (
-                        <span style={{ ...pillBase, fontSize: fSize, color: '#D8608A', display: 'inline-flex', alignItems: 'center', justifyContent: 'flex-end', gap: '5px', maxWidth: '145px' }}>
+                        <span style={{ ...pillBase, fontSize: fSize, color: '#E11D48', display: 'inline-flex', alignItems: 'center', justifyContent: 'flex-end', gap: '5px', maxWidth: '145px' }}>
                           <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{textStr}</span>
                           {payList.length > 1 && <span style={{...cardChip, flexShrink: 0}}>+{payList.length - 1}</span>}
                         </span>

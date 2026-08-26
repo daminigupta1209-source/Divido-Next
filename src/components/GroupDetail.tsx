@@ -576,7 +576,7 @@ export const GroupDetail: React.FC<GroupDetailProps> = ({
           return `${curr}${formatCompactAmount(val)}`;
         };
 
-        const PINK = '#DB2777';
+        const PINK = '#E11D48';
         const GREEN = '#10B981';
 
         // Original single-line look (regular weight, no uppercase). Segments size
@@ -957,7 +957,7 @@ export const GroupDetail: React.FC<GroupDetailProps> = ({
                               const textStr = `${balPrimary(payList)} to pay`;
                               const fSize = textStr.length > 22 ? '9.5px' : textStr.length > 17 ? '11px' : '13px';
                               return (
-                                <span style={{ ...balPillBase, fontSize: fSize, color: '#D8608A', maxWidth: '145px', overflow: 'hidden' }}>
+                                <span style={{ ...balPillBase, fontSize: fSize, color: '#E11D48', maxWidth: '145px', overflow: 'hidden' }}>
                                   <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{textStr}</span>
                                   {payList.length > 1 && <span style={{...balCardChip, flexShrink: 0}}>+{payList.length - 1}</span>}
                                 </span>
