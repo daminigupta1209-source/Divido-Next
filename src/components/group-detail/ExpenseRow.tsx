@@ -82,11 +82,10 @@ export const ExpenseRow: React.FC<ExpenseRowProps> = ({
           borderRadius: '20px',
           border: '1px solid rgba(226, 232, 240, 0.8)',
           fontSize: '11px',
-          fontWeight: 800,
+          fontWeight: 600,
           color: '#64748B',
           margin: '4px auto 12px auto',
           maxWidth: 'fit-content',
-          fontFamily: 'Nunito',
           boxShadow: '0 1px 3px rgba(0,0,0,0.02)',
         }}
       >
@@ -147,7 +146,7 @@ export const ExpenseRow: React.FC<ExpenseRowProps> = ({
           </div>
           <div>
             <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-              <h3 className="nunito" style={{ fontSize: '14px', fontWeight: 800, color: '#6D28D9', margin: 0 }}>
+              <h3 style={{ fontSize: '14px', fontWeight: 600, color: '#6D28D9', margin: 0 }}>
                 Currency Conversion <span style={{ fontSize: '10px', opacity: 0.3 }}>✏️</span>
               </h3>
               <span
@@ -301,7 +300,7 @@ export const ExpenseRow: React.FC<ExpenseRowProps> = ({
             🤝
           </div>
           <div style={{ minWidth: 0, flex: 1, marginRight: '16px' }}>
-            <h3 className="nunito" style={{ fontSize: '15px', color: 'var(--t)', margin: 0, fontWeight: 800, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+            <h3 style={{ fontSize: '14px', color: 'var(--t)', margin: 0, fontWeight: 600, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
               Payment Recorded
             </h3>
             <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '11px', color: '#94A3B8', marginTop: '6px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
@@ -336,7 +335,7 @@ export const ExpenseRow: React.FC<ExpenseRowProps> = ({
           onClick={(ev) => ev.stopPropagation()}
         >
           <div style={{ textAlign: 'right' }}>
-            <span style={{ fontSize: '14px', fontWeight: 800, color: 'var(--t)', fontFamily: '"Nunito", sans-serif' }}>
+            <span style={{ fontSize: '14px', fontWeight: 600, color: 'var(--t)' }}>
               {e.currency || selectedGroup.currency || '₹'} {formatCompactAmount((Number(e.amt) || 0))}
             </span>
           </div>
@@ -427,7 +426,7 @@ export const ExpenseRow: React.FC<ExpenseRowProps> = ({
           {getEmoji(e.title) || '⚡'}
         </div>
         <div style={{ minWidth: 0, flex: 1, marginRight: '16px' }}>
-          <h3 className="nunito" style={{ fontSize: '15px', color: 'var(--t)', margin: 0, fontWeight: 800, display: 'flex', alignItems: 'center', gap: '4px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+          <h3 style={{ fontSize: '14px', color: 'var(--t)', margin: 0, fontWeight: 600, display: 'flex', alignItems: 'center', gap: '4px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
             {e.title}
           </h3>
           <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '11px', color: '#94A3B8', marginTop: '6px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
@@ -486,7 +485,7 @@ export const ExpenseRow: React.FC<ExpenseRowProps> = ({
         onClick={(ev) => ev.stopPropagation()}
       >
         <div style={{ textAlign: 'right', display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '2px' }}>
-          <span style={{ fontSize: '14px', fontWeight: 800, color: 'var(--t)', fontFamily: '"Nunito", sans-serif' }}>
+          <span style={{ fontSize: '14px', fontWeight: 600, color: 'var(--t)' }}>
             {e.currency || selectedGroup.currency || '₹'} {formatCompactAmount(e.amt)}
           </span>
         </div>
