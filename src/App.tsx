@@ -4350,7 +4350,16 @@ function App() {
             <span>Home</span>
           </div>
 
-          <div className={`b-nav-btn ${view === 'friends' ? 'active' : ''}`} onClick={() => setView('friends')}>
+          <div
+            className={`b-nav-btn ${view === 'friends' || (view === 'detail' && groupDetailTab === 'balances') ? 'active' : ''}`}
+            onClick={() => {
+              if (view === 'detail') {
+                setGroupDetailTab('balances');
+              } else {
+                setView('friends');
+              }
+            }}
+          >
             <span className="b-nav-icon" style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: '24px', height: '24px' }}>
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" style={{ width: '22px', height: '22px' }}>
                 <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
