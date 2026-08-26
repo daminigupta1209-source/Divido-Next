@@ -98,9 +98,9 @@ export const GroupSettingsModal: React.FC<GroupSettingsModalProps> = ({
         </div>
         <div style={{ display: 'flex', flexDirection: 'column' }}>
           
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '16px 8px', borderBottom: '1px solid #F1F5F9' }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 8px', borderBottom: '1px solid #F1F5F9' }}>
             <div style={{ display: 'flex', flexDirection: 'column' }}>
-              <span style={{ fontSize: '14px', fontWeight: 600, color: '#000000' }}>Simplify Debts</span>
+              <span style={{ fontSize: '13px', fontWeight: 600, color: '#000000' }}>Simplify Debts</span>
               <span style={{ fontSize: '11px', fontWeight: 400, color: '#64748B', marginTop: '2px' }}>Minimizes total transactions</span>
             </div>
             <div
@@ -140,12 +140,12 @@ export const GroupSettingsModal: React.FC<GroupSettingsModalProps> = ({
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'flex-start',
-                padding: '16px 8px',
+                padding: '12px 8px',
                 background: 'transparent',
                 border: 'none',
                 borderBottom: '1px solid #F1F5F9',
                 cursor: 'pointer',
-                fontSize: '14px',
+                fontSize: '13px',
                 fontWeight: 500,
                 color: '#000000',
                 transition: 'background-color 0.15s',
@@ -163,12 +163,12 @@ export const GroupSettingsModal: React.FC<GroupSettingsModalProps> = ({
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'flex-start',
-              padding: '16px 8px',
+              padding: '12px 8px',
               background: 'transparent',
               border: 'none',
               borderBottom: '1px solid #F1F5F9',
               cursor: 'pointer',
-              fontSize: '14px',
+              fontSize: '13px',
               fontWeight: 500,
               color: '#000000',
               transition: 'background-color 0.15s',
@@ -186,12 +186,12 @@ export const GroupSettingsModal: React.FC<GroupSettingsModalProps> = ({
               alignItems: 'center',
               justifyContent: 'flex-start',
               gap: '8px',
-              padding: '16px 8px',
+              padding: '12px 8px',
               background: 'transparent',
               border: 'none',
               borderBottom: '1px solid #F1F5F9',
               cursor: 'pointer',
-              fontSize: '14px',
+              fontSize: '13px',
               fontWeight: 500,
               color: '#000000',
               transition: 'background-color 0.15s',
@@ -215,12 +215,12 @@ export const GroupSettingsModal: React.FC<GroupSettingsModalProps> = ({
               style={{
                 display: 'flex',
                 alignItems: 'center',
-                justifyContent: 'flex-start',
-                padding: '16px 8px',
+                justifyContent: 'center',
+                padding: '12px 8px',
                 background: 'transparent',
                 border: 'none',
                 cursor: 'pointer',
-                fontSize: '14px',
+                fontSize: '13px',
                 fontWeight: 500,
                 color: '#EF4444',
                 transition: 'background-color 0.15s',
