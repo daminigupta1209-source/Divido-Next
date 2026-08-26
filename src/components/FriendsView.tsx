@@ -594,45 +594,30 @@ export const FriendsView: React.FC<FriendsViewProps> = ({
                 {f.name.charAt(0).toUpperCase()}
               </div>
 
-              {/* Name */}
-              <div style={{ minWidth: 0, flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center', gap: '1px' }}>
+              {/* Name with the amount stacked right below it (left-aligned) */}
+              <div style={{ minWidth: 0, flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center', gap: '2px' }}>
                 <h3 style={{ fontSize: '16px', fontWeight: 600, color: '#2E2A25', margin: 0, textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap', textTransform: 'capitalize' }}>{f.name}</h3>
-                {isDupName(f.name) && f.groups.length > 0 && (
-                  <span style={{ fontSize: '11px', color: '#94A3B8', fontWeight: 600, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{f.groups.join(', ')}</span>
-                )}
-              </div>
-
-              {/* Balance pills */}
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', alignItems: 'flex-end', flexShrink: 0 }}>
                 {!active ? (
-                  <span style={{ ...pillBase, color: '#047857' }}>Settled up</span>
+                  <span style={{ fontSize: '13px', fontWeight: 600, color: '#94A3B8' }}>Settled up</span>
                 ) : (
-                  <>
-                    {payList.length > 0 && (() => {
-                      const textStr = `${joinPrimary(payList)} to pay`;
-                      const fSize = textStr.length > 22 ? '9.5px' : textStr.length > 17 ? '11px' : '13px';
-                      return (
-                        <span style={{ ...pillBase, fontSize: fSize, color: '#B91C1C', display: 'inline-flex', alignItems: 'center', justifyContent: 'flex-end', gap: '5px', maxWidth: '130px' }}>
-                          <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{textStr}</span>
-                          {payList.length > 1 && <span style={{...cardChip, flexShrink: 0}}>+{payList.length - 1}</span>}
-                        </span>
-                      );
-                    })()}
-                    {collectList.length > 0 && (() => {
-                      const textStr = `${joinPrimary(collectList)} to collect`;
-                      const fSize = textStr.length > 22 ? '9.5px' : textStr.length > 17 ? '11px' : '13px';
-                      return (
-                        <span style={{ ...pillBase, fontSize: fSize, color: '#047857', display: 'inline-flex', alignItems: 'center', justifyContent: 'flex-end', gap: '5px', maxWidth: '130px' }}>
-                          <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{textStr}</span>
-                          {collectList.length > 1 && <span style={{...cardChip, flexShrink: 0}}>+{collectList.length - 1}</span>}
-                        </span>
-                      );
-                    })()}
-                  </>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '2px', minWidth: 0 }}>
+                    {payList.length > 0 && (
+                      <span style={{ fontSize: '13px', fontWeight: 600, color: '#B91C1C', display: 'inline-flex', alignItems: 'center', gap: '5px', minWidth: 0 }}>
+                        <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{`${joinPrimary(payList)} to pay`}</span>
+                        {payList.length > 1 && <span style={{ ...cardChip, flexShrink: 0 }}>+{payList.length - 1}</span>}
+                      </span>
+                    )}
+                    {collectList.length > 0 && (
+                      <span style={{ fontSize: '13px', fontWeight: 600, color: '#047857', display: 'inline-flex', alignItems: 'center', gap: '5px', minWidth: 0 }}>
+                        <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{`${joinPrimary(collectList)} to collect`}</span>
+                        {collectList.length > 1 && <span style={{ ...cardChip, flexShrink: 0 }}>+{collectList.length - 1}</span>}
+                      </span>
+                    )}
+                  </div>
                 )}
               </div>
 
-              {/* Quick add-expense — small round icon */}
+              {/* Quick add-expense — small round icon, nudged a little left of the arrow */}
               {onQuickAddExpense && (
                 <button
                   onClick={(e) => { e.stopPropagation(); onQuickAddExpense(f.name); }}
@@ -641,6 +626,7 @@ export const FriendsView: React.FC<FriendsViewProps> = ({
                     flexShrink: 0, width: '30px', height: '30px', borderRadius: '50%',
                     background: '#ECFDF5', color: '#059669', border: '1px solid #A7F3D0',
                     display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', padding: 0,
+                    marginRight: '4px',
                   }}
                 >
                   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.6" strokeLinecap="round" style={{ width: '15px', height: '15px' }}>
