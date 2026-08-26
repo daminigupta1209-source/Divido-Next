@@ -81,6 +81,10 @@ People are referenced by **name string**: `paid` (payer name), `splitters` (name
 
 ---
 
+## Sync-reconciliation invariants (don't regress)
+- **Delete vs pending** is decided by the last-synced snapshot (`prevExpensesRef` / `divido_last_synced_expenses`) in the `useSupabaseSync` load merge: a local expense missing from the cloud is kept only if it was NOT previously synced; if it WAS synced and is now gone, it was deleted remotely → drop it (never re-insert). Fixes cross-device deletion resurrection. Don't revert to a plain "is it in the cloud?" check.
+- **Recurring occurrences use a deterministic id** `recur-<templateId>-<date>` (App.tsx auto-log engine), skipped if already present, so two devices can't double-spawn a charge; the template's `nextOccurrence` always advances past processed dates.
+
 ## Prior handoff to-dos — addressed
 - **Search UI (Activities/Photos):** both already existed & matched; the Photos search bar was actually **broken** (App passed `searchQuery={globalSearchQuery}`, making its `onChange` a no-op). Now locally controlled and typeable, like Activities (`GroupGallery.tsx`).
 - **Photo→expense didn't update the tile:** the code edits in place and preserves the attachment; the original failure was the expense-id swap race, now removed by the permanent-expense-id fix. Re-test to confirm; if it still repros, add a targeted reconciliation.
