@@ -1024,18 +1024,6 @@ export const GroupDetail: React.FC<GroupDetailProps> = ({
                       return (
                         <div
                           key={`other-${idx}`}
-                          onClick={() => {
-                            const cleanMe = me.replace(/\s*\(me\)$/i, '').replace(/\s*\(Left\)$/i, '').toLowerCase();
-                            const isPastMember = selectedGroup.members.some(x => {
-                              const cleanM = x.replace(/\s*\(me\)$/i, '').replace(/\s*\(Left\)$/i, '').toLowerCase();
-                              return cleanM === cleanMe && x.toLowerCase().endsWith(' (left)');
-                            });
-                            if (isPastMember) {
-                              if (onRequestRejoin) onRequestRejoin();
-                            } else {
-                              setGlobalSettleData({ name: t.from, gId: selectedId });
-                            }
-                          }}
                           style={{
                             padding: '16px',
                             background: '#F8FAFC',
@@ -1048,7 +1036,7 @@ export const GroupDetail: React.FC<GroupDetailProps> = ({
                             borderRadius: '20px',
                             boxShadow: '0 2px 10px rgba(0,0,0,0.04)',
                             boxSizing: 'border-box',
-                            cursor: 'pointer',
+                            cursor: 'default',
                           }}
                         >
                           <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flex: 1, minWidth: 0 }}>
