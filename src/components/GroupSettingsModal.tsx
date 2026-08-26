@@ -96,12 +96,12 @@ export const GroupSettingsModal: React.FC<GroupSettingsModalProps> = ({
         <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '-8px' }}>
           <div style={{ width: '40px', height: '5px', background: '#E2E8F0', borderRadius: '10px' }} />
         </div>
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+        <div style={{ display: 'flex', flexDirection: 'column' }}>
           
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 16px', background: '#F8FAFC', borderRadius: '12px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '16px 8px', borderBottom: '1px solid #F1F5F9' }}>
             <div style={{ display: 'flex', flexDirection: 'column' }}>
-              <span style={{ fontSize: '13px', fontWeight: 800, color: '#1E293B' }}>Simplify Debts</span>
-              <span style={{ fontSize: '10px', fontWeight: 600, color: '#94A3B8' }}>Minimizes total transactions</span>
+              <span style={{ fontSize: '14px', fontWeight: 600, color: '#000000' }}>Simplify Debts</span>
+              <span style={{ fontSize: '11px', fontWeight: 400, color: '#64748B', marginTop: '2px' }}>Minimizes total transactions</span>
             </div>
             <div
               onClick={onSimplifyToggle}
@@ -109,7 +109,7 @@ export const GroupSettingsModal: React.FC<GroupSettingsModalProps> = ({
                 width: '36px',
                 height: '20px',
                 borderRadius: '20px',
-                background: group.simplifyDebts ? '#10B981' : '#CBD5E1',
+                background: group.simplifyDebts ? '#000000' : '#E2E8F0',
                 position: 'relative',
                 cursor: 'pointer',
                 transition: 'background-color 0.2s',
@@ -126,7 +126,7 @@ export const GroupSettingsModal: React.FC<GroupSettingsModalProps> = ({
                   top: '2px',
                   left: group.simplifyDebts ? '18px' : '2px',
                   transition: 'left 0.2s',
-                  boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
+                  boxShadow: '0 1px 2px rgba(0,0,0,0.1)',
                 }}
               />
             </div>
@@ -139,19 +139,19 @@ export const GroupSettingsModal: React.FC<GroupSettingsModalProps> = ({
               style={{
                 display: 'flex',
                 alignItems: 'center',
-                justifyContent: 'center',
-                padding: '10px 16px',
-                background: '#F8FAFC',
-                borderRadius: '12px',
+                justifyContent: 'flex-start',
+                padding: '16px 8px',
+                background: 'transparent',
                 border: 'none',
+                borderBottom: '1px solid #F1F5F9',
                 cursor: 'pointer',
-                fontSize: '13px',
-                fontWeight: 800,
-                color: '#1E293B',
+                fontSize: '14px',
+                fontWeight: 500,
+                color: '#000000',
                 transition: 'background-color 0.15s',
               }}
-              onMouseEnter={(e) => (e.currentTarget.style.background = '#F1F5F9')}
-              onMouseLeave={(e) => (e.currentTarget.style.background = '#F8FAFC')}
+              onMouseEnter={(e) => (e.currentTarget.style.background = '#F8FAFC')}
+              onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}
             >
               Convert Currency
             </button>
@@ -162,19 +162,19 @@ export const GroupSettingsModal: React.FC<GroupSettingsModalProps> = ({
             style={{
               display: 'flex',
               alignItems: 'center',
-              justifyContent: 'center',
-              padding: '10px 16px',
-              background: '#F8FAFC',
-              borderRadius: '12px',
+              justifyContent: 'flex-start',
+              padding: '16px 8px',
+              background: 'transparent',
               border: 'none',
+              borderBottom: '1px solid #F1F5F9',
               cursor: 'pointer',
-              fontSize: '13px',
-              fontWeight: 800,
-              color: '#1E293B',
+              fontSize: '14px',
+              fontWeight: 500,
+              color: '#000000',
               transition: 'background-color 0.15s',
             }}
-            onMouseEnter={(e) => (e.currentTarget.style.background = '#F1F5F9')}
-            onMouseLeave={(e) => (e.currentTarget.style.background = '#F8FAFC')}
+            onMouseEnter={(e) => (e.currentTarget.style.background = '#F8FAFC')}
+            onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}
           >
             Export Data
           </button>
@@ -184,23 +184,23 @@ export const GroupSettingsModal: React.FC<GroupSettingsModalProps> = ({
             style={{
               display: 'flex',
               alignItems: 'center',
-              justifyContent: 'center',
-              gap: '6px',
-              padding: '10px 16px',
-              background: '#EFF6FF',
-              borderRadius: '12px',
+              justifyContent: 'flex-start',
+              gap: '8px',
+              padding: '16px 8px',
+              background: 'transparent',
               border: 'none',
+              borderBottom: '1px solid #F1F5F9',
               cursor: 'pointer',
-              fontSize: '13px',
-              fontWeight: 800,
-              color: '#2563EB',
+              fontSize: '14px',
+              fontWeight: 500,
+              color: '#000000',
               transition: 'background-color 0.15s',
             }}
-            onMouseEnter={(e) => (e.currentTarget.style.background = '#DBEAFE')}
-            onMouseLeave={(e) => (e.currentTarget.style.background = '#EFF6FF')}
+            onMouseEnter={(e) => (e.currentTarget.style.background = '#F8FAFC')}
+            onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}
           >
             Share Link
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ width: '16px', height: '16px', color: '#2563EB' }}>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ width: '14px', height: '14px', color: '#000000' }}>
               <circle cx="18" cy="5" r="3" />
               <circle cx="6" cy="12" r="3" />
               <circle cx="18" cy="19" r="3" />
@@ -215,20 +215,19 @@ export const GroupSettingsModal: React.FC<GroupSettingsModalProps> = ({
               style={{
                 display: 'flex',
                 alignItems: 'center',
-                justifyContent: 'center',
-                padding: '10px 16px',
-                background: '#FEF2F2',
-                borderRadius: '12px',
+                justifyContent: 'flex-start',
+                padding: '16px 8px',
+                background: 'transparent',
                 border: 'none',
                 cursor: 'pointer',
-                fontSize: '13px',
-                fontWeight: 800,
-                color: '#DC2626',
+                fontSize: '14px',
+                fontWeight: 500,
+                color: '#EF4444',
                 transition: 'background-color 0.15s',
-                marginTop: '12px',
+                marginTop: '8px',
               }}
-              onMouseEnter={(e) => (e.currentTarget.style.background = '#FEE2E2')}
-              onMouseLeave={(e) => (e.currentTarget.style.background = '#FEF2F2')}
+              onMouseEnter={(e) => (e.currentTarget.style.background = '#FEF2F2')}
+              onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}
             >
               {isActiveMember ? (activeMembersCount > 1 ? 'Leave Group' : 'Delete Group') : 'Delete Group for Me'}
             </button>
