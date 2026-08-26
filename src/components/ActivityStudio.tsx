@@ -554,7 +554,7 @@ export const ActivityStudio: React.FC<ActivityStudioProps> = ({
                           flexShrink: 0,
                         }}
                       >
-                        {e.category || getEmoji(e.title) || '⚡'}
+                        {isSettlement ? '✅' : e.title === 'Written off' ? '➖' : (e.category || getEmoji(e.title) || (e.attachments && e.attachments.length > 0 ? '🖼️' : '💰'))}
                       </div>
                       <div style={{ minWidth: 0, flex: 1, marginRight: '16px' }}>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '6px', whiteSpace: 'nowrap', overflow: 'hidden', minWidth: 0 }}>
@@ -589,6 +589,10 @@ export const ActivityStudio: React.FC<ActivityStudioProps> = ({
                           {isSettlement ? (
                             <span style={{ color: '#16A34A', fontWeight: 700 }}>
                               {e.paid === me ? 'You' : e.paid} paid {e.splitters?.[0] === me ? 'you' : e.splitters?.[0]}
+                            </span>
+                          ) : e.title === 'Written off' && e.splitters?.[0] ? (
+                            <span style={{ color: '#64748B' }}>
+                              {e.paid === me ? 'You' : e.paid} paid {e.splitters[0] === me ? 'you' : e.splitters[0]}
                             </span>
                           ) : (
                             <span style={{ color: e.paid === me ? '#16A34A' : '#DC2626' }}>{e.paid === me ? 'You paid' : `${e.paid} paid`}</span>

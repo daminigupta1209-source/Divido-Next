@@ -27,8 +27,8 @@ export const PaymentHistory: React.FC<PaymentHistoryProps> = ({
   const [openDropdownId, setOpenDropdownId] = useState<string | number | null>(null);
 
   const settlements = expenses
-    .filter((e) => e.title && e.title.includes('✅ Settlement'))
-    .sort((a, b) => parseExpenseId(b.id) - parseExpenseId(a.id));
+    .filter((e) => e.title && (e.title.includes('✅ Settlement') || e.title.includes('🤝 Settlement') || e.title.toLowerCase().includes('settlement')))
+    .sort((a, b) => (b.timestamp || parseExpenseId(b.id)) - (a.timestamp || parseExpenseId(a.id)));
 
   return (
     <div className="content-width-limit" style={{ paddingBottom: '80px' }}>
