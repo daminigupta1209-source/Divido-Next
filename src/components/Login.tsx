@@ -18,7 +18,6 @@ export const Login: React.FC<LoginProps> = ({ onLoginSuccess, currentTheme }) =>
   };
 
   const checkIfDemoMode = () => {
-    if (window.location.hostname === 'localhost') return true;
     const url = import.meta.env.VITE_SUPABASE_URL || '';
     const key = import.meta.env.VITE_SUPABASE_ANON_KEY || '';
     return !url || url.includes('your-project-id') || !key || key.includes('your-supabase-anon-key');

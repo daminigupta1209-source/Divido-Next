@@ -2373,7 +2373,7 @@ function App() {
   };
 
   // Account-first: only signed-in users can create groups. Guests get nudged to sign in.
-  const isSignedIn = !!userEmail || window.location.hostname === 'localhost';
+  const isSignedIn = !!userEmail;
   const requireSignInToCreate = (): boolean => {
     if (isSignedIn) return true;
     alert('Please sign in to create a group and split with friends.');
