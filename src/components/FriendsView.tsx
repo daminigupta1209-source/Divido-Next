@@ -567,7 +567,6 @@ export const FriendsView: React.FC<FriendsViewProps> = ({
           return (
             <div
               key={f.id}
-              className="hover-up-mini"
               onClick={() => { if (active) setGlobalSettleData({ name: f.name, identity: f.id, groups: f.groups, balances: activeBals }); }}
               style={{
                 padding: '16px',
@@ -613,6 +612,7 @@ export const FriendsView: React.FC<FriendsViewProps> = ({
               {/* Quick add-expense — small round icon, nudged a little left of the arrow */}
               {onQuickAddExpense && (
                 <button
+                  className="hover-up-mini"
                   onClick={(e) => { e.stopPropagation(); onQuickAddExpense(f.name); }}
                   title={`Add expense with ${f.name}`}
                   style={{
