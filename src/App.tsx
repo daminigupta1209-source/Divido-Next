@@ -1437,33 +1437,39 @@ function App() {
 
     const newSpawned: Expense[] = [];
     let templateUpdated = false;
+    // Ids that already exist anywhere, so a given occurrence is spawned at most
+    // once. Each occurrence gets a DETERMINISTIC id (template id + its date), so
+    // if two devices spawn the same month they collapse to one row (same id)
+    // instead of duplicating the charge.
+    const existingIds = new Set(expenses.map((x) => String(x.id)));
 
     const finalExpenses = expenses.map((e) => {
       if (e.isRecurring && e.recurrence && e.recurrence !== 'none' && e.nextOccurrence) {
         let currentNext = e.nextOccurrence;
-        const localSpawned: Expense[] = [];
+        const startNext = currentNext;
 
         // Loop as long as nextOccurrence is <= today
         while (currentNext <= todayStr) {
-          const copy: Expense = {
-            ...e,
-            id: genExpenseId(),
-            date: currentNext,
-            isRecurring: false,
-            recurrence: undefined,
-            nextOccurrence: undefined,
-          };
-          localSpawned.push(copy);
+          const occId = `recur-${e.id}-${currentNext}`;
+          if (!existingIds.has(occId)) {
+            newSpawned.push({
+              ...e,
+              id: occId,
+              date: currentNext,
+              isRecurring: false,
+              recurrence: undefined,
+              nextOccurrence: undefined,
+            });
+            existingIds.add(occId);
+          }
           currentNext = calculateNextOccurrenceDate(currentNext, e.recurrence);
         }
 
-        if (localSpawned.length > 0) {
-          newSpawned.push(...localSpawned);
+        // Advance the template past everything processed, even if nothing new
+        // was spawned (occurrences already existed) — otherwise it retries forever.
+        if (currentNext !== startNext) {
           templateUpdated = true;
-          return {
-            ...e,
-            nextOccurrence: currentNext,
-          };
+          return { ...e, nextOccurrence: currentNext };
         }
       }
       return e;
@@ -1471,8 +1477,10 @@ function App() {
 
     if (templateUpdated) {
       setExpenses([...newSpawned, ...finalExpenses]);
-      setToastMsg(`Successfully generated ${newSpawned.length} recurring expense${newSpawned.length > 1 ? 's' : ''}! 🔄`);
-      setTimeout(() => setToastMsg(null), 5000);
+      if (newSpawned.length > 0) {
+        setToastMsg(`Successfully generated ${newSpawned.length} recurring expense${newSpawned.length > 1 ? 's' : ''}! 🔄`);
+        setTimeout(() => setToastMsg(null), 5000);
+      }
     }
   }, [expenses]);
 
