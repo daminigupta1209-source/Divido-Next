@@ -1,5 +1,5 @@
 import React from 'react';
-import { formatCompactAmount } from '../lib/utils';
+import { formatExactAmount } from '../lib/utils';
 
 interface BalanceDisplayProps {
   balances: Record<string, number> | null | undefined;
@@ -80,7 +80,7 @@ export const BalanceDisplay: React.FC<BalanceDisplayProps> = ({
               {curr}
             </span>
             <span>
-              {formatCompactAmount(val)}
+              {formatExactAmount(val)}
             </span>
           </div>
         </div>

@@ -3,7 +3,7 @@ import { SearchableCurrencyPicker } from './SearchableCurrencyPicker';
 
 import { Group, Expense, UserMetadata } from '../lib/types';
 import { escManager } from '../lib/escManager';
-import { formatCompactAmount, toCurrencyCode, genExpenseId } from '../lib/utils';
+import { formatExactAmount, toCurrencyCode, genExpenseId } from '../lib/utils';
 import { StyledDropdown } from './StyledDropdown';
 
 const settleBtnStyle: React.CSSProperties = { padding: '12px', borderRadius: '14px', border: '2px solid #F1F1F1', fontSize: '14px', fontWeight: 700, background: 'var(--w, #fff)', marginTop: '4px', boxShadow: 'none', color: '#1E293B' };
@@ -485,7 +485,7 @@ export const SettleModal: React.FC<SettleModalProps> = ({
                         </p>
                         <p style={{ fontSize: '18px', fontWeight: 600, color: t.from === me ? '#DC2626' : '#059669' }}>
                           {t.currency}
-                          {formatCompactAmount(t.amount)}
+                          {formatExactAmount(t.amount)}
                         </p>
                         {t.currency !== primaryCurrency && rates[toCurrencyCode(t.currency)] && (
                           <p style={{ fontSize: '11px', fontWeight: 700, color: '#16A34A', margin: '2px 0 0 0', textAlign: 'left' }}>

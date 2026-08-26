@@ -1,6 +1,6 @@
 import React from 'react';
 import { Group, Expense } from '../../lib/types';
-import { formatDate, getEmoji, getExactTime, formatCompactAmount } from '../../lib/utils';
+import { formatDate, getEmoji, getExactTime, formatExactAmount } from '../../lib/utils';
 
 interface ExpenseRowProps {
   e: Expense;
@@ -336,7 +336,7 @@ export const ExpenseRow: React.FC<ExpenseRowProps> = ({
         >
           <div style={{ textAlign: 'right' }}>
             <span style={{ fontSize: '14px', fontWeight: 600, color: 'var(--t)' }}>
-              {e.currency || selectedGroup.currency || '₹'} {formatCompactAmount((Number(e.amt) || 0))}
+              {e.currency || selectedGroup.currency || '₹'} {formatExactAmount((Number(e.amt) || 0))}
             </span>
           </div>
           <div
@@ -486,7 +486,7 @@ export const ExpenseRow: React.FC<ExpenseRowProps> = ({
       >
         <div style={{ textAlign: 'right', display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '2px' }}>
           <span style={{ fontSize: '14px', fontWeight: 600, color: 'var(--t)' }}>
-            {e.currency || selectedGroup.currency || '₹'} {formatCompactAmount(e.amt)}
+            {e.currency || selectedGroup.currency || '₹'} {formatExactAmount(e.amt)}
           </span>
         </div>
       </div>

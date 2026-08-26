@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { BalanceDisplay } from './BalanceDisplay';
-import { getEmoji, GROUP_COLORS, formatCompactAmount, parseExpenseId } from '../lib/utils';
+import { getEmoji, GROUP_COLORS, formatExactAmount, parseExpenseId } from '../lib/utils';
 import { StyledDropdown } from './StyledDropdown';
 
 // Pill-style trigger for the compact filter dropdowns (matches the old selects).
@@ -488,7 +488,7 @@ export const MasterSummary: React.FC<MasterSummaryProps> = ({
         // above it carries a "+N" when more currencies exist (full detail on tap).
         const primaryAmt = (entries: [string, number][]) => {
           const [curr, val] = entries[0];
-          return `${curr}${formatCompactAmount(val)}`;
+          return `${curr}${formatExactAmount(val)}`;
         };
 
         // Match the in-group net-balance pill (GroupDetail) for a consistent look.
@@ -868,7 +868,7 @@ export const MasterSummary: React.FC<MasterSummaryProps> = ({
           const joinGroupPrimary = (entries: [string, number][]) => {
             if (entries.length === 0) return '';
             const [curr, val] = entries[0];
-            return `${curr}${formatCompactAmount(val)}`;
+            return `${curr}${formatExactAmount(val)}`;
           };
           const pillBase: React.CSSProperties = {
             padding: '2px 4px',

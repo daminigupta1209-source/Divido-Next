@@ -2,7 +2,7 @@ import React from 'react';
 import { SettleModal } from './SettleModal';
 import { BalanceDisplay } from './BalanceDisplay';
 import { Group, Expense, UserMetadata } from '../lib/types';
-import { GROUP_COLORS, formatCompactAmount } from '../lib/utils';
+import { GROUP_COLORS, formatExactAmount } from '../lib/utils';
 import { useGroupDetailForm } from '../hooks/useGroupDetailForm';
 
 // Subcomponents
@@ -573,7 +573,7 @@ export const GroupDetail: React.FC<GroupDetailProps> = ({
         // above it carries a "+N" when more currencies exist (full detail on tap).
         const primaryAmt = (entries: [string, number][]) => {
           const [curr, val] = entries[0];
-          return `${curr}${formatCompactAmount(val)}`;
+          return `${curr}${formatExactAmount(val)}`;
         };
 
         const PINK = '#E11D48';
@@ -893,7 +893,7 @@ export const GroupDetail: React.FC<GroupDetailProps> = ({
                 const AV_COLORS = ['#B39DDB', '#F48FB1', '#80CBC4', '#FFB74D', '#9FA8DA', '#A5D6A7', '#EF9A9A', '#7FC8CE'];
                 const balPillBase: React.CSSProperties = { padding: '2px 4px', borderRadius: '999px', fontSize: '13px', fontWeight: 600, whiteSpace: 'nowrap', display: 'inline-flex', alignItems: 'center', justifyContent: 'flex-end', gap: '5px' };
                 const balCardChip: React.CSSProperties = { background: '#F1EFE8', borderRadius: '999px', padding: '0 6px', fontSize: '10px', fontWeight: 600, lineHeight: '16px' };
-                const balPrimary = (list: [string, number][]) => { const [c, v] = list[0]; return `${c}${formatCompactAmount(v)}`; };
+                const balPrimary = (list: [string, number][]) => { const [c, v] = list[0]; return `${c}${formatExactAmount(v)}`; };
 
                 return (
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
