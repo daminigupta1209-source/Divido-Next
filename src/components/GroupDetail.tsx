@@ -932,16 +932,16 @@ export const GroupDetail: React.FC<GroupDetailProps> = ({
                              }
                           }}
                           style={{
-                            padding: '10px 16px',
+                            padding: '16px',
                             background: '#FFFFFF',
-                            border: '1.5px solid #F1F5F9',
+                            border: '0.5px solid #EFE7DC',
                             display: 'flex',
                             alignItems: 'center',
-                            gap: '14px',
-                            borderRadius: '18px',
-                            cursor: 'pointer',
-                            minHeight: '56px',
+                            gap: '12px',
+                            borderRadius: '20px',
+                            boxShadow: '0 2px 10px rgba(0,0,0,0.04)',
                             boxSizing: 'border-box',
+                            cursor: 'pointer',
                           }}
                         >
                           <div style={{ width: '40px', height: '40px', borderRadius: '50%', background: avBg, color: '#FFFFFF', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '16px', fontWeight: 600, flexShrink: 0 }}>
@@ -949,7 +949,7 @@ export const GroupDetail: React.FC<GroupDetailProps> = ({
                           </div>
 
                           <div style={{ minWidth: 0, flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center', gap: '6px' }}>
-                            <h3  style={{ fontSize: '17px', fontWeight: 600, color: '#2E2A25', margin: 0, textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap', textTransform: 'capitalize' }}>{m}</h3>
+                            <h3  style={{ fontSize: '16px', fontWeight: 600, color: '#2E2A25', margin: 0, textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap', textTransform: 'capitalize' }}>{m}</h3>
 
                             <div style={{ display: 'flex', flexDirection: 'column', gap: '2px', alignItems: 'flex-start', minWidth: 0 }}>
                               {payList.length > 0 && (() => {
@@ -1047,15 +1047,17 @@ export const GroupDetail: React.FC<GroupDetailProps> = ({
                             }
                           }}
                           style={{
-                            padding: '12px 14px',
+                            padding: '16px',
                             background: '#F8FAFC',
-                            border: '1.5px solid #F1F5F9',
+                            border: '0.5px solid #EFE7DC',
                             opacity: 0.9,
                             display: 'flex',
                             alignItems: 'center',
                             justifyContent: 'space-between',
                             gap: '12px',
-                            borderRadius: '12px',
+                            borderRadius: '20px',
+                            boxShadow: '0 2px 10px rgba(0,0,0,0.04)',
+                            boxSizing: 'border-box',
                             cursor: 'pointer',
                           }}
                         >
@@ -1330,14 +1332,16 @@ export const GroupDetail: React.FC<GroupDetailProps> = ({
                         key={m}
                         className="card hover-up"
                         style={{
-                          padding: '12px 14px',
-                          background: 'var(--w)',
-                          border: '1.5px solid #F1F5F9',
+                          padding: '16px',
+                          background: '#FFFFFF',
+                          border: '0.5px solid #EFE7DC',
                           display: 'flex',
                           alignItems: 'center',
                           justifyContent: 'space-between',
                           gap: '12px',
-                          borderRadius: '12px',
+                          borderRadius: '20px',
+                          boxShadow: '0 2px 10px rgba(0,0,0,0.04)',
+                          boxSizing: 'border-box',
                         }}
                       >
                         <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flex: 1, minWidth: 0 }}>
