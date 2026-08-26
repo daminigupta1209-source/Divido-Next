@@ -264,8 +264,8 @@ export const ExpenseRow: React.FC<ExpenseRowProps> = ({
     return (
       <div
         onClick={() => {
-          setEditingSettle(e);
-          setShowSettleModal(true);
+          setEditingExpense(e);
+          setShowExpModal(true);
         }}
         style={{
           position: 'relative',
@@ -354,8 +354,8 @@ export const ExpenseRow: React.FC<ExpenseRowProps> = ({
             >
               <div
                 onClick={() => {
-                  setEditingSettle(e);
-                  setShowSettleModal(true);
+                  setEditingExpense(e);
+                  setShowExpModal(true);
                   setOpenExpId(null);
                 }}
               >
