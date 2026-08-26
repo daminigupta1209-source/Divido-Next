@@ -948,31 +948,31 @@ export const GroupDetail: React.FC<GroupDetailProps> = ({
                             {m.charAt(0).toUpperCase()}
                           </div>
 
-                          <div style={{ minWidth: 0, flex: 1, display: 'flex', alignItems: 'center', gap: '6px' }}>
+                          <div style={{ minWidth: 0, flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center', gap: '6px' }}>
                             <h3  style={{ fontSize: '17px', fontWeight: 600, color: '#2E2A25', margin: 0, textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap', textTransform: 'capitalize' }}>{m}</h3>
-                          </div>
 
-                          <div style={{ display: 'flex', flexDirection: 'column', gap: '2px', alignItems: 'flex-end', flexShrink: 0 }}>
-                            {payList.length > 0 && (() => {
-                              const textStr = `${balPrimary(payList)} to pay`;
-                              const fSize = textStr.length > 22 ? '9.5px' : textStr.length > 17 ? '11px' : '13px';
-                              return (
-                                <span style={{ ...balPillBase, fontSize: fSize, color: '#E11D48', maxWidth: '145px', overflow: 'hidden' }}>
-                                  <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{textStr}</span>
-                                  {payList.length > 1 && <span style={{...balCardChip, flexShrink: 0}}>+{payList.length - 1}</span>}
-                                </span>
-                              );
-                            })()}
-                            {collectList.length > 0 && (() => {
-                              const textStr = `${balPrimary(collectList)} to collect`;
-                              const fSize = textStr.length > 22 ? '9.5px' : textStr.length > 17 ? '11px' : '13px';
-                              return (
-                                <span style={{ ...balPillBase, fontSize: fSize, color: '#3FA97C', maxWidth: '145px', overflow: 'hidden' }}>
-                                  <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{textStr}</span>
-                                  {collectList.length > 1 && <span style={{...balCardChip, flexShrink: 0}}>+{collectList.length - 1}</span>}
-                                </span>
-                              );
-                            })()}
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: '2px', alignItems: 'flex-start', minWidth: 0 }}>
+                              {payList.length > 0 && (() => {
+                                const textStr = `${balPrimary(payList)} to pay`;
+                                const fSize = textStr.length > 22 ? '11px' : '13px';
+                                return (
+                                  <span style={{ ...balPillBase, padding: 0, fontSize: fSize, color: '#E11D48', maxWidth: '145px', overflow: 'hidden', justifyContent: 'flex-start' }}>
+                                    <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{textStr}</span>
+                                    {payList.length > 1 && <span style={{...balCardChip, flexShrink: 0}}>+{payList.length - 1}</span>}
+                                  </span>
+                                );
+                              })()}
+                              {collectList.length > 0 && (() => {
+                                const textStr = `${balPrimary(collectList)} to collect`;
+                                const fSize = textStr.length > 22 ? '11px' : '13px';
+                                return (
+                                  <span style={{ ...balPillBase, padding: 0, fontSize: fSize, color: '#3FA97C', maxWidth: '145px', overflow: 'hidden', justifyContent: 'flex-start' }}>
+                                    <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{textStr}</span>
+                                    {collectList.length > 1 && <span style={{...balCardChip, flexShrink: 0}}>+{collectList.length - 1}</span>}
+                                  </span>
+                                );
+                              })()}
+                            </div>
                           </div>
 
                           <button
