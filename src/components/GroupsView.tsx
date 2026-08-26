@@ -5,7 +5,6 @@ import { StyledDropdown } from './StyledDropdown';
 const filterBtnStyle: React.CSSProperties = { padding: '6px 12px', borderRadius: '20px', border: '1px solid #E2E8F0', fontSize: '12px', fontWeight: 600, background: '#F1F5F9', color: '#475569', boxShadow: 'none' };
 import { Group, Expense } from '../lib/types';
 import { BalanceDisplay } from './BalanceDisplay';
-import { simplifyMultiCurrencyDebts } from '../lib/calculations';
 
 interface GroupsViewProps {
   groups: Group[];
@@ -385,31 +384,13 @@ export const GroupsView: React.FC<GroupsViewProps> = ({
         {/* Remaining Group Cards */}
         {filteredGroups.map((g, i) => {
           const c = GROUP_COLORS[i % GROUP_COLORS.length];
+          // The card's balance and its "Settled Up" state come from the same
+          // authoritative source (allGroupBalances via getMemberBalance) that the
+          // inside-group view uses — so they can never disagree. Recomputing here
+          // from g.members dropped any expense referencing a name not in the
+          // roster (a friend's new activity, a pending member), which wrongly
+          // showed "Settled Up" while the group actually had a net balance.
           const bal = getMemberBalance(g.id, me);
-
-          // Calculate status message
-          const groupExps = expenses.filter((e) => String(e.gId) === String(g.id));
-          
-          const simplified = simplifyMultiCurrencyDebts(g.members || [], groupExps, g.currency || '₹');
-          const memberBals: Record<string, Record<string, number>> = {};
-          simplified.forEach((t) => {
-            if (t.from === me) {
-              if (!memberBals[t.to]) memberBals[t.to] = {};
-              Object.entries(t.balances).forEach(([c, v]) => {
-                memberBals[t.to][c] = (memberBals[t.to][c] || 0) - v;
-              });
-            } else if (t.to === me) {
-              if (!memberBals[t.from]) memberBals[t.from] = {};
-              Object.entries(t.balances).forEach(([c, v]) => {
-                memberBals[t.from][c] = (memberBals[t.from][c] || 0) + v;
-              });
-            }
-          });
-          
-          const rels = Object.entries(memberBals).map(([name, balances]) => ({
-            name,
-            balances,
-          })).filter((r) => Object.values(r.balances).some((v) => Math.abs(v) > 0.01));
 
           return (
             <div
@@ -480,13 +461,15 @@ export const GroupsView: React.FC<GroupsViewProps> = ({
 
               {/* Right Side: Net Balance Tags & Actions */}
               <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexShrink: 0 }}>
-                {rels.length === 0 ? (
-                  <span style={{ fontSize: '13px', fontWeight: 600, color: '#16A34A', background: '#ECFDF5', border: 'none', padding: '4px 10px', borderRadius: '20px' }}>
-                    Settled Up
-                  </span>
-                ) : (
-                  (() => {
+                {(() => {
                     const balEntries = Object.entries(bal).filter(([_, v]) => Math.abs(v) > 0.01);
+                    if (balEntries.length === 0) {
+                      return (
+                        <span style={{ fontSize: '13px', fontWeight: 600, color: '#16A34A', background: '#ECFDF5', border: 'none', padding: '4px 10px', borderRadius: '20px' }}>
+                          Settled Up
+                        </span>
+                      );
+                    }
                     return (
                       <span style={{ fontSize: '13px', fontWeight: 600, fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", sans-serif', whiteSpace: 'nowrap' }}>
                         {balEntries.slice(0, 3).map(([curr, val], idx, shown) => {
@@ -502,8 +485,7 @@ export const GroupsView: React.FC<GroupsViewProps> = ({
                         {balEntries.length > 3 && <span style={{ color: '#94A3B8' }}>…</span>}
                       </span>
                     );
-                  })()
-                )}
+                  })()}
                 <span style={{ fontSize: '16px', color: '#94A3B8', fontWeight: 600, marginLeft: '4px', lineHeight: 1 }}>›</span>
               </div>
             </div>
