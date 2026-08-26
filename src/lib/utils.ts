@@ -308,6 +308,19 @@ export const formatCompactAmount = (value: number): string => {
   return abs.toLocaleString('en-US', { maximumFractionDigits: 0 });
 };
 
+// Exact money — full grouped figure, never abbreviated (₹11,990 stays 11,990,
+// not "12K"). Use this wherever an exact balance matters; keep
+// formatCompactAmount for tight chips where space beats precision. Shows cents
+// only when the value actually has a fractional part.
+export const formatExactAmount = (value: number): string => {
+  const abs = Math.abs(value);
+  const hasFraction = Math.round(abs * 100) % 100 !== 0;
+  return abs.toLocaleString('en-US', {
+    minimumFractionDigits: hasFraction ? 2 : 0,
+    maximumFractionDigits: 2,
+  });
+};
+
 export const parseExpenseId = (id: string | number | undefined | null): number => {
   if (id === undefined || id === null) return 0;
   if (typeof id === 'number') return id;

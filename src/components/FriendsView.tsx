@@ -3,7 +3,7 @@ import { BalanceDisplay } from './BalanceDisplay';
 
 import { Group, Expense, UserMetadata, GlobalSettleData } from '../lib/types';
 import { simplifyMultiCurrencyDebts, computeRawPairwiseTransactions } from '../lib/calculations';
-import { worldCurrencies, formatCompactAmount } from '../lib/utils';
+import { worldCurrencies, formatExactAmount } from '../lib/utils';
 import { SearchableCurrencyPicker } from './SearchableCurrencyPicker';
 import { StyledDropdown } from './StyledDropdown';
 
@@ -355,7 +355,7 @@ export const FriendsView: React.FC<FriendsViewProps> = ({
               if (entries.length === 0) return 'Nothing to pay';
               const [c, v] = entries[0];
               return (<>
-                <span style={{ overflow: 'hidden', textOverflow: 'ellipsis' }}>{c}{formatCompactAmount(v)} to pay</span>
+                <span style={{ overflow: 'hidden', textOverflow: 'ellipsis' }}>{c}{formatExactAmount(v)} to pay</span>
                 {entries.length > 1 && <span style={pillChipStyle}>+{entries.length - 1}</span>}
               </>);
             })()}
@@ -392,7 +392,7 @@ export const FriendsView: React.FC<FriendsViewProps> = ({
               if (entries.length === 0) return 'Nothing to collect';
               const [c, v] = entries[0];
               return (<>
-                <span style={{ overflow: 'hidden', textOverflow: 'ellipsis' }}>{c}{formatCompactAmount(v)} to collect</span>
+                <span style={{ overflow: 'hidden', textOverflow: 'ellipsis' }}>{c}{formatExactAmount(v)} to collect</span>
                 {entries.length > 1 && <span style={pillChipStyle}>+{entries.length - 1}</span>}
               </>);
             })()}
@@ -544,7 +544,7 @@ export const FriendsView: React.FC<FriendsViewProps> = ({
             if (entries.length === 0) return '';
             const [curr, val] = entries[0];
             const prefix = convertTo ? '≈ ' : '';
-            return `${prefix}${curr}${formatCompactAmount(val)}`;
+            return `${prefix}${curr}${formatExactAmount(val)}`;
           };
 
           const AV_COLORS = ['#B39DDB', '#F48FB1', '#80CBC4', '#FFB74D', '#9FA8DA', '#A5D6A7', '#EF9A9A', '#7FC8CE'];
