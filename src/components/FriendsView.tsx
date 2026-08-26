@@ -595,20 +595,20 @@ export const FriendsView: React.FC<FriendsViewProps> = ({
               </div>
 
               {/* Name with the amount stacked right below it (left-aligned) */}
-              <div style={{ minWidth: 0, flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center', gap: '3px' }}>
+              <div style={{ minWidth: 0, flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center', gap: '6px' }}>
                 <h3 style={{ fontSize: '16px', fontWeight: 600, color: '#2E2A25', margin: 0, textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap', textTransform: 'capitalize' }}>{f.name}</h3>
                 {!active ? (
-                  <span style={{ fontSize: '13px', fontWeight: 600, color: '#94A3B8' }}>Settled up</span>
+                  <span style={{ fontSize: '13px', fontWeight: 600, fontStyle: 'italic', color: '#94A3B8' }}>Settled up</span>
                 ) : (
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '2px', minWidth: 0 }}>
                     {payList.length > 0 && (
-                      <span style={{ fontSize: '13px', fontWeight: 600, color: '#B91C1C', display: 'inline-flex', alignItems: 'center', gap: '5px', minWidth: 0 }}>
+                      <span style={{ fontSize: '13px', fontWeight: 600, fontStyle: 'italic', color: '#B91C1C', display: 'inline-flex', alignItems: 'center', gap: '5px', minWidth: 0 }}>
                         <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{`${joinPrimary(payList)} to pay`}</span>
                         {payList.length > 1 && <span style={{ ...cardChip, flexShrink: 0 }}>+{payList.length - 1}</span>}
                       </span>
                     )}
                     {collectList.length > 0 && (
-                      <span style={{ fontSize: '13px', fontWeight: 600, color: '#047857', display: 'inline-flex', alignItems: 'center', gap: '5px', minWidth: 0 }}>
+                      <span style={{ fontSize: '13px', fontWeight: 600, fontStyle: 'italic', color: '#047857', display: 'inline-flex', alignItems: 'center', gap: '5px', minWidth: 0 }}>
                         <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{`${joinPrimary(collectList)} to collect`}</span>
                         {collectList.length > 1 && <span style={{ ...cardChip, flexShrink: 0 }}>+{collectList.length - 1}</span>}
                       </span>
