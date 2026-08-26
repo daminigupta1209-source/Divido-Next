@@ -1,8 +1,29 @@
 import React, { useState, useEffect } from 'react';
-import { getEmoji, GROUP_COLORS, formatExactAmount } from '../lib/utils';
+import { getEmoji, GROUP_COLORS, formatExactAmount, formatCompactAmount } from '../lib/utils';
 import { StyledDropdown } from './StyledDropdown';
 
 const filterBtnStyle: React.CSSProperties = { padding: '6px 12px', borderRadius: '20px', border: '1px solid #E2E8F0', fontSize: '12px', fontWeight: 600, background: '#F1F5F9', color: '#475569', boxShadow: 'none' };
+
+// Step the balance-tag font down as the (multi-currency) string grows.
+const fitCardFont = (text: string, base: number): number => {
+  const n = text.length;
+  if (n <= 12) return base;
+  if (n <= 16) return base - 1;
+  if (n <= 20) return base - 2;
+  return Math.max(base - 3, 9);
+};
+
+// Show exact figures on the group-card balance tag while they stay readable
+// (>= base-2, ~11px); once the exact string would need to shrink smaller,
+// round to compact (₹1.2M) so the tag never becomes unreadable or overflows.
+const chooseCardAmt = (entries: [string, number][], base: number): { compact: boolean; fontSize: number } => {
+  const shown = entries.slice(0, 3);
+  const build = (fmt: (v: number) => string) =>
+    shown.map(([c, v]) => `${v > 0.01 ? '+' : '-'}${c}${fmt(v)}`).join(', ') + (entries.length > 3 ? ' …' : '');
+  const exactFont = fitCardFont(build(formatExactAmount), base);
+  if (exactFont >= base - 2) return { compact: false, fontSize: exactFont };
+  return { compact: true, fontSize: fitCardFont(build(formatCompactAmount), base) };
+};
 import { Group, Expense } from '../lib/types';
 import { BalanceDisplay } from './BalanceDisplay';
 
@@ -360,14 +381,15 @@ export const GroupsView: React.FC<GroupsViewProps> = ({
             ) : (
               (() => {
                 const nonGroupEntries = Object.entries(nonGroupBal).filter(([_, v]) => Math.abs(v) > 0.01);
+                const amt = chooseCardAmt(nonGroupEntries, 13);
                 return (
-                  <span style={{ fontSize: '13px', fontWeight: 600, fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", sans-serif', whiteSpace: 'nowrap' }}>
+                  <span style={{ fontSize: `${amt.fontSize}px`, fontWeight: 600, fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", sans-serif', whiteSpace: 'nowrap' }}>
                     {nonGroupEntries.slice(0, 3).map(([curr, val], idx, shown) => {
                       const isOwed = val > 0.01;
                       const isLast = idx === shown.length - 1;
                       return (
                         <span key={curr} style={{ color: isOwed ? '#16A34A' : '#EF4444' }}>
-                          {isOwed ? '+' : '-'}{curr}{formatExactAmount(val)}
+                          {isOwed ? '+' : '-'}{curr}{amt.compact ? formatCompactAmount(val) : formatExactAmount(val)}
                           {!isLast && <span style={{ color: '#94A3B8' }}>, </span>}
                         </span>
                       );
@@ -470,14 +492,15 @@ export const GroupsView: React.FC<GroupsViewProps> = ({
                         </span>
                       );
                     }
+                    const amt = chooseCardAmt(balEntries, 13);
                     return (
-                      <span style={{ fontSize: '13px', fontWeight: 600, fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", sans-serif', whiteSpace: 'nowrap' }}>
+                      <span style={{ fontSize: `${amt.fontSize}px`, fontWeight: 600, fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", sans-serif', whiteSpace: 'nowrap' }}>
                         {balEntries.slice(0, 3).map(([curr, val], idx, shown) => {
                           const isOwed = val > 0.01;
                           const isLast = idx === shown.length - 1;
                           return (
                             <span key={curr} style={{ color: isOwed ? '#16A34A' : '#EF4444' }}>
-                              {isOwed ? '+' : '-'}{curr}{formatExactAmount(val)}
+                              {isOwed ? '+' : '-'}{curr}{amt.compact ? formatCompactAmount(val) : formatExactAmount(val)}
                               {!isLast && <span style={{ color: '#94A3B8' }}>, </span>}
                             </span>
                           );
