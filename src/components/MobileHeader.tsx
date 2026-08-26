@@ -761,7 +761,7 @@ export const MobileHeader: React.FC<MobileHeaderProps> = ({
           </div>
         ) : (
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: '100%', position: 'relative', height: '100%' }}>
-            {(view === 'profile' || view === 'gallery' || view === 'detail' || view === 'analytics') ? (
+            {(view === 'gallery' || view === 'detail' || (view === 'analytics' && analyticsGroupId !== null && analyticsGroupId !== 'ALL')) ? (
               <span
                 onClick={() => {
                   if (view === 'gallery' || view === 'analytics') {
@@ -813,7 +813,7 @@ export const MobileHeader: React.FC<MobileHeaderProps> = ({
               <div
                 style={{
                   position: 'absolute',
-                  left: (view === 'profile' || view === 'gallery' || view === 'detail' || view === 'analytics') ? '34px' : '52px',
+                  left: (view === 'gallery' || view === 'detail' || (view === 'analytics' && analyticsGroupId !== null && analyticsGroupId !== 'ALL')) ? '34px' : '52px',
                   top: '50%',
                   transform: 'translateY(-50%)',
                   display: 'flex',
