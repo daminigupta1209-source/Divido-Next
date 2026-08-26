@@ -73,7 +73,7 @@ export const ExpenseList: React.FC<ExpenseListProps> = ({
       <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', paddingLeft: '8px', paddingRight: '8px' }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '12px', position: 'relative', width: '100%' }}>
           {/* Search bar — always visible */}
-          <div style={{ position: 'relative', flex: 1, maxWidth: '240px', lineHeight: 0, fontSize: 0 }}>
+          <div style={{ position: 'relative', flex: 1, lineHeight: 0, fontSize: 0 }}>
             <svg
               viewBox="0 0 24 24" fill="none"
               stroke="currentColor" strokeWidth="2.5"
