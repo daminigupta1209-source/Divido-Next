@@ -594,62 +594,65 @@ export const FriendsView: React.FC<FriendsViewProps> = ({
                 {f.name.charAt(0).toUpperCase()}
               </div>
 
-              {/* Name */}
-              <div style={{ minWidth: 0, flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center', gap: '1px' }}>
-                <h3  style={{ fontSize: '17px', fontWeight: 600, color: '#2E2A25', margin: 0, textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap', textTransform: 'capitalize' }}>{f.name}</h3>
-                {isDupName(f.name) && f.groups.length > 0 && (
-                  <span style={{ fontSize: '11px', color: '#94A3B8', fontWeight: 600, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{f.groups.join(', ')}</span>
-                )}
-              </div>
+              {/* Name on its own full-width line, balance + action below — so the
+                  name is never crushed by the pill/button on narrow screens. */}
+              <div style={{ minWidth: 0, flex: 1, display: 'flex', flexDirection: 'column', gap: '7px', justifyContent: 'center' }}>
+                <div style={{ minWidth: 0 }}>
+                  <h3 style={{ fontSize: '16px', fontWeight: 600, color: '#2E2A25', margin: 0, textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap', textTransform: 'capitalize' }}>{f.name}</h3>
+                  {isDupName(f.name) && f.groups.length > 0 && (
+                    <span style={{ display: 'block', fontSize: '11px', color: '#94A3B8', fontWeight: 600, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{f.groups.join(', ')}</span>
+                  )}
+                </div>
 
-              {/* Balance pills */}
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', alignItems: 'flex-end', flexShrink: 0 }}>
-                {!active ? (
-                  <span style={{ ...pillBase, color: '#047857' }}>Settled up</span>
-                ) : (
-                  <>
-                    {payList.length > 0 && (() => {
-                      const textStr = `${joinPrimary(payList)} to pay`;
-                      const fSize = textStr.length > 22 ? '9.5px' : textStr.length > 17 ? '11px' : '13px';
-                      return (
-                        <span style={{ ...pillBase, fontSize: fSize, color: '#B91C1C', display: 'inline-flex', alignItems: 'center', justifyContent: 'flex-end', gap: '5px', maxWidth: '145px' }}>
-                          <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{textStr}</span>
-                          {payList.length > 1 && <span style={{...cardChip, flexShrink: 0}}>+{payList.length - 1}</span>}
-                        </span>
-                      );
-                    })()}
-                    {collectList.length > 0 && (() => {
-                      const textStr = `${joinPrimary(collectList)} to collect`;
-                      const fSize = textStr.length > 22 ? '9.5px' : textStr.length > 17 ? '11px' : '13px';
-                      return (
-                        <span style={{ ...pillBase, fontSize: fSize, color: '#047857', display: 'inline-flex', alignItems: 'center', justifyContent: 'flex-end', gap: '5px', maxWidth: '145px' }}>
-                          <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{textStr}</span>
-                          {collectList.length > 1 && <span style={{...cardChip, flexShrink: 0}}>+{collectList.length - 1}</span>}
-                        </span>
-                      );
-                    })()}
-                  </>
-                )}
-              </div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+                  {/* Balance pills */}
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '3px', alignItems: 'flex-start' }}>
+                    {!active ? (
+                      <span style={{ ...pillBase, padding: '0', color: '#047857' }}>Settled up</span>
+                    ) : (
+                      <>
+                        {payList.length > 0 && (() => {
+                          const textStr = `${joinPrimary(payList)} to pay`;
+                          return (
+                            <span style={{ ...pillBase, padding: '0', color: '#B91C1C', display: 'inline-flex', alignItems: 'center', gap: '5px' }}>
+                              <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{textStr}</span>
+                              {payList.length > 1 && <span style={{...cardChip, flexShrink: 0}}>+{payList.length - 1}</span>}
+                            </span>
+                          );
+                        })()}
+                        {collectList.length > 0 && (() => {
+                          const textStr = `${joinPrimary(collectList)} to collect`;
+                          return (
+                            <span style={{ ...pillBase, padding: '0', color: '#047857', display: 'inline-flex', alignItems: 'center', gap: '5px' }}>
+                              <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{textStr}</span>
+                              {collectList.length > 1 && <span style={{...cardChip, flexShrink: 0}}>+{collectList.length - 1}</span>}
+                            </span>
+                          );
+                        })()}
+                      </>
+                    )}
+                  </div>
 
-              {onQuickAddExpense && (
-                <button
-                  onClick={(e) => { e.stopPropagation(); onQuickAddExpense(f.name); }}
-                  title={`Add expense with ${f.name}`}
-                  style={{
-                    flexShrink: 0, display: 'inline-flex', alignItems: 'center', gap: '3px',
-                    background: '#ECFDF5', color: '#059669', border: '1px solid #A7F3D0',
-                    borderRadius: '999px', padding: '4px 8px', fontSize: '10.5px', fontWeight: 700,
-                    cursor: 'pointer', fontFamily: 'inherit', lineHeight: 1,
-                  }}
-                >
-                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.8" strokeLinecap="round" style={{ width: '11px', height: '11px' }}>
-                    <line x1="12" y1="5" x2="12" y2="19" />
-                    <line x1="5" y1="12" x2="19" y2="12" />
-                  </svg>
-                  Expense
-                </button>
-              )}
+                  {onQuickAddExpense && (
+                    <button
+                      onClick={(e) => { e.stopPropagation(); onQuickAddExpense(f.name); }}
+                      title={`Add expense with ${f.name}`}
+                      style={{
+                        flexShrink: 0, display: 'inline-flex', alignItems: 'center', gap: '3px',
+                        background: '#ECFDF5', color: '#059669', border: '1px solid #A7F3D0',
+                        borderRadius: '999px', padding: '4px 9px', fontSize: '11px', fontWeight: 700,
+                        cursor: 'pointer', fontFamily: 'inherit', lineHeight: 1,
+                      }}
+                    >
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.8" strokeLinecap="round" style={{ width: '11px', height: '11px' }}>
+                        <line x1="12" y1="5" x2="12" y2="19" />
+                        <line x1="5" y1="12" x2="19" y2="12" />
+                      </svg>
+                      Expense
+                    </button>
+                  )}
+                </div>
+              </div>
 
               <span style={{ fontSize: '18px', color: '#B8ADA0', fontWeight: 600, lineHeight: 1, flexShrink: 0 }}>›</span>
             </div>
