@@ -56,7 +56,10 @@ export const GroupGallery: React.FC<GroupGalleryProps> = ({
   // Filter states
   const [localSearchQuery, setLocalSearchQuery] = useState('');
   const [localShowFilters, setLocalShowFilters] = useState(false);
-  const searchQuery = propSearchQuery !== undefined ? propSearchQuery : localSearchQuery;
+  // The in-tab search bar is locally controlled (like the Activities search).
+  // A non-empty global/header search (propSearchQuery) still filters if present,
+  // but the tab's own bar always works.
+  const searchQuery = localSearchQuery.trim() ? localSearchQuery : (propSearchQuery || '');
   const showFilters = propShowFilters !== undefined ? propShowFilters : localShowFilters;
   const setShowFilters = propSetShowFilters !== undefined ? propSetShowFilters : setLocalShowFilters;
   const [filterType, setFilterType] = useState('all'); // 'all', 'expenses', 'settlements'
@@ -190,8 +193,8 @@ export const GroupGallery: React.FC<GroupGalleryProps> = ({
             <input
               type="text"
               placeholder="Search photos..."
-              value={searchQuery}
-              onChange={(e) => propSearchQuery !== undefined ? {} : setLocalSearchQuery(e.target.value)}
+              value={localSearchQuery}
+              onChange={(e) => setLocalSearchQuery(e.target.value)}
               style={{
                 display: 'block',
                 width: '100%',
