@@ -501,6 +501,21 @@ function App() {
   // 1. Listen for browser popstate and apply to React states
   useEffect(() => {
     const onPopState = (e: PopStateEvent) => {
+      // A back-swipe from a top-level bottom-nav screen (All balances, All
+      // Activities, Global Analytics, Profile) goes to the Home screen (groups),
+      // not to whatever screen happened to be underneath.
+      const onTopLevelScreen =
+        view === 'friends' || view === 'activity' || view === 'profile' ||
+        (view === 'analytics' && (analyticsGroupId === null || analyticsGroupId === 'ALL'));
+      if (onTopLevelScreen) {
+        isNavigatingHistory.current = true;
+        setView('summary');
+        setSelectedId(null);
+        try {
+          sessionStorage.setItem('divido_ui_state', JSON.stringify({ ...getUiState(), view: 'summary', selectedId: null }));
+        } catch {}
+        return;
+      }
       const st = e.state;
       if (st && st._divido && st.uiState) {
         isNavigatingHistory.current = true;
