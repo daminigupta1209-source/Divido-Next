@@ -147,8 +147,16 @@ export function useExpenseForm({
     }
   }, [newlyAddedFriends, setNewlyAddedFriends]);
 
-  const [title, setTitle] = useState<string>(editingExpense?.title || '');
-  const [overrideEmoji, setOverrideEmoji] = useState<string | null>(null);
+  const [title, setTitle] = useState<string>(() => {
+    if (!editingExpense) return '';
+    const isSettlement = editingExpense.title?.includes('Settlement') || editingExpense.category === '💸' || editingExpense.category === '🤝';
+    return isSettlement ? 'Payment Recorded' : editingExpense.title;
+  });
+  const [overrideEmoji, setOverrideEmoji] = useState<string | null>(() => {
+    if (!editingExpense) return null;
+    const isSettlement = editingExpense.title?.includes('Settlement') || editingExpense.category === '💸' || editingExpense.category === '🤝';
+    return isSettlement ? (editingExpense.category || '💸') : null;
+  });
   const [showGroupDropdown, setShowGroupDropdown] = useState<boolean>(false);
   const [showSuggestions, setShowSuggestions] = useState<boolean>(false);
   const [selIdx, setSelIdx] = useState<number>(-1);

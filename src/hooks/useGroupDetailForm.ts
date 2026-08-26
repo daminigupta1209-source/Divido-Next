@@ -108,7 +108,7 @@ export function useGroupDetailForm({
     const headers = ['Date', 'Title', 'Category', 'Paid By', 'Split Mode', 'Split Members', 'Total Amount', 'Currency'].join(',');
     
     const rows = groupExpenses.map((e) => {
-      const isSettlement = e.title.includes('✅ Settlement');
+      const isSettlement = e.title.includes('💸 Settlement') || e.title.includes('✅ Settlement') || e.title.includes('🤝 Settlement') || e.title.toLowerCase().includes('settlement') || e.category === '💸' || e.category === '✅' || e.category === '🤝' || e.title === 'Payment Recorded';
       const category = getEmoji(e.title) || (isSettlement ? '✅' : '📄');
       
       const escapedTitle = `"${e.title.replace(/"/g, '""')}"`;

@@ -91,7 +91,7 @@ export const GroupGallery: React.FC<GroupGalleryProps> = ({
       }
 
       // 2. Type filter
-      const isSettlement = e.category === '✅' || e.title?.includes('✅ Settlement') || e.title?.toLowerCase().includes('settlement');
+      const isSettlement = e.category === '💸' || e.category === '✅' || e.category === '🤝' || e.title?.includes('💸 Settlement') || e.title?.includes('✅ Settlement') || e.title?.includes('🤝 Settlement') || e.title?.toLowerCase().includes('settlement') || e.title === 'Payment Recorded';
       if (filterType === 'expenses' && isSettlement) return false;
       if (filterType === 'settlements' && !isSettlement) return false;
 

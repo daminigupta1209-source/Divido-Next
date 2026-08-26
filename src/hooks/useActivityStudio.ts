@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from 'react';
+﻿import { useState, useEffect, useMemo } from 'react';
 import { Group, Expense } from '../lib/types';
 import { getEmoji, parseExpenseId } from '../lib/utils';
 
@@ -68,8 +68,7 @@ export function useActivityStudio({
         const tagMatch = e.tags?.some((t) => t.toLowerCase().includes(q));
         if (!titleMatch && !paidMatch && !tagMatch) return false;
       }
-      const isSettlement =
-        e.title?.includes('✅ Settlement') || e.category === '✅' || e.title?.toLowerCase().includes('settlement');
+      const isSettlement = e.title?.includes('💸 Settlement') || e.title?.includes('✅ Settlement') || e.title?.includes('🤝 Settlement') || e.category === '💸' || e.category === '✅' || e.category === '🤝' || e.title?.toLowerCase().includes('settlement') || e.title === 'Payment Recorded';
       const isConversion = !!e.isConversion;
       if (filterType === 'expenses') {
         if (isSettlement || isConversion) return false;
@@ -124,8 +123,8 @@ export function useActivityStudio({
   const handleExportCSV = () => {
     const headers = ['Date', 'Title', 'Category', 'Paid By', 'Split Mode', 'Split Members', 'Total Amount', 'Currency'].join(',');
     const rows = sorted.map((e) => {
-      const isSettlement = e.title?.includes('✅ Settlement') || e.category === '✅' || e.title?.toLowerCase().includes('settlement');
-      const category = e.category || getEmoji(e.title) || (isSettlement ? '✅' : '📄');
+      const isSettlement = e.title?.includes('💸 Settlement') || e.title?.includes('✅ Settlement') || e.title?.includes('🤝 Settlement') || e.category === '💸' || e.category === '✅' || e.category === '🤝' || e.title?.toLowerCase().includes('settlement') || e.title === 'Payment Recorded';
+      const category = e.category || getEmoji(e.title) || (isSettlement ? 'âœ…' : 'ðŸ“„');
       
       const escapedTitle = `"${e.title.replace(/"/g, '""')}"`;
       const escapedCategory = `"${category.replace(/"/g, '""')}"`;
@@ -143,7 +142,7 @@ export function useActivityStudio({
         escapedSplitMode,
         escapedSplitters,
         e.amt.toFixed(2),
-        e.currency || '₹'
+        e.currency || 'â‚¹'
       ].join(',');
     });
     
@@ -162,7 +161,7 @@ export function useActivityStudio({
   const handleExportPDF = () => {
     const printWindow = window.open('', '_blank');
     if (!printWindow) {
-      alert('Popup blocker prevented opening the print report! 🛑 Please allow popups for this site.');
+      alert('Popup blocker prevented opening the print report! ðŸ›‘ Please allow popups for this site.');
       return;
     }
 
@@ -195,7 +194,7 @@ export function useActivityStudio({
           <div class="header-container">
             <div>
               <h1>Divido Statement</h1>
-              <div class="meta-info">Global Activities Ledger • Generated on <strong>${new Date().toLocaleDateString()}</strong></div>
+              <div class="meta-info">Global Activities Ledger â€¢ Generated on <strong>${new Date().toLocaleDateString()}</strong></div>
             </div>
             <div style="text-align: right;" class="meta-info">
               User: <strong>${me}</strong><br>
@@ -216,19 +215,19 @@ export function useActivityStudio({
             </thead>
             <tbody>
               ${sorted.map((e) => {
-                const isSettlement = e.title?.includes('✅ Settlement') || e.category === '✅' || e.title?.toLowerCase().includes('settlement');
+                const isSettlement = e.title?.includes('💸 Settlement') || e.title?.includes('✅ Settlement') || e.title?.includes('🤝 Settlement') || e.category === '💸' || e.category === '✅' || e.category === '🤝' || e.title?.toLowerCase().includes('settlement') || e.title === 'Payment Recorded';
                 return `
                   <tr>
                     <td>${e.date}</td>
                     <td>
                       <span class="badge ${isSettlement ? 'badge-settle' : 'badge-expense'}">
-                        ${isSettlement ? 'Settlement ✅' : 'Expense 💸'}
+                        ${isSettlement ? 'Settlement âœ…' : 'Expense ðŸ’¸'}
                       </span>
                     </td>
                     <td>${e.title}</td>
                     <td>${e.paid}</td>
                     <td>${e.mode || 'Equally'}</td>
-                    <td class="amt">${e.currency || '₹'}${e.amt.toFixed(2)}</td>
+                    <td class="amt">${e.currency || 'â‚¹'}${e.amt.toFixed(2)}</td>
                   </tr>
                 `;
               }).join('')}

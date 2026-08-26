@@ -97,7 +97,7 @@ export const ExpenseRow: React.FC<ExpenseRowProps> = ({
     );
   }
 
-  const isSettlement = e.title.includes('✅ Settlement') || e.title.includes('🤝 Settlement') || e.title.toLowerCase().includes('settlement');
+  const isSettlement = e.title.includes('💸 Settlement') || e.title.includes('🤝 Settlement') || e.title.toLowerCase().includes('settlement') || e.category === '💸' || e.category === '🤝' || e.title === 'Payment Recorded';
   const splitters = e.splitters || selectedGroup?.members || [];
   const isConversion = e.isConversion;
 
