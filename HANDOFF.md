@@ -81,6 +81,10 @@ People are referenced by **name string**: `paid` (payer name), `splitters` (name
 
 ---
 
+## Prior handoff to-dos — addressed
+- **Search UI (Activities/Photos):** both already existed & matched; the Photos search bar was actually **broken** (App passed `searchQuery={globalSearchQuery}`, making its `onChange` a no-op). Now locally controlled and typeable, like Activities (`GroupGallery.tsx`).
+- **Photo→expense didn't update the tile:** the code edits in place and preserves the attachment; the original failure was the expense-id swap race, now removed by the permanent-expense-id fix. Re-test to confirm; if it still repros, add a targeted reconciliation.
+
 ## Open / deferred (not bugs)
 - **Rename-request "pending" indicator** — renaming a JOINED member sends a proposal the person must accept; there's no persistent "pending" badge and it can sit unaccepted. By design (their name is theirs); low priority.
 - **"Settle up →" then auto-leave** — currently two steps (settle, then leave); left as-is.
