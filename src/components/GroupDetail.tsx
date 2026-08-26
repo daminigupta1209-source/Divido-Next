@@ -214,9 +214,8 @@ export const GroupDetail: React.FC<GroupDetailProps> = ({
         if (activeTab === 'expenses' && setActiveTab) setActiveTab('balances');
         else if (activeTab === 'balances' && setActiveTab) setActiveTab('photos');
       } else {
-        // Swipe right
-        if (activeTab === 'photos' && setActiveTab) setActiveTab('balances');
-        else if (activeTab === 'balances' && setActiveTab) setActiveTab('expenses');
+        // Swipe right (Back gesture)
+        setView('summary');
       }
     }
   };
