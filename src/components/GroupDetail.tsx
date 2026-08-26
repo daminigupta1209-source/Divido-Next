@@ -987,7 +987,7 @@ export const GroupDetail: React.FC<GroupDetailProps> = ({
                                 date: new Date().toISOString().split('T')[0],
                                 mode: 'Equally',
                                 paid: me,
-                                
+                                splitters: [me, m],
                                 shares: { [me]: 50, [m]: 50 },
                                 timestamp: Date.now()
                               });
@@ -1381,7 +1381,7 @@ export const GroupDetail: React.FC<GroupDetailProps> = ({
                                 date: new Date().toISOString().split('T')[0],
                                 mode: 'Equally',
                                 paid: me,
-                                
+                                splitters: [me, m],
                                 shares: { [me]: 50, [m]: 50 },
                                 timestamp: Date.now()
                               });
