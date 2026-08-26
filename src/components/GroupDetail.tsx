@@ -651,7 +651,7 @@ export const GroupDetail: React.FC<GroupDetailProps> = ({
         marginTop: '10px',
       }}>
         {([
-          { id: 'expenses', label: 'Expenses' },
+          { id: 'expenses', label: 'Activities' },
           { id: 'balances', label: 'Settle' },
           { id: 'photos', label: 'Photos' }
         ] as const).map((tab) => {
@@ -1156,7 +1156,7 @@ export const GroupDetail: React.FC<GroupDetailProps> = ({
               color: '#64748B',
             }}
           >
-            No expenses yet
+            No activities yet
           </span>
         </div>
       )}
