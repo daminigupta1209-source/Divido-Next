@@ -918,7 +918,6 @@ export const GroupDetail: React.FC<GroupDetailProps> = ({
                       return (
                         <div
                           key={`my-${m}`}
-                          className="card hover-up"
                           onClick={() => {
                              const cleanMe = me.replace(/\s*\(me\)$/i, '').replace(/\s*\(Left\)$/i, '').toLowerCase();
                              const isPastMember = selectedGroup.members.some(x => {
@@ -1033,7 +1032,6 @@ export const GroupDetail: React.FC<GroupDetailProps> = ({
                       return (
                         <div
                           key={`other-${idx}`}
-                          className="card hover-up"
                           onClick={() => {
                             const cleanMe = me.replace(/\s*\(me\)$/i, '').replace(/\s*\(Left\)$/i, '').toLowerCase();
                             const isPastMember = selectedGroup.members.some(x => {
@@ -1330,7 +1328,6 @@ export const GroupDetail: React.FC<GroupDetailProps> = ({
                     return (
                       <div
                         key={m}
-                        className="card hover-up"
                         style={{
                           padding: '16px',
                           background: '#FFFFFF',
