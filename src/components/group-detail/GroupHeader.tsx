@@ -181,7 +181,7 @@ export const GroupHeader: React.FC<GroupHeaderProps> = ({
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px', maxWidth: 'calc(100% - 72px)' }}>
               {isRenaming ? (
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '2px', alignItems: 'center' }}>
-                  <label style={{ fontSize: '8px', fontWeight: 900, color: 'var(--g)', textTransform: 'uppercase', letterSpacing: '1.2px', marginBottom: '-4px' }}>Group Name</label>
+                  <label style={{ fontSize: '8px', fontWeight: 600, color: 'var(--g)', textTransform: 'uppercase', letterSpacing: '1.2px', marginBottom: '-4px' }}>Group Name</label>
                   <input
                     ref={renameInputRef}
                     id="dv-grp-rename"
@@ -200,16 +200,16 @@ export const GroupHeader: React.FC<GroupHeaderProps> = ({
                       if (e.key === 'Escape') { e.preventDefault(); e.stopPropagation(); handleCancel(); }
                     }}
                     placeholder="New Group Name..."
-                    style={{ fontSize: '22px', fontWeight: 950, fontFamily: 'Nunito', border: 'none', background: 'transparent', outline: 'none', color: nameError ? '#EF4444' : 'var(--t)', padding: 0, margin: 0, textAlign: 'center' }}
+                    style={{ fontSize: '22px', fontWeight: 600,  border: 'none', background: 'transparent', outline: 'none', color: nameError ? '#EF4444' : 'var(--t)', padding: 0, margin: 0, textAlign: 'center' }}
                   />
-                  {nameError && <p style={{ fontSize: '10px', fontWeight: 900, color: '#EF4444' }}>{nameError}</p>}
+                  {nameError && <p style={{ fontSize: '10px', fontWeight: 600, color: '#EF4444' }}>{nameError}</p>}
                 </div>
               ) : (
                 <h1
                   className="nunito group-header-h1"
                   style={{
                     fontSize: '24px',
-                    fontWeight: 950,
+                    fontWeight: 600,
                     color: 'var(--t)',
                     letterSpacing: '-0.5px',
                     margin: 0,
@@ -245,7 +245,7 @@ export const GroupHeader: React.FC<GroupHeaderProps> = ({
                       borderRadius: '20px',
                       padding: '7px 14px',
                       fontSize: '13px',
-                      fontWeight: 800,
+                      fontWeight: 600,
                       cursor: 'pointer',
                       display: 'inline-flex',
                       alignItems: 'center',
@@ -375,7 +375,7 @@ export const GroupHeader: React.FC<GroupHeaderProps> = ({
                             background: '#FF4B4B',
                             color: '#FFFFFF',
                             fontSize: '9px',
-                            fontWeight: 900,
+                            fontWeight: 600,
                             display: 'flex',
                             alignItems: 'center',
                             justifyContent: 'center',
@@ -432,7 +432,7 @@ export const GroupHeader: React.FC<GroupHeaderProps> = ({
                         overflowY: 'auto',
                       }}
                     >
-                      <div style={{ fontSize: '11px', fontWeight: 800, color: '#475569', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '8px', borderBottom: '1px solid #F1F5F9', paddingBottom: '6px', textAlign: 'left' }}>
+                      <div style={{ fontSize: '11px', fontWeight: 600, color: '#475569', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '8px', borderBottom: '1px solid #F1F5F9', paddingBottom: '6px', textAlign: 'left' }}>
                         Updates Log 🔔
                       </div>
                       {systemLogs.length === 0 ? (
@@ -509,7 +509,7 @@ export const GroupHeader: React.FC<GroupHeaderProps> = ({
                     {/* Simplify Debts Toggle */}
                     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '12px', padding: '10px 12px', borderBottom: '1px solid #F1F5F9', marginBottom: '4px' }}>
                       <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
-                        <span style={{ fontSize: '13px', fontWeight: 900, color: '#111827', whiteSpace: 'nowrap' }}>Simplify Debts</span>
+                        <span style={{ fontSize: '13px', fontWeight: 600, color: '#111827', whiteSpace: 'nowrap' }}>Simplify Debts</span>
                         <span
                           style={{ fontSize: '12px', color: '#94A3B8', cursor: 'pointer', userSelect: 'none', padding: '0 4px' }}
                           onClick={(e) => {
@@ -594,7 +594,7 @@ export const GroupHeader: React.FC<GroupHeaderProps> = ({
                             cursor: 'pointer', 
                             borderRadius: '10px', 
                             fontSize: '12px', 
-                            fontWeight: 800, 
+                            fontWeight: 600, 
                             color: item.danger ? '#DC2626' : '#374151', 
                             transition: '0.15s all' 
                           }}
@@ -677,7 +677,7 @@ export const GroupHeader: React.FC<GroupHeaderProps> = ({
           padding: '8px 16px',
           borderRadius: '12px',
           border: '1px solid var(--nav-hover)',
-          fontWeight: 800,
+          fontWeight: 600,
           animation: 'fadeSlideIn 0.2s ease-out',
           display: 'flex',
           alignItems: 'center',
@@ -725,7 +725,7 @@ export const GroupHeader: React.FC<GroupHeaderProps> = ({
             }}
           >
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <h3 style={{ margin: 0, fontSize: '18px', fontWeight: 900, color: '#1E293B', fontFamily: 'Nunito', letterSpacing: '-0.3px' }}>
+              <h3 style={{ margin: 0, fontSize: '18px', fontWeight: 600, color: '#1E293B',  letterSpacing: '-0.3px' }}>
                 Process Attachment
               </h3>
               <button
@@ -772,7 +772,7 @@ export const GroupHeader: React.FC<GroupHeaderProps> = ({
 
             {/* Optional Caption/Title input */}
             <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-              <label style={{ fontSize: '11px', fontWeight: 900, color: '#94A3B8', fontFamily: 'Nunito' }}>
+              <label style={{ fontSize: '11px', fontWeight: 600, color: '#94A3B8',  }}>
                 Caption (optional)
               </label>
               <input
@@ -788,7 +788,7 @@ export const GroupHeader: React.FC<GroupHeaderProps> = ({
                   fontSize: '13px',
                   fontWeight: 700,
                   outline: 'none',
-                  fontFamily: 'Nunito',
+                  
                   color: '#334155',
                   boxSizing: 'border-box',
                   transition: 'border-color 0.2s',
@@ -810,7 +810,7 @@ export const GroupHeader: React.FC<GroupHeaderProps> = ({
                   color: '#FFFFFF',
                   border: 'none',
                   fontSize: '13px',
-                  fontWeight: 900,
+                  fontWeight: 600,
                   cursor: 'pointer',
                   display: 'flex',
                   alignItems: 'center',
@@ -834,7 +834,7 @@ export const GroupHeader: React.FC<GroupHeaderProps> = ({
                   color: '#475569',
                   border: '1.5px solid #E2E8F0',
                   fontSize: '13px',
-                  fontWeight: 900,
+                  fontWeight: 600,
                   cursor: 'pointer',
                   display: 'flex',
                   alignItems: 'center',
@@ -902,7 +902,7 @@ export const GroupHeader: React.FC<GroupHeaderProps> = ({
             >
               ✕
             </div>
-            <p style={{ fontSize: '11px', fontWeight: 900, color: '#94A3B8', textTransform: 'uppercase', letterSpacing: '1px', textAlign: 'center', margin: '4px 0 14px' }}>
+            <p style={{ fontSize: '11px', fontWeight: 600, color: '#94A3B8', textTransform: 'uppercase', letterSpacing: '1px', textAlign: 'center', margin: '4px 0 14px' }}>
               Add Attachment
             </p>
             
@@ -926,7 +926,7 @@ export const GroupHeader: React.FC<GroupHeaderProps> = ({
                 <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z" />
                 <circle cx="12" cy="13" r="4" />
               </svg>
-              <span style={{ fontSize: '14px', fontWeight: 800, color: '#334155' }}>Camera</span>
+              <span style={{ fontSize: '14px', fontWeight: 600, color: '#334155' }}>Camera</span>
             </div>
 
             <div
@@ -950,7 +950,7 @@ export const GroupHeader: React.FC<GroupHeaderProps> = ({
                 <polyline points="17 8 12 3 7 8" />
                 <line x1="12" y1="3" x2="12" y2="15" />
               </svg>
-              <span style={{ fontSize: '14px', fontWeight: 800, color: '#334155' }}>Upload photo or file</span>
+              <span style={{ fontSize: '14px', fontWeight: 600, color: '#334155' }}>Upload photo or file</span>
             </div>
           </div>
         </div>,

@@ -60,7 +60,7 @@ export const StyledDropdown: React.FC<StyledDropdownProps> = ({
           border: '1.5px solid #E2E8F0',
           background: 'var(--w, #fff)',
           fontSize: '13px',
-          fontWeight: 800,
+          fontWeight: 600,
           color: '#475569',
           cursor: 'pointer',
           whiteSpace: 'nowrap',

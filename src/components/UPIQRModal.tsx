@@ -182,12 +182,12 @@ export const UPIQRModal: React.FC<UPIQRModalProps> = ({
         </div>
 
         {/* Title */}
-        <h3 className="nunito" style={{ fontSize: '20px', fontWeight: 950, marginBottom: '4px' }}>
+        <h3  style={{ fontSize: '20px', fontWeight: 600, marginBottom: '4px' }}>
           {requestFrom ? 'Scan to Settle Dues 🤝' : 'UPI Payment QR Code 📱'}
         </h3>
-        <p style={{ fontSize: '11px', color: 'var(--g)', fontWeight: 800, marginBottom: '20px' }}>
+        <p style={{ fontSize: '11px', color: 'var(--g)', fontWeight: 600, marginBottom: '20px' }}>
           {requestFrom ? (
-            <span>Let <span style={{ color: 'var(--t)', fontWeight: 900 }}>{requestFrom}</span> scan this to pay you the net amount</span>
+            <span>Let <span style={{ color: 'var(--t)', fontWeight: 600 }}>{requestFrom}</span> scan this to pay you the net amount</span>
           ) : (
             <span>Scan this to transfer the net settled balance directly</span>
           )}
@@ -211,7 +211,7 @@ export const UPIQRModal: React.FC<UPIQRModalProps> = ({
           {isEditing ? (
             <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', width: '200px' }}>
               <span style={{ fontSize: '24px' }}>💳</span>
-              <span style={{ fontSize: '12px', fontWeight: 900, color: 'var(--t)' }}>
+              <span style={{ fontSize: '12px', fontWeight: 600, color: 'var(--t)' }}>
                 {requestFrom ? 'Link your UPI ID to receive payments:' : `Link UPI ID for ${payeeName}:`}
               </span>
               <input
@@ -225,7 +225,7 @@ export const UPIQRModal: React.FC<UPIQRModalProps> = ({
                 style={{
                   padding: '10px 12px',
                   fontSize: '13px',
-                  fontWeight: 800,
+                  fontWeight: 600,
                   borderRadius: '10px',
                   border: '1.5px solid #CBD5E1',
                   background: 'white',
@@ -249,13 +249,13 @@ export const UPIQRModal: React.FC<UPIQRModalProps> = ({
         {/* Details section */}
         {!isEditing && (
           <div style={{ marginBottom: '20px' }}>
-            <div style={{ fontSize: '28px', fontWeight: 950, color: 'var(--t)', letterSpacing: '-0.5px' }}>
+            <div style={{ fontSize: '28px', fontWeight: 600, color: 'var(--t)', letterSpacing: '-0.5px' }}>
               {currency}{amount.toFixed(2)}
             </div>
             <div
               style={{
                 fontSize: '12px',
-                fontWeight: 900,
+                fontWeight: 600,
                 color: 'var(--g)',
                 marginTop: '4px',
                 display: 'flex',
@@ -283,7 +283,7 @@ export const UPIQRModal: React.FC<UPIQRModalProps> = ({
               </span>
             </div>
             {copied && (
-              <p style={{ fontSize: '10px', color: '#16A34A', fontWeight: 900, marginTop: '4px', animation: 'fadeSlideIn 0.2s ease-out' }}>
+              <p style={{ fontSize: '10px', color: '#16A34A', fontWeight: 600, marginTop: '4px', animation: 'fadeSlideIn 0.2s ease-out' }}>
                 ✓ UPI ID Copied!
               </p>
             )}
@@ -301,7 +301,7 @@ export const UPIQRModal: React.FC<UPIQRModalProps> = ({
                   color: 'white',
                   textDecoration: 'none',
                   fontSize: '13px',
-                  fontWeight: 950,
+                  fontWeight: 600,
                   padding: '12px',
                   borderRadius: '14px',
                   boxShadow: '0 4px 12px rgba(124, 58, 237, 0.2)',
@@ -322,7 +322,7 @@ export const UPIQRModal: React.FC<UPIQRModalProps> = ({
                   justifyContent: 'center',
                   gap: '8px',
                   fontSize: '13px',
-                  fontWeight: 950,
+                  fontWeight: 600,
                   padding: '12px',
                   borderRadius: '14px',
                   border: 'none',
@@ -358,7 +358,7 @@ export const UPIQRModal: React.FC<UPIQRModalProps> = ({
             style={{ width: '36px', height: '36px', borderRadius: '50%', border: '1.5px solid #FCD34D', flexShrink: 0 }}
             alt="Mascot"
           />
-          <p style={{ fontSize: '10px', fontWeight: 800, color: '#92400E', margin: 0, lineHeight: '1.4' }}>
+          <p style={{ fontSize: '10px', fontWeight: 600, color: '#92400E', margin: 0, lineHeight: '1.4' }}>
             {requestFrom ? (
               <span>Your friend can scan this or click deep-links to pay you. Once transferred, click Settle to clear.</span>
             ) : (

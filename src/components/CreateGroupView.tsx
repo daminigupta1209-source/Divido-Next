@@ -52,7 +52,7 @@ export const CreateGroupView: React.FC<CreateGroupViewProps> = ({
       Left: { c: '#64748B', bg: '#F1F5F9' },
     };
     const cfg = map[status] || map.Joined;
-    return { fontSize: '10px', fontWeight: 800, color: cfg.c, background: cfg.bg, padding: '2px 9px', borderRadius: '999px', flexShrink: 0 };
+    return { fontSize: '10px', fontWeight: 600, color: cfg.c, background: cfg.bg, padding: '2px 9px', borderRadius: '999px', flexShrink: 0 };
   };
   const [nameError, setNameError] = useState('');
   const [createdDate, setCreatedDate] = useState(() => editingGroup?.createdDate || new Date().toISOString().split('T')[0]);
@@ -235,7 +235,7 @@ export const CreateGroupView: React.FC<CreateGroupViewProps> = ({
               <polyline points="15 18 9 12 15 6" />
             </svg>
           </button>
-          <h1 style={{ fontSize: '20px', fontWeight: 950, color: 'var(--t)', margin: 0, fontFamily: 'Nunito' }}>
+          <h1 style={{ fontSize: '20px', fontWeight: 600, color: 'var(--t)', margin: 0,  }}>
             {editingGroup ? 'Edit Group' : 'New Group'}
           </h1>
         </div>
@@ -345,7 +345,7 @@ export const CreateGroupView: React.FC<CreateGroupViewProps> = ({
                   color: 'var(--t)',
                   outline: 'none',
                   boxSizing: 'border-box',
-                  fontFamily: 'Nunito',
+                  
                   marginTop: 0,
                 }}
               />
@@ -390,15 +390,15 @@ export const CreateGroupView: React.FC<CreateGroupViewProps> = ({
                   alignItems: 'center',
                   justifyContent: 'center',
                   fontSize: '14px',
-                  fontWeight: 900,
+                  fontWeight: 600,
                   flexShrink: 0,
-                  fontFamily: 'Nunito',
+                  
                 }}
               >
                 {currencyInfo?.s || '₹'}
               </div>
               <div style={{ display: 'flex', flexDirection: 'column', minWidth: 0, alignItems: 'flex-start' }}>
-                <span style={{ fontSize: '15px', fontWeight: 800, color: 'var(--t)', textAlign: 'left' }}>
+                <span style={{ fontSize: '15px', fontWeight: 600, color: 'var(--t)', textAlign: 'left' }}>
                   {currencyInfo?.n || 'Indian Rupee'}
                 </span>
                 <span style={{ fontSize: '11.5px', fontWeight: 600, color: '#A09586', marginTop: '2px', textAlign: 'left' }}>
@@ -406,7 +406,7 @@ export const CreateGroupView: React.FC<CreateGroupViewProps> = ({
                 </span>
               </div>
             </div>
-            <span style={{ fontSize: '20px', color: '#CFC6BB', fontWeight: 900, userSelect: 'none' }}>›</span>
+            <span style={{ fontSize: '20px', color: '#CFC6BB', fontWeight: 600, userSelect: 'none' }}>›</span>
           </div>
         </div>
 
@@ -441,7 +441,7 @@ export const CreateGroupView: React.FC<CreateGroupViewProps> = ({
                       borderBottom: i < editMemberRows.length - 1 ? '1px solid #F1F5F9' : 'none',
                     }}
                   >
-                    <span style={{ flex: 1, fontSize: '14px', fontWeight: 700, color: row.status === 'Left' ? 'var(--g)' : 'var(--t)', fontFamily: 'Nunito', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                    <span style={{ flex: 1, fontSize: '14px', fontWeight: 700, color: row.status === 'Left' ? 'var(--g)' : 'var(--t)',  overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                       {row.name}
                     </span>
                     <span style={statusChip(row.status)}>{row.status}</span>
@@ -465,9 +465,9 @@ export const CreateGroupView: React.FC<CreateGroupViewProps> = ({
                   background: '#FFFFFF',
                   color: '#2563EB',
                   fontSize: '13px',
-                  fontWeight: 800,
+                  fontWeight: 600,
                   cursor: 'pointer',
-                  fontFamily: 'Nunito',
+                  
                 }}
               >
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" /><circle cx="9" cy="7" r="4" /><path d="M23 21v-2a4 4 0 0 0-3-3.87" /><path d="M16 3.13a4 4 0 0 1 0 7.75" /></svg>
@@ -518,7 +518,7 @@ export const CreateGroupView: React.FC<CreateGroupViewProps> = ({
                       fontSize: '14px',
                       fontWeight: 700,
                       color: index === 0 ? 'var(--g)' : 'var(--t)',
-                      fontFamily: 'Nunito',
+                      
                     }}
                   />
                   {index > 0 && !isExistingMember(participant) && (
@@ -620,7 +620,7 @@ export const CreateGroupView: React.FC<CreateGroupViewProps> = ({
                 <line x1="8" y1="2" x2="8" y2="6" />
                 <line x1="3" y1="10" x2="21" y2="10" />
               </svg>
-              <span style={{ fontSize: '13px', fontWeight: 800, color: 'var(--t)', fontFamily: 'Nunito' }}>
+              <span style={{ fontSize: '13px', fontWeight: 600, color: 'var(--t)',  }}>
                 {formatDateLabel(createdDate)}
               </span>
             </div>

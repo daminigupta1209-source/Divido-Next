@@ -103,12 +103,12 @@ export const InstallPrompt: React.FC = () => {
           <img src="/divido_laughing_cat_mascot_1778063273427.png" alt="Divido" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
         </div>
         <div style={{ flex: 1, minWidth: 0 }}>
-          <div style={{ fontSize: '14px', fontWeight: 800, color: '#0F172A' }}>Install Divido</div>
+          <div style={{ fontSize: '14px', fontWeight: 600, color: '#0F172A' }}>Install Divido</div>
           <div style={{ fontSize: '12px', color: '#64748B', fontWeight: 600 }}>Add it to your home screen for a faster, app-like experience.</div>
         </div>
         <button
           onClick={handleInstall}
-          style={{ background: '#6366F1', color: '#fff', border: 'none', borderRadius: '12px', padding: '9px 16px', fontSize: '13px', fontWeight: 800, cursor: 'pointer', flexShrink: 0 }}
+          style={{ background: '#6366F1', color: '#fff', border: 'none', borderRadius: '12px', padding: '9px 16px', fontSize: '13px', fontWeight: 600, cursor: 'pointer', flexShrink: 0 }}
         >
           {deferredPrompt ? 'Install' : 'How?'}
         </button>

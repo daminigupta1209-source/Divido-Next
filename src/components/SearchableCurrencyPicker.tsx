@@ -95,7 +95,7 @@ export const SearchableCurrencyPicker: React.FC<SearchableCurrencyPickerProps> =
             marginBottom: '12px',
           }}
         >
-          <h2 className="nunito" style={{ fontSize: '16px', fontWeight: 900 }}>
+          <h2  style={{ fontSize: '16px', fontWeight: 600 }}>
             Select Currency
           </h2>
           <button
@@ -179,7 +179,7 @@ export const SearchableCurrencyPicker: React.FC<SearchableCurrencyPickerProps> =
         >
           {filtered.length === 0 ? (
             <div style={{ textAlign: 'center', padding: '40px 20px' }}>
-              <p style={{ color: 'var(--g)', fontWeight: 800, fontSize: '14px' }}>
+              <p style={{ color: 'var(--g)', fontWeight: 600, fontSize: '14px' }}>
                 No currencies found for "{search}"
               </p>
             </div>
@@ -211,7 +211,7 @@ export const SearchableCurrencyPicker: React.FC<SearchableCurrencyPickerProps> =
                       alignItems: 'center',
                       justifyContent: 'center',
                       fontSize: curr.s.length > 2 ? '8px' : curr.s.length > 1 ? '10px' : '13px',
-                      fontWeight: 900,
+                      fontWeight: 600,
                       border: '1px solid #E2E8F0',
                       color: '#0F172A',
                     }}
@@ -219,13 +219,13 @@ export const SearchableCurrencyPicker: React.FC<SearchableCurrencyPickerProps> =
                     {curr.s}
                   </div>
                   <div style={{ textAlign: 'left' }}>
-                    <div style={{ fontSize: '12px', fontWeight: 800, color: '#1E293B' }}>
+                    <div style={{ fontSize: '12px', fontWeight: 600, color: '#1E293B' }}>
                       {curr.n}
                     </div>
                     <div
                       style={{
                         fontSize: '11px',
-                        fontWeight: 900,
+                        fontWeight: 600,
                         color: '#94A3B8',
                         textTransform: 'uppercase',
                         letterSpacing: '0.5px',

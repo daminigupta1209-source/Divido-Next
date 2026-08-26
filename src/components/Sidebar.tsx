@@ -199,10 +199,10 @@ export const Sidebar: React.FC<SidebarProps> = ({
           />
         </div>
         <div
-          className="nunito"
+          
           style={{
             fontSize: '24px',
-            fontWeight: 950,
+            fontWeight: 600,
             color: '#0F172A',
             letterSpacing: '-1.5px',
             textAlign: 'center',
@@ -227,7 +227,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
         <p
           style={{
             fontSize: '10px',
-            fontWeight: 950,
+            fontWeight: 600,
             color: '#94A3B8',
             textTransform: 'uppercase',
             letterSpacing: '1.5px',
@@ -269,7 +269,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
                   color: isActive ? 'white' : '#64748B',
                   border: isActive ? 'none' : '1.5px solid transparent',
                   boxShadow: isActive ? `0 10px 15px -3px ${it.c[0]}66` : 'none',
-                  fontWeight: 900,
+                  fontWeight: 600,
                   borderRadius: '14px',
                   transition: '0.3s all',
                   padding: '0 16px',
@@ -331,7 +331,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'space-between',
-                fontWeight: 900,
+                fontWeight: 600,
               }}
               onClick={() => setIsGroupsExpanded(!isGroupsExpanded)}
             >
@@ -474,7 +474,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
                     color: '#059669',
                     border: '1.5px dashed #10B981',
                     fontSize: '13px',
-                    fontWeight: 950,
+                    fontWeight: 600,
                     cursor: 'pointer',
                     width: 'calc(100% - 12px)',
                     transition: '0.2s all',
@@ -519,7 +519,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
                   color: isActive ? 'white' : '#64748B',
                   border: isActive ? 'none' : '1.5px solid transparent',
                   boxShadow: isActive ? `0 10px 15px -3px ${it.c[0]}66` : 'none',
-                  fontWeight: 900,
+                  fontWeight: 600,
                   borderRadius: '14px',
                   transition: '0.3s all',
                   padding: '0 16px',
@@ -571,7 +571,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
             width: '100%',
             background: 'linear-gradient(135deg, #FDBA74 0%, #F97316 100%)',
             color: 'white',
-            fontWeight: 950,
+            fontWeight: 600,
             boxShadow: '0 10px 15px -3px rgba(249, 115, 22, 0.2)',
             justifyContent: 'center',
             borderRadius: '14px',

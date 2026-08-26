@@ -294,7 +294,7 @@ export const FriendsView: React.FC<FriendsViewProps> = ({
     width: '100%', boxSizing: 'border-box',
     padding: '6px 12px', borderRadius: '20px',
     border: '1.5px solid #E2E8F0', background: 'var(--w)',
-    fontSize: '12px', fontWeight: 800, color: '#475569',
+    fontSize: '12px', fontWeight: 600, color: '#475569',
     cursor: 'pointer', whiteSpace: 'nowrap',
     boxShadow: '0 1px 4px rgba(0,0,0,0.04)',
   };
@@ -309,7 +309,7 @@ export const FriendsView: React.FC<FriendsViewProps> = ({
   const optionStyle = (active: boolean): React.CSSProperties => ({
     display: 'flex', alignItems: 'center', gap: '8px',
     padding: '8px 12px', borderRadius: '8px', cursor: 'pointer',
-    fontSize: '12px', fontWeight: 800,
+    fontSize: '12px', fontWeight: 600,
     color: active ? '#16A34A' : '#1E293B',
     background: active ? '#F0FDF4' : 'transparent',
   });
@@ -367,14 +367,14 @@ export const FriendsView: React.FC<FriendsViewProps> = ({
                 <div style={popupStyle}>
                   <div style={optionStyle(selectedFriends.length === 0)} onClick={() => { setSelectedFriends([]); setShowFriendsDropdown(false); }}>
                     <div style={{ width: '16px', height: '16px', borderRadius: '4px', border: `2px solid ${selectedFriends.length === 0 ? '#16A34A' : '#CBD5E1'}`, background: selectedFriends.length === 0 ? '#16A34A' : '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                      {selectedFriends.length === 0 && <span style={{ color: '#fff', fontSize: '10px', fontWeight: 900 }}>✓</span>}
+                      {selectedFriends.length === 0 && <span style={{ color: '#fff', fontSize: '10px', fontWeight: 600 }}>✓</span>}
                     </div>
                     <span>All Friends</span>
                   </div>
                   {friends.map((f) => (
                     <div key={f.id} style={optionStyle(selectedFriends.includes(f.id))} onClick={() => toggleFriend(f.id)}>
                       <div style={{ width: '16px', height: '16px', borderRadius: '4px', border: `2px solid ${selectedFriends.includes(f.id) ? '#16A34A' : '#CBD5E1'}`, background: selectedFriends.includes(f.id) ? '#16A34A' : '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                        {selectedFriends.includes(f.id) && <span style={{ color: '#fff', fontSize: '10px', fontWeight: 900 }}>✓</span>}
+                        {selectedFriends.includes(f.id) && <span style={{ color: '#fff', fontSize: '10px', fontWeight: 600 }}>✓</span>}
                       </div>
                       <span style={{ display: 'flex', flexDirection: 'column', minWidth: 0 }}>
                         <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{f.name}</span>
@@ -435,7 +435,7 @@ export const FriendsView: React.FC<FriendsViewProps> = ({
             borderRadius: '16px',
             padding: '10px 14px',
             fontSize: '11px',
-            fontWeight: 800,
+            fontWeight: 600,
             color: '#1E40AF',
             marginBottom: '16px',
             display: 'flex',
@@ -530,7 +530,7 @@ export const FriendsView: React.FC<FriendsViewProps> = ({
           </div>
           )}
           {(Object.keys(totalPayable).length > 0 || Object.keys(totalReceivable).length > 0) && (
-            <span style={{ position: 'absolute', right: '14px', top: '50%', transform: 'translateY(-50%)', color: '#FFFFFF', fontSize: '18px', fontWeight: 900, lineHeight: 1, pointerEvents: 'none', opacity: 0.9 }}>›</span>
+            <span style={{ position: 'absolute', right: '14px', top: '50%', transform: 'translateY(-50%)', color: '#FFFFFF', fontSize: '18px', fontWeight: 600, lineHeight: 1, pointerEvents: 'none', opacity: 0.9 }}>›</span>
           )}
         </div>
       </div>
@@ -567,7 +567,7 @@ export const FriendsView: React.FC<FriendsViewProps> = ({
             fontWeight: 600,
             whiteSpace: 'nowrap',
           };
-          const cardChip: React.CSSProperties = { background: '#F1EFE8', borderRadius: '999px', padding: '0 6px', fontSize: '10px', fontWeight: 800, lineHeight: '16px' };
+          const cardChip: React.CSSProperties = { background: '#F1EFE8', borderRadius: '999px', padding: '0 6px', fontSize: '10px', fontWeight: 600, lineHeight: '16px' };
 
           return (
             <div
@@ -588,13 +588,13 @@ export const FriendsView: React.FC<FriendsViewProps> = ({
               }}
             >
               {/* Avatar */}
-              <div style={{ width: '40px', height: '40px', borderRadius: '50%', background: avBg, color: '#FFFFFF', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '16px', fontWeight: 900, flexShrink: 0 }}>
+              <div style={{ width: '40px', height: '40px', borderRadius: '50%', background: avBg, color: '#FFFFFF', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '16px', fontWeight: 600, flexShrink: 0 }}>
                 {f.name.charAt(0).toUpperCase()}
               </div>
 
               {/* Name */}
               <div style={{ minWidth: 0, flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center', gap: '1px' }}>
-                <h3 className="nunito" style={{ fontSize: '17px', fontWeight: 800, color: '#2E2A25', margin: 0, textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap', textTransform: 'capitalize' }}>{f.name}</h3>
+                <h3  style={{ fontSize: '17px', fontWeight: 600, color: '#2E2A25', margin: 0, textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap', textTransform: 'capitalize' }}>{f.name}</h3>
                 {isDupName(f.name) && f.groups.length > 0 && (
                   <span style={{ fontSize: '11px', color: '#94A3B8', fontWeight: 600, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{f.groups.join(', ')}</span>
                 )}
@@ -630,7 +630,7 @@ export const FriendsView: React.FC<FriendsViewProps> = ({
                 )}
               </div>
 
-              <span style={{ fontSize: '18px', color: '#B8ADA0', fontWeight: 900, lineHeight: 1, flexShrink: 0 }}>›</span>
+              <span style={{ fontSize: '18px', color: '#B8ADA0', fontWeight: 600, lineHeight: 1, flexShrink: 0 }}>›</span>
             </div>
           );
         })}
@@ -690,7 +690,7 @@ export const FriendsView: React.FC<FriendsViewProps> = ({
               {isConverting ? 'Fetching Live Rates...' : 'Open ER API'}
             </div>
 
-            <h3 className="nunito" style={{ fontSize: '20px', fontWeight: 800, color: '#1E293B', marginBottom: '4px' }}>
+            <h3  style={{ fontSize: '20px', fontWeight: 600, color: '#1E293B', marginBottom: '4px' }}>
               Convert Currencies
             </h3>
 
@@ -716,14 +716,14 @@ export const FriendsView: React.FC<FriendsViewProps> = ({
                   ariaLabel="Convert from currency"
                   value={sourceCurr}
                   onChange={(v) => setSourceCurr(v)}
-                  buttonStyle={{ fontSize: '14px', fontWeight: 800, color: '#475569', border: '1.5px solid #E2E8F0', boxShadow: 'none', minWidth: '60px', padding: '6px 10px' }}
+                  buttonStyle={{ fontSize: '14px', fontWeight: 600, color: '#475569', border: '1.5px solid #E2E8F0', boxShadow: 'none', minWidth: '60px', padding: '6px 10px' }}
                   options={[{ value: 'ALL', label: 'All' }, ...distinctCurrencies.map((c) => ({ value: c, label: c }))]}
                 />
               </div>
 
               {/* Connection arrow with live rate */}
               <div style={{ flex: 1.5, position: 'relative', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-                <span style={{ fontSize: '9.5px', fontWeight: 800, color: '#0D9488', background: '#E6F4EA', padding: '2px 8px', borderRadius: '100px', whiteSpace: 'nowrap', marginBottom: '6px' }}>
+                <span style={{ fontSize: '9.5px', fontWeight: 600, color: '#0D9488', background: '#E6F4EA', padding: '2px 8px', borderRadius: '100px', whiteSpace: 'nowrap', marginBottom: '6px' }}>
                   1 : {(() => {
                     const lookup = sourceCurr === 'ALL' ? (distinctCurrencies.find((c) => c !== convertTarget) || distinctCurrencies[0]) : sourceCurr;
                     return rateMap[lookup] ?? '…';
@@ -753,7 +753,7 @@ export const FriendsView: React.FC<FriendsViewProps> = ({
                   onClick={() => setShowConvertPicker(true)}
                   style={{
                     fontSize: '14px',
-                    fontWeight: 800,
+                    fontWeight: 600,
                     color: '#1E293B',
                     background: '#FFFFFF',
                     border: '1.5px solid #0D9488',
@@ -798,7 +798,7 @@ export const FriendsView: React.FC<FriendsViewProps> = ({
             {manualRates && (
               <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginBottom: '16px' }}>
                 {distinctCurrencies.filter((c) => c !== convertTarget).map((c) => (
-                  <div key={c} style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '13px', fontWeight: 800, color: '#1E293B' }}>
+                  <div key={c} style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '13px', fontWeight: 600, color: '#1E293B' }}>
                     <span style={{ opacity: 0.5 }}>1</span>
                     <span style={{ color: '#0D9488' }}>{c}</span>
                     <span>=</span>
@@ -807,7 +807,7 @@ export const FriendsView: React.FC<FriendsViewProps> = ({
                       step="any"
                       value={rateMap[c] ?? ''}
                       onChange={(e) => setRateMap((prev) => ({ ...prev, [c]: parseFloat(e.target.value) || 0 }))}
-                      style={{ flex: 1, padding: '6px 10px', borderRadius: '10px', border: '1.5px solid #EEF2FF', background: '#F8FAFC', textAlign: 'center', fontWeight: 800 }}
+                      style={{ flex: 1, padding: '6px 10px', borderRadius: '10px', border: '1.5px solid #EEF2FF', background: '#F8FAFC', textAlign: 'center', fontWeight: 600 }}
                     />
                     <span style={{ color: '#16A34A' }}>{convertTarget}</span>
                   </div>
@@ -819,7 +819,7 @@ export const FriendsView: React.FC<FriendsViewProps> = ({
               disabled={isConverting || !convertTarget}
               onClick={() => { setConvertTo(convertTarget); setShowConvertModal(false); }}
               className="btn-green hover-up"
-              style={{ width: '100%', padding: '14px', fontSize: '15px', fontWeight: 900, borderRadius: '16px', border: 'none', cursor: 'pointer', opacity: isConverting ? 0.6 : 1 }}
+              style={{ width: '100%', padding: '14px', fontSize: '15px', fontWeight: 600, borderRadius: '16px', border: 'none', cursor: 'pointer', opacity: isConverting ? 0.6 : 1 }}
             >
               {isConverting ? 'Fetching rates…' : 'Apply Conversion'}
             </button>

@@ -16,7 +16,7 @@ import { StyledDropdown } from './StyledDropdown';
 import { CameraCaptureModal } from './CameraCaptureModal';
 
 // Borderless trigger — the wrapping div already provides the pill/border/shadow.
-const emInlineBtnStyle: React.CSSProperties = { border: '1.5px solid #EAEFF4', background: 'var(--w, #fff)', boxShadow: '0 1px 3px rgba(0,0,0,0.03)', borderRadius: '19px', height: '38px', width: '100%', fontSize: '12px', fontWeight: 800, color: '#1E293B', padding: '0 16px' };
+const emInlineBtnStyle: React.CSSProperties = { border: '1.5px solid #EAEFF4', background: 'var(--w, #fff)', boxShadow: '0 1px 3px rgba(0,0,0,0.03)', borderRadius: '19px', height: '38px', width: '100%', fontSize: '12px', fontWeight: 600, color: '#1E293B', padding: '0 16px' };
 
 interface ExpenseModalProps {
   setShowExpModal: (show: boolean) => void;
@@ -482,7 +482,7 @@ export const ExpenseModal: React.FC<ExpenseModalProps> = ({
                   border: '1.5px solid #E2E8F0',
                   background: '#FFFFFF',
                   cursor: 'pointer',
-                  fontSize: '16px', fontWeight: 950, color: '#475569',
+                  fontSize: '16px', fontWeight: 600, color: '#475569',
                   boxShadow: '0 1px 4px rgba(0,0,0,0.06)',
                   whiteSpace: 'nowrap',
                   minWidth: '180px',
@@ -529,7 +529,7 @@ export const ExpenseModal: React.FC<ExpenseModalProps> = ({
                     }}
                   >
                     <div style={{ width: '30px', height: '30px', borderRadius: '50%', background: '#F1F5F9', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '14px', flexShrink: 0 }}>👤</div>
-                    <span style={{ fontSize: '12px', fontWeight: 900, color: 'var(--t)' }}>Non-Group Split</span>
+                    <span style={{ fontSize: '12px', fontWeight: 600, color: 'var(--t)' }}>Non-Group Split</span>
                   </div>
 
                   {/* Scrollable groups list wrapper */}
@@ -578,7 +578,7 @@ export const ExpenseModal: React.FC<ExpenseModalProps> = ({
                               alignItems: 'center', 
                               justifyContent: 'center', 
                               fontSize: '12px', 
-                              fontWeight: 900,
+                              fontWeight: 600,
                               flexShrink: 0,
                               overflow: 'hidden',
                             }}>
@@ -588,7 +588,7 @@ export const ExpenseModal: React.FC<ExpenseModalProps> = ({
                                 initials
                               )}
                             </div>
-                            <span style={{ fontSize: '12px', fontWeight: 900, color: 'var(--t)', flex: 1, minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                            <span style={{ fontSize: '12px', fontWeight: 600, color: 'var(--t)', flex: 1, minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                               {g.name}
                             </span>
                           </div>
@@ -624,7 +624,7 @@ export const ExpenseModal: React.FC<ExpenseModalProps> = ({
                       }}
                     >
                       <div style={{ width: '30px', height: '30px', borderRadius: '8px', background: '#EEF2FF', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '16px', flexShrink: 0 }}>➕</div>
-                      <span style={{ fontSize: '12px', fontWeight: 900 }}>Create New Group</span>
+                      <span style={{ fontSize: '12px', fontWeight: 600 }}>Create New Group</span>
                     </div>
                   </div>
                 </div>
@@ -685,7 +685,7 @@ export const ExpenseModal: React.FC<ExpenseModalProps> = ({
                   >
                     ✕
                   </div>
-                  <p style={{ fontSize: '11px', fontWeight: 900, color: 'var(--g)', textTransform: 'uppercase', letterSpacing: '1px', textAlign: 'center', margin: '6px 0 10px' }}>
+                  <p style={{ fontSize: '11px', fontWeight: 600, color: 'var(--g)', textTransform: 'uppercase', letterSpacing: '1px', textAlign: 'center', margin: '6px 0 10px' }}>
                     Add Attachment
                   </p>
                   <div
@@ -700,7 +700,7 @@ export const ExpenseModal: React.FC<ExpenseModalProps> = ({
                       <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z" />
                       <circle cx="12" cy="13" r="4" />
                     </svg>
-                    <span style={{ fontSize: '14px', fontWeight: 800, color: 'var(--t)' }}>Camera</span>
+                    <span style={{ fontSize: '14px', fontWeight: 600, color: 'var(--t)' }}>Camera</span>
                   </div>
                   <div
                     onClick={() => {
@@ -715,7 +715,7 @@ export const ExpenseModal: React.FC<ExpenseModalProps> = ({
                       <polyline points="17 8 12 3 7 8" />
                       <line x1="12" y1="3" x2="12" y2="15" />
                     </svg>
-                    <span style={{ fontSize: '14px', fontWeight: 800, color: 'var(--t)' }}>Upload photo or file</span>
+                    <span style={{ fontSize: '14px', fontWeight: 600, color: 'var(--t)' }}>Upload photo or file</span>
                   </div>
                 </div>
               </div>
@@ -794,7 +794,7 @@ export const ExpenseModal: React.FC<ExpenseModalProps> = ({
                 <label
                   style={{
                     fontSize: '9px',
-                    fontWeight: 950,
+                    fontWeight: 600,
                     textTransform: 'uppercase',
                     letterSpacing: '1.2px',
                   }}
@@ -805,7 +805,7 @@ export const ExpenseModal: React.FC<ExpenseModalProps> = ({
                   <span
                     style={{
                       fontSize: '9px',
-                      fontWeight: 900,
+                      fontWeight: 600,
                       color: '#059669',
                       background: '#ECFDF5',
                       padding: '2px 8px',
@@ -827,7 +827,7 @@ export const ExpenseModal: React.FC<ExpenseModalProps> = ({
                     background: 'rgba(16, 185, 129, 0.1)',
                     border: '1.5px solid #10B981',
                     fontSize: '12px',
-                    fontWeight: 800,
+                    fontWeight: 600,
                     color: '#065F46',
                     display: 'flex',
                     alignItems: 'center',
@@ -859,7 +859,7 @@ export const ExpenseModal: React.FC<ExpenseModalProps> = ({
                       background: 'transparent',
                       border: '1.5px solid #059669',
                       fontSize: '12px',
-                      fontWeight: 800,
+                      fontWeight: 600,
                       color: '#059669',
                       cursor: 'pointer',
                       display: 'flex',
@@ -897,7 +897,7 @@ export const ExpenseModal: React.FC<ExpenseModalProps> = ({
                         background: showFriendPickerPopup ? 'rgba(16, 185, 129, 0.1)' : 'var(--w)',
                         border: showFriendPickerPopup ? '1.5px solid #10B981' : highlightAddFriend ? '1.5px solid #10B981' : '1.5px dashed #CBD5E1',
                         fontSize: '13px',
-                        fontWeight: 800,
+                        fontWeight: 600,
                         color: showFriendPickerPopup ? '#065F46' : '#64748B',
                         cursor: 'pointer',
                         display: 'flex',
@@ -921,7 +921,7 @@ export const ExpenseModal: React.FC<ExpenseModalProps> = ({
                         const othersSelected = selectedSplitters.filter(s => s !== me).length;
                         const othersTotal = friendsToSelect.filter(f => f !== me).length;
                         return (
-                          <span style={{ fontSize: '11px', fontWeight: 900 }}>
+                          <span style={{ fontSize: '11px', fontWeight: 600 }}>
                             {othersSelected > 0 ? `${othersSelected}/${othersTotal}` : `+ ${othersTotal}`}
                           </span>
                         );
@@ -943,7 +943,7 @@ export const ExpenseModal: React.FC<ExpenseModalProps> = ({
                       style={{
                         width: '34px', height: '34px', borderRadius: '10px',
                         background: 'var(--w)', border: '1.5px dashed #CBD5E1',
-                        fontSize: '18px', fontWeight: 900, color: '#94A3B8',
+                        fontSize: '18px', fontWeight: 600, color: '#94A3B8',
                         cursor: 'pointer', display: 'flex', alignItems: 'center',
                         justifyContent: 'center', outline: 'none', padding: 0, flexShrink: 0,
                       }}
@@ -986,7 +986,7 @@ export const ExpenseModal: React.FC<ExpenseModalProps> = ({
                     >
                       {/* Header */}
                       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '16px 16px 10px 16px' }}>
-                        <span style={{ fontSize: '14px', fontWeight: 900, color: 'var(--t)' }}>
+                        <span style={{ fontSize: '14px', fontWeight: 600, color: 'var(--t)' }}>
                           Who's splitting? 🤝
                         </span>
                         <button
@@ -1054,7 +1054,7 @@ export const ExpenseModal: React.FC<ExpenseModalProps> = ({
                                   transition: 'all 0.2s ease',
                                 }}
                               >
-                                {isChecked && <span style={{ color: 'white', fontSize: '11px', fontWeight: 900 }}>✓</span>}
+                                {isChecked && <span style={{ color: 'white', fontSize: '11px', fontWeight: 600 }}>✓</span>}
                               </div>
                               <div
                                 style={{
@@ -1066,7 +1066,7 @@ export const ExpenseModal: React.FC<ExpenseModalProps> = ({
                                   alignItems: 'center',
                                   justifyContent: 'center',
                                   fontSize: '12px',
-                                  fontWeight: 900,
+                                  fontWeight: 600,
                                   color: '#3B82F6',
                                   flexShrink: 0,
                                 }}
@@ -1095,7 +1095,7 @@ export const ExpenseModal: React.FC<ExpenseModalProps> = ({
                                 background: 'transparent',
                                 border: '1.5px solid #059669',
                                 fontSize: '12px',
-                                fontWeight: 800,
+                                fontWeight: 600,
                                 color: '#059669',
                                 cursor: 'pointer',
                                 display: 'flex',
@@ -1122,7 +1122,7 @@ export const ExpenseModal: React.FC<ExpenseModalProps> = ({
                             border: 'none',
                             background: '#10B981',
                             fontSize: '12px',
-                            fontWeight: 800,
+                            fontWeight: 600,
                             color: 'white',
                             cursor: 'pointer',
                             display: 'flex',
@@ -1320,7 +1320,7 @@ export const ExpenseModal: React.FC<ExpenseModalProps> = ({
                   alignSelf: 'center',
                 }}
               >
-                <span style={{ fontSize: curr.length > 2 ? '11px' : curr.length > 1 ? '13px' : '16px', fontWeight: 800, color: '#1E3A5F' }}>{curr}</span>
+                <span style={{ fontSize: curr.length > 2 ? '11px' : curr.length > 1 ? '13px' : '16px', fontWeight: 600, color: '#1E3A5F' }}>{curr}</span>
                 <span style={{ fontSize: '7px', color: '#94A3B8',
                   transition: 'transform 0.2s ease',
                   display: 'inline-block',
@@ -1419,7 +1419,7 @@ export const ExpenseModal: React.FC<ExpenseModalProps> = ({
               <label
                 style={{
                   fontSize: '9px',
-                  fontWeight: 950,
+                  fontWeight: 600,
                   textTransform: 'uppercase',
                   letterSpacing: '1.2px',
                   color: '#94A3B8',
@@ -1448,7 +1448,7 @@ export const ExpenseModal: React.FC<ExpenseModalProps> = ({
               <label
                 style={{
                   fontSize: '9px',
-                  fontWeight: 950,
+                  fontWeight: 600,
                   textTransform: 'uppercase',
                   letterSpacing: '1.2px',
                   color: '#94A3B8',
@@ -1507,12 +1507,12 @@ export const ExpenseModal: React.FC<ExpenseModalProps> = ({
                       display: 'flex', alignItems: 'center', justifyContent: 'center',
                       flexShrink: 0,
                     }}>
-                      {allSelected && <span style={{ color: '#fff', fontSize: '11px', fontWeight: 900 }}>✓</span>}
+                      {allSelected && <span style={{ color: '#fff', fontSize: '11px', fontWeight: 600 }}>✓</span>}
                     </div>
                     <label
                       style={{
                         fontSize: '9px',
-                        fontWeight: 950,
+                        fontWeight: 600,
                         color: '#94A3B8',
                         textTransform: 'uppercase',
                         letterSpacing: '1.2px',
@@ -1592,13 +1592,13 @@ export const ExpenseModal: React.FC<ExpenseModalProps> = ({
                         display: 'flex', alignItems: 'center', justifyContent: 'center',
                         flexShrink: 0,
                       }}>
-                        {isSelected && <span style={{ color: '#fff', fontSize: '12px', fontWeight: 900 }}>✓</span>}
+                        {isSelected && <span style={{ color: '#fff', fontSize: '12px', fontWeight: 600 }}>✓</span>}
                       </div>
                       <span style={{ fontSize: '13px', fontWeight: 700, color: '#1E293B' }}>{displayName}</span>
                     </div>
                     {isSelected && amt && (
                       splitMode === 'Equally' ? (
-                        <span style={{ fontSize: '13px', fontWeight: 800, color: '#16A34A', whiteSpace: 'nowrap' }}>
+                        <span style={{ fontSize: '13px', fontWeight: 600, color: '#16A34A', whiteSpace: 'nowrap' }}>
                           {curr}{share >= 1000000 ? formatCompactAmount(share) : share.toFixed(2)}
                         </span>
                       ) : (
@@ -1621,7 +1621,7 @@ export const ExpenseModal: React.FC<ExpenseModalProps> = ({
                             onClick={(e) => e.stopPropagation()}
                           >
                             {splitMode === 'Unequally' && (
-                              <span style={{ fontSize: '13px', fontWeight: 800, color: '#0F172A', opacity: 0.7, marginRight: '6px', userSelect: 'none' }}>{curr}</span>
+                              <span style={{ fontSize: '13px', fontWeight: 600, color: '#0F172A', opacity: 0.7, marginRight: '6px', userSelect: 'none' }}>{curr}</span>
                             )}
                             <input
                               type="text"
@@ -1671,7 +1671,7 @@ export const ExpenseModal: React.FC<ExpenseModalProps> = ({
                                 border: 'none',
                                 outline: 'none',
                                 fontSize: '15px',
-                                fontWeight: 800,
+                                fontWeight: 600,
                                 color: '#0F172A',
                                 padding: 0,
                                 margin: 0,
@@ -1680,7 +1680,7 @@ export const ExpenseModal: React.FC<ExpenseModalProps> = ({
                               }}
                             />
                             {splitMode === 'Percentage' && (
-                              <span style={{ fontSize: '13px', fontWeight: 800, color: '#0F172A', opacity: 0.7, marginLeft: '4px', userSelect: 'none' }}>%</span>
+                              <span style={{ fontSize: '13px', fontWeight: 600, color: '#0F172A', opacity: 0.7, marginLeft: '4px', userSelect: 'none' }}>%</span>
                             )}
                           </div>
                         </div>
@@ -1724,7 +1724,7 @@ export const ExpenseModal: React.FC<ExpenseModalProps> = ({
                 <span
                   style={{
                     fontSize: '11px',
-                    fontWeight: 800,
+                    fontWeight: 600,
                     color:
                       splitMode === 'Unequally'
                         ? Math.abs(totalShares - (parseFloat(amt) || 0)) < 0.01
@@ -1887,7 +1887,7 @@ export const ExpenseModal: React.FC<ExpenseModalProps> = ({
                 <span
                   style={{
                     fontSize: '11px',
-                    fontWeight: 900,
+                    fontWeight: 600,
                     color: '#9F1239',
                     textTransform: 'uppercase',
                     letterSpacing: '1px',
@@ -1895,7 +1895,7 @@ export const ExpenseModal: React.FC<ExpenseModalProps> = ({
                 >
                   Action Required
                 </span>
-                <span style={{ fontSize: '13px', color: '#475569', fontWeight: 800, lineHeight: '1.4' }}>
+                <span style={{ fontSize: '13px', color: '#475569', fontWeight: 600, lineHeight: '1.4' }}>
                   {!title
                     ? 'Please enter a description for this expense.'
                     : parseFloat(amt) <= 0
@@ -1920,7 +1920,7 @@ export const ExpenseModal: React.FC<ExpenseModalProps> = ({
                   padding: '10px',
                   borderRadius: '12px',
                   fontSize: '13px',
-                  fontWeight: 900,
+                  fontWeight: 600,
                   marginTop: '6px',
                 }}
               >
@@ -1996,7 +1996,7 @@ export const ExpenseModal: React.FC<ExpenseModalProps> = ({
             }}
           >
             <button onClick={() => setShowDatePopup(false)} style={{ position: 'absolute', top: '12px', right: '14px', background: 'none', border: 'none', fontSize: '18px', cursor: 'pointer', color: '#94A3B8', lineHeight: 1 }}>✕</button>
-            <p style={{ margin: 0, fontWeight: 800, fontSize: '15px', color: '#1E293B' }}>📅 Pick a Date</p>
+            <p style={{ margin: 0, fontWeight: 600, fontSize: '15px', color: '#1E293B' }}>📅 Pick a Date</p>
             <input
               type="date"
               value={date}
@@ -2011,7 +2011,7 @@ export const ExpenseModal: React.FC<ExpenseModalProps> = ({
               onClick={() => setShowDatePopup(false)}
               style={{
                 background: '#16A34A', color: '#fff', border: 'none',
-                borderRadius: '10px', padding: '8px 24px', fontWeight: 800,
+                borderRadius: '10px', padding: '8px 24px', fontWeight: 600,
                 fontSize: '13px', cursor: 'pointer',
               }}
             >Done</button>
@@ -2052,7 +2052,7 @@ export const ExpenseModal: React.FC<ExpenseModalProps> = ({
             onClick={(e) => e.stopPropagation()}
           >
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <span style={{ fontSize: '15px', fontWeight: 950, color: '#1E293B', display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <span style={{ fontSize: '15px', fontWeight: 600, color: '#1E293B', display: 'flex', alignItems: 'center', gap: '8px' }}>
                 📝 Notes & Details
               </span>
               <button
@@ -2086,7 +2086,7 @@ export const ExpenseModal: React.FC<ExpenseModalProps> = ({
                 width: '100%',
                 padding: '12px',
                 fontSize: '13px',
-                fontWeight: 800,
+                fontWeight: 600,
                 borderRadius: '16px',
                 border: '2.5px solid #F1F5F9',
                 outline: 'none',
@@ -2108,7 +2108,7 @@ export const ExpenseModal: React.FC<ExpenseModalProps> = ({
                   border: 'none',
                   borderRadius: '10px',
                   fontSize: '12px',
-                  fontWeight: 900,
+                  fontWeight: 600,
                   cursor: 'pointer',
                 }}
                 className="hover-up-mini"
@@ -2128,7 +2128,7 @@ export const ExpenseModal: React.FC<ExpenseModalProps> = ({
                   border: 'none',
                   borderRadius: '10px',
                   fontSize: '12px',
-                  fontWeight: 900,
+                  fontWeight: 600,
                   cursor: 'pointer',
                 }}
                 className="hover-up-mini"
@@ -2164,7 +2164,7 @@ export const ExpenseModal: React.FC<ExpenseModalProps> = ({
               animation: 'scannerSpin 0.7s linear infinite',
               marginBottom: '16px',
             }} />
-            <h3 className="nunito" style={{ fontSize: '15px', fontWeight: 900, color: '#0F172A', margin: '0 0 6px 0' }}>
+            <h3  style={{ fontSize: '15px', fontWeight: 600, color: '#0F172A', margin: '0 0 6px 0' }}>
               Launching Smart Scanner...
             </h3>
             <p style={{ fontSize: '12px', fontWeight: 700, color: '#64748B', margin: 0 }}>
@@ -2247,7 +2247,7 @@ export const ExpenseModal: React.FC<ExpenseModalProps> = ({
             onClick={(e) => e.stopPropagation()}
           >
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <span style={{ fontSize: '15px', fontWeight: 950, color: '#1E293B', display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <span style={{ fontSize: '15px', fontWeight: 600, color: '#1E293B', display: 'flex', alignItems: 'center', gap: '8px' }}>
                 📎 Attached Receipt
               </span>
               <button
@@ -2289,7 +2289,7 @@ export const ExpenseModal: React.FC<ExpenseModalProps> = ({
               ) : (
                 <div style={{ padding: '40px 20px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '12px', color: '#64748B' }}>
                   <span style={{ fontSize: '48px' }}>📄</span>
-                  <span style={{ fontSize: '12px', fontWeight: 900, textAlign: 'center', wordBreak: 'break-all' }}>
+                  <span style={{ fontSize: '12px', fontWeight: 600, textAlign: 'center', wordBreak: 'break-all' }}>
                     {attachments[activeAttachmentIndex]}
                   </span>
                 </div>
@@ -2408,7 +2408,7 @@ export const ExpenseModal: React.FC<ExpenseModalProps> = ({
                   border: '1.5px solid #E2E8F0',
                   borderRadius: '12px',
                   fontSize: '12px',
-                  fontWeight: 900,
+                  fontWeight: 600,
                   cursor: 'pointer',
                 }}
                 className="hover-up-mini"
@@ -2430,7 +2430,7 @@ export const ExpenseModal: React.FC<ExpenseModalProps> = ({
                   border: 'none',
                   borderRadius: '12px',
                   fontSize: '13px',
-                  fontWeight: 900,
+                  fontWeight: 600,
                   cursor: 'pointer',
                 }}
                 className="hover-up-mini"

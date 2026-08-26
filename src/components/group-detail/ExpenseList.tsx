@@ -5,7 +5,7 @@ import { StyledDropdown } from '../StyledDropdown';
 
 import { parseExpenseId } from '../../lib/utils';
 
-const elFilterBtnStyle: React.CSSProperties = { padding: '6px 12px', borderRadius: '20px', border: '1.5px solid #E2E8F0', fontSize: '12px', fontWeight: 800, background: 'var(--w, #fff)', color: '#475569', boxShadow: '0 1px 4px rgba(0,0,0,0.04)' };
+const elFilterBtnStyle: React.CSSProperties = { padding: '6px 12px', borderRadius: '20px', border: '1.5px solid #E2E8F0', fontSize: '12px', fontWeight: 600, background: 'var(--w, #fff)', color: '#475569', boxShadow: '0 1px 4px rgba(0,0,0,0.04)' };
 
 interface ExpenseListProps {
   setView: (v: any) => void;

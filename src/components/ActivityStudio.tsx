@@ -5,7 +5,7 @@ import { Group, Expense } from '../lib/types';
 import { useActivityStudio } from '../hooks/useActivityStudio';
 import { StyledDropdown } from './StyledDropdown';
 
-const asFilterBtnStyle: React.CSSProperties = { padding: '6px 12px', borderRadius: '20px', border: '1.5px solid #E2E8F0', fontSize: '12px', fontWeight: 800, background: 'var(--w, #fff)', color: '#475569', boxShadow: '0 1px 4px rgba(0,0,0,0.04)' };
+const asFilterBtnStyle: React.CSSProperties = { padding: '6px 12px', borderRadius: '20px', border: '1.5px solid #E2E8F0', fontSize: '12px', fontWeight: 600, background: 'var(--w, #fff)', color: '#475569', boxShadow: '0 1px 4px rgba(0,0,0,0.04)' };
 
 interface ActivityStudioProps {
   expenses: Expense[];
@@ -232,7 +232,7 @@ export const ActivityStudio: React.FC<ActivityStudioProps> = ({
             }}
           >
             <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-              <span style={{ fontSize: '11px', fontWeight: 900, color: '#64748B' }}>FROM</span>
+              <span style={{ fontSize: '11px', fontWeight: 600, color: '#64748B' }}>FROM</span>
               <input
                 type="date"
                 value={customStartDate}
@@ -243,14 +243,14 @@ export const ActivityStudio: React.FC<ActivityStudioProps> = ({
                   border: '1.5px solid #E2E8F0',
                   outline: 'none',
                   fontSize: '12px',
-                  fontWeight: 900,
+                  fontWeight: 600,
                   color: '#1E293B',
                   background: '#FFFFFF',
                 }}
               />
             </div>
             <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-              <span style={{ fontSize: '11px', fontWeight: 900, color: '#64748B' }}>TO</span>
+              <span style={{ fontSize: '11px', fontWeight: 600, color: '#64748B' }}>TO</span>
               <input
                 type="date"
                 value={customEndDate}
@@ -261,7 +261,7 @@ export const ActivityStudio: React.FC<ActivityStudioProps> = ({
                   border: '1.5px solid #E2E8F0',
                   outline: 'none',
                   fontSize: '12px',
-                  fontWeight: 900,
+                  fontWeight: 600,
                   color: '#1E293B',
                   background: '#FFFFFF',
                 }}
@@ -278,7 +278,7 @@ export const ActivityStudio: React.FC<ActivityStudioProps> = ({
                   border: 'none',
                   color: '#EF4444',
                   fontSize: '11px',
-                  fontWeight: 900,
+                  fontWeight: 600,
                   cursor: 'pointer',
                   padding: '4px 8px',
                 }}
@@ -309,10 +309,10 @@ export const ActivityStudio: React.FC<ActivityStudioProps> = ({
             }}
           >
             <div style={{ fontSize: '40px', marginBottom: '12px' }}>🏜️</div>
-            <h3 className="nunito" style={{ fontWeight: 900, color: 'var(--g)', margin: 0 }}>
+            <h3  style={{ fontWeight: 600, color: 'var(--g)', margin: 0 }}>
               No activities found
             </h3>
-            <p style={{ fontSize: '13px', fontWeight: 800, color: 'var(--g)', opacity: 0.6, marginTop: '4px', margin: 0 }}>
+            <p style={{ fontSize: '13px', fontWeight: 600, color: 'var(--g)', opacity: 0.6, marginTop: '4px', margin: 0 }}>
               Your financial history is a blank canvas.
             </p>
           </div>
@@ -343,7 +343,7 @@ export const ActivityStudio: React.FC<ActivityStudioProps> = ({
                         padding: '4px 10px',
                         borderRadius: '8px',
                         fontSize: '11px',
-                        fontWeight: 900,
+                        fontWeight: 600,
                         color: '#4F46E5',
                         textTransform: 'uppercase',
                         letterSpacing: '0.5px',
@@ -393,7 +393,7 @@ export const ActivityStudio: React.FC<ActivityStudioProps> = ({
                         <div
                           style={{
                             fontSize: '14px',
-                            fontWeight: 900,
+                            fontWeight: 600,
                             color: '#5B21B6',
                             whiteSpace: 'nowrap',
                             textOverflow: 'ellipsis',
@@ -412,7 +412,7 @@ export const ActivityStudio: React.FC<ActivityStudioProps> = ({
                                   key={src}
                                   style={{
                                     fontSize: '9px',
-                                    fontWeight: 900,
+                                    fontWeight: 600,
                                     background: '#EDE9FE',
                                     color: '#7C3AED',
                                     padding: '1px 6px',
@@ -461,7 +461,7 @@ export const ActivityStudio: React.FC<ActivityStudioProps> = ({
                                 setShowConvertModalId(e.gId);
                                 setOpenExpId(null);
                               }}
-                              style={{ padding: '8px 10px', fontSize: '12px', fontWeight: 800, cursor: 'pointer', borderRadius: '8px' }}
+                              style={{ padding: '8px 10px', fontSize: '12px', fontWeight: 600, cursor: 'pointer', borderRadius: '8px' }}
                               className="hover-bg"
                             >
                               ⚙️ Adjust Conversion
@@ -506,7 +506,7 @@ export const ActivityStudio: React.FC<ActivityStudioProps> = ({
                               style={{
                                 padding: '8px 10px',
                                 fontSize: '12px',
-                                fontWeight: 800,
+                                fontWeight: 600,
                                 cursor: 'pointer',
                                 color: '#DB2777',
                                 borderRadius: '8px',
@@ -558,7 +558,7 @@ export const ActivityStudio: React.FC<ActivityStudioProps> = ({
                       </div>
                       <div style={{ minWidth: 0, flex: 1, marginRight: '16px' }}>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '6px', whiteSpace: 'nowrap', overflow: 'hidden', minWidth: 0 }}>
-                          <h3 className="nunito" style={{ fontSize: isSettlement ? '13px' : '15px', color: 'var(--t)', margin: 0, fontWeight: 700, display: 'flex', alignItems: 'center', gap: '4px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', flexShrink: 0 }}>
+                          <h3  style={{ fontSize: isSettlement ? '13px' : '15px', color: 'var(--t)', margin: 0, fontWeight: 700, display: 'flex', alignItems: 'center', gap: '4px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', flexShrink: 0 }}>
                             {isSettlement ? 'Payment Recorded' : e.title}
                           </h3>
                           {e.gId !== 'STANDALONE' && (
@@ -570,7 +570,7 @@ export const ActivityStudio: React.FC<ActivityStudioProps> = ({
                               }}
                               style={{
                                 fontSize: '10px',
-                                fontWeight: 800,
+                                fontWeight: 600,
                                 color: '#8B5CF6',
                                 background: '#F5F3FF',
                                 padding: '1px 6px',
@@ -634,7 +634,7 @@ export const ActivityStudio: React.FC<ActivityStudioProps> = ({
                     </div>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '16px', flexShrink: 0 }}>
                       <div style={{ textAlign: 'right' }}>
-                        <span style={{ fontSize: '14px', fontWeight: 800, color: 'var(--t)', fontFamily: '"Nunito", sans-serif' }}>
+                        <span style={{ fontSize: '14px', fontWeight: 600, color: 'var(--t)',  }}>
                           {e.currency || '₹'} {formatCompactAmount((Number(e.amt) || 0))}
                         </span>
                       </div>

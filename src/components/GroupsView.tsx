@@ -115,7 +115,7 @@ export const GroupsView: React.FC<GroupsViewProps> = ({
   return (
     <div className="content-width-limit" style={{ maxWidth: '600px', margin: '0 auto' }}>
       <div className="desktop-only-header" style={{ marginBottom: '20px', display: 'flex', flexDirection: 'column', gap: '8px', alignItems: 'center' }}>
-        <h1 className="nunito" style={{ fontSize: '28px', fontWeight: 950, color: 'var(--t)', letterSpacing: '-0.5px', margin: 0, display: 'flex', alignItems: 'center', gap: '8px' }}>
+        <h1  style={{ fontSize: '28px', fontWeight: 600, color: 'var(--t)', letterSpacing: '-0.5px', margin: 0, display: 'flex', alignItems: 'center', gap: '8px' }}>
           <span>Your Groups</span>
           <button
             type="button"
@@ -154,7 +154,7 @@ export const GroupsView: React.FC<GroupsViewProps> = ({
             padding: '8px 16px',
             borderRadius: '12px',
             border: '1px solid var(--nav-hover)',
-            fontWeight: 800,
+            fontWeight: 600,
             animation: 'fadeSlideIn 0.2s ease-out',
             display: 'flex',
             alignItems: 'center',
@@ -323,7 +323,7 @@ export const GroupsView: React.FC<GroupsViewProps> = ({
           }}
         >
           <div style={{ display: 'flex', alignItems: 'center', gap: '6px', minWidth: 0, flex: 1 }}>
-            <h3 className="nunito" style={{ fontSize: '15px', color: '#334155', fontWeight: 600, margin: 0, lineHeight: 1.2 }}>
+            <h3  style={{ fontSize: '15px', color: '#334155', fontWeight: 600, margin: 0, lineHeight: 1.2 }}>
               Non-Group Expenses
             </h3>
             <button
@@ -340,7 +340,7 @@ export const GroupsView: React.FC<GroupsViewProps> = ({
                 border: '1px solid #64748B',
                 color: '#64748B',
                 fontSize: '8px',
-                fontWeight: 800,
+                fontWeight: 600,
                 cursor: 'help',
                 padding: 0,
                 margin: 0,
@@ -355,7 +355,7 @@ export const GroupsView: React.FC<GroupsViewProps> = ({
 
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexShrink: 0 }}>
             {nonGroupRels.length === 0 ? (
-              <span style={{ fontSize: '13px', fontWeight: 800, color: '#16A34A', background: '#ECFDF5', border: 'none', padding: '4px 10px', borderRadius: '20px' }}>
+              <span style={{ fontSize: '13px', fontWeight: 600, color: '#16A34A', background: '#ECFDF5', border: 'none', padding: '4px 10px', borderRadius: '20px' }}>
                 Settled Up
               </span>
             ) : (
@@ -378,7 +378,7 @@ export const GroupsView: React.FC<GroupsViewProps> = ({
                 );
               })()
             )}
-            <span style={{ fontSize: '16px', color: '#94A3B8', fontWeight: 900, marginLeft: '4px', lineHeight: 1 }}>›</span>
+            <span style={{ fontSize: '16px', color: '#94A3B8', fontWeight: 600, marginLeft: '4px', lineHeight: 1 }}>›</span>
           </div>
         </div>
 
@@ -448,7 +448,7 @@ export const GroupsView: React.FC<GroupsViewProps> = ({
                     alignItems: 'center',
                     justifyContent: 'center',
                     fontSize: '15px',
-                    fontWeight: 900,
+                    fontWeight: 600,
                     overflow: 'hidden',
                   }}
                 >
@@ -460,11 +460,11 @@ export const GroupsView: React.FC<GroupsViewProps> = ({
                 </div>
                 <div style={{ minWidth: 0 }}>
                   <h3
-                    className="nunito"
+                    
                     style={{
                       fontSize: '15px',
                       color: '#0F172A',
-                      fontWeight: 800,
+                      fontWeight: 600,
                       margin: 0,
                       lineHeight: 1.2,
                       opacity: g.name ? 1 : 0.5,
@@ -481,7 +481,7 @@ export const GroupsView: React.FC<GroupsViewProps> = ({
               {/* Right Side: Net Balance Tags & Actions */}
               <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexShrink: 0 }}>
                 {rels.length === 0 ? (
-                  <span style={{ fontSize: '13px', fontWeight: 800, color: '#16A34A', background: '#ECFDF5', border: 'none', padding: '4px 10px', borderRadius: '20px' }}>
+                  <span style={{ fontSize: '13px', fontWeight: 600, color: '#16A34A', background: '#ECFDF5', border: 'none', padding: '4px 10px', borderRadius: '20px' }}>
                     Settled Up
                   </span>
                 ) : (
@@ -504,7 +504,7 @@ export const GroupsView: React.FC<GroupsViewProps> = ({
                     );
                   })()
                 )}
-                <span style={{ fontSize: '16px', color: '#94A3B8', fontWeight: 900, marginLeft: '4px', lineHeight: 1 }}>›</span>
+                <span style={{ fontSize: '16px', color: '#94A3B8', fontWeight: 600, marginLeft: '4px', lineHeight: 1 }}>›</span>
               </div>
             </div>
           );

@@ -192,7 +192,7 @@ export const UpiSection: React.FC<UpiSectionProps> = ({
             placeholder="username@bank"
             style={{
               fontSize: '15px',
-              fontWeight: 800,
+              fontWeight: 600,
               border: 'none',
               background: 'transparent',
               padding: '2px 2px',
@@ -224,7 +224,7 @@ export const UpiSection: React.FC<UpiSectionProps> = ({
                 }}
                 style={{
                   fontSize: '13px',
-                  fontWeight: 800,
+                  fontWeight: 600,
                   color: '#EA580C',
                   cursor: 'pointer',
                   textDecoration: 'underline',
@@ -238,7 +238,7 @@ export const UpiSection: React.FC<UpiSectionProps> = ({
                 onClick={() => setUserMetadata({ ...userMetadata, [me]: { ...userMetadata[me], upiVerified: false } })}
                 style={{
                   fontSize: '13px',
-                  fontWeight: 800,
+                  fontWeight: 600,
                   color: '#16A34A',
                   cursor: 'pointer',
                   textDecoration: 'underline',
@@ -286,7 +286,7 @@ export const UpiSection: React.FC<UpiSectionProps> = ({
           }}>
             {/* Header */}
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <span style={{ fontSize: '18px', fontWeight: 900, color: '#2E2A25' }}>
+              <span style={{ fontSize: '18px', fontWeight: 600, color: '#2E2A25' }}>
                 Verify UPI VPA
               </span>
               <button
@@ -297,7 +297,7 @@ export const UpiSection: React.FC<UpiSectionProps> = ({
                 }}
                 style={{
                   fontSize: '10px',
-                  fontWeight: 800,
+                  fontWeight: 600,
                   background: '#F1F5F9',
                   border: 'none',
                   color: '#64748B',
@@ -336,7 +336,7 @@ export const UpiSection: React.FC<UpiSectionProps> = ({
                   style={{
                     marginTop: '8px',
                     fontSize: '12px',
-                    fontWeight: 800,
+                    fontWeight: 600,
                     color: '#64748B',
                     border: '1.5px solid #E2E8F0',
                     background: '#FFFFFF',
@@ -393,7 +393,7 @@ export const UpiSection: React.FC<UpiSectionProps> = ({
                     style={{
                       width: '100%',
                       fontSize: '14px',
-                      fontWeight: 800,
+                      fontWeight: 600,
                       background: '#10B981',
                       color: 'white',
                       border: 'none',
@@ -414,7 +414,7 @@ export const UpiSection: React.FC<UpiSectionProps> = ({
                     style={{
                       width: '100%',
                       fontSize: '12px',
-                      fontWeight: 800,
+                      fontWeight: 600,
                       background: '#FFFFFF',
                       border: '1.5px solid #F1F5F9',
                       color: '#64748B',

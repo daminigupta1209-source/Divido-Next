@@ -145,7 +145,7 @@ export const Profile: React.FC<ProfileProps> = ({
                   style={{ width: '100%', height: '100%', objectFit: 'cover' }}
                 />
               ) : (
-                <span style={{ fontSize: '26px', fontWeight: 900, color: '#E65100', userSelect: 'none' }}>
+                <span style={{ fontSize: '26px', fontWeight: 600, color: '#E65100', userSelect: 'none' }}>
                   {initials}
                 </span>
               )}
@@ -190,7 +190,7 @@ export const Profile: React.FC<ProfileProps> = ({
             style={{ display: 'none' }}
           />
 
-          <h2 style={{ fontSize: '20px', fontWeight: 800, color: '#2E2A25', margin: '14px 0 2px', lineHeight: 1.2 }}>
+          <h2 style={{ fontSize: '20px', fontWeight: 600, color: '#2E2A25', margin: '14px 0 2px', lineHeight: 1.2 }}>
             {userName}
           </h2>
           <span style={{ fontSize: '12px', fontWeight: 600, color: '#A09586', letterSpacing: '0.3px' }}>
@@ -237,7 +237,7 @@ export const Profile: React.FC<ProfileProps> = ({
                 placeholder="Enter your name"
                 style={{
                   fontSize: '15px',
-                  fontWeight: 800,
+                  fontWeight: 600,
                   border: 'none',
                   background: 'transparent',
                   padding: '2px 2px',
@@ -256,7 +256,7 @@ export const Profile: React.FC<ProfileProps> = ({
               <label style={{ fontSize: '11px', fontWeight: 700, color: '#B3A897', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
                 Account Security
               </label>
-              <div style={{ fontSize: '15px', fontWeight: 800, color: '#2E2A25', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+              <div style={{ fontSize: '15px', fontWeight: 600, color: '#2E2A25', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                 {userEmail || 'Not signed in'}
               </div>
             </div>
@@ -310,15 +310,15 @@ export const Profile: React.FC<ProfileProps> = ({
                   alignItems: 'center',
                   justifyContent: 'center',
                   fontSize: '15px',
-                  fontWeight: 900,
+                  fontWeight: 600,
                   flexShrink: 0,
-                  fontFamily: 'Nunito',
+                  
                 }}
               >
                 {currencyInfo?.s || '₹'}
               </div>
               <div style={{ display: 'flex', flexDirection: 'column', minWidth: 0 }}>
-                <span style={{ fontSize: '15px', fontWeight: 800, color: 'var(--t)' }}>
+                <span style={{ fontSize: '15px', fontWeight: 600, color: 'var(--t)' }}>
                   {currencyInfo?.n || 'Indian Rupee'}
                 </span>
                 <span style={{ fontSize: '11.5px', fontWeight: 600, color: 'var(--g)', marginTop: '2px' }}>
@@ -326,7 +326,7 @@ export const Profile: React.FC<ProfileProps> = ({
                 </span>
               </div>
             </div>
-            <span style={{ fontSize: '20px', color: '#CFC6BB', fontWeight: 900, userSelect: 'none' }}>›</span>
+            <span style={{ fontSize: '20px', color: '#CFC6BB', fontWeight: 600, userSelect: 'none' }}>›</span>
           </div>
         </div>
 
@@ -373,7 +373,7 @@ export const Profile: React.FC<ProfileProps> = ({
                 border: currentTheme === 'lavender' ? '1.5px solid #DB2777' : '1.5px solid #F1F5F9',
                 background: currentTheme === 'lavender' ? '#FFF5F5' : '#F8FAFC',
                 color: currentTheme === 'lavender' ? '#DB2777' : '#64748B',
-                fontWeight: 800,
+                fontWeight: 600,
                 fontSize: '12px',
                 cursor: 'pointer',
                 transition: '0.2s all',
@@ -390,7 +390,7 @@ export const Profile: React.FC<ProfileProps> = ({
                 border: currentTheme === 'sunset' ? '1.5px solid #F97316' : '1.5px solid #F1F5F9',
                 background: currentTheme === 'sunset' ? '#FFF7ED' : '#F8FAFC',
                 color: currentTheme === 'sunset' ? '#EA580C' : '#64748B',
-                fontWeight: 800,
+                fontWeight: 600,
                 fontSize: '12px',
                 cursor: 'pointer',
                 transition: '0.2s all',
@@ -429,7 +429,7 @@ export const Profile: React.FC<ProfileProps> = ({
                 border: 'none',
                 padding: '10px',
                 borderRadius: '12px',
-                fontWeight: 950,
+                fontWeight: 600,
                 fontSize: '13px',
                 cursor: 'pointer',
                 boxShadow: '0 10px 15px -3px rgba(249, 115, 22, 0.2)',
@@ -447,7 +447,7 @@ export const Profile: React.FC<ProfileProps> = ({
                 border: '2px solid #EF4444',
                 padding: '10px',
                 borderRadius: '12px',
-                fontWeight: 950,
+                fontWeight: 600,
                 fontSize: '13px',
                 cursor: 'pointer',
                 boxSizing: 'border-box',

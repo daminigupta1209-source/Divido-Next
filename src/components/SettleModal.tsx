@@ -349,7 +349,7 @@ export const SettleModal: React.FC<SettleModalProps> = ({
             >
               🤝
             </div>
-            <h2 className="nunito" style={{ fontSize: '22px', fontWeight: 900 }}>
+            <h2  style={{ fontSize: '22px', fontWeight: 600 }}>
               {editingSettle ? 'Edit Settlement' : 'Clear Dues'}
             </h2>
           </div>
@@ -370,7 +370,7 @@ export const SettleModal: React.FC<SettleModalProps> = ({
             <h4
               style={{
                 fontSize: '10px',
-                fontWeight: 900,
+                fontWeight: 600,
                 color: 'var(--g)',
                 textTransform: 'uppercase',
                 letterSpacing: '1.5px',
@@ -479,10 +479,10 @@ export const SettleModal: React.FC<SettleModalProps> = ({
                       }}
                     >
                       <div>
-                        <p style={{ fontSize: '11px', fontWeight: 900, color: 'var(--g)' }}>
+                        <p style={{ fontSize: '11px', fontWeight: 600, color: 'var(--g)' }}>
                           {t.from === me ? `💸 You pay ${t.to}` : `💸 You get back from ${t.from}`}
                         </p>
-                        <p style={{ fontSize: '18px', fontWeight: 950, color: t.from === me ? '#DC2626' : '#059669' }}>
+                        <p style={{ fontSize: '18px', fontWeight: 600, color: t.from === me ? '#DC2626' : '#059669' }}>
                           {t.currency}
                           {formatCompactAmount(t.amount)}
                         </p>
@@ -505,7 +505,7 @@ export const SettleModal: React.FC<SettleModalProps> = ({
                                 color: '#0284C7',
                                 borderRadius: '12px',
                                 fontSize: '11px',
-                                fontWeight: 900,
+                                fontWeight: 600,
                                 textDecoration: 'none',
                                 border: '1.5px solid #B0E5FC',
                               }}
@@ -528,7 +528,7 @@ export const SettleModal: React.FC<SettleModalProps> = ({
                             color: '#16A34A',
                             borderRadius: '12px',
                             fontSize: '11px',
-                            fontWeight: 900,
+                            fontWeight: 600,
                             border: '1.5px solid #DCFCE7',
                             cursor: 'pointer',
                           }}
@@ -547,7 +547,7 @@ export const SettleModal: React.FC<SettleModalProps> = ({
         <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
             <div>
-              <label style={{ fontSize: '10px', fontWeight: 900, color: 'var(--g)', textTransform: 'uppercase' }}>From</label>
+              <label style={{ fontSize: '10px', fontWeight: 600, color: 'var(--g)', textTransform: 'uppercase' }}>From</label>
               <StyledDropdown
                 id="settle-from-select"
                 fullWidth
@@ -572,7 +572,7 @@ export const SettleModal: React.FC<SettleModalProps> = ({
               />
             </div>
             <div>
-              <label style={{ fontSize: '10px', fontWeight: 900, color: 'var(--g)', textTransform: 'uppercase' }}>To</label>
+              <label style={{ fontSize: '10px', fontWeight: 600, color: 'var(--g)', textTransform: 'uppercase' }}>To</label>
               <StyledDropdown
                 id="settle-to-select"
                 fullWidth
@@ -596,7 +596,7 @@ export const SettleModal: React.FC<SettleModalProps> = ({
           </div>
 
           <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-            <label style={{ fontSize: '10px', fontWeight: 900, color: 'var(--g)', textTransform: 'uppercase', letterSpacing: '1px' }}>
+            <label style={{ fontSize: '10px', fontWeight: 600, color: 'var(--g)', textTransform: 'uppercase', letterSpacing: '1px' }}>
               Dues to Clear
             </label>
             <div style={{ display: 'flex', alignItems: 'center', background: 'var(--bg)', borderRadius: '16px', border: '1.5px solid #F1F1F1', height: '56px', padding: '0 14px' }}>
@@ -608,7 +608,7 @@ export const SettleModal: React.FC<SettleModalProps> = ({
                   color: 'white',
                   borderRadius: '10px',
                   fontSize: '12px',
-                  fontWeight: 900,
+                  fontWeight: 600,
                   cursor: 'pointer',
                   display: 'flex',
                   alignItems: 'center',
@@ -676,7 +676,7 @@ export const SettleModal: React.FC<SettleModalProps> = ({
                   background: 'transparent',
                   border: 'none',
                   fontSize: '24px',
-                  fontWeight: 900,
+                  fontWeight: 600,
                   color: '#0F172A',
                   textAlign: 'center',
                   outline: 'none',
@@ -684,7 +684,7 @@ export const SettleModal: React.FC<SettleModalProps> = ({
               />
             </div>
             {settleCurr !== primaryCurrency && rates[toCurrencyCode(settleCurr)] && (
-              <p style={{ fontSize: '11px', fontWeight: 800, color: '#16A34A', margin: '2px 0 0 2px', textAlign: 'left' }}>
+              <p style={{ fontSize: '11px', fontWeight: 600, color: '#16A34A', margin: '2px 0 0 2px', textAlign: 'left' }}>
                 ≈ {primaryCurrency}{((parseFloat(settleAmt) || 0) / rates[toCurrencyCode(settleCurr)]).toFixed(2)} in your primary currency
               </p>
             )}
@@ -692,7 +692,7 @@ export const SettleModal: React.FC<SettleModalProps> = ({
 
           {(showSettleNotes || settleNotes) && (
             <div>
-              <label style={{ fontSize: '10px', fontWeight: 900, color: 'var(--g)', textTransform: 'uppercase' }}>Notes</label>
+              <label style={{ fontSize: '10px', fontWeight: 600, color: 'var(--g)', textTransform: 'uppercase' }}>Notes</label>
               <input
                 id="settle-txt-input"
                 ref={settleNotesRef}
@@ -728,7 +728,7 @@ export const SettleModal: React.FC<SettleModalProps> = ({
                 border: 'none',
                 color: '#6366F1',
                 fontSize: '11px',
-                fontWeight: 900,
+                fontWeight: 600,
                 cursor: 'pointer',
                 textAlign: 'left',
                 padding: '4px 0',

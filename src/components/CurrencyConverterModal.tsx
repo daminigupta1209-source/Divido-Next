@@ -41,7 +41,7 @@ const ManualRateRow: React.FC<ManualRateRowProps> = ({ c, targetCurr, initialRat
 
   return (
     <div style={{ background: 'var(--w)', padding: '8px 10px', borderRadius: '12px', border: '1.5px solid #F1F5F9' }}>
-      <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '12px', fontWeight: 950, color: 'var(--t)' }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '12px', fontWeight: 600, color: 'var(--t)' }}>
         <span style={{ opacity: 0.4 }}>1</span>
         <span style={{ color: '#6366F1' }}>{isInverted ? targetCurr : c}</span>
         <span>=</span>
@@ -58,7 +58,7 @@ const ManualRateRow: React.FC<ManualRateRowProps> = ({ c, targetCurr, initialRat
             border: '1.5px solid #EEF2FF',
             background: 'var(--bg)',
             textAlign: 'center',
-            fontWeight: 950,
+            fontWeight: 600,
             outline: 'none',
             fontSize: '14px',
           }}
@@ -318,7 +318,7 @@ export const CurrencyConverterModal: React.FC<CurrencyConverterModalProps> = ({
           {isFetching ? 'Fetching Live Rates...' : 'Open ER API'}
         </div>
 
-        <h3 className="nunito" style={{ fontSize: '20px', fontWeight: 800, color: '#1E293B', marginBottom: '4px' }}>
+        <h3  style={{ fontSize: '20px', fontWeight: 600, color: '#1E293B', marginBottom: '4px' }}>
           Convert Group Currency
         </h3>
 
@@ -344,14 +344,14 @@ export const CurrencyConverterModal: React.FC<CurrencyConverterModalProps> = ({
               ariaLabel="Convert from currency"
               value={sourceCurr}
               onChange={(v) => setSourceCurr(v)}
-              buttonStyle={{ fontSize: '14px', fontWeight: 800, color: '#475569', border: '1.5px solid #E2E8F0', boxShadow: 'none', minWidth: '60px', padding: '6px 10px' }}
+              buttonStyle={{ fontSize: '14px', fontWeight: 600, color: '#475569', border: '1.5px solid #E2E8F0', boxShadow: 'none', minWidth: '60px', padding: '6px 10px' }}
               options={[{ value: 'ALL', label: 'All' }, ...detectedCurrs.map((c) => ({ value: c, label: c }))]}
             />
           </div>
 
           {/* Connection arrow with live rate */}
           <div style={{ flex: 1.5, position: 'relative', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-            <span style={{ fontSize: '9.5px', fontWeight: 800, color: '#0D9488', background: '#E6F4EA', padding: '2px 8px', borderRadius: '100px', whiteSpace: 'nowrap', marginBottom: '6px' }}>
+            <span style={{ fontSize: '9.5px', fontWeight: 600, color: '#0D9488', background: '#E6F4EA', padding: '2px 8px', borderRadius: '100px', whiteSpace: 'nowrap', marginBottom: '6px' }}>
               1 : {rateMap[sourceCurr === 'ALL' ? group.currency : sourceCurr] || '...'}
             </span>
             {/* Visual Arrow Line */}
@@ -378,7 +378,7 @@ export const CurrencyConverterModal: React.FC<CurrencyConverterModalProps> = ({
               onClick={() => setShowCurrPickerId('CONVERT_TARGET')}
               style={{
                 fontSize: '14px',
-                fontWeight: 800,
+                fontWeight: 600,
                 color: '#1E293B',
                 background: '#FFFFFF',
                 border: '1.5px solid #0D9488',
@@ -466,7 +466,7 @@ export const CurrencyConverterModal: React.FC<CurrencyConverterModalProps> = ({
 
         <button
           className="btn-green hover-up"
-          style={{ width: '100%', height: '46px', borderRadius: '14px', fontSize: '14px', fontWeight: 800 }}
+          style={{ width: '100%', height: '46px', borderRadius: '14px', fontSize: '14px', fontWeight: 600 }}
           onClick={handleConvert}
           disabled={isConverting || isFetching}
         >

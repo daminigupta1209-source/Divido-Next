@@ -339,7 +339,7 @@ export const GroupDetail: React.FC<GroupDetailProps> = ({
               <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
                 <span style={{ fontSize: '20px' }}>🔔</span>
                 <div style={{ textAlign: 'left' }}>
-                  <h4 style={{ margin: 0, fontSize: '13px', fontWeight: 900, color: '#312E81' }}>
+                  <h4 style={{ margin: 0, fontSize: '13px', fontWeight: 600, color: '#312E81' }}>
                     Join Request: {req.requestName}
                   </h4>
                   <p style={{ margin: '2px 0 0 0', fontSize: '11px', color: '#4338CA', fontWeight: 700 }}>
@@ -358,7 +358,7 @@ export const GroupDetail: React.FC<GroupDetailProps> = ({
                   style={{
                     padding: '6px 12px',
                     fontSize: '11px',
-                    fontWeight: 900,
+                    fontWeight: 600,
                     borderRadius: '10px',
                     cursor: 'pointer',
                   }}
@@ -374,7 +374,7 @@ export const GroupDetail: React.FC<GroupDetailProps> = ({
                   style={{
                     padding: '6px 12px',
                     fontSize: '11px',
-                    fontWeight: 900,
+                    fontWeight: 600,
                     borderRadius: '10px',
                     border: '1.5px solid #FCA5A5',
                     background: '#FFFFFF',
@@ -440,7 +440,7 @@ export const GroupDetail: React.FC<GroupDetailProps> = ({
                           alignItems: 'center',
                           justifyContent: 'center',
                           fontSize: '9.5px',
-                          fontWeight: 900,
+                          fontWeight: 600,
                           border: '2px solid #FFFFFF',
                           position: 'absolute',
                           left: `${idx * 20}px`,
@@ -635,7 +635,7 @@ export const GroupDetail: React.FC<GroupDetailProps> = ({
                 </>
               )}
               {hasActiveBalancesForCard && (
-                <span style={{ position: 'absolute', right: '14px', top: '50%', transform: 'translateY(-50%)', color: '#FFFFFF', fontSize: '18px', fontWeight: 900, lineHeight: 1, pointerEvents: 'none', opacity: 0.9 }}>›</span>
+                <span style={{ position: 'absolute', right: '14px', top: '50%', transform: 'translateY(-50%)', color: '#FFFFFF', fontSize: '18px', fontWeight: 600, lineHeight: 1, pointerEvents: 'none', opacity: 0.9 }}>›</span>
               )}
             </div>
           </div>
@@ -756,7 +756,7 @@ export const GroupDetail: React.FC<GroupDetailProps> = ({
           width: '100%', boxSizing: 'border-box',
           padding: '6px 12px', borderRadius: '20px',
           border: '1.5px solid #E2E8F0', background: 'var(--w)',
-          fontSize: '12px', fontWeight: 800, color: '#475569',
+          fontSize: '12px', fontWeight: 600, color: '#475569',
           cursor: 'pointer', whiteSpace: 'nowrap',
           boxShadow: '0 1px 4px rgba(0,0,0,0.04)',
         };
@@ -771,7 +771,7 @@ export const GroupDetail: React.FC<GroupDetailProps> = ({
         const optionStyle = (active: boolean): React.CSSProperties => ({
           display: 'flex', alignItems: 'center', gap: '8px',
           padding: '8px 12px', borderRadius: '8px', cursor: 'pointer',
-          fontSize: '12px', fontWeight: 800,
+          fontSize: '12px', fontWeight: 600,
           color: active ? '#16A34A' : '#1E293B',
           background: active ? '#F0FDF4' : 'transparent',
         });
@@ -878,7 +878,7 @@ export const GroupDetail: React.FC<GroupDetailProps> = ({
                   return (
                     <div className="card" style={{ padding: '32px 24px', borderRadius: '24px', textAlign: 'center', color: '#64748B' }}>
                       <span style={{ fontSize: '32px' }}>🤝</span>
-                      <p style={{ margin: '10px 0 0 0', fontWeight: 800, fontSize: '13px' }}>
+                      <p style={{ margin: '10px 0 0 0', fontWeight: 600, fontSize: '13px' }}>
                         {filterFriend === 'all' && filterType === 'all' 
                           ? 'Everyone is fully settled up!' 
                           : 'No matching settlements found for active filters.'
@@ -893,7 +893,7 @@ export const GroupDetail: React.FC<GroupDetailProps> = ({
 
                 const AV_COLORS = ['#B39DDB', '#F48FB1', '#80CBC4', '#FFB74D', '#9FA8DA', '#A5D6A7', '#EF9A9A', '#7FC8CE'];
                 const balPillBase: React.CSSProperties = { padding: '2px 4px', borderRadius: '999px', fontSize: '13px', fontWeight: 600, whiteSpace: 'nowrap', display: 'inline-flex', alignItems: 'center', justifyContent: 'flex-end', gap: '5px' };
-                const balCardChip: React.CSSProperties = { background: '#F1EFE8', borderRadius: '999px', padding: '0 6px', fontSize: '10px', fontWeight: 800, lineHeight: '16px' };
+                const balCardChip: React.CSSProperties = { background: '#F1EFE8', borderRadius: '999px', padding: '0 6px', fontSize: '10px', fontWeight: 600, lineHeight: '16px' };
                 const balPrimary = (list: [string, number][]) => { const [c, v] = list[0]; return `${c}${formatCompactAmount(v)}`; };
 
                 return (
@@ -945,12 +945,12 @@ export const GroupDetail: React.FC<GroupDetailProps> = ({
                             boxSizing: 'border-box',
                           }}
                         >
-                          <div style={{ width: '40px', height: '40px', borderRadius: '50%', background: avBg, color: '#FFFFFF', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '16px', fontWeight: 900, flexShrink: 0 }}>
+                          <div style={{ width: '40px', height: '40px', borderRadius: '50%', background: avBg, color: '#FFFFFF', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '16px', fontWeight: 600, flexShrink: 0 }}>
                             {m.charAt(0).toUpperCase()}
                           </div>
 
                           <div style={{ minWidth: 0, flex: 1, display: 'flex', alignItems: 'center', gap: '6px' }}>
-                            <h3 className="nunito" style={{ fontSize: '17px', fontWeight: 800, color: '#2E2A25', margin: 0, textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap', textTransform: 'capitalize' }}>{m}</h3>
+                            <h3  style={{ fontSize: '17px', fontWeight: 600, color: '#2E2A25', margin: 0, textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap', textTransform: 'capitalize' }}>{m}</h3>
                           </div>
 
                           <div style={{ display: 'flex', flexDirection: 'column', gap: '2px', alignItems: 'flex-end', flexShrink: 0 }}>
@@ -976,7 +976,7 @@ export const GroupDetail: React.FC<GroupDetailProps> = ({
                             })()}
                           </div>
 
-                          <span style={{ fontSize: '18px', color: '#C9BEB2', fontWeight: 900, lineHeight: 1, flexShrink: 0 }}>›</span>
+                          <span style={{ fontSize: '18px', color: '#C9BEB2', fontWeight: 600, lineHeight: 1, flexShrink: 0 }}>›</span>
                         </div>
                       );
                     })}
@@ -985,7 +985,7 @@ export const GroupDetail: React.FC<GroupDetailProps> = ({
                       <h4
                         style={{
                           fontSize: '9.5px',
-                          fontWeight: 950,
+                          fontWeight: 600,
                           color: '#64748B',
                           textTransform: 'uppercase',
                           letterSpacing: '0.8px',
@@ -1045,15 +1045,15 @@ export const GroupDetail: React.FC<GroupDetailProps> = ({
                               🤝
                             </div>
                             <div style={{ minWidth: 0, fontSize: '13px', color: '#64748B', fontWeight: 700, textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap' }}>
-                              <span style={{ color: '#475569', fontWeight: 800 }}>{t.from}</span>
+                              <span style={{ color: '#475569', fontWeight: 600 }}>{t.from}</span>
                               <span style={{ margin: '0 6px', fontWeight: 500, opacity: 0.7 }}>➔</span>
-                              <span style={{ color: '#475569', fontWeight: 800 }}>{t.to}</span>
+                              <span style={{ color: '#475569', fontWeight: 600 }}>{t.to}</span>
                             </div>
                           </div>
 
                           <div style={{ display: 'flex', alignItems: 'center', gap: '16px', flexShrink: 0 }}>
                             <div style={{ width: '80px', flexShrink: 0, display: 'flex', justifyContent: 'flex-end' }}>
-                              <BalanceDisplay balances={t.balances} align="right" style={{ fontSize: '14px', fontWeight: 800, color: '#64748B' }} />
+                              <BalanceDisplay balances={t.balances} align="right" style={{ fontSize: '14px', fontWeight: 600, color: '#64748B' }} />
                             </div>
                           </div>
                         </div>
@@ -1149,7 +1149,7 @@ export const GroupDetail: React.FC<GroupDetailProps> = ({
             />
           </svg>
           <span
-            className="nunito"
+            
             style={{
               fontSize: '15px',
               fontWeight: 600,
@@ -1254,9 +1254,9 @@ export const GroupDetail: React.FC<GroupDetailProps> = ({
             >
               ✕
             </div>
-            <h3 className="nunito" style={{
+            <h3  style={{
               fontSize: '20px',
-              fontWeight: 950,
+              fontWeight: 600,
               color: '#0F172A',
               marginBottom: '4px',
               textAlign: 'center'
@@ -1267,7 +1267,7 @@ export const GroupDetail: React.FC<GroupDetailProps> = ({
               textAlign: 'center',
               color: 'var(--g)',
               fontSize: '11px',
-              fontWeight: 900,
+              fontWeight: 600,
               textTransform: 'uppercase',
               letterSpacing: '0.5px',
               marginBottom: '16px'
@@ -1278,7 +1278,7 @@ export const GroupDetail: React.FC<GroupDetailProps> = ({
             <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', maxHeight: '350px', overflowY: 'auto' }}>
               {myTrans.length > 0 && (
                 <>
-                  <div style={{ fontSize: '11px', fontWeight: 800, color: '#475569', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '2px', marginTop: '4px', paddingLeft: '4px' }}>
+                  <div style={{ fontSize: '11px', fontWeight: 600, color: '#475569', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '2px', marginTop: '4px', paddingLeft: '4px' }}>
                     Your Settlements
                   </div>
                   {myTrans.map((t) => {
@@ -1327,7 +1327,7 @@ export const GroupDetail: React.FC<GroupDetailProps> = ({
                           </div>
                           <div style={{ minWidth: 0 }}>
                             <div style={{ display: 'flex', alignItems: 'center', gap: '4px', flexWrap: 'wrap' }}>
-                              <h4 className="nunito" style={{ fontSize: '13px', fontWeight: 800, margin: 0, textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap', textTransform: 'capitalize' }}>
+                              <h4  style={{ fontSize: '13px', fontWeight: 600, margin: 0, textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap', textTransform: 'capitalize' }}>
                                 {m}
                               </h4>
                             </div>
@@ -1336,7 +1336,7 @@ export const GroupDetail: React.FC<GroupDetailProps> = ({
 
                         <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexShrink: 0 }}>
                           <div>
-                            <BalanceDisplay balances={displayBalances} align="right" style={{ fontSize: '14px', fontWeight: 800 }} />
+                            <BalanceDisplay balances={displayBalances} align="right" style={{ fontSize: '14px', fontWeight: 600 }} />
                           </div>
                           <button
                             onClick={() => {
@@ -1348,7 +1348,7 @@ export const GroupDetail: React.FC<GroupDetailProps> = ({
                               padding: '5px 10px',
                               fontSize: '11px',
                               borderRadius: '8px',
-                              fontWeight: 800,
+                              fontWeight: 600,
                               boxShadow: '0 4px 10px rgba(16, 185, 129, 0.12)',
                               display: 'inline-flex',
                               alignItems: 'center',
@@ -1367,7 +1367,7 @@ export const GroupDetail: React.FC<GroupDetailProps> = ({
 
               {otherTrans.length > 0 && (
                 <>
-                  <div style={{ fontSize: '11px', fontWeight: 800, color: '#94A3B8', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '2px', marginTop: '10px', paddingLeft: '4px' }}>
+                  <div style={{ fontSize: '11px', fontWeight: 600, color: '#94A3B8', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '2px', marginTop: '10px', paddingLeft: '4px' }}>
                     Other Settlements
                   </div>
                   {otherTrans.map((t, idx) => (
@@ -1403,14 +1403,14 @@ export const GroupDetail: React.FC<GroupDetailProps> = ({
                           🤝
                         </div>
                         <div style={{ minWidth: 0, fontSize: '12px', color: '#64748B', fontWeight: 700 }}>
-                          <span style={{ color: '#475569', fontWeight: 800 }}>{t.from}</span>
+                          <span style={{ color: '#475569', fontWeight: 600 }}>{t.from}</span>
                           <span style={{ margin: '0 4px', fontWeight: 500, opacity: 0.7 }}>➔</span>
-                          <span style={{ color: '#475569', fontWeight: 800 }}>{t.to}</span>
+                          <span style={{ color: '#475569', fontWeight: 600 }}>{t.to}</span>
                         </div>
                       </div>
 
                       <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexShrink: 0 }}>
-                        <BalanceDisplay balances={t.balances} align="right" style={{ fontSize: '13px', fontWeight: 800, color: '#64748B' }} />
+                        <BalanceDisplay balances={t.balances} align="right" style={{ fontSize: '13px', fontWeight: 600, color: '#64748B' }} />
                       </div>
                     </div>
                   ))}
@@ -1472,9 +1472,9 @@ export const GroupDetail: React.FC<GroupDetailProps> = ({
             >
               ✕
             </div>
-            <h3 className="nunito" style={{
+            <h3  style={{
               fontSize: '18px',
-              fontWeight: 900,
+              fontWeight: 600,
               color: '#0F172A',
               marginBottom: '16px',
               textAlign: 'center'
@@ -1488,7 +1488,7 @@ export const GroupDetail: React.FC<GroupDetailProps> = ({
                   padding: '12px',
                   fontSize: '13px',
                   borderRadius: '12px',
-                  fontWeight: 900,
+                  fontWeight: 600,
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
@@ -1507,7 +1507,7 @@ export const GroupDetail: React.FC<GroupDetailProps> = ({
                   padding: '12px',
                   fontSize: '13px',
                   borderRadius: '12px',
-                  fontWeight: 900,
+                  fontWeight: 600,
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',

@@ -44,12 +44,12 @@ export const BalanceActionCard: React.FC<BalanceActionCardProps> = ({
           style={{
             position: 'absolute', top: '16px', right: '16px', width: '26px', height: '26px',
             borderRadius: '50%', background: '#F1F5F9', color: '#64748B', border: 'none',
-            fontSize: '12px', fontWeight: 800, cursor: 'pointer',
+            fontSize: '12px', fontWeight: 600, cursor: 'pointer',
             display: 'flex', alignItems: 'center', justifyContent: 'center',
           }}
         >✕</button>
 
-        <h3 className="nunito" style={{ fontSize: '18px', fontWeight: 900, color: '#0F172A', margin: '0 0 8px' }}>
+        <h3  style={{ fontSize: '18px', fontWeight: 600, color: '#0F172A', margin: '0 0 8px' }}>
           {title}
         </h3>
         <p style={{ fontSize: '14px', fontWeight: 600, color: '#64748B', lineHeight: 1.4, margin: '0 0 20px' }}>
@@ -60,7 +60,7 @@ export const BalanceActionCard: React.FC<BalanceActionCardProps> = ({
           onClick={onPrimary}
           style={{
             width: '100%', padding: '13px', borderRadius: '14px', border: 'none',
-            background: primaryColor, color: '#FFFFFF', fontSize: '14px', fontWeight: 800,
+            background: primaryColor, color: '#FFFFFF', fontSize: '14px', fontWeight: 600,
             cursor: 'pointer', fontFamily: 'inherit',
           }}
         >{primaryLabel}</button>
@@ -68,7 +68,7 @@ export const BalanceActionCard: React.FC<BalanceActionCardProps> = ({
         {secondaryLabel && (
           <div
             onClick={onSecondary}
-            style={{ marginTop: '12px', fontSize: '13px', fontWeight: 800, color: '#94A3B8', cursor: 'pointer' }}
+            style={{ marginTop: '12px', fontSize: '13px', fontWeight: 600, color: '#94A3B8', cursor: 'pointer' }}
           >{secondaryLabel}</div>
         )}
       </div>

@@ -28,7 +28,7 @@ export const MatchPromptModal: React.FC<Props> = ({ prompt, onMatch, onDismiss }
         {/* Header */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', alignItems: 'center' }}>
           <div style={{ fontSize: '32px' }}>✨</div>
-          <h2 className="nunito" style={{ fontSize: '18px', fontWeight: 900, color: '#0F172A', margin: '4px 0 0 0', textAlign: 'center' }}>
+          <h2  style={{ fontSize: '18px', fontWeight: 600, color: '#0F172A', margin: '4px 0 0 0', textAlign: 'center' }}>
             {prompt.newMemberName} joined!
           </h2>
           <p style={{ margin: 0, fontSize: '12px', color: '#64748B', fontWeight: 600, textAlign: 'center', lineHeight: 1.4 }}>
@@ -66,9 +66,9 @@ export const MatchPromptModal: React.FC<Props> = ({ prompt, onMatch, onDismiss }
                 👤
               </div>
               <div style={{ flex: 1, minWidth: 0 }}>
-                <div style={{ fontSize: '13px', fontWeight: 800, color: '#0F172A', textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap' }}>{p.name}</div>
+                <div style={{ fontSize: '13px', fontWeight: 600, color: '#0F172A', textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap' }}>{p.name}</div>
               </div>
-              <div style={{ fontSize: '11px', fontWeight: 800, color: '#7C3AED', flexShrink: 0 }}>
+              <div style={{ fontSize: '11px', fontWeight: 600, color: '#7C3AED', flexShrink: 0 }}>
                 Link →
               </div>
             </button>
@@ -81,7 +81,7 @@ export const MatchPromptModal: React.FC<Props> = ({ prompt, onMatch, onDismiss }
           style={{
             width: '100%', padding: '10px', borderRadius: '12px',
             border: '1.5px solid #E2E8F0', background: '#fff',
-            fontSize: '12px', fontWeight: 800, color: '#64748B',
+            fontSize: '12px', fontWeight: 600, color: '#64748B',
             cursor: 'pointer',
           }}
         >

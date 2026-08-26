@@ -78,7 +78,7 @@ const MiniMetric: React.FC<MiniMetricProps> = ({ label, value, icon, color, sub,
         <span
           style={{
             fontSize: '9px',
-            fontWeight: 900,
+            fontWeight: 600,
             color: 'var(--g)',
             textTransform: 'uppercase',
             letterSpacing: '0.5px',
@@ -87,7 +87,7 @@ const MiniMetric: React.FC<MiniMetricProps> = ({ label, value, icon, color, sub,
           {label}
         </span>
       </div>
-      <h4 className="nunito" style={{ fontSize: '14px', fontWeight: 900, color: 'var(--t)', margin: 0, wordBreak: 'break-word', overflow: 'hidden', textOverflow: 'ellipsis', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', maxWidth: '100%' }}>
+      <h4  style={{ fontSize: '14px', fontWeight: 600, color: 'var(--t)', margin: 0, wordBreak: 'break-word', overflow: 'hidden', textOverflow: 'ellipsis', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', maxWidth: '100%' }}>
         {value}
       </h4>
 
@@ -105,7 +105,7 @@ const MiniMetric: React.FC<MiniMetricProps> = ({ label, value, icon, color, sub,
             padding: '6px 10px',
             borderRadius: '8px',
             fontSize: '10px',
-            fontWeight: 800,
+            fontWeight: 600,
             width: '130px',
             boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
             zIndex: 1000,
@@ -159,7 +159,7 @@ const InsightCarousel = ({ insights }: { insights: string[] }) => {
         position: 'relative'
       }}
     >
-      <span style={{ fontSize: '10px', fontWeight: 800, color: '#0284C7', textTransform: 'uppercase', letterSpacing: '1px', display: 'block', marginBottom: '8px' }}>
+      <span style={{ fontSize: '10px', fontWeight: 600, color: '#0284C7', textTransform: 'uppercase', letterSpacing: '1px', display: 'block', marginBottom: '8px' }}>
         Insights
       </span>
       
@@ -169,7 +169,7 @@ const InsightCarousel = ({ insights }: { insights: string[] }) => {
         ) : <div style={{ width: '20px' }} />}
         
         <div style={{ flex: 1, minHeight: '40px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-           <h2 className="nunito" style={{ fontSize: '16px', fontWeight: 600, color: '#0F172A', margin: 0, lineHeight: 1.4, animation: 'fadeIn 0.4s ease-out' }} key={currentIndex}>
+           <h2  style={{ fontSize: '16px', fontWeight: 600, color: '#0F172A', margin: 0, lineHeight: 1.4, animation: 'fadeIn 0.4s ease-out' }} key={currentIndex}>
              {insights[currentIndex]}
            </h2>
         </div>
@@ -271,7 +271,7 @@ export const Analytics: React.FC<AnalyticsProps> = ({ expenses, groups, me, user
           }}
         >
           <div>
-            <h3 className="nunito" style={{ fontSize: '13px', fontWeight: 900, display: 'flex', alignItems: 'center', gap: '6px', margin: 0, color: 'var(--t)', position: 'relative', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+            <h3  style={{ fontSize: '13px', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '6px', margin: 0, color: 'var(--t)', position: 'relative', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
               Recent Spending
             </h3>
           </div>
@@ -283,7 +283,7 @@ export const Analytics: React.FC<AnalyticsProps> = ({ expenses, groups, me, user
                   fontSize: '9.5px',
                   padding: '4px 8px',
                   animation: 'fadeIn 0.2s ease-out',
-                  fontWeight: 900
+                  fontWeight: 600
                 }}
               >
                 {lastExpenses[hoveredBar].title}: <strong>₹{lastExpenses[hoveredBar].amt}</strong>
@@ -335,7 +335,7 @@ export const Analytics: React.FC<AnalyticsProps> = ({ expenses, groups, me, user
             }}
           >
             {lastExpenses.length === 0 ? (
-              <div style={{ width: '100%', textAlign: 'center', color: 'var(--g)', fontSize: '12px', fontWeight: 800 }}>
+              <div style={{ width: '100%', textAlign: 'center', color: 'var(--g)', fontSize: '12px', fontWeight: 600 }}>
                 No expenses recorded yet.
               </div>
             ) : (
@@ -371,7 +371,7 @@ export const Analytics: React.FC<AnalyticsProps> = ({ expenses, groups, me, user
                     <span
                       style={{
                         fontSize: '9px',
-                        fontWeight: 900,
+                        fontWeight: 600,
                         color: isHovered ? '#4F46E5' : 'var(--g)',
                         marginTop: '6px',
                         textTransform: 'uppercase',
@@ -415,7 +415,7 @@ export const Analytics: React.FC<AnalyticsProps> = ({ expenses, groups, me, user
                 marginBottom: '16px',
               }}
             >
-              <h3 className="nunito" style={{ fontSize: '16px', fontWeight: 900, margin: 0 }}>
+              <h3  style={{ fontSize: '16px', fontWeight: 600, margin: 0 }}>
                 {analyticsDetail.title}
               </h3>
               <button
@@ -442,11 +442,11 @@ export const Analytics: React.FC<AnalyticsProps> = ({ expenses, groups, me, user
                   <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                     <span style={{ fontSize: '16px' }}>{item.icon}</span>
                     <div>
-                      <span style={{ fontWeight: 800, fontSize: '13px', display: 'block' }}>{item.text}</span>
+                      <span style={{ fontWeight: 600, fontSize: '13px', display: 'block' }}>{item.text}</span>
                       {item.sub && <span style={{ fontSize: '9px', color: 'var(--g)', fontWeight: 700 }}>{item.sub}</span>}
                     </div>
                   </div>
-                  {item.val && <span style={{ fontWeight: 900, fontSize: '13px', color: '#1F2937' }}>{item.val}</span>}
+                  {item.val && <span style={{ fontWeight: 600, fontSize: '13px', color: '#1F2937' }}>{item.val}</span>}
                 </div>
               ))}
               {analyticsDetail.items.length === 0 && (
@@ -489,7 +489,7 @@ export const Analytics: React.FC<AnalyticsProps> = ({ expenses, groups, me, user
                   border: 'none',
                   background: isActive ? 'var(--w)' : 'transparent',
                   color: isActive ? 'var(--purple-text)' : '#64748B',
-                  fontWeight: 900,
+                  fontWeight: 600,
                   fontSize: '11px',
                   padding: '8px 12px',
                   borderRadius: '20px',
@@ -620,7 +620,7 @@ export const Analytics: React.FC<AnalyticsProps> = ({ expenses, groups, me, user
               marginBottom: showCategories ? '24px' : '0px',
             }}
           >
-            <h3 className="nunito" style={{ fontSize: '13px', fontWeight: 900, display: 'flex', alignItems: 'center', gap: '6px', margin: 0, color: 'var(--t)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+            <h3  style={{ fontSize: '13px', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '6px', margin: 0, color: 'var(--t)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
               {showByGroup ? 'Groups Leaderboard' : 'Spending by Category'}
             </h3>
             <div
@@ -697,20 +697,20 @@ export const Analytics: React.FC<AnalyticsProps> = ({ expenses, groups, me, user
                   >
                     {hoveredCategory ? (
                       <>
-                        <span style={{ fontSize: '9px', fontWeight: 900, color: 'var(--g)', textTransform: 'uppercase' }}>
+                        <span style={{ fontSize: '9px', fontWeight: 600, color: 'var(--g)', textTransform: 'uppercase' }}>
                           {hoveredCategory}
                         </span>
-                        <span style={{ fontSize: '14px', fontWeight: 950, color: '#1F2937', marginTop: '2px' }}>
+                        <span style={{ fontSize: '14px', fontWeight: 600, color: '#1F2937', marginTop: '2px' }}>
                           ₹{activeSlices.find(s => s.name === hoveredCategory)?.amount?.toLocaleString(undefined, { maximumFractionDigits: 0 }) ?? '0'}
                         </span>
-                        <span style={{ fontSize: '9px', fontWeight: 900, color: activeSlices.find(s => s.name === hoveredCategory)?.color || '#000' }}>
+                        <span style={{ fontSize: '9px', fontWeight: 600, color: activeSlices.find(s => s.name === hoveredCategory)?.color || '#000' }}>
                           {activeSlices.find(s => s.name === hoveredCategory)?.pct?.toFixed(0) ?? '0'}%
                         </span>
                       </>
                     ) : (
                       <>
-                        <span style={{ fontSize: '8px', fontWeight: 900, color: 'var(--g)' }}>TOTAL SPENT</span>
-                        <span style={{ fontSize: '15px', fontWeight: 950, color: '#1F2937', marginTop: '2px' }}>
+                        <span style={{ fontSize: '8px', fontWeight: 600, color: 'var(--g)' }}>TOTAL SPENT</span>
+                        <span style={{ fontSize: '15px', fontWeight: 600, color: '#1F2937', marginTop: '2px' }}>
                           ₹{totalSpentVal.toLocaleString(undefined, { maximumFractionDigits: 0 })}
                         </span>
                       </>
@@ -760,17 +760,17 @@ export const Analytics: React.FC<AnalyticsProps> = ({ expenses, groups, me, user
                           color: idx < 3 ? '#FFF' : '#64748B',
                           width: '18px', height: '18px', borderRadius: '50%',
                           display: 'flex', alignItems: 'center', justifyContent: 'center',
-                          fontSize: '10px', fontWeight: 900
+                          fontSize: '10px', fontWeight: 600
                         }}>
                           {idx + 1}
                         </div>
                       )}
                       <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px', paddingLeft: showByGroup ? '12px' : '0' }}>
-                        <span style={{ fontSize: '13px', fontWeight: 800, color: 'var(--t)' }}>
+                        <span style={{ fontSize: '13px', fontWeight: 600, color: 'var(--t)' }}>
                           <span style={{ marginRight: '6px' }}>{showByGroup ? '🏡' : ('emoji' in item ? item.emoji : '⚡')}</span>
                           {item.name}
                         </span>
-                        <span style={{ fontSize: '13px', fontWeight: 900, color: 'var(--t)' }}>
+                        <span style={{ fontSize: '13px', fontWeight: 600, color: 'var(--t)' }}>
                           ₹{item.amount.toLocaleString(undefined, { maximumFractionDigits: 0 })}
                         </span>
                       </div>
@@ -794,7 +794,7 @@ export const Analytics: React.FC<AnalyticsProps> = ({ expenses, groups, me, user
         </div>
 
         <div className="card shadow-sm" style={{ padding: '32px', border: '1.5px solid rgba(0,0,0,0.02)' }}>
-          <h3 className="nunito" style={{ fontSize: '14px', fontWeight: 900, marginBottom: '32px', display: 'flex', alignItems: 'center', gap: '12px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+          <h3  style={{ fontSize: '14px', fontWeight: 600, marginBottom: '32px', display: 'flex', alignItems: 'center', gap: '12px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
             Group Health List
           </h3>
           <div style={{ display: 'flex', flexDirection: 'column' }}>
@@ -844,12 +844,12 @@ export const Analytics: React.FC<AnalyticsProps> = ({ expenses, groups, me, user
                           justifyContent: 'center',
                         }}
                       >
-                        <div style={{ fontSize: '14px', fontWeight: 800, color: '#0284C7' }}>
+                        <div style={{ fontSize: '14px', fontWeight: 600, color: '#0284C7' }}>
                           {g.name ? g.name.charAt(0).toUpperCase() : 'G'}
                         </div>
                       </div>
                       <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
-                        <span style={{ fontWeight: 800, fontSize: '14px', color: '#0F172A' }}>
+                        <span style={{ fontWeight: 600, fontSize: '14px', color: '#0F172A' }}>
                           {g.name || 'Untitled Group'}
                         </span>
                         <span style={{ fontSize: '11px', color: '#94A3B8', fontWeight: 600 }}>
@@ -873,7 +873,7 @@ export const Analytics: React.FC<AnalyticsProps> = ({ expenses, groups, me, user
         </div>
 
         <div className="card shadow-sm" style={{ padding: '24px', background: 'var(--w)' }}>
-          <h3 className="nunito" style={{ fontSize: '14px', fontWeight: 900, marginBottom: '20px', display: 'flex', alignItems: 'center', gap: '10px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+          <h3  style={{ fontSize: '14px', fontWeight: 600, marginBottom: '20px', display: 'flex', alignItems: 'center', gap: '10px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
             Monthly Spending Budgets
           </h3>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
@@ -898,7 +898,7 @@ export const Analytics: React.FC<AnalyticsProps> = ({ expenses, groups, me, user
                 border: '1px dashed #CBD5E1',
                 borderRadius: '12px',
                 color: '#64748B',
-                fontWeight: 800,
+                fontWeight: 600,
                 fontSize: '13px',
                 cursor: 'pointer',
                 display: 'flex',
@@ -951,10 +951,10 @@ export const Analytics: React.FC<AnalyticsProps> = ({ expenses, groups, me, user
                   <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '16px' }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                       <div style={{ width: '10px', height: '10px', borderRadius: '50%', background: CAT_COLORS[label] || '#64748B' }} />
-                      <span style={{ fontSize: '14px', fontWeight: 800, color: 'var(--t)' }}>{label}</span>
+                      <span style={{ fontSize: '14px', fontWeight: 600, color: 'var(--t)' }}>{label}</span>
                     </div>
                     <div style={{ position: 'relative', width: '120px' }}>
-                      <span style={{ position: 'absolute', left: '10px', top: '50%', transform: 'translateY(-50%)', fontSize: '12px', fontWeight: 800, color: '#94A3B8' }}>
+                      <span style={{ position: 'absolute', left: '10px', top: '50%', transform: 'translateY(-50%)', fontSize: '12px', fontWeight: 600, color: '#94A3B8' }}>
                         {defaultCurrency}
                       </span>
                       <input
@@ -981,7 +981,7 @@ export const Analytics: React.FC<AnalyticsProps> = ({ expenses, groups, me, user
                           borderRadius: '8px',
                           border: '1.5px solid #E2E8F0',
                           fontSize: '13px',
-                          fontWeight: 800,
+                          fontWeight: 600,
                           color: 'var(--t)',
                           background: 'var(--bg)',
                           outline: 'none',
@@ -994,7 +994,7 @@ export const Analytics: React.FC<AnalyticsProps> = ({ expenses, groups, me, user
 
                   {budgetAmt > 0 && (
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', marginTop: '4px', animation: 'fadeSlideIn 0.2s ease-out' }}>
-                      <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '11px', fontWeight: 800 }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '11px', fontWeight: 600 }}>
                         <span style={{ color: isExceeded ? '#EF4444' : 'var(--g)' }}>
                           Spent: <strong>{defaultCurrency}{spentAmt.toFixed(0)}</strong> of {defaultCurrency}{budgetAmt}
                         </span>
@@ -1011,7 +1011,7 @@ export const Analytics: React.FC<AnalyticsProps> = ({ expenses, groups, me, user
                           }}
                         />
                       </div>
-                      <div style={{ fontSize: '9px', fontWeight: 800, color: isExceeded ? '#EF4444' : 'var(--g)' }}>
+                      <div style={{ fontSize: '9px', fontWeight: 600, color: isExceeded ? '#EF4444' : 'var(--g)' }}>
                         {isExceeded ? '⚠️ Over Budget!' : `${defaultCurrency}${(budgetAmt - spentAmt).toFixed(0)} remaining`}
                       </div>
                     </div>

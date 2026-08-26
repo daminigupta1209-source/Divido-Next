@@ -66,7 +66,7 @@ export class ErrorBoundary extends Component<Props, State> {
         }}
       >
         <div style={{ fontSize: '48px', marginBottom: '16px' }}>😵‍💫</div>
-        <h1 style={{ fontSize: '20px', fontWeight: 800, margin: '0 0 8px' }}>
+        <h1 style={{ fontSize: '20px', fontWeight: 600, margin: '0 0 8px' }}>
           New Version Available
         </h1>
         <p style={{ fontSize: '14px', color: '#64748B', margin: '0 0 24px', maxWidth: '320px' }}>
@@ -81,7 +81,7 @@ export class ErrorBoundary extends Component<Props, State> {
             borderRadius: '12px',
             padding: '12px 28px',
             fontSize: '15px',
-            fontWeight: 800,
+            fontWeight: 600,
             cursor: 'pointer',
             boxShadow: '0 4px 12px rgba(16, 185, 129, 0.3)',
           }}

@@ -24,7 +24,7 @@ const galleryFilterBtnStyle: React.CSSProperties = {
   borderRadius: '20px',
   border: '1.5px solid #E2E8F0',
   fontSize: '12px',
-  fontWeight: 800,
+  fontWeight: 600,
   background: 'var(--w, #fff)',
   color: '#475569',
   boxShadow: '0 1px 4px rgba(0,0,0,0.04)',
@@ -297,7 +297,7 @@ export const GroupGallery: React.FC<GroupGalleryProps> = ({
           }}
         >
           <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-            <span style={{ fontSize: '11px', fontWeight: 900, color: '#64748B' }}>From</span>
+            <span style={{ fontSize: '11px', fontWeight: 600, color: '#64748B' }}>From</span>
             <input
               type="date"
               value={customStartDate}
@@ -308,14 +308,14 @@ export const GroupGallery: React.FC<GroupGalleryProps> = ({
                 border: '1.5px solid #E2E8F0',
                 outline: 'none',
                 fontSize: '12px',
-                fontWeight: 900,
+                fontWeight: 600,
                 color: '#1E293B',
                 background: '#FFFFFF',
               }}
             />
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-            <span style={{ fontSize: '11px', fontWeight: 900, color: '#64748B' }}>To</span>
+            <span style={{ fontSize: '11px', fontWeight: 600, color: '#64748B' }}>To</span>
             <input
               type="date"
               value={customEndDate}
@@ -326,7 +326,7 @@ export const GroupGallery: React.FC<GroupGalleryProps> = ({
                 border: '1.5px solid #E2E8F0',
                 outline: 'none',
                 fontSize: '12px',
-                fontWeight: 900,
+                fontWeight: 600,
                 color: '#1E293B',
                 background: '#FFFFFF',
               }}
@@ -343,7 +343,7 @@ export const GroupGallery: React.FC<GroupGalleryProps> = ({
                 border: 'none',
                 color: '#EF4444',
                 fontSize: '11px',
-                fontWeight: 900,
+                fontWeight: 600,
                 cursor: 'pointer',
                 padding: '4px 8px',
               }}
@@ -356,7 +356,7 @@ export const GroupGallery: React.FC<GroupGalleryProps> = ({
 
       {/* Photo count summary */}
       {filteredPhotos.length > 0 && (
-        <p style={{ fontSize: '11px', fontWeight: 800, color: '#94A3B8', textTransform: 'uppercase', letterSpacing: '0.5px', margin: '0 0 14px 2px' }}>
+        <p style={{ fontSize: '11px', fontWeight: 600, color: '#94A3B8', textTransform: 'uppercase', letterSpacing: '0.5px', margin: '0 0 14px 2px' }}>
           {filteredPhotos.length} photo{filteredPhotos.length > 1 ? 's' : ''}
         </p>
       )}
@@ -376,7 +376,7 @@ export const GroupGallery: React.FC<GroupGalleryProps> = ({
                 border: 'none',
                 padding: '10px 24px',
                 borderRadius: '12px',
-                fontWeight: 800,
+                fontWeight: 600,
                 fontSize: '14px',
                 cursor: 'pointer',
                 display: 'inline-flex',
@@ -401,11 +401,11 @@ export const GroupGallery: React.FC<GroupGalleryProps> = ({
               <div key={date || 'undated'}>
                 {/* Date section header */}
                 <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '10px', marginLeft: '2px' }}>
-                  <span style={{ fontSize: '12px', fontWeight: 900, color: '#64748B', whiteSpace: 'nowrap' }}>
+                  <span style={{ fontSize: '12px', fontWeight: 600, color: '#64748B', whiteSpace: 'nowrap' }}>
                     {date ? formatDate(date) : 'Undated'}
                   </span>
                   <span style={{ height: '1px', flex: 1, background: '#F1F5F9' }} />
-                  <span style={{ fontSize: '10px', fontWeight: 800, color: '#B0A79C' }}>{photos.length}</span>
+                  <span style={{ fontSize: '10px', fontWeight: 600, color: '#B0A79C' }}>{photos.length}</span>
                 </div>
 
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(72px, 1fr))', gap: '8px' }}>
@@ -465,7 +465,7 @@ export const GroupGallery: React.FC<GroupGalleryProps> = ({
                           color: '#fff',
                         }}
                       >
-                        <div style={{ fontSize: '10px', fontWeight: 800, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                        <div style={{ fontSize: '10px', fontWeight: 600, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                           {photo.expense.title}
                         </div>
                         <div style={{ fontSize: '9px', fontWeight: 700, opacity: 0.85 }}>
@@ -522,7 +522,7 @@ export const GroupGallery: React.FC<GroupGalleryProps> = ({
             }}
             onClick={(e) => e.stopPropagation()}
           >
-            <h4 style={{ margin: '0 0 4px 0', fontSize: '18px', fontWeight: 800 }}>
+            <h4 style={{ margin: '0 0 4px 0', fontSize: '18px', fontWeight: 600 }}>
               {filteredPhotos[activePhotoIndex].expense.title}
             </h4>
             <p style={{ margin: 0, fontSize: '13px', color: '#64748B', fontWeight: 600 }}>
@@ -569,7 +569,7 @@ export const GroupGallery: React.FC<GroupGalleryProps> = ({
                 padding: '10px 20px',
                 borderRadius: '12px',
                 fontSize: '13.5px',
-                fontWeight: 900,
+                fontWeight: 600,
                 border: 'none',
                 cursor: 'pointer',
                 background: '#10B981',

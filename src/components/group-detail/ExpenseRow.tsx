@@ -419,7 +419,7 @@ export const ExpenseRow: React.FC<ExpenseRowProps> = ({
             alignItems: 'center',
             justifyContent: 'center',
             fontSize: '18px',
-            fontWeight: 900,
+            fontWeight: 600,
             flexShrink: 0,
           }}
         >

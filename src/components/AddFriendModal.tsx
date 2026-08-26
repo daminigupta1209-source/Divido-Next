@@ -249,7 +249,7 @@ export const AddFriendModal: React.FC<AddFriendModalProps> = ({
       >
         {/* Header */}
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <h2 className="nunito" style={{ fontSize: '17px', fontWeight: 900, color: '#0F172A', margin: 0 }}>
+          <h2  style={{ fontSize: '17px', fontWeight: 600, color: '#0F172A', margin: 0 }}>
             {invited ? 'Invite to app? (optional) 🚀' : 'Add Friends 🎉'}
           </h2>
           <button
@@ -318,7 +318,7 @@ export const AddFriendModal: React.FC<AddFriendModalProps> = ({
                   padding: '8px 12px',
                   marginTop: '8px',
                   fontSize: '11px',
-                  fontWeight: 800,
+                  fontWeight: 600,
                   color: '#991B1B',
                   textAlign: 'left',
                   display: 'flex',
@@ -353,7 +353,7 @@ export const AddFriendModal: React.FC<AddFriendModalProps> = ({
               style={{
                 width: '100%', padding: '13px', borderRadius: '14px', border: 'none',
                 background: (pending.length === 0 && name.trim().length === 0) ? '#CBD5E1' : '#6366F1',
-                color: 'white', fontSize: '14px', fontWeight: 800,
+                color: 'white', fontSize: '14px', fontWeight: 600,
                 cursor: (pending.length === 0 && name.trim().length === 0) ? 'not-allowed' : 'pointer',
                 transition: '0.2s all',
               }}
@@ -370,7 +370,7 @@ export const AddFriendModal: React.FC<AddFriendModalProps> = ({
         ) : (
           <>
             <div>
-              <p style={{ margin: '0 0 4px 0', fontSize: '13px', fontWeight: 800, color: '#10B981', textAlign: 'center' }}>
+              <p style={{ margin: '0 0 4px 0', fontSize: '13px', fontWeight: 600, color: '#10B981', textAlign: 'center' }}>
                 {confirmedNames.length === 0
                   ? `🔗 Share ${selectedGroup ? `"${selectedGroup.name}"` : 'group'} link`
                   : customRejoinLink ? `🎉 ${confirmedNames.join(', ')} Invited!` : `🎉 ${confirmedNames.join(', ')} Added!`}
@@ -389,7 +389,7 @@ export const AddFriendModal: React.FC<AddFriendModalProps> = ({
                     background: '#6366F1',
                     color: 'white',
                     fontSize: '14px',
-                    fontWeight: 800,
+                    fontWeight: 600,
                     cursor: 'pointer',
                     display: 'flex',
                     alignItems: 'center',
@@ -426,7 +426,7 @@ export const AddFriendModal: React.FC<AddFriendModalProps> = ({
               onClick={() => setShowAddFriendModal(false)}
               style={{
                 width: '100%', padding: '13px', borderRadius: '14px', border: 'none',
-                background: '#10B981', color: 'white', fontSize: '14px', fontWeight: 800,
+                background: '#10B981', color: 'white', fontSize: '14px', fontWeight: 600,
                 cursor: 'pointer',
               }}
             >

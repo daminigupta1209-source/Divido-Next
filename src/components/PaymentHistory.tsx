@@ -45,10 +45,10 @@ export const PaymentHistory: React.FC<PaymentHistoryProps> = ({
           border: '1px solid rgba(255,255,255,0.8)',
         }}
       >
-        <h1 className="nunito" style={{ fontSize: '32px' }}>
+        <h1  style={{ fontSize: '32px' }}>
           Payment History 📜
         </h1>
-        <p style={{ fontSize: '12px', fontWeight: 800, opacity: 0.7, marginTop: '8px' }}>
+        <p style={{ fontSize: '12px', fontWeight: 600, opacity: 0.7, marginTop: '8px' }}>
           Your complete chronological ledger of cleared dues
         </p>
       </div>
@@ -101,7 +101,7 @@ export const PaymentHistory: React.FC<PaymentHistoryProps> = ({
                   </div>
                   <div>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                      <h3 className="nunito" style={{ fontSize: '18px', color: '#1E293B' }}>
+                      <h3  style={{ fontSize: '18px', color: '#1E293B' }}>
                         {isByMe ? 'You Paid' : `${s.paid} Paid You`}
                       </h3>
                       <span
@@ -118,7 +118,7 @@ export const PaymentHistory: React.FC<PaymentHistoryProps> = ({
                         {g?.name || 'Group'}
                       </span>
                     </div>
-                    <p style={{ fontSize: '11px', fontWeight: 800, color: 'var(--g)', marginTop: '4px' }}>
+                    <p style={{ fontSize: '11px', fontWeight: 600, color: 'var(--g)', marginTop: '4px' }}>
                       {isByMe ? `To: ${s.splitters?.[0]}` : `From: ${s.paid}`} • {s.date}
                       {timeStr ? ` at ${timeStr}` : ''}
                     </p>
@@ -126,7 +126,7 @@ export const PaymentHistory: React.FC<PaymentHistoryProps> = ({
                 </div>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }} onClick={(ev) => ev.stopPropagation()}>
                   <div style={{ textAlign: 'right' }}>
-                    <div style={{ fontSize: '22px', fontWeight: 900, color: '#0F172A' }}>
+                    <div style={{ fontSize: '22px', fontWeight: 600, color: '#0F172A' }}>
                       {s.currency || '₹'}
                       {(parseFloat(s.amt.toString()) || 0).toLocaleString(undefined, {
                         minimumFractionDigits: 0,
@@ -140,7 +140,7 @@ export const PaymentHistory: React.FC<PaymentHistoryProps> = ({
                         background: isByMe ? '#D1FAE5' : '#DBEAFE',
                         color: isByMe ? '#065F46' : '#1E40AF',
                         fontSize: '10px',
-                        fontWeight: 900,
+                        fontWeight: 600,
                       }}
                     >
                       Cleared <span style={{ color: '#16A34A' }}>✔️</span>
@@ -176,7 +176,7 @@ export const PaymentHistory: React.FC<PaymentHistoryProps> = ({
                             }
                             setOpenDropdownId(null);
                           }}
-                          style={{ padding: '10px 12px', fontSize: '12px', fontWeight: 800, cursor: 'pointer', borderRadius: '8px' }}
+                          style={{ padding: '10px 12px', fontSize: '12px', fontWeight: 600, cursor: 'pointer', borderRadius: '8px' }}
                           className="hover-bg"
                         >
                           ✏️ Edit
@@ -191,7 +191,7 @@ export const PaymentHistory: React.FC<PaymentHistoryProps> = ({
                           style={{
                             padding: '10px 12px',
                             fontSize: '12px',
-                            fontWeight: 800,
+                            fontWeight: 600,
                             cursor: 'pointer',
                             color: '#DB2777',
                             borderRadius: '8px',

@@ -343,7 +343,7 @@ export const MobileHeader: React.FC<MobileHeaderProps> = ({
                 alignItems: 'center',
                 justifyContent: 'center',
                 fontSize: '16px',
-                fontWeight: 900,
+                fontWeight: 600,
                 overflow: 'hidden',
                 flexShrink: 0,
                 zIndex: 2,
@@ -393,10 +393,10 @@ export const MobileHeader: React.FC<MobileHeaderProps> = ({
                       }
                     }}
                     placeholder="New Group Name..."
-                    className="nunito"
+                    
                     style={{
                       fontSize: '20px',
-                      fontWeight: 950,
+                      fontWeight: 600,
                       letterSpacing: '-0.5px',
                       border: 'none',
                       background: 'transparent',
@@ -417,10 +417,10 @@ export const MobileHeader: React.FC<MobileHeaderProps> = ({
               ) : (
                 <>
                   <h1
-                    className="nunito"
+                    
                     style={{
                       fontSize: selectedId === 'STANDALONE' ? '18px' : '20px',
-                      fontWeight: 950,
+                      fontWeight: 600,
                       letterSpacing: '-0.5px',
                       cursor: selectedId === 'STANDALONE' ? 'default' : 'pointer',
                       display: 'flex',
@@ -561,7 +561,7 @@ export const MobileHeader: React.FC<MobileHeaderProps> = ({
                             background: '#FF4B4B',
                             color: '#FFFFFF',
                             fontSize: '8px',
-                            fontWeight: 900,
+                            fontWeight: 600,
                             display: 'flex',
                             alignItems: 'center',
                             justifyContent: 'center',
@@ -652,7 +652,7 @@ export const MobileHeader: React.FC<MobileHeaderProps> = ({
                             <polyline points="15 18 9 12 15 6" />
                           </svg>
                         </button>
-                        <h2 className="nunito" style={{ margin: 0, fontSize: '19px', fontWeight: 950, letterSpacing: '-0.3px', color: '#1E293B' }}>
+                        <h2  style={{ margin: 0, fontSize: '19px', fontWeight: 600, letterSpacing: '-0.3px', color: '#1E293B' }}>
                           Updates Log 🔔
                         </h2>
                       </div>
@@ -672,7 +672,7 @@ export const MobileHeader: React.FC<MobileHeaderProps> = ({
                           <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
                             {systemLogs.slice().reverse().map((log, idx) => (
                               <div key={idx} style={{ display: 'flex', flexDirection: 'column', gap: '4px', padding: '12px 14px', borderRadius: '14px', background: '#F8FAFC', border: '1px solid #F1F5F9', textAlign: 'left' }}>
-                                <div style={{ fontSize: '13px', color: '#334155', fontWeight: 800 }}>
+                                <div style={{ fontSize: '13px', color: '#334155', fontWeight: 600 }}>
                                   {getSystemTitle(log.title)}
                                 </div>
                                 <div style={{ fontSize: '11px', color: '#94A3B8', fontWeight: 600 }}>
@@ -825,10 +825,10 @@ export const MobileHeader: React.FC<MobileHeaderProps> = ({
                 }}
               >
                 <h1
-                  className="nunito"
+                  
                   style={{
                     fontSize: '21px',
-                    fontWeight: 800,
+                    fontWeight: 600,
                     letterSpacing: '-0.4px',
                     color: 'var(--t)',
                     margin: 0,
@@ -865,10 +865,10 @@ export const MobileHeader: React.FC<MobileHeaderProps> = ({
                 </h1>
                 {view === 'gallery' && selectedGroup && (
                   <span
-                    className="nunito"
+                    
                     style={{
                       fontSize: '9px',
-                      fontWeight: 900,
+                      fontWeight: 600,
                       color: '#94A3B8',
                       letterSpacing: '1.2px',
                       textTransform: 'uppercase',
@@ -1009,7 +1009,7 @@ export const MobileHeader: React.FC<MobileHeaderProps> = ({
                     <path d="M10 21h4" />
                   </svg>
                   {unreadNotifCount > 0 && (
-                    <span style={{ position: 'absolute', top: '-2px', right: '-2px', minWidth: '16px', height: '16px', padding: '0 4px', borderRadius: '8px', background: '#EF4444', color: '#fff', fontSize: '10px', fontWeight: 800, display: 'flex', alignItems: 'center', justifyContent: 'center', lineHeight: 1, boxSizing: 'border-box' }}>
+                    <span style={{ position: 'absolute', top: '-2px', right: '-2px', minWidth: '16px', height: '16px', padding: '0 4px', borderRadius: '8px', background: '#EF4444', color: '#fff', fontSize: '10px', fontWeight: 600, display: 'flex', alignItems: 'center', justifyContent: 'center', lineHeight: 1, boxSizing: 'border-box' }}>
                       {unreadNotifCount > 9 ? '9+' : unreadNotifCount}
                     </span>
                   )}
@@ -1056,7 +1056,7 @@ export const MobileHeader: React.FC<MobileHeaderProps> = ({
                 <polyline points="15 18 9 12 15 6" />
               </svg>
             </button>
-            <h2 className="nunito" style={{ margin: 0, fontSize: '19px', fontWeight: 950, letterSpacing: '-0.3px', color: '#1E293B', flex: 1 }}>
+            <h2  style={{ margin: 0, fontSize: '19px', fontWeight: 600, letterSpacing: '-0.3px', color: '#1E293B', flex: 1 }}>
               Notifications
             </h2>
             {notifications.length > 0 && (
@@ -1141,7 +1141,7 @@ export const MobileHeader: React.FC<MobileHeaderProps> = ({
           padding: '8px 12px',
           borderRadius: '10px',
           border: '1px solid var(--nav-hover)',
-          fontWeight: 800,
+          fontWeight: 600,
           width: '100%',
           display: 'flex',
           alignItems: 'center',
@@ -1190,7 +1190,7 @@ export const MobileHeader: React.FC<MobileHeaderProps> = ({
             }}
           >
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <h3 style={{ margin: 0, fontSize: '18px', fontWeight: 900, color: '#1E293B', fontFamily: 'Nunito', letterSpacing: '-0.3px' }}>
+              <h3 style={{ margin: 0, fontSize: '18px', fontWeight: 600, color: '#1E293B',  letterSpacing: '-0.3px' }}>
                 Process Attachment
               </h3>
               <button
@@ -1237,7 +1237,7 @@ export const MobileHeader: React.FC<MobileHeaderProps> = ({
 
             {/* Optional Caption/Title input */}
             <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-              <label style={{ fontSize: '11px', fontWeight: 900, color: '#94A3B8', fontFamily: 'Nunito' }}>
+              <label style={{ fontSize: '11px', fontWeight: 600, color: '#94A3B8',  }}>
                 Caption (optional)
               </label>
               <input
@@ -1253,7 +1253,7 @@ export const MobileHeader: React.FC<MobileHeaderProps> = ({
                   fontSize: '13px',
                   fontWeight: 700,
                   outline: 'none',
-                  fontFamily: 'Nunito',
+                  
                   color: '#334155',
                   boxSizing: 'border-box',
                   transition: 'border-color 0.2s',
@@ -1275,7 +1275,7 @@ export const MobileHeader: React.FC<MobileHeaderProps> = ({
                   color: '#FFFFFF',
                   border: 'none',
                   fontSize: '13px',
-                  fontWeight: 900,
+                  fontWeight: 600,
                   cursor: 'pointer',
                   display: 'flex',
                   alignItems: 'center',
@@ -1299,7 +1299,7 @@ export const MobileHeader: React.FC<MobileHeaderProps> = ({
                   color: '#475569',
                   border: '1.5px solid #E2E8F0',
                   fontSize: '13px',
-                  fontWeight: 900,
+                  fontWeight: 600,
                   cursor: 'pointer',
                   display: 'flex',
                   alignItems: 'center',
@@ -1367,7 +1367,7 @@ export const MobileHeader: React.FC<MobileHeaderProps> = ({
             >
               ✕
             </div>
-            <p style={{ fontSize: '11px', fontWeight: 900, color: '#94A3B8', textTransform: 'uppercase', letterSpacing: '1px', textAlign: 'center', margin: '4px 0 14px' }}>
+            <p style={{ fontSize: '11px', fontWeight: 600, color: '#94A3B8', textTransform: 'uppercase', letterSpacing: '1px', textAlign: 'center', margin: '4px 0 14px' }}>
               Add Attachment
             </p>
             
@@ -1391,7 +1391,7 @@ export const MobileHeader: React.FC<MobileHeaderProps> = ({
                 <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z" />
                 <circle cx="12" cy="13" r="4" />
               </svg>
-              <span style={{ fontSize: '14px', fontWeight: 800, color: '#334155' }}>Camera</span>
+              <span style={{ fontSize: '14px', fontWeight: 600, color: '#334155' }}>Camera</span>
             </div>
 
             <div
@@ -1415,7 +1415,7 @@ export const MobileHeader: React.FC<MobileHeaderProps> = ({
                 <polyline points="17 8 12 3 7 8" />
                 <line x1="12" y1="3" x2="12" y2="15" />
               </svg>
-              <span style={{ fontSize: '14px', fontWeight: 800, color: '#334155' }}>Upload photo or file</span>
+              <span style={{ fontSize: '14px', fontWeight: 600, color: '#334155' }}>Upload photo or file</span>
             </div>
           </div>
         </div>,

@@ -54,7 +54,7 @@ export const SidebarProfile: React.FC<SidebarProfileProps> = ({
           alignItems: 'center',
           justifyContent: 'center',
           fontSize: '14px',
-          fontWeight: 900,
+          fontWeight: 600,
           color: '#16A34A',
           border: '1.5px solid #DCFCE7',
           overflow: 'hidden',
@@ -68,7 +68,7 @@ export const SidebarProfile: React.FC<SidebarProfileProps> = ({
         )}
       </div>
       <div style={{ flex: 1 }}>
-        <h4 className="nunito" style={{ fontSize: '13px', color: '#1E293B' }}>
+        <h4  style={{ fontSize: '13px', color: '#1E293B' }}>
           {userName.split(' ')[0]}
         </h4>
       </div>

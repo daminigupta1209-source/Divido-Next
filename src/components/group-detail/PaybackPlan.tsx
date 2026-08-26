@@ -63,7 +63,7 @@ export const PaybackPlan: React.FC<PaybackPlanProps> = ({
         }}
       >
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <h3 className="nunito" style={{ margin: 0, fontSize: '20px', fontWeight: 950, color: 'var(--t)', display: 'flex', alignItems: 'center', gap: '8px' }}>
+          <h3  style={{ margin: 0, fontSize: '20px', fontWeight: 600, color: 'var(--t)', display: 'flex', alignItems: 'center', gap: '8px' }}>
             Payback Plan 🚀
           </h3>
           <button
@@ -89,7 +89,7 @@ export const PaybackPlan: React.FC<PaybackPlanProps> = ({
             borderRadius: '12px',
             fontSize: '11px',
             color: '#065F46',
-            fontWeight: 900,
+            fontWeight: 600,
             display: 'flex',
             alignItems: 'center',
             gap: '8px',
@@ -119,7 +119,7 @@ export const PaybackPlan: React.FC<PaybackPlanProps> = ({
               <h5
                 style={{
                   fontSize: '10px',
-                  fontWeight: 900,
+                  fontWeight: 600,
                   color: 'var(--g)',
                   textTransform: 'uppercase',
                   letterSpacing: '1px',
@@ -189,7 +189,7 @@ export const PaybackPlan: React.FC<PaybackPlanProps> = ({
                 <h5
                   style={{
                     fontSize: '10px',
-                    fontWeight: 900,
+                    fontWeight: 600,
                     color: 'var(--g)',
                     textTransform: 'uppercase',
                     letterSpacing: '1px',
@@ -227,7 +227,7 @@ export const PaybackPlan: React.FC<PaybackPlanProps> = ({
             style={{
               padding: '10px 20px',
               fontSize: '13px',
-              fontWeight: 900,
+              fontWeight: 600,
               borderRadius: '12px',
               cursor: 'pointer'
             }}

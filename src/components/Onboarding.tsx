@@ -60,10 +60,10 @@ export const Onboarding: React.FC<OnboardingProps> = ({
         </div>
 
         <h2
-          className="nunito"
+          
           style={{
             fontSize: '32px',
-            fontWeight: 950,
+            fontWeight: 600,
             color: '#0F172A',
             letterSpacing: '-1.5px',
             marginBottom: '8px',
@@ -87,7 +87,7 @@ export const Onboarding: React.FC<OnboardingProps> = ({
           <label
             style={{
               fontSize: '11px',
-              fontWeight: 900,
+              fontWeight: 600,
               color: 'var(--g)',
               textTransform: 'uppercase',
               letterSpacing: '1.5px',
@@ -109,7 +109,7 @@ export const Onboarding: React.FC<OnboardingProps> = ({
               border: '2px solid #E2E8F0',
               background: 'var(--w)',
               fontSize: '16px',
-              fontWeight: 800,
+              fontWeight: 600,
               outline: 'none',
               transition: 'border-color 0.2s',
               boxSizing: 'border-box',
@@ -136,7 +136,7 @@ export const Onboarding: React.FC<OnboardingProps> = ({
               ? 'linear-gradient(135deg, var(--accent) 0%, var(--purple-text) 100%)'
               : '#E2E8F0',
             color: tempName.trim() ? 'white' : '#94A3B8',
-            fontWeight: 950,
+            fontWeight: 600,
             fontSize: '16px',
             cursor: tempName.trim() ? 'pointer' : 'default',
             boxShadow: tempName.trim() ? '0 10px 15px -3px rgba(219, 39, 119, 0.2)' : 'none',

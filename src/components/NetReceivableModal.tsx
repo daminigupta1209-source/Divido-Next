@@ -163,13 +163,13 @@ export const NetReceivableModal: React.FC<NetReceivableModalProps> = ({
           ✕
         </div>
         
-        <h3 className="nunito" style={{ fontSize: '17px', fontWeight: 950, marginBottom: '14px', textAlign: 'center' }}>
+        <h3  style={{ fontSize: '17px', fontWeight: 600, marginBottom: '14px', textAlign: 'center' }}>
           Send Reminder to {popupData.friendName}
         </h3>
         {remPopupEditing ? (
           /* Link UPI first (needed for pay link + QR) */
           <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', marginBottom: '18px', background: 'var(--bg)', padding: '16px', borderRadius: '16px', border: '2px dashed var(--b)' }}>
-            <span style={{ fontSize: '12px', fontWeight: 900, color: 'var(--t)' }}>
+            <span style={{ fontSize: '12px', fontWeight: 600, color: 'var(--t)' }}>
               Link your UPI ID to receive payments
             </span>
             <input
@@ -180,7 +180,7 @@ export const NetReceivableModal: React.FC<NetReceivableModalProps> = ({
               value={remPopupUpi}
               onChange={(e) => setRemPopupUpi(e.target.value)}
               autoComplete="on"
-              style={{ padding: '10px 12px', fontSize: '13px', fontWeight: 800, borderRadius: '10px', border: '1.5px solid #CBD5E1', background: 'white', textAlign: 'center', outline: 'none' }}
+              style={{ padding: '10px 12px', fontSize: '13px', fontWeight: 600, borderRadius: '10px', border: '1.5px solid #CBD5E1', background: 'white', textAlign: 'center', outline: 'none' }}
             />
             <button
               className="btn-green"
@@ -226,7 +226,7 @@ export const NetReceivableModal: React.FC<NetReceivableModalProps> = ({
              {remPopupUpi ? (
               <button
                 onClick={() => setShowQr((s) => !s)}
-                style={{ background: 'none', border: 'none', color: 'var(--g)', fontSize: '11px', fontWeight: 900, cursor: 'pointer', marginBottom: showQr ? '10px' : '14px', textDecoration: 'underline' }}
+                style={{ background: 'none', border: 'none', color: 'var(--g)', fontSize: '11px', fontWeight: 600, cursor: 'pointer', marginBottom: showQr ? '10px' : '14px', textDecoration: 'underline' }}
               >
                 {showQr ? 'Hide QR code' : 'Show QR code'}
               </button>
@@ -254,10 +254,10 @@ export const NetReceivableModal: React.FC<NetReceivableModalProps> = ({
               <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', marginBottom: '16px' }}>
                 <div style={{ background: '#F8FAFC', padding: '14px 16px', borderRadius: '16px', border: '1px solid #EEF2F6', display: 'inline-flex', flexDirection: 'column', alignItems: 'center', gap: '8px' }}>
                   <canvas ref={reminderCanvasRef} style={{ borderRadius: '10px', background: 'white' }} />
-                  <div style={{ fontSize: '12px', fontWeight: 900, color: 'var(--t)' }}>
+                  <div style={{ fontSize: '12px', fontWeight: 600, color: 'var(--t)' }}>
                     Scan to pay ₹{upiAmt}{!debtIsINR ? ` (${popupData.curr}${popupData.amt.toFixed(2)})` : ''}
                   </div>
-                  <div style={{ fontSize: '10.5px', fontWeight: 800, color: 'var(--g)', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                  <div style={{ fontSize: '10.5px', fontWeight: 600, color: 'var(--g)', display: 'flex', alignItems: 'center', gap: '4px' }}>
                     <span>{remPopupUpi}</span>
                     <span onClick={() => setRemPopupEditing(true)} style={{ cursor: 'pointer', fontSize: '11px' }} title="Edit UPI ID">✏️</span>
                   </div>
@@ -275,7 +275,7 @@ export const NetReceivableModal: React.FC<NetReceivableModalProps> = ({
               onFinalSettle();
               onClose();
             }}
-            style={{ padding: '12px', fontSize: '13px', borderRadius: '14px', width: '100%', fontWeight: 950 }}
+            style={{ padding: '12px', fontSize: '13px', borderRadius: '14px', width: '100%', fontWeight: 600 }}
           >
             Mark as Settled & Record
           </button>

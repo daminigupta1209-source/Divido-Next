@@ -23,7 +23,7 @@ export const SidebarNav: React.FC<SidebarNavProps> = ({
       <p
         style={{
           fontSize: '10px',
-          fontWeight: 950,
+          fontWeight: 600,
           color: '#94A3B8',
           textTransform: 'uppercase',
           letterSpacing: '1.5px',
@@ -59,7 +59,7 @@ export const SidebarNav: React.FC<SidebarNavProps> = ({
                 color: isActive ? 'white' : '#64748B',
                 border: isActive ? 'none' : '1.5px solid transparent',
                 boxShadow: isActive ? `0 10px 15px -3px ${it.c[0]}66` : 'none',
-                fontWeight: 900,
+                fontWeight: 600,
                 borderRadius: '14px',
                 transition: '0.3s all',
                 padding: '0 16px',

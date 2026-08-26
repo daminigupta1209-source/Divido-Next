@@ -233,7 +233,7 @@ export const GroupMemberList: React.FC<GroupMemberListProps> = ({
                 <polyline points="15 18 9 12 15 6" />
               </svg>
             </button>
-            <h1 style={{ fontSize: '20px', fontWeight: 950, color: 'var(--t)', margin: 0, fontFamily: 'Nunito' }}>
+            <h1 style={{ fontSize: '20px', fontWeight: 600, color: 'var(--t)', margin: 0,  }}>
               Group Members
             </h1>
           </div>
@@ -288,7 +288,7 @@ export const GroupMemberList: React.FC<GroupMemberListProps> = ({
             gap: '14px',
           }}
         >
-          <h4 style={{ margin: 0, fontSize: '12px', fontWeight: 800, color: '#475569', textTransform: 'uppercase', letterSpacing: '0.5px', textAlign: 'left' }}>
+          <h4 style={{ margin: 0, fontSize: '12px', fontWeight: 600, color: '#475569', textTransform: 'uppercase', letterSpacing: '0.5px', textAlign: 'left' }}>
             Joined Members ({joinedMembersList.length})
           </h4>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
@@ -349,7 +349,7 @@ export const GroupMemberList: React.FC<GroupMemberListProps> = ({
                         setInlineRenameVal(m);
                       }}
                     >
-                      {checkIsMe(m) ? 'You' : m.replace(/\s*\(me\)$/i, '')} {checkIsAdmin(m) && <span style={{ fontSize: '10px', fontWeight: 800, color: '#7C3AED', background: '#F5F3FF', padding: '1px 6px', borderRadius: '4px', marginLeft: '6px' }}>Admin</span>}
+                      {checkIsMe(m) ? 'You' : m.replace(/\s*\(me\)$/i, '')} {checkIsAdmin(m) && <span style={{ fontSize: '10px', fontWeight: 600, color: '#7C3AED', background: '#F5F3FF', padding: '1px 6px', borderRadius: '4px', marginLeft: '6px' }}>Admin</span>}
                     </span>
                   )}
                   
@@ -414,7 +414,7 @@ export const GroupMemberList: React.FC<GroupMemberListProps> = ({
           }}
         >
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-            <h4 style={{ margin: 0, fontSize: '12px', fontWeight: 800, color: '#475569', textTransform: 'uppercase', letterSpacing: '0.5px', textAlign: 'left' }}>
+            <h4 style={{ margin: 0, fontSize: '12px', fontWeight: 600, color: '#475569', textTransform: 'uppercase', letterSpacing: '0.5px', textAlign: 'left' }}>
               Pending Invites ({pendingMembersList.length})
             </h4>
             {pendingMembersList.length > 0 && (
@@ -427,7 +427,7 @@ export const GroupMemberList: React.FC<GroupMemberListProps> = ({
                   padding: '4px 10px',
                   color: '#EA580C',
                   fontSize: '10px',
-                  fontWeight: 900,
+                  fontWeight: 600,
                   cursor: 'pointer',
                   transition: '0.15s all ease',
                 }}
@@ -493,7 +493,7 @@ export const GroupMemberList: React.FC<GroupMemberListProps> = ({
                           setInlineRenameVal(m);
                         }}
                       >
-                        {checkIsMe(m) ? 'You' : m.replace(/\s*\(me\)$/i, '')} {checkIsAdmin(m) && <span style={{ fontSize: '10px', fontWeight: 800, color: '#7C3AED', background: '#F5F3FF', padding: '1px 6px', borderRadius: '4px', marginLeft: '6px' }}>Admin</span>}
+                        {checkIsMe(m) ? 'You' : m.replace(/\s*\(me\)$/i, '')} {checkIsAdmin(m) && <span style={{ fontSize: '10px', fontWeight: 600, color: '#7C3AED', background: '#F5F3FF', padding: '1px 6px', borderRadius: '4px', marginLeft: '6px' }}>Admin</span>}
                       </span>
                     )}
                   </div>
@@ -714,7 +714,7 @@ export const GroupMemberList: React.FC<GroupMemberListProps> = ({
               gap: '14px',
             }}
           >
-            <h4 style={{ margin: 0, fontSize: '12px', fontWeight: 800, color: '#475569', textTransform: 'uppercase', letterSpacing: '0.5px', textAlign: 'left' }}>
+            <h4 style={{ margin: 0, fontSize: '12px', fontWeight: 600, color: '#475569', textTransform: 'uppercase', letterSpacing: '0.5px', textAlign: 'left' }}>
               Past Members ({leftMembersList.length})
             </h4>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
@@ -735,7 +735,7 @@ export const GroupMemberList: React.FC<GroupMemberListProps> = ({
                     }}
                   >
                     <span style={{ fontWeight: 'bold', fontSize: '12px', color: '#64748B', textDecoration: 'line-through' }}>
-                      {checkIsMe(cleanName) ? 'You' : cleanName} {checkIsAdmin(cleanName) && <span style={{ fontSize: '10px', fontWeight: 800, color: '#7C3AED', background: '#F5F3FF', padding: '1px 6px', borderRadius: '4px', marginLeft: '6px' }}>Admin</span>}
+                      {checkIsMe(cleanName) ? 'You' : cleanName} {checkIsAdmin(cleanName) && <span style={{ fontSize: '10px', fontWeight: 600, color: '#7C3AED', background: '#F5F3FF', padding: '1px 6px', borderRadius: '4px', marginLeft: '6px' }}>Admin</span>}
                     </span>
                     
                     {isAdmin && (
@@ -761,7 +761,7 @@ export const GroupMemberList: React.FC<GroupMemberListProps> = ({
                                 padding: '5px 10px',
                                 color: '#B45309',
                                 fontSize: '11px',
-                                fontWeight: 800,
+                                fontWeight: 600,
                                 cursor: 'pointer',
                               }}
                             >
@@ -787,7 +787,7 @@ export const GroupMemberList: React.FC<GroupMemberListProps> = ({
                             padding: '5px 10px',
                             color: '#4F46E6',
                             fontSize: '11px',
-                            fontWeight: 800,
+                            fontWeight: 600,
                             cursor: 'pointer',
                             transition: '0.15s all ease',
                           }}
@@ -849,7 +849,7 @@ export const GroupMemberList: React.FC<GroupMemberListProps> = ({
               width: '100%',
               padding: '12px',
               fontSize: '14px',
-              fontWeight: 800,
+              fontWeight: 600,
               borderRadius: '14px',
               cursor: 'pointer',
               border: 'none',

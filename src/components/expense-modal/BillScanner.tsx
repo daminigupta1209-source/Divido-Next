@@ -667,7 +667,7 @@ If a valid receipt: {"title": "Sunrise Foods", "amount": 5445.30, "notes": "Groc
       >
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', margin: '6px 0 10px' }}>
           <div style={{ flex: 1 }} />
-          <span style={{ fontSize: '11px', fontWeight: 900, color: 'var(--g)', textTransform: 'uppercase', letterSpacing: '1px', textAlign: 'center' }}>
+          <span style={{ fontSize: '11px', fontWeight: 600, color: 'var(--g)', textTransform: 'uppercase', letterSpacing: '1px', textAlign: 'center' }}>
             Smart Scanner
           </span>
           <div style={{ flex: 1, display: 'flex', justifyContent: 'flex-end' }}>
@@ -706,7 +706,7 @@ If a valid receipt: {"title": "Sunrise Foods", "amount": 5445.30, "notes": "Groc
               ) : (
                 <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px', color: '#94A3B8' }}>
                   <span style={{ fontSize: '48px' }}>📄</span>
-                  <span style={{ fontSize: '11px', fontWeight: 800 }}>{scanFile.name}</span>
+                  <span style={{ fontSize: '11px', fontWeight: 600 }}>{scanFile.name}</span>
                 </div>
               )}
               {scanProgress < 100 && (
@@ -717,7 +717,7 @@ If a valid receipt: {"title": "Sunrise Foods", "amount": 5445.30, "notes": "Groc
             </div>
 
             <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '12px', fontWeight: 900 }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '12px', fontWeight: 600 }}>
                 <span style={{ color: '#1E293B', textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap', maxWidth: '240px' }}>
                   📄 {scanFile.name}
                 </span>
@@ -757,7 +757,7 @@ If a valid receipt: {"title": "Sunrise Foods", "amount": 5445.30, "notes": "Groc
                   background: 'rgba(16, 185, 129, 0.95)',
                   color: '#fff',
                   fontSize: '8px',
-                  fontWeight: 900,
+                  fontWeight: 600,
                   padding: '3px 6px',
                   borderRadius: '4px',
                   textTransform: 'uppercase',
@@ -806,7 +806,7 @@ If a valid receipt: {"title": "Sunrise Foods", "amount": 5445.30, "notes": "Groc
                 onClick={() => document.getElementById('receipt-file-input')?.click()}
                 style={{
                   fontSize: '11.5px',
-                  fontWeight: 900,
+                  fontWeight: 600,
                   color: '#4F46E5',
                   cursor: 'pointer',
                   background: '#EEF2FF',
@@ -844,7 +844,7 @@ If a valid receipt: {"title": "Sunrise Foods", "amount": 5445.30, "notes": "Groc
                   <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z" />
                   <circle cx="12" cy="13" r="4" />
                 </svg>
-                <span style={{ fontSize: '15px', fontWeight: 800, color: '#1E293B' }}>Camera</span>
+                <span style={{ fontSize: '15px', fontWeight: 600, color: '#1E293B' }}>Camera</span>
               </div>
 
               {/* Upload Bill Option */}
@@ -866,7 +866,7 @@ If a valid receipt: {"title": "Sunrise Foods", "amount": 5445.30, "notes": "Groc
                   <polyline points="17 8 12 3 7 8" />
                   <line x1="12" y1="3" x2="12" y2="15" />
                 </svg>
-                <span style={{ fontSize: '15px', fontWeight: 800, color: '#1E293B' }}>Upload Bill</span>
+                <span style={{ fontSize: '15px', fontWeight: 600, color: '#1E293B' }}>Upload Bill</span>
               </div>
             </div>
 
@@ -881,7 +881,7 @@ If a valid receipt: {"title": "Sunrise Foods", "amount": 5445.30, "notes": "Groc
                   borderRadius: '12px',
                   fontSize: '11px',
                   color: '#991B1B',
-                  fontWeight: 800,
+                  fontWeight: 600,
                   textAlign: 'center',
                   lineHeight: '1.4',
                 }}
@@ -911,7 +911,7 @@ If a valid receipt: {"title": "Sunrise Foods", "amount": 5445.30, "notes": "Groc
                 border: 'none',
                 borderRadius: '10px',
                 fontSize: '12px',
-                fontWeight: 900,
+                fontWeight: 600,
                 cursor: 'pointer',
               }}
               className="hover-up"

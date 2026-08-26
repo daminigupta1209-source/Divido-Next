@@ -192,7 +192,7 @@ export const PostExpenseShareSheet: React.FC<PostExpenseShareSheetProps> = ({
                 <div
                   style={{
                     fontSize: '15px',
-                    fontWeight: 900,
+                    fontWeight: 600,
                     color: '#FCD34D', // Bright amber highlight
                     letterSpacing: '-0.2px',
                     display: 'flex',
@@ -249,13 +249,13 @@ export const PostExpenseShareSheet: React.FC<PostExpenseShareSheetProps> = ({
               >
                 <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
                   <span style={{ fontSize: '14px' }}>👤</span>
-                  <span style={{ fontWeight: 800, color: '#F8FAFC' }}>
+                  <span style={{ fontWeight: 600, color: '#F8FAFC' }}>
                     {item.name}
                   </span>
                   <span
                     style={{
                       fontSize: '10px',
-                      fontWeight: 800,
+                      fontWeight: 600,
                       background: 'rgba(245, 158, 11, 0.25)',
                       color: '#FCD34D',
                       padding: '2px 7px',
@@ -266,7 +266,7 @@ export const PostExpenseShareSheet: React.FC<PostExpenseShareSheetProps> = ({
                     Guest
                   </span>
                 </div>
-                <span style={{ fontWeight: 900, color: '#10B981', fontSize: '14px' }}>
+                <span style={{ fontWeight: 600, color: '#10B981', fontSize: '14px' }}>
                   {currencySymbol}{item.shareAmount.toFixed(2)}
                 </span>
               </div>
@@ -286,7 +286,7 @@ export const PostExpenseShareSheet: React.FC<PostExpenseShareSheetProps> = ({
                   background: '#25D366',
                   color: '#FFFFFF',
                   fontSize: '13.5px',
-                  fontWeight: 900,
+                  fontWeight: 600,
                   cursor: 'pointer',
                   display: 'flex',
                   alignItems: 'center',
@@ -312,7 +312,7 @@ export const PostExpenseShareSheet: React.FC<PostExpenseShareSheetProps> = ({
                     background: '#6366F1',
                     color: '#FFFFFF',
                     fontSize: '13px',
-                    fontWeight: 800,
+                    fontWeight: 600,
                     cursor: 'pointer',
                     display: 'flex',
                     alignItems: 'center',
@@ -331,7 +331,7 @@ export const PostExpenseShareSheet: React.FC<PostExpenseShareSheetProps> = ({
                     background: 'rgba(255, 255, 255, 0.12)',
                     color: '#E2E8F0',
                     fontSize: '13px',
-                    fontWeight: 800,
+                    fontWeight: 600,
                     cursor: 'pointer',
                   }}
                 >

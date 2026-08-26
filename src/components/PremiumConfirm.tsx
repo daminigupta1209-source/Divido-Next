@@ -98,8 +98,8 @@ export const PremiumConfirm: React.FC<PremiumConfirmProps> = ({
           {type === 'danger' ? '⚠️' : type === 'logout' ? '🚪' : '✨'}
         </div>
         <h3
-          className="nunito"
-          style={{ fontSize: '18px', fontWeight: 900, marginBottom: '6px', color: '#1E293B' }}
+          
+          style={{ fontSize: '18px', fontWeight: 600, marginBottom: '6px', color: '#1E293B' }}
         >
           {title}
         </h3>
@@ -125,7 +125,7 @@ export const PremiumConfirm: React.FC<PremiumConfirmProps> = ({
               border: 'none',
               borderRadius: '12px',
               padding: '11px',
-              fontWeight: 900,
+              fontWeight: 600,
               fontSize: '13px',
               cursor: 'pointer',
             }}
@@ -140,7 +140,7 @@ export const PremiumConfirm: React.FC<PremiumConfirmProps> = ({
               padding: '11px',
               borderRadius: '12px',
               fontSize: '13px',
-              fontWeight: 900
+              fontWeight: 600
             }}
             onClick={onConfirm}
           >

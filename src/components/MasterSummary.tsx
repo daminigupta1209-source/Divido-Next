@@ -359,13 +359,13 @@ export const MasterSummary: React.FC<MasterSummaryProps> = ({
               flexShrink: 0,
             }}
           >
-            <span style={{ color: '#FFFFFF', fontStyle: 'italic', fontWeight: 900, fontSize: '10px', letterSpacing: '-0.3px' }}>UPI</span>
+            <span style={{ color: '#FFFFFF', fontStyle: 'italic', fontWeight: 600, fontSize: '10px', letterSpacing: '-0.3px' }}>UPI</span>
           </div>
 
           <span
             style={{
               fontSize: '12.5px',
-              fontWeight: 800,
+              fontWeight: 600,
               flex: 1,
               whiteSpace: 'nowrap',
               overflow: 'hidden',
@@ -382,7 +382,7 @@ export const MasterSummary: React.FC<MasterSummaryProps> = ({
             style={{
               color: '#EA580C',
               fontSize: '18px',
-              fontWeight: 800,
+              fontWeight: 600,
               cursor: 'pointer',
               lineHeight: 1,
               display: 'flex',
@@ -404,7 +404,7 @@ export const MasterSummary: React.FC<MasterSummaryProps> = ({
             style={{
               color: '#94A3B8',
               fontSize: '18px',
-              fontWeight: 800,
+              fontWeight: 600,
               cursor: 'pointer',
               lineHeight: 1,
               padding: '2px 4px',
@@ -444,17 +444,17 @@ export const MasterSummary: React.FC<MasterSummaryProps> = ({
               position: 'absolute', top: '10px', right: '12px',
               background: 'none', border: 'none', cursor: 'pointer',
               fontSize: '16px', color: '#FCA5A5', lineHeight: 1, padding: '2px',
-              fontWeight: 900,
+              fontWeight: 600,
             }}
             title="Dismiss"
           >×</button>
           <div style={{ display: 'flex', alignItems: 'center', gap: '16px', flex: 1 }}>
             <span style={{ fontSize: '28px' }}>⚠️</span>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
-              <h4 className="nunito" style={{ fontSize: '15px', color: '#B91C1C', margin: 0, fontWeight: 900 }}>
+              <h4  style={{ fontSize: '15px', color: '#B91C1C', margin: 0, fontWeight: 600 }}>
                 Monthly Budget Exceeded!
               </h4>
-              <p style={{ fontSize: '12px', fontWeight: 800, color: '#DC2626', margin: 0, opacity: 0.8 }}>
+              <p style={{ fontSize: '12px', fontWeight: 600, color: '#DC2626', margin: 0, opacity: 0.8 }}>
                 You have exceeded your limit in: {exceededBudgets.map(b => `${b.emoji} (${b.spent.toFixed(0)} / ${b.limit})`).join(', ')}
               </p>
             </div>
@@ -468,7 +468,7 @@ export const MasterSummary: React.FC<MasterSummaryProps> = ({
               border: 'none',
               borderRadius: '10px',
               fontSize: '12px',
-              fontWeight: 900,
+              fontWeight: 600,
               cursor: 'pointer',
               boxShadow: '0 4px 6px rgba(239, 68, 68, 0.15)'
             }}
@@ -548,7 +548,7 @@ export const MasterSummary: React.FC<MasterSummaryProps> = ({
                 </>
               )}
               {hasActiveBalancesForCard && (
-                <span style={{ position: 'absolute', right: '14px', top: '50%', transform: 'translateY(-50%)', color: '#FFFFFF', fontSize: '18px', fontWeight: 900, lineHeight: 1, pointerEvents: 'none', opacity: 0.9 }}>›</span>
+                <span style={{ position: 'absolute', right: '14px', top: '50%', transform: 'translateY(-50%)', color: '#FFFFFF', fontSize: '18px', fontWeight: 600, lineHeight: 1, pointerEvents: 'none', opacity: 0.9 }}>›</span>
               )}
             </div>
           </div>
@@ -747,7 +747,7 @@ export const MasterSummary: React.FC<MasterSummaryProps> = ({
                 alignItems: 'center',
                 justifyContent: 'center',
                 fontSize: '14px',
-                fontWeight: 950,
+                fontWeight: 600,
                 flexShrink: 0,
               }}
             >
@@ -755,11 +755,11 @@ export const MasterSummary: React.FC<MasterSummaryProps> = ({
             </div>
             <div style={{ minWidth: 0 }}>
               <h3
-                className="nunito"
+                
                 style={{
                   fontSize: '15px',
                   color: '#2E2A25',
-                  fontWeight: 800,
+                  fontWeight: 600,
                   margin: 0,
                   lineHeight: 1.2,
                   textOverflow: 'ellipsis',
@@ -798,7 +798,7 @@ export const MasterSummary: React.FC<MasterSummaryProps> = ({
                 );
               })()
             )}
-            <span style={{ fontSize: '18px', color: '#CFC6BB', fontWeight: 900, lineHeight: 1, userSelect: 'none', flexShrink: 0 }}>›</span>
+            <span style={{ fontSize: '18px', color: '#CFC6BB', fontWeight: 600, lineHeight: 1, userSelect: 'none', flexShrink: 0 }}>›</span>
           </div>
         </div>
 
@@ -879,7 +879,7 @@ export const MasterSummary: React.FC<MasterSummaryProps> = ({
             textAlign: 'right',
           };
           // Count chip for extra currencies on white cards (text colour inherited).
-          const cardChip: React.CSSProperties = { background: '#F1EFE8', borderRadius: '999px', padding: '0 6px', fontSize: '10px', fontWeight: 800, lineHeight: '16px' };
+          const cardChip: React.CSSProperties = { background: '#F1EFE8', borderRadius: '999px', padding: '0 6px', fontSize: '10px', fontWeight: 600, lineHeight: '16px' };
 
           return (
             <div
@@ -915,7 +915,7 @@ export const MasterSummary: React.FC<MasterSummaryProps> = ({
                   alignItems: 'center',
                   justifyContent: 'center',
                   fontSize: '18px',
-                  fontWeight: 900,
+                  fontWeight: 600,
                   flexShrink: 0,
                   overflow: 'hidden',
                 }}
@@ -930,11 +930,11 @@ export const MasterSummary: React.FC<MasterSummaryProps> = ({
               {/* Name + subtitle */}
               <div style={{ minWidth: 0, flex: 1 }}>
                 <h3
-                  className="nunito"
+                  
                   style={{
                     fontSize: '17px',
                     color: '#2E2A25',
-                    fontWeight: 800,
+                    fontWeight: 600,
                     margin: 0,
                     lineHeight: 1.2,
                     opacity: g.name ? 1 : 0.5,
@@ -977,7 +977,7 @@ export const MasterSummary: React.FC<MasterSummaryProps> = ({
                 )}
               </div>
 
-              <span style={{ fontSize: '18px', color: '#C9BEB2', fontWeight: 900, lineHeight: 1, flexShrink: 0 }}>›</span>
+              <span style={{ fontSize: '18px', color: '#C9BEB2', fontWeight: 600, lineHeight: 1, flexShrink: 0 }}>›</span>
             </div>
           );
         })}

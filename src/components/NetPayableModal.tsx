@@ -172,7 +172,7 @@ export const NetPayableModal: React.FC<NetPayableModalProps> = ({
             <>
               {payPopupEditing ? (
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', background: 'var(--bg)', padding: '12px', borderRadius: '16px' }}>
-                  <label style={{ fontSize: '11px', fontWeight: 900, color: 'var(--g)', textTransform: 'uppercase' }}>
+                  <label style={{ fontSize: '11px', fontWeight: 600, color: 'var(--g)', textTransform: 'uppercase' }}>
                     Link {popupData.friendName}'s UPI ID
                   </label>
                   <style>{`
@@ -210,7 +210,7 @@ export const NetPayableModal: React.FC<NetPayableModalProps> = ({
                   />
                 </div>
               ) : (
-                <div style={{ fontSize: '12px', fontWeight: 800, color: 'var(--g)', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px' }}>
+                <div style={{ fontSize: '12px', fontWeight: 600, color: 'var(--g)', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px' }}>
                   <span>Paying to: <strong style={{ color: 'var(--t)' }}>{payPopupUpi}</strong></span>
                   <span onClick={() => setPayPopupEditing(true)} style={{ cursor: 'pointer', fontSize: '12px' }} title="Edit UPI ID">✏️</span>
                 </div>
@@ -255,7 +255,7 @@ export const NetPayableModal: React.FC<NetPayableModalProps> = ({
                   // must NOT auto-settle. Ask the user to confirm after they return.
                   setAwaitingConfirm(true);
                 }}
-                style={{ padding: '12px', fontSize: '13px', borderRadius: '14px', width: '100%', fontWeight: 950, opacity: canPayViaUpi ? 1 : 0.5, cursor: canPayViaUpi ? 'pointer' : 'not-allowed' }}
+                style={{ padding: '12px', fontSize: '13px', borderRadius: '14px', width: '100%', fontWeight: 600, opacity: canPayViaUpi ? 1 : 0.5, cursor: canPayViaUpi ? 'pointer' : 'not-allowed' }}
               >
                 {debtIsINR ? 'Proceed to Pay ⚡' : `Pay ${inrDisplay || '…'} via UPI ⚡`}
               </button>
@@ -268,7 +268,7 @@ export const NetPayableModal: React.FC<NetPayableModalProps> = ({
                   onFinalSettle();
                   onClose();
                 }}
-                style={{ padding: '12px', background: '#0D9488', color: '#fff', border: 'none', borderRadius: '14px', fontSize: '12px', fontWeight: 900, cursor: 'pointer' }}
+                style={{ padding: '12px', background: '#0D9488', color: '#fff', border: 'none', borderRadius: '14px', fontSize: '12px', fontWeight: 600, cursor: 'pointer' }}
                 className="hover-up"
               >
                 I've paid — mark as settled ✔
@@ -292,7 +292,7 @@ export const NetPayableModal: React.FC<NetPayableModalProps> = ({
                 color: 'var(--t)',
                 borderRadius: '14px',
                 fontSize: '12px',
-                fontWeight: 900,
+                fontWeight: 600,
                 cursor: 'pointer',
               }}
               className="hover-up"

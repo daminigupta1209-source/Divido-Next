@@ -51,7 +51,7 @@ export const BalanceDisplay: React.FC<BalanceDisplayProps> = ({
             <span
               style={{
                 fontSize: '12px',
-                fontWeight: 900,
+                fontWeight: 600,
                 textTransform: 'uppercase',
                 letterSpacing: '2px',
                 color: val > 0.01 ? '#16A34A' : val < -0.01 ? '#DC2626' : 'var(--g)',

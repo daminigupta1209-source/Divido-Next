@@ -42,7 +42,7 @@ export const CurrencySetupModal: React.FC<CurrencySetupModalProps> = ({
           boxSizing: 'border-box',
         }}
       >
-        <h2 className="nunito" style={{ fontSize: '19px', fontWeight: 900, color: 'var(--t)', margin: '0 0 6px' }}>
+        <h2  style={{ fontSize: '19px', fontWeight: 600, color: 'var(--t)', margin: '0 0 6px' }}>
           Which currency do you use?
         </h2>
         <p style={{ fontSize: '12.5px', fontWeight: 600, color: 'var(--g)', margin: '0 0 18px', lineHeight: 1.5 }}>
@@ -65,17 +65,17 @@ export const CurrencySetupModal: React.FC<CurrencySetupModalProps> = ({
           }}
         >
           <span style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-            <span style={{ fontSize: '18px', fontWeight: 900, color: 'var(--t)', minWidth: '34px', textAlign: 'left' }}>{selected}</span>
+            <span style={{ fontSize: '18px', fontWeight: 600, color: 'var(--t)', minWidth: '34px', textAlign: 'left' }}>{selected}</span>
             <span style={{ fontSize: '13px', fontWeight: 700, color: 'var(--g)' }}>{info?.n || 'Selected currency'}</span>
           </span>
-          <span style={{ fontSize: '11px', fontWeight: 800, color: '#8B5CF6' }}>Change</span>
+          <span style={{ fontSize: '11px', fontWeight: 600, color: '#8B5CF6' }}>Change</span>
         </button>
 
         <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
           <button
             className="btn-green hover-up"
             onClick={() => onConfirm(selected)}
-            style={{ padding: '13px', fontSize: '14px', borderRadius: '14px', width: '100%', fontWeight: 950, border: 'none' }}
+            style={{ padding: '13px', fontSize: '14px', borderRadius: '14px', width: '100%', fontWeight: 600, border: 'none' }}
           >
             Confirm
           </button>
@@ -87,7 +87,7 @@ export const CurrencySetupModal: React.FC<CurrencySetupModalProps> = ({
               border: 'none',
               color: 'var(--g)',
               fontSize: '12px',
-              fontWeight: 800,
+              fontWeight: 600,
               cursor: 'pointer',
               opacity: 0.7,
             }}
