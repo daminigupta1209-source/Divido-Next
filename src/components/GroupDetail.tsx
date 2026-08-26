@@ -991,6 +991,7 @@ export const GroupDetail: React.FC<GroupDetailProps> = ({
                                 shares: { [me]: 50, [m]: 50 },
                                 timestamp: Date.now()
                               });
+                              setShowExpModal(true);
                             }}
                             title={`Add expense with ${m}`}
                             style={{
@@ -1385,6 +1386,7 @@ export const GroupDetail: React.FC<GroupDetailProps> = ({
                                 shares: { [me]: 50, [m]: 50 },
                                 timestamp: Date.now()
                               });
+                              setShowExpModal(true);
                             }}
                             title={`Add expense with ${m}`}
                             style={{
