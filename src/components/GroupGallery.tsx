@@ -140,13 +140,8 @@ export const GroupGallery: React.FC<GroupGalleryProps> = ({
 
   const handleViewExpense = (e: Expense) => {
     setActivePhotoIndex(null);
-    if (e.category === '✅') {
-      setEditingSettle(e);
-      setShowSettleModal(true);
-    } else {
-      setEditingExpense(e);
-      setShowExpModal(true);
-    }
+    setEditingExpense(e);
+    setShowExpModal(true);
   };
 
   // Keep each photo's flat index (the lightbox navigates over the flat list),

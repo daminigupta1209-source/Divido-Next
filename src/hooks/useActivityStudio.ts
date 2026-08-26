@@ -244,15 +244,8 @@ export function useActivityStudio({
   };
 
   const handleEdit = (exp: Expense) => {
-    const isSettlement =
-      exp.title?.includes('✅ Settlement') || exp.category === '✅' || exp.title?.toLowerCase().includes('settlement');
-    if (isSettlement) {
-      setEditingSettle(exp);
-      setShowSettleModal(true);
-    } else {
-      setEditingExpense(exp);
-      setShowExpModal(true);
-    }
+    setEditingExpense(exp);
+    setShowExpModal(true);
   };
 
   return {
