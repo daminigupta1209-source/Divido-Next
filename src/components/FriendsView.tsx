@@ -22,6 +22,7 @@ interface FriendsViewProps {
   searchQuery?: string;
   showConvertModal?: boolean;
   setShowConvertModal?: (b: boolean) => void;
+  onQuickAddExpense?: (friendName: string) => void;
 }
 
 export const FriendsView: React.FC<FriendsViewProps> = ({
@@ -36,6 +37,7 @@ export const FriendsView: React.FC<FriendsViewProps> = ({
   searchQuery = '',
   showConvertModal = false,
   setShowConvertModal = () => {},
+  onQuickAddExpense,
 }) => {
   const [showInfo, setShowInfo] = useState(false);
   const [showDetails, setShowDetails] = useState(false);
@@ -629,6 +631,25 @@ export const FriendsView: React.FC<FriendsViewProps> = ({
                   </>
                 )}
               </div>
+
+              {onQuickAddExpense && (
+                <button
+                  onClick={(e) => { e.stopPropagation(); onQuickAddExpense(f.name); }}
+                  title={`Add expense with ${f.name}`}
+                  style={{
+                    flexShrink: 0, display: 'inline-flex', alignItems: 'center', gap: '4px',
+                    background: '#ECFDF5', color: '#059669', border: '1px solid #A7F3D0',
+                    borderRadius: '999px', padding: '6px 10px', fontSize: '12px', fontWeight: 700,
+                    cursor: 'pointer', fontFamily: 'inherit',
+                  }}
+                >
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.6" strokeLinecap="round" style={{ width: '13px', height: '13px' }}>
+                    <line x1="12" y1="5" x2="12" y2="19" />
+                    <line x1="5" y1="12" x2="19" y2="12" />
+                  </svg>
+                  Expense
+                </button>
+              )}
 
               <span style={{ fontSize: '18px', color: '#B8ADA0', fontWeight: 600, lineHeight: 1, flexShrink: 0 }}>›</span>
             </div>

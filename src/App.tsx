@@ -2424,6 +2424,26 @@ function App() {
     setShowExpModalSecure(true);
   };
 
+  // Quick "add expense with a friend" from the Balances list — opens the expense
+  // form prefilled as a Non-Group (standalone) expense split between me + friend,
+  // so there's no group/typing step.
+  const quickAddExpenseWithFriend = (friendName: string) => {
+    if (!requireSignInToCreate()) return;
+    const clean = friendName.replace(/\s*\(Left\)$/i, '').trim();
+    if (!clean) return;
+    setAutoOpenScanner(false);
+    setEditingExpenseSecure({
+      id: 'temp-' + Date.now(),
+      gId: 'STANDALONE',
+      title: '',
+      amt: 0,
+      date: new Date().toISOString().split('T')[0],
+      splitters: [me, clean],
+      paid: me,
+    } as any);
+    setShowExpModalSecure(true);
+  };
+
   const handleCreateGroup = (groupData: { name: string; currency: string; members: string[]; emoji: string; createdDate?: string }) => {
     const id = genGroupId();
     // Everyone added at creation except me is a not-yet-claimed invitee, so they
@@ -2731,6 +2751,7 @@ function App() {
             searchQuery={globalSearchQuery}
             showConvertModal={showFriendsConvert}
             setShowConvertModal={setShowFriendsConvert}
+            onQuickAddExpense={quickAddExpenseWithFriend}
           />
         ) : view === 'analytics' ? (
           <Analytics

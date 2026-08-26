@@ -96,14 +96,21 @@ export function useExpenseForm({
       return {
         id: 'STANDALONE',
         name: 'Non-Group Expenses',
-        members: Array.from(new Set([me, ...standaloneParticipants])),
+        // Include the current expense's own splitters so a quick "add expense
+        // with a friend" (prefilled with someone new to Non-Group) shows them
+        // as a selectable chip, not just an invisible selection.
+        members: Array.from(new Set([
+          me,
+          ...standaloneParticipants,
+          ...((editingExpense && Array.isArray(editingExpense.splitters)) ? editingExpense.splitters : []),
+        ])),
         currency: defaultCurrency,
         emoji: '👤',
         simplifyDebts: false,
       };
     }
     return groups.find((g) => g && String(g.id) === String(localGId));
-  }, [localGId, groups, expenses, me, defaultCurrency]);
+  }, [localGId, groups, expenses, me, defaultCurrency, editingExpense]);
 
   const [selectedSplitters, setSelectedSplitters] = useState<string[]>(() => {
     // Only reuse a saved selection when it actually has members. A new expense
