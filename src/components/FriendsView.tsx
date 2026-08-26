@@ -577,7 +577,7 @@ export const FriendsView: React.FC<FriendsViewProps> = ({
               className="hover-up-mini"
               onClick={() => { if (active) setGlobalSettleData({ name: f.name, identity: f.id, groups: f.groups, balances: activeBals }); }}
               style={{
-                padding: '10px 16px',
+                padding: '16px',
                 background: '#FFFFFF',
                 border: '0.5px solid #EFE7DC',
                 display: 'flex',
@@ -595,7 +595,7 @@ export const FriendsView: React.FC<FriendsViewProps> = ({
               </div>
 
               {/* Name with the amount stacked right below it (left-aligned) */}
-              <div style={{ minWidth: 0, flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center', gap: '2px' }}>
+              <div style={{ minWidth: 0, flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center', gap: '3px' }}>
                 <h3 style={{ fontSize: '16px', fontWeight: 600, color: '#2E2A25', margin: 0, textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap', textTransform: 'capitalize' }}>{f.name}</h3>
                 {!active ? (
                   <span style={{ fontSize: '13px', fontWeight: 600, color: '#94A3B8' }}>Settled up</span>
