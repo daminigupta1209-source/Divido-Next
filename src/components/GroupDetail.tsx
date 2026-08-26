@@ -950,27 +950,19 @@ export const GroupDetail: React.FC<GroupDetailProps> = ({
                           <div style={{ minWidth: 0, flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center', gap: '6px' }}>
                             <h3  style={{ fontSize: '16px', fontWeight: 600, color: '#2E2A25', margin: 0, textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap', textTransform: 'capitalize' }}>{m}</h3>
 
-                            <div style={{ display: 'flex', flexDirection: 'column', gap: '2px', alignItems: 'flex-start', minWidth: 0 }}>
-                              {payList.length > 0 && (() => {
-                                const textStr = `${balPrimary(payList)} to pay`;
-                                const fSize = textStr.length > 22 ? '11px' : '13px';
-                                return (
-                                  <span style={{ ...balPillBase, padding: 0, fontSize: fSize, color: '#E11D48', maxWidth: '145px', overflow: 'hidden', justifyContent: 'flex-start' }}>
-                                    <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{textStr}</span>
-                                    {payList.length > 1 && <span style={{...balCardChip, flexShrink: 0}}>+{payList.length - 1}</span>}
-                                  </span>
-                                );
-                              })()}
-                              {collectList.length > 0 && (() => {
-                                const textStr = `${balPrimary(collectList)} to collect`;
-                                const fSize = textStr.length > 22 ? '11px' : '13px';
-                                return (
-                                  <span style={{ ...balPillBase, padding: 0, fontSize: fSize, color: '#3FA97C', maxWidth: '145px', overflow: 'hidden', justifyContent: 'flex-start' }}>
-                                    <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{textStr}</span>
-                                    {collectList.length > 1 && <span style={{...balCardChip, flexShrink: 0}}>+{collectList.length - 1}</span>}
-                                  </span>
-                                );
-                              })()}
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: '2px', minWidth: 0 }}>
+                              {payList.length > 0 && (
+                                <span style={{ fontSize: '13px', fontWeight: 500, color: '#E11D48', display: 'inline-flex', alignItems: 'center', gap: '5px', minWidth: 0 }}>
+                                  <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{`${balPrimary(payList)} to pay`}</span>
+                                  {payList.length > 1 && <span style={{ background: '#F1EFE8', borderRadius: '999px', padding: '0 6px', fontSize: '10px', fontWeight: 600, lineHeight: '16px', flexShrink: 0 }}>+{payList.length - 1}</span>}
+                                </span>
+                              )}
+                              {collectList.length > 0 && (
+                                <span style={{ fontSize: '13px', fontWeight: 500, color: '#047857', display: 'inline-flex', alignItems: 'center', gap: '5px', minWidth: 0 }}>
+                                  <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{`${balPrimary(collectList)} to collect`}</span>
+                                  {collectList.length > 1 && <span style={{ background: '#F1EFE8', borderRadius: '999px', padding: '0 6px', fontSize: '10px', fontWeight: 600, lineHeight: '16px', flexShrink: 0 }}>+{collectList.length - 1}</span>}
+                                </span>
+                              )}
                             </div>
                           </div>
 
