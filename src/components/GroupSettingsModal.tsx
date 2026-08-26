@@ -99,9 +99,14 @@ export const GroupSettingsModal: React.FC<GroupSettingsModalProps> = ({
         <div style={{ display: 'flex', flexDirection: 'column' }}>
           
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 8px', borderBottom: '1px solid #F1F5F9' }}>
-            <div style={{ display: 'flex', flexDirection: 'column' }}>
-              <span style={{ fontSize: '13px', fontWeight: 600, color: '#000000' }}>Simplify Debts</span>
-              <span style={{ fontSize: '11px', fontWeight: 400, color: '#64748B', marginTop: '2px' }}>Minimizes total transactions</span>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ width: '18px', height: '18px', color: '#64748B' }}>
+                <path d="M8 3v3a2 2 0 0 1-2 2H3m18 0h-3a2 2 0 0 1-2-2V3m0 18v-3a2 2 0 0 1 2-2h3M3 14h3a2 2 0 0 1 2 2v3" />
+              </svg>
+              <div style={{ display: 'flex', flexDirection: 'column' }}>
+                <span style={{ fontSize: '13px', fontWeight: 600, color: '#000000' }}>Simplify Debts</span>
+                <span style={{ fontSize: '11px', fontWeight: 400, color: '#64748B', marginTop: '2px' }}>Minimizes total transactions</span>
+              </div>
             </div>
             <div
               onClick={onSimplifyToggle}
@@ -140,6 +145,7 @@ export const GroupSettingsModal: React.FC<GroupSettingsModalProps> = ({
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'flex-start',
+                gap: '12px',
                 padding: '12px 8px',
                 background: 'transparent',
                 border: 'none',
@@ -153,6 +159,9 @@ export const GroupSettingsModal: React.FC<GroupSettingsModalProps> = ({
               onMouseEnter={(e) => (e.currentTarget.style.background = '#F8FAFC')}
               onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}
             >
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ width: '18px', height: '18px', color: '#64748B' }}>
+                <path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" />
+              </svg>
               Convert Currency
             </button>
           )}
@@ -163,6 +172,7 @@ export const GroupSettingsModal: React.FC<GroupSettingsModalProps> = ({
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'flex-start',
+              gap: '12px',
               padding: '12px 8px',
               background: 'transparent',
               border: 'none',
@@ -176,6 +186,11 @@ export const GroupSettingsModal: React.FC<GroupSettingsModalProps> = ({
             onMouseEnter={(e) => (e.currentTarget.style.background = '#F8FAFC')}
             onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}
           >
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ width: '18px', height: '18px', color: '#64748B' }}>
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+              <polyline points="7 10 12 15 17 10" />
+              <line x1="12" y1="15" x2="12" y2="3" />
+            </svg>
             Export Data
           </button>
 
@@ -185,7 +200,7 @@ export const GroupSettingsModal: React.FC<GroupSettingsModalProps> = ({
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'flex-start',
-              gap: '8px',
+              gap: '12px',
               padding: '12px 8px',
               background: 'transparent',
               border: 'none',
@@ -199,14 +214,14 @@ export const GroupSettingsModal: React.FC<GroupSettingsModalProps> = ({
             onMouseEnter={(e) => (e.currentTarget.style.background = '#F8FAFC')}
             onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}
           >
-            Share Link
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ width: '14px', height: '14px', color: '#000000' }}>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ width: '18px', height: '18px', color: '#64748B' }}>
               <circle cx="18" cy="5" r="3" />
               <circle cx="6" cy="12" r="3" />
               <circle cx="18" cy="19" r="3" />
               <line x1="8.59" y1="13.51" x2="15.42" y2="17.49" />
               <line x1="15.41" y1="6.51" x2="8.59" y2="10.49" />
             </svg>
+            Share Link
           </button>
 
           {(isActiveMember || isPastMember) && (
@@ -215,7 +230,8 @@ export const GroupSettingsModal: React.FC<GroupSettingsModalProps> = ({
               style={{
                 display: 'flex',
                 alignItems: 'center',
-                justifyContent: 'center',
+                justifyContent: 'flex-start',
+                gap: '12px',
                 padding: '12px 8px',
                 background: 'transparent',
                 border: 'none',
@@ -229,6 +245,11 @@ export const GroupSettingsModal: React.FC<GroupSettingsModalProps> = ({
               onMouseEnter={(e) => (e.currentTarget.style.background = '#FEF2F2')}
               onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}
             >
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ width: '18px', height: '18px', color: '#EF4444' }}>
+                <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
+                <polyline points="16 17 21 12 16 7" />
+                <line x1="21" y1="12" x2="9" y2="12" />
+              </svg>
               {isActiveMember ? (activeMembersCount > 1 ? 'Leave Group' : 'Delete Group') : 'Delete Group for Me'}
             </button>
           )}
