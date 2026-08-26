@@ -83,13 +83,13 @@ export function useAnalytics({
     const now = new Date();
     return base.filter((e) => {
       // Exclude non-spending entries so "Total Spent"/categories aren't inflated:
-      // settlements (🤝), write-offs (🧾) and SYSTEM notes are money movements or
+      // settlements (✅), write-offs (🧾) and SYSTEM notes are money movements or
       // records, not spending.
       const t = e.title || '';
       if (
         e.paid === 'SYSTEM' ||
-        e.category === '🤝' ||
-        t.includes('🤝 Settlement') ||
+        e.category === '✅' ||
+        t.includes('✅ Settlement') ||
         t === 'Written off' || e.notes === 'Written off'
       ) {
         return false;

@@ -1367,14 +1367,14 @@ function App() {
       .map((it) => ({
         id: genExpenseId(),
         gId: it.gId,
-        title: `🤝 Settlement: ${it.paidBy} paid ${it.receivedBy}`,
+        title: `✅ Settlement: ${it.paidBy} paid ${it.receivedBy}`,
         amt: parseFloat(it.amt) || 0,
         paid: it.paidBy,
         splitters: [it.receivedBy],
         date: new Date().toISOString().split('T')[0],
         notes: '',
         currency: it.curr,
-        category: '🤝',
+        category: '✅',
         mode: 'Equally' as const,
         shares: {},
       }));
@@ -1892,6 +1892,7 @@ function App() {
         const receiver = val > 0 ? t.to : t.from;
         writeOffs.push({
           id: genExpenseId(),
+          timestamp: Date.now(),
           gId: groupId,
           title: 'Written off',
           amt: Math.round(absVal * 100) / 100,
@@ -3213,6 +3214,7 @@ function App() {
                       .from('expenses')
                       .insert({
                         group_id: selectedId,
+                        timestamp: Date.now(),
                         title: `${memberName} was removed`,
                         amt: 0,
                         paid: 'SYSTEM',
@@ -3398,6 +3400,7 @@ function App() {
               currency: savedExp.currency || myDefaultCurrency || '₹',
             };
             const unregisteredShares = getUnregisteredParticipantShares(savedExp, targetGroup, me);
+            /* Temporarily disabled per user request
             if (unregisteredShares.length > 0) {
               setPostExpenseShareData({
                 expense: savedExp,
@@ -3405,6 +3408,7 @@ function App() {
                 unregisteredShares,
               });
             }
+            */
           }}
         />
         </React.Suspense>
@@ -3672,6 +3676,7 @@ function App() {
                           .from('expenses')
                           .insert({
                             group_id: linkRequestGroup.id,
+                            timestamp: Date.now(),
                             title: `${cleanName} rejoined`,
                             amt: 0,
                             paid: 'SYSTEM',
@@ -5141,6 +5146,7 @@ function App() {
                         .from('expenses')
                         .insert({
                           group_id: adminRejoinRequest.groupId,
+                          timestamp: Date.now(),
                           title: `${cleanName} rejoined`,
                           amt: 0,
                           paid: 'SYSTEM',

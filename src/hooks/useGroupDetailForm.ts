@@ -108,8 +108,8 @@ export function useGroupDetailForm({
     const headers = ['Date', 'Title', 'Category', 'Paid By', 'Split Mode', 'Split Members', 'Total Amount', 'Currency'].join(',');
     
     const rows = groupExpenses.map((e) => {
-      const isSettlement = e.title.includes('🤝 Settlement');
-      const category = getEmoji(e.title) || (isSettlement ? '🤝' : '📄');
+      const isSettlement = e.title.includes('✅ Settlement');
+      const category = getEmoji(e.title) || (isSettlement ? '✅' : '📄');
       
       const escapedTitle = `"${e.title.replace(/"/g, '""')}"`;
       const escapedCategory = `"${category.replace(/"/g, '""')}"`;
@@ -299,7 +299,7 @@ export function useGroupDetailForm({
             <div style="text-align: right;">
               <div style="font-size: 14px; font-weight: 800; color: #1E3A8A;">Total Group Spend</div>
               <div style="font-size: 24px; font-weight: 900; color: #1E293B;">
-                ${baseCurrency}${groupExpenses.reduce((sum, e) => sum + (e.title.includes('🤝 Settlement') ? 0 : e.amt), 0).toFixed(2)}
+                ${baseCurrency}${groupExpenses.reduce((sum, e) => sum + (e.title.includes('✅ Settlement') ? 0 : e.amt), 0).toFixed(2)}
               </div>
             </div>
           </div>
@@ -367,7 +367,7 @@ export function useGroupDetailForm({
               </thead>
               <tbody>
                 ${groupExpenses.map((e) => {
-                  const isSettle = e.title.includes('🤝 Settlement');
+                  const isSettle = e.title.includes('✅ Settlement');
                   const splitters = e.splitters || selectedGroup.members || [];
                   const isPersonal = splitters.length === 1 && splitters[0] === e.paid;
                   const splitText = isSettle

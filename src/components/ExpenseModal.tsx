@@ -987,7 +987,7 @@ export const ExpenseModal: React.FC<ExpenseModalProps> = ({
                       {/* Header */}
                       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '16px 16px 10px 16px' }}>
                         <span style={{ fontSize: '14px', fontWeight: 600, color: 'var(--t)' }}>
-                          Who's splitting? 🤝
+                          Who's splitting? ✅
                         </span>
                         <button
                           type="button"

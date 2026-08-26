@@ -431,6 +431,7 @@ export function useExpenseForm({
       const isTemporaryNewExpense = editingExpense?.id && String(editingExpense.id).startsWith('temp-');
       const savedExp: Expense = {
         id: (editingExpense && !isTemporaryNewExpense) ? editingExpense.id : genExpenseId(),
+        timestamp: (editingExpense && !isTemporaryNewExpense && editingExpense.timestamp) ? editingExpense.timestamp : Date.now(),
         gId: localGId,
         title,
         amt: parseFloat(amt) || 0,

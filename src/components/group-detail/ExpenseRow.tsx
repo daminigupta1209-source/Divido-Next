@@ -97,7 +97,7 @@ export const ExpenseRow: React.FC<ExpenseRowProps> = ({
     );
   }
 
-  const isSettlement = e.title.includes('🤝 Settlement');
+  const isSettlement = e.title.includes('✅ Settlement');
   const splitters = e.splitters || selectedGroup?.members || [];
   const isConversion = e.isConversion;
 
@@ -297,7 +297,7 @@ export const ExpenseRow: React.FC<ExpenseRowProps> = ({
               flexShrink: 0,
             }}
           >
-            🤝
+            ✅
           </div>
           <div style={{ minWidth: 0, flex: 1, marginRight: '16px' }}>
             <h3 style={{ fontSize: '14px', color: 'var(--t)', margin: 0, fontWeight: 600, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>

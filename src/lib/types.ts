@@ -37,6 +37,7 @@ export interface PendingMatchPrompt {
 
 export interface Expense {
   id: string | number;
+  timestamp?: number;
   gId: string | number;
   title: string;
   amt: number;

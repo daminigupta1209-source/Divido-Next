@@ -88,7 +88,7 @@ export const GroupGallery: React.FC<GroupGalleryProps> = ({
       }
 
       // 2. Type filter
-      const isSettlement = e.category === '🤝' || e.title?.includes('🤝 Settlement') || e.title?.toLowerCase().includes('settlement');
+      const isSettlement = e.category === '✅' || e.title?.includes('✅ Settlement') || e.title?.toLowerCase().includes('settlement');
       if (filterType === 'expenses' && isSettlement) return false;
       if (filterType === 'settlements' && !isSettlement) return false;
 
@@ -137,7 +137,7 @@ export const GroupGallery: React.FC<GroupGalleryProps> = ({
 
   const handleViewExpense = (e: Expense) => {
     setActivePhotoIndex(null);
-    if (e.category === '🤝') {
+    if (e.category === '✅') {
       setEditingSettle(e);
       setShowSettleModal(true);
     } else {

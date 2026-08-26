@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect } from 'react';
 import { Expense } from '../lib/types';
+import { parseExpenseId } from '../lib/utils';
 
 interface UseUndoStackProps {
   expenses: Expense[];
@@ -36,7 +37,11 @@ export function useUndoStack({ expenses, setExpenses }: UseUndoStackProps) {
     if (undoStack.length === 0) return;
     const { item } = undoStack[0];
     setExpenses((prev) =>
-      [item, ...prev].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
+      [item, ...prev].sort((a, b) => {
+        const dateDiff = new Date(b.date).getTime() - new Date(a.date).getTime();
+        if (dateDiff !== 0) return dateDiff;
+        return (b.timestamp || parseExpenseId(b.id)) - (a.timestamp || parseExpenseId(a.id));
+      })
     );
     setUndoStack((prev) => prev.slice(1));
     if (undoTimerRef.current) clearTimeout(undoTimerRef.current);

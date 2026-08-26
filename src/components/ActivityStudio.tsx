@@ -323,7 +323,7 @@ export const ActivityStudio: React.FC<ActivityStudioProps> = ({
             const showHeader = i === 0 || getMonthYearKey(sorted[i - 1].date, sorted[i - 1].id).key !== myKey;
 
             const isSettlement =
-              e.title?.includes('🤝 Settlement') || e.category === '🤝' || e.title?.toLowerCase().includes('settlement');
+              e.title?.includes('✅ Settlement') || e.category === '✅' || e.title?.toLowerCase().includes('settlement');
             const timeStr = isSettlement ? getExactTime(e.id) : null;
 
             return (

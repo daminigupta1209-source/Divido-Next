@@ -183,7 +183,7 @@ export const UPIQRModal: React.FC<UPIQRModalProps> = ({
 
         {/* Title */}
         <h3  style={{ fontSize: '20px', fontWeight: 600, marginBottom: '4px' }}>
-          {requestFrom ? 'Scan to Settle Dues 🤝' : 'UPI Payment QR Code 📱'}
+          {requestFrom ? 'Scan to Settle Dues ✅' : 'UPI Payment QR Code 📱'}
         </h3>
         <p style={{ fontSize: '11px', color: 'var(--g)', fontWeight: 600, marginBottom: '20px' }}>
           {requestFrom ? (

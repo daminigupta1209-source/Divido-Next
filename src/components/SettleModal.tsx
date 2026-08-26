@@ -168,7 +168,7 @@ export const SettleModal: React.FC<SettleModalProps> = ({
           e.id === editingSettle.id
             ? {
                 ...e,
-                title: `🤝 Settlement: ${settleFromRef.current} paid ${to}`,
+                title: `✅ Settlement: ${settleFromRef.current} paid ${to}`,
                 amt: amount,
                 paid: settleFromRef.current,
                 splitters: [to],
@@ -182,15 +182,16 @@ export const SettleModal: React.FC<SettleModalProps> = ({
     } else {
       const newExp: Expense = {
         id: genExpenseId(),
+        timestamp: Date.now(),
         gId: selectedId || 'STANDALONE',
-        title: `🤝 Settlement: ${settleFromRef.current} paid ${to}`,
+        title: `✅ Settlement: ${settleFromRef.current} paid ${to}`,
         amt: amount,
         paid: settleFromRef.current,
         splitters: [to],
         date: settleDateRef.current,
         notes: settleNotesValRef.current,
         currency: settleCurr,
-        category: '🤝',
+        category: '✅',
       };
       setExpenses((prev) => [...prev, newExp]);
     }
@@ -347,7 +348,7 @@ export const SettleModal: React.FC<SettleModalProps> = ({
                 color: '#16A34A',
               }}
             >
-              🤝
+              ✅
             </div>
             <h2  style={{ fontSize: '22px', fontWeight: 600 }}>
               {editingSettle ? 'Edit Settlement' : 'Clear Dues'}

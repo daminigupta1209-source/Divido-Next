@@ -65,7 +65,7 @@ export const ExpenseList: React.FC<ExpenseListProps> = ({
   const [showFilters, setShowFilters] = useState(false);
 
   const sorted = [...filtered].sort(
-    (a, b) => b.date.localeCompare(a.date) || parseExpenseId(b.id) - parseExpenseId(a.id)
+    (a, b) => b.date.localeCompare(a.date) || (b.timestamp || parseExpenseId(b.id)) - (a.timestamp || parseExpenseId(a.id))
   );
 
   return (

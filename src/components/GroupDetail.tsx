@@ -876,7 +876,7 @@ export const GroupDetail: React.FC<GroupDetailProps> = ({
                 if (filtered.length === 0) {
                   return (
                     <div className="card" style={{ padding: '32px 24px', borderRadius: '24px', textAlign: 'center', color: '#64748B' }}>
-                      <span style={{ fontSize: '32px' }}>🤝</span>
+                      <span style={{ fontSize: '32px' }}>✅</span>
                       <p style={{ margin: '10px 0 0 0', fontWeight: 600, fontSize: '13px' }}>
                         {filterFriend === 'all' && filterType === 'all' 
                           ? 'Everyone is fully settled up!' 
@@ -1041,7 +1041,7 @@ export const GroupDetail: React.FC<GroupDetailProps> = ({
                                 flexShrink: 0,
                               }}
                             >
-                              🤝
+                              ✅
                             </div>
                             <div style={{ minWidth: 0, fontSize: '13px', color: '#64748B', fontWeight: 700, textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap' }}>
                               <span style={{ color: '#475569', fontWeight: 600 }}>{t.from}</span>
@@ -1399,7 +1399,7 @@ export const GroupDetail: React.FC<GroupDetailProps> = ({
                             flexShrink: 0,
                           }}
                         >
-                          🤝
+                          ✅
                         </div>
                         <div style={{ minWidth: 0, fontSize: '12px', color: '#64748B', fontWeight: 700 }}>
                           <span style={{ color: '#475569', fontWeight: 600 }}>{t.from}</span>

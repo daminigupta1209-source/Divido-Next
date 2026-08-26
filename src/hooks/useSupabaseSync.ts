@@ -473,6 +473,7 @@ export function useSupabaseSync({
         // 5. Map expenses
         const loadedExpenses: Expense[] = expenseRecords.map((e: any) => ({
           id: e.id,
+          timestamp: e.created_at ? new Date(e.created_at).getTime() : 0,
           gId: e.group_id,
           title: e.title,
           amt: parseFloat(e.amt) || 0,

@@ -69,7 +69,7 @@ export function useActivityStudio({
         if (!titleMatch && !paidMatch && !tagMatch) return false;
       }
       const isSettlement =
-        e.title?.includes('🤝 Settlement') || e.category === '🤝' || e.title?.toLowerCase().includes('settlement');
+        e.title?.includes('✅ Settlement') || e.category === '✅' || e.title?.toLowerCase().includes('settlement');
       const isConversion = !!e.isConversion;
       if (filterType === 'expenses') {
         if (isSettlement || isConversion) return false;
@@ -117,15 +117,15 @@ export function useActivityStudio({
     return [...filteredExpenses].sort((a, b) => {
       const dateDiff = new Date(b.date).getTime() - new Date(a.date).getTime();
       if (dateDiff !== 0) return dateDiff;
-      return parseExpenseId(b.id) - parseExpenseId(a.id);
+      return (b.timestamp || parseExpenseId(b.id)) - (a.timestamp || parseExpenseId(a.id));
     });
   }, [filteredExpenses]);
 
   const handleExportCSV = () => {
     const headers = ['Date', 'Title', 'Category', 'Paid By', 'Split Mode', 'Split Members', 'Total Amount', 'Currency'].join(',');
     const rows = sorted.map((e) => {
-      const isSettlement = e.title?.includes('🤝 Settlement') || e.category === '🤝' || e.title?.toLowerCase().includes('settlement');
-      const category = e.category || getEmoji(e.title) || (isSettlement ? '🤝' : '📄');
+      const isSettlement = e.title?.includes('✅ Settlement') || e.category === '✅' || e.title?.toLowerCase().includes('settlement');
+      const category = e.category || getEmoji(e.title) || (isSettlement ? '✅' : '📄');
       
       const escapedTitle = `"${e.title.replace(/"/g, '""')}"`;
       const escapedCategory = `"${category.replace(/"/g, '""')}"`;
@@ -216,13 +216,13 @@ export function useActivityStudio({
             </thead>
             <tbody>
               ${sorted.map((e) => {
-                const isSettlement = e.title?.includes('🤝 Settlement') || e.category === '🤝' || e.title?.toLowerCase().includes('settlement');
+                const isSettlement = e.title?.includes('✅ Settlement') || e.category === '✅' || e.title?.toLowerCase().includes('settlement');
                 return `
                   <tr>
                     <td>${e.date}</td>
                     <td>
                       <span class="badge ${isSettlement ? 'badge-settle' : 'badge-expense'}">
-                        ${isSettlement ? 'Settlement 🤝' : 'Expense 💸'}
+                        ${isSettlement ? 'Settlement ✅' : 'Expense 💸'}
                       </span>
                     </td>
                     <td>${e.title}</td>
@@ -245,7 +245,7 @@ export function useActivityStudio({
 
   const handleEdit = (exp: Expense) => {
     const isSettlement =
-      exp.title?.includes('🤝 Settlement') || exp.category === '🤝' || exp.title?.toLowerCase().includes('settlement');
+      exp.title?.includes('✅ Settlement') || exp.category === '✅' || exp.title?.toLowerCase().includes('settlement');
     if (isSettlement) {
       setEditingSettle(exp);
       setShowSettleModal(true);
