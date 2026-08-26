@@ -270,7 +270,7 @@ export function useAnalytics({
        }
     }
 
-    if (mostActiveGroup && mostActiveGroup.name !== 'Non-Group Expenses' && mostActiveGroup.name !== 'Untitled Group') {
+    if (!initialGroupId && mostActiveGroup && mostActiveGroup.name !== 'Non-Group Expenses' && mostActiveGroup.name !== 'Untitled Group') {
        insights.push(`You are most active in ${mostActiveGroup.name}.`);
     }
 
