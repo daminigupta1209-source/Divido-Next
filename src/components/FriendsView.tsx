@@ -3,6 +3,7 @@ import { BalanceDisplay } from './BalanceDisplay';
 
 import { Group, Expense, UserMetadata, GlobalSettleData } from '../lib/types';
 import { simplifyMultiCurrencyDebts, computeRawPairwiseTransactions } from '../lib/calculations';
+import { getPersonKey } from '../lib/identity';
 import { worldCurrencies, formatExactAmount, formatCompactAmount } from '../lib/utils';
 import { SearchableCurrencyPicker } from './SearchableCurrencyPicker';
 import { StyledDropdown } from './StyledDropdown';
@@ -94,8 +95,7 @@ export const FriendsView: React.FC<FriendsViewProps> = ({
   const idMeta: Record<string, { name: string; groups: Set<string> }> = {};
   // Resolve a member NAME within a group to its identity (falls back to the name
   // itself for legacy/unlinked members — preserving old merge-by-name behaviour).
-  const resolveId = (g: Group, nm: string) =>
-    (g?.memberIdentities?.[nm]) || (g?.memberIdentities?.[nm + ' (Left)']) || nm;
+  const resolveId = (g: Group, nm: string) => getPersonKey(g, nm);
   const bumpBal = (id: string, name: string, groupName: string | null, curr: string, delta: number) => {
     if (!masterBal[id]) masterBal[id] = {};
     masterBal[id][curr] = (masterBal[id][curr] || 0) + delta;

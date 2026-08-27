@@ -57,6 +57,7 @@ import { CurrencySetupModal } from './components/CurrencySetupModal';
 import { GroupGallery } from './components/GroupGallery';
 import { checkIfDemoMode } from './lib/demoMode';
 import { ensureArray, ensureObject, isLegacyRenameLog, formatCompactAmount, genGroupId, genExpenseId } from './lib/utils';
+import { getPersonKey } from './lib/identity';
 import { useSupabaseSync, getGidRemap } from './hooks/useSupabaseSync';
 import { BalanceActionCard } from './components/BalanceActionCard';
 import { useAppHotkeys } from './hooks/useAppHotkeys';
@@ -1230,8 +1231,7 @@ function App() {
         // person can appear under a different name in each group, so matching a
         // single name would miss some groups (e.g. showing only Denmark and
         // dropping Zilo). Fall back to the tapped name when no identity match.
-        const resolveId = (nm: string) =>
-          ((g as any).memberIdentities?.[nm]) || ((g as any).memberIdentities?.[nm + ' (Left)']) || nm;
+        const resolveId = (nm: string) => getPersonKey(g, nm);
         const m = (globalSettleData.identity && !isStandalone
           ? (g.members || []).find((nm) => resolveId(nm) === globalSettleData.identity)
           : null) || baseName;
