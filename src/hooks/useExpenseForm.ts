@@ -456,17 +456,29 @@ export function useExpenseForm({
     }
     if (isValid && localGId) {
       const isTemporaryNewExpense = editingExpense?.id && String(editingExpense.id).startsWith('temp-');
+      // Enforce "one name per person per group": snap every name to the group's
+      // exact roster spelling (case-insensitive match) so the stored data can
+      // never hold "didi" and "Didi" as if they were two people.
+      const roster = localGId !== 'STANDALONE' && activeGroup?.members ? activeGroup.members : [];
+      const canonName = (nm: string): string => {
+        if (!nm || roster.length === 0) return nm;
+        const target = nm.replace(/\s*\(Left\)$/i, '').trim().toLowerCase();
+        const match = roster.find((m) => m.replace(/\s*\(Left\)$/i, '').trim().toLowerCase() === target);
+        return match ? match.replace(/\s*\(Left\)$/i, '') : nm;
+      };
+      const canonShares: Record<string, number> = {};
+      Object.entries(shares || {}).forEach(([nm, v]) => { canonShares[canonName(nm)] = v as number; });
       const savedExp: Expense = {
         id: (editingExpense && !isTemporaryNewExpense) ? editingExpense.id : genExpenseId(),
         timestamp: (editingExpense && !isTemporaryNewExpense && editingExpense.timestamp) ? editingExpense.timestamp : Date.now(),
         gId: localGId,
         title,
         amt: parseFloat(amt) || 0,
-        paid: payer,
+        paid: canonName(payer),
         date,
         mode: splitMode,
-        shares,
-        splitters: selectedSplitters,
+        shares: canonShares,
+        splitters: Array.from(new Set(selectedSplitters.map(canonName))),
         category: overrideEmoji || getEmoji(title) || '⚡',
         currency: curr,
         notes: notes.trim() ? notes : undefined,
