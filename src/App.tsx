@@ -95,6 +95,11 @@ const SettleAmountInput: React.FC<{
     a === '' || a == null ? '' : String(typeof a === 'number' ? Math.round(a * 100) / 100 : a);
   const ref = React.useRef<HTMLInputElement>(null);
   const lastTyped = React.useRef<string>(toStr(amount));
+  // Show the amount as plain text until tapped; only then mount the real input.
+  // No live input on screen = no keypad and no OS autofill bar just from the
+  // settle sheet appearing. Tapping enters edit mode (a user gesture, so the
+  // keypad opens); blurring returns to text.
+  const [editing, setEditing] = React.useState(false);
   // UNCONTROLLED input: the browser owns the text and caret, so no React
   // re-render can ever move the cursor or clear/cross-wire the field while you
   // type. We only push the DOM value from the prop when it changed externally
@@ -111,17 +116,44 @@ const SettleAmountInput: React.FC<{
 
   const currStr = currency || '';
   const paddingLeft = Math.max(20, currStr.length * 8 + 12);
-  const valLen = toStr(amount).length;
+  const valLen = Math.max(toStr(amount).length, 4);
   const inputWidth = Math.max(90, paddingLeft + valLen * 8 + 14);
+
+  const boxStyle: React.CSSProperties = {
+    width: `${inputWidth}px`,
+    maxWidth: '135px',
+    height: '32px',
+    padding: `0 8px 0 ${paddingLeft}px`,
+    margin: 0,
+    borderRadius: '8px',
+    border: `1.5px solid ${shake ? '#EF4444' : '#CBD5E1'}`,
+    background: disabled ? '#F1F5F9' : '#FFFFFF',
+    fontSize: '13px',
+    fontWeight: 700,
+    color: '#1E293B',
+    outline: 'none',
+    textAlign: 'left',
+    boxSizing: 'border-box',
+    transition: 'width 0.15s ease, padding 0.15s ease',
+  };
+
+  // Plain-text display until tapped — this is what keeps the keypad and the
+  // OS autofill bar from appearing merely because the settle sheet opened.
+  if (!editing) {
+    return (
+      <div
+        onClick={() => { if (!disabled) setEditing(true); }}
+        style={{ ...boxStyle, display: 'flex', alignItems: 'center', cursor: disabled ? 'default' : 'text' }}
+      >
+        {toStr(amount) || '0'}
+      </div>
+    );
+  }
 
   return (
     <input
       ref={ref}
       id={inputId}
-      // type="search" (not "text") so Android's autofill leaves it alone — a
-      // plain text field triggers the OS password/card/address bar above the
-      // keyboard. Matches the expense amount field (val-entry), which doesn't
-      // show that bar.
       type="search"
       inputMode="decimal"
       autoComplete="off"
@@ -129,17 +161,10 @@ const SettleAmountInput: React.FC<{
       spellCheck="false"
       data-1p-ignore
       data-lpignore="true"
-      // readOnly until the field is actually TAPPED (pointerdown), not merely
-      // focused: a plain onFocus unlock is defeated when the field is focused
-      // programmatically/by the browser, which is what kept popping the keypad
-      // as the settle sheet rendered. Unlocking only on a real pointer tap keeps
-      // the keypad closed until the user taps the amount.
-      readOnly
-      onPointerDown={(e) => { e.currentTarget.readOnly = false; }}
-      onTouchStart={(e) => { e.currentTarget.readOnly = false; }}
-      onBlur={(e) => { e.currentTarget.readOnly = true; }}
+      autoFocus
       defaultValue={toStr(amount)}
       disabled={disabled}
+      onBlur={() => setEditing(false)}
       onChange={(e) => {
         const v = e.target.value;
         // Reject invalid characters — revert to the last good value.
@@ -160,23 +185,7 @@ const SettleAmountInput: React.FC<{
         lastTyped.current = cleaned;
         onCommit(cleaned);
       }}
-      style={{
-        width: `${inputWidth}px`,
-        maxWidth: '135px',
-        height: '32px',
-        padding: `0 8px 0 ${paddingLeft}px`,
-        margin: 0,
-        borderRadius: '8px',
-        border: `1.5px solid ${shake ? '#EF4444' : '#CBD5E1'}`,
-        background: disabled ? '#F1F5F9' : '#FFFFFF',
-        fontSize: '13px',
-        fontWeight: 700,
-        color: '#1E293B',
-        outline: 'none',
-        textAlign: 'left',
-        boxSizing: 'border-box',
-        transition: 'width 0.15s ease, padding 0.15s ease',
-      }}
+      style={boxStyle}
     />
   );
 };
