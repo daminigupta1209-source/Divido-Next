@@ -2332,13 +2332,35 @@ function App() {
   };
 
   const commitAddMembers = (groupId: string | number, names: string[]) => {
+    // Enforce "no duplicate names in a group" — case-insensitively, and against
+    // EVERY existing state (joined, pending, and "(Left)" past members). A plain
+    // Set only de-dupes exact strings, so "didi" would slip past an existing
+    // "Didi". Block the duplicates and tell the admin (a left member should be
+    // brought back via "Invite again", not re-added as a second person).
+    const g = groups.find((x) => String(x.id) === String(groupId));
+    const norm = (n: string) => n.replace(/\s*\(Left\)$/i, '').trim().toLowerCase();
+    const existing = new Set((g?.members || []).map(norm));
+    const seen = new Set<string>();
+    const toAdd: string[] = [];
+    const skipped: string[] = [];
+    names.forEach((n) => {
+      const key = norm(n);
+      if (!key) return;
+      if (existing.has(key) || seen.has(key)) { skipped.push(n); return; }
+      seen.add(key);
+      toAdd.push(n);
+    });
+    if (skipped.length > 0) {
+      alert(`"${skipped.join('", "')}" ${skipped.length > 1 ? 'are' : 'is'} already in this group. If they left, use "Invite again" in Past Members.`);
+    }
+    if (toAdd.length === 0) return;
     setGroups((prev) => prev.map((x) => {
-      if (x.id != groupId) return x;
-      const newMembers = Array.from(new Set([...x.members, ...names]));
-      const newPending = Array.from(new Set([...(x.pendingMembers || []), ...names]));
+      if (String(x.id) !== String(groupId)) return x;
+      const newMembers = Array.from(new Set([...x.members, ...toAdd]));
+      const newPending = Array.from(new Set([...(x.pendingMembers || []), ...toAdd]));
       return { ...x, members: newMembers, pendingMembers: newPending };
     }));
-    setNewlyAddedFriends(names);
+    setNewlyAddedFriends(toAdd);
   };
 
   const resolvePersonChoice = (identity: string | null) => {
