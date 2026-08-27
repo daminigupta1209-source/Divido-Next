@@ -125,6 +125,13 @@ const SettleAmountInput: React.FC<{
       spellCheck="false"
       data-1p-ignore
       data-lpignore="true"
+      // readOnly until the field is actually tapped: this suppresses the mobile
+      // keypad from popping open just because the settle sheet rendered — it now
+      // only appears when the user taps the amount. Matches val-entry /
+      // settle-val-input elsewhere.
+      readOnly
+      onFocus={(e) => { e.currentTarget.readOnly = false; }}
+      onBlur={(e) => { e.currentTarget.readOnly = true; }}
       defaultValue={toStr(amount)}
       disabled={disabled}
       onChange={(e) => {
