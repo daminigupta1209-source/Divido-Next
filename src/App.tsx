@@ -1492,7 +1492,10 @@ function App() {
         mode: 'Equally' as const,
         shares: {},
       }));
-    setExpenses([...newSettlements, ...expenses]);
+    // Functional update: never write a stale `expenses` array here — a realtime
+    // reload from the other device may have changed it since render, and the
+    // spread-of-stale form would drop those changes.
+    setExpenses((prev) => [...newSettlements, ...prev]);
 
     // Notify the other person that a settlement was recorded with them
     if (newSettlements.length > 0 && globalSettleData?.name) {
@@ -2018,7 +2021,10 @@ function App() {
         const payer = val > 0 ? t.from : t.to;
         const receiver = val > 0 ? t.to : t.from;
         writeOffs.push({
-          id: genExpenseId(),
+          // Deterministic id so two devices (or a double-tap) writing off the
+          // SAME person/currency on the same day converge to ONE row instead of
+          // creating duplicate cancelling entries that double-reverse the balance.
+          id: `writeoff-${String(groupId)}-${payer}-${receiver}-${curr}-${today}`,
           timestamp: Date.now(),
           gId: groupId,
           title: 'Written off',

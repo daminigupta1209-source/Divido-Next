@@ -557,7 +557,21 @@ export function useSupabaseSync({
         localStorage.setItem('divido_last_synced_expenses', JSON.stringify(loadedExpenses));
 
         setGroups(mergedGroups);
-        setExpenses(mergedExpenses);
+        // Preserve any brand-new local expense added DURING this async load
+        // (after the effect captured `expenses`): it's in the latest state but
+        // not in the reconciled array, and was never synced (not in cloud, not
+        // in the last-synced baseline). Overwriting with mergedExpenses alone
+        // would silently drop it. Use a functional update to read the latest.
+        setExpenses((latest) => {
+          const mergedIds = new Set(mergedExpenses.map((e: any) => String(e.id)));
+          const concurrentAdds = latest.filter((e: any) =>
+            !mergedIds.has(String(e.id)) &&
+            !cloudExpenseIds.has(String(e.id)) &&
+            !lastSyncedExpenseIds.has(String(e.id)) &&
+            !isLegacyRenameLog(e)
+          );
+          return concurrentAdds.length ? [...mergedExpenses, ...concurrentAdds] : mergedExpenses;
+        });
         hasSyncedOnceRef.current = true;
         initialLoadDoneRef.current = true;
         setIsInitialLoadDone(true);
