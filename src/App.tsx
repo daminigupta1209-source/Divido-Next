@@ -1706,15 +1706,10 @@ function App() {
         });
         if (missing.length === 0) return g;
         changed = true;
-        // A name found ONLY in expenses (not on the roster) is historical — a
-        // participant who was removed but whose expenses remain. Surface them in
-        // Past Members (tombstoned "(Left)"), never as a fresh pending invite you
-        // would think you still need to chase. This keeps balances correct without
-        // resurrecting removed people into the active/pending list.
-        const missingLeft = missing.map((n) => `${n.replace(/\s*\(Left\)$/i, '').trim()} (Left)`);
         return {
           ...g,
-          members: [...(g.members || []), ...missingLeft],
+          members: [...(g.members || []), ...missing],
+          pendingMembers: Array.from(new Set([...(g.pendingMembers || []), ...missing])),
         };
       });
       return changed ? next : prevGroups;
@@ -3213,17 +3208,15 @@ function App() {
                 return Number(e.gId) > 2147483647;
               });
 
-              // A PAST member who still has expense history CANNOT be fully
-              // deleted: their name lives on in those expenses, and the roster
-              // self-heal (the "missing members" effect) would just re-add them —
-              // previously as an active pending invite, which is the resurrection
-              // bug. So we settle their balance to zero and leave them tombstoned
-              // in Past Members (where they already are). That is the correct,
-              // stable end state for anyone with shared history.
+              // Removing a PAST member who still has expense history is an explicit
+              // "Write off & remove" action (confirmed on the member-list card): we
+              // settle any outstanding balance first — so their expenses net to zero
+              // and no phantom debt is left behind — then hard-delete every row
+              // variant below. This replaces the old behaviour that wrongly
+              // resurrected them as an active pending invite.
               const purgePastWithHistory = isPastMember && hasExpenseHistory;
               if (purgePastWithHistory) {
                 performWriteOff(selectedId, cleanName);
-                return;
               }
 
               // Anyone with NO expense footprint has no history to protect — a pending

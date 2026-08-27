@@ -88,15 +88,6 @@ export const GroupMemberList: React.FC<GroupMemberListProps> = ({
   const memberHasBalance = (name: string): boolean =>
     Object.values(getMemberBalanceByCurrency(name)).some((v) => Math.abs(v) >= 0.5);
 
-  // Does this person appear in any of the group's expenses? If so they can't be
-  // deleted (their expenses need them) — only settled and kept in Past Members.
-  const memberHasHistory = (name: string): boolean =>
-    expenses.some((e) => {
-      if (String(e.gId) !== String(selectedId) || e.paid === 'SYSTEM') return false;
-      const splitters = e.splitters || [];
-      return e.paid === name || splitters.includes(name);
-    });
-
   const activeMembers = selectedGroup.members.filter((m) => !m.endsWith(' (Left)'));
   const adminName = activeMembers[0] || selectedGroup.members[0];
   const cleanMe = me.replace(/\s*\(me\)$/i, '').replace(/\s*\(Left\)$/i, '').toLowerCase();
@@ -810,28 +801,16 @@ export const GroupMemberList: React.FC<GroupMemberListProps> = ({
                           title="Remove past member"
                           onClick={(e) => {
                             e.stopPropagation();
-                            const hasHistory = memberHasHistory(cleanName);
                             const hasBal = memberHasBalance(cleanName);
-                            setActionCard(
-                              hasHistory
-                                ? {
-                                    // Can't delete someone with shared expenses — settle & keep.
-                                    title: `Settle up with ${cleanName}?`,
-                                    desc: hasBal
-                                      ? `Writes off your balance with ${cleanName}. They stay in Past Members so the group's totals stay correct.`
-                                      : `${cleanName} is already settled. They stay in Past Members because their past expenses keep the group's totals correct.`,
-                                    primaryLabel: hasBal ? 'Write off' : 'OK',
-                                    primaryColor: '#E11D48',
-                                    onPrimary: () => { setActionCard(null); if (hasBal) onRemoveMember && onRemoveMember(m); },
-                                  }
-                                : {
-                                    title: `Remove ${cleanName}?`,
-                                    desc: `They have no expenses here, so they'll be removed from the group. This can't be undone.`,
-                                    primaryLabel: 'Remove',
-                                    primaryColor: '#E11D48',
-                                    onPrimary: () => { setActionCard(null); onRemoveMember && onRemoveMember(m); },
-                                  }
-                            );
+                            setActionCard({
+                              title: `Remove ${cleanName}?`,
+                              desc: hasBal
+                                ? `Their balance will be written off and they'll be removed from this group. This can't be undone.`
+                                : `They'll be removed from this group. This can't be undone.`,
+                              primaryLabel: hasBal ? 'Write off & remove' : 'Remove',
+                              primaryColor: '#E11D48',
+                              onPrimary: () => { setActionCard(null); onRemoveMember && onRemoveMember(m); },
+                            });
                           }}
                           style={{ cursor: 'pointer', opacity: 0.6, fontSize: '13px', color: '#EF4444', fontWeight: 'bold', padding: '0 4px' }}
                         >
