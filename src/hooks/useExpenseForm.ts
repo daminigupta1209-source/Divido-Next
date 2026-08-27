@@ -352,17 +352,29 @@ export function useExpenseForm({
 
     if (editingExpense && String(localGId) === String(editingExpense.gId)) {
       // Back on the expense's original group — restore its saved selection, but
+      // Map a stored name to the roster's actual spelling (case-insensitive,
+      // suffix-stripped). Old expenses may hold "didi" while the member row is
+      // "Didi" — without this the "Paid by" dropdown and the "Paid for"
+      // checkboxes can't find their match and render blank/unchecked.
+      const canonName = (nm: string): string => {
+        if (!nm || !activeGroup?.members) return nm;
+        const target = nm.replace(/\s*\(Left\)$/i, '').trim().toLowerCase();
+        const match = activeGroup.members.find(
+          (m) => m.replace(/\s*\(Left\)$/i, '').trim().toLowerCase() === target
+        );
+        return match ? match.replace(/\s*\(Left\)$/i, '') : nm;
+      };
       // a new expense has an empty splitters list, so fall back to all members.
       setSelectedSplitters(
         Array.isArray(editingExpense.splitters) && editingExpense.splitters.length > 0
-          ? editingExpense.splitters
+          ? editingExpense.splitters.map(canonName)
           : localGId === 'STANDALONE'
           ? [me]
           : Array.from(new Set(activeGroup.members)).filter((m) => !m.endsWith(' (Left)'))
       );
       setShares(editingExpense.shares || {});
       setManualEdits(new Set());
-      setPayer(editingExpense.paid || me);
+      setPayer(canonName(editingExpense.paid) || me);
       setCurr(editingExpense.currency || activeGroup.currency || defaultCurrency);
       return;
     }
