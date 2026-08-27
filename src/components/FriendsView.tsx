@@ -110,8 +110,15 @@ export const FriendsView: React.FC<FriendsViewProps> = ({
   // This ensures that FriendsView perfectly syncs with simplified group balances.
   groups.forEach((g) => {
     const groupExps = expenses.filter((e) => String(e.gId) === String(g.id));
+    // The user's OWN name within this group (per-group claimed identity), not
+    // the flat global first name — otherwise, on a device where they differ,
+    // the user's own transactions get mis-attributed (they can even show up as
+    // their own "friend") and balances go wrong.
+    let myG = me;
+    try { const claim = localStorage.getItem(`divido_identity_${g.id}`); if (claim) myG = claim; } catch { /* ignore */ }
+    const myKey = getPersonKey(g, myG);
     const effectiveMembers = Array.from(new Set([
-      me,
+      myG,
       ...groupExps.reduce((acc, e) => {
         if (e.paid) acc.add(e.paid);
         if (Array.isArray(e.splitters)) {
@@ -121,11 +128,11 @@ export const FriendsView: React.FC<FriendsViewProps> = ({
       }, new Set<string>())
     ]));
 
-    effectiveMembers.forEach((m) => { if (m !== me) allSharedMembers.add(m); });
+    effectiveMembers.forEach((m) => { if (getPersonKey(g, m) !== myKey) allSharedMembers.add(m); });
     // Group roster members count as friends too, even with no expenses yet.
     (g.members || []).forEach((m) => {
       const name = m.replace(' (Left)', '');
-      if (name && name !== me) allSharedMembers.add(name);
+      if (name && getPersonKey(g, name) !== myKey) allSharedMembers.add(name);
     });
 
     // Determine if we should simplify debts for this group (standalone is never simplified)
@@ -140,15 +147,16 @@ export const FriendsView: React.FC<FriendsViewProps> = ({
       groupTransactions = computeRawPairwiseTransactions(effectiveMembers, groupExps, g.currency || '₹');
     }
 
-    // Accumulate transactions involving me
+    // Accumulate transactions involving me (compared by identity key, so a
+    // per-group name or a case variant still matches "me").
     groupTransactions.forEach((t) => {
-      if (t.from === me) {
+      if (getPersonKey(g, t.from) === myKey) {
         const friend = t.to;
         const id = resolveId(g, friend);
         Object.entries(t.balances).forEach(([curr, val]) => {
           bumpBal(id, friend, g.name, curr, -val);
         });
-      } else if (t.to === me) {
+      } else if (getPersonKey(g, t.to) === myKey) {
         const friend = t.from;
         const id = resolveId(g, friend);
         Object.entries(t.balances).forEach(([curr, val]) => {
