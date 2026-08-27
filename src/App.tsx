@@ -1235,6 +1235,14 @@ function App() {
         const m = (globalSettleData.identity && !isStandalone
           ? (g.members || []).find((nm) => resolveId(nm) === globalSettleData.identity)
           : null) || baseName;
+        // Resolve BOTH sides by identity key so the "involves us" match works even
+        // when the user's own name in this group differs from the flat home-screen
+        // `me` (per-group claimed identity), or names differ only by case. Without
+        // this, the settle sheet found no items and rendered empty.
+        let myG = me;
+        try { const claim = localStorage.getItem(`divido_identity_${g.id}`); if (claim) myG = claim; } catch { /* ignore */ }
+        const myKey = getPersonKey(g, myG);
+        const mKey = (globalSettleData.identity && !isStandalone) ? globalSettleData.identity : getPersonKey(g, m);
         const groupExps = expenses.filter((e) => String(e.gId) === String(g.id));
         const members = isStandalone
           ? Array.from(new Set([
@@ -1328,13 +1336,18 @@ function App() {
             e.splitters ||
             (isStandalone ? Array.from(new Set(e.splitters || [])) : g.members) ||
             [];
+          const paidKey = getPersonKey(g, e.paid);
+          const splitterKeys = splitters.map((s) => getPersonKey(g, s));
           return (
-            (e.paid === me && splitters.includes(m)) || (e.paid === m && splitters.includes(me))
+            (paidKey === myKey && splitterKeys.includes(mKey)) ||
+            (paidKey === mKey && splitterKeys.includes(myKey))
           );
         });
 
         groupPlan.forEach((t) => {
-          const involvesUs = (t.from === me && t.to === m) || (t.from === m && t.to === me);
+          const fromKey = getPersonKey(g, t.from);
+          const toKey = getPersonKey(g, t.to);
+          const involvesUs = (fromKey === myKey && toKey === mKey) || (fromKey === mKey && toKey === myKey);
 
           if (involvesUs) {
             Object.entries(t.balances).forEach(([curr, val]) => {
