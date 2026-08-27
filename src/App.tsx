@@ -584,6 +584,16 @@ function App() {
     const cur = window.history.state;
     const currentUi = getUiState();
 
+    // Count how many overlays (modals / panels / sheets) are open in a UI snapshot.
+    // Used to detect a "pure close" so we can consume the modal's history entry
+    // instead of pushing a new one (which a back-swipe would restore = reopen).
+    const overlayCount = (ui: any) => [
+      ui.showExpModal, ui.showSettleModal, ui.showAddFriendModal, ui.showGroupSettleList,
+      ui.showMembersHealth, ui.showNotifPanel, ui.mobileShowGroupOptionsMenu,
+      !!ui.qrModalData, !!ui.showConvertModalId, !!ui.editingSettle, !!ui.globalSettleData,
+      !!(ui.confirmState && ui.confirmState.show),
+    ].filter(Boolean).length;
+
     if (cur?._divido && cur.uiState) {
       const prev = cur.uiState;
       const isSameId = (a: any, b: any) => {
@@ -591,7 +601,7 @@ function App() {
         if (a == null || b == null) return a === b;
         return String(a) === String(b);
       };
-      
+
       const hasChanged =
         prev.view !== currentUi.view ||
         !isSameId(prev.selectedId, currentUi.selectedId) ||
@@ -612,6 +622,22 @@ function App() {
         JSON.stringify(prev.confirmState) !== JSON.stringify(currentUi.confirmState);
 
       if (!hasChanged) return;
+
+      // A "pure close": still on the same screen, but fewer overlays are open
+      // than the entry we're sitting on. Rather than push a forward state (which
+      // a back-swipe would restore, reopening the just-closed modal), step BACK
+      // to consume that modal's history entry. This is what makes back-swipe
+      // feel normal across the whole app.
+      const sameScreen =
+        prev.view === currentUi.view &&
+        isSameId(prev.selectedId, currentUi.selectedId) &&
+        prev.groupDetailTab === currentUi.groupDetailTab &&
+        prev.showFriendsList === currentUi.showFriendsList &&
+        isSameId(prev.analyticsGroupId, currentUi.analyticsGroupId);
+      if (sameScreen && overlayCount(currentUi) < overlayCount(prev)) {
+        window.history.back();
+        return;
+      }
     }
 
     window.history.pushState({ _divido: true, uiState: currentUi }, '');
