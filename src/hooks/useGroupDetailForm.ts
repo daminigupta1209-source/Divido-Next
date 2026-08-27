@@ -1,7 +1,6 @@
 import { useState, useEffect, useMemo } from 'react';
 import { Group, Expense, UserMetadata } from '../lib/types';
-import { simplifyMultiCurrencyDebts, computeRawPairwiseTransactions } from '../lib/calculations';
-import { balancesByIdentity } from '../lib/identity';
+import { balancesByIdentity, getPersonKey } from '../lib/identity';
 import { getEmoji } from '../lib/utils';
 
 export interface UseGroupDetailFormProps {
@@ -469,17 +468,10 @@ export function useGroupDetailForm({
     const currentGId = String(selectedId);
     const groupExpenses = expenses.filter((e) => String(e.gId) === currentGId);
 
-    const rawTransactions = computeRawPairwiseTransactions(
-      selectedGroup.members || [],
-      groupExpenses,
-      selectedGroup.currency || '₹'
-    );
-
-    const simplifiedTransactions = simplifyMultiCurrencyDebts(
-      selectedGroup.members || [],
-      groupExpenses,
-      selectedGroup.currency || '₹'
-    );
+    // Identity-space: collapses same-person name variants (e.g. "Ram" in
+    // expenses and "Ram (Left)" on the roster) into one settle line.
+    const rawTransactions = balancesByIdentity(selectedGroup, groupExpenses, false);
+    const simplifiedTransactions = balancesByIdentity(selectedGroup, groupExpenses, true);
 
     const finalTransactions = selectedGroup.id !== 'STANDALONE' && selectedGroup.simplifyDebts
       ? simplifiedTransactions
@@ -488,8 +480,13 @@ export function useGroupDetailForm({
     const simpTransCount = simplifiedTransactions.length;
     const savedTransCount = rawTransCount - simpTransCount;
 
-    const myTrans = finalTransactions.filter((t) => t.from === me || t.to === me);
-    const otherTrans = finalTransactions.filter((t) => t.from !== me && t.to !== me);
+    // Filter "my" lines by stable KEY, not display name — the transactions now
+    // carry canonical display names, so compare the person each side resolves to
+    // against the person `me` resolves to (round-trips via getPersonKey).
+    const meKey = getPersonKey(selectedGroup, me);
+    const sideKey = (nm: string) => getPersonKey(selectedGroup, nm);
+    const myTrans = finalTransactions.filter((t) => sideKey(t.from) === meKey || sideKey(t.to) === meKey);
+    const otherTrans = finalTransactions.filter((t) => sideKey(t.from) !== meKey && sideKey(t.to) !== meKey);
 
     return {
       savedTransCount,

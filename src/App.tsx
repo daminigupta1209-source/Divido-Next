@@ -2280,8 +2280,31 @@ function App() {
 
   const getMemberBalance = React.useCallback((groupId: string | number | null, memberName: string) => {
     const gId = String(groupId || 'STANDALONE');
-    return allGroupBalances[gId]?.[memberName] || {};
-  }, [allGroupBalances]);
+    const groupBals = allGroupBalances[gId];
+    if (!groupBals) return {};
+
+    // Standalone has no per-group roster/identities — keep the plain name lookup.
+    const g = gId === 'STANDALONE' ? null : groups.find((x) => String(x.id) === gId);
+    if (!g) return groupBals[memberName] || {};
+
+    // Identity-aware read: a person can appear under more than one display name
+    // in the same group — most commonly their live name in expenses ("Ram") and
+    // a "(Left)" roster entry ("Ram (Left)"). Those are stored as separate
+    // name-buckets, but they are ONE person. Sum every bucket whose stable key
+    // matches the requested member's key. This is non-destructive (the numbers
+    // are computed exactly as before; we only merge at read time) and falls back
+    // to today's behaviour when no identity links the names — each expense
+    // attributes to exactly one name-bucket, so nothing is double-counted.
+    const targetKey = getPersonKey(g, memberName);
+    const out: Record<string, number> = {};
+    let matched = false;
+    Object.entries(groupBals).forEach(([nm, byCurr]) => {
+      if (getPersonKey(g, nm) !== targetKey) return;
+      matched = true;
+      Object.entries(byCurr).forEach(([c, v]) => { out[c] = (out[c] || 0) + v; });
+    });
+    return matched ? out : (groupBals[memberName] || {});
+  }, [allGroupBalances, groups]);
 
   // ── "Same person?" prompt (Step 4b) ────────────────────────────────────────
   const findPersonCandidates = (name: string, excludeGroupId: string | number) => {
