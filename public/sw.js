@@ -10,7 +10,7 @@
 //   * Cross-origin requests (Supabase auth/data/storage) -> never touched, so
 //     they always go straight to the network.
 
-const CACHE = 'divido-cache-v33';
+const CACHE = 'divido-cache-v34';
 const CORE = ['/', '/index.html', '/manifest.json'];
 
 self.addEventListener('install', (event) => {

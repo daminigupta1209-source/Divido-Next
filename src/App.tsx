@@ -508,12 +508,23 @@ function App() {
   // 1. Listen for browser popstate and apply to React states
   useEffect(() => {
     const onPopState = (e: PopStateEvent) => {
+      // If any overlay (modal / panel / sheet / prompt) is open, a back-swipe
+      // must close THAT first — never take the top-level shortcut below, or the
+      // back would skip past the open modal (the "needs 2 swipes" bug: from
+      // Balances, quick-expense modal open, first swipe jumped to Home instead
+      // of closing the modal).
+      const anyOverlayOpen =
+        showExpModal || showSettleModal || showAddFriendModal || showGroupSettleList ||
+        showMembersHealth || showNotifPanel || mobileShowGroupOptionsMenu ||
+        !!qrModalData || !!showConvertModalId || !!editingSettle || !!globalSettleData ||
+        !!(confirmState && confirmState.show) || !!samePersonPrompt;
       // A back-swipe from a top-level bottom-nav screen (All balances, All
       // Activities, Global Analytics, Profile) goes to the Home screen (groups),
       // not to whatever screen happened to be underneath.
       const onTopLevelScreen =
-        view === 'friends' || view === 'activity' || view === 'profile' ||
-        (view === 'analytics' && (analyticsGroupId === null || analyticsGroupId === 'ALL'));
+        !anyOverlayOpen && (
+          view === 'friends' || view === 'activity' || view === 'profile' ||
+          (view === 'analytics' && (analyticsGroupId === null || analyticsGroupId === 'ALL')));
       if (onTopLevelScreen) {
         isNavigatingHistory.current = true;
         setView('summary');
