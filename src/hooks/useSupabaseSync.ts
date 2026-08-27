@@ -928,18 +928,30 @@ export function useSupabaseSync({
         // 1. Find deleted expenses
         const deleted = prev.filter(p => !curr.some(c => c.id === p.id));
 
-        // Safety: refuse to mass-delete if too many expenses disappear at once.
-        // This protects against accidental state resets wiping the database.
-        // Legitimate bulk deletions (e.g. deleting a group) are handled separately.
-        if (deleted.length > 3 && deleted.length > prev.length * 0.5) {
-          console.warn(`Safety: blocked mass-deletion of ${deleted.length} expenses. This looks like a state reset, not intentional deletion.`);
+        // Safety: refuse to mass-delete only when it looks like a catastrophic
+        // state reset — almost everything vanishing at once. The old threshold
+        // (>3 and >50%) also blocked LEGITIMATE bulk deletes (e.g. clearing a
+        // group's expenses), which then resurrected on the next reload. Raised
+        // to "nearly all rows gone" so real deletions go through.
+        const failedExpenseIds = new Set<string>();
+        if (deleted.length > 20 && deleted.length > prev.length * 0.9) {
+          console.warn(`Safety: blocked mass-deletion of ${deleted.length}/${prev.length} expenses (looks like a state reset).`);
+          // Keep those rows "pending" so we neither delete them in the cloud nor
+          // forget them from the baseline (which would resurrect them locally).
+          deleted.forEach((e) => { if (e.id != null) failedExpenseIds.add(String(e.id)); });
         } else {
           for (const e of deleted) {
             // Expense ids are permanent client-generated ids now; delete by id.
             // (A never-synced id simply matches no row — a harmless no-op.)
             if (e.id != null) {
-              const { error } = await supabase.from('expenses').delete().eq('id', String(e.id));
-              if (error) throw error;
+              try {
+                const { error } = await supabase.from('expenses').delete().eq('id', String(e.id));
+                if (error) throw error;
+              } catch (delErr) {
+                // Non-fatal: one failed delete must not abort the whole batch.
+                console.error('Failed to delete expense (will retry):', e.id, delErr);
+                failedExpenseIds.add(String(e.id));
+              }
             }
           }
         }
@@ -950,122 +962,131 @@ export function useSupabaseSync({
 
         for (let i = 0; i < nextExpenses.length; i++) {
           const e = nextExpenses[i];
-          if (e.gId === 'STANDALONE') {
-            // Moved from a group to Non-Group: remove the cloud row so it doesn't reappear in the old group
-            const old = prev.find(p => p.id === e.id);
-            if (old && old.gId !== 'STANDALONE') {
-              const { error } = await supabase.from('expenses').delete().eq('id', String(e.id));
-              if (error) throw error;
-            }
-            continue;
-          }
-
-          // Upload any local data URL attachments to Supabase Storage first
-          let attachmentsUpdated = false;
-          const updatedAttachments = e.attachments ? [...e.attachments] : [];
-          for (let j = 0; j < updatedAttachments.length; j++) {
-            if (updatedAttachments[j] && updatedAttachments[j].startsWith('data:')) {
-              const publicUrl = await uploadAttachment(updatedAttachments[j]);
-              if (publicUrl !== updatedAttachments[j]) {
-                updatedAttachments[j] = publicUrl;
-                attachmentsUpdated = true;
+          // Each row syncs independently: a failure records the id and continues
+          // (RISK 2/9), so one bad row can't abort everyone else's sync.
+          try {
+            if (e.gId === 'STANDALONE') {
+              // Moved from a group to Non-Group: remove the cloud row so it doesn't reappear in the old group
+              const old = prev.find(p => p.id === e.id);
+              if (old && old.gId !== 'STANDALONE') {
+                const { error } = await supabase.from('expenses').delete().eq('id', String(e.id));
+                if (error) throw error;
               }
-            }
-          }
-
-          let updatedExpense = e;
-          if (attachmentsUpdated) {
-            updatedExpense = { ...e, attachments: updatedAttachments };
-            nextExpenses[i] = updatedExpense;
-            localStateUpdated = true;
-          }
-
-          const old = prev.find(p => p.id === updatedExpense.id);
-          if (!old || old.gId === 'STANDALONE') {
-            // Insert new expense (also covers a Non-Group expense moved into a group — it has no cloud row yet)
-            // If this expense's group hasn't been inserted into the cloud yet, skip
-            // for now — inserting the expense first would violate the group_id
-            // foreign key. It syncs on the next pass once the group row exists.
-            const grpForExpense = groups.find(gr => String(gr.id) === String(updatedExpense.gId));
-            if (grpForExpense && grpForExpense.pendingSync) {
               continue;
             }
 
-            // Send the permanent client id (as text) — no temp->DB swap anymore.
-            const insertId = updatedExpense.id != null ? String(updatedExpense.id) : undefined;
-            const { error } = await supabase
-              .from('expenses')
-              .insert({
-                id: insertId,
-                group_id: updatedExpense.gId,
-                title: updatedExpense.title,
-                amt: updatedExpense.amt,
-                paid: updatedExpense.paid,
-                date: updatedExpense.date,
-                mode: updatedExpense.mode || 'Equally',
-                splitters: updatedExpense.splitters || [],
-                shares: updatedExpense.shares,
-                category: updatedExpense.category,
-                currency: updatedExpense.currency,
-                notes: updatedExpense.notes,
-                attachments: updatedExpense.attachments || [],
-                is_recurring: updatedExpense.isRecurring || false,
-                recurrence: updatedExpense.recurrence || 'none',
-                next_occurrence: updatedExpense.nextOccurrence
-              });
+            // Upload any local data URL attachments to Supabase Storage first
+            let attachmentsUpdated = false;
+            const updatedAttachments = e.attachments ? [...e.attachments] : [];
+            for (let j = 0; j < updatedAttachments.length; j++) {
+              if (updatedAttachments[j] && updatedAttachments[j].startsWith('data:')) {
+                const publicUrl = await uploadAttachment(updatedAttachments[j]);
+                if (publicUrl !== updatedAttachments[j]) {
+                  updatedAttachments[j] = publicUrl;
+                  attachmentsUpdated = true;
+                }
+              }
+            }
 
-            if (error) throw error;
-            // No id remap needed — the id we sent is permanent.
-          } else if (
-            String(old.gId) !== String(updatedExpense.gId) ||
-            old.title !== updatedExpense.title ||
-            old.amt !== updatedExpense.amt ||
-            old.paid !== updatedExpense.paid ||
-            old.date !== updatedExpense.date ||
-            old.mode !== updatedExpense.mode ||
-            JSON.stringify(old.splitters) !== JSON.stringify(updatedExpense.splitters) ||
-            JSON.stringify(old.shares) !== JSON.stringify(updatedExpense.shares) ||
-            old.category !== updatedExpense.category ||
-            old.currency !== updatedExpense.currency ||
-            old.notes !== updatedExpense.notes ||
-            JSON.stringify(old.attachments) !== JSON.stringify(updatedExpense.attachments) ||
-            old.isRecurring !== updatedExpense.isRecurring ||
-            old.recurrence !== updatedExpense.recurrence ||
-            old.nextOccurrence !== updatedExpense.nextOccurrence
-          ) {
-            // Update existing expense
-            const { error } = await supabase
-              .from('expenses')
-              .update({
-                group_id: updatedExpense.gId,
-                title: updatedExpense.title,
-                amt: updatedExpense.amt,
-                paid: updatedExpense.paid,
-                date: updatedExpense.date,
-                mode: updatedExpense.mode || 'Equally',
-                splitters: updatedExpense.splitters || [],
-                shares: updatedExpense.shares,
-                category: updatedExpense.category,
-                currency: updatedExpense.currency,
-                notes: updatedExpense.notes,
-                attachments: updatedExpense.attachments || [],
-                is_recurring: updatedExpense.isRecurring || false,
-                recurrence: updatedExpense.recurrence || 'none',
-                next_occurrence: updatedExpense.nextOccurrence
-              })
-              .eq('id', String(updatedExpense.id));
-            if (error) throw error;
+            let updatedExpense = e;
+            if (attachmentsUpdated) {
+              updatedExpense = { ...e, attachments: updatedAttachments };
+              nextExpenses[i] = updatedExpense;
+              localStateUpdated = true;
+            }
+
+            const old = prev.find(p => p.id === updatedExpense.id);
+            if (!old || old.gId === 'STANDALONE') {
+              // Insert new expense (also covers a Non-Group expense moved into a group — it has no cloud row yet)
+              // If this expense's group hasn't been inserted into the cloud yet, skip
+              // for now — inserting the expense first would violate the group_id
+              // foreign key. It syncs on the next pass once the group row exists.
+              const grpForExpense = groups.find(gr => String(gr.id) === String(updatedExpense.gId));
+              if (grpForExpense && grpForExpense.pendingSync) {
+                continue;
+              }
+
+              // upsert (not insert) so a duplicate id — e.g. the same recurring
+              // occurrence spawned on two devices, or a retried row — updates
+              // instead of throwing a PK violation and aborting the batch.
+              const insertId = updatedExpense.id != null ? String(updatedExpense.id) : undefined;
+              const { error } = await supabase
+                .from('expenses')
+                .upsert({
+                  id: insertId,
+                  group_id: updatedExpense.gId,
+                  title: updatedExpense.title,
+                  amt: updatedExpense.amt,
+                  paid: updatedExpense.paid,
+                  date: updatedExpense.date,
+                  mode: updatedExpense.mode || 'Equally',
+                  splitters: updatedExpense.splitters || [],
+                  shares: updatedExpense.shares,
+                  category: updatedExpense.category,
+                  currency: updatedExpense.currency,
+                  notes: updatedExpense.notes,
+                  attachments: updatedExpense.attachments || [],
+                  is_recurring: updatedExpense.isRecurring || false,
+                  recurrence: updatedExpense.recurrence || 'none',
+                  next_occurrence: updatedExpense.nextOccurrence
+                }, { onConflict: 'id' });
+
+              if (error) throw error;
+              // No id remap needed — the id we sent is permanent.
+            } else {
+              // Partial update: send ONLY the fields that actually changed vs the
+              // last-synced baseline (RISK 1). Writing the whole row would clobber
+              // a field another device edited in the cloud since our baseline —
+              // e.g. editing only the title here must not overwrite an amount the
+              // other device already changed. Editing the SAME field on both is
+              // still last-write-wins (genuinely ambiguous), but different fields
+              // no longer destroy each other.
+              const updates: Record<string, any> = {};
+              if (String(old.gId) !== String(updatedExpense.gId)) updates.group_id = updatedExpense.gId;
+              if (old.title !== updatedExpense.title) updates.title = updatedExpense.title;
+              if (old.amt !== updatedExpense.amt) updates.amt = updatedExpense.amt;
+              if (old.paid !== updatedExpense.paid) updates.paid = updatedExpense.paid;
+              if (old.date !== updatedExpense.date) updates.date = updatedExpense.date;
+              if (old.mode !== updatedExpense.mode) updates.mode = updatedExpense.mode || 'Equally';
+              if (JSON.stringify(old.splitters) !== JSON.stringify(updatedExpense.splitters)) updates.splitters = updatedExpense.splitters || [];
+              if (JSON.stringify(old.shares) !== JSON.stringify(updatedExpense.shares)) updates.shares = updatedExpense.shares;
+              if (old.category !== updatedExpense.category) updates.category = updatedExpense.category;
+              if (old.currency !== updatedExpense.currency) updates.currency = updatedExpense.currency;
+              if (old.notes !== updatedExpense.notes) updates.notes = updatedExpense.notes;
+              if (JSON.stringify(old.attachments) !== JSON.stringify(updatedExpense.attachments)) updates.attachments = updatedExpense.attachments || [];
+              if (old.isRecurring !== updatedExpense.isRecurring) updates.is_recurring = updatedExpense.isRecurring || false;
+              if (old.recurrence !== updatedExpense.recurrence) updates.recurrence = updatedExpense.recurrence || 'none';
+              if (old.nextOccurrence !== updatedExpense.nextOccurrence) updates.next_occurrence = updatedExpense.nextOccurrence;
+
+              if (Object.keys(updates).length > 0) {
+                const { error } = await supabase
+                  .from('expenses')
+                  .update(updates)
+                  .eq('id', String(updatedExpense.id));
+                if (error) throw error;
+              }
+            }
+          } catch (rowErr) {
+            console.error('Failed to sync expense (will retry next pass):', e.id, rowErr);
+            if (e.id != null) failedExpenseIds.add(String(e.id));
           }
         }
 
-        if (localStateUpdated) {
-          prevExpensesRef.current = nextExpenses;
-          localStorage.setItem('divido_last_synced_expenses', JSON.stringify(nextExpenses));
-          setExpenses(nextExpenses);
-        } else {
-          prevExpensesRef.current = expenses;
-          localStorage.setItem('divido_last_synced_expenses', JSON.stringify(expenses));
-        }
+        // Advance the last-synced baseline ONLY for rows that synced cleanly.
+        // Rows that failed (or a blocked mass-delete) stay OUT of the baseline so
+        // they retry next pass and aren't "forgotten" — which would drop a
+        // pending edit or resurrect a delete.
+        const source = localStateUpdated ? nextExpenses : curr;
+        const syncedRows = source.filter((e: any) => !failedExpenseIds.has(String(e.id)));
+        // Keep failed DELETES pending too: they're in prev but gone from curr, so
+        // re-add their old value so next pass re-attempts the delete.
+        const pendingFailedDeletes = prev.filter((p: any) =>
+          failedExpenseIds.has(String(p.id)) && !curr.some((c: any) => String(c.id) === String(p.id))
+        );
+        const newBaseline = [...syncedRows, ...pendingFailedDeletes];
+        prevExpensesRef.current = newBaseline;
+        localStorage.setItem('divido_last_synced_expenses', JSON.stringify(newBaseline));
+        if (localStateUpdated) setExpenses(nextExpenses);
 
         // Trigger load data once queue is fully caught up
         if (!initialLoadDoneRef.current) {
