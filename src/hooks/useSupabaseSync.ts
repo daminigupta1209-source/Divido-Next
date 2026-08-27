@@ -831,18 +831,19 @@ export function useSupabaseSync({
             throw err;
           }
           } else {
-            if (old.name !== g.name || old.currency !== g.currency || old.emoji !== g.emoji || old.simplifyDebts !== g.simplifyDebts) {
-              // Update existing group
-              const { error } = await supabase
-                .from('groups')
-                .update({
-                  name: g.name,
-                  currency: g.currency,
-                  emoji: g.emoji,
-                  simplify_debts: g.simplifyDebts
-                })
-                .eq('id', g.id);
-              if (error) throw error;
+            // Partial update: send only the group fields that changed vs the
+            // baseline, so one device renaming the group can't overwrite a
+            // currency/emoji another device changed (RISK 1, group version).
+            {
+              const gUpdates: Record<string, any> = {};
+              if (old.name !== g.name) gUpdates.name = g.name;
+              if (old.currency !== g.currency) gUpdates.currency = g.currency;
+              if (old.emoji !== g.emoji) gUpdates.emoji = g.emoji;
+              if (old.simplifyDebts !== g.simplifyDebts) gUpdates.simplify_debts = g.simplifyDebts;
+              if (Object.keys(gUpdates).length > 0) {
+                const { error } = await supabase.from('groups').update(gUpdates).eq('id', g.id);
+                if (error) throw error;
+              }
             }
 
             if (old.createdDate !== g.createdDate && g.createdDate) {
