@@ -20,6 +20,13 @@ describe('getPersonKey', () => {
     expect(getPersonKey(g, 'Ram')).toBe('pid-999');
   });
 
+  it('matches case-insensitively (expense "didi" resolves to roster "Didi")', () => {
+    const g = mkGroup({ Didi: 'pid-didi' });
+    expect(getPersonKey(g, 'didi')).toBe('pid-didi');
+    expect(getPersonKey(g, 'DIDI')).toBe('pid-didi');
+    expect(getPersonKey(g, 'didi (Left)')).toBe('pid-didi');
+  });
+
   it('falls back to the raw name for legacy/unlinked members', () => {
     const g = mkGroup({ Someone: 'pid-1' });
     expect(getPersonKey(g, 'Zara')).toBe('Zara');

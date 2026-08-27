@@ -24,10 +24,22 @@ import {
 // Every balance-bucketing caller should use THIS function rather than reaching
 // into memberIdentities inline, so the resolution rule lives in one place.
 // ─────────────────────────────────────────────────────────────────────────
-export const getPersonKey = (group: Group | undefined | null, name: string): string =>
-  (group?.memberIdentities?.[name]) ||
-  (group?.memberIdentities?.[name + ' (Left)']) ||
-  name;
+export const getPersonKey = (group: Group | undefined | null, name: string): string => {
+  const mi = group?.memberIdentities;
+  if (!mi) return name;
+  // Fast path: exact match, then the "(Left)" variant.
+  if (mi[name]) return mi[name];
+  if (mi[name + ' (Left)']) return mi[name + ' (Left)'];
+  // Case-insensitive fallback: expenses can spell a name differently from the
+  // roster ("didi" in one expense, "Didi" on the member row). Without this they
+  // resolve to different keys and the same person shows up twice. Match by the
+  // lower-cased, suffix-stripped name against every identity entry.
+  const target = name.replace(/\s*\(Left\)$/i, '').trim().toLowerCase();
+  for (const k of Object.keys(mi)) {
+    if (k.replace(/\s*\(Left\)$/i, '').trim().toLowerCase() === target) return mi[k];
+  }
+  return name;
+};
 
 // Strip the "(Left)" / "(me)" display suffixes to get the bare name. Kept here
 // next to getPersonKey because both are about turning a raw member string into
