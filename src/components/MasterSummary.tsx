@@ -530,7 +530,7 @@ export const MasterSummary: React.FC<MasterSummaryProps> = ({
                       style={{ ...segStyle, background: PINK, paddingRight: getBacks.length > 0 ? '18px' : '34px' }}
                       onClick={() => setView('friends')}
                     >
-                      <span style={{ overflow: 'hidden', textOverflow: 'ellipsis' }}>{primaryAmt(payBacks)} to pay</span>
+                      <span style={{ overflow: 'hidden', textOverflow: 'ellipsis' }}>You pay {primaryAmt(payBacks)}</span>
                       {payBacks.length > 1 && <span style={chipStyle}>+{payBacks.length - 1}</span>}
                     </div>
                   )}
@@ -539,7 +539,7 @@ export const MasterSummary: React.FC<MasterSummaryProps> = ({
                       style={{ ...segStyle, background: GREEN, paddingRight: '34px' }}
                       onClick={() => setView('friends')}
                     >
-                      <span style={{ overflow: 'hidden', textOverflow: 'ellipsis' }}>{primaryAmt(getBacks)} to collect</span>
+                      <span style={{ overflow: 'hidden', textOverflow: 'ellipsis' }}>You collect {primaryAmt(getBacks)}</span>
                       {getBacks.length > 1 && <span style={chipStyle}>+{getBacks.length - 1}</span>}
                     </div>
                   )}
@@ -933,7 +933,7 @@ export const MasterSummary: React.FC<MasterSummaryProps> = ({
                 ) : (
                   <>
                     {payList.length > 0 && (() => {
-                      const textStr = `${joinGroupPrimary(payList)} to pay`;
+                      const textStr = `You pay ${joinGroupPrimary(payList)}`;
                       const fSize = textStr.length > 22 ? '9.5px' : textStr.length > 17 ? '11px' : '13px';
                       return (
                         <span style={{ ...pillBase, fontSize: fSize, color: '#E11D48', display: 'inline-flex', alignItems: 'center', justifyContent: 'flex-end', gap: '5px', maxWidth: '145px' }}>
@@ -943,7 +943,7 @@ export const MasterSummary: React.FC<MasterSummaryProps> = ({
                       );
                     })()}
                     {collectList.length > 0 && (() => {
-                      const textStr = `${joinGroupPrimary(collectList)} to collect`;
+                      const textStr = `You collect ${joinGroupPrimary(collectList)}`;
                       const fSize = textStr.length > 22 ? '9.5px' : textStr.length > 17 ? '11px' : '13px';
                       return (
                         <span style={{ ...pillBase, fontSize: fSize, color: '#3FA97C', display: 'inline-flex', alignItems: 'center', justifyContent: 'flex-end', gap: '5px', maxWidth: '145px' }}>

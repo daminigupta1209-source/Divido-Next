@@ -391,7 +391,7 @@ export const FriendsView: React.FC<FriendsViewProps> = ({
               const entries = Object.entries(totalPayable);
               if (entries.length === 0) return 'Nothing to pay';
               const [c, v] = entries[0];
-              const { text: txt, fontSize } = pickAmount(v, c, '', ' to pay', 13);
+              const { text: txt, fontSize } = pickAmount(v, c, 'You pay ', '', 13);
               return (<>
                 <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', fontSize: `${fontSize}px` }}>{txt}</span>
                 {entries.length > 1 && <span style={pillChipStyle}>+{entries.length - 1}</span>}
@@ -429,7 +429,7 @@ export const FriendsView: React.FC<FriendsViewProps> = ({
               const entries = Object.entries(totalReceivable);
               if (entries.length === 0) return 'Nothing to collect';
               const [c, v] = entries[0];
-              const { text: txt, fontSize } = pickAmount(v, c, '', ' to collect', 13);
+              const { text: txt, fontSize } = pickAmount(v, c, 'You collect ', '', 13);
               return (<>
                 <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', fontSize: `${fontSize}px` }}>{txt}</span>
                 {entries.length > 1 && <span style={pillChipStyle}>+{entries.length - 1}</span>}
@@ -579,10 +579,12 @@ export const FriendsView: React.FC<FriendsViewProps> = ({
           const balEntries = Object.entries(activeBals).filter(([_, v]) => Math.abs(v) > 0.01);
           const payList = balEntries.filter(([_, v]) => v < -0.01);
           const collectList = balEntries.filter(([_, v]) => v > 0.01);
-          const fitRow = (entries: [string, number][], suffix: string) => {
+          const fitRow = (entries: [string, number][], label: string) => {
             const [curr, val] = entries[0];
-            const prefix = convertTo ? '≈ ' : '';
-            return pickAmount(val, curr, prefix, suffix, 13);
+            // label makes clear WHO acts ("You pay" / "You collect"); ≈ marks a
+            // converted estimate.
+            const prefix = `${label}${convertTo ? '≈ ' : ''}`;
+            return pickAmount(val, curr, prefix, '', 13);
           };
 
           const AV_COLORS = ['#B39DDB', '#F48FB1', '#80CBC4', '#FFB74D', '#9FA8DA', '#A5D6A7', '#EF9A9A', '#7FC8CE'];
@@ -632,7 +634,7 @@ export const FriendsView: React.FC<FriendsViewProps> = ({
                 ) : (
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '2px', minWidth: 0 }}>
                     {payList.length > 0 && (() => {
-                      const { text: txt, fontSize } = fitRow(payList, ' to pay');
+                      const { text: txt, fontSize } = fitRow(payList, 'You pay ');
                       return (
                       <span style={{ fontSize: `${fontSize}px`, fontWeight: 500, color: '#B91C1C', display: 'inline-flex', alignItems: 'center', gap: '5px', minWidth: 0 }}>
                         <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{txt}</span>
@@ -641,7 +643,7 @@ export const FriendsView: React.FC<FriendsViewProps> = ({
                       );
                     })()}
                     {collectList.length > 0 && (() => {
-                      const { text: txt, fontSize } = fitRow(collectList, ' to collect');
+                      const { text: txt, fontSize } = fitRow(collectList, 'You collect ');
                       return (
                       <span style={{ fontSize: `${fontSize}px`, fontWeight: 500, color: '#047857', display: 'inline-flex', alignItems: 'center', gap: '5px', minWidth: 0 }}>
                         <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{txt}</span>

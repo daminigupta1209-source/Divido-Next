@@ -81,7 +81,7 @@ export const GroupMemberList: React.FC<GroupMemberListProps> = ({
   const memberBalanceText = (name: string): string => {
     const parts: string[] = [];
     for (const [c, amt] of Object.entries(getMemberBalanceByCurrency(name))) {
-      if (Math.abs(amt) >= 0.5) parts.push(`${c}${Math.abs(amt).toFixed(0)} to ${amt < 0 ? 'pay' : 'collect'}`);
+      if (Math.abs(amt) >= 0.5) parts.push(`You ${amt < 0 ? 'pay' : 'collect'} ${c}${Math.abs(amt).toFixed(0)}`);
     }
     return parts.join(', ');
   };

@@ -625,7 +625,7 @@ export const GroupDetail: React.FC<GroupDetailProps> = ({
                       style={{ ...segStyle, background: PINK, paddingRight: getBacks.length > 0 ? '18px' : '34px' }}
                       onClick={() => setActiveTab('balances')}
                     >
-                      <span style={{ overflow: 'hidden', textOverflow: 'ellipsis' }}>{primaryAmt(payBacks)} to pay</span>
+                      <span style={{ overflow: 'hidden', textOverflow: 'ellipsis' }}>You pay {primaryAmt(payBacks)}</span>
                       {payBacks.length > 1 && <span style={chipStyle}>+{payBacks.length - 1}</span>}
                     </div>
                   )}
@@ -634,7 +634,7 @@ export const GroupDetail: React.FC<GroupDetailProps> = ({
                       style={{ ...segStyle, background: GREEN, paddingRight: '34px' }}
                       onClick={() => setActiveTab('balances')}
                     >
-                      <span style={{ overflow: 'hidden', textOverflow: 'ellipsis' }}>{primaryAmt(getBacks)} to collect</span>
+                      <span style={{ overflow: 'hidden', textOverflow: 'ellipsis' }}>You collect {primaryAmt(getBacks)}</span>
                       {getBacks.length > 1 && <span style={chipStyle}>+{getBacks.length - 1}</span>}
                     </div>
                   )}
@@ -960,13 +960,13 @@ export const GroupDetail: React.FC<GroupDetailProps> = ({
                             <div style={{ display: 'flex', flexDirection: 'column', gap: '2px', minWidth: 0 }}>
                               {payList.length > 0 && (
                                 <span style={{ fontSize: '13px', fontWeight: 500, color: '#E11D48', display: 'inline-flex', alignItems: 'center', gap: '5px', minWidth: 0 }}>
-                                  <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{`${balPrimary(payList)} to pay`}</span>
+                                  <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{`You pay ${balPrimary(payList)}`}</span>
                                   {payList.length > 1 && <span style={{ background: '#F1EFE8', borderRadius: '999px', padding: '0 6px', fontSize: '10px', fontWeight: 600, lineHeight: '16px', flexShrink: 0 }}>+{payList.length - 1}</span>}
                                 </span>
                               )}
                               {collectList.length > 0 && (
                                 <span style={{ fontSize: '13px', fontWeight: 500, color: '#047857', display: 'inline-flex', alignItems: 'center', gap: '5px', minWidth: 0 }}>
-                                  <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{`${balPrimary(collectList)} to collect`}</span>
+                                  <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{`You collect ${balPrimary(collectList)}`}</span>
                                   {collectList.length > 1 && <span style={{ background: '#F1EFE8', borderRadius: '999px', padding: '0 6px', fontSize: '10px', fontWeight: 600, lineHeight: '16px', flexShrink: 0 }}>+{collectList.length - 1}</span>}
                                 </span>
                               )}
