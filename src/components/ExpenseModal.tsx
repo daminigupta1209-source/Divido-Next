@@ -735,7 +735,7 @@ export const ExpenseModal: React.FC<ExpenseModalProps> = ({
                 onClick={() => {
                   const isWriteOff = editingExpense.title === 'Written off' || editingExpense.notes === 'Written off';
                   const msg = isWriteOff
-                    ? 'Delete this write-off? The balance it cleared will come back.'
+                    ? 'Delete this write-off? This un-settles it and the balance will reappear.'
                     : 'Delete this activity? This cannot be undone.';
                   if (confirm(msg)) {
                     deleteExpense && deleteExpense(editingExpense.id);
