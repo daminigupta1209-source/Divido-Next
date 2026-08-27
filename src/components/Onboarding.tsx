@@ -98,7 +98,7 @@ export const Onboarding: React.FC<OnboardingProps> = ({
             What should we call you?
           </label>
           <input
-            type="text"
+            type="search"
             placeholder="Enter your name..."
             value={tempName}
             onChange={(e) => setTempName(e.target.value)}

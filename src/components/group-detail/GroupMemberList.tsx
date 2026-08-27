@@ -601,7 +601,7 @@ export const GroupMemberList: React.FC<GroupMemberListProps> = ({
                     ref={inlineInputRef}
                     id="dv-member-add"
                     autoFocus
-                    type="text"
+                    type="search"
                     autoComplete="off"
                     autoCorrect="off"
                     spellCheck="false"

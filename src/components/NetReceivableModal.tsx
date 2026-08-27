@@ -173,7 +173,7 @@ export const NetReceivableModal: React.FC<NetReceivableModalProps> = ({
               Link your UPI ID to receive payments
             </span>
             <input
-              type="text"
+              type="search"
               name="upiId"
               id="my-upi-input"
               placeholder="e.g. name@okaxis"

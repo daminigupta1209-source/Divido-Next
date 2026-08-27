@@ -625,7 +625,7 @@ export const MasterSummary: React.FC<MasterSummaryProps> = ({
               <line x1="21" y1="21" x2="16.65" y2="16.65" />
             </svg>
             <input
-              type="text"
+              type="search"
               placeholder="Search groups..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}

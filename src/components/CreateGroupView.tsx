@@ -325,7 +325,7 @@ export const CreateGroupView: React.FC<CreateGroupViewProps> = ({
 
               <input
                 ref={titleInputRef}
-                type="text"
+                type="search"
                 value={title}
                 onChange={(e) => {
                   setTitle(e.target.value);
@@ -503,7 +503,7 @@ export const CreateGroupView: React.FC<CreateGroupViewProps> = ({
                   }}
                 >
                   <input
-                    type="text"
+                    type="search"
                     ref={index === participants.length - 1 ? lastFieldRef : null}
                     value={index === 0 ? `${(participant && participant !== me ? participant : userName).replace(/\s*\(you\)$/i, '')} (You)` : participant}
                     placeholder={index === 0 ? "Your name" : `Friend ${index + 1}`}

@@ -1628,7 +1628,7 @@ export const ExpenseModal: React.FC<ExpenseModalProps> = ({
                               <span style={{ fontSize: '13px', fontWeight: 600, color: '#0F172A', opacity: 0.7, marginRight: '6px', userSelect: 'none' }}>{curr}</span>
                             )}
                             <input
-                              type="text"
+                              type="search"
                               inputMode="decimal"
                               className="inline-share-input"
                               value={shares[cleanMember] === undefined ? '' : shares[cleanMember]}

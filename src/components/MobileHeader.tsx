@@ -1241,7 +1241,7 @@ export const MobileHeader: React.FC<MobileHeaderProps> = ({
                 Caption (optional)
               </label>
               <input
-                type="text"
+                type="search"
                 placeholder="e.g. Dinner receipt, Event photo..."
                 value={photoCaption}
                 onChange={(e) => setPhotoCaption(e.target.value)}

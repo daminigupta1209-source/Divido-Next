@@ -123,7 +123,7 @@ export const ActivityStudio: React.FC<ActivityStudioProps> = ({
             <line x1="21" y1="21" x2="16.65" y2="16.65" />
           </svg>
           <input
-            type="text"
+            type="search"
             placeholder="Search activities..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
