@@ -208,7 +208,10 @@ export const GroupDetail: React.FC<GroupDetailProps> = ({
     const dx = t.clientX - swipeStart.current.x;
     const dy = t.clientY - swipeStart.current.y;
     swipeStart.current = null;
-    if (Math.abs(dx) > 60 && Math.abs(dx) > Math.abs(dy) * 1.5) {
+    // Forgiving detection: a shorter (40px) mostly-horizontal flick counts, so
+    // toggling tabs feels smooth instead of needing 2-3 tries. Only require the
+    // horizontal movement to beat the vertical (drop the strict 1.5x ratio).
+    if (Math.abs(dx) > 40 && Math.abs(dx) > Math.abs(dy)) {
       // Tabs left→right: Activities (expenses) · Settle (balances) · Photos.
       const order: Array<'expenses' | 'balances' | 'photos'> = ['expenses', 'balances', 'photos'];
       const idx = order.indexOf(activeTab as any);
