@@ -476,7 +476,11 @@ function App() {
   const getUiState = () => ({
     view,
     selectedId,
-    groupDetailTab,
+    // groupDetailTab is intentionally NOT tracked in history: switching tabs
+    // (Activities/Settle/Photos) is not "navigation", so it must not add back
+    // entries — otherwise the OS back-swipe walks through the tabs instead of
+    // leaving the group. Tabs are switched by tap or the content swipe; back
+    // exits the group in one go.
     showExpModal,
     showSettleModal,
     showAddFriendModal,
@@ -605,7 +609,6 @@ function App() {
       const hasChanged =
         prev.view !== currentUi.view ||
         !isSameId(prev.selectedId, currentUi.selectedId) ||
-        prev.groupDetailTab !== currentUi.groupDetailTab ||
         prev.showExpModal !== currentUi.showExpModal ||
         prev.showSettleModal !== currentUi.showSettleModal ||
         prev.showAddFriendModal !== currentUi.showAddFriendModal ||
@@ -631,7 +634,6 @@ function App() {
       const sameScreen =
         prev.view === currentUi.view &&
         isSameId(prev.selectedId, currentUi.selectedId) &&
-        prev.groupDetailTab === currentUi.groupDetailTab &&
         prev.showFriendsList === currentUi.showFriendsList &&
         isSameId(prev.analyticsGroupId, currentUi.analyticsGroupId);
       if (sameScreen && overlayCount(currentUi) < overlayCount(prev)) {
