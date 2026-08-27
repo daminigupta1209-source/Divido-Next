@@ -324,6 +324,8 @@ export const ActivityStudio: React.FC<ActivityStudioProps> = ({
 
             const isSettlement =
               e.title?.includes('💸 Settlement') || e.title?.includes('✅ Settlement') || e.title?.includes('🤝 Settlement') || e.category === '💸' || e.category === '✅' || e.category === '🤝' || e.title?.toLowerCase().includes('settlement') || e.title === 'Payment Recorded';
+            // Write-offs are locked "receipts", not editable expenses (see below).
+            const isWriteOff = e.title === 'Written off' || e.notes === 'Written off';
             const timeStr = isSettlement ? getExactTime(e.id) : null;
 
             return (
@@ -520,6 +522,54 @@ export const ActivityStudio: React.FC<ActivityStudioProps> = ({
                       </div>
                     </div>
                   </div>
+                ) : isWriteOff ? (
+                  (() => {
+                    const receiver = Array.isArray(e.splitters) ? e.splitters[0] : undefined;
+                    const payerLabel = e.paid === me ? 'You' : e.paid;
+                    const receiverLabel = receiver === me ? 'you' : receiver;
+                    const whoWhom = receiver ? `${payerLabel} paid ${receiverLabel}` : (e.paid === me ? 'You paid' : `${e.paid} paid`);
+                    const undo = () => {
+                      if (confirm(`Undo this write-off?\n\nThe balance it cleared${receiver ? ` between ${e.paid} and ${receiver}` : ''} will come back.`)) {
+                        setExpenses((prev) => prev.filter((x) => String(x.id) !== String(e.id)));
+                      }
+                    };
+                    return (
+                      // Locked write-off receipt: read-only, no tap-to-edit. Reversing
+                      // it is deliberate only, via the "Undo" control (confirms first),
+                      // so it can't be deleted by accident like a normal expense.
+                      <div
+                        style={{
+                          display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+                          padding: '12px 16px', borderRadius: '14px', background: '#F8FAFC',
+                          border: '0.5px dashed #CBD5E1', minHeight: '58px', boxSizing: 'border-box',
+                        }}
+                      >
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flex: 1, minWidth: 0 }}>
+                          <div style={{ width: '34px', height: '34px', borderRadius: '10px', background: '#E2E8F0', color: '#475569', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '14px', flexShrink: 0 }}>➖</div>
+                          <div style={{ minWidth: 0, flex: 1 }}>
+                            <h3 style={{ fontSize: '13px', color: '#475569', margin: 0, fontWeight: 600, display: 'flex', alignItems: 'center', gap: '5px' }}>
+                              Written off
+                              <span style={{ fontSize: '9px', fontWeight: 700, color: '#64748B', background: '#E2E8F0', borderRadius: '999px', padding: '1px 6px', letterSpacing: '0.3px' }}>SETTLED</span>
+                            </h3>
+                            <div style={{ fontSize: '11px', color: '#94A3B8', marginTop: '4px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                              {whoWhom} • {formatDate(e.date)}
+                            </div>
+                          </div>
+                        </div>
+                        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '4px' }}>
+                          <span style={{ fontSize: '13px', fontWeight: 600, color: '#94A3B8', textDecoration: 'line-through' }}>
+                            {e.currency || '₹'} {formatExactAmount((Number(e.amt) || 0))}
+                          </span>
+                          <button
+                            onClick={(ev) => { ev.stopPropagation(); undo(); }}
+                            style={{ background: 'none', border: 'none', color: '#64748B', fontSize: '11px', fontWeight: 600, cursor: 'pointer', padding: 0, textDecoration: 'underline' }}
+                          >
+                            Undo
+                          </button>
+                        </div>
+                      </div>
+                    );
+                  })()
                 ) : (
                   <div
                     className="card hover-up-mini"

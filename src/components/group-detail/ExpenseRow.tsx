@@ -98,6 +98,10 @@ export const ExpenseRow: React.FC<ExpenseRowProps> = ({
   }
 
   const isSettlement = e.title.includes('💸 Settlement') || e.title.includes('🤝 Settlement') || e.title.toLowerCase().includes('settlement') || e.category === '💸' || e.category === '🤝' || e.title === 'Payment Recorded';
+  // A write-off is a locked "receipt" of a forgiven balance — not a normal,
+  // editable expense. Rendered read-only below so it can't be accidentally
+  // edited or deleted (deleting one silently reverses the write-off).
+  const isWriteOff = e.title === 'Written off' || e.notes === 'Written off';
   const splitters = e.splitters || selectedGroup?.members || [];
   const isConversion = e.isConversion;
 
@@ -372,6 +376,65 @@ export const ExpenseRow: React.FC<ExpenseRowProps> = ({
               </div>
             </div>
           </div>
+        </div>
+      </div>
+    );
+  }
+
+  // ── Locked write-off receipt ──────────────────────────────────────────────
+  // A quiet, read-only line: no tap-to-edit, no inline delete. Reversing it is
+  // deliberate only — via the small "Undo" control, which confirms first,
+  // because deleting a write-off brings the cleared balance (and the person)
+  // back. This kills the trap where a write-off looked like a normal expense
+  // and got deleted by accident.
+  if (isWriteOff) {
+    const receiver = Array.isArray(e.splitters) ? e.splitters[0] : undefined;
+    const payerLabel = e.paid === me ? 'You' : e.paid;
+    const receiverLabel = receiver === me ? 'you' : receiver;
+    const whoWhom = receiver ? `${payerLabel} paid ${receiverLabel}` : (e.paid === me ? 'You paid' : `${e.paid} paid`);
+    const undo = () => {
+      if (window.confirm(`Undo this write-off?\n\nThe balance it cleared${receiver ? ` between ${e.paid} and ${receiver}` : ''} will come back.`)) {
+        deleteExpense(e.id);
+      }
+    };
+    return (
+      <div
+        style={{
+          position: 'relative',
+          padding: '12px 16px',
+          background: '#F8FAFC',
+          border: '0.5px dashed #CBD5E1',
+          borderRadius: '16px',
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          marginBottom: '8px',
+          minHeight: '58px',
+          boxSizing: 'border-box',
+        }}
+      >
+        <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flex: 1, minWidth: 0 }}>
+          <div style={{ width: '34px', height: '34px', background: '#E2E8F0', color: '#475569', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '15px', flexShrink: 0 }}>➖</div>
+          <div style={{ minWidth: 0, flex: 1 }}>
+            <h3 style={{ fontSize: '13px', color: '#475569', margin: 0, fontWeight: 600, display: 'flex', alignItems: 'center', gap: '5px' }}>
+              Written off
+              <span style={{ fontSize: '9px', fontWeight: 700, color: '#64748B', background: '#E2E8F0', borderRadius: '999px', padding: '1px 6px', letterSpacing: '0.3px' }}>SETTLED</span>
+            </h3>
+            <div style={{ fontSize: '11px', color: '#94A3B8', marginTop: '4px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+              {whoWhom} • {formatDate(e.date)}
+            </div>
+          </div>
+        </div>
+        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '4px' }}>
+          <span style={{ fontSize: '13px', fontWeight: 600, color: '#94A3B8', textDecoration: 'line-through' }}>
+            {e.currency || selectedGroup.currency || '₹'} {formatExactAmount(e.amt)}
+          </span>
+          <button
+            onClick={(ev) => { ev.stopPropagation(); undo(); }}
+            style={{ background: 'none', border: 'none', color: '#64748B', fontSize: '11px', fontWeight: 600, cursor: 'pointer', padding: 0, textDecoration: 'underline' }}
+          >
+            Undo
+          </button>
         </div>
       </div>
     );

@@ -1706,10 +1706,15 @@ function App() {
         });
         if (missing.length === 0) return g;
         changed = true;
+        // A name found ONLY in expenses (not on the roster) is historical — a
+        // participant who was removed but whose expenses remain. Surface them in
+        // Past Members (tombstoned "(Left)"), never as a fresh pending invite you
+        // would think you still need to chase. This keeps balances correct
+        // without resurrecting removed people into the active/pending list.
+        const missingLeft = missing.map((n) => `${n.replace(/\s*\(Left\)$/i, '').trim()} (Left)`);
         return {
           ...g,
-          members: [...(g.members || []), ...missing],
-          pendingMembers: Array.from(new Set([...(g.pendingMembers || []), ...missing])),
+          members: [...(g.members || []), ...missingLeft],
         };
       });
       return changed ? next : prevGroups;
