@@ -80,8 +80,30 @@ if ('serviceWorker' in navigator) {
     navigator.serviceWorker
       .register('/sw.js')
       .then((reg) => {
-        // Proactively check for a new version on every load.
-        reg.update?.();
+        // Check for a new version on load AND repeatedly while the app stays
+        // open — a PWA is rarely fully closed, so a once-per-load check would
+        // never notice a fresh deploy. Poll on an interval and whenever the app
+        // regains focus, so the "New version available" banner actually appears.
+        const checkForUpdate = () => { try { reg.update?.(); } catch { /* ignore */ } };
+        checkForUpdate();
+        setInterval(checkForUpdate, 60 * 1000);
+        document.addEventListener('visibilitychange', () => {
+          if (document.visibilityState === 'visible') checkForUpdate();
+        });
+        window.addEventListener('focus', checkForUpdate);
+
+        // Belt-and-suspenders: if a new worker is found and finishes installing
+        // while we already have a controller, surface the banner even if the
+        // controllerchange event is missed.
+        reg.addEventListener('updatefound', () => {
+          const installing = reg.installing;
+          if (!installing) return;
+          installing.addEventListener('statechange', () => {
+            if (installing.state === 'installed' && navigator.serviceWorker.controller) {
+              showUpdateBanner();
+            }
+          });
+        });
       })
       .catch(() => {
         /* offline support is a progressive enhancement — ignore failures */
