@@ -3208,15 +3208,15 @@ function App() {
                 return Number(e.gId) > 2147483647;
               });
 
-              // A PAST member who still has expense history cannot be fully
-              // removed without orphaning those expenses (and previously this
-              // resurrected them as an active pending invite). Their tombstone in
-              // Past Members IS the correct final state — keep it and explain,
-              // rather than deleting. "Write off" is offered separately to zero
-              // their balance.
-              if (isPastMember && hasExpenseHistory) {
-                alert(`"${cleanName}" has shared expenses in this group, so they stay in Past Members to keep everyone's balances accurate.\n\nUse "Write off" on their row if you want to settle their balance.`);
-                return;
+              // Removing a PAST member who still has expense history is an explicit
+              // "Write off & remove" action (confirmed on the member-list card): we
+              // settle any outstanding balance first — so their expenses net to zero
+              // and no phantom debt is left behind — then hard-delete every row
+              // variant below. This replaces the old behaviour that wrongly
+              // resurrected them as an active pending invite.
+              const purgePastWithHistory = isPastMember && hasExpenseHistory;
+              if (purgePastWithHistory) {
+                performWriteOff(selectedId, cleanName);
               }
 
               // Anyone with NO expense footprint has no history to protect — a pending
@@ -3225,7 +3225,7 @@ function App() {
               // tombstone that just clutters Past Members. Balance need not be checked
               // separately: a non-zero balance can only come from an expense, so it is
               // already implied by hasExpenseHistory.
-              const hardDelete = !hasExpenseHistory;
+              const hardDelete = !hasExpenseHistory || purgePastWithHistory;
               // Delete EVERY row-name variant for this person so no stray row (e.g.
               // a clean-named pending row left over from an incomplete tombstone)
               // survives to reload as an active member. De-duplicated.

@@ -798,14 +798,19 @@ export const GroupMemberList: React.FC<GroupMemberListProps> = ({
                         </button>
                         
                         <span
-                          title="Delete past member"
+                          title="Remove past member"
                           onClick={(e) => {
                             e.stopPropagation();
-                            if (confirm(`Permanently remove "${cleanName}" from the group's history?`)) {
-                              if (onRemoveMember) {
-                                onRemoveMember(m);
-                              }
-                            }
+                            const hasBal = memberHasBalance(cleanName);
+                            setActionCard({
+                              title: `Remove ${cleanName}?`,
+                              desc: hasBal
+                                ? `Their balance will be written off and they'll be removed from this group. This can't be undone.`
+                                : `They'll be removed from this group. This can't be undone.`,
+                              primaryLabel: hasBal ? 'Write off & remove' : 'Remove',
+                              primaryColor: '#E11D48',
+                              onPrimary: () => { setActionCard(null); onRemoveMember && onRemoveMember(m); },
+                            });
                           }}
                           style={{ cursor: 'pointer', opacity: 0.6, fontSize: '13px', color: '#EF4444', fontWeight: 'bold', padding: '0 4px' }}
                         >
