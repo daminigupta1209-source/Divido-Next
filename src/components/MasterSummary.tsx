@@ -175,6 +175,20 @@ export const MasterSummary: React.FC<MasterSummaryProps> = ({
     }
   };
 
+  // The home screen has no group open, so the flat `me` is only the user's
+  // global first name — which may not match the name they claimed inside a
+  // given group. Resolve each group's own claimed identity (same
+  // divido_identity_<id> key App uses to derive `me` inside a group) so the
+  // card and filter read the correct member's balance. Without this the lookup
+  // misses and the card wrongly shows "Settled up" even with a real balance.
+  const myNameInGroup = (gId: string | number): string => {
+    try {
+      const claim = localStorage.getItem(`divido_identity_${gId}`);
+      if (claim) return claim;
+    } catch { /* localStorage unavailable */ }
+    return me;
+  };
+
   const nonGroupBal = getMemberBalance('STANDALONE', me);
   const nonGroupExps = expenses.filter((e) => String(e.gId) === 'STANDALONE');
   const nonGroupMembers = Array.from(new Set(nonGroupExps.flatMap((e) => e.splitters || [])));
@@ -218,7 +232,7 @@ export const MasterSummary: React.FC<MasterSummaryProps> = ({
 
     // Balance filter
     if (balanceFilter !== 'all') {
-      const bal = getMemberBalance(g.id, me);
+      const bal = getMemberBalance(g.id, myNameInGroup(g.id));
       const totalNet = Object.values(bal).reduce((a, b) => a + b, 0);
       if (balanceFilter === 'owed' && totalNet <= 0.01) return false;
       if (balanceFilter === 'owe' && totalNet >= -0.01) return false;
@@ -823,30 +837,11 @@ export const MasterSummary: React.FC<MasterSummaryProps> = ({
         {/* Group Cards List */}
         {filteredGroups.map((g, i) => {
           const c = GROUP_COLORS[i % GROUP_COLORS.length];
-          const bal = getMemberBalance(g.id, me);
+          // Balance for the current user in THIS group, resolved via the
+          // group's own claimed identity (not the flat home-screen `me`).
+          const bal = getMemberBalance(g.id, myNameInGroup(g.id));
 
-          // Calculate status message
           const groupExps = expenses.filter((e) => String(e.gId) === String(g.id));
-          const simplified = simplifyMultiCurrencyDebts(g.members || [], groupExps, g.currency || '₹');
-          const memberBals: Record<string, Record<string, number>> = {};
-          simplified.forEach((t) => {
-            if (t.from === me) {
-              if (!memberBals[t.to]) memberBals[t.to] = {};
-              Object.entries(t.balances).forEach(([c, v]) => {
-                memberBals[t.to][c] = (memberBals[t.to][c] || 0) - v;
-              });
-            } else if (t.to === me) {
-              if (!memberBals[t.from]) memberBals[t.from] = {};
-              Object.entries(t.balances).forEach(([c, v]) => {
-                memberBals[t.from][c] = (memberBals[t.from][c] || 0) + v;
-              });
-            }
-          });
-          
-          const rels = Object.entries(memberBals).map(([name, balances]) => ({
-            name,
-            balances,
-          })).filter((r) => Object.values(r.balances).some((v) => Math.abs(v) > 0.01));
 
           // Most recent activity for the subtitle line
           const lastExp = groupExps.slice().sort((a, b) => (b.date.localeCompare(a.date)) || (parseExpenseId(b.id) - parseExpenseId(a.id)))[0];

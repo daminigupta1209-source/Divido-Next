@@ -76,6 +76,20 @@ export const GroupsView: React.FC<GroupsViewProps> = ({
     return () => window.removeEventListener('click', closeDrop);
   }, []);
 
+  // The home screen has no group open, so the flat `me` is just the user's
+  // global first name — which may not match the name they claimed inside a
+  // given group. Resolve each group's own claimed identity (the same
+  // divido_identity_<id> key App uses to derive `me` inside a group) so the
+  // card and filter read the correct member's balance. Without this the lookup
+  // misses and the card wrongly shows "Settled Up" even with a real balance.
+  const myNameInGroup = (gId: string | number): string => {
+    try {
+      const claim = localStorage.getItem(`divido_identity_${gId}`);
+      if (claim) return claim;
+    } catch { /* localStorage unavailable */ }
+    return me;
+  };
+
   // 1. Separate Non-Group Card data
   const nonGroupColor = { bg: '#FAF5FF', border: '#F3E8FF', text: '#7C3AED' }; // Very Soft Lavender
   const nonGroupBal = getMemberBalance('STANDALONE', me);
@@ -122,7 +136,7 @@ export const GroupsView: React.FC<GroupsViewProps> = ({
 
     // Balance filter
     if (balanceFilter !== 'all') {
-      const bal = getMemberBalance(g.id, me);
+      const bal = getMemberBalance(g.id, myNameInGroup(g.id));
       const totalNet = Object.values(bal).reduce((a, b) => a + b, 0);
       if (balanceFilter === 'owed' && totalNet <= 0.01) return false;
       if (balanceFilter === 'owe' && totalNet >= -0.01) return false;
@@ -412,7 +426,7 @@ export const GroupsView: React.FC<GroupsViewProps> = ({
           // from g.members dropped any expense referencing a name not in the
           // roster (a friend's new activity, a pending member), which wrongly
           // showed "Settled Up" while the group actually had a net balance.
-          const bal = getMemberBalance(g.id, me);
+          const bal = getMemberBalance(g.id, myNameInGroup(g.id));
 
           return (
             <div
