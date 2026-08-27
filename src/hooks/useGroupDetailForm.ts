@@ -1,6 +1,7 @@
 import { useState, useEffect, useMemo } from 'react';
 import { Group, Expense, UserMetadata } from '../lib/types';
 import { simplifyMultiCurrencyDebts, computeRawPairwiseTransactions } from '../lib/calculations';
+import { balancesByIdentity } from '../lib/identity';
 import { getEmoji } from '../lib/utils';
 
 export interface UseGroupDetailFormProps {
@@ -154,20 +155,10 @@ export function useGroupDetailForm({
       return { name: m, balance: bal };
     });
 
-    const rawTransactions = computeRawPairwiseTransactions(
-      selectedGroup.members,
-      groupExpenses,
-      selectedGroup.currency || '₹'
-    );
-
-    const simplifiedTransactions = simplifyMultiCurrencyDebts(
-      selectedGroup.members,
-      groupExpenses,
-      selectedGroup.currency || '₹'
-    );
-
+    // Identity-space: collapses same-person name variants (e.g. a member who
+    // left shows once, not split between "Ram" and "Ram (Left)") in the report.
     const useSimplify = !!selectedGroup.simplifyDebts;
-    const finalTransactions = useSimplify ? simplifiedTransactions : rawTransactions;
+    const finalTransactions = balancesByIdentity(selectedGroup, groupExpenses, useSimplify);
 
     const printWindow = window.open('', '_blank');
     if (!printWindow) {
