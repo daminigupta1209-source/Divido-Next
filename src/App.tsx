@@ -2374,11 +2374,29 @@ function App() {
         map[`${groupId}::${item.name}`] = identity;
         localStorage.setItem('divido_person_link', JSON.stringify(map));
       } catch { /* ignore */ }
+      // Merge immediately in local state so the two same-named people bucket as
+      // ONE person right away (no waiting for a reload).
+      setGroups((prev) => prev.map((g) =>
+        String(g.id) === String(groupId)
+          ? { ...g, memberIdentities: { ...(g.memberIdentities || {}), [item.name]: identity } }
+          : g
+      ));
+      // Persist to the member row if it already exists (covers the case where
+      // the create/add sync already inserted it with a fresh id — the
+      // divido_person_link above only helps the not-yet-inserted case).
+      if (!checkIfDemoMode() && isAuthenticated) {
+        supabase
+          .from('group_members')
+          .update({ person_id: identity })
+          .eq('group_id', groupId)
+          .ilike('name', item.name)
+          .then(({ error }) => { if (error) console.error('Failed to link person identity:', error); });
+      }
     }
     const nextIndex = index + 1;
     if (nextIndex >= queue.length) {
       setSamePersonPrompt(null);
-      commitAddMembers(groupId, addNames);
+      if (addNames && addNames.length > 0) commitAddMembers(groupId, addNames);
     } else {
       setSamePersonPrompt({ ...samePersonPrompt, index: nextIndex });
     }
@@ -2516,6 +2534,17 @@ function App() {
     setGroups([...groups, newGroup]);
     setSelectedId(id);
     setView('detail');
+
+    // Same-person check for members added AT CREATION (previously only the
+    // add-to-existing-group path did this). Without it, adding "Abhishek" to a
+    // new group when an Abhishek already exists elsewhere silently created a
+    // second, separate person — two Abhisheks in the cross-group balances.
+    const clashing = pendingMembers
+      .map((n) => ({ name: n, candidates: findPersonCandidates(n, id) }))
+      .filter((x) => x.candidates.length > 0);
+    if (clashing.length > 0) {
+      setSamePersonPrompt({ groupId: id, queue: clashing, index: 0, addNames: [] });
+    }
   };
 
   const handleUpdateGroup = async (groupId: string | number, groupData: { name: string; currency: string; members: string[]; emoji: string; createdDate?: string }) => {
