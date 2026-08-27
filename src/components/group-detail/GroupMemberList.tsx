@@ -796,26 +796,9 @@ export const GroupMemberList: React.FC<GroupMemberListProps> = ({
                         >
                           🔗 Invite again
                         </button>
-                        
-                        <span
-                          title="Remove past member"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            const hasBal = memberHasBalance(cleanName);
-                            setActionCard({
-                              title: `Remove ${cleanName}?`,
-                              desc: hasBal
-                                ? `Their balance will be written off and they'll be removed from this group. This can't be undone.`
-                                : `They'll be removed from this group. This can't be undone.`,
-                              primaryLabel: hasBal ? 'Write off & remove' : 'Remove',
-                              primaryColor: '#E11D48',
-                              onPrimary: () => { setActionCard(null); onRemoveMember && onRemoveMember(m); },
-                            });
-                          }}
-                          style={{ cursor: 'pointer', opacity: 0.6, fontSize: '13px', color: '#EF4444', fontWeight: 'bold', padding: '0 4px' }}
-                        >
-                          ✕
-                        </span>
+                        {/* Past members are never removable: their expenses keep the
+                            group's balances correct, so they stay in history. The
+                            only past-member action is "Write off" (settle balance). */}
                       </div>
                     )}
                   </div>
