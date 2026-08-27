@@ -209,13 +209,17 @@ export const GroupDetail: React.FC<GroupDetailProps> = ({
     const dy = t.clientY - swipeStart.current.y;
     swipeStart.current = null;
     if (Math.abs(dx) > 60 && Math.abs(dx) > Math.abs(dy) * 1.5) {
+      // Tabs left→right: Activities (expenses) · Settle (balances) · Photos.
+      const order: Array<'expenses' | 'balances' | 'photos'> = ['expenses', 'balances', 'photos'];
+      const idx = order.indexOf(activeTab as any);
       if (dx < 0) {
-        // Swipe left
-        if (activeTab === 'expenses' && setActiveTab) setActiveTab('balances');
-        else if (activeTab === 'balances' && setActiveTab) setActiveTab('photos');
+        // Swipe left → next tab (stops at the last one).
+        if (idx >= 0 && idx < order.length - 1 && setActiveTab) setActiveTab(order[idx + 1]);
       } else {
-        // Swipe right (Back gesture)
-        setView('summary');
+        // Swipe right → previous tab; only leave the group when already on the
+        // first tab (so both directions toggle tabs symmetrically).
+        if (idx > 0 && setActiveTab) setActiveTab(order[idx - 1]);
+        else setView('summary');
       }
     }
   };
