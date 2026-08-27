@@ -685,6 +685,29 @@ function App() {
     showNotifPanel, mobileShowGroupOptionsMenu, editingSettle, globalSettleData, showFriendsList, samePersonPrompt, analyticsGroupId, confirmState
   ]);
 
+  // Keep the focused input visible above the on-screen keyboard. On mobile the
+  // keyboard covers the lower part of the screen, hiding fields like "Add friend"
+  // so you can't see what you're typing. When any input/textarea gains focus,
+  // scroll it into the middle of the visible area after the keyboard has opened.
+  useEffect(() => {
+    const onFocusIn = (e: FocusEvent) => {
+      const el = e.target as HTMLElement | null;
+      if (!el) return;
+      const tag = el.tagName;
+      if (tag !== 'INPUT' && tag !== 'TEXTAREA') return;
+      // Wait for the keyboard's open animation, then bring the field into view.
+      window.setTimeout(() => {
+        try {
+          if (document.activeElement === el) {
+            el.scrollIntoView({ block: 'center', behavior: 'smooth' });
+          }
+        } catch { /* older browsers */ }
+      }, 300);
+    };
+    window.addEventListener('focusin', onFocusIn);
+    return () => window.removeEventListener('focusin', onFocusIn);
+  }, []);
+
   // Header search should never linger — close it when leaving the home / settle pages.
   useEffect(() => {
     if (view !== 'summary' && view !== 'friends' && isHeaderSearchActive) {
