@@ -3794,11 +3794,15 @@ function App() {
                           })
                           .eq('id', p.id);
 
-                        // 2. Local identity setup
-                        localStorage.setItem('divido_username', cleanName);
+                        // 2. Local identity setup — per-group name only; don't clobber
+                        // an existing account profile name (Option-3 rule).
+                        {
+                          const existing = localStorage.getItem('divido_username');
+                          const hasRealName = !!existing && !['You', 'Guest', 'undefined', ''].includes(existing.trim());
+                          if (!hasRealName) { localStorage.setItem('divido_username', cleanName); setUserName(cleanName); }
+                        }
                         localStorage.setItem('divido_authenticated', 'true');
                         localStorage.setItem(`divido_identity_${linkRequestGroup.id}`, cleanName);
-                        setUserName(cleanName);
                         setIsAuthenticated(true);
                         if (activeEmail.startsWith('guest-')) {
                           setUserEmail(activeEmail);
@@ -3856,15 +3860,22 @@ function App() {
                           })
                           .eq('id', p.id);
                         
-                        localStorage.setItem('divido_username', p.name);
+                        // Claiming sets your name INSIDE this group only — it must
+                        // not overwrite your account profile name (Option-3 rule:
+                        // profile and per-group names are independent). Only seed the
+                        // profile name if you don't already have a real one.
+                        {
+                          const existing = localStorage.getItem('divido_username');
+                          const hasRealName = !!existing && !['You', 'Guest', 'undefined', ''].includes(existing.trim());
+                          if (!hasRealName) { localStorage.setItem('divido_username', p.name); setUserName(p.name); }
+                        }
                         localStorage.setItem('divido_authenticated', 'true');
                         localStorage.setItem(`divido_identity_${linkRequestGroup.id}`, p.name);
-                        setUserName(p.name);
                         setIsAuthenticated(true);
                         if (activeEmail.startsWith('guest-')) {
                           setUserEmail(activeEmail);
                         }
-                        
+
                         alert(`Welcome, ${p.name}! You have successfully joined the group. 🎉`);
                       }
                       
@@ -5110,7 +5121,11 @@ function App() {
                             link_request_name: null,
                           })
                           .eq('id', matched.id);
-                        localStorage.setItem('divido_username', cleanName);
+                        {
+                          const existing = localStorage.getItem('divido_username');
+                          const hasRealName = !!existing && !['You', 'Guest', 'undefined', ''].includes(existing.trim());
+                          if (!hasRealName) { localStorage.setItem('divido_username', cleanName); setUserName(cleanName); }
+                        }
                         localStorage.setItem(`divido_identity_${selectedId}`, cleanName);
                         setGroups(groups.map((g) =>
                           String(g.id) === String(selectedId)
