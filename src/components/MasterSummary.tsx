@@ -123,46 +123,30 @@ export const MasterSummary: React.FC<MasterSummaryProps> = ({
   // netBalances depends only on groups/expenses/me — memoize so it isn't
   // recomputed across every group/expense on unrelated re-renders (filters, dropdowns).
   const netBalances = useMemo(() => {
-    const netBalances: Record<string, number> = {};
-  // Calculate overall netBalances by accumulating from the simplified group plans and standalone expenses
-  // This guarantees perfect sync across MasterSummary and FriendsView.
-  groups.forEach((g) => {
-    const groupExps = expenses.filter((e) => String(e.gId) === String(g.id));
-    const effectiveMembers = Array.from(new Set([
-      me,
-      ...groupExps.reduce((acc, e) => {
-        if (e.paid) acc.add(e.paid);
-        if (Array.isArray(e.splitters)) {
-          e.splitters.forEach((s) => acc.add(s));
-        }
-        return acc;
-      }, new Set<string>())
-    ]));
-
-    const useSimplify = g.id !== 'STANDALONE' && !!g.simplifyDebts;
-    let groupTransactions: { from: string; to: string; balances: Record<string, number> }[] = [];
-    
-    if (useSimplify) {
-      groupTransactions = simplifyMultiCurrencyDebts(effectiveMembers, groupExps, g.currency || '₹');
-    } else {
-      groupTransactions = computeRawPairwiseTransactions(effectiveMembers, groupExps, g.currency || '₹');
-    }
-
-    groupTransactions.forEach((t) => {
-      if (t.from === me) {
-        Object.entries(t.balances).forEach(([curr, val]) => {
-          netBalances[curr] = (netBalances[curr] || 0) - val;
-        });
-      } else if (t.to === me) {
-        Object.entries(t.balances).forEach(([curr, val]) => {
-          netBalances[curr] = (netBalances[curr] || 0) + val;
-        });
-      }
+    const nb: Record<string, number> = {};
+    // Resolve the user's OWN name within a group (the per-group claimed
+    // identity), so the net total is read for the right member — the flat `me`
+    // is just the global first name and can miss on other devices, which made
+    // the card say "All settled up" while the group rows showed real balances.
+    const myNameFor = (gId: string | number): string => {
+      try {
+        const claim = localStorage.getItem(`divido_identity_${gId}`);
+        if (claim) return claim;
+      } catch { /* localStorage unavailable */ }
+      return me;
+    };
+    const add = (bal: Record<string, number>) => {
+      Object.entries(bal).forEach(([curr, val]) => { nb[curr] = (nb[curr] || 0) + val; });
+    };
+    // Sum EXACTLY what the group cards show (getMemberBalance is identity-aware),
+    // so the Net Balance total can never disagree with the per-group rows.
+    groups.forEach((g) => {
+      if (!g || g.id === 'STANDALONE') return;
+      add(getMemberBalance(g.id, myNameFor(g.id)));
     });
-  });
-
-    return netBalances;
-  }, [groups, expenses, me]);
+    add(getMemberBalance('STANDALONE', me));
+    return nb;
+  }, [groups, getMemberBalance, me]);
 
   const isWithinRange = (dateStr: string, days: number) => {
     try {
