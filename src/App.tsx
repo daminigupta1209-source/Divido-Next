@@ -3181,6 +3181,12 @@ function App() {
             onRemoveMember={async (memberName) => {
               if (!selectedId || selectedId === 'STANDALONE') return;
               const isPastMember = memberName.endsWith(' (Left)');
+              // Expenses store a member's CLEAN name ("didi"), never the "(Left)"
+              // tombstone label. So when removing a past member we must check
+              // history against the clean name — otherwise every past member looks
+              // history-less and gets wrongly hard-deleted, orphaning their
+              // expenses and (worse) resurrecting a clean-named pending row.
+              const cleanName = memberName.replace(/\s*\(Left\)$/i, '').trim();
               // Orphan guard: a member referenced by ANY expense (as payer or splitter)
               // must never be hard-deleted. Removing their row leaves their name dangling
               // in those expenses, and the balance engine then renders the leftover shares
@@ -3188,8 +3194,10 @@ function App() {
               // active member takes on leaving — so history is preserved and they stay
               // rejoinable.
               const hasExpenseHistory = expenses.some((e) => {
+                const names = [cleanName, memberName];
                 const referencesMember =
-                  e.paid === memberName || (Array.isArray(e.splitters) && e.splitters.includes(memberName));
+                  names.includes(e.paid) ||
+                  (Array.isArray(e.splitters) && e.splitters.some((s) => names.includes(s)));
                 if (!referencesMember) return false;
                 if (String(e.gId) === String(selectedId)) return true;
                 // Safety net: an expense may be stranded on a temporary (pre-sync)
@@ -3199,6 +3207,18 @@ function App() {
                 // Date.now()-based floats, far above any real DB id.
                 return Number(e.gId) > 2147483647;
               });
+
+              // A PAST member who still has expense history cannot be fully
+              // removed without orphaning those expenses (and previously this
+              // resurrected them as an active pending invite). Their tombstone in
+              // Past Members IS the correct final state — keep it and explain,
+              // rather than deleting. "Write off" is offered separately to zero
+              // their balance.
+              if (isPastMember && hasExpenseHistory) {
+                alert(`"${cleanName}" has shared expenses in this group, so they stay in Past Members to keep everyone's balances accurate.\n\nUse "Write off" on their row if you want to settle their balance.`);
+                return;
+              }
+
               // Anyone with NO expense footprint has no history to protect — a pending
               // invite that was never used, or a fully-joined member who was never in a
               // single expense. Delete them outright rather than leaving a "(Left)"
@@ -3206,15 +3226,19 @@ function App() {
               // separately: a non-zero balance can only come from an expense, so it is
               // already implied by hasExpenseHistory.
               const hardDelete = !hasExpenseHistory;
+              // Delete EVERY row-name variant for this person so no stray row (e.g.
+              // a clean-named pending row left over from an incomplete tombstone)
+              // survives to reload as an active member. De-duplicated.
+              const deleteNames = Array.from(new Set([cleanName, memberName, `${cleanName} (Left)`]));
               if (!checkIfDemoMode() && isAuthenticated) {
                 try {
                   if (hardDelete) {
-                    // Permanently delete from group_members table
+                    // Permanently delete every name-variant row for this person.
                     await supabase
                       .from('group_members')
                       .delete()
                       .eq('group_id', selectedId)
-                      .ilike('name', memberName);
+                      .in('name', deleteNames);
                     // Race guard: a just-added pending member may not have been
                     // flushed to group_members yet when ✕ is clicked, so the delete
                     // above matches zero rows. The deferred add-sync then inserts the
@@ -3224,16 +3248,16 @@ function App() {
                     // but only if they're still meant to be gone locally (guards against
                     // a same-name re-add in the meantime).
                     const sweepGroupId = selectedId;
-                    const sweepName = memberName;
+                    const sweepNames = deleteNames;
                     setTimeout(async () => {
                       const g = groupsRef.current.find((gg) => String(gg.id) === String(sweepGroupId));
-                      const stillGone = !g || (!g.members.includes(sweepName) && !(g.pendingMembers || []).includes(sweepName));
+                      const stillGone = !g || sweepNames.every((n) => !g.members.includes(n) && !(g.pendingMembers || []).includes(n));
                       if (stillGone) {
                         await supabase
                           .from('group_members')
                           .delete()
                           .eq('group_id', sweepGroupId)
-                          .ilike('name', sweepName);
+                          .in('name', sweepNames);
                       }
                     }, 1500);
                   } else if (!isPastMember) {
@@ -3302,11 +3326,11 @@ function App() {
                     ? {
                         ...g,
                         members: hardDelete
-                          ? g.members.filter((m) => m !== memberName)
+                          ? g.members.filter((m) => !deleteNames.includes(m))
                           : isPastMember
                             ? g.members
                             : g.members.map((m) => (m === memberName ? memberName + ' (Left)' : m)),
-                        pendingMembers: g.pendingMembers?.filter((m) => m !== memberName)
+                        pendingMembers: g.pendingMembers?.filter((m) => !deleteNames.includes(m))
                       }
                     : g
                 )
