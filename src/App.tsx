@@ -125,12 +125,14 @@ const SettleAmountInput: React.FC<{
       spellCheck="false"
       data-1p-ignore
       data-lpignore="true"
-      // readOnly until the field is actually tapped: this suppresses the mobile
-      // keypad from popping open just because the settle sheet rendered — it now
-      // only appears when the user taps the amount. Matches val-entry /
-      // settle-val-input elsewhere.
+      // readOnly until the field is actually TAPPED (pointerdown), not merely
+      // focused: a plain onFocus unlock is defeated when the field is focused
+      // programmatically/by the browser, which is what kept popping the keypad
+      // as the settle sheet rendered. Unlocking only on a real pointer tap keeps
+      // the keypad closed until the user taps the amount.
       readOnly
-      onFocus={(e) => { e.currentTarget.readOnly = false; }}
+      onPointerDown={(e) => { e.currentTarget.readOnly = false; }}
+      onTouchStart={(e) => { e.currentTarget.readOnly = false; }}
       onBlur={(e) => { e.currentTarget.readOnly = true; }}
       defaultValue={toStr(amount)}
       disabled={disabled}
