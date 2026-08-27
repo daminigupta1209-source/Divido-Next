@@ -118,7 +118,11 @@ const SettleAmountInput: React.FC<{
     <input
       ref={ref}
       id={inputId}
-      type="text"
+      // type="search" (not "text") so Android's autofill leaves it alone — a
+      // plain text field triggers the OS password/card/address bar above the
+      // keyboard. Matches the expense amount field (val-entry), which doesn't
+      // show that bar.
+      type="search"
       inputMode="decimal"
       autoComplete="off"
       autoCorrect="off"
