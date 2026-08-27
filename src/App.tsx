@@ -489,7 +489,9 @@ function App() {
     editingSettle,
     globalSettleData,
     showFriendsList,
-    samePersonPrompt,
+    // samePersonPrompt is intentionally NOT tracked in history: it's a transient
+    // prompt, and tracking it made dismissing it push a state so a back-swipe
+    // reopened it (an endless popup on every swipe). Back always just closes it.
     analyticsGroupId,
     confirmState: {
       show: confirmState?.show || false,
@@ -537,7 +539,8 @@ function App() {
         setEditingSettle(ui.editingSettle || null);
         setGlobalSettleData(ui.globalSettleData || null);
         setShowFriendsList(!!ui.showFriendsList);
-        setSamePersonPrompt(ui.samePersonPrompt || null);
+        // Back always dismisses the transient same-person prompt (never restores it).
+        setSamePersonPrompt(null);
         if (ui.analyticsGroupId !== undefined) setAnalyticsGroupId(ui.analyticsGroupId);
         setConfirmState({ show: false });
 
@@ -604,7 +607,6 @@ function App() {
         prev.mobileShowGroupOptionsMenu !== currentUi.mobileShowGroupOptionsMenu ||
         prev.showFriendsList !== currentUi.showFriendsList ||
         !isSameId(prev.analyticsGroupId, currentUi.analyticsGroupId) ||
-        JSON.stringify(prev.samePersonPrompt) !== JSON.stringify(currentUi.samePersonPrompt) ||
         JSON.stringify(prev.editingSettle) !== JSON.stringify(currentUi.editingSettle) ||
         JSON.stringify(prev.globalSettleData) !== JSON.stringify(currentUi.globalSettleData) ||
         JSON.stringify(prev.confirmState) !== JSON.stringify(currentUi.confirmState);
