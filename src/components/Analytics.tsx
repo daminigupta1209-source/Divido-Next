@@ -331,8 +331,11 @@ export const Analytics: React.FC<AnalyticsProps> = ({ expenses, groups, me, user
               background: '#F8FAFC', 
               borderRadius: '16px', 
               boxSizing: 'border-box',
-              animation: 'fadeSlideIn 0.3s ease-out'
+              animation: 'fadeSlideIn 0.3s ease-out',
+              overflowX: 'auto',
+              WebkitOverflowScrolling: 'touch'
             }}
+            className="modal-body-scroll"
           >
             {lastExpenses.length === 0 ? (
               <div style={{ width: '100%', textAlign: 'center', color: 'var(--g)', fontSize: '12px', fontWeight: 600 }}>
@@ -346,7 +349,7 @@ export const Analytics: React.FC<AnalyticsProps> = ({ expenses, groups, me, user
                   <div
                     key={e.id}
                     style={{
-                      flex: 1,
+                      flex: '1 0 40px',
                       height: '100%',
                       display: 'flex',
                       flexDirection: 'column',
