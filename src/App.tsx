@@ -4587,7 +4587,7 @@ function App() {
                 <path d="M16 3.13a4 4 0 0 1 0 7.75" />
               </svg>
             </span>
-            <span>Balances</span>
+            <span>Friends</span>
           </div>
 
           {/* Central Button — always "Add Expense", the single most-used action. */}
