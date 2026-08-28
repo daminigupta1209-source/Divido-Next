@@ -193,6 +193,16 @@ export const GroupDetail: React.FC<GroupDetailProps> = ({
       setShowDetailBalancesMenu(false);
     };
     window.addEventListener('click', handleGlobalClick);
+
+    try {
+      if (sessionStorage.getItem('divido_open_members') === '1') {
+        sessionStorage.removeItem('divido_open_members');
+        if (setShowFriendsList) setShowFriendsList(true);
+      }
+    } catch (e) {
+      // Ignore sessionStorage errors
+    }
+
     return () => window.removeEventListener('click', handleGlobalClick);
   }, []);
 
