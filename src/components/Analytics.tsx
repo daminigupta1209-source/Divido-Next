@@ -150,37 +150,37 @@ const InsightCarousel = ({ insights }: { insights: string[] }) => {
     <div 
       style={{
         background: 'linear-gradient(135deg, #F0F9FF 0%, #E0F2FE 100%)',
-        borderRadius: '20px',
-        padding: '16px 16px',
+        borderRadius: '16px',
+        padding: '12px 14px',
         marginBottom: '20px',
-        boxShadow: '0 4px 16px rgba(14, 165, 233, 0.1)',
+        boxShadow: '0 2px 10px rgba(14, 165, 233, 0.08)',
         textAlign: 'center',
         animation: 'fadeSlideIn 0.3s ease-out',
         position: 'relative'
       }}
     >
-      <span style={{ fontSize: '10px', fontWeight: 600, color: '#0284C7', textTransform: 'uppercase', letterSpacing: '1px', display: 'block', marginBottom: '8px' }}>
+      <span style={{ fontSize: '10px', fontWeight: 600, color: '#0284C7', textTransform: 'uppercase', letterSpacing: '1px', display: 'block', marginBottom: '4px' }}>
         Insights
       </span>
       
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '8px' }}>
         {insights.length > 1 ? (
-          <button onClick={handlePrev} style={{ background: 'none', border: 'none', color: '#0284C7', cursor: 'pointer', padding: '4px', fontSize: '14px', flexShrink: 0 }}>❮</button>
+          <button onClick={handlePrev} style={{ background: 'none', border: 'none', color: '#0284C7', cursor: 'pointer', padding: '2px', fontSize: '13px', flexShrink: 0 }}>❮</button>
         ) : <div style={{ width: '20px' }} />}
         
-        <div style={{ flex: 1, minHeight: '40px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-           <h2  style={{ fontSize: '16px', fontWeight: 600, color: '#0F172A', margin: 0, lineHeight: 1.4, animation: 'fadeIn 0.4s ease-out' }} key={currentIndex}>
+        <div style={{ flex: 1, minHeight: '30px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+           <h2  style={{ fontSize: '14px', fontWeight: 600, color: '#0F172A', margin: 0, lineHeight: 1.3, animation: 'fadeIn 0.4s ease-out' }} key={currentIndex}>
              {insights[currentIndex]}
            </h2>
         </div>
 
         {insights.length > 1 ? (
-          <button onClick={handleNext} style={{ background: 'none', border: 'none', color: '#0284C7', cursor: 'pointer', padding: '4px', fontSize: '14px', flexShrink: 0 }}>❯</button>
+          <button onClick={handleNext} style={{ background: 'none', border: 'none', color: '#0284C7', cursor: 'pointer', padding: '2px', fontSize: '13px', flexShrink: 0 }}>❯</button>
         ) : <div style={{ width: '20px' }} />}
       </div>
 
       {insights.length > 1 && (
-        <div style={{ display: 'flex', justifyContent: 'center', gap: '8px', marginTop: '10px' }}>
+        <div style={{ display: 'flex', justifyContent: 'center', gap: '6px', marginTop: '6px' }}>
           {insights.map((_, idx) => (
             <div 
               key={idx} 
