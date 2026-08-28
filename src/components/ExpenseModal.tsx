@@ -474,10 +474,10 @@ export const ExpenseModal: React.FC<ExpenseModalProps> = ({
                 onMouseDown={(e) => { e.preventDefault(); setShowGroupDropdown((p) => !p); }}
                 style={{
                   display: 'flex', alignItems: 'center', gap: '8px',
-                  padding: '8px 16px 8px 12px',
+                  padding: '6px 16px 6px 6px',
                   borderRadius: '24px',
-                  border: '1.5px solid #E2E8F0',
-                  background: 'transparent',
+                  border: 'none',
+                  background: '#F1F5F9',
                   cursor: 'pointer',
                   fontSize: '16px', fontWeight: 600, color: '#475569',
                   boxShadow: 'none',
@@ -487,12 +487,43 @@ export const ExpenseModal: React.FC<ExpenseModalProps> = ({
                   letterSpacing: '-0.3px',
                 }}
               >
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" style={{ flexShrink: 0, color: '#475569' }}>
-                  <circle cx="9" cy="7" r="3.5" stroke="currentColor" strokeWidth="2"/>
-                  <path d="M2 20c0-3.314 3.134-6 7-6s7 2.686 7 6" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
-                  <circle cx="17" cy="7" r="2.5" stroke="currentColor" strokeWidth="1.8"/>
-                  <path d="M22 20c0-2.761-2.239-5-5-5" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"/>
-                </svg>
+                {(() => {
+                  if (localGId === 'STANDALONE') {
+                    return (
+                      <div style={{ width: '24px', height: '24px', borderRadius: '50%', background: '#E2E8F0', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '12px', flexShrink: 0 }}>👤</div>
+                    );
+                  }
+                  if (activeGroup) {
+                    const index = groups.findIndex((x) => String(x.id) === String(activeGroup.id));
+                    const c = GROUP_COLORS[index !== -1 ? index % GROUP_COLORS.length : 0];
+                    const initials = (activeGroup.emoji && (activeGroup.emoji.startsWith('data:image/') || activeGroup.emoji.startsWith('http'))) ? activeGroup.emoji : (activeGroup.name.charAt(0).toUpperCase() || '🏡');
+                    return (
+                      <div style={{
+                        width: '24px',
+                        height: '24px',
+                        borderRadius: '50%',
+                        background: c.bg,
+                        color: c.text,
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        fontSize: '10px',
+                        fontWeight: 600,
+                        flexShrink: 0,
+                        overflow: 'hidden',
+                      }}>
+                        {initials && (initials.startsWith('data:image/') || initials.startsWith('http')) ? (
+                          <img src={initials} style={{ width: '100%', height: '100%', objectFit: 'cover' }} alt="" />
+                        ) : (
+                          initials
+                        )}
+                      </div>
+                    );
+                  }
+                  return (
+                    <div style={{ width: '24px', height: '24px', borderRadius: '50%', background: '#E2E8F0', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '12px', flexShrink: 0 }}>🏡</div>
+                  );
+                })()}
                 <span style={{ overflow: 'hidden', textOverflow: 'ellipsis' }}>
                   {localGId === 'STANDALONE' ? 'Non-Group Split' : (activeGroup?.name || 'Select Group')}
                 </span>
