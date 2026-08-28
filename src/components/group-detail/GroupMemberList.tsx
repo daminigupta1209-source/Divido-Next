@@ -366,7 +366,7 @@ export const GroupMemberList: React.FC<GroupMemberListProps> = ({
                           e.stopPropagation();
                           const bt = memberBalanceText(m);
                           const balLine = bt
-                            ? `${m} still has ${bt}. It stays saved.`
+                            ? `Outstanding balance: ${bt}. They move to Past Members and history is kept.`
                             : 'They move to Past Members and history is kept.';
                           if (checkIsMe(m)) {
                             // Leaving (self) → App's bespoke leave card.
@@ -554,7 +554,7 @@ export const GroupMemberList: React.FC<GroupMemberListProps> = ({
                           }
                           const bt = memberBalanceText(m);
                           const desc = bt
-                            ? `${m} still has ${bt}. It stays saved.`
+                            ? `Outstanding balance: ${bt}. They move to Past Members and history is kept.`
                             : "They haven't joined yet — this removes them.";
                           setActionCard({
                             title: `Remove "${m}"?`,
