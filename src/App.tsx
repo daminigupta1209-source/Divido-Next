@@ -3021,14 +3021,10 @@ function App() {
             editingGroup={editingGroupId ? groups.find(g => String(g.id) === String(editingGroupId)) : undefined}
             onManageMembers={() => {
               const gid = editingGroupId;
-              try {
-                sessionStorage.setItem('divido_open_members', '1');
-              } catch (e) {
-                // ignore
-              }
               setEditingGroupId(null);
               if (gid) setSelectedId(gid);
               setView('detail');
+              setShowFriendsList(true);
             }}
           />
         ) : (
