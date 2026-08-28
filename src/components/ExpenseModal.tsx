@@ -438,7 +438,7 @@ export const ExpenseModal: React.FC<ExpenseModalProps> = ({
         <div
           style={{
             display: 'grid',
-            gridTemplateColumns: '40px 1fr 80px',
+            gridTemplateColumns: '40px minmax(0, 1fr) auto',
             alignItems: 'center',
             background: '#F8FAFC',
             padding: '18px 16px',
@@ -485,7 +485,7 @@ export const ExpenseModal: React.FC<ExpenseModalProps> = ({
                   fontSize: '16px', fontWeight: 600, color: '#475569',
                   boxShadow: '0 1px 4px rgba(0,0,0,0.06)',
                   whiteSpace: 'nowrap',
-                  minWidth: '180px',
+                  maxWidth: '100%',
                   justifyContent: 'center',
                   letterSpacing: '-0.3px',
                 }}
@@ -789,19 +789,16 @@ export const ExpenseModal: React.FC<ExpenseModalProps> = ({
               }}
               style={{
                 border: 'none',
-                background: !isValid || !title ? '#A7F3D0' : '#059669',
+                background: 'transparent',
                 cursor: !isValid || !title ? 'not-allowed' : 'pointer',
-                width: '32px',
-                height: '32px',
-                borderRadius: '50%',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                marginLeft: '4px',
-                boxShadow: '0 2px 6px rgba(5,150,105,0.25)',
+                padding: '6px',
+                color: !isValid || !title ? '#A7F3D0' : '#059669',
               }}
             >
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+              <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
                 <polyline points="20 6 9 17 4 12" />
               </svg>
             </button>
