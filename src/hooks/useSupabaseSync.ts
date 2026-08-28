@@ -206,13 +206,7 @@ export function useSupabaseSync({
         const hasUnsyncedGroups = JSON.stringify(normalizeGroupsForDiff(localGroupsForDiff)) !== JSON.stringify(normalizeGroupsForDiff(nonDraftPrevGroups));
         const hasUnsyncedExpenses = JSON.stringify(expenses) !== JSON.stringify(prevExpensesRef.current);
         if (hasUnsyncedGroups || hasUnsyncedExpenses) {
-          console.log('Unsynced offline changes detected. Skipping load until sync is complete.', 'groups mismatch:', hasUnsyncedGroups, 'expenses mismatch:', hasUnsyncedExpenses);
-          // Render the local (cached) ledger now instead of blocking on the
-          // loader — the sync effects will upload these changes and re-trigger a
-          // fresh load once the queue is caught up.
-          initialLoadDoneRef.current = true;
-          setIsInitialLoadDone(true);
-          return;
+          console.log('Unsynced offline changes detected. Proceeding with pull-and-field-merge.', 'groups mismatch:', hasUnsyncedGroups, 'expenses mismatch:', hasUnsyncedExpenses);
         }
         const { data: { session } } = await supabase.auth.getSession();
         
@@ -517,7 +511,26 @@ export function useSupabaseSync({
           loadedGroups.push(selectedLocalGroup);
         }
 
-        const mergedGroups = [...cleanUnsynced, ...loadedGroups];
+        // 3-way field merge for groups
+        const prevGroupsMap = new Map(prevGroupsRef.current.map(g => [String(g.id), g]));
+        const localGroupsMap = new Map(groups.map(g => [String(g.id), g]));
+        
+        const fieldMergedGroups = loadedGroups.map(cloudGrp => {
+          const localGrp = localGroupsMap.get(String(cloudGrp.id));
+          const prevGrp = prevGroupsMap.get(String(cloudGrp.id));
+          if (!localGrp || !prevGrp) return cloudGrp;
+
+          const merged: any = { ...cloudGrp };
+          const editableFields: (keyof Group)[] = ['name', 'currency', 'emoji', 'simplifyDebts', 'createdDate'];
+          for (const key of editableFields) {
+            if (JSON.stringify(localGrp[key]) !== JSON.stringify(prevGrp[key])) {
+              merged[key] = localGrp[key];
+            }
+          }
+          return merged as Group;
+        });
+
+        const mergedGroups = [...cleanUnsynced, ...fieldMergedGroups];
 
         // Merge: keep any local expenses that are NOT in the cloud yet (pending upload)
         // These have temporary IDs (timestamp-based, > 2147483647) or belong to unsynced groups
@@ -547,9 +560,28 @@ export function useSupabaseSync({
           const belongsToSyncedGroup = mergedGroups.some(g => String(g.id) === String(e.gId));
           return belongsToSyncedGroup;
         });
+        // 3-way field merge for expenses
+        const prevExpensesMap = new Map(prevExpensesRef.current.map((e: any) => [String(e.id), e]));
+        const localExpensesMap = new Map(healedExpenses.map((e: any) => [String(e.id), e]));
+        
+        const fieldMergedExpenses = loadedExpenses.map((cloudExp: any) => {
+          const localExp = localExpensesMap.get(String(cloudExp.id));
+          const prevExp = prevExpensesMap.get(String(cloudExp.id));
+          if (!localExp || !prevExp) return cloudExp;
+
+          const merged: any = { ...cloudExp };
+          const editableFields: (keyof Expense)[] = ['title', 'amt', 'paid', 'date', 'mode', 'splitters', 'shares', 'category', 'currency', 'notes', 'attachments', 'isRecurring', 'recurrence', 'nextOccurrence'];
+          for (const key of editableFields) {
+            if (JSON.stringify(localExp[key]) !== JSON.stringify(prevExp[key])) {
+              merged[key] = localExp[key];
+            }
+          }
+          return merged as Expense;
+        });
+
         // Drop legacy "X is now Y" name-change log rows so they can't reappear
         // from a local cache or re-upload after being deleted.
-        const mergedExpenses = [...loadedExpenses, ...localOnlyExpenses].filter((e) => !isLegacyRenameLog(e));
+        const mergedExpenses = [...fieldMergedExpenses, ...localOnlyExpenses].filter((e) => !isLegacyRenameLog(e));
 
         prevGroupsRef.current = loadedGroups;
         localStorage.setItem('divido_last_synced_groups', JSON.stringify(loadedGroups));
