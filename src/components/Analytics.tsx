@@ -255,9 +255,20 @@ export const Analytics: React.FC<AnalyticsProps> = ({ expenses, groups, me, user
     const [recentFilter, setRecentFilter] = useState<'1M' | '6M' | 'YTD' | '1Y' | '5Y' | 'Max'>('1M');
     
     const localLastExpenses = useMemo(() => {
+      const base = selectedGroupId === 'ALL' ? expenses : expenses.filter((e) => String(e.gId) === String(selectedGroupId));
       const now = new Date();
       const currentYear = now.getFullYear();
-      return filteredExpenses.filter((e: Expense) => {
+      return base.filter((e: Expense) => {
+        const t = e.title || '';
+        if (
+          e.paid === 'SYSTEM' ||
+          e.category === '✅' ||
+          t.includes('✅ Settlement') ||
+          t === 'Written off' || e.notes === 'Written off'
+        ) {
+          return false;
+        }
+        
         const d = new Date(e.date);
         switch (recentFilter) {
           case '1M':
@@ -275,7 +286,7 @@ export const Analytics: React.FC<AnalyticsProps> = ({ expenses, groups, me, user
             return true;
         }
       });
-    }, [filteredExpenses, recentFilter]);
+    }, [expenses, selectedGroupId, recentFilter]);
 
     const chartData = useMemo(() => {
       const sorted = [...localLastExpenses].sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
@@ -436,14 +447,14 @@ export const Analytics: React.FC<AnalyticsProps> = ({ expenses, groups, me, user
                   <line x1="40" y1="75" x2="390" y2="75" stroke="#E2E8F0" strokeWidth="1" strokeDasharray="4 4" />
                   <line x1="40" y1="130" x2="390" y2="130" stroke="#E2E8F0" strokeWidth="1" strokeDasharray="4 4" />
 
-                  <text x="35" y="24" fontSize="9" fill="#94A3B8" textAnchor="end" fontWeight="500">₹{maxCumAmt >= 1000 ? (maxCumAmt/1000).toFixed(1)+'k' : maxCumAmt}</text>
-                  <text x="35" y="79" fontSize="9" fill="#94A3B8" textAnchor="end" fontWeight="500">₹{Math.round((maxCumAmt + minCumAmt)/2) >= 1000 ? (Math.round((maxCumAmt + minCumAmt)/2)/1000).toFixed(1)+'k' : Math.round((maxCumAmt + minCumAmt)/2)}</text>
-                  <text x="35" y="134" fontSize="9" fill="#94A3B8" textAnchor="end" fontWeight="500">₹{minCumAmt >= 1000 ? (minCumAmt/1000).toFixed(1)+'k' : minCumAmt}</text>
+                  <text x="35" y="24" fontSize="10" fill="#475569" textAnchor="end" fontWeight="600">₹{maxCumAmt >= 1000 ? (maxCumAmt/1000).toFixed(1)+'k' : maxCumAmt}</text>
+                  <text x="35" y="79" fontSize="10" fill="#475569" textAnchor="end" fontWeight="600">₹{Math.round((maxCumAmt + minCumAmt)/2) >= 1000 ? (Math.round((maxCumAmt + minCumAmt)/2)/1000).toFixed(1)+'k' : Math.round((maxCumAmt + minCumAmt)/2)}</text>
+                  <text x="35" y="134" fontSize="10" fill="#475569" textAnchor="end" fontWeight="600">₹{minCumAmt >= 1000 ? (minCumAmt/1000).toFixed(1)+'k' : minCumAmt}</text>
 
-                  <text x="40" y="145" fontSize="9" fill="#94A3B8" textAnchor="start" fontWeight="500">
+                  <text x="40" y="145" fontSize="10" fill="#475569" textAnchor="start" fontWeight="600">
                     {new Date(minTime).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
                   </text>
-                  <text x="390" y="145" fontSize="9" fill="#94A3B8" textAnchor="end" fontWeight="500">
+                  <text x="390" y="145" fontSize="10" fill="#475569" textAnchor="end" fontWeight="600">
                     {new Date(maxTime).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
                   </text>
 
