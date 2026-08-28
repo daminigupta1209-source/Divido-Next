@@ -474,12 +474,12 @@ export const ExpenseModal: React.FC<ExpenseModalProps> = ({
                 onMouseDown={(e) => { e.preventDefault(); setShowGroupDropdown((p) => !p); }}
                 style={{
                   display: 'flex', alignItems: 'center', gap: '8px',
-                  padding: '6px 16px 6px 6px',
-                  borderRadius: '24px',
+                  padding: '8px 18px 8px 8px',
+                  borderRadius: '30px',
                   border: 'none',
                   background: '#F1F5F9',
                   cursor: 'pointer',
-                  fontSize: '16px', fontWeight: 600, color: '#475569',
+                  fontSize: '18px', fontWeight: 600, color: '#475569',
                   boxShadow: 'none',
                   whiteSpace: 'nowrap',
                   maxWidth: '100%',
@@ -490,7 +490,7 @@ export const ExpenseModal: React.FC<ExpenseModalProps> = ({
                 {(() => {
                   if (localGId === 'STANDALONE') {
                     return (
-                      <div style={{ width: '24px', height: '24px', borderRadius: '50%', background: '#E2E8F0', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '12px', flexShrink: 0 }}>👤</div>
+                      <div style={{ width: '28px', height: '28px', borderRadius: '50%', background: '#E2E8F0', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '14px', flexShrink: 0 }}>👤</div>
                     );
                   }
                   if (activeGroup) {
@@ -499,15 +499,15 @@ export const ExpenseModal: React.FC<ExpenseModalProps> = ({
                     const initials = (activeGroup.emoji && (activeGroup.emoji.startsWith('data:image/') || activeGroup.emoji.startsWith('http'))) ? activeGroup.emoji : (activeGroup.name.charAt(0).toUpperCase() || '🏡');
                     return (
                       <div style={{
-                        width: '24px',
-                        height: '24px',
+                        width: '28px',
+                        height: '28px',
                         borderRadius: '50%',
                         background: c.bg,
                         color: c.text,
                         display: 'flex',
                         alignItems: 'center',
                         justifyContent: 'center',
-                        fontSize: '10px',
+                        fontSize: '12px',
                         fontWeight: 600,
                         flexShrink: 0,
                         overflow: 'hidden',
@@ -521,7 +521,7 @@ export const ExpenseModal: React.FC<ExpenseModalProps> = ({
                     );
                   }
                   return (
-                    <div style={{ width: '24px', height: '24px', borderRadius: '50%', background: '#E2E8F0', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '12px', flexShrink: 0 }}>🏡</div>
+                    <div style={{ width: '28px', height: '28px', borderRadius: '50%', background: '#E2E8F0', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '14px', flexShrink: 0 }}>🏡</div>
                   );
                 })()}
                 <span style={{ overflow: 'hidden', textOverflow: 'ellipsis' }}>
