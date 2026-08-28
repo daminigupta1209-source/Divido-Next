@@ -441,7 +441,7 @@ export const ExpenseModal: React.FC<ExpenseModalProps> = ({
             gridTemplateColumns: '1fr auto 1fr',
             alignItems: 'center',
             background: '#F8FAFC',
-            padding: '18px 16px',
+            padding: '18px 8px 18px 16px',
             margin: '-16px -20px 12px -20px',
             borderBottom: '1px solid #E2E8F0',
           }}
@@ -632,7 +632,7 @@ export const ExpenseModal: React.FC<ExpenseModalProps> = ({
             </div>
           </div>
 
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: '2px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: '0px' }}>
             <input
               ref={uploadInputRef}
               type="file"
@@ -730,7 +730,7 @@ export const ExpenseModal: React.FC<ExpenseModalProps> = ({
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
-                  padding: '6px',
+                  padding: '4px',
                 }}
                 onClick={() => {
                   const isWriteOff = editingExpense.title === 'Written off' || editingExpense.notes === 'Written off';
@@ -762,7 +762,7 @@ export const ExpenseModal: React.FC<ExpenseModalProps> = ({
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                padding: '6px',
+                padding: '4px',
                 color: 'var(--t)',
                 opacity: 0.7,
               }}
@@ -794,7 +794,7 @@ export const ExpenseModal: React.FC<ExpenseModalProps> = ({
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                padding: '6px',
+                padding: '4px',
                 color: !isValid || !title ? '#A7F3D0' : '#059669',
               }}
             >
