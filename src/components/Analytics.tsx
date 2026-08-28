@@ -277,8 +277,44 @@ export const Analytics: React.FC<AnalyticsProps> = ({ expenses, groups, me, user
       });
     }, [filteredExpenses, recentFilter]);
 
-    const localMaxAmt = useMemo(() => Math.max(...localLastExpenses.map((e: Expense) => e.amt), 1), [localLastExpenses]);
+    const chartData = useMemo(() => {
+      const sorted = [...localLastExpenses].sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+      let cumulative = 0;
+      return sorted.map((e) => {
+        cumulative += (Number(e.amt) || 0);
+        return {
+          ...e,
+          cumulative,
+          dateObj: new Date(e.date)
+        };
+      });
+    }, [localLastExpenses]);
 
+    const { points, polylinePoints, areaPoints } = useMemo(() => {
+      if (chartData.length === 0) return { points: [], polylinePoints: '', areaPoints: '' };
+      
+      const maxCumAmt = chartData[chartData.length - 1].cumulative;
+      const minCumAmt = chartData[0].cumulative;
+      const minTime = chartData[0].dateObj.getTime();
+      const maxTime = chartData[chartData.length - 1].dateObj.getTime();
+      
+      const pts = chartData.map((d, i) => {
+        let x = 200;
+        if (chartData.length > 1) {
+          x = maxTime === minTime ? (i / (chartData.length - 1)) * 400 : ((d.dateObj.getTime() - minTime) / (maxTime - minTime)) * 400;
+        }
+        let y = 75;
+        if (maxCumAmt > minCumAmt) {
+          y = 140 - ((d.cumulative - minCumAmt) / (maxCumAmt - minCumAmt)) * 120; // 20 to 140
+        }
+        return { x, y, data: d, index: i };
+      });
+      
+      const poly = pts.map(p => `${p.x},${p.y}`).join(' ');
+      const area = pts.length > 0 ? `${pts[0].x},150 ${poly} ${pts[pts.length - 1].x},150` : '';
+      
+      return { points: pts, polylinePoints: poly, areaPoints: area };
+    }, [chartData]);
     return (
       <div
         className="card shadow-sm"
@@ -303,7 +339,7 @@ export const Analytics: React.FC<AnalyticsProps> = ({ expenses, groups, me, user
             </h3>
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-            {showTrends && hoveredBar !== null && localLastExpenses[hoveredBar] && (
+            {showTrends && hoveredBar !== null && chartData[hoveredBar] && (
               <div
                 className="pill purple"
                 style={{
@@ -313,7 +349,7 @@ export const Analytics: React.FC<AnalyticsProps> = ({ expenses, groups, me, user
                   fontWeight: 600
                 }}
               >
-                {localLastExpenses[hoveredBar].title}: <strong>₹{localLastExpenses[hoveredBar].amt}</strong>
+                {chartData[hoveredBar].title}: <strong>₹{chartData[hoveredBar].amt}</strong>
               </div>
             )}
             <div
@@ -348,7 +384,7 @@ export const Analytics: React.FC<AnalyticsProps> = ({ expenses, groups, me, user
 
         {showTrends && (
           <>
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '16px', marginBottom: '16px', overflowX: 'auto', paddingBottom: '4px' }} className="hide-scrollbar">
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-start', gap: '16px', marginBottom: '16px', overflowX: 'auto', paddingBottom: '4px', width: '100%' }} className="hide-scrollbar">
               {['1M', '6M', 'YTD', '1Y', '5Y', 'Max'].map((filter, index, arr) => (
                 <React.Fragment key={filter}>
                   <div
@@ -375,73 +411,54 @@ export const Analytics: React.FC<AnalyticsProps> = ({ expenses, groups, me, user
               style={{ 
                 height: '160px', 
                 width: '100%', 
-                display: 'flex', 
-                alignItems: 'flex-end', 
-                gap: '10px', 
-                padding: '20px 10px 10px 10px', 
+                position: 'relative',
                 background: '#F8FAFC', 
                 borderRadius: '16px', 
-                boxSizing: 'border-box',
                 animation: 'fadeSlideIn 0.3s ease-out',
-                overflowX: 'auto',
-                WebkitOverflowScrolling: 'touch'
+                overflow: 'hidden',
+                marginTop: '8px'
               }}
-              className="modal-body-scroll"
             >
-              {localLastExpenses.length === 0 ? (
-                <div style={{ width: '100%', textAlign: 'center', color: 'var(--g)', fontSize: '12px', fontWeight: 600 }}>
+              {chartData.length === 0 ? (
+                <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--g)', fontSize: '12px', fontWeight: 600 }}>
                   No expenses recorded yet.
                 </div>
               ) : (
-                localLastExpenses.map((e: Expense, i: number) => {
-                  const heightPct = (e.amt / localMaxAmt) * 100;
-                  const isHovered = hoveredBar === i;
-                  return (
-                    <div
-                      key={e.id}
-                    style={{
-                      flex: '1 0 40px',
-                      height: '100%',
-                      display: 'flex',
-                      flexDirection: 'column',
-                      justifyContent: 'flex-end',
-                      alignItems: 'center',
-                      position: 'relative',
-                      cursor: 'pointer',
-                    }}
-                    onMouseEnter={() => setHoveredBar(i)}
-                    onMouseLeave={() => setHoveredBar(null)}
-                  >
-                    <div
-                      style={{
-                        width: '100%',
-                        height: `${heightPct}%`,
-                        background: isHovered ? 'linear-gradient(180deg, #6366F1 0%, #8B5CF6 100%)' : 'linear-gradient(180deg, #818CF8 0%, #A78BFA 100%)',
-                        borderRadius: '12px 12px 4px 4px',
-                        transition: 'all 0.25s cubic-bezier(0.4, 0, 0.2, 1)',
-                        boxShadow: isHovered ? '0 8px 16px rgba(139, 92, 246, 0.3)' : '0 4px 12px rgba(139, 92, 246, 0.1)',
-                      }}
+                <svg viewBox="0 0 400 150" preserveAspectRatio="none" style={{ width: '100%', height: '100%', display: 'block' }}>
+                  <defs>
+                    <linearGradient id="lineGrad" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="0%" stopColor="#818CF8" stopOpacity="0.4" />
+                      <stop offset="100%" stopColor="#818CF8" stopOpacity="0" />
+                    </linearGradient>
+                  </defs>
+                  
+                  <line x1="0" y1="20" x2="400" y2="20" stroke="#E2E8F0" strokeWidth="1" strokeDasharray="4 4" />
+                  <line x1="0" y1="80" x2="400" y2="80" stroke="#E2E8F0" strokeWidth="1" strokeDasharray="4 4" />
+                  <line x1="0" y1="140" x2="400" y2="140" stroke="#E2E8F0" strokeWidth="1" strokeDasharray="4 4" />
+
+                  {areaPoints && (
+                    <polygon points={areaPoints} fill="url(#lineGrad)" />
+                  )}
+                  {polylinePoints && (
+                    <polyline points={polylinePoints} fill="none" stroke="#6366F1" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" />
+                  )}
+
+                  {points.map((p) => (
+                    <circle
+                      key={p.index}
+                      cx={p.x}
+                      cy={p.y}
+                      r={hoveredBar === p.index ? 6 : 4}
+                      fill={hoveredBar === p.index ? '#4F46E5' : '#FFFFFF'}
+                      stroke="#6366F1"
+                      strokeWidth="2"
+                      style={{ cursor: 'pointer', transition: 'all 0.2s' }}
+                      onMouseEnter={() => setHoveredBar(p.index)}
+                      onMouseLeave={() => setHoveredBar(null)}
                     />
-                    <span
-                      style={{
-                        fontSize: '9px',
-                        fontWeight: 600,
-                        color: isHovered ? '#4F46E5' : 'var(--g)',
-                        marginTop: '6px',
-                        textTransform: 'uppercase',
-                        textAlign: 'center',
-                        whiteSpace: 'nowrap',
-                        maxWidth: '100%',
-                        overflow: 'hidden',
-                        textOverflow: 'ellipsis'
-                      }}
-                    >
-                      {e.title.slice(0, 5)}
-                    </span>
-                  </div>
-                );
-              })
-            )}
+                  ))}
+                </svg>
+              )}
             </div>
           </>
         )}
