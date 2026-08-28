@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { Group, Expense } from '../lib/types';
 import { useAnalytics, CAT_COLORS } from '../hooks/useAnalytics';
 import { getEmoji } from '../lib/utils';
@@ -252,6 +252,33 @@ export const Analytics: React.FC<AnalyticsProps> = ({ expenses, groups, me, user
   const activeList = showByGroup ? groupList : categoryList;
 
   const SpendingTrend = () => {
+    const [recentFilter, setRecentFilter] = useState<'1M' | '6M' | 'YTD' | '1Y' | '5Y' | 'Max'>('1M');
+    
+    const localLastExpenses = useMemo(() => {
+      const now = new Date();
+      const currentYear = now.getFullYear();
+      return filteredExpenses.filter((e: Expense) => {
+        const d = new Date(e.date);
+        switch (recentFilter) {
+          case '1M':
+            return now.getTime() - d.getTime() <= 30 * 24 * 60 * 60 * 1000;
+          case '6M':
+            return now.getTime() - d.getTime() <= 180 * 24 * 60 * 60 * 1000;
+          case 'YTD':
+            return d.getFullYear() === currentYear;
+          case '1Y':
+            return now.getTime() - d.getTime() <= 365 * 24 * 60 * 60 * 1000;
+          case '5Y':
+            return now.getTime() - d.getTime() <= 5 * 365 * 24 * 60 * 60 * 1000;
+          case 'Max':
+          default:
+            return true;
+        }
+      });
+    }, [filteredExpenses, recentFilter]);
+
+    const localMaxAmt = useMemo(() => Math.max(...localLastExpenses.map((e: Expense) => e.amt), 1), [localLastExpenses]);
+
     return (
       <div
         className="card shadow-sm"
@@ -276,7 +303,7 @@ export const Analytics: React.FC<AnalyticsProps> = ({ expenses, groups, me, user
             </h3>
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-            {showTrends && hoveredBar !== null && lastExpenses[hoveredBar] && (
+            {showTrends && hoveredBar !== null && localLastExpenses[hoveredBar] && (
               <div
                 className="pill purple"
                 style={{
@@ -286,7 +313,7 @@ export const Analytics: React.FC<AnalyticsProps> = ({ expenses, groups, me, user
                   fontWeight: 600
                 }}
               >
-                {lastExpenses[hoveredBar].title}: <strong>₹{lastExpenses[hoveredBar].amt}</strong>
+                {localLastExpenses[hoveredBar].title}: <strong>₹{localLastExpenses[hoveredBar].amt}</strong>
               </div>
             )}
             <div
@@ -320,34 +347,58 @@ export const Analytics: React.FC<AnalyticsProps> = ({ expenses, groups, me, user
         </div>
 
         {showTrends && (
-          <div 
-            style={{ 
-              height: '160px', 
-              width: '100%', 
-              display: 'flex', 
-              alignItems: 'flex-end', 
-              gap: '10px', 
-              padding: '20px 10px 10px 10px', 
-              background: '#F8FAFC', 
-              borderRadius: '16px', 
-              boxSizing: 'border-box',
-              animation: 'fadeSlideIn 0.3s ease-out',
-              overflowX: 'auto',
-              WebkitOverflowScrolling: 'touch'
-            }}
-            className="modal-body-scroll"
-          >
-            {lastExpenses.length === 0 ? (
-              <div style={{ width: '100%', textAlign: 'center', color: 'var(--g)', fontSize: '12px', fontWeight: 600 }}>
-                No expenses recorded yet.
-              </div>
-            ) : (
-              lastExpenses.map((e, i) => {
-                const heightPct = (e.amt / maxAmt) * 100;
-                const isHovered = hoveredBar === i;
-                return (
+          <>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '16px', marginBottom: '16px', overflowX: 'auto', paddingBottom: '4px' }} className="hide-scrollbar">
+              {['1M', '6M', 'YTD', '1Y', '5Y', 'Max'].map((filter, index, arr) => (
+                <React.Fragment key={filter}>
                   <div
-                    key={e.id}
+                    onClick={() => setRecentFilter(filter as any)}
+                    style={{
+                      cursor: 'pointer',
+                      fontSize: '12px',
+                      fontWeight: 500,
+                      color: recentFilter === filter ? '#0284C7' : '#64748B',
+                      padding: '2px 4px',
+                      whiteSpace: 'nowrap',
+                      transition: 'all 0.2s',
+                    }}
+                  >
+                    {filter}
+                  </div>
+                  {index < arr.length - 1 && (
+                    <div style={{ width: '1px', height: '14px', background: '#E2E8F0', flexShrink: 0 }} />
+                  )}
+                </React.Fragment>
+              ))}
+            </div>
+            <div 
+              style={{ 
+                height: '160px', 
+                width: '100%', 
+                display: 'flex', 
+                alignItems: 'flex-end', 
+                gap: '10px', 
+                padding: '20px 10px 10px 10px', 
+                background: '#F8FAFC', 
+                borderRadius: '16px', 
+                boxSizing: 'border-box',
+                animation: 'fadeSlideIn 0.3s ease-out',
+                overflowX: 'auto',
+                WebkitOverflowScrolling: 'touch'
+              }}
+              className="modal-body-scroll"
+            >
+              {localLastExpenses.length === 0 ? (
+                <div style={{ width: '100%', textAlign: 'center', color: 'var(--g)', fontSize: '12px', fontWeight: 600 }}>
+                  No expenses recorded yet.
+                </div>
+              ) : (
+                localLastExpenses.map((e: Expense, i: number) => {
+                  const heightPct = (e.amt / localMaxAmt) * 100;
+                  const isHovered = hoveredBar === i;
+                  return (
+                    <div
+                      key={e.id}
                     style={{
                       flex: '1 0 40px',
                       height: '100%',
@@ -391,7 +442,8 @@ export const Analytics: React.FC<AnalyticsProps> = ({ expenses, groups, me, user
                 );
               })
             )}
-          </div>
+            </div>
+          </>
         )}
       </div>
     );
