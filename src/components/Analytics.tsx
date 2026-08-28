@@ -252,120 +252,149 @@ export const Analytics: React.FC<AnalyticsProps> = ({ expenses, groups, me, user
   const activeList = showByGroup ? groupList : categoryList;
 
   const SpendingTrend = () => {
-    const [recentFilter, setRecentFilter] = useState<'1M' | '6M' | 'YTD' | '1Y' | '5Y' | 'Max'>('1M');
+    const [recentFilter, setRecentFilter] = useState<'1W' | '1M' | '6M' | 'YTD' | '1Y' | '5Y' | 'Max'>('1M');
     
-    const localLastExpenses = useMemo(() => {
+    const baseExpenses = useMemo(() => {
       const base = selectedGroupId === 'ALL' ? expenses : expenses.filter((e) => String(e.gId) === String(selectedGroupId));
-      const now = new Date();
-      const currentYear = now.getFullYear();
       return base.filter((e: Expense) => {
         const t = e.title || '';
-        if (
+        return !(
           e.paid === 'SYSTEM' ||
           e.category === '✅' ||
           t.includes('✅ Settlement') ||
           t === 'Written off' || e.notes === 'Written off'
-        ) {
-          return false;
-        }
-        
-        const d = new Date(e.date);
-        switch (recentFilter) {
-          case '1M':
-            return now.getTime() - d.getTime() <= 30 * 24 * 60 * 60 * 1000;
-          case '6M':
-            return now.getTime() - d.getTime() <= 180 * 24 * 60 * 60 * 1000;
-          case 'YTD':
-            return d.getFullYear() === currentYear;
-          case '1Y':
-            return now.getTime() - d.getTime() <= 365 * 24 * 60 * 60 * 1000;
-          case '5Y':
-            return now.getTime() - d.getTime() <= 5 * 365 * 24 * 60 * 60 * 1000;
-          case 'Max':
-          default:
-            return true;
-        }
+        );
       });
-    }, [expenses, selectedGroupId, recentFilter]);
+    }, [expenses, selectedGroupId]);
 
-    const chartData = useMemo(() => {
-      const sorted = [...localLastExpenses].sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+    const allDailyData = useMemo(() => {
+      const sorted = [...baseExpenses].sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+      const dailyMap = new Map<string, { amt: number, items: any[] }>();
+      sorted.forEach(e => {
+        const d = new Date(e.date);
+        const dateKey = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+        if (!dailyMap.has(dateKey)) {
+          dailyMap.set(dateKey, { amt: 0, items: [] });
+        }
+        dailyMap.get(dateKey)!.amt += (Number(e.amt) || 0);
+        dailyMap.get(dateKey)!.items.push(e);
+      });
+      
+      const dailySorted = Array.from(dailyMap.entries()).sort((a, b) => new Date(a[0]).getTime() - new Date(b[0]).getTime());
+      
       let cumulative = 0;
-      return sorted.map((e) => {
-        cumulative += (Number(e.amt) || 0);
+      return dailySorted.map(([dateKey, data]) => {
+        cumulative += data.amt;
+        const dObj = new Date(dateKey + 'T12:00:00');
+        const title = data.items.length === 1 ? data.items[0].title : `${data.items.length} expenses`;
         return {
-          ...e,
+          dateKey,
+          amt: data.amt,
           cumulative,
-          dateObj: new Date(e.date)
+          dateObj: dObj,
+          time: dObj.getTime(),
+          title,
+          items: data.items
         };
       });
-    }, [localLastExpenses]);
+    }, [baseExpenses]);
 
-    const { points, polylinePoints, areaPoints, maxCumAmt, minCumAmt, minTime, maxTime } = useMemo(() => {
-      if (chartData.length === 0) return { points: [], polylinePoints: '', areaPoints: '', maxCumAmt: 0, minCumAmt: 0, minTime: 0, maxTime: 0 };
+    const { chartData, minT, maxT } = useMemo(() => {
+      const now = new Date();
+      const nowT = now.getTime();
+      let startT = nowT;
+      const currentYear = now.getFullYear();
       
-      const maxC = chartData[chartData.length - 1].cumulative;
-      const minC = chartData[0].cumulative;
-      const minT = chartData[0].dateObj.getTime();
-      const maxT = chartData[chartData.length - 1].dateObj.getTime();
+      switch (recentFilter) {
+        case '1W': startT = nowT - 7 * 24 * 3600 * 1000; break;
+        case '1M': startT = nowT - 30 * 24 * 3600 * 1000; break;
+        case '6M': startT = nowT - 180 * 24 * 3600 * 1000; break;
+        case 'YTD': startT = new Date(currentYear, 0, 1).getTime(); break;
+        case '1Y': startT = nowT - 365 * 24 * 3600 * 1000; break;
+        case '5Y': startT = nowT - 5 * 365 * 24 * 3600 * 1000; break;
+        case 'Max': 
+          startT = allDailyData.length > 0 ? allDailyData[0].time : nowT - 30 * 24 * 3600 * 1000;
+          break;
+      }
       
+      const filtered = allDailyData.filter(d => d.time >= startT);
+      
+      let startCum = 0;
+      const beforeStart = allDailyData.filter(d => d.time < startT);
+      if (beforeStart.length > 0) {
+        startCum = beforeStart[beforeStart.length - 1].cumulative;
+      }
+      
+      let dataForChart = [];
+      dataForChart.push({ time: startT, cumulative: startCum, isSynthetic: true, dateObj: new Date(startT), title: '', amt: 0, index: -1 });
+      dataForChart = dataForChart.concat(filtered.map(d => ({...d, isSynthetic: false, index: 0})));
+      
+      if (dataForChart.length === 0 || dataForChart[dataForChart.length - 1].time < nowT) {
+        const lastCum = dataForChart.length > 0 ? dataForChart[dataForChart.length - 1].cumulative : startCum;
+        dataForChart.push({ time: nowT, cumulative: lastCum, isSynthetic: true, dateObj: new Date(nowT), title: '', amt: 0, index: -1 });
+      }
+
+      dataForChart.forEach((d, i) => d.index = i);
+      return { chartData: dataForChart, minT: startT, maxT: nowT };
+    }, [allDailyData, recentFilter]);
+
+    const { points, polylinePoints, areaPoints, maxCumAmt, minCumAmt } = useMemo(() => {
+      if (chartData.length === 0) return { points: [], polylinePoints: '', areaPoints: '', maxCumAmt: 0, minCumAmt: 0 };
+      
+      let maxC = chartData[0].cumulative;
+      let minC = chartData[0].cumulative;
+      chartData.forEach(d => {
+        if (d.cumulative > maxC) maxC = d.cumulative;
+        if (d.cumulative < minC) minC = d.cumulative;
+      });
+
+      const svgW = 400;
+      const svgH = 150;
+      const drawW = svgW;
+      const drawH = svgH;
+
       const pts = chartData.map((d, i) => {
-        let x = 220; // center if only 1 point
-        if (chartData.length > 1) {
-          x = maxT === minT ? 50 + (i / (chartData.length - 1)) * 340 : 50 + ((d.dateObj.getTime() - minT) / (maxT - minT)) * 340;
+        let x = 0;
+        if (maxT > minT) {
+          x = ((d.time - minT) / (maxT - minT)) * drawW;
         }
-        let y = 95;
+        let y = svgH / 2;
         if (maxC > minC) {
-          y = 170 - ((d.cumulative - minC) / (maxC - minC)) * 150; // 20 to 170
+          y = svgH - ((d.cumulative - minC) / (maxC - minC)) * drawH; 
         }
         return { x, y, data: d, index: i };
       });
       
       const poly = pts.map(p => `${p.x},${p.y}`).join(' ');
-      const area = pts.length > 0 ? `${pts[0].x},170 ${poly} ${pts[pts.length - 1].x},170` : '';
+      const area = pts.length > 0 ? `${pts[0].x},${svgH} ${poly} ${pts[pts.length - 1].x},${svgH}` : '';
       
-      return { points: pts, polylinePoints: poly, areaPoints: area, maxCumAmt: maxC, minCumAmt: minC, minTime: minT, maxTime: maxT };
-    }, [chartData]);
+      return { points: pts, polylinePoints: poly, areaPoints: area, maxCumAmt: maxC, minCumAmt: minC };
+    }, [chartData, minT, maxT]);
+
+    const formatY = (val: number) => {
+      if (val >= 1000) return (val / 1000).toFixed(1) + 'k';
+      return Math.round(val);
+    };
+
     return (
       <div
         className="card shadow-sm"
-        style={{
-          padding: '18px',
-          marginBottom: '32px',
-          background: 'var(--w)',
-          border: '1.5px solid rgba(0,0,0,0.02)',
-        }}
+        style={{ padding: '18px', marginBottom: '32px', background: 'var(--w)', border: '1.5px solid rgba(0,0,0,0.02)' }}
       >
-        <div
-          style={{
-            display: 'flex',
-            justifyContent: 'space-between',
-            alignItems: 'center',
-            marginBottom: showTrends ? '24px' : '0px',
-          }}
-        >
-          <div>
-            <h3  style={{ fontSize: '13px', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '6px', margin: 0, color: 'var(--t)', position: 'relative', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
-              Recent Spending
-            </h3>
-          </div>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: showTrends ? '24px' : '0px' }}>
+          <h3 style={{ fontSize: '13px', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '6px', margin: 0, color: 'var(--t)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+            Recent Spending
+          </h3>
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-            {showTrends && hoveredBar !== null && chartData[hoveredBar] && (
+            {showTrends && hoveredBar !== null && chartData[hoveredBar] && !chartData[hoveredBar].isSynthetic && (
               <div
                 style={{
-                  background: '#FFFFFF',
-                  border: '1px solid #E2E8F0',
-                  boxShadow: '0 4px 12px rgba(0,0,0,0.1)',
-                  borderRadius: '4px',
-                  padding: '4px 8px',
-                  fontSize: '11.5px',
-                  fontWeight: 500,
-                  color: '#1E293B',
-                  animation: 'fadeIn 0.2s ease-out',
-                  fontFamily: 'system-ui, sans-serif'
+                  background: '#FFFFFF', border: '1px solid #E2E8F0', boxShadow: '0 4px 12px rgba(0,0,0,0.1)',
+                  borderRadius: '4px', padding: '4px 8px', fontSize: '11.5px', fontWeight: 500, color: '#1E293B',
+                  animation: 'fadeIn 0.2s ease-out', fontFamily: 'system-ui, sans-serif'
                 }}
               >
-                <span style={{ color: '#EF4444' }}>₹{chartData[hoveredBar].cumulative}</span>
+                <span style={{ color: '#10B981' }}>₹{chartData[hoveredBar].cumulative}</span>
                 {' '}
                 <span style={{ color: '#64748B', fontSize: '10.5px' }}>
                   {chartData[hoveredBar].dateObj.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
@@ -375,27 +404,15 @@ export const Analytics: React.FC<AnalyticsProps> = ({ expenses, groups, me, user
             <div
               onClick={() => setShowTrends(!showTrends)}
               style={{
-                width: '38px',
-                height: '20px',
-                borderRadius: '10px',
+                width: '38px', height: '20px', borderRadius: '10px',
                 background: showTrends ? '#10B981' : '#CBD5E1',
-                position: 'relative',
-                cursor: 'pointer',
-                transition: 'background 0.2s',
-                flexShrink: 0,
+                position: 'relative', cursor: 'pointer', transition: 'background 0.2s', flexShrink: 0,
               }}
             >
               <div
                 style={{
-                  width: '16px',
-                  height: '16px',
-                  borderRadius: '50%',
-                  background: '#FFFFFF',
-                  position: 'absolute',
-                  top: '2px',
-                  left: showTrends ? '20px' : '2px',
-                  transition: 'left 0.2s',
-                  boxShadow: '0 1px 3px rgba(0,0,0,0.2)',
+                  width: '16px', height: '16px', borderRadius: '50%', background: '#FFFFFF', position: 'absolute',
+                  top: '2px', left: showTrends ? '20px' : '2px', transition: 'left 0.2s', boxShadow: '0 1px 3px rgba(0,0,0,0.2)',
                 }}
               />
             </div>
@@ -404,84 +421,84 @@ export const Analytics: React.FC<AnalyticsProps> = ({ expenses, groups, me, user
 
         {showTrends && (
           <>
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-start', gap: '16px', marginBottom: '16px', overflowX: 'auto', paddingBottom: '4px', width: '100%' }} className="hide-scrollbar">
-              {['1M', '6M', 'YTD', '1Y', '5Y', 'Max'].map((filter, index, arr) => (
-                <React.Fragment key={filter}>
-                  <div
-                    onClick={() => setRecentFilter(filter as any)}
-                    style={{
-                      cursor: 'pointer',
-                      fontSize: '12px',
-                      fontWeight: 500,
-                      color: recentFilter === filter ? '#0284C7' : '#64748B',
-                      padding: '2px 4px',
-                      whiteSpace: 'nowrap',
-                      transition: 'all 0.2s',
-                    }}
-                  >
-                    {filter}
-                  </div>
-                  {index < arr.length - 1 && (
-                    <div style={{ width: '1px', height: '14px', background: '#E2E8F0', flexShrink: 0 }} />
-                  )}
-                </React.Fragment>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-start', gap: '16px', marginBottom: '8px', width: '100%' }}>
+              {['1W', '1M', '6M', 'YTD'].map((filter) => (
+                <div
+                  key={filter}
+                  onClick={() => setRecentFilter(filter as any)}
+                  style={{
+                    cursor: 'pointer', fontSize: '12px', fontWeight: 500,
+                    color: recentFilter === filter ? '#10B981' : '#64748B',
+                    padding: '2px 4px', transition: 'all 0.2s',
+                  }}
+                >
+                  {filter}
+                </div>
               ))}
+              <div style={{ position: 'relative' }}>
+                <select 
+                  value={['1Y', '5Y', 'Max'].includes(recentFilter) ? recentFilter : 'More'}
+                  onChange={(e) => setRecentFilter(e.target.value as any)}
+                  style={{
+                    background: 'transparent', border: 'none', outline: 'none',
+                    fontSize: '12px', fontWeight: 500, 
+                    color: ['1Y', '5Y', 'Max'].includes(recentFilter) ? '#10B981' : '#64748B',
+                    cursor: 'pointer', padding: '2px 16px 2px 4px', appearance: 'none', WebkitAppearance: 'none'
+                  }}
+                >
+                  <option value="More" disabled hidden>More</option>
+                  <option value="1Y">1Y</option>
+                  <option value="5Y">5Y</option>
+                  <option value="Max">Max</option>
+                </select>
+                <div style={{ position: 'absolute', right: '0px', top: '2px', pointerEvents: 'none', fontSize: '10px', color: ['1Y', '5Y', 'Max'].includes(recentFilter) ? '#10B981' : '#64748B' }}>
+                  ▼
+                </div>
+              </div>
             </div>
+            
             <div 
               style={{ 
-                height: '220px', 
-                width: '100%', 
-                position: 'relative',
-                background: '#F8FAFC', 
-                borderRadius: '16px', 
-                animation: 'fadeSlideIn 0.3s ease-out',
-                overflow: 'hidden',
-                marginTop: '8px'
+                height: '220px', width: '100%', position: 'relative', background: '#F8FAFC', 
+                borderRadius: '16px', animation: 'fadeSlideIn 0.3s ease-out', marginTop: '8px',
+                boxSizing: 'border-box'
               }}
             >
-              {chartData.length === 0 ? (
-                <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--g)', fontSize: '12px', fontWeight: 600 }}>
-                  No expenses recorded yet.
-                </div>
-              ) : (
-                <svg viewBox="0 0 400 200" preserveAspectRatio="none" style={{ width: '100%', height: '100%', display: 'block' }}>
+              <div style={{ position: 'absolute', left: '8px', top: '15px', fontSize: '11px', color: '#64748B', fontFamily: 'system-ui, sans-serif' }}>₹{formatY(maxCumAmt)}</div>
+              <div style={{ position: 'absolute', left: '8px', top: '90px', fontSize: '11px', color: '#64748B', fontFamily: 'system-ui, sans-serif', transform: 'translateY(-50%)' }}>₹{formatY((maxCumAmt + minCumAmt) / 2)}</div>
+              <div style={{ position: 'absolute', left: '8px', top: '165px', fontSize: '11px', color: '#64748B', fontFamily: 'system-ui, sans-serif', transform: 'translateY(-100%)' }}>₹{formatY(minCumAmt)}</div>
+              
+              <div style={{ position: 'absolute', left: '45px', right: '0', top: '15px', height: '1px', background: '#E2E8F0' }} />
+              <div style={{ position: 'absolute', left: '45px', right: '0', top: '90px', height: '1px', background: '#E2E8F0' }} />
+              <div style={{ position: 'absolute', left: '45px', right: '0', top: '165px', height: '1px', background: '#E2E8F0' }} />
+
+              <div style={{ position: 'absolute', left: '45px', bottom: '15px', fontSize: '11px', color: '#64748B', fontFamily: 'system-ui, sans-serif' }}>
+                {new Date(minT).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+              </div>
+              <div style={{ position: 'absolute', right: '15px', bottom: '15px', fontSize: '11px', color: '#64748B', fontFamily: 'system-ui, sans-serif' }}>
+                {new Date(maxT).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+              </div>
+
+              <div style={{ position: 'absolute', left: '45px', right: '0', top: '15px', height: '150px' }}>
+                <svg viewBox="0 0 400 150" preserveAspectRatio="none" style={{ width: '100%', height: '100%', display: 'block' }}>
                   <defs>
                     <linearGradient id="lineGrad" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="0%" stopColor="#818CF8" stopOpacity="0.4" />
-                      <stop offset="100%" stopColor="#818CF8" stopOpacity="0" />
+                      <stop offset="0%" stopColor="#10B981" stopOpacity="0.3" />
+                      <stop offset="100%" stopColor="#10B981" stopOpacity="0" />
                     </linearGradient>
                   </defs>
                   
-                  <line x1="50" y1="20" x2="390" y2="20" stroke="#E2E8F0" strokeWidth="1" />
-                  <line x1="50" y1="95" x2="390" y2="95" stroke="#E2E8F0" strokeWidth="1" />
-                  <line x1="50" y1="170" x2="390" y2="170" stroke="#E2E8F0" strokeWidth="1" />
-
-                  <text x="42" y="20" fontSize="11" fill="#64748B" textAnchor="end" alignmentBaseline="middle" fontFamily="system-ui, sans-serif">₹{maxCumAmt >= 1000 ? (maxCumAmt/1000).toFixed(1)+'k' : maxCumAmt}</text>
-                  <text x="42" y="95" fontSize="11" fill="#64748B" textAnchor="end" alignmentBaseline="middle" fontFamily="system-ui, sans-serif">₹{Math.round((maxCumAmt + minCumAmt)/2) >= 1000 ? (Math.round((maxCumAmt + minCumAmt)/2)/1000).toFixed(1)+'k' : Math.round((maxCumAmt + minCumAmt)/2)}</text>
-                  <text x="42" y="170" fontSize="11" fill="#64748B" textAnchor="end" alignmentBaseline="middle" fontFamily="system-ui, sans-serif">₹{minCumAmt >= 1000 ? (minCumAmt/1000).toFixed(1)+'k' : minCumAmt}</text>
-
-                  <text x="50" y="190" fontSize="11" fill="#64748B" textAnchor="start" fontFamily="system-ui, sans-serif">
-                    {new Date(minTime).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
-                  </text>
-                  <text x="390" y="190" fontSize="11" fill="#64748B" textAnchor="end" fontFamily="system-ui, sans-serif">
-                    {new Date(maxTime).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
-                  </text>
-
-                  {areaPoints && (
-                    <polygon points={areaPoints} fill="url(#lineGrad)" />
-                  )}
-                  {polylinePoints && (
-                    <polyline points={polylinePoints} fill="none" stroke="#6366F1" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" />
-                  )}
-
-                  {points.map((p) => (
+                  {areaPoints && <polygon points={areaPoints} fill="url(#lineGrad)" />}
+                  {polylinePoints && <polyline points={polylinePoints} fill="none" stroke="#10B981" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />}
+                  
+                  {points.filter(p => !p.data.isSynthetic).map((p) => (
                     <circle
                       key={p.index}
                       cx={p.x}
                       cy={p.y}
                       r={hoveredBar === p.index ? 6 : 4}
-                      fill={hoveredBar === p.index ? '#4F46E5' : '#FFFFFF'}
-                      stroke="#6366F1"
+                      fill={hoveredBar === p.index ? '#10B981' : '#FFFFFF'}
+                      stroke="#10B981"
                       strokeWidth="2"
                       style={{ cursor: 'pointer', transition: 'all 0.2s' }}
                       onMouseEnter={() => setHoveredBar(p.index)}
@@ -489,7 +506,7 @@ export const Analytics: React.FC<AnalyticsProps> = ({ expenses, groups, me, user
                     />
                   ))}
                 </svg>
-              )}
+              </div>
             </div>
           </>
         )}
