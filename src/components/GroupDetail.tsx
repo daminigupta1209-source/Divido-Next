@@ -405,7 +405,7 @@ export const GroupDetail: React.FC<GroupDetailProps> = ({
                 flex: '0 1 380px',
                 background: '#FFFFFF',
                 borderRadius: '20px',
-                padding: '6px 16px',
+                padding: '12px 16px',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'space-between',
