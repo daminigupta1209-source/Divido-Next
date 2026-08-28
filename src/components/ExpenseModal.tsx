@@ -438,7 +438,7 @@ export const ExpenseModal: React.FC<ExpenseModalProps> = ({
         <div
           style={{
             display: 'grid',
-            gridTemplateColumns: '40px minmax(0, 1fr) auto',
+            gridTemplateColumns: '1fr auto 1fr',
             alignItems: 'center',
             background: '#F8FAFC',
             padding: '18px 16px',
@@ -632,7 +632,7 @@ export const ExpenseModal: React.FC<ExpenseModalProps> = ({
             </div>
           </div>
 
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: '14px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: '6px' }}>
             <input
               ref={uploadInputRef}
               type="file"
