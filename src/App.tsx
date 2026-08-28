@@ -4570,13 +4570,10 @@ function App() {
           </div>
 
           <div
-            className={`b-nav-btn ${view === 'friends' || (view === 'detail' && groupDetailTab === 'balances') ? 'active' : ''}`}
+            className={`b-nav-btn ${view === 'friends' ? 'active' : ''}`}
             onClick={() => {
-              if (view === 'detail') {
-                setGroupDetailTab('balances');
-              } else {
-                setView('friends');
-              }
+              setSelectedId(null);
+              setView('friends');
             }}
           >
             <span className="b-nav-icon" style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: '24px', height: '24px' }}>
