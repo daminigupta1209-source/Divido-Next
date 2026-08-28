@@ -290,30 +290,30 @@ export const Analytics: React.FC<AnalyticsProps> = ({ expenses, groups, me, user
       });
     }, [localLastExpenses]);
 
-    const { points, polylinePoints, areaPoints } = useMemo(() => {
-      if (chartData.length === 0) return { points: [], polylinePoints: '', areaPoints: '' };
+    const { points, polylinePoints, areaPoints, maxCumAmt, minCumAmt, minTime, maxTime } = useMemo(() => {
+      if (chartData.length === 0) return { points: [], polylinePoints: '', areaPoints: '', maxCumAmt: 0, minCumAmt: 0, minTime: 0, maxTime: 0 };
       
-      const maxCumAmt = chartData[chartData.length - 1].cumulative;
-      const minCumAmt = chartData[0].cumulative;
-      const minTime = chartData[0].dateObj.getTime();
-      const maxTime = chartData[chartData.length - 1].dateObj.getTime();
+      const maxC = chartData[chartData.length - 1].cumulative;
+      const minC = chartData[0].cumulative;
+      const minT = chartData[0].dateObj.getTime();
+      const maxT = chartData[chartData.length - 1].dateObj.getTime();
       
       const pts = chartData.map((d, i) => {
-        let x = 200;
+        let x = 215; // center if only 1 point
         if (chartData.length > 1) {
-          x = maxTime === minTime ? (i / (chartData.length - 1)) * 400 : ((d.dateObj.getTime() - minTime) / (maxTime - minTime)) * 400;
+          x = maxT === minT ? 40 + (i / (chartData.length - 1)) * 350 : 40 + ((d.dateObj.getTime() - minT) / (maxT - minT)) * 350;
         }
         let y = 75;
-        if (maxCumAmt > minCumAmt) {
-          y = 140 - ((d.cumulative - minCumAmt) / (maxCumAmt - minCumAmt)) * 120; // 20 to 140
+        if (maxC > minC) {
+          y = 130 - ((d.cumulative - minC) / (maxC - minC)) * 110; // 20 to 130
         }
         return { x, y, data: d, index: i };
       });
       
       const poly = pts.map(p => `${p.x},${p.y}`).join(' ');
-      const area = pts.length > 0 ? `${pts[0].x},150 ${poly} ${pts[pts.length - 1].x},150` : '';
+      const area = pts.length > 0 ? `${pts[0].x},130 ${poly} ${pts[pts.length - 1].x},130` : '';
       
-      return { points: pts, polylinePoints: poly, areaPoints: area };
+      return { points: pts, polylinePoints: poly, areaPoints: area, maxCumAmt: maxC, minCumAmt: minC, minTime: minT, maxTime: maxT };
     }, [chartData]);
     return (
       <div
@@ -432,9 +432,20 @@ export const Analytics: React.FC<AnalyticsProps> = ({ expenses, groups, me, user
                     </linearGradient>
                   </defs>
                   
-                  <line x1="0" y1="20" x2="400" y2="20" stroke="#E2E8F0" strokeWidth="1" strokeDasharray="4 4" />
-                  <line x1="0" y1="80" x2="400" y2="80" stroke="#E2E8F0" strokeWidth="1" strokeDasharray="4 4" />
-                  <line x1="0" y1="140" x2="400" y2="140" stroke="#E2E8F0" strokeWidth="1" strokeDasharray="4 4" />
+                  <line x1="40" y1="20" x2="390" y2="20" stroke="#E2E8F0" strokeWidth="1" strokeDasharray="4 4" />
+                  <line x1="40" y1="75" x2="390" y2="75" stroke="#E2E8F0" strokeWidth="1" strokeDasharray="4 4" />
+                  <line x1="40" y1="130" x2="390" y2="130" stroke="#E2E8F0" strokeWidth="1" strokeDasharray="4 4" />
+
+                  <text x="35" y="24" fontSize="9" fill="#94A3B8" textAnchor="end" fontWeight="500">₹{maxCumAmt >= 1000 ? (maxCumAmt/1000).toFixed(1)+'k' : maxCumAmt}</text>
+                  <text x="35" y="79" fontSize="9" fill="#94A3B8" textAnchor="end" fontWeight="500">₹{Math.round((maxCumAmt + minCumAmt)/2) >= 1000 ? (Math.round((maxCumAmt + minCumAmt)/2)/1000).toFixed(1)+'k' : Math.round((maxCumAmt + minCumAmt)/2)}</text>
+                  <text x="35" y="134" fontSize="9" fill="#94A3B8" textAnchor="end" fontWeight="500">₹{minCumAmt >= 1000 ? (minCumAmt/1000).toFixed(1)+'k' : minCumAmt}</text>
+
+                  <text x="40" y="145" fontSize="9" fill="#94A3B8" textAnchor="start" fontWeight="500">
+                    {new Date(minTime).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+                  </text>
+                  <text x="390" y="145" fontSize="9" fill="#94A3B8" textAnchor="end" fontWeight="500">
+                    {new Date(maxTime).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+                  </text>
 
                   {areaPoints && (
                     <polygon points={areaPoints} fill="url(#lineGrad)" />
