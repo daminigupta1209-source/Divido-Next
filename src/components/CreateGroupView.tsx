@@ -35,14 +35,19 @@ export const CreateGroupView: React.FC<CreateGroupViewProps> = ({
   // "Manage members" — so Edit Group stays a clean settings + info screen.
   const meClean = me.replace(/\s*\(me\)$/i, '').replace(/\s*\(Left\)$/i, '').trim().toLowerCase();
   const editMemberRows = editingGroup
-    ? (editingGroup.members || []).map((m) => {
-        const isLeft = /\s*\(left\)$/i.test(m);
-        const clean = m.replace(/\s*\(Left\)$/i, '');
-        const isMe = clean.toLowerCase() === meClean;
-        const isPending = (editingGroup.pendingMembers || []).includes(m);
-        const status = isMe ? 'Admin' : isLeft ? 'Left' : isPending ? 'Pending' : 'Joined';
-        return { name: clean, status };
-      })
+    ? (editingGroup.members || [])
+        .map((m) => {
+          const isLeft = /\s*\(left\)$/i.test(m);
+          const clean = m.replace(/\s*\(Left\)$/i, '');
+          const isMe = clean.toLowerCase() === meClean;
+          const isPending = (editingGroup.pendingMembers || []).includes(m);
+          const status = isMe ? 'Admin' : isLeft ? 'Left' : isPending ? 'Pending' : 'Joined';
+          return { name: clean, status };
+        })
+        .sort((a, b) => {
+          const order: Record<string, number> = { Admin: 1, Joined: 2, Pending: 3, Left: 4 };
+          return (order[a.status] || 5) - (order[b.status] || 5);
+        })
     : [];
   const statusChip = (status: string): React.CSSProperties => {
     const map: Record<string, { c: string; bg: string }> = {
