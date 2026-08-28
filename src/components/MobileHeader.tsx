@@ -845,7 +845,16 @@ export const MobileHeader: React.FC<MobileHeaderProps> = ({
                     {view === 'groups' && 'Your Groups'}
                     {view === 'friends' && 'All balances'}
                     {view === 'activity' && 'All Activities'}
-                    {view === 'analytics' && (analyticsGroupId === null || analyticsGroupId === 'ALL' ? 'Global Analytics' : 'Analytics')}
+                    {view === 'analytics' && (analyticsGroupId === null || analyticsGroupId === 'ALL' ? 'Global Analytics' : (
+                      <>
+                        Analytics
+                        {selectedGroup && (
+                          <span style={{ fontSize: '13px', fontWeight: 500, color: '#94A3B8', paddingLeft: '8px', marginLeft: '8px', borderLeft: '1.5px solid #E2E8F0' }}>
+                            {selectedGroup.name}
+                          </span>
+                        )}
+                      </>
+                    ))}
                     {view === 'profile' && 'Profile'}
                     {view === 'gallery' && 'Gallery'}
                   </span>
