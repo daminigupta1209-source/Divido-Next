@@ -612,7 +612,7 @@ export const GroupDetail: React.FC<GroupDetailProps> = ({
         return (
           <div style={{ marginBottom: '22px', marginTop: '4px' }}>
             <div style={{ fontSize: '11px', fontWeight: 700, letterSpacing: '1.5px', textTransform: 'uppercase', color: '#B0A79C', marginBottom: '10px', marginLeft: '2px' }}>
-              Net Balance
+              Your Group Balance
             </div>
 
             <div onClick={() => hasActiveBalancesForCard && setActiveTab('balances')} style={{ position: 'relative', display: 'flex', height: '38px', borderRadius: '999px', overflow: 'hidden', boxShadow: '0 6px 16px rgba(0,0,0,0.06)', cursor: hasActiveBalancesForCard ? 'pointer' : 'default' }}>
