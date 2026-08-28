@@ -437,8 +437,8 @@ export const ExpenseModal: React.FC<ExpenseModalProps> = ({
         {/* Modal Header */}
         <div
           style={{
-            display: 'grid',
-            gridTemplateColumns: '1fr auto 1fr',
+            display: 'flex',
+            justifyContent: 'space-between',
             alignItems: 'center',
             background: '#F8FAFC',
             padding: '18px 8px 18px 16px',
@@ -464,10 +464,7 @@ export const ExpenseModal: React.FC<ExpenseModalProps> = ({
                 <polyline points="15 18 9 12 15 6" />
               </svg>
             </button>
-          </div>
-
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-            <div style={{ position: 'relative' }}>
+            <div style={{ position: 'relative', marginLeft: '12px' }}>
               {/* Invisible backdrop to close on outside click */}
               {showGroupDropdown && (
                 <div onClick={() => setShowGroupDropdown(false)} style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, zIndex: 299 }} />
@@ -631,8 +628,7 @@ export const ExpenseModal: React.FC<ExpenseModalProps> = ({
               )}
             </div>
           </div>
-
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: '1px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: '1.5px' }}>
             <input
               ref={uploadInputRef}
               type="file"
