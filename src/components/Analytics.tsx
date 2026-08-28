@@ -421,7 +421,7 @@ export const Analytics: React.FC<AnalyticsProps> = ({ expenses, groups, me, user
 
         {showTrends && (
           <>
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-start', gap: '16px', marginBottom: '8px', width: '100%' }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '8px', width: '100%' }}>
               {['1W', '1M', '6M', 'YTD'].map((filter) => (
                 <div
                   key={filter}
