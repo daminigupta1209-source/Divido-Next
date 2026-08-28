@@ -747,8 +747,8 @@ export const GroupMemberList: React.FC<GroupMemberListProps> = ({
                               onClick={(e) => {
                                 e.stopPropagation();
                                 setActionCard({
-                                  title: `Write off ${wbText}?`,
-                                  desc: 'Clears it for good.',
+                                  title: 'Write off this balance?',
+                                  desc: `Clears your pending balance of '${wbText}' permanently.`,
                                   primaryLabel: 'Write off',
                                   primaryColor: '#F59E0B',
                                   onPrimary: () => { setActionCard(null); onWriteOff && onWriteOff(m); },
