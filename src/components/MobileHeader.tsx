@@ -764,19 +764,9 @@ export const MobileHeader: React.FC<MobileHeaderProps> = ({
             {(view === 'gallery' || view === 'detail' || (view === 'analytics' && analyticsGroupId !== null && analyticsGroupId !== 'ALL')) ? (
               <span
                 onClick={() => {
-                  if (view === 'gallery' || view === 'analytics') {
-                    if (selectedId && selectedId !== 'STANDALONE') {
-                      setView('detail');
-                    } else {
-                      if (setSelectedId) setSelectedId(null);
-                      setView('summary');
-                    }
-                  } else if (view === 'detail' && groupDetailTab === 'balances') {
-                    if (setGroupDetailTab) setGroupDetailTab('expenses');
-                  } else {
-                    if (setSelectedId) setSelectedId(null);
-                    setView('summary');
-                  }
+                  if (setSelectedId) setSelectedId(null);
+                  if (setAnalyticsGroupId) setAnalyticsGroupId(null);
+                  setView('summary');
                 }}
                 style={{
                   position: 'absolute',
