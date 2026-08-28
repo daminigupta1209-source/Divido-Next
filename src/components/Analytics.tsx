@@ -327,10 +327,27 @@ export const Analytics: React.FC<AnalyticsProps> = ({ expenses, groups, me, user
       
       let dataForChart = [];
       dataForChart.push({ time: startT, cumulative: startCum, isSynthetic: true, dateObj: new Date(startT), title: '', amt: 0, index: -1 });
-      dataForChart = dataForChart.concat(filtered.map(d => ({...d, isSynthetic: false, index: 0})));
       
-      if (dataForChart.length === 0 || dataForChart[dataForChart.length - 1].time < nowT) {
-        const lastCum = dataForChart.length > 0 ? dataForChart[dataForChart.length - 1].cumulative : startCum;
+      let lastCum = startCum;
+      let lastTime = startT;
+      
+      filtered.forEach(d => {
+        // If the gap is more than 1 day, insert a synthetic point before it to keep the line flat
+        if (d.time - lastTime > 24 * 3600 * 1000) {
+           dataForChart.push({
+             time: d.time - 12 * 3600 * 1000, // half a day before
+             cumulative: lastCum,
+             isSynthetic: true,
+             dateObj: new Date(d.time - 12 * 3600 * 1000),
+             title: '', amt: 0, index: -1
+           });
+        }
+        dataForChart.push({ ...d, isSynthetic: false, index: 0 });
+        lastCum = d.cumulative;
+        lastTime = d.time;
+      });
+      
+      if (dataForChart[dataForChart.length - 1].time < nowT) {
         dataForChart.push({ time: nowT, cumulative: lastCum, isSynthetic: true, dateObj: new Date(nowT), title: '', amt: 0, index: -1 });
       }
 
