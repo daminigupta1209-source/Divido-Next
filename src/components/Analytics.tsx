@@ -310,19 +310,19 @@ export const Analytics: React.FC<AnalyticsProps> = ({ expenses, groups, me, user
       const maxT = chartData[chartData.length - 1].dateObj.getTime();
       
       const pts = chartData.map((d, i) => {
-        let x = 215; // center if only 1 point
+        let x = 220; // center if only 1 point
         if (chartData.length > 1) {
-          x = maxT === minT ? 40 + (i / (chartData.length - 1)) * 350 : 40 + ((d.dateObj.getTime() - minT) / (maxT - minT)) * 350;
+          x = maxT === minT ? 50 + (i / (chartData.length - 1)) * 340 : 50 + ((d.dateObj.getTime() - minT) / (maxT - minT)) * 340;
         }
-        let y = 75;
+        let y = 95;
         if (maxC > minC) {
-          y = 130 - ((d.cumulative - minC) / (maxC - minC)) * 110; // 20 to 130
+          y = 170 - ((d.cumulative - minC) / (maxC - minC)) * 150; // 20 to 170
         }
         return { x, y, data: d, index: i };
       });
       
       const poly = pts.map(p => `${p.x},${p.y}`).join(' ');
-      const area = pts.length > 0 ? `${pts[0].x},130 ${poly} ${pts[pts.length - 1].x},130` : '';
+      const area = pts.length > 0 ? `${pts[0].x},170 ${poly} ${pts[pts.length - 1].x},170` : '';
       
       return { points: pts, polylinePoints: poly, areaPoints: area, maxCumAmt: maxC, minCumAmt: minC, minTime: minT, maxTime: maxT };
     }, [chartData]);
@@ -352,15 +352,24 @@ export const Analytics: React.FC<AnalyticsProps> = ({ expenses, groups, me, user
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
             {showTrends && hoveredBar !== null && chartData[hoveredBar] && (
               <div
-                className="pill purple"
                 style={{
-                  fontSize: '9.5px',
+                  background: '#FFFFFF',
+                  border: '1px solid #E2E8F0',
+                  boxShadow: '0 4px 12px rgba(0,0,0,0.1)',
+                  borderRadius: '4px',
                   padding: '4px 8px',
+                  fontSize: '11.5px',
+                  fontWeight: 500,
+                  color: '#1E293B',
                   animation: 'fadeIn 0.2s ease-out',
-                  fontWeight: 600
+                  fontFamily: 'system-ui, sans-serif'
                 }}
               >
-                {chartData[hoveredBar].title}: <strong>₹{chartData[hoveredBar].amt}</strong>
+                <span style={{ color: '#EF4444' }}>₹{chartData[hoveredBar].cumulative}</span>
+                {' '}
+                <span style={{ color: '#64748B', fontSize: '10.5px' }}>
+                  {chartData[hoveredBar].dateObj.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+                </span>
               </div>
             )}
             <div
@@ -420,7 +429,7 @@ export const Analytics: React.FC<AnalyticsProps> = ({ expenses, groups, me, user
             </div>
             <div 
               style={{ 
-                height: '160px', 
+                height: '220px', 
                 width: '100%', 
                 position: 'relative',
                 background: '#F8FAFC', 
@@ -435,7 +444,7 @@ export const Analytics: React.FC<AnalyticsProps> = ({ expenses, groups, me, user
                   No expenses recorded yet.
                 </div>
               ) : (
-                <svg viewBox="0 0 400 150" preserveAspectRatio="none" style={{ width: '100%', height: '100%', display: 'block' }}>
+                <svg viewBox="0 0 400 200" preserveAspectRatio="none" style={{ width: '100%', height: '100%', display: 'block' }}>
                   <defs>
                     <linearGradient id="lineGrad" x1="0" y1="0" x2="0" y2="1">
                       <stop offset="0%" stopColor="#818CF8" stopOpacity="0.4" />
@@ -443,18 +452,18 @@ export const Analytics: React.FC<AnalyticsProps> = ({ expenses, groups, me, user
                     </linearGradient>
                   </defs>
                   
-                  <line x1="40" y1="20" x2="390" y2="20" stroke="#E2E8F0" strokeWidth="1" strokeDasharray="4 4" />
-                  <line x1="40" y1="75" x2="390" y2="75" stroke="#E2E8F0" strokeWidth="1" strokeDasharray="4 4" />
-                  <line x1="40" y1="130" x2="390" y2="130" stroke="#E2E8F0" strokeWidth="1" strokeDasharray="4 4" />
+                  <line x1="50" y1="20" x2="390" y2="20" stroke="#E2E8F0" strokeWidth="1" />
+                  <line x1="50" y1="95" x2="390" y2="95" stroke="#E2E8F0" strokeWidth="1" />
+                  <line x1="50" y1="170" x2="390" y2="170" stroke="#E2E8F0" strokeWidth="1" />
 
-                  <text x="35" y="24" fontSize="10" fill="#475569" textAnchor="end" fontWeight="600">₹{maxCumAmt >= 1000 ? (maxCumAmt/1000).toFixed(1)+'k' : maxCumAmt}</text>
-                  <text x="35" y="79" fontSize="10" fill="#475569" textAnchor="end" fontWeight="600">₹{Math.round((maxCumAmt + minCumAmt)/2) >= 1000 ? (Math.round((maxCumAmt + minCumAmt)/2)/1000).toFixed(1)+'k' : Math.round((maxCumAmt + minCumAmt)/2)}</text>
-                  <text x="35" y="134" fontSize="10" fill="#475569" textAnchor="end" fontWeight="600">₹{minCumAmt >= 1000 ? (minCumAmt/1000).toFixed(1)+'k' : minCumAmt}</text>
+                  <text x="42" y="20" fontSize="11" fill="#64748B" textAnchor="end" alignmentBaseline="middle" fontFamily="system-ui, sans-serif">₹{maxCumAmt >= 1000 ? (maxCumAmt/1000).toFixed(1)+'k' : maxCumAmt}</text>
+                  <text x="42" y="95" fontSize="11" fill="#64748B" textAnchor="end" alignmentBaseline="middle" fontFamily="system-ui, sans-serif">₹{Math.round((maxCumAmt + minCumAmt)/2) >= 1000 ? (Math.round((maxCumAmt + minCumAmt)/2)/1000).toFixed(1)+'k' : Math.round((maxCumAmt + minCumAmt)/2)}</text>
+                  <text x="42" y="170" fontSize="11" fill="#64748B" textAnchor="end" alignmentBaseline="middle" fontFamily="system-ui, sans-serif">₹{minCumAmt >= 1000 ? (minCumAmt/1000).toFixed(1)+'k' : minCumAmt}</text>
 
-                  <text x="40" y="145" fontSize="10" fill="#475569" textAnchor="start" fontWeight="600">
+                  <text x="50" y="190" fontSize="11" fill="#64748B" textAnchor="start" fontFamily="system-ui, sans-serif">
                     {new Date(minTime).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
                   </text>
-                  <text x="390" y="145" fontSize="10" fill="#475569" textAnchor="end" fontWeight="600">
+                  <text x="390" y="190" fontSize="11" fill="#64748B" textAnchor="end" fontFamily="system-ui, sans-serif">
                     {new Date(maxTime).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
                   </text>
 
