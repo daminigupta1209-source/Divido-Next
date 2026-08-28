@@ -791,8 +791,8 @@ export const ExpenseModal: React.FC<ExpenseModalProps> = ({
                 alignItems: 'center',
                 justifyContent: 'center',
                 padding: '4px',
-                color: '#059669',
-                opacity: !isValid || !title ? 0.35 : 1,
+                color: !isValid || !title ? '#94A3B8' : '#059669',
+                opacity: 1,
               }}
             >
               <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
