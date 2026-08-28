@@ -443,7 +443,7 @@ export const ExpenseModal: React.FC<ExpenseModalProps> = ({
             background: '#F8FAFC',
             padding: '18px 8px 18px 16px',
             margin: '-16px -20px 12px -20px',
-            borderBottom: '1px solid #E2E8F0',
+            borderBottom: 'none',
           }}
         >
           <div style={{ display: 'flex', alignItems: 'center' }}>
