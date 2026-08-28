@@ -474,13 +474,13 @@ export const ExpenseModal: React.FC<ExpenseModalProps> = ({
                 onMouseDown={(e) => { e.preventDefault(); setShowGroupDropdown((p) => !p); }}
                 style={{
                   display: 'flex', alignItems: 'center', gap: '8px',
-                  padding: '10px 20px 10px 16px',
+                  padding: '8px 16px 8px 12px',
                   borderRadius: '24px',
                   border: '1.5px solid #E2E8F0',
-                  background: '#FFFFFF',
+                  background: 'transparent',
                   cursor: 'pointer',
                   fontSize: '16px', fontWeight: 600, color: '#475569',
-                  boxShadow: '0 1px 4px rgba(0,0,0,0.06)',
+                  boxShadow: 'none',
                   whiteSpace: 'nowrap',
                   maxWidth: '100%',
                   justifyContent: 'center',
