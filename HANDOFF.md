@@ -2,7 +2,7 @@
 
 React + Vite expense-splitting **PWA**. Backend: **Supabase** (Postgres + RLS + realtime + storage). Deploy: push to `main` → **Vercel** auto-deploys. Live URL: https://divido-next.vercel.app
 
-> Latest commit at handoff: **c04a62d** (service-worker cache **v45**). Everything below is live on `main`.
+> Latest commit at handoff: **b07147f** (service-worker cache **v84**). Everything below is live on `main`.
 > The **"Session 2026-08-27/28"** section near the bottom is the freshest work — read it first.
 
 ## Working rules
@@ -101,6 +101,12 @@ See memory `divido-sync-risks` for the full audit. Fixed: **field-level updates*
 - Focused input **scrolls into view above the keyboard** (global focusin handler, App.tsx).
 - Expense card has a **green save tick in the header** (bottom "Save Changes" hides behind the keyboard).
 - **Refresh banner** now polls for new deploys (every 60s / on focus / on updatefound), so it actually appears without force-closing (`main.tsx`).
+
+### UI Polish & Navigation (Recent Tweaks)
+- **Navigation logic simplified**: Clicking the back arrow from ANY nested view inside a group now ALWAYS takes the user straight to the global home screen (summary view).
+- **Bottom Navigation**: Fixed a double-highlighting bug. Now, only "Home" highlights when inside a group (since groups belong to Home). The "Friends" button at the bottom strictly routes to the global Friends view and is decoupled from the group's internal tabs.
+- **Analytics UI**: Added the Group Name (`Analytics | [Group Name]`) to the top header when viewing a group's analytics. Shrunk the Insight Carousel card to save screen real estate.
+- **Grammar & Copy**: Removed spliced grammar from the 'Remove Member' and 'Write-off' modals. All modals consistently use plain language with "pay"/"collect" wording (e.g., `Balance remaining: You pay ₹665. They will be archived in Past Members.`).
 
 ---
 
