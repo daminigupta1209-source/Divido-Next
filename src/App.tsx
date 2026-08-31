@@ -372,6 +372,10 @@ function App() {
   // Link request modal state
   const [linkRequestGroup, setLinkRequestGroup] = useState<any | null>(null);
   const [linkRequestPlaceholders, setLinkRequestPlaceholders] = useState<any[]>([]);
+  // True when the claim card is shown because THIS user's email is already a
+  // (past) member of the group — i.e. a rejoin. In that case we hide the "join
+  // as a new member" option (the app already knows who they are).
+  const [linkRequestRejoinMode, setLinkRequestRejoinMode] = useState<boolean>(false);
   const [submittingLinkRequest, setSubmittingLinkRequest] = useState<boolean>(false);
   // Name the invitee types when they aren't in the invite list and want to join
   // as a brand-new member (the claim card would otherwise dead-end on Cancel).
@@ -1938,6 +1942,7 @@ function App() {
             m.name.toLowerCase() === (rejoinName + ' (Left)').toLowerCase()
           );
           if (matchLeftMember) {
+            setLinkRequestRejoinMode(true);
             setLinkRequestGroup(groupData);
             setLinkRequestPlaceholders([matchLeftMember]);
             return;
@@ -1950,6 +1955,7 @@ function App() {
             m.user_email === myEmail && m.name.toLowerCase().endsWith(' (left)')
           );
           if (leftMemberRow) {
+            setLinkRequestRejoinMode(true);
             setLinkRequestGroup(groupData);
             setLinkRequestPlaceholders([leftMemberRow]);
             return;
@@ -1995,6 +2001,7 @@ function App() {
         // Title Case so they don't look shouty next to normally-cased names.
         const googleName = rawGoogleName.toLowerCase().replace(/\b\w/g, (c: string) => c.toUpperCase());
         if (googleName) setJoinNewName(googleName);
+        setLinkRequestRejoinMode(false);
         setLinkRequestGroup(groupData);
         setLinkRequestPlaceholders(placeholders);
       } catch (err) {
@@ -4099,6 +4106,7 @@ function App() {
               ))}
             </div>
 
+            {!linkRequestRejoinMode && (
             <div style={{ borderTop: linkRequestPlaceholders.length > 0 ? '1px solid #F1F5F9' : 'none', margin: '4px 0 12px', paddingTop: linkRequestPlaceholders.length > 0 ? '14px' : '4px' }}>
               {linkRequestPlaceholders.length > 0 && (
                 <p style={{ fontSize: '12px', color: '#94A3B8', fontWeight: 700, margin: '0 0 8px 0' }}>
@@ -4228,6 +4236,7 @@ function App() {
                 Join as new member
               </button>
             </div>
+            )}
           </div>
         </div>
       )}
