@@ -1990,7 +1990,10 @@ function App() {
         const placeholders = existingMembers.filter((m: any) => m.is_pending && !m.user_email && !m.link_request_email);
         // Prefill the "join as new member" name with the Google profile name, so
         // a signed-in invitee doesn't have to type it (they can still edit it).
-        const googleName = (session?.user?.user_metadata?.full_name || session?.user?.user_metadata?.name || '').trim();
+        const rawGoogleName = (session?.user?.user_metadata?.full_name || session?.user?.user_metadata?.name || '').trim();
+        // Google names often arrive ALL CAPS ("VANDANA GUPTA"); normalize to
+        // Title Case so they don't look shouty next to normally-cased names.
+        const googleName = rawGoogleName.toLowerCase().replace(/\b\w/g, (c: string) => c.toUpperCase());
         if (googleName) setJoinNewName(googleName);
         setLinkRequestGroup(groupData);
         setLinkRequestPlaceholders(placeholders);

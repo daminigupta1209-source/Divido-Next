@@ -49,7 +49,7 @@ export const BalanceActionCard: React.FC<BalanceActionCardProps> = ({
           }}
         >✕</button>
 
-        <h3  style={{ fontSize: '18px', fontWeight: 600, color: '#0F172A', margin: '0 0 8px' }}>
+        <h3  style={{ fontSize: '18px', fontWeight: 600, color: '#0F172A', margin: '0 0 8px', padding: '0 26px', overflowWrap: 'anywhere' }}>
           {title}
         </h3>
         <p style={{ fontSize: '14px', fontWeight: 600, color: '#64748B', lineHeight: 1.4, margin: '0 0 20px' }}>
