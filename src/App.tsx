@@ -4383,6 +4383,11 @@ function App() {
             }}>
               Settle with {globalSettleData.name}
             </h3>
+            {globalSettleData.identity && String(globalSettleData.identity).includes('@') && (
+              <p style={{ textAlign: 'center', color: '#94A3B8', fontSize: '12px', fontWeight: 500, marginBottom: '4px', wordBreak: 'break-all' }}>
+                {globalSettleData.identity}
+              </p>
+            )}
             <p style={{
               textAlign: 'center',
               color: '#64748B',
