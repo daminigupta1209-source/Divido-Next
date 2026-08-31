@@ -56,6 +56,15 @@ export const GroupMemberList: React.FC<GroupMemberListProps> = ({
 
   if (selectedId === 'STANDALONE' || !showFriendsList) return null;
 
+  // The email tied to a member (from their hidden identity), shown under the
+  // name so two people with the same name are distinguishable. Only real emails
+  // are shown — name-only members (identity = person_id or a bare name) show
+  // nothing extra.
+  const emailFor = (name: string): string => {
+    const id = selectedGroup.memberIdentities?.[name] || '';
+    return typeof id === 'string' && id.includes('@') ? id : '';
+  };
+
   // Per-currency net for a member (positive = to collect, negative = to pay).
   const getMemberBalanceByCurrency = (name: string): Record<string, number> => {
     const bal: Record<string, number> = {};
@@ -330,27 +339,34 @@ export const GroupMemberList: React.FC<GroupMemberListProps> = ({
                       }}
                     />
                   ) : (
-                    <span
-                      title={checkIsMe(m) ? "Click to edit name" : undefined}
-                      style={{
-                        fontWeight: 'bold',
-                        fontSize: '12px',
-                        color: '#334155',
-                        cursor: checkIsMe(m) ? 'pointer' : 'default',
-                        textDecoration: checkIsMe(m) ? 'underline dotted rgba(0,0,0,0.1)' : 'none',
-                      }}
-                      onClick={(e) => {
-                        if (!checkIsMe(m)) {
-                          alert("Only this member can rename themselves.");
-                          return;
-                        }
-                        e.stopPropagation();
-                        setEditingMemberName(m);
-                        setInlineRenameVal(m);
-                      }}
-                    >
-                      {checkIsMe(m) ? 'You' : m.replace(/\s*\(me\)$/i, '')} {checkIsAdmin(m) && <span style={{ fontSize: '10px', fontWeight: 600, color: '#7C3AED', background: '#F5F3FF', padding: '1px 6px', borderRadius: '4px', marginLeft: '6px' }}>Admin</span>}
-                    </span>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '1px', minWidth: 0 }}>
+                      <span
+                        title={checkIsMe(m) ? "Click to edit name" : undefined}
+                        style={{
+                          fontWeight: 'bold',
+                          fontSize: '12px',
+                          color: '#334155',
+                          cursor: checkIsMe(m) ? 'pointer' : 'default',
+                          textDecoration: checkIsMe(m) ? 'underline dotted rgba(0,0,0,0.1)' : 'none',
+                        }}
+                        onClick={(e) => {
+                          if (!checkIsMe(m)) {
+                            alert("Only this member can rename themselves.");
+                            return;
+                          }
+                          e.stopPropagation();
+                          setEditingMemberName(m);
+                          setInlineRenameVal(m);
+                        }}
+                      >
+                        {checkIsMe(m) ? 'You' : m.replace(/\s*\(me\)$/i, '')} {checkIsAdmin(m) && <span style={{ fontSize: '10px', fontWeight: 600, color: '#7C3AED', background: '#F5F3FF', padding: '1px 6px', borderRadius: '4px', marginLeft: '6px' }}>Admin</span>}
+                      </span>
+                      {emailFor(m) && (
+                        <span style={{ fontSize: '10px', color: '#94A3B8', fontWeight: 500, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                          {emailFor(m)}
+                        </span>
+                      )}
+                    </div>
                   )}
                   
                   <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
