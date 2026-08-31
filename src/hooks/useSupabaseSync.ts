@@ -2,7 +2,7 @@ import { useEffect, useRef, useState, useMemo } from 'react';
 import { supabase, uploadAttachment } from '../lib/supabaseClient';
 import { Group, Expense } from '../lib/types';
 import { checkIfDemoMode } from '../lib/demoMode';
-import { ensureArray, ensureObject, isLegacyRenameLog } from '../lib/utils';
+import { ensureArray, ensureObject, isLegacyRenameLog, titleCaseName } from '../lib/utils';
 
 // Fresh hidden person id for a new name-only member, so two people who share a
 // name in different groups stay separate. Signed-in members are left null and
@@ -396,18 +396,22 @@ export function useSupabaseSync({
           const groupMems = allMembers.filter((m: any) => m.group_id === group.id);
           const activeMems = groupMems.filter((m: any) => !m.link_request_email || !m.is_pending || m.name.endsWith(' (Left)'));
           
-          const members = Array.from(new Set(activeMems.map((m: any) => m.name)));
+          // Normalize all-caps display names (e.g. a Google "VANDANA GUPTA") to
+          // Title Case for display. Matching stays case-insensitive, so this is
+          // display-only and never changes balances.
+          const members = Array.from(new Set(activeMems.map((m: any) => titleCaseName(m.name))));
 
           // Build the hidden identity for each member name: prefer an explicit
           // person_id, else the signed-in email, else fall back to the name
           // itself (legacy members keep merging by name — no behaviour change).
           const memberIdentities: Record<string, string> = {};
           activeMems.forEach((m: any) => {
-            const cleanName = m.name.replace(/\s*\(Left\)$/i, '');
+            const displayName = titleCaseName(m.name);
+            const cleanName = displayName.replace(/\s*\(Left\)$/i, '');
             // Email is the strongest identity (a real signed-in account), then the
             // stored person_id, then the raw name (legacy members merge by name).
             const identity = (m.user_email ? m.user_email.toLowerCase() : '') || m.person_id || cleanName;
-            if (!memberIdentities[m.name]) memberIdentities[m.name] = identity;
+            if (!memberIdentities[displayName]) memberIdentities[displayName] = identity;
           });
 
           // Hydrate this device's identity for this group from the account, so a
@@ -431,7 +435,7 @@ export function useSupabaseSync({
             // If this member's name matches the current user (me), not pending
             if (currentEmail && m.user_email?.toLowerCase() === currentEmail) return false;
             return true;
-          }).map((m: any) => m.name)));
+          }).map((m: any) => titleCaseName(m.name))));
 
           const pendingLinkRequests = groupMems
             .filter((m: any) => m.link_request_email && m.is_pending)
@@ -471,11 +475,13 @@ export function useSupabaseSync({
           gId: e.group_id,
           title: e.title,
           amt: parseFloat(e.amt) || 0,
-          paid: e.paid,
+          paid: e.paid ? titleCaseName(e.paid) : e.paid,
           date: e.date,
           mode: e.mode,
-          splitters: ensureArray(e.splitters),
-          shares: ensureObject(e.shares),
+          splitters: ensureArray(e.splitters).map(titleCaseName),
+          shares: Object.fromEntries(
+            Object.entries(ensureObject(e.shares)).map(([k, v]) => [titleCaseName(k), v])
+          ),
           category: e.category,
           currency: e.currency,
           notes: e.notes,

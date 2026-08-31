@@ -22,6 +22,25 @@ export const genExpenseId = (): string =>
     ? (crypto as any).randomUUID()
     : `eid-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 10)}`;
 
+// Normalize an ALL-CAPS display name to Title Case ("VANDANA GUPTA" ->
+// "Vandana Gupta"). Google accounts often hand back shouty all-caps names.
+// Only touches names that are entirely uppercase — intentional casing
+// ("didi", "McKay", "iPhone fund") is left exactly as-is. The " (Left)"/" (me)"
+// suffix is preserved. Balance matching is case-insensitive (see getPersonKey),
+// so changing only the display casing never affects who owes whom.
+export const titleCaseName = (raw: string): string => {
+  if (!raw) return raw;
+  const suffixMatch = raw.match(/\s*\((?:Left|me)\)\s*$/i);
+  const suffix = suffixMatch ? suffixMatch[0] : '';
+  const base = suffix ? raw.slice(0, raw.length - suffix.length) : raw;
+  // Only all-caps bases (with at least one letter) are normalized.
+  if (base && base === base.toUpperCase() && base !== base.toLowerCase()) {
+    const fixed = base.toLowerCase().replace(/\b\w/g, (c: string) => c.toUpperCase());
+    return fixed + suffix;
+  }
+  return raw;
+};
+
 // Legacy "📝 \"X\" is now \"Y\"" name-change log entries were once written into
 // the expenses table. We stopped creating them, but old ones linger in local
 // caches (and re-upload as unsynced). Filter them out everywhere so they can't

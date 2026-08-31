@@ -56,7 +56,7 @@ import { NetPayableModal } from './components/NetPayableModal';
 import { CurrencySetupModal } from './components/CurrencySetupModal';
 import { GroupGallery } from './components/GroupGallery';
 import { checkIfDemoMode } from './lib/demoMode';
-import { ensureArray, ensureObject, isLegacyRenameLog, formatCompactAmount, genGroupId, genExpenseId } from './lib/utils';
+import { ensureArray, ensureObject, isLegacyRenameLog, formatCompactAmount, genGroupId, genExpenseId, titleCaseName } from './lib/utils';
 import { getPersonKey } from './lib/identity';
 import { useSupabaseSync, getGidRemap } from './hooks/useSupabaseSync';
 import { BalanceActionCard } from './components/BalanceActionCard';
@@ -3883,7 +3883,7 @@ function App() {
                     // email to this member row permanently, so a fat-finger tap on the
                     // wrong row silently hijacks someone else's identity. One confirm()
                     // on the claimer's own screen catches the common accidental case.
-                    const claimTarget = p.name.replace(' (Left)', '');
+                    const claimTarget = titleCaseName(p.name.replace(' (Left)', ''));
                     if (!confirm(`Join "${linkRequestGroup.name}" as "${claimTarget}"?\n\nThis is how the group will see you. Only continue if you are ${claimTarget}.`)) {
                       return;
                     }
@@ -4093,7 +4093,7 @@ function App() {
                     const rejoinParam = new URLSearchParams(window.location.search).get('rejoinName');
                     const isRejoinLabel = p.name.endsWith(' (Left)') ||
                       (!!rejoinParam && rejoinParam.toLowerCase() === p.name.replace(' (Left)', '').toLowerCase());
-                    return isRejoinLabel ? `Rejoin as "${p.name.replace(' (Left)', '')}"` : `Claim "${p.name}"`;
+                    return isRejoinLabel ? `Rejoin as "${titleCaseName(p.name.replace(' (Left)', ''))}"` : `Claim "${titleCaseName(p.name)}"`;
                   })()}
                 </button>
               ))}
