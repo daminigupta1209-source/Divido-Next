@@ -373,6 +373,9 @@ function App() {
   const [linkRequestGroup, setLinkRequestGroup] = useState<any | null>(null);
   const [linkRequestPlaceholders, setLinkRequestPlaceholders] = useState<any[]>([]);
   const [submittingLinkRequest, setSubmittingLinkRequest] = useState<boolean>(false);
+  // Name the invitee types when they aren't in the invite list and want to join
+  // as a brand-new member (the claim card would otherwise dead-end on Cancel).
+  const [joinNewName, setJoinNewName] = useState<string>('');
   // True while we resolve an invite link (fetch the group + members + session)
   // before deciding whether to show the claim card, admit the user, etc. Seeded
   // synchronously so the home feed never flashes behind the pending claim card.
@@ -4050,6 +4053,134 @@ function App() {
                   })()}
                 </button>
               ))}
+            </div>
+
+            <div style={{ borderTop: '1px solid #F1F5F9', margin: '4px 0 12px', paddingTop: '14px' }}>
+              <p style={{ fontSize: '12px', color: '#94A3B8', fontWeight: 700, margin: '0 0 8px 0' }}>
+                {linkRequestPlaceholders.length === 0 ? 'Join as a new member.' : "Not listed? Join as a new member."}
+              </p>
+              <input
+                type="search"
+                value={joinNewName}
+                onChange={(e) => setJoinNewName(e.target.value)}
+                placeholder="Your name"
+                disabled={submittingLinkRequest}
+                style={{ width: '100%', padding: '11px 12px', borderRadius: '12px', border: '1.5px solid #E2E8F0', fontSize: '14px', fontWeight: 600, marginBottom: '8px', boxSizing: 'border-box', textAlign: 'center' }}
+              />
+              <button
+                disabled={submittingLinkRequest || !joinNewName.trim()}
+                onClick={async () => {
+                  const typed = joinNewName.trim();
+                  if (!typed) return;
+                  setSubmittingLinkRequest(true);
+                  try {
+                    const { data: { session } } = await supabase.auth.getSession();
+                    const myEmail = session?.user?.email || (localStorage.getItem('divido_e2e_testing') === 'true' ? localStorage.getItem('divido_mock_email') || 'e2e-test-guest@divido.app' : null);
+                    if (!myEmail) {
+                      // Not signed in yet — save the invite intent and go to Google.
+                      // On return the claim card reappears so they can join as new.
+                      try {
+                        localStorage.setItem('divido_pending_join', JSON.stringify({ groupId: linkRequestGroup.id, ts: Date.now() }));
+                      } catch { /* storage full — non-fatal */ }
+                      const _join = new URL(window.location.href).searchParams.get('joinGroupId');
+                      const cleanRedirect = window.location.origin + window.location.pathname + (_join ? `?joinGroupId=${_join}` : '');
+                      await supabase.auth.signInWithOAuth({
+                        provider: 'google',
+                        options: { redirectTo: cleanRedirect, queryParams: { prompt: 'select_account' } },
+                      });
+                      setSubmittingLinkRequest(false);
+                      return;
+                    }
+                    // Fetch the roster: block a duplicate name, and adopt an
+                    // existing row if this email already belongs to the group.
+                    const { data: gm } = await supabase
+                      .from('group_members')
+                      .select('*')
+                      .eq('group_id', linkRequestGroup.id)
+                      .order('id', { ascending: true });
+                    const roster = gm || [];
+                    const norm = (n: string) => n.replace(/\s*\(Left\)$/i, '').trim().toLowerCase();
+                    const mine = roster.find((m: any) => m.user_email && String(m.user_email).toLowerCase() === myEmail.toLowerCase());
+                    if (!mine) {
+                      if (roster.some((m: any) => norm(m.name) === norm(typed))) {
+                        alert(`"${typed}" is already in this group. Add a surname or pick a different name.`);
+                        setSubmittingLinkRequest(false);
+                        return;
+                      }
+                      // New member identified by email (person_id null, like the
+                      // group creator). is_pending false — they've actively joined.
+                      const { error: insErr } = await supabase.from('group_members').insert({
+                        group_id: linkRequestGroup.id,
+                        name: typed,
+                        user_email: myEmail,
+                        is_pending: false,
+                        person_id: null,
+                      });
+                      if (insErr) throw insErr;
+                    }
+                    const myName = mine ? String(mine.name).replace(/\s*\(Left\)$/i, '') : typed;
+                    {
+                      const existing = localStorage.getItem('divido_username');
+                      const hasRealName = !!existing && !['You', 'Guest', 'undefined', ''].includes(existing.trim());
+                      if (!hasRealName) { localStorage.setItem('divido_username', myName); setUserName(myName); }
+                    }
+                    localStorage.setItem('divido_authenticated', 'true');
+                    localStorage.setItem(`divido_identity_${linkRequestGroup.id}`, myName);
+                    setIsAuthenticated(true);
+                    // Re-fetch so the joiner sees the full roster (incl. their new row).
+                    let freshMembers: string[] = [];
+                    let freshPending: string[] = [];
+                    try {
+                      const { data: gm2 } = await supabase
+                        .from('group_members')
+                        .select('*')
+                        .eq('group_id', linkRequestGroup.id)
+                        .order('id', { ascending: true });
+                      if (gm2) {
+                        const activeMems = gm2.filter((m: any) => !m.link_request_email || !m.is_pending || m.name.endsWith(' (Left)'));
+                        freshMembers = Array.from(new Set(activeMems.map((m: any) => m.name)));
+                        freshPending = Array.from(new Set(activeMems
+                          .filter((m: any) => m.is_pending && !m.user_email && !m.name.endsWith(' (Left)'))
+                          .map((m: any) => m.name)));
+                      }
+                    } catch { /* background cloud-load will catch up */ }
+                    const updatedGroup = {
+                      ...linkRequestGroup,
+                      members: freshMembers.length ? freshMembers : [...(linkRequestGroup.members || []), myName],
+                      pendingMembers: freshPending,
+                    };
+                    setGroups(prev => prev.some(g => g.id === updatedGroup.id)
+                      ? prev.map(g => g.id === updatedGroup.id ? updatedGroup : g)
+                      : [...prev, updatedGroup]);
+                    setSelectedId(linkRequestGroup.id);
+                    setView('detail');
+                    setLinkRequestGroup(null);
+                    setJoinNewName('');
+                    localStorage.removeItem('divido_pending_join');
+                    alert(`Welcome, ${myName}! You have joined the group. 🎉`);
+                  } catch (err) {
+                    console.error('Join as new member failed:', err);
+                    alert('Could not join right now. Please try again.');
+                  } finally {
+                    setSubmittingLinkRequest(false);
+                    const cleanUrl = window.location.protocol + '//' + window.location.host + window.location.pathname;
+                    window.history.replaceState({}, document.title, cleanUrl);
+                  }
+                }}
+                style={{
+                  width: '100%',
+                  padding: '12px',
+                  borderRadius: '12px',
+                  border: 'none',
+                  background: joinNewName.trim() ? '#6366F1' : '#CBD5E1',
+                  color: '#FFFFFF',
+                  fontWeight: 800,
+                  fontSize: '13px',
+                  cursor: joinNewName.trim() ? 'pointer' : 'not-allowed',
+                }}
+              >
+                Join as new member
+              </button>
             </div>
 
             <button
