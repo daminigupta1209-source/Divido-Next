@@ -1988,6 +1988,10 @@ function App() {
 
         // Show selection list of unlinked pending members (placeholders)
         const placeholders = existingMembers.filter((m: any) => m.is_pending && !m.user_email && !m.link_request_email);
+        // Prefill the "join as new member" name with the Google profile name, so
+        // a signed-in invitee doesn't have to type it (they can still edit it).
+        const googleName = (session?.user?.user_metadata?.full_name || session?.user?.user_metadata?.name || '').trim();
+        if (googleName) setJoinNewName(googleName);
         setLinkRequestGroup(groupData);
         setLinkRequestPlaceholders(placeholders);
       } catch (err) {
@@ -3820,14 +3824,51 @@ function App() {
               background: '#FFFFFF',
               border: '1px solid rgba(0,0,0,0.05)',
               textAlign: 'center',
+              position: 'relative',
             }}
           >
+            <button
+              aria-label="Close"
+              onClick={() => {
+                const declinedId = linkRequestGroup?.id;
+                setLinkRequestGroup(null);
+                setJoinNewName('');
+                localStorage.removeItem('divido_pending_join');
+                if (declinedId != null) {
+                  setGroups(prev => prev.filter(g => String(g.id) !== String(declinedId)));
+                }
+                const cleanUrl = window.location.protocol + '//' + window.location.host + window.location.pathname;
+                window.history.replaceState({}, document.title, cleanUrl);
+              }}
+              style={{
+                position: 'absolute',
+                top: '14px',
+                right: '14px',
+                width: '30px',
+                height: '30px',
+                borderRadius: '50%',
+                border: 'none',
+                background: '#F1F5F9',
+                color: '#64748B',
+                fontSize: '18px',
+                fontWeight: 700,
+                lineHeight: 1,
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+              }}
+            >
+              ×
+            </button>
             <h3 className="nunito" style={{ fontSize: '18px', fontWeight: 900, color: '#0F172A', margin: '0 0 6px 0' }}>
-              Join {linkRequestGroup.name}
+              Join Group "{linkRequestGroup.name}"
             </h3>
-            <p style={{ fontSize: '13px', color: '#64748B', fontWeight: 600, margin: '0 0 16px 0', lineHeight: 1.4 }}>
-              Select your name to join.
-            </p>
+            {linkRequestPlaceholders.length > 0 && (
+              <p style={{ fontSize: '13px', color: '#64748B', fontWeight: 600, margin: '0 0 16px 0', lineHeight: 1.4 }}>
+                Select your name to join.
+              </p>
+            )}
 
             <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', maxHeight: '200px', overflowY: 'auto', marginBottom: '16px', paddingRight: '4px' }}>
               {linkRequestPlaceholders.map((p) => (
@@ -4055,10 +4096,12 @@ function App() {
               ))}
             </div>
 
-            <div style={{ borderTop: '1px solid #F1F5F9', margin: '4px 0 12px', paddingTop: '14px' }}>
-              <p style={{ fontSize: '12px', color: '#94A3B8', fontWeight: 700, margin: '0 0 8px 0' }}>
-                {linkRequestPlaceholders.length === 0 ? 'Join as a new member.' : "Not listed? Join as a new member."}
-              </p>
+            <div style={{ borderTop: linkRequestPlaceholders.length > 0 ? '1px solid #F1F5F9' : 'none', margin: '4px 0 12px', paddingTop: linkRequestPlaceholders.length > 0 ? '14px' : '4px' }}>
+              {linkRequestPlaceholders.length > 0 && (
+                <p style={{ fontSize: '12px', color: '#94A3B8', fontWeight: 700, margin: '0 0 8px 0' }}>
+                  Not listed? Join as a new member.
+                </p>
+              )}
               <input
                 type="search"
                 value={joinNewName}
@@ -4182,37 +4225,6 @@ function App() {
                 Join as new member
               </button>
             </div>
-
-            <button
-              onClick={() => {
-                // Declining an invite you never accepted shouldn't leave the group
-                // sitting in your feed. The claim card only shows when you're NOT an
-                // active member, so it's safe to drop it locally here; the cloud sync
-                // re-adds it only if you actually are a member. (Cloud data is never
-                // deleted by this — groups are only removed via explicit "Leave/Delete".)
-                const declinedId = linkRequestGroup?.id;
-                setLinkRequestGroup(null);
-                localStorage.removeItem('divido_pending_join');
-                if (declinedId != null) {
-                  setGroups(prev => prev.filter(g => String(g.id) !== String(declinedId)));
-                }
-                const cleanUrl = window.location.protocol + '//' + window.location.host + window.location.pathname;
-                window.history.replaceState({}, document.title, cleanUrl);
-              }}
-              style={{
-                width: '100%',
-                padding: '11px',
-                borderRadius: '12px',
-                border: 'none',
-                background: '#F1F5F9',
-                color: '#64748B',
-                fontWeight: 900,
-                fontSize: '13px',
-                cursor: 'pointer',
-              }}
-            >
-              Cancel
-            </button>
           </div>
         </div>
       )}
