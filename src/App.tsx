@@ -4018,7 +4018,7 @@ function App() {
                           setUserEmail(activeEmail);
                         }
 
-                        alert(`Welcome, ${p.name}! You have successfully joined the group. 🎉`);
+                        // No blocking alert — landing in the group is the confirmation.
                       }
                       
                       // Fetch the real member roster right now so the joiner sees
@@ -4200,7 +4200,7 @@ function App() {
                     setLinkRequestGroup(null);
                     setJoinNewName('');
                     localStorage.removeItem('divido_pending_join');
-                    alert(`Welcome, ${myName}! You have joined the group. 🎉`);
+                    // No blocking alert — landing in the group is the confirmation.
                   } catch (err) {
                     console.error('Join as new member failed:', err);
                     alert('Could not join right now. Please try again.');
