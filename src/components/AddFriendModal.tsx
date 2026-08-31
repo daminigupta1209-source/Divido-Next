@@ -37,6 +37,31 @@ export const AddFriendModal: React.FC<AddFriendModalProps> = ({
   const [error, setError] = useState<string | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
+  // "People you've split with before" — everyone from your OTHER groups, so you
+  // can tap instead of retyping. Deduped by hidden identity (email/person_id/
+  // name), and hides anyone already in this group or in the pending invite list.
+  const suggestions = React.useMemo(() => {
+    const meLower = (me || '').replace(/\s*\(me\)$/i, '').replace(/\s*\(Left\)$/i, '').trim().toLowerCase();
+    const curMembers = new Set((selectedGroup?.members || []).map((m) => m.replace(/\s*\(Left\)$/i, '').trim().toLowerCase()));
+    const seen = new Set<string>();
+    const out: { name: string; email: string }[] = [];
+    for (const g of groups) {
+      if (!g || g.id === 'STANDALONE') continue;
+      const mi = g.memberIdentities || {};
+      for (const m of g.members || []) {
+        const clean = m.replace(/\s*\(Left\)$/i, '').trim();
+        const lower = clean.toLowerCase();
+        if (!clean || lower === meLower || curMembers.has(lower)) continue;
+        const identity = typeof mi[m] === 'string' ? mi[m] : '';
+        const key = (identity || lower).toLowerCase();
+        if (seen.has(key)) continue;
+        seen.add(key);
+        out.push({ name: clean, email: identity.includes('@') ? identity : '' });
+      }
+    }
+    return out.sort((a, b) => a.name.localeCompare(b.name));
+  }, [groups, selectedGroup, me]);
+
   const getInviteLink = () =>
     customRejoinLink || `${window.location.origin}/?joinGroupId=${selectedId || 'STANDALONE'}`;
 
@@ -47,8 +72,11 @@ export const AddFriendModal: React.FC<AddFriendModalProps> = ({
     return `Hey! Join ${selectedGroup ? `"${selectedGroup.name}"` : 'my group'} on Divido to split expenses 💸\n${getInviteLink()}`;
   };
 
-  const handleAddName = async () => {
-    const trimmed = name.trim();
+  const handleAddName = async (rawName?: string) => {
+    // rawName is passed when tapping a suggestion; typing uses the input state.
+    // Guard against an onClick event being passed in as the argument.
+    const fromArg = typeof rawName === 'string' ? rawName : undefined;
+    const trimmed = (fromArg ?? name).trim();
     if (!trimmed) return;
     setError(null);
 
@@ -71,7 +99,7 @@ export const AddFriendModal: React.FC<AddFriendModalProps> = ({
     }
 
     setPending((prev) => [...prev, trimmed]);
-    setName('');
+    if (fromArg === undefined) setName('');
   };
 
   const handleConfirm = () => {
@@ -295,7 +323,7 @@ export const AddFriendModal: React.FC<AddFriendModalProps> = ({
                 />
                 {name.trim().length > 0 && (
                   <button
-                    onClick={handleAddName}
+                    onClick={() => handleAddName()}
                     style={{
                       width: '44px', height: '44px', borderRadius: '12px',
                       background: '#6366F1', border: 'none', cursor: 'pointer',
@@ -344,6 +372,42 @@ export const AddFriendModal: React.FC<AddFriendModalProps> = ({
                   ))}
                 </div>
               )}
+
+              {/* Suggestions: people you've split with before */}
+              {(() => {
+                const q = name.trim().toLowerCase();
+                const pendLower = new Set(pending.map((p) => p.toLowerCase()));
+                const shown = suggestions
+                  .filter((s) => !pendLower.has(s.name.toLowerCase()))
+                  .filter((s) => !q || s.name.toLowerCase().includes(q) || s.email.toLowerCase().includes(q))
+                  .slice(0, 6);
+                if (shown.length === 0) return null;
+                return (
+                  <div style={{ marginTop: '12px' }}>
+                    <p style={{ margin: '0 0 6px 0', fontSize: '11px', fontWeight: 700, color: '#94A3B8', textTransform: 'uppercase', letterSpacing: '0.5px', textAlign: 'left' }}>
+                      Recently split with
+                    </p>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', maxHeight: '160px', overflowY: 'auto' }}>
+                      {shown.map((s) => (
+                        <button
+                          key={s.email || s.name}
+                          onClick={() => handleAddName(s.name)}
+                          style={{ display: 'flex', alignItems: 'center', gap: '10px', width: '100%', textAlign: 'left', background: '#F8FAFC', border: '1px solid #EEF2F7', borderRadius: '10px', padding: '8px 10px', cursor: 'pointer' }}
+                        >
+                          <span style={{ width: '28px', height: '28px', borderRadius: '50%', background: '#EEF2FF', color: '#4338CA', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '12px', fontWeight: 700, flexShrink: 0 }}>
+                            {s.name.charAt(0).toUpperCase()}
+                          </span>
+                          <span style={{ minWidth: 0, flex: 1 }}>
+                            <span style={{ display: 'block', fontSize: '13px', fontWeight: 600, color: '#334155', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{s.name}</span>
+                            {s.email && <span style={{ display: 'block', fontSize: '10px', color: '#94A3B8', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{s.email}</span>}
+                          </span>
+                          <span style={{ color: '#6366F1', fontSize: '16px', fontWeight: 700, flexShrink: 0 }}>+</span>
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                );
+              })()}
             </div>
 
             {/* Add button */}
