@@ -1107,15 +1107,41 @@ function App() {
     const cleanNew = newName.trim();
     if (!cleanNew) return;
 
-    // Option 3: a profile-name change is account-only. It no longer reaches into
-    // groups — each group keeps its own member name (set when you join/create it,
-    // or changed by the group admin). This stops a profile rename from (a)
-    // overwriting a custom per-group name, and (b) leaving old expenses pointing
-    // at a stale name (ghosts). Your name INSIDE a group is resolved from that
-    // group's own member row (see `me` and the divido_identity hydration on
-    // load), so balances are unaffected by this change.
+    // Update the account display name immediately.
     setUserName(cleanNew);
     localStorage.setItem('divido_username', cleanNew);
+
+    // Propagate: your profile name is your identity, so rename YOUR OWN entry in
+    // every group you belong to — member row AND your references in past
+    // expenses (paid/splitters/shares) — then sync, so everyone sees the new
+    // name. applyRename does the balance-safe rewrite; we only ever touch our
+    // own name. (Reverses the old account-only "Option 3": names now flow from
+    // the profile, per the agreed profile-name-is-identity design.)
+    const myEmail = (userEmail || '').toLowerCase();
+    for (const g of groups) {
+      if (!g || g.id === 'STANDALONE') continue;
+      // This device's current name in the group: the per-group claimed identity,
+      // else the member whose hidden identity resolves to my email.
+      let oldName = '';
+      try { oldName = localStorage.getItem(`divido_identity_${g.id}`) || ''; } catch { /* ignore */ }
+      if (!oldName && myEmail) {
+        const mi = g.memberIdentities || {};
+        const match = (g.members || []).find((m) => (mi[m] || '').toLowerCase() === myEmail);
+        if (match) oldName = match.replace(/\s*\(Left\)$/i, '');
+      }
+      if (!oldName) continue;
+      if (oldName.toLowerCase() === cleanNew.toLowerCase()) continue; // no real change
+      // Never collide with a DIFFERENT existing member in this group.
+      const clash = (g.members || []).some((m) => {
+        const cm = m.replace(/\s*\(Left\)$/i, '');
+        return cm.toLowerCase() === cleanNew.toLowerCase() && cm.toLowerCase() !== oldName.toLowerCase();
+      });
+      if (clash) {
+        console.warn(`Skipped profile rename in "${g.name}": "${cleanNew}" is already a member there.`);
+        continue;
+      }
+      await applyRename(g.id, oldName, cleanNew);
+    }
   };
 
   const guestIdentitiesLinkedRef = useRef<string | null>(null);
