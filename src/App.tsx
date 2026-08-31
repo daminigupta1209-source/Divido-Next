@@ -1118,6 +1118,7 @@ function App() {
     // own name. (Reverses the old account-only "Option 3": names now flow from
     // the profile, per the agreed profile-name-is-identity design.)
     const myEmail = (userEmail || '').toLowerCase();
+    const clashedGroups: string[] = [];
     for (const g of groups) {
       if (!g || g.id === 'STANDALONE') continue;
       // This device's current name in the group: the per-group claimed identity,
@@ -1137,10 +1138,19 @@ function App() {
         return cm.toLowerCase() === cleanNew.toLowerCase() && cm.toLowerCase() !== oldName.toLowerCase();
       });
       if (clash) {
-        console.warn(`Skipped profile rename in "${g.name}": "${cleanNew}" is already a member there.`);
+        clashedGroups.push(g.name);
         continue;
       }
       await applyRename(g.id, oldName, cleanNew);
+    }
+    // Tell the user if the name couldn't be applied in some groups because
+    // someone there already uses it — otherwise the skip is silently confusing.
+    if (clashedGroups.length > 0) {
+      alert(
+        `Your name was updated, but not in ${clashedGroups.length === 1 ? 'this group' : 'these groups'} because "${cleanNew}" is already a member there:\n\n` +
+        clashedGroups.join(', ') +
+        `\n\nUse a slightly different name, or ask that member to rename.`
+      );
     }
   };
 
