@@ -1479,7 +1479,13 @@ function App() {
     const newSettlements = localSettleEdits
       .filter((it) => it.selected && it.amt > 0)
       .map((it) => ({
-        id: genExpenseId(),
+        // Deterministic id so two devices (or a double-tap) recording the SAME
+        // settlement — same pair, currency, amount, day — converge to ONE row
+        // instead of two cancelling entries that double-reverse the balance
+        // (mirrors performWriteOff). The amount is part of the key, so two
+        // genuinely-different payments to the same person on the same day stay
+        // distinct; only exact duplicates collapse.
+        id: `settle-${String(it.gId)}-${it.paidBy}-${it.receivedBy}-${it.curr}-${Math.round((parseFloat(it.amt) || 0) * 100)}-${new Date().toISOString().split('T')[0]}`,
         gId: it.gId,
         title: `✅ Settlement: ${it.paidBy} paid ${it.receivedBy}`,
         amt: parseFloat(it.amt) || 0,

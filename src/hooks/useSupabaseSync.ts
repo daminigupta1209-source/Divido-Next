@@ -1136,17 +1136,22 @@ export function useSupabaseSync({
   // Listen for online status to trigger automatic sync queue flush
   useEffect(() => {
     const handleOnline = () => {
-      console.log('Network connection restored. Replaying sync queue...');
-      // Force trigger state updates to re-run the sync effects
+      console.log('Network connection restored. Replaying sync queue and pulling remote changes...');
+      // Force trigger state updates to re-run the sync effects (push local edits).
       setGroups((prev) => [...prev]);
       setExpenses((prev) => [...prev]);
+      // Also force a PULL. Supabase realtime does not replay events missed while
+      // the socket was down, so changes another device made during our offline
+      // window would otherwise stay invisible until the next local change or a
+      // full reload. Bumping loadTrigger runs the pull-and-field-merge once.
+      setLoadTrigger((prev) => prev + 1);
     };
 
     window.addEventListener('online', handleOnline);
     return () => {
       window.removeEventListener('online', handleOnline);
     };
-  }, [setGroups, setExpenses]);
+  }, [setGroups, setExpenses, setLoadTrigger]);
 
   return { syncStatus, isInitialLoadDone };
 }
