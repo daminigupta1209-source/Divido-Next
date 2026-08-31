@@ -2,23 +2,48 @@
 // picking up new deploys quickly.
 //
 // Strategy:
+//   * On install, PRECACHE the app shell: the index page AND the main JS/CSS it
+//     references (parsed out of index.html), cached together as one coherent
+//     set. This is what lets the app open on a cold offline start instead of
+//     falling into a reload loop when a needed chunk isn't cached.
 //   * HTML navigations -> network-first (always try the latest deploy; fall
-//     back to the cached page only when offline). This is what keeps users
-//     from being trapped on a stale version.
-//   * Same-origin static assets (Vite emits content-hashed filenames, so a new
-//     build = new filename) -> cache-first, filled in on first fetch.
-//   * Cross-origin requests (Supabase auth/data/storage) -> never touched, so
-//     they always go straight to the network.
+//     back to the cached index only when offline).
+//   * Same-origin static assets (Vite emits content-hashed filenames) ->
+//     cache-first, filled in on first fetch. Lazy-loaded route chunks are
+//     cached the first time they're visited online.
+//   * Cross-origin requests (Supabase auth/data/storage) -> never touched.
 
-const CACHE = 'divido-cache-v84';
-const CORE = ['/', '/index.html', '/manifest.json'];
+const CACHE = 'divido-cache-v85';
+const CORE = ['/index.html', '/manifest.json'];
+
+// Precache the shell: core files plus every hashed /assets/*.js and *.css that
+// index.html references, so the entry bundle is guaranteed present offline.
+async function precacheShell(cache) {
+  await Promise.allSettled(CORE.map((u) => cache.add(u)));
+  try {
+    const res = await fetch('/index.html', { cache: 'no-cache' });
+    if (res && res.ok) {
+      await cache.put('/index.html', res.clone());
+      const html = await res.text();
+      const urls = new Set();
+      const re = /(?:href|src)=["']([^"']+)["']/g;
+      let m;
+      while ((m = re.exec(html))) {
+        const u = m[1];
+        if (u.startsWith('/assets/') && (u.endsWith('.js') || u.endsWith('.css'))) {
+          urls.add(u);
+        }
+      }
+      await Promise.allSettled([...urls].map((u) => cache.add(u)));
+    }
+  } catch (e) {
+    // Offline during install (rare) — the core files are enough to boot.
+  }
+}
 
 self.addEventListener('install', (event) => {
   event.waitUntil(
-    caches.open(CACHE)
-      // allSettled: one missing core file must not abort the whole install
-      .then((c) => Promise.allSettled(CORE.map((u) => c.add(u))))
-      .then(() => self.skipWaiting())
+    caches.open(CACHE).then(precacheShell).then(() => self.skipWaiting())
   );
 });
 
@@ -38,7 +63,10 @@ self.addEventListener('fetch', (event) => {
   // Only handle our own origin — Supabase and other APIs must hit the network.
   if (url.origin !== self.location.origin) return;
 
-  // HTML pages: network-first so a fresh deploy is always preferred.
+  // HTML pages: network-first so a fresh deploy is always preferred; fall back
+  // to the cached index (kept fresh by every online navigation + install) when
+  // offline. No stale '/' fallback — that was what served an old page pointing
+  // at chunks that were no longer cached, causing the offline reload loop.
   if (req.mode === 'navigate') {
     event.respondWith(
       fetch(req)
@@ -47,7 +75,7 @@ self.addEventListener('fetch', (event) => {
           caches.open(CACHE).then((c) => c.put('/index.html', clone));
           return res;
         })
-        .catch(() => caches.match('/index.html').then((r) => r || caches.match('/')))
+        .catch(() => caches.match('/index.html'))
     );
     return;
   }
@@ -61,8 +89,6 @@ self.addEventListener('fetch', (event) => {
           if (res && res.status === 200 && res.type === 'basic') {
             const clone = res.clone();
             caches.open(CACHE).then((c) => c.put(req, clone));
-          } else if (res && res.status === 404 && url.pathname.endsWith('.js')) {
-            caches.open(CACHE).then((c) => c.delete('/index.html'));
           }
           return res;
         })
