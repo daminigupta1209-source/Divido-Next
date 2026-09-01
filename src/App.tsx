@@ -2750,7 +2750,9 @@ function App() {
     // second, separate person — two Abhisheks in the cross-group balances.
     const clashing = pendingMembers
       .map((n) => ({ name: n, candidates: findPersonCandidates(n, id) }))
-      .filter((x) => x.candidates.length > 0);
+      // Skip the "same person?" prompt for members added WITH an email — the
+      // email (in memberIdentities) already settles identity via auto-merge.
+      .filter((x) => x.candidates.length > 0 && !memberIdentities[x.name]);
     if (clashing.length > 0) {
       setSamePersonPrompt({ groupId: id, queue: clashing, index: 0, addNames: [] });
     }
@@ -3609,9 +3611,11 @@ function App() {
             }}
             onAddMembers={(names, emails) => {
               if (selectedId && selectedId !== 'STANDALONE') {
+                // An email settles identity, so skip the "same person?" prompt for
+                // any name added WITH an email — it auto-merges by email instead.
                 const clashing = names
                   .map((n) => ({ name: n, candidates: findPersonCandidates(n, selectedId) }))
-                  .filter((x) => x.candidates.length > 0);
+                  .filter((x) => x.candidates.length > 0 && !(emails && emails[x.name]));
                 if (clashing.length > 0) {
                   setSamePersonPrompt({ groupId: selectedId, queue: clashing, index: 0, addNames: names, addEmails: emails });
                 } else {
@@ -3800,10 +3804,11 @@ function App() {
              if (selectedId === 'STANDALONE') {
                setNewlyAddedFriends(names);
              } else if (selectedId) {
-               // If any added name already exists elsewhere, ask "same person?".
+               // If any added name already exists elsewhere, ask "same person?" —
+               // but skip that for names added WITH an email (email settles it).
                const clashing = names
                  .map((n) => ({ name: n, candidates: findPersonCandidates(n, selectedId) }))
-                 .filter((x) => x.candidates.length > 0);
+                 .filter((x) => x.candidates.length > 0 && !(emails && emails[x.name]));
                if (clashing.length > 0) {
                  setSamePersonPrompt({ groupId: selectedId, queue: clashing, index: 0, addNames: names, addEmails: emails });
                } else {
