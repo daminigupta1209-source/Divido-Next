@@ -65,6 +65,31 @@ export const GroupMemberList: React.FC<GroupMemberListProps> = ({
     return typeof id === 'string' && id.includes('@') ? id : '';
   };
 
+  // "People you've split with before" — everyone from your OTHER groups, so you
+  // can tap to add instead of retyping. Deduped by hidden identity; hides anyone
+  // already in this group.
+  const buildSuggestions = (): { name: string; email: string }[] => {
+    const meLower = (me || '').replace(/\s*\((me|Left)\)$/i, '').trim().toLowerCase();
+    const curMembers = new Set((selectedGroup.members || []).map((m) => m.replace(/\s*\(Left\)$/i, '').trim().toLowerCase()));
+    const seen = new Set<string>();
+    const out: { name: string; email: string }[] = [];
+    for (const g of groups) {
+      if (!g || g.id === 'STANDALONE' || String(g.id) === String(selectedGroup.id)) continue;
+      const mi = g.memberIdentities || {};
+      for (const m of g.members || []) {
+        const clean = m.replace(/\s*\(Left\)$/i, '').trim();
+        const lower = clean.toLowerCase();
+        if (!clean || lower === meLower || curMembers.has(lower)) continue;
+        const identity = typeof mi[m] === 'string' ? mi[m] : '';
+        const key = (identity || lower).toLowerCase();
+        if (seen.has(key)) continue;
+        seen.add(key);
+        out.push({ name: clean, email: identity.includes('@') ? identity : '' });
+      }
+    }
+    return out.sort((a, b) => a.name.localeCompare(b.name));
+  };
+
   // Per-currency net for a member (positive = to collect, negative = to pay).
   const getMemberBalanceByCurrency = (name: string): Record<string, number> => {
     const bal: Record<string, number> = {};
@@ -142,8 +167,9 @@ export const GroupMemberList: React.FC<GroupMemberListProps> = ({
     }
   };
 
-  const handleInlineAdd = () => {
-    const trimmed = inlineAddVal.trim();
+  const handleInlineAdd = (rawName?: string) => {
+    const fromArg = typeof rawName === 'string' ? rawName : undefined;
+    const trimmed = (fromArg ?? inlineAddVal).trim();
     if (!trimmed) return;
 
     // Check duplicates against selectedGroup.members (case-insensitive)
@@ -165,7 +191,7 @@ export const GroupMemberList: React.FC<GroupMemberListProps> = ({
     if (onAddMembers) {
       onAddMembers([trimmed]);
     }
-    setInlineAddVal('');
+    if (fromArg === undefined) setInlineAddVal('');
     // Automatically refocus the input box for consecutive additions
     setTimeout(() => {
       inlineInputRef.current?.focus();
@@ -666,6 +692,41 @@ export const GroupMemberList: React.FC<GroupMemberListProps> = ({
                   </span>
                 </div>
               )}
+
+              {/* Suggestions: people you've split with before */}
+              {isAddingInline && (() => {
+                const q = inlineAddVal.trim().toLowerCase();
+                const shown = buildSuggestions()
+                  .filter((s) => !q || s.name.toLowerCase().includes(q) || s.email.toLowerCase().includes(q))
+                  .slice(0, 6);
+                if (shown.length === 0) return null;
+                return (
+                  <div style={{ marginTop: '8px' }}>
+                    <p style={{ margin: '0 0 6px 0', fontSize: '10px', fontWeight: 600, color: '#94A3B8', textTransform: 'uppercase', letterSpacing: '0.5px', textAlign: 'left' }}>
+                      Recently split with
+                    </p>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', maxHeight: '150px', overflowY: 'auto' }}>
+                      {shown.map((s) => (
+                        <button
+                          key={s.email || s.name}
+                          type="button"
+                          onClick={() => handleInlineAdd(s.name)}
+                          style={{ display: 'flex', alignItems: 'center', gap: '10px', width: '100%', textAlign: 'left', background: '#F8FAFC', border: '1px solid #EEF2F7', borderRadius: '10px', padding: '7px 10px', cursor: 'pointer' }}
+                        >
+                          <span style={{ width: '26px', height: '26px', borderRadius: '50%', background: '#EEF2FF', color: '#4338CA', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '11px', fontWeight: 700, flexShrink: 0 }}>
+                            {s.name.charAt(0).toUpperCase()}
+                          </span>
+                          <span style={{ minWidth: 0, flex: 1 }}>
+                            <span style={{ display: 'block', fontSize: '12px', fontWeight: 600, color: '#334155', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{s.name}</span>
+                            {s.email && <span style={{ display: 'block', fontSize: '10px', color: '#94A3B8', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{s.email}</span>}
+                          </span>
+                          <span style={{ color: '#6366F1', fontSize: '16px', fontWeight: 700, flexShrink: 0 }}>+</span>
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                );
+              })()}
             </div>
 
             {(!isAddingInline || inlineAddVal.length > 0) && (
