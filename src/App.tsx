@@ -4761,9 +4761,21 @@ function App() {
                               e.stopPropagation();
                               setLocalSettleEdits((prev) => prev.map((x, i) => (i === idx ? { ...x, mode: x.mode === 'writeoff' ? 'settle' : 'writeoff' } : x)));
                             }}
-                            style={{ marginTop: '3px', fontSize: '10px', fontWeight: 700, cursor: 'pointer', color: item.mode === 'writeoff' ? '#B45309' : '#94A3B8', alignSelf: 'flex-start' }}
+                            style={{
+                              marginTop: '5px',
+                              fontSize: '10px',
+                              fontWeight: 700,
+                              cursor: 'pointer',
+                              alignSelf: 'flex-start',
+                              padding: '2px 9px',
+                              borderRadius: '20px',
+                              border: '1px solid ' + (item.mode === 'writeoff' ? '#F59E0B' : '#E2E8F0'),
+                              background: item.mode === 'writeoff' ? '#FEF3C7' : '#FFFFFF',
+                              color: item.mode === 'writeoff' ? '#B45309' : '#64748B',
+                              whiteSpace: 'nowrap',
+                            }}
                           >
-                            {item.mode === 'writeoff' ? "✓ Writing off — tap to mark paid instead" : "Can't recover it? Write off"}
+                            {item.mode === 'writeoff' ? '✓ Writing off · undo' : "Write off"}
                           </span>
                         )}
                       </div>
@@ -4908,6 +4920,8 @@ function App() {
 
               const selectedCount = localSettleEdits.filter((it) => it.selected).length;
               const hasActiveBalances = Object.values(netBalances).some((b) => Math.abs(b) >= 0.01);
+              const hasWriteoff = localSettleEdits.some((it) => it.selected && it.mode === 'writeoff');
+              const confirmLabel = hasWriteoff ? 'Confirm' : 'Mark as Settled';
               const friendName = globalSettleData.name;
 
               let buttonText = `Settle ${selectedCount} Items`;
@@ -4970,7 +4984,7 @@ function App() {
                       }}
                       onClick={handleFinalGlobalSettle}
                     >
-                      Mark as Settled
+                      {confirmLabel}
                     </button>
                   </div>
                 );
@@ -4993,7 +5007,7 @@ function App() {
                     }}
                     onClick={handleFinalGlobalSettle}
                   >
-                    Mark as Settled
+                    {confirmLabel}
                   </button>
                   <button
                     type="button"
