@@ -2714,8 +2714,14 @@ function App() {
     setShowExpModalSecure(true);
   };
 
-  const handleCreateGroup = (groupData: { name: string; currency: string; members: string[]; emoji: string; createdDate?: string }) => {
+  const handleCreateGroup = (groupData: { name: string; currency: string; members: string[]; emoji: string; createdDate?: string; memberEmails?: Record<string, string> }) => {
     const id = genGroupId();
+    // Emails supplied for members at creation become their identity (invite_email
+    // on insert), so they auto-claim when they sign in with that address.
+    const memberIdentities: Record<string, string> = {};
+    Object.entries(groupData.memberEmails || {}).forEach(([n, em]) => {
+      if (em && em.includes('@')) memberIdentities[n] = em.trim().toLowerCase();
+    });
     // Everyone added at creation except me is a not-yet-claimed invitee, so they
     // must start as pending. The member list buckets Joined vs Pending purely on
     // this array — omitting it made fresh invitees (e.g. Ram) show as Joined
@@ -2731,6 +2737,7 @@ function App() {
       simplifyDebts: false,
       createdDate: groupData.createdDate || new Date().toISOString().split('T')[0],
       pendingMembers,
+      memberIdentities,
       pendingSync: true,
     };
     setGroups([...groups, newGroup]);

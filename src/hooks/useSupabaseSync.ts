@@ -840,14 +840,19 @@ export function useSupabaseSync({
               // Link creator and other group members
               const memberInserts = g.members.map((m, idx) => {
                 const isMe = m.toLowerCase() === me.toLowerCase() || idx === 0;
+                // An email supplied at creation (memberIdentities) becomes the
+                // member's invite_email so they auto-claim on join.
+                const id = g.memberIdentities?.[m];
+                const inviteEmail = (!isMe && typeof id === 'string' && id.includes('@')) ? id.toLowerCase() : null;
                 return {
                   group_id: newGroupId,
                   name: m,
                   user_email: isMe ? userEmail : null,
                   is_pending: !isMe,
+                  invite_email: inviteEmail,
                   // Me is identified by email; other name-only members get their
                   // own hidden id so same-named people never merge across groups.
-                  person_id: isMe ? null : genPersonId(),
+                  person_id: isMe || inviteEmail ? null : genPersonId(),
                 };
               });
               const { error: memErr } = await supabase.from('group_members').insert(memberInserts);

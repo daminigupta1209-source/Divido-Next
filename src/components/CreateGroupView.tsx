@@ -1,13 +1,14 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { worldCurrencies } from '../lib/utils';
 import { Group } from '../lib/types';
+import { buildPeopleSuggestions } from '../lib/identity';
 import { SearchableCurrencyPicker } from './SearchableCurrencyPicker';
 
 interface CreateGroupViewProps {
   me: string;
   myDefaultCurrency: string;
   onCancel: () => void;
-  onCreateGroup: (groupData: { name: string; currency: string; members: string[]; emoji: string; createdDate?: string }) => void;
+  onCreateGroup: (groupData: { name: string; currency: string; members: string[]; emoji: string; createdDate?: string; memberEmails?: Record<string, string> }) => void;
   groups: Group[];
   userName: string;
   editingGroup?: Group;
@@ -29,6 +30,8 @@ export const CreateGroupView: React.FC<CreateGroupViewProps> = ({
   const [selectedCurrency, setSelectedCurrency] = useState(editingGroup ? editingGroup.currency : (myDefaultCurrency || '₹'));
   const [showCurrencyPicker, setShowCurrencyPicker] = useState(false);
   const [participants, setParticipants] = useState<string[]>(editingGroup ? editingGroup.members : [me]);
+  // Emails supplied for participants added via a suggestion (or later, a field).
+  const [participantEmails, setParticipantEmails] = useState<Record<string, string>>({});
 
   // Read-only member rows for Edit mode, tagged by category. Actions (remove /
   // remind / invite-again) live on the group members card, opened via
@@ -193,12 +196,17 @@ export const CreateGroupView: React.FC<CreateGroupViewProps> = ({
     // Make unique members list
     const uniqueMembers = Array.from(new Set(cleanMembers));
 
+    // Carry through only the emails whose member survived the clean/unique pass.
+    const memberEmails: Record<string, string> = {};
+    uniqueMembers.forEach((m) => { if (participantEmails[m]) memberEmails[m] = participantEmails[m]; });
+
     onCreateGroup({
       name: trimmedTitle,
       currency: selectedCurrency,
       members: uniqueMembers,
       emoji: selectedEmoji,
       createdDate: createdDate,
+      memberEmails,
     });
   };
 
@@ -584,6 +592,43 @@ export const CreateGroupView: React.FC<CreateGroupViewProps> = ({
                 <span style={{ fontSize: '16px', fontWeight: 600, lineHeight: 1, color: '#FFFFFF', display: 'flex', alignItems: 'center' }}>+</span>
                 <span style={{ color: '#FFFFFF', lineHeight: 1, display: 'flex', alignItems: 'center' }}>Friend</span>
               </button>
+
+              {/* Suggestions: people you've split with before */}
+              {(() => {
+                const shown = buildPeopleSuggestions(groups, null, participants, me).slice(0, 6);
+                if (shown.length === 0) return null;
+                const norm = (n: string) => n.replace(/\s*\(Left\)$/i, '').trim().toLowerCase();
+                return (
+                  <div style={{ marginTop: '10px' }}>
+                    <p style={{ margin: '0 0 6px 0', fontSize: '10px', fontWeight: 700, color: '#94A3B8', textTransform: 'uppercase', letterSpacing: '0.5px', textAlign: 'center' }}>
+                      Recently split with
+                    </p>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', maxHeight: '150px', overflowY: 'auto' }}>
+                      {shown.map((s) => (
+                        <button
+                          key={s.email || s.name}
+                          type="button"
+                          onClick={() => {
+                            if (participants.some((p) => norm(p) === norm(s.name))) return;
+                            setParticipants((prev) => [...prev, s.name]);
+                            if (s.email) setParticipantEmails((prev) => ({ ...prev, [s.name]: s.email }));
+                          }}
+                          style={{ display: 'flex', alignItems: 'center', gap: '10px', width: '100%', textAlign: 'left', background: 'var(--bg)', border: '1px solid var(--border)', borderRadius: '10px', padding: '7px 10px', cursor: 'pointer' }}
+                        >
+                          <span style={{ width: '26px', height: '26px', borderRadius: '50%', background: '#FEF0E6', color: '#EA580C', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '11px', fontWeight: 700, flexShrink: 0 }}>
+                            {s.name.charAt(0).toUpperCase()}
+                          </span>
+                          <span style={{ minWidth: 0, flex: 1 }}>
+                            <span style={{ display: 'block', fontSize: '12px', fontWeight: 600, color: 'var(--t)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{s.name}</span>
+                            {s.email && <span style={{ display: 'block', fontSize: '10px', color: '#94A3B8', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{s.email}</span>}
+                          </span>
+                          <span style={{ color: '#F97316', fontSize: '16px', fontWeight: 700, flexShrink: 0 }}>+</span>
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                );
+              })()}
               {duplicateIndices.size > 0 && (
                 <p style={{ margin: '10px 4px 0', fontSize: '12px', fontWeight: 700, color: '#EF4444', textAlign: 'center' }}>
                   Each friend needs a different name.
