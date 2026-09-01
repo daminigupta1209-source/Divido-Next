@@ -1,6 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { Group, UserMetadata } from '../lib/types';
 import { escManager } from '../lib/escManager';
+import { buildPeopleSuggestions } from '../lib/identity';
 
 interface AddFriendModalProps {
   setShowAddFriendModal: (show: boolean) => void;
@@ -37,30 +38,11 @@ export const AddFriendModal: React.FC<AddFriendModalProps> = ({
   const [error, setError] = useState<string | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
-  // "People you've split with before" — everyone from your OTHER groups, so you
-  // can tap instead of retyping. Deduped by hidden identity (email/person_id/
-  // name), and hides anyone already in this group or in the pending invite list.
-  const suggestions = React.useMemo(() => {
-    const meLower = (me || '').replace(/\s*\(me\)$/i, '').replace(/\s*\(Left\)$/i, '').trim().toLowerCase();
-    const curMembers = new Set((selectedGroup?.members || []).map((m) => m.replace(/\s*\(Left\)$/i, '').trim().toLowerCase()));
-    const seen = new Set<string>();
-    const out: { name: string; email: string }[] = [];
-    for (const g of groups) {
-      if (!g || g.id === 'STANDALONE') continue;
-      const mi = g.memberIdentities || {};
-      for (const m of g.members || []) {
-        const clean = m.replace(/\s*\(Left\)$/i, '').trim();
-        const lower = clean.toLowerCase();
-        if (!clean || lower === meLower || curMembers.has(lower)) continue;
-        const identity = typeof mi[m] === 'string' ? mi[m] : '';
-        const key = (identity || lower).toLowerCase();
-        if (seen.has(key)) continue;
-        seen.add(key);
-        out.push({ name: clean, email: identity.includes('@') ? identity : '' });
-      }
-    }
-    return out.sort((a, b) => a.name.localeCompare(b.name));
-  }, [groups, selectedGroup, me]);
+  // "People you've split with before" — see buildPeopleSuggestions (identity.ts).
+  const suggestions = React.useMemo(
+    () => buildPeopleSuggestions(groups, selectedGroup?.id ?? null, selectedGroup?.members || [], me),
+    [groups, selectedGroup, me],
+  );
 
   const getInviteLink = () =>
     customRejoinLink || `${window.location.origin}/?joinGroupId=${selectedId || 'STANDALONE'}`;

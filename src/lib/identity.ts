@@ -41,6 +41,57 @@ export const getPersonKey = (group: Group | undefined | null, name: string): str
   return name;
 };
 
+// Build the "people you've split with before" suggestion list for the add-friend
+// UIs: everyone from your OTHER groups who isn't already in the current group.
+//
+// Dedup rule (important): people who joined with Google are keyed by EMAIL, so
+// two different people who share a name stay separate (distinguishable by their
+// email). But name-only members get a fresh hidden person_id in every group, so
+// the same "didi" across groups would otherwise appear many times. So we collapse
+// all name-only entries that share a name into ONE, and drop a name-only entry
+// entirely when an email-bearing entry for that same name exists (same person,
+// now identified).
+export const buildPeopleSuggestions = (
+  groups: Group[],
+  currentGroupId: string | number | null,
+  currentMembers: string[],
+  me: string,
+): { name: string; email: string }[] => {
+  const meLower = (me || '').replace(/\s*\((me|Left)\)$/i, '').trim().toLowerCase();
+  const curMembers = new Set((currentMembers || []).map((m) => m.replace(/\s*\(Left\)$/i, '').trim().toLowerCase()));
+  // Collect one raw entry per (group member): name + email (if any).
+  const raw: { name: string; email: string }[] = [];
+  for (const g of groups || []) {
+    if (!g || g.id === 'STANDALONE' || String(g.id) === String(currentGroupId)) continue;
+    const mi = g.memberIdentities || {};
+    for (const m of g.members || []) {
+      const clean = m.replace(/\s*\(Left\)$/i, '').trim();
+      const lower = clean.toLowerCase();
+      if (!clean || lower === meLower || curMembers.has(lower)) continue;
+      const identity = typeof mi[m] === 'string' ? mi[m] : '';
+      raw.push({ name: clean, email: identity.includes('@') ? identity : '' });
+    }
+  }
+  // Group by lowercased name; within a name, emit one row per distinct email,
+  // plus a single name-only row only when that name has no email at all.
+  const byName = new Map<string, { name: string; emails: Set<string>; nameOnly: boolean }>();
+  for (const r of raw) {
+    const k = r.name.toLowerCase();
+    if (!byName.has(k)) byName.set(k, { name: r.name, emails: new Set(), nameOnly: false });
+    const e = byName.get(k)!;
+    if (r.email) e.emails.add(r.email.toLowerCase()); else e.nameOnly = true;
+  }
+  const out: { name: string; email: string }[] = [];
+  for (const e of byName.values()) {
+    if (e.emails.size > 0) {
+      for (const em of e.emails) out.push({ name: e.name, email: em });
+    } else if (e.nameOnly) {
+      out.push({ name: e.name, email: '' });
+    }
+  }
+  return out.sort((a, b) => a.name.localeCompare(b.name));
+};
+
 // Strip the "(Left)" / "(me)" display suffixes to get the bare name. Kept here
 // next to getPersonKey because both are about turning a raw member string into
 // something comparable; callers that need the plain name for display use this.

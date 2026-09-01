@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Group, Expense, UserMetadata } from '../../lib/types';
 import { BalanceActionCard } from '../BalanceActionCard';
+import { buildPeopleSuggestions } from '../../lib/identity';
 
 interface GroupMemberListProps {
   selectedGroup: Group;
@@ -65,30 +66,8 @@ export const GroupMemberList: React.FC<GroupMemberListProps> = ({
     return typeof id === 'string' && id.includes('@') ? id : '';
   };
 
-  // "People you've split with before" — everyone from your OTHER groups, so you
-  // can tap to add instead of retyping. Deduped by hidden identity; hides anyone
-  // already in this group.
-  const buildSuggestions = (): { name: string; email: string }[] => {
-    const meLower = (me || '').replace(/\s*\((me|Left)\)$/i, '').trim().toLowerCase();
-    const curMembers = new Set((selectedGroup.members || []).map((m) => m.replace(/\s*\(Left\)$/i, '').trim().toLowerCase()));
-    const seen = new Set<string>();
-    const out: { name: string; email: string }[] = [];
-    for (const g of groups) {
-      if (!g || g.id === 'STANDALONE' || String(g.id) === String(selectedGroup.id)) continue;
-      const mi = g.memberIdentities || {};
-      for (const m of g.members || []) {
-        const clean = m.replace(/\s*\(Left\)$/i, '').trim();
-        const lower = clean.toLowerCase();
-        if (!clean || lower === meLower || curMembers.has(lower)) continue;
-        const identity = typeof mi[m] === 'string' ? mi[m] : '';
-        const key = (identity || lower).toLowerCase();
-        if (seen.has(key)) continue;
-        seen.add(key);
-        out.push({ name: clean, email: identity.includes('@') ? identity : '' });
-      }
-    }
-    return out.sort((a, b) => a.name.localeCompare(b.name));
-  };
+  // "People you've split with before" — see buildPeopleSuggestions (identity.ts).
+  const buildSuggestions = () => buildPeopleSuggestions(groups, selectedGroup.id, selectedGroup.members, me);
 
   // Per-currency net for a member (positive = to collect, negative = to pay).
   const getMemberBalanceByCurrency = (name: string): Record<string, number> => {
