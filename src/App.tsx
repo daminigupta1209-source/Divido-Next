@@ -2032,6 +2032,50 @@ function App() {
             localStorage.setItem('divido_authenticated', 'true');
             setIsAuthenticated(true);
             localStorage.removeItem('divido_pending_join');
+
+            // Put the group into local state WITH its roster BEFORE navigating,
+            // so the detail screen renders immediately instead of flashing a blank
+            // / stale-group screen until the background cloud-load catches up.
+            let freshMembers: string[] = [];
+            let freshPending: string[] = [];
+            const memberIdentities: Record<string, string> = {};
+            try {
+              const { data: gm } = await supabase
+                .from('group_members')
+                .select('*')
+                .eq('group_id', joinGroupId)
+                .order('id', { ascending: true });
+              if (gm) {
+                const activeMems = gm.filter((m: any) => !m.link_request_email || !m.is_pending || m.name.endsWith(' (Left)'));
+                freshMembers = Array.from(new Set(activeMems.map((m: any) => titleCaseName(m.name))));
+                freshPending = Array.from(new Set(activeMems
+                  .filter((m: any) => m.is_pending && !m.user_email && !m.name.endsWith(' (Left)'))
+                  .map((m: any) => titleCaseName(m.name))));
+                activeMems.forEach((m: any) => {
+                  const dn = titleCaseName(m.name);
+                  const identity = (m.user_email ? m.user_email.toLowerCase() : '')
+                    || (m.invite_email ? m.invite_email.toLowerCase() : '')
+                    || m.person_id
+                    || dn.replace(/\s*\(Left\)$/i, '');
+                  if (!memberIdentities[dn]) memberIdentities[dn] = identity;
+                });
+              }
+            } catch { /* background cloud-load will fill it in */ }
+            const updatedGroup: any = {
+              id: groupData.id,
+              name: groupData.name,
+              currency: groupData.currency || '₹',
+              emoji: groupData.emoji || undefined,
+              simplifyDebts: groupData.simplify_debts || false,
+              createdDate: groupData.created_date || (groupData.created_at ? String(groupData.created_at).split('T')[0] : undefined),
+              members: freshMembers.length ? freshMembers : [claimedName],
+              pendingMembers: freshPending,
+              memberIdentities,
+            };
+            setGroups((prev) => prev.some((g) => String(g.id) === String(updatedGroup.id))
+              ? prev.map((g) => String(g.id) === String(updatedGroup.id) ? updatedGroup : g)
+              : [...prev, updatedGroup]);
+
             setSelectedId(joinGroupId);
             setView('detail');
             const cleanUrl = window.location.protocol + '//' + window.location.host + window.location.pathname;
