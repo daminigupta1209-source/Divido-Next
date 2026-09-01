@@ -1874,6 +1874,51 @@ function App() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isInitialLoadDone]);
 
+  // One-time heal: adopt MY own Google profile name across every group I'm in.
+  // People who joined before the "profile name once joined" rule kept the
+  // placeholder the inviter typed ("baby", "bhaiya"). Each member's own device
+  // knows their real profile name, so here — on their device — we rename their
+  // per-group name to it (balance-safe via applyRename), once per session. It's
+  // idempotent: once the name matches the profile, it never renames again.
+  const profileNameHealDoneRef = useRef(false);
+  useEffect(() => {
+    if (!isInitialLoadDone || profileNameHealDoneRef.current) return;
+    if (!userEmail || groups.length === 0) return;
+    profileNameHealDoneRef.current = true;
+    (async () => {
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+        const raw = (session?.user?.user_metadata?.full_name || session?.user?.user_metadata?.name || '').trim();
+        const profileName = raw ? titleCaseName(raw) : '';
+        if (!profileName) return;
+        const myEmail = userEmail.toLowerCase();
+        for (const g of groups) {
+          if (!g || g.id === 'STANDALONE') continue;
+          // My current name in this group: the per-group claimed identity, else
+          // the member whose hidden identity resolves to my email.
+          let myName = '';
+          try { myName = localStorage.getItem(`divido_identity_${g.id}`) || ''; } catch { /* ignore */ }
+          if (!myName) {
+            const mi = g.memberIdentities || {};
+            const match = (g.members || []).find((m) => (mi[m] || '').toLowerCase() === myEmail);
+            if (match) myName = match.replace(/\s*\(Left\)$/i, '');
+          }
+          if (!myName || myName.toLowerCase() === profileName.toLowerCase()) continue;
+          // Don't collide with a different existing member.
+          const clash = (g.members || []).some((m) => {
+            const cm = m.replace(/\s*\(Left\)$/i, '');
+            return cm.toLowerCase() === profileName.toLowerCase() && cm.toLowerCase() !== myName.toLowerCase();
+          });
+          if (clash) continue;
+          await applyRename(g.id, myName, profileName);
+        }
+      } catch (e) {
+        console.error('profile-name heal failed:', e);
+      }
+    })();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isInitialLoadDone, groups, userEmail]);
+
   // Safety net: never keep the branded splash up forever. If the first cloud
   // load stalls, hide it after 5s and show whatever we have.
   const [bootLoaderExpired, setBootLoaderExpired] = useState(false);
