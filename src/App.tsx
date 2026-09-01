@@ -1504,6 +1504,9 @@ function App() {
                   paidBy: payer,
                   receivedBy: receiver,
                   selected: true,
+                  // 'settle' = record a real payment; 'writeoff' = forgive it.
+                  // Write-off is only offered on lines where I'm OWED (see UI).
+                  mode: 'settle',
                   summary: `${currencyExps.length || relevantExps.length} activities • ${summary}`,
                 });
               }
@@ -1520,44 +1523,80 @@ function App() {
 
 
   const handleFinalGlobalSettle = () => {
+    const today = new Date().toISOString().split('T')[0];
     const newSettlements = localSettleEdits
       .filter((it) => it.selected && it.amt > 0)
-      .map((it) => ({
-        // Deterministic id so two devices (or a double-tap) recording the SAME
-        // settlement — same pair, currency, amount, day — converge to ONE row
-        // instead of two cancelling entries that double-reverse the balance
-        // (mirrors performWriteOff). The amount is part of the key, so two
-        // genuinely-different payments to the same person on the same day stay
-        // distinct; only exact duplicates collapse.
-        id: `settle-${String(it.gId)}-${it.paidBy}-${it.receivedBy}-${it.curr}-${Math.round((parseFloat(it.amt) || 0) * 100)}-${new Date().toISOString().split('T')[0]}`,
-        gId: it.gId,
-        title: `✅ Settlement: ${it.paidBy} paid ${it.receivedBy}`,
-        amt: parseFloat(it.amt) || 0,
-        paid: it.paidBy,
-        splitters: [it.receivedBy],
-        date: new Date().toISOString().split('T')[0],
-        notes: '',
-        currency: it.curr,
-        category: '✅',
-        mode: 'Equally' as const,
-        shares: {},
-      }));
+      .map((it) => {
+        const amt = parseFloat(it.amt) || 0;
+        if (it.mode === 'writeoff') {
+          // Write-off = forgive what they owe me. Recorded like a settlement so
+          // the balance closes, but titled "Written off", excluded from Analytics,
+          // and given a deterministic id (matches performWriteOff) so two devices /
+          // a double-tap converge to one row instead of double-cancelling.
+          return {
+            id: `writeoff-${String(it.gId)}-${it.paidBy}-${it.receivedBy}-${it.curr}-${today}`,
+            gId: it.gId,
+            title: 'Written off',
+            amt,
+            paid: it.paidBy,
+            splitters: [it.receivedBy],
+            date: today,
+            notes: '',
+            currency: it.curr,
+            category: '',
+            mode: 'Equally' as const,
+            shares: {},
+          };
+        }
+        return {
+          // Deterministic id so two devices (or a double-tap) recording the SAME
+          // settlement converge to ONE row (amount is in the key, so two genuinely
+          // different same-day payments stay distinct; exact duplicates collapse).
+          id: `settle-${String(it.gId)}-${it.paidBy}-${it.receivedBy}-${it.curr}-${Math.round(amt * 100)}-${today}`,
+          gId: it.gId,
+          title: `✅ Settlement: ${it.paidBy} paid ${it.receivedBy}`,
+          amt,
+          paid: it.paidBy,
+          splitters: [it.receivedBy],
+          date: today,
+          notes: '',
+          currency: it.curr,
+          category: '✅',
+          mode: 'Equally' as const,
+          shares: {},
+        };
+      });
     // Functional update: never write a stale `expenses` array here — a realtime
     // reload from the other device may have changed it since render, and the
     // spread-of-stale form would drop those changes.
     setExpenses((prev) => [...newSettlements, ...prev]);
 
-    // Notify the other person that a settlement was recorded with them
-    if (newSettlements.length > 0 && globalSettleData?.name) {
-      const totals: Record<string, number> = {};
-      newSettlements.forEach((s) => { totals[s.currency] = (totals[s.currency] || 0) + s.amt; });
-      const amtStr = Object.entries(totals).map(([c, v]) => `${c}${v.toFixed(0)}`).join(', ');
-      notifyFriend(globalSettleData.name, {
-        type: 'payment_request',
-        title: `${userName} settled up with you`,
-        body: `Recorded a settlement of ${amtStr}`,
-        groupId: newSettlements[0].gId,
-      });
+    // Notify the other person — but tell the truth: a real settlement reads as
+    // "settled up", a write-off reads as "wrote off" (no payment happened).
+    if (globalSettleData?.name) {
+      const fmt = (rows: typeof newSettlements) => {
+        const totals: Record<string, number> = {};
+        rows.forEach((s) => { totals[s.currency] = (totals[s.currency] || 0) + s.amt; });
+        return Object.entries(totals).map(([c, v]) => `${c}${v.toFixed(0)}`).join(', ');
+      };
+      const settled = newSettlements.filter((s) => s.category === '✅');
+      const wroteOff = newSettlements.filter((s) => s.title === 'Written off');
+      if (settled.length > 0) {
+        notifyFriend(globalSettleData.name, {
+          type: 'payment_request',
+          title: `${userName} settled up with you`,
+          body: `Recorded a settlement of ${fmt(settled)}`,
+          groupId: settled[0].gId,
+        });
+      }
+      if (wroteOff.length > 0) {
+        notifyFriend(globalSettleData.name, {
+          type: 'payment_request',
+          title: `${userName} wrote off a balance`,
+          body: `Wrote off ${fmt(wroteOff)} — nothing to pay`,
+          groupId: wroteOff[0].gId,
+        });
+      }
     }
 
     setGlobalSettleData(null);
@@ -4710,9 +4749,23 @@ function App() {
                         </span>
                         {/* Direction of this row, so a mixed net (you pay in one
                             group, collect in another) reads correctly. */}
-                        <span style={{ fontSize: '10px', fontWeight: 800, marginTop: '1px', color: item.paidBy === me ? '#DB2777' : '#10B981' }}>
-                          {item.paidBy === me ? 'You are Paying' : 'You are Collecting'}
+                        <span style={{ fontSize: '10px', fontWeight: 800, marginTop: '1px', color: item.paidBy === me ? '#DB2777' : (item.mode === 'writeoff' ? '#B45309' : '#10B981') }}>
+                          {item.paidBy === me ? 'You are Paying' : (item.mode === 'writeoff' ? 'Writing off' : 'You are Collecting')}
                         </span>
+                        {/* Write off is offered only when THEY owe YOU — it's your
+                            money to forgive. Tap to toggle between recording a real
+                            payment and writing the amount off (can't recover). */}
+                        {item.paidBy !== me && (
+                          <span
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setLocalSettleEdits((prev) => prev.map((x, i) => (i === idx ? { ...x, mode: x.mode === 'writeoff' ? 'settle' : 'writeoff' } : x)));
+                            }}
+                            style={{ marginTop: '3px', fontSize: '10px', fontWeight: 700, cursor: 'pointer', color: item.mode === 'writeoff' ? '#B45309' : '#94A3B8', alignSelf: 'flex-start' }}
+                          >
+                            {item.mode === 'writeoff' ? "✓ Writing off — tap to mark paid instead" : "Can't recover it? Write off"}
+                          </span>
+                        )}
                       </div>
                     </div>
 
