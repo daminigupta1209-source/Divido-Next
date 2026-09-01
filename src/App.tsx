@@ -1434,6 +1434,10 @@ function App() {
                 // val > 0: money flows t.from -> t.to; val < 0: the reverse direction for this currency
                 const payer = val > 0 ? t.from : t.to;
                 const receiver = val > 0 ? t.to : t.from;
+                // Whether I'M the payer must be decided by IDENTITY, not a name
+                // match against the flat global `me` — my per-group name can
+                // differ from it, which silently flipped every line's direction.
+                const iAmPayer = getPersonKey(g, payer) === myKey;
 
                 const currencyExps = relevantExps.filter(
                   (e) => (e.currency || g.currency || '₹') === curr
@@ -1451,6 +1455,7 @@ function App() {
                   maxAmt: Math.round(absVal * 100) / 100,
                   paidBy: payer,
                   receivedBy: receiver,
+                  iAmPayer,
                   selected: true,
                   // 'settle' = record a real payment; 'writeoff' = forgive it.
                   // Write-off is only offered on lines where I'm OWED (see UI).
@@ -4621,7 +4626,7 @@ function App() {
               }}
             >
               {localSettleEdits.map((item, idx) => {
-                const isPayable = item.paidBy === me;
+                const isPayable = !!item.iAmPayer;
                 const isSelected = item.selected;
 
                 return (
@@ -4697,13 +4702,13 @@ function App() {
                         </span>
                         {/* Direction of this row, so a mixed net (you pay in one
                             group, collect in another) reads correctly. */}
-                        <span style={{ fontSize: '10px', fontWeight: 800, marginTop: '1px', color: item.paidBy === me ? '#DB2777' : (item.mode === 'writeoff' ? '#B45309' : '#10B981') }}>
-                          {item.paidBy === me ? 'You are Paying' : (item.mode === 'writeoff' ? 'Writing off' : 'You are Collecting')}
+                        <span style={{ fontSize: '10px', fontWeight: 800, marginTop: '1px', color: item.iAmPayer ? '#DB2777' : (item.mode === 'writeoff' ? '#B45309' : '#10B981') }}>
+                          {item.iAmPayer ? 'You are Paying' : (item.mode === 'writeoff' ? 'Writing off' : 'You are Collecting')}
                         </span>
                         {/* Write off is offered only when THEY owe YOU — it's your
                             money to forgive. Tap to toggle between recording a real
                             payment and writing the amount off (can't recover). */}
-                        {item.paidBy !== me && (
+                        {!item.iAmPayer && (
                           <span
                             onClick={(e) => {
                               e.stopPropagation();
@@ -4801,7 +4806,7 @@ function App() {
                 if (!item.selected) return;
                 const amt = parseFloat(item.amt) || 0;
                 if (!netBalances[item.curr]) netBalances[item.curr] = 0;
-                if (item.paidBy === me) {
+                if (item.iAmPayer) {
                   netBalances[item.curr] -= amt;
                 } else {
                   netBalances[item.curr] += amt;
@@ -4859,7 +4864,7 @@ function App() {
                 if (!item.selected) return;
                 const amt = parseFloat(item.amt) || 0;
                 if (!netBalances[item.curr]) netBalances[item.curr] = 0;
-                if (item.paidBy === me) {
+                if (item.iAmPayer) {
                   netBalances[item.curr] -= amt;
                 } else {
                   netBalances[item.curr] += amt;
