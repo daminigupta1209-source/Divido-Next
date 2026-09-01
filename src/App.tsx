@@ -2006,7 +2006,10 @@ function App() {
             setView('detail');
             // Clean URL parameters
             const cleanUrl = window.location.protocol + '//' + window.location.host + window.location.pathname;
-            window.history.replaceState({}, document.title, cleanUrl);
+            // Seed a HOME base entry (not an empty one) so a back-swipe from the
+            // group you just entered/claimed goes to the home screen instead of
+            // exiting the app. The detail entry is pushed on top by the history sync.
+            window.history.replaceState({ _divido: true, uiState: { view: 'summary', selectedId: null } }, '', cleanUrl);
             return;
           }
 
@@ -2079,7 +2082,10 @@ function App() {
             setSelectedId(joinGroupId);
             setView('detail');
             const cleanUrl = window.location.protocol + '//' + window.location.host + window.location.pathname;
-            window.history.replaceState({}, document.title, cleanUrl);
+            // Seed a HOME base entry (not an empty one) so a back-swipe from the
+            // group you just entered/claimed goes to the home screen instead of
+            // exiting the app. The detail entry is pushed on top by the history sync.
+            window.history.replaceState({ _divido: true, uiState: { view: 'summary', selectedId: null } }, '', cleanUrl);
             return;
           }
         }
@@ -2097,7 +2103,10 @@ function App() {
             setSelectedId(joinGroupId);
             setView('detail');
             const cleanUrl = window.location.protocol + '//' + window.location.host + window.location.pathname;
-            window.history.replaceState({}, document.title, cleanUrl);
+            // Seed a HOME base entry (not an empty one) so a back-swipe from the
+            // group you just entered/claimed goes to the home screen instead of
+            // exiting the app. The detail entry is pushed on top by the history sync.
+            window.history.replaceState({ _divido: true, uiState: { view: 'summary', selectedId: null } }, '', cleanUrl);
             return;
           }
         }
@@ -3978,7 +3987,10 @@ function App() {
                   setGroups(prev => prev.filter(g => String(g.id) !== String(declinedId)));
                 }
                 const cleanUrl = window.location.protocol + '//' + window.location.host + window.location.pathname;
-                window.history.replaceState({}, document.title, cleanUrl);
+                // Seed a HOME base entry (not an empty one) so a back-swipe from the
+            // group you just entered/claimed goes to the home screen instead of
+            // exiting the app. The detail entry is pushed on top by the history sync.
+            window.history.replaceState({ _divido: true, uiState: { view: 'summary', selectedId: null } }, '', cleanUrl);
               }}
               style={{
                 position: 'absolute',
@@ -4209,7 +4221,10 @@ function App() {
                     } finally {
                       setSubmittingLinkRequest(false);
                       const cleanUrl = window.location.protocol + '//' + window.location.host + window.location.pathname;
-                      window.history.replaceState({}, document.title, cleanUrl);
+                      // Seed a HOME base entry (not an empty one) so a back-swipe from the
+            // group you just entered/claimed goes to the home screen instead of
+            // exiting the app. The detail entry is pushed on top by the history sync.
+            window.history.replaceState({ _divido: true, uiState: { view: 'summary', selectedId: null } }, '', cleanUrl);
                     }
                   }}
                   style={{
@@ -4348,7 +4363,10 @@ function App() {
                   } finally {
                     setSubmittingLinkRequest(false);
                     const cleanUrl = window.location.protocol + '//' + window.location.host + window.location.pathname;
-                    window.history.replaceState({}, document.title, cleanUrl);
+                    // Seed a HOME base entry (not an empty one) so a back-swipe from the
+            // group you just entered/claimed goes to the home screen instead of
+            // exiting the app. The detail entry is pushed on top by the history sync.
+            window.history.replaceState({ _divido: true, uiState: { view: 'summary', selectedId: null } }, '', cleanUrl);
                   }
                 }}
                 style={{
