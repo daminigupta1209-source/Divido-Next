@@ -2022,10 +2022,42 @@ function App() {
             !m.user_email && m.is_pending && !m.name.toLowerCase().endsWith(' (left)')
           );
           if (inviteMatch) {
+            const placeholderName = String(inviteMatch.name).replace(/\s*\(Left\)$/i, '');
+            // Once you join, your name = your OWN profile name (not the placeholder
+            // the inviter typed). Adopt the Google profile name, unless it would
+            // collide with another member here (then keep the placeholder).
+            const rawProfile = (session?.user?.user_metadata?.full_name || session?.user?.user_metadata?.name || '').trim();
+            let profileName = rawProfile ? titleCaseName(rawProfile) : '';
+            if (!profileName) {
+              const un = localStorage.getItem('divido_username');
+              if (un && !['You', 'Guest', 'undefined', ''].includes(un.trim())) profileName = un.trim();
+            }
+            const profileClash = !!profileName && existingMembers.some((m: any) =>
+              m.id !== inviteMatch.id &&
+              String(m.name).replace(/\s*\(Left\)$/i, '').trim().toLowerCase() === profileName.toLowerCase()
+            );
+            const claimedName = (profileName && !profileClash) ? profileName : placeholderName;
             await supabase.from('group_members')
-              .update({ user_email: myEmail, is_pending: false })
+              .update({ name: claimedName, user_email: myEmail, is_pending: false })
               .eq('id', inviteMatch.id);
-            const claimedName = String(inviteMatch.name).replace(/\s*\(Left\)$/i, '');
+            // If the name changed from the placeholder, rewrite this group's
+            // expenses so paid/splitters/shares follow the new name (balance-safe).
+            if (claimedName !== placeholderName) {
+              try {
+                const { data: exps } = await supabase.from('expenses').select('*').eq('group_id', joinGroupId);
+                for (const e of exps || []) {
+                  const paidNew = e.paid === placeholderName ? claimedName : e.paid;
+                  const splittersNew = Array.isArray(e.splitters) ? e.splitters.map((s: string) => (s === placeholderName ? claimedName : s)) : e.splitters;
+                  let sharesNew = e.shares;
+                  if (e.shares && Object.prototype.hasOwnProperty.call(e.shares, placeholderName)) {
+                    sharesNew = {}; for (const k of Object.keys(e.shares)) sharesNew[k === placeholderName ? claimedName : k] = e.shares[k];
+                  }
+                  if (paidNew !== e.paid || JSON.stringify(splittersNew) !== JSON.stringify(e.splitters) || JSON.stringify(sharesNew) !== JSON.stringify(e.shares)) {
+                    await supabase.from('expenses').update({ paid: paidNew, splitters: splittersNew, shares: sharesNew }).eq('id', e.id);
+                  }
+                }
+              } catch (rwErr) { console.error('claim rename rewrite failed:', rwErr); }
+            }
             localStorage.setItem(`divido_identity_${joinGroupId}`, claimedName);
             {
               const existing = localStorage.getItem('divido_username');
@@ -4145,26 +4177,55 @@ function App() {
 
                         alert(`Welcome back to "${linkRequestGroup.name}"! You have successfully rejoined as "${cleanName}". 🎉`);
                       } else {
-                        // Normal claim flow
+                        // Normal claim flow — adopt the joiner's own PROFILE name
+                        // (once joined, your name = your profile name, not the
+                        // placeholder the inviter typed), unless it collides with
+                        // another member here.
+                        const rawProfile = (session?.user?.user_metadata?.full_name || session?.user?.user_metadata?.name || '').trim();
+                        let profileName = rawProfile ? titleCaseName(rawProfile) : '';
+                        if (!profileName) {
+                          const un = localStorage.getItem('divido_username');
+                          if (un && !['You', 'Guest', 'undefined', ''].includes(un.trim())) profileName = un.trim();
+                        }
+                        let claimName = p.name;
+                        if (profileName && profileName.toLowerCase() !== p.name.toLowerCase()) {
+                          const { data: mems } = await supabase.from('group_members').select('id, name').eq('group_id', linkRequestGroup.id);
+                          const clash = (mems || []).some((m: any) => m.id !== p.id && String(m.name).replace(/\s*\(Left\)$/i, '').trim().toLowerCase() === profileName.toLowerCase());
+                          if (!clash) claimName = profileName;
+                        }
                         await supabase
                           .from('group_members')
                           .update({
+                            name: claimName,
                             user_email: activeEmail,
                             is_pending: false,
                           })
                           .eq('id', p.id);
-                        
-                        // Claiming sets your name INSIDE this group only — it must
-                        // not overwrite your account profile name (Option-3 rule:
-                        // profile and per-group names are independent). Only seed the
-                        // profile name if you don't already have a real one.
+                        // If the name changed from the placeholder, rewrite this
+                        // group's expenses so balances follow the new name.
+                        if (claimName !== p.name) {
+                          try {
+                            const { data: exps } = await supabase.from('expenses').select('*').eq('group_id', linkRequestGroup.id);
+                            for (const e of exps || []) {
+                              const paidNew = e.paid === p.name ? claimName : e.paid;
+                              const splittersNew = Array.isArray(e.splitters) ? e.splitters.map((s: string) => (s === p.name ? claimName : s)) : e.splitters;
+                              let sharesNew = e.shares;
+                              if (e.shares && Object.prototype.hasOwnProperty.call(e.shares, p.name)) {
+                                sharesNew = {}; for (const k of Object.keys(e.shares)) sharesNew[k === p.name ? claimName : k] = e.shares[k];
+                              }
+                              if (paidNew !== e.paid || JSON.stringify(splittersNew) !== JSON.stringify(e.splitters) || JSON.stringify(sharesNew) !== JSON.stringify(e.shares)) {
+                                await supabase.from('expenses').update({ paid: paidNew, splitters: splittersNew, shares: sharesNew }).eq('id', e.id);
+                              }
+                            }
+                          } catch (rwErr) { console.error('claim rename rewrite failed:', rwErr); }
+                        }
                         {
                           const existing = localStorage.getItem('divido_username');
                           const hasRealName = !!existing && !['You', 'Guest', 'undefined', ''].includes(existing.trim());
-                          if (!hasRealName) { localStorage.setItem('divido_username', p.name); setUserName(p.name); }
+                          if (!hasRealName) { localStorage.setItem('divido_username', claimName); setUserName(claimName); }
                         }
                         localStorage.setItem('divido_authenticated', 'true');
-                        localStorage.setItem(`divido_identity_${linkRequestGroup.id}`, p.name);
+                        localStorage.setItem(`divido_identity_${linkRequestGroup.id}`, claimName);
                         setIsAuthenticated(true);
                         if (activeEmail.startsWith('guest-')) {
                           setUserEmail(activeEmail);
