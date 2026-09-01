@@ -11,7 +11,7 @@ interface AddFriendModalProps {
   selectedId: string | number | null;
   me: string;
   setSelectedId: (id: string | number | null) => void;
-  onAdd?: (names: string[]) => void;
+  onAdd?: (names: string[], emails?: Record<string, string>) => void;
   currentSplitters?: string[];
   userMetadata: Record<string, UserMetadata>;
   setUserMetadata: (meta: Record<string, UserMetadata>) => void;
@@ -33,6 +33,8 @@ export const AddFriendModal: React.FC<AddFriendModalProps> = ({
   shareOnly,
 }) => {
   const [name, setName] = useState('');
+  const [emailInput, setEmailInput] = useState('');
+  const [pendingEmails, setPendingEmails] = useState<Record<string, string>>({});
   const [pending, setPending] = useState<string[]>([]);
   const [copied, setCopied] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -81,13 +83,18 @@ export const AddFriendModal: React.FC<AddFriendModalProps> = ({
     }
 
     setPending((prev) => [...prev, trimmed]);
-    if (fromArg === undefined) setName('');
+    if (fromArg === undefined) {
+      const em = emailInput.trim().toLowerCase();
+      if (em.includes('@')) setPendingEmails((prev) => ({ ...prev, [trimmed]: em }));
+      setName('');
+      setEmailInput('');
+    }
   };
 
   const handleConfirm = () => {
     if (pending.length === 0) return;
     if (onAdd) {
-      onAdd(pending);
+      onAdd(pending, pendingEmails);
     } else if (selectedGroup) {
       const newMembers = [...selectedGroup.members];
       pending.forEach((n) => { if (!newMembers.includes(n)) newMembers.push(n); });
@@ -228,9 +235,14 @@ export const AddFriendModal: React.FC<AddFriendModalProps> = ({
     }
 
     if (finalPending.length === 0) return;
+    // Include an email typed for the leftover (not-yet-added) name.
+    const emails = { ...pendingEmails };
+    if (trimmed && emailInput.trim().includes('@') && !emails[trimmed]) {
+      emails[trimmed] = emailInput.trim().toLowerCase();
+    }
     setConfirmedNames(finalPending);
     if (onAdd) {
-      onAdd(finalPending);
+      onAdd(finalPending, emails);
     } else if (selectedGroup) {
       const newMembers = [...selectedGroup.members];
       finalPending.forEach((n) => { if (!newMembers.includes(n)) newMembers.push(n); });
@@ -320,6 +332,28 @@ export const AddFriendModal: React.FC<AddFriendModalProps> = ({
                 )}
               </div>
 
+              {/* Optional email — if you know it, they auto-join with no "pick
+                  your name" step when they sign in with it. */}
+              <input
+                type="search"
+                autoComplete="off"
+                autoCorrect="off"
+                spellCheck="false"
+                data-1p-ignore
+                data-lpignore="true"
+                placeholder="Email (optional)"
+                value={emailInput}
+                onChange={(e) => { e.stopPropagation(); setEmailInput(e.target.value); }}
+                onClick={(e) => e.stopPropagation()}
+                onKeyDown={(e) => { e.stopPropagation(); if (e.key === 'Enter') { e.preventDefault(); handleAddName(); } }}
+                style={{
+                  width: '100%', height: '40px', borderRadius: '12px', marginTop: '8px',
+                  border: '1.5px solid #E2E8F0', background: '#fff',
+                  fontSize: '13px', fontWeight: 500, color: '#0F172A',
+                  padding: '0 14px', outline: 'none', boxSizing: 'border-box',
+                }}
+              />
+
               {error && (
                 <div style={{
                   background: '#FEF2F2',
@@ -373,7 +407,7 @@ export const AddFriendModal: React.FC<AddFriendModalProps> = ({
                       {shown.map((s) => (
                         <button
                           key={s.email || s.name}
-                          onClick={() => handleAddName(s.name)}
+                          onClick={() => { if (s.email) setPendingEmails((prev) => ({ ...prev, [s.name]: s.email })); handleAddName(s.name); }}
                           style={{ display: 'flex', alignItems: 'center', gap: '10px', width: '100%', textAlign: 'left', background: '#F8FAFC', border: '1px solid #EEF2F7', borderRadius: '10px', padding: '8px 10px', cursor: 'pointer' }}
                         >
                           <span style={{ width: '28px', height: '28px', borderRadius: '50%', background: '#EEF2FF', color: '#4338CA', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '12px', fontWeight: 700, flexShrink: 0 }}>

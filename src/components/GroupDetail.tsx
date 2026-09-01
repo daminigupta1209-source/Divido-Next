@@ -52,7 +52,7 @@ interface GroupDetailProps {
   onLeaveGroup?: () => void;
   onReinviteMember?: (memberName: string, inviteUrl: string) => void;
   onRemindAllPending?: (pendingNames: string[]) => void;
-  onAddMembers?: (names: string[]) => void;
+  onAddMembers?: (names: string[], emails?: Record<string, string>) => void;
   onRequestRejoin?: () => Promise<void>;
   wasRemovedByAdmin?: boolean;
   onCreateGroup?: () => void;

@@ -21,7 +21,7 @@ interface GroupMemberListProps {
   onLeaveGroup?: () => void;
   onReinviteMember?: (memberName: string, inviteUrl: string) => void;
   onRemindAllPending?: (pendingNames: string[]) => void;
-  onAddMembers?: (names: string[]) => void;
+  onAddMembers?: (names: string[], emails?: Record<string, string>) => void;
 }
 
 export const GroupMemberList: React.FC<GroupMemberListProps> = ({
@@ -50,6 +50,7 @@ export const GroupMemberList: React.FC<GroupMemberListProps> = ({
   const [inlineRenameVal, setInlineRenameVal] = React.useState<string>('');
   const [isAddingInline, setIsAddingInline] = React.useState(false);
   const [inlineAddVal, setInlineAddVal] = React.useState('');
+  const [inlineEmailVal, setInlineEmailVal] = React.useState('');
   const inlineInputRef = React.useRef<HTMLInputElement>(null);
   const [actionCard, setActionCard] = useState<null | {
     title: string; desc: string; primaryLabel: string; primaryColor: string; onPrimary: () => void;
@@ -146,7 +147,7 @@ export const GroupMemberList: React.FC<GroupMemberListProps> = ({
     }
   };
 
-  const handleInlineAdd = (rawName?: string) => {
+  const handleInlineAdd = (rawName?: string, emailArg?: string) => {
     const fromArg = typeof rawName === 'string' ? rawName : undefined;
     const trimmed = (fromArg ?? inlineAddVal).trim();
     if (!trimmed) return;
@@ -168,9 +169,13 @@ export const GroupMemberList: React.FC<GroupMemberListProps> = ({
     }
 
     if (onAddMembers) {
-      onAddMembers([trimmed]);
+      // Attach a typed email (or a suggestion's email, passed via emailArg) so
+      // the new member is keyed by it and auto-claims when they sign in with it.
+      const email = (typeof emailArg === 'string' ? emailArg : inlineEmailVal).trim().toLowerCase();
+      const emails = email.includes('@') ? { [trimmed]: email } : undefined;
+      onAddMembers([trimmed], emails);
     }
-    if (fromArg === undefined) setInlineAddVal('');
+    if (fromArg === undefined) { setInlineAddVal(''); setInlineEmailVal(''); }
     // Automatically refocus the input box for consecutive additions
     setTimeout(() => {
       inlineInputRef.current?.focus();
@@ -672,6 +677,29 @@ export const GroupMemberList: React.FC<GroupMemberListProps> = ({
                 </div>
               )}
 
+              {/* Optional email — if known, they auto-join (no "pick your name"
+                  step) when they sign in with it. */}
+              {isAddingInline && (
+                <input
+                  type="search"
+                  autoComplete="off"
+                  autoCorrect="off"
+                  spellCheck="false"
+                  data-1p-ignore
+                  data-lpignore="true"
+                  placeholder="Email (optional)"
+                  value={inlineEmailVal}
+                  onChange={(e) => setInlineEmailVal(e.target.value)}
+                  onKeyDown={(e) => { if (e.key === 'Enter') handleInlineAdd(); }}
+                  style={{
+                    width: '100%', height: '34px', borderRadius: '10px', marginTop: '6px',
+                    border: '1px solid #E2E8F0', background: '#fff', fontSize: '12px',
+                    fontWeight: 500, color: '#334155', padding: '0 12px', outline: 'none',
+                    boxSizing: 'border-box',
+                  }}
+                />
+              )}
+
               {/* Suggestions: people you've split with before */}
               {isAddingInline && (() => {
                 const q = inlineAddVal.trim().toLowerCase();
@@ -689,7 +717,7 @@ export const GroupMemberList: React.FC<GroupMemberListProps> = ({
                         <button
                           key={s.email || s.name}
                           type="button"
-                          onClick={() => handleInlineAdd(s.name)}
+                          onClick={() => handleInlineAdd(s.name, s.email)}
                           style={{ display: 'flex', alignItems: 'center', gap: '10px', width: '100%', textAlign: 'left', background: '#F8FAFC', border: '1px solid #EEF2F7', borderRadius: '10px', padding: '7px 10px', cursor: 'pointer' }}
                         >
                           <span style={{ width: '26px', height: '26px', borderRadius: '50%', background: '#EEF2FF', color: '#4338CA', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '11px', fontWeight: 700, flexShrink: 0 }}>

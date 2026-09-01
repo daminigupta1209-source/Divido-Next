@@ -410,7 +410,13 @@ export function useSupabaseSync({
             const cleanName = displayName.replace(/\s*\(Left\)$/i, '');
             // Email is the strongest identity (a real signed-in account), then the
             // stored person_id, then the raw name (legacy members merge by name).
-            const identity = (m.user_email ? m.user_email.toLowerCase() : '') || m.person_id || cleanName;
+            // Priority: the joined account email, then the invite_email supplied
+            // when they were added (so an as-yet-unjoined invitee is already keyed
+            // by their email), then the hidden person_id, then the raw name.
+            const identity = (m.user_email ? m.user_email.toLowerCase() : '')
+              || (m.invite_email ? m.invite_email.toLowerCase() : '')
+              || m.person_id
+              || cleanName;
             if (!memberIdentities[displayName]) memberIdentities[displayName] = identity;
           });
 
@@ -897,12 +903,20 @@ export function useSupabaseSync({
             // Compare members to find new ones (ignore left members and existing name-variants)
             const newMembers = g.members.filter(m => !m.endsWith(' (Left)') && !old.members.includes(m) && !old.members.includes(m + ' (Left)'));
             if (newMembers.length > 0) {
-              const memberInserts = newMembers.map(m => ({
-                group_id: g.id,
-                name: m,
-                is_pending: true,
-                person_id: pickPersonId(g.id, m),
-              }));
+              const memberInserts = newMembers.map(m => {
+                // If this member was added with an email, memberIdentities[m] holds
+                // it — store it as invite_email so they auto-claim on join, and skip
+                // the hidden person_id (their email IS their identity).
+                const id = g.memberIdentities?.[m];
+                const inviteEmail = (typeof id === 'string' && id.includes('@')) ? id.toLowerCase() : null;
+                return {
+                  group_id: g.id,
+                  name: m,
+                  is_pending: true,
+                  invite_email: inviteEmail,
+                  person_id: inviteEmail ? null : pickPersonId(g.id, m),
+                };
+              });
               const { error: memErr } = await supabase.from('group_members').insert(memberInserts);
               if (memErr) throw memErr;
             }

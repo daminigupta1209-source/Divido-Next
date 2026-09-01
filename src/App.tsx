@@ -499,6 +499,7 @@ function App() {
     queue: { name: string; candidates: { identity: string; name: string; groups: string[] }[] }[];
     index: number;
     addNames: string[];
+    addEmails?: Record<string, string>;
   }>(null);
 
   // Helper to get current UI state for history syncing
@@ -2008,6 +2009,35 @@ function App() {
             window.history.replaceState({}, document.title, cleanUrl);
             return;
           }
+
+          // Auto-claim: if a pending spot was added with THIS person's exact
+          // email (invite_email), they are unambiguously that member — claim it
+          // silently and go straight in. No "pick your name" card. This is the
+          // email-identity magic.
+          const inviteMatch = existingMembers.find((m: any) =>
+            m.invite_email && String(m.invite_email).toLowerCase() === myEmail.toLowerCase() &&
+            !m.user_email && m.is_pending && !m.name.toLowerCase().endsWith(' (left)')
+          );
+          if (inviteMatch) {
+            await supabase.from('group_members')
+              .update({ user_email: myEmail, is_pending: false })
+              .eq('id', inviteMatch.id);
+            const claimedName = String(inviteMatch.name).replace(/\s*\(Left\)$/i, '');
+            localStorage.setItem(`divido_identity_${joinGroupId}`, claimedName);
+            {
+              const existing = localStorage.getItem('divido_username');
+              const hasRealName = !!existing && !['You', 'Guest', 'undefined', ''].includes(existing.trim());
+              if (!hasRealName) { localStorage.setItem('divido_username', claimedName); setUserName(claimedName); }
+            }
+            localStorage.setItem('divido_authenticated', 'true');
+            setIsAuthenticated(true);
+            localStorage.removeItem('divido_pending_join');
+            setSelectedId(joinGroupId);
+            setView('detail');
+            const cleanUrl = window.location.protocol + '//' + window.location.host + window.location.pathname;
+            window.history.replaceState({}, document.title, cleanUrl);
+            return;
+          }
         }
 
         // If this device has already claimed an identity in this group, don't show
@@ -2495,7 +2525,7 @@ function App() {
     return Object.values(byId).map((c) => ({ identity: c.identity, name: c.name, groups: Array.from(c.groups) }));
   };
 
-  const commitAddMembers = (groupId: string | number, names: string[]) => {
+  const commitAddMembers = (groupId: string | number, names: string[], emails?: Record<string, string>) => {
     // Enforce "no duplicate names in a group" — case-insensitively, and against
     // EVERY existing state (joined, pending, and "(Left)" past members). A plain
     // Set only de-dupes exact strings, so "didi" would slip past an existing
@@ -2522,14 +2552,22 @@ function App() {
       if (String(x.id) !== String(groupId)) return x;
       const newMembers = Array.from(new Set([...x.members, ...toAdd]));
       const newPending = Array.from(new Set([...(x.pendingMembers || []), ...toAdd]));
-      return { ...x, members: newMembers, pendingMembers: newPending };
+      // If an email was supplied for a new member, record it as their identity
+      // right away — the sync insert reads it back as invite_email, and it drives
+      // display + suggestion dedup + auto-claim on join.
+      const newIdentities = { ...(x.memberIdentities || {}) };
+      toAdd.forEach((n) => {
+        const em = emails?.[n];
+        if (em && em.includes('@')) newIdentities[n] = em.trim().toLowerCase();
+      });
+      return { ...x, members: newMembers, pendingMembers: newPending, memberIdentities: newIdentities };
     }));
     setNewlyAddedFriends(toAdd);
   };
 
   const resolvePersonChoice = (identity: string | null) => {
     if (!samePersonPrompt) return;
-    const { groupId, queue, index, addNames } = samePersonPrompt;
+    const { groupId, queue, index, addNames, addEmails } = samePersonPrompt;
     const item = queue[index];
     if (identity) {
       try {
@@ -2560,7 +2598,7 @@ function App() {
     const nextIndex = index + 1;
     if (nextIndex >= queue.length) {
       setSamePersonPrompt(null);
-      if (addNames && addNames.length > 0) commitAddMembers(groupId, addNames);
+      if (addNames && addNames.length > 0) commitAddMembers(groupId, addNames, addEmails);
     } else {
       setSamePersonPrompt({ ...samePersonPrompt, index: nextIndex });
     }
@@ -3562,15 +3600,15 @@ function App() {
               // bounced out to the groups list. (Removing someone else never
               // navigated away, so this only changes the self-removal case.)
             }}
-            onAddMembers={(names) => {
+            onAddMembers={(names, emails) => {
               if (selectedId && selectedId !== 'STANDALONE') {
                 const clashing = names
                   .map((n) => ({ name: n, candidates: findPersonCandidates(n, selectedId) }))
                   .filter((x) => x.candidates.length > 0);
                 if (clashing.length > 0) {
-                  setSamePersonPrompt({ groupId: selectedId, queue: clashing, index: 0, addNames: names });
+                  setSamePersonPrompt({ groupId: selectedId, queue: clashing, index: 0, addNames: names, addEmails: emails });
                 } else {
-                  commitAddMembers(selectedId, names);
+                  commitAddMembers(selectedId, names, emails);
                 }
               }
             }}
@@ -3751,7 +3789,7 @@ function App() {
            targetReminderName={activeReminderName}
            customRejoinLink={activeRejoinLink}
            shareOnly={addFriendShareOnly}
-           onAdd={(names) => {
+           onAdd={(names, emails) => {
              if (selectedId === 'STANDALONE') {
                setNewlyAddedFriends(names);
              } else if (selectedId) {
@@ -3760,9 +3798,9 @@ function App() {
                  .map((n) => ({ name: n, candidates: findPersonCandidates(n, selectedId) }))
                  .filter((x) => x.candidates.length > 0);
                if (clashing.length > 0) {
-                 setSamePersonPrompt({ groupId: selectedId, queue: clashing, index: 0, addNames: names });
+                 setSamePersonPrompt({ groupId: selectedId, queue: clashing, index: 0, addNames: names, addEmails: emails });
                } else {
-                 commitAddMembers(selectedId, names);
+                 commitAddMembers(selectedId, names, emails);
                }
              } else {
                if (!requireSignInToCreate()) return;
