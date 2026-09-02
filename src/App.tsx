@@ -2042,6 +2042,7 @@ function App() {
             localStorage.removeItem('divido_pending_join');
             setSelectedId(joinGroupId);
             setView('detail');
+            setShowFriendsList(false);
             // Clean URL parameters
             const cleanUrl = window.location.protocol + '//' + window.location.host + window.location.pathname;
             // Seed a HOME base entry (not an empty one) so a back-swipe from the
@@ -3271,7 +3272,15 @@ function App() {
             onManageMembers={() => {
               const gid = editingGroupId;
               setEditingGroupId(null);
-              if (gid) setSelectedId(gid);
+              if (gid) {
+                setSelectedId(gid);
+                // Push intermediate history state so a back-swipe from the Members
+                // overlay lands on the group detail screen instead of jumping all
+                // the way back to the home screen.
+                const midState = { ...getUiState(), view: 'detail', selectedId: gid, showFriendsList: false };
+                window.history.pushState({ _divido: true, uiState: midState }, '');
+                try { sessionStorage.setItem('divido_ui_state', JSON.stringify(midState)); } catch {}
+              }
               setView('detail');
               setShowFriendsList(true);
             }}
@@ -4337,6 +4346,7 @@ function App() {
 
                       setSelectedId(linkRequestGroup.id);
                       setView('detail');
+                      setShowFriendsList(false); // Clear any lingering overlay state
                       setLinkRequestGroup(null);
                       localStorage.removeItem('divido_pending_join');
                     } catch (err) {
