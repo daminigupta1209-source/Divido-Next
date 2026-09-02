@@ -2,7 +2,7 @@
 
 React + Vite expense-splitting **PWA**. Backend: **Supabase** (Postgres + RLS + realtime + storage). Deploy: push to `main` → **Vercel** auto-deploys. Live URL: https://divido-next.vercel.app
 
-> Latest commit at handoff: **185c4ee** (identity-reuse for suggestions + email validation, SW cache **v89**). Everything below is live on `main`.
+> Latest commit at handoff: **3ea6eea** (history back-swipe fix, strict third-party zero-to-remove block, SW cache **v89**). Everything below is live on `main`.
 > The **"Session 2026-09-02"** section is the freshest work — read it first, then 2026-09-01, then 2026-08-27/28.
 
 ## Working rules
@@ -178,32 +178,19 @@ settle-sheet net == group balance; raw == simplified per-person net), `buildPeop
 identity-carry, and `isValidEmail`. `npx vitest run src/lib/identity.test.ts
 src/lib/calculations.test.ts` → **31 pass**.
 
+### Late-Session Follow-ups (Commits `8034c40`, `a51d89b`, `daf9b83`, `3ea6eea`)
+- **History Back-swipe Fix**: Fixed a bug where claiming a card or clicking "Manage Members" on the Home screen would open a group directly into an overlay (Group Members slide-over), but swiping back skipped the group detail screen and jumped straight to Home. We now actively clear lingering overlays on load, and manually push intermediate history states when jumping straight into an overlay.
+- **Strict Third-Party Protection (Zero-to-Remove)**: Previously, a member could be removed if their balance with *you* was zero, even if they owed a third-party in the group. We implemented `memberHasThirdPartyBalance` to enforce a strict group-wide check. If they owe *anyone* else, the Admin receives a hard block ("They have unsettled debts with other members") and no Settle/Write-off buttons are shown. 
+- **Group Members UX Polish**: Removed the redundant "Save Changes" button at the bottom of the list, and made the top header (with the green tick) sticky during scroll. All tasks from the previous session (Identity reuse in create group, identity-aware write-offs, simplifying "Left" past members) were also verified as complete.
+
 ### ⏭️ TO DO NEXT SESSION (start here)
 1. **Two-phone test of everything above** — still not done on real devices. Priority.
    Check: (a) can't leave/remove with a balance (Settle/Write-off only); (b) Settle up opens
    the sheet; (c) same-person numbers match across group card / Balances tab / Settle sheet
    (both direction AND amount); (d) same name-only friend added to two groups shows as ONE
-   person with combined balance; (e) double write-off from two phones collapses to one entry.
-2. **Extend identity-reuse to the create-group screen** (`CreateGroupView` / `handleCreateGroup`
-   in App.tsx ~2848). Today it keys new members by email-or-name only; it does NOT carry a
-   name-only person's hidden id like the add-friend flow now does. Small follow-up so a person
-   added at group-creation also links across groups.
-3. **Past Members → lightweight "Left" history + Re-invite** — shrink the Past Members block to
-   a compact "Left" history line + an "Invite again" action, drop the balance clutter (balance
-   is now always zero once zero-to-remove is enforced, so the old balance display is moot).
-4. **`performWriteOff` still matches people by RAW NAME**, not `getPersonKey` (App.tsx ~2218).
-   Pre-existing, works for typical cases, but it's the same class the consistency rule warns
-   about. Route it through identity keys. Do carefully (money-critical).
-5. **Zero-to-remove edge — debts with a THIRD party.** The gate uses the member's PAIRWISE
-   balance with ME. If a member owes someone *else* (not me) but is settled with me, removal
-   isn't blocked and Write off (which zeroes ALL their balances) is not forced. Acceptable for
-   v1 (me-centric model), but note it. Splitwise blocks on total balance.
-6. **Multi-currency zero check on removal** — confirm the gate lists every currency (it reads
-   `getMemberBalanceByCurrency` which is per-currency, so likely fine — verify).
-7. **Admin-leaving → admin transfer / auto-promote** rule (partially there in `handleDeleteGroup`
-   — notifies next member; confirm the promotion is real and surfaced).
-8. Longer-horizon (unchanged): offline precache-all-code; **Stage 5** permanent `person_id` on
-   expenses (kills the raw-name matching at the source — makes #4 moot); native contacts picker.
+   person with combined balance; (e) double write-off from two phones collapses to one entry; (f) Third-party debts block member removal.
+2. **Longer-horizon (unchanged)**: offline precache-all-code; **Stage 5** permanent `person_id` on
+   expenses (kills the raw-name matching at the source); native contacts picker.
 
 ---
 
