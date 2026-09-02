@@ -638,6 +638,7 @@ function App() {
       ui.showMembersHealth, ui.showNotifPanel, ui.mobileShowGroupOptionsMenu,
       !!ui.qrModalData, !!ui.showConvertModalId, !!ui.editingSettle, !!ui.globalSettleData,
       !!(ui.confirmState && ui.confirmState.show),
+      ui.showFriendsList,
     ].filter(Boolean).length;
 
     if (cur?._divido && cur.uiState) {
@@ -676,7 +677,6 @@ function App() {
       const sameScreen =
         prev.view === currentUi.view &&
         isSameId(prev.selectedId, currentUi.selectedId) &&
-        prev.showFriendsList === currentUi.showFriendsList &&
         isSameId(prev.analyticsGroupId, currentUi.analyticsGroupId);
       if (sameScreen && overlayCount(currentUi) < overlayCount(prev)) {
         window.history.back();
