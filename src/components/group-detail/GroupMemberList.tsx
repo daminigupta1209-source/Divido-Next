@@ -58,6 +58,10 @@ export const GroupMemberList: React.FC<GroupMemberListProps> = ({
     title: string; desc: string; primaryLabel: string; primaryColor: string; onPrimary: () => void;
     secondaryLabel?: string; onSecondary?: () => void;
   }>(null);
+  // Which segment of the members screen is showing. One list at a time replaces
+  // the old three stacked cards (and makes the duplicate-section render bug
+  // impossible — only the active tab is ever mounted).
+  const [activeTab, setActiveTab] = useState<'joined' | 'pending' | 'left'>('joined');
 
   if (selectedId === 'STANDALONE' || !showFriendsList) return null;
 
@@ -231,6 +235,44 @@ export const GroupMemberList: React.FC<GroupMemberListProps> = ({
   const pendingMembersList = selectedGroup.pendingMembers || [];
   const leftMembersList = selectedGroup.members.filter((m) => m.endsWith(' (Left)'));
 
+  // Two-letter initials for a member's avatar (first + last word, else first two
+  // letters of a single word).
+  const initialsFor = (name: string): string => {
+    const clean = name.replace(/\s*\(me\)$/i, '').replace(/\s*\(Left\)$/i, '').trim();
+    const parts = clean.split(/\s+/).filter(Boolean);
+    if (parts.length === 0) return '?';
+    const a = parts[0][0] || '';
+    const b = parts.length > 1 ? parts[parts.length - 1][0] : (parts[0][1] || '');
+    return (a + b).toUpperCase();
+  };
+  // Stable [bg, text] color pair per name so the same person keeps their color.
+  const AVATAR_COLORS: [string, string][] = [
+    ['#E6F1FB', '#185FA5'], ['#FBEAF0', '#993556'], ['#E1F5EE', '#0F6E56'],
+    ['#FAEEDA', '#854F0B'], ['#EEEDFE', '#534AB7'], ['#FAECE7', '#993C1D'],
+    ['#E1F5EE', '#0F6E56'], ['#FBEAF0', '#993556'],
+  ];
+  const avatarColor = (name: string): [string, string] => {
+    const clean = name.replace(/\s*\(me\)$/i, '').replace(/\s*\(Left\)$/i, '').trim().toLowerCase();
+    let h = 0;
+    for (let i = 0; i < clean.length; i++) h = (h * 31 + clean.charCodeAt(i)) >>> 0;
+    return AVATAR_COLORS[h % AVATAR_COLORS.length];
+  };
+  const STATUS_DOT: Record<'joined' | 'pending' | 'left', string> = {
+    joined: '#1D9E75', pending: '#EF9F27', left: '#94A3B8',
+  };
+  // A round avatar with a status dot, shared across all three tabs.
+  const Avatar: React.FC<{ name: string; status: 'joined' | 'pending' | 'left' }> = ({ name, status }) => {
+    const [bg, fg] = avatarColor(name);
+    return (
+      <div style={{ position: 'relative', width: '38px', height: '38px', flex: 'none' }}>
+        <div style={{ width: '38px', height: '38px', borderRadius: '50%', background: bg, color: fg, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '13px', fontWeight: 700 }}>
+          {initialsFor(name)}
+        </div>
+        <span style={{ position: 'absolute', right: '-1px', bottom: '-1px', width: '11px', height: '11px', borderRadius: '50%', background: STATUS_DOT[status], border: '2.5px solid var(--w)' }} />
+      </div>
+    );
+  };
+
   return (
     <div
       onClick={(e) => e.stopPropagation()}
@@ -355,24 +397,63 @@ export const GroupMemberList: React.FC<GroupMemberListProps> = ({
           </button>
         </div>
 
-        {/* 1. Joined Group Members Card */}
+        {/* Segmented tab bar */}
+        <div
+          style={{
+            display: 'flex',
+            background: 'var(--bg)',
+            border: '1.5px solid #F1F5F9',
+            borderRadius: '999px',
+            padding: '4px',
+            gap: '2px',
+          }}
+        >
+          {([
+            ['joined', 'Joined', joinedMembersList.length],
+            ['pending', 'Pending', pendingMembersList.length],
+            ['left', 'Left', leftMembersList.length],
+          ] as [typeof activeTab, string, number][]).map(([key, label, count]) => {
+            const on = activeTab === key;
+            return (
+              <button
+                key={key}
+                type="button"
+                onClick={() => setActiveTab(key)}
+                style={{
+                  flex: 1,
+                  border: 'none',
+                  background: on ? 'var(--w)' : 'transparent',
+                  color: on ? '#334155' : '#94A3B8',
+                  fontWeight: on ? 700 : 500,
+                  fontSize: '12.5px',
+                  borderRadius: '999px',
+                  padding: '8px 0',
+                  cursor: 'pointer',
+                  boxShadow: on ? '0 1px 2px rgba(0,0,0,0.06)' : 'none',
+                  transition: '0.15s all ease',
+                }}
+              >
+                {label} · {count}
+              </button>
+            );
+          })}
+        </div>
+
+        {/* JOINED TAB */}
+        {activeTab === 'joined' && (
         <div
           className="card"
           style={{
             background: 'var(--w)',
             borderRadius: '24px',
             border: '1.5px solid #F1F5F9',
-            padding: '20px 16px',
+            padding: '8px 16px',
             display: 'flex',
             flexDirection: 'column',
-            gap: '14px',
           }}
         >
-          <h4 style={{ margin: 0, fontSize: '12px', fontWeight: 600, color: '#475569', textTransform: 'uppercase', letterSpacing: '0.5px', textAlign: 'left' }}>
-            Joined Members ({joinedMembersList.length})
-          </h4>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-            {joinedMembersList.map((m) => {
+          <div style={{ display: 'flex', flexDirection: 'column' }}>
+            {joinedMembersList.map((m, idx) => {
               return (
                 <div
                   key={m}
@@ -380,12 +461,13 @@ export const GroupMemberList: React.FC<GroupMemberListProps> = ({
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'space-between',
-                    padding: '8px 12px',
-                    background: '#F8FAFC',
-                    borderRadius: '12px',
+                    gap: '11px',
+                    padding: '11px 2px',
+                    borderBottom: idx < joinedMembersList.length - 1 ? '1px solid #F1F5F9' : 'none',
                     boxSizing: 'border-box',
                   }}
                 >
+                  <Avatar name={m} status="joined" />
                   {editingMemberName === m ? (
                     <input
                       autoFocus
@@ -397,7 +479,8 @@ export const GroupMemberList: React.FC<GroupMemberListProps> = ({
                         if (e.key === 'Escape') setEditingMemberName(null);
                       }}
                       style={{
-                        fontSize: '12px',
+                        flex: 1,
+                        fontSize: '13px',
                         fontWeight: 'bold',
                         padding: '2px 6px',
                         border: '1.5px solid #6366F1',
@@ -405,17 +488,16 @@ export const GroupMemberList: React.FC<GroupMemberListProps> = ({
                         background: 'var(--bg)',
                         color: 'var(--t)',
                         outline: 'none',
-                        width: '120px',
                         boxSizing: 'border-box',
                       }}
                     />
                   ) : (
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '1px', minWidth: 0 }}>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '1px', minWidth: 0, flex: 1 }}>
                       <span
                         title={checkIsMe(m) ? "Click to edit name" : undefined}
                         style={{
                           fontWeight: 'bold',
-                          fontSize: '12px',
+                          fontSize: '14px',
                           color: '#334155',
                           cursor: checkIsMe(m) ? 'pointer' : 'default',
                           textDecoration: checkIsMe(m) ? 'underline dotted rgba(0,0,0,0.1)' : 'none',
@@ -433,20 +515,20 @@ export const GroupMemberList: React.FC<GroupMemberListProps> = ({
                         {checkIsMe(m) ? 'You' : m.replace(/\s*\(me\)$/i, '')} {checkIsAdmin(m) && <span style={{ fontSize: '10px', fontWeight: 600, color: '#7C3AED', background: '#F5F3FF', padding: '1px 6px', borderRadius: '4px', marginLeft: '6px' }}>Admin</span>}
                       </span>
                       {emailFor(m) && (
-                        <span style={{ fontSize: '10px', color: '#94A3B8', fontWeight: 500, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                        <span style={{ fontSize: '11px', color: '#94A3B8', fontWeight: 500, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                           {emailFor(m)}
                         </span>
                       )}
                     </div>
                   )}
-                  
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexShrink: 0 }}>
                     {userMetadata[m]?.upiId && (
-                      <span title="Payment Info Linked 安心" style={{ fontSize: '10px', color: '#1D4ED8', cursor: 'help' }}>
+                      <span title="Payment Info Linked 安心" style={{ fontSize: '12px', color: '#1D4ED8', cursor: 'help' }}>
                         💳
                       </span>
                     )}
-                    
+
                     {(isAdmin || checkIsMe(m)) && (
                       <span
                         onClick={async (e) => {
@@ -497,7 +579,7 @@ export const GroupMemberList: React.FC<GroupMemberListProps> = ({
                         style={{
                           cursor: 'pointer',
                           color: '#EF4444',
-                          fontSize: '12px',
+                          fontSize: '14px',
                           fontWeight: 'bold',
                           padding: '0 4px',
                         }}
@@ -510,34 +592,33 @@ export const GroupMemberList: React.FC<GroupMemberListProps> = ({
             })}
           </div>
         </div>
+        )}
 
-        {/* 2. Pending Members Card */}
+        {/* PENDING TAB */}
+        {activeTab === 'pending' && (
         <div
           className="card"
           style={{
             background: 'var(--w)',
             borderRadius: '24px',
             border: '1.5px solid #F1F5F9',
-            padding: '20px 16px',
+            padding: '8px 16px 16px',
             display: 'flex',
             flexDirection: 'column',
-            gap: '14px',
+            gap: '4px',
           }}
         >
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-            <h4 style={{ margin: 0, fontSize: '12px', fontWeight: 600, color: '#475569', textTransform: 'uppercase', letterSpacing: '0.5px', textAlign: 'left' }}>
-              Pending Invites ({pendingMembersList.length})
-            </h4>
-            {pendingMembersList.length > 0 && (
+          {pendingMembersList.length > 0 && (
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', paddingTop: '10px' }}>
               <button
                 onClick={handleRemindAll}
                 style={{
                   background: '#FFEDD5',
                   border: 'none',
                   borderRadius: '12px',
-                  padding: '4px 10px',
+                  padding: '5px 12px',
                   color: '#EA580C',
-                  fontSize: '10px',
+                  fontSize: '11px',
                   fontWeight: 600,
                   cursor: 'pointer',
                   transition: '0.15s all ease',
@@ -545,26 +626,31 @@ export const GroupMemberList: React.FC<GroupMemberListProps> = ({
                 onMouseEnter={(e) => { e.currentTarget.style.background = '#FED7AA'; }}
                 onMouseLeave={(e) => { e.currentTarget.style.background = '#FFEDD5'; }}
               >
-                Remind All
+                Remind all
               </button>
-            )}
-          </div>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-              {pendingMembersList.map((m) => (
+            </div>
+          )}
+          {pendingMembersList.length === 0 && (
+            <p style={{ margin: 0, padding: '20px 4px', fontSize: '13px', color: '#94A3B8', textAlign: 'center' }}>
+              No pending invites.
+            </p>
+          )}
+            <div style={{ display: 'flex', flexDirection: 'column' }}>
+              {pendingMembersList.map((m, idx) => (
                 <div
                   key={m}
                   style={{
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'space-between',
-                    padding: '8px 12px',
-                    background: '#F8FAFC',
-                    border: 'none',
-                    borderRadius: '12px',
+                    gap: '11px',
+                    padding: '11px 2px',
+                    borderBottom: idx < pendingMembersList.length - 1 ? '1px solid #F1F5F9' : 'none',
                     boxSizing: 'border-box',
                   }}
                 >
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <Avatar name={m} status="pending" />
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '1px', minWidth: 0, flex: 1 }}>
                     {editingMemberName === m ? (
                       <input
                         autoFocus
@@ -576,7 +662,7 @@ export const GroupMemberList: React.FC<GroupMemberListProps> = ({
                           if (e.key === 'Escape') setEditingMemberName(null);
                         }}
                         style={{
-                          fontSize: '12px',
+                          fontSize: '13px',
                           fontWeight: 'bold',
                           padding: '2px 6px',
                           border: '1.5px solid #6366F1',
@@ -584,16 +670,17 @@ export const GroupMemberList: React.FC<GroupMemberListProps> = ({
                           background: 'var(--bg)',
                           color: 'var(--t)',
                           outline: 'none',
-                          width: '120px',
+                          width: '100%',
                           boxSizing: 'border-box',
                         }}
                       />
                     ) : (
+                      <>
                       <span
                         title="Click to edit name"
                         style={{
                           fontWeight: 'bold',
-                          fontSize: '13px',
+                          fontSize: '14px',
                           color: '#334155',
                           cursor: 'pointer',
                           textDecoration: 'underline dotted rgba(0,0,0,0.1)',
@@ -606,10 +693,12 @@ export const GroupMemberList: React.FC<GroupMemberListProps> = ({
                       >
                         {checkIsMe(m) ? 'You' : m.replace(/\s*\(me\)$/i, '')} {checkIsAdmin(m) && <span style={{ fontSize: '10px', fontWeight: 600, color: '#7C3AED', background: '#F5F3FF', padding: '1px 6px', borderRadius: '4px', marginLeft: '6px' }}>Admin</span>}
                       </span>
+                      <span style={{ fontSize: '11px', color: '#94A3B8', fontWeight: 500 }}>Invite sent</span>
+                      </>
                     )}
                   </div>
 
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexShrink: 0 }}>
                     <button
                       onClick={async (e) => {
                         e.stopPropagation();
@@ -626,8 +715,8 @@ export const GroupMemberList: React.FC<GroupMemberListProps> = ({
                         background: '#FFEDD5',
                         border: 'none',
                         borderRadius: '50%',
-                        width: '28px',
-                        height: '28px',
+                        width: '30px',
+                        height: '30px',
                         display: 'flex',
                         alignItems: 'center',
                         justifyContent: 'center',
@@ -654,7 +743,7 @@ export const GroupMemberList: React.FC<GroupMemberListProps> = ({
                     </button>
                     {selectedId !== 'STANDALONE' && (isAdmin || checkIsMe(m)) && (
                       <span
-                        style={{ cursor: 'pointer', opacity: 0.6, fontSize: '13px', color: '#EF4444', fontWeight: 'bold', padding: '0 4px' }}
+                        style={{ cursor: 'pointer', opacity: 0.6, fontSize: '14px', color: '#EF4444', fontWeight: 'bold', padding: '0 4px' }}
                         title="Cancel invite"
                         onClick={(e) => {
                           e.stopPropagation();
@@ -916,26 +1005,28 @@ export const GroupMemberList: React.FC<GroupMemberListProps> = ({
               </div>
             )}
           </div>
+        )}
 
-        {/* 3. Past Members Card */}
-        {leftMembersList.length > 0 && (
+        {/* LEFT TAB */}
+        {activeTab === 'left' && (
           <div
             className="card"
             style={{
               background: 'var(--w)',
               borderRadius: '24px',
               border: '1.5px solid #F1F5F9',
-              padding: '20px 16px',
+              padding: '8px 16px',
               display: 'flex',
               flexDirection: 'column',
-              gap: '14px',
             }}
           >
-            <h4 style={{ margin: 0, fontSize: '12px', fontWeight: 600, color: '#475569', textTransform: 'uppercase', letterSpacing: '0.5px', textAlign: 'left' }}>
-              Left ({leftMembersList.length})
-            </h4>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-              {leftMembersList.map((m) => {
+            {leftMembersList.length === 0 && (
+              <p style={{ margin: 0, padding: '20px 4px', fontSize: '13px', color: '#94A3B8', textAlign: 'center' }}>
+                No past members.
+              </p>
+            )}
+            <div style={{ display: 'flex', flexDirection: 'column' }}>
+              {leftMembersList.map((m, idx) => {
                 const cleanName = m.replace(' (Left)', '');
                 return (
                   <div
@@ -944,17 +1035,18 @@ export const GroupMemberList: React.FC<GroupMemberListProps> = ({
                       display: 'flex',
                       alignItems: 'center',
                       justifyContent: 'space-between',
-                      padding: '8px 12px',
-                      background: '#F8FAFC',
-                      borderRadius: '12px',
+                      gap: '11px',
+                      padding: '11px 2px',
+                      borderBottom: idx < leftMembersList.length - 1 ? '1px solid #F1F5F9' : 'none',
                       boxSizing: 'border-box',
                       opacity: 0.7,
                     }}
                   >
-                    <span style={{ fontWeight: 'bold', fontSize: '12px', color: '#64748B', textDecoration: 'line-through' }}>
+                    <Avatar name={cleanName} status="left" />
+                    <span style={{ flex: 1, fontWeight: 'bold', fontSize: '14px', color: '#64748B', textDecoration: 'line-through' }}>
                       {checkIsMe(cleanName) ? 'You' : cleanName} {checkIsAdmin(cleanName) && <span style={{ fontSize: '10px', fontWeight: 600, color: '#7C3AED', background: '#F5F3FF', padding: '1px 6px', borderRadius: '4px', marginLeft: '6px' }}>Admin</span>}
                     </span>
-                    
+
                     {isAdmin && (
                       <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                         <button
