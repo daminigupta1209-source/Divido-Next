@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Group, Expense, UserMetadata } from '../../lib/types';
 import { BalanceActionCard } from '../BalanceActionCard';
-import { buildPeopleSuggestions } from '../../lib/identity';
+import { buildPeopleSuggestions, balancesByIdentity, getPersonKey } from '../../lib/identity';
 
 interface GroupMemberListProps {
   selectedGroup: Group;
@@ -74,23 +74,31 @@ export const GroupMemberList: React.FC<GroupMemberListProps> = ({
   const buildSuggestions = () => buildPeopleSuggestions(groups, selectedGroup.id, selectedGroup.members, me);
 
   // Per-currency net for a member (positive = to collect, negative = to pay).
+  // This member's balance WITH ME in this group, via the ONE canonical engine +
+  // identity keys — never a hand-rolled copy (which diverged from the Settle tab
+  // and showed a wrong figure). It is pairwise (me ↔ them), matching the number
+  // shown everywhere else the user looks (the group Settle tab, the friend card),
+  // and it's exactly what "Settle up" can clear. Positive = they collect from me,
+  // negative = they pay me.
   const getMemberBalanceByCurrency = (name: string): Record<string, number> => {
+    const groupExps = expenses.filter((e) => String(e.gId) === String(selectedId));
+    const txns = balancesByIdentity(selectedGroup, groupExps, !!selectedGroup.simplifyDebts);
+    const memberKey = getPersonKey(selectedGroup, name);
+    // My per-group identity may differ from the flat `me` after a claim/rename.
+    let myG = me;
+    try { const c = localStorage.getItem(`divido_identity_${selectedId}`); if (c) myG = c; } catch { /* ignore */ }
+    const meKey = getPersonKey(selectedGroup, myG);
     const bal: Record<string, number> = {};
-    expenses.forEach((e) => {
-      if (String(e.gId) !== String(selectedId)) return;
-      const splitters = e.splitters || selectedGroup.members || [];
-      if (!splitters.includes(name) && e.paid !== name) return;
-      const curr = e.currency || selectedGroup.currency || '₹';
-      const share = !e.mode || e.mode === 'Equally'
-        ? e.amt / (splitters.length || 1)
-        : e.mode === 'Unequally'
-        ? parseFloat(e.shares?.[name]?.toString() || '0')
-        : (e.amt * parseFloat(e.shares?.[name]?.toString() || '0')) / 100;
-      if (e.paid === name) {
-        bal[curr] = (bal[curr] || 0) + (e.amt - (splitters.includes(name) ? share : 0));
-      } else if (splitters.includes(name)) {
-        bal[curr] = (bal[curr] || 0) - share;
-      }
+    txns.forEach((t) => {
+      const fromK = getPersonKey(selectedGroup, t.from);
+      const toK = getPersonKey(selectedGroup, t.to);
+      const meAndThem =
+        (fromK === meKey && toK === memberKey) || (fromK === memberKey && toK === meKey);
+      if (!meAndThem) return;
+      Object.entries(t.balances).forEach(([curr, val]) => {
+        if (toK === memberKey) bal[curr] = (bal[curr] || 0) + val;        // they collect from me
+        else bal[curr] = (bal[curr] || 0) - val;                          // they pay me
+      });
     });
     return bal;
   };
@@ -416,7 +424,9 @@ export const GroupMemberList: React.FC<GroupMemberListProps> = ({
                               desc: `Balance remaining: ${bt}. Settle up or write it off to remove them.`,
                               primaryLabel: 'Settle up →',
                               primaryColor: '#10B981',
-                              onPrimary: () => { setActionCard(null); onSettleMember && onSettleMember(m); },
+                              // Close the member-list panel (z 9999) first, else the
+                              // settle sheet (z 4000) opens behind it and looks dead.
+                              onPrimary: () => { setActionCard(null); setShowFriendsList(false); onSettleMember && onSettleMember(m); },
                               secondaryLabel: 'Write off & remove',
                               onSecondary: () => { setActionCard(null); onWriteOff && onWriteOff(m); onRemoveMember && onRemoveMember(m); },
                             });
@@ -623,7 +633,7 @@ export const GroupMemberList: React.FC<GroupMemberListProps> = ({
                               desc: `Balance remaining: ${bt}. Settle up or write it off to remove them.`,
                               primaryLabel: 'Settle up →',
                               primaryColor: '#10B981',
-                              onPrimary: () => { setActionCard(null); onSettleMember && onSettleMember(m); },
+                              onPrimary: () => { setActionCard(null); setShowFriendsList(false); onSettleMember && onSettleMember(m); },
                               secondaryLabel: 'Write off & remove',
                               onSecondary: () => { setActionCard(null); onWriteOff && onWriteOff(m); localRemove(); },
                             });
