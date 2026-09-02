@@ -856,7 +856,7 @@ export const GroupMemberList: React.FC<GroupMemberListProps> = ({
             }}
           >
             <h4 style={{ margin: 0, fontSize: '12px', fontWeight: 600, color: '#475569', textTransform: 'uppercase', letterSpacing: '0.5px', textAlign: 'left' }}>
-              Past Members ({leftMembersList.length})
+              Left ({leftMembersList.length})
             </h4>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
               {leftMembersList.map((m) => {
@@ -881,35 +881,6 @@ export const GroupMemberList: React.FC<GroupMemberListProps> = ({
                     
                     {isAdmin && (
                       <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                        {onWriteOff && memberHasBalance(cleanName) && (() => {
-                          const wbText = memberBalanceText(cleanName);
-                          return (
-                            <button
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                setActionCard({
-                                  title: 'Write off this balance?',
-                                  desc: `Clears your pending balance of '${wbText}' permanently.`,
-                                  primaryLabel: 'Write off',
-                                  primaryColor: '#F59E0B',
-                                  onPrimary: () => { setActionCard(null); onWriteOff && onWriteOff(m); },
-                                });
-                              }}
-                              style={{
-                                background: 'rgba(245, 158, 11, 0.12)',
-                                border: 'none',
-                                borderRadius: '8px',
-                                padding: '5px 10px',
-                                color: '#B45309',
-                                fontSize: '11px',
-                                fontWeight: 600,
-                                cursor: 'pointer',
-                              }}
-                            >
-                              Write off
-                            </button>
-                          );
-                        })()}
                         <button
                           onClick={async (e) => {
                             e.stopPropagation();
@@ -938,8 +909,7 @@ export const GroupMemberList: React.FC<GroupMemberListProps> = ({
                           🔗 Invite again
                         </button>
                         {/* Past members are never removable: their expenses keep the
-                            group's balances correct, so they stay in history. The
-                            only past-member action is "Write off" (settle balance). */}
+                            group's balances correct, so they stay in history. */}
                       </div>
                     )}
                   </div>

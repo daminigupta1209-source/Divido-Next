@@ -8,7 +8,7 @@ interface CreateGroupViewProps {
   me: string;
   myDefaultCurrency: string;
   onCancel: () => void;
-  onCreateGroup: (groupData: { name: string; currency: string; members: string[]; emoji: string; createdDate?: string; memberEmails?: Record<string, string> }) => void;
+  onCreateGroup: (groupData: { name: string; currency: string; members: string[]; emoji: string; createdDate?: string; memberEmails?: Record<string, string>; memberIdentities?: Record<string, string> }) => void;
   groups: Group[];
   userName: string;
   editingGroup?: Group;
@@ -32,6 +32,8 @@ export const CreateGroupView: React.FC<CreateGroupViewProps> = ({
   const [participants, setParticipants] = useState<string[]>(editingGroup ? editingGroup.members : [me]);
   // Emails supplied for participants added via a suggestion (or later, a field).
   const [participantEmails, setParticipantEmails] = useState<Record<string, string>>({});
+  // Identities (email or person_id) from suggestions.
+  const [participantIdentities, setParticipantIdentities] = useState<Record<string, string>>({});
 
   // Read-only member rows for Edit mode, tagged by category. Actions (remove /
   // remind / invite-again) live on the group members card, opened via
@@ -198,7 +200,11 @@ export const CreateGroupView: React.FC<CreateGroupViewProps> = ({
 
     // Carry through only the emails whose member survived the clean/unique pass.
     const memberEmails: Record<string, string> = {};
-    uniqueMembers.forEach((m) => { if (participantEmails[m]) memberEmails[m] = participantEmails[m]; });
+    const memberIdentities: Record<string, string> = {};
+    uniqueMembers.forEach((m) => { 
+      if (participantEmails[m]) memberEmails[m] = participantEmails[m]; 
+      if (participantIdentities[m]) memberIdentities[m] = participantIdentities[m]; 
+    });
 
     onCreateGroup({
       name: trimmedTitle,
@@ -207,6 +213,7 @@ export const CreateGroupView: React.FC<CreateGroupViewProps> = ({
       emoji: selectedEmoji,
       createdDate: createdDate,
       memberEmails,
+      memberIdentities,
     });
   };
 
@@ -612,6 +619,7 @@ export const CreateGroupView: React.FC<CreateGroupViewProps> = ({
                             if (participants.some((p) => norm(p) === norm(s.name))) return;
                             setParticipants((prev) => [...prev, s.name]);
                             if (s.email) setParticipantEmails((prev) => ({ ...prev, [s.name]: s.email }));
+                            if (s.identity) setParticipantIdentities((prev) => ({ ...prev, [s.name]: s.identity }));
                           }}
                           style={{ display: 'flex', alignItems: 'center', gap: '10px', width: '100%', textAlign: 'left', background: 'var(--bg)', border: '1px solid var(--border)', borderRadius: '10px', padding: '7px 10px', cursor: 'pointer' }}
                         >

@@ -57,7 +57,7 @@ import { CurrencySetupModal } from './components/CurrencySetupModal';
 import { GroupGallery } from './components/GroupGallery';
 import { checkIfDemoMode } from './lib/demoMode';
 import { ensureArray, ensureObject, isLegacyRenameLog, formatCompactAmount, genGroupId, genExpenseId, titleCaseName } from './lib/utils';
-import { getPersonKey } from './lib/identity';
+import { getPersonKey, toIdentitySpace } from './lib/identity';
 import { useSupabaseSync, getGidRemap } from './hooks/useSupabaseSync';
 import { BalanceActionCard } from './components/BalanceActionCard';
 import { useAppHotkeys } from './hooks/useAppHotkeys';
@@ -2219,30 +2219,40 @@ function App() {
   const performWriteOff = (groupId: string | number, memberRow: string) => {
     const g = groups.find((x) => String(x.id) === String(groupId));
     if (!g) return;
-    const cleanName = memberRow.replace(/\s*\(Left\)$/i, '');
+    
+    const targetKey = getPersonKey(g, memberRow);
     const groupExps = expenses.filter((e) => String(e.gId) === String(groupId));
-    const members = Array.from(new Set((g.members || []).map((x) => x.replace(/\s*\(Left\)$/i, ''))));
-    const txs = computeRawPairwiseTransactions(members, groupExps, g.currency || '₹');
+    
+    // Map expenses to identity-space so the math natively collapses duplicate names for the same person
+    const { memberKeys, expenses: rekeyedExps, keyToName } = toIdentitySpace(g, groupExps);
+    const txs = computeRawPairwiseTransactions(memberKeys, rekeyedExps, g.currency || '₹');
+    
     const today = new Date().toISOString().split('T')[0];
     const writeOffs: any[] = [];
     txs.forEach((t: any) => {
-      if (t.from !== cleanName && t.to !== cleanName) return;
+      if (t.from !== targetKey && t.to !== targetKey) return;
       Object.entries(t.balances as Record<string, number>).forEach(([curr, val]) => {
         const absVal = Math.abs(val);
         if (absVal <= 0.01) return;
-        const payer = val > 0 ? t.from : t.to;
-        const receiver = val > 0 ? t.to : t.from;
+        
+        const payerKey = val > 0 ? t.from : t.to;
+        const receiverKey = val > 0 ? t.to : t.from;
+        
+        // Map back to canonical display names for the expense record
+        const payerName = keyToName[payerKey] ?? payerKey;
+        const receiverName = keyToName[receiverKey] ?? receiverKey;
+
         writeOffs.push({
           // Deterministic id so two devices (or a double-tap) writing off the
           // SAME person/currency on the same day converge to ONE row instead of
           // creating duplicate cancelling entries that double-reverse the balance.
-          id: `writeoff-${String(groupId)}-${payer}-${receiver}-${curr}-${today}`,
+          id: `writeoff-${String(groupId)}-${payerKey}-${receiverKey}-${curr}-${today}`,
           timestamp: Date.now(),
           gId: groupId,
           title: 'Written off',
           amt: Math.round(absVal * 100) / 100,
-          paid: payer,
-          splitters: [receiver],
+          paid: payerName,
+          splitters: [receiverName],
           date: today,
           notes: '',
           currency: curr,
@@ -2847,11 +2857,11 @@ function App() {
     setShowExpModalSecure(true);
   };
 
-  const handleCreateGroup = (groupData: { name: string; currency: string; members: string[]; emoji: string; createdDate?: string; memberEmails?: Record<string, string> }) => {
+  const handleCreateGroup = (groupData: { name: string; currency: string; members: string[]; emoji: string; createdDate?: string; memberEmails?: Record<string, string>; memberIdentities?: Record<string, string> }) => {
     const id = genGroupId();
     // Emails supplied for members at creation become their identity (invite_email
     // on insert), so they auto-claim when they sign in with that address.
-    const memberIdentities: Record<string, string> = {};
+    const memberIdentities: Record<string, string> = { ...(groupData.memberIdentities || {}) };
     Object.entries(groupData.memberEmails || {}).forEach(([n, em]) => {
       if (em && em.includes('@')) memberIdentities[n] = em.trim().toLowerCase();
     });
