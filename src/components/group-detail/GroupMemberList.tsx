@@ -671,15 +671,37 @@ export const GroupMemberList: React.FC<GroupMemberListProps> = ({
                 <div
                   style={{
                     display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'space-between',
-                    padding: '0 12px',
-                    height: '38px',
+                    flexDirection: 'column',
+                    gap: '8px',
+                    padding: '12px',
                     background: '#F8FAFC',
-                    borderRadius: '12px',
+                    borderRadius: '16px',
+                    border: '1.5px solid #E2E8F0',
                     boxSizing: 'border-box',
                   }}
                 >
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '4px' }}>
+                    <span style={{ fontSize: '11px', fontWeight: 700, color: '#64748B', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                      Add New Member
+                    </span>
+                    <span
+                      onClick={() => {
+                        setIsAddingInline(false);
+                        setInlineAddVal('');
+                        setInlineEmailVal('');
+                      }}
+                      style={{
+                        cursor: 'pointer',
+                        fontSize: '14px',
+                        color: '#94A3B8',
+                        fontWeight: 'bold',
+                        padding: '0 4px',
+                      }}
+                    >
+                      ✕
+                    </span>
+                  </div>
+                  
                   <input
                     ref={inlineInputRef}
                     id="dv-member-add"
@@ -694,67 +716,72 @@ export const GroupMemberList: React.FC<GroupMemberListProps> = ({
                     value={inlineAddVal}
                     onChange={(e) => setInlineAddVal(e.target.value)}
                     onKeyDown={(e) => {
-                      if (e.key === 'Enter') handleInlineAdd();
                       if (e.key === 'Escape') {
                         setIsAddingInline(false);
                         setInlineAddVal('');
+                        setInlineEmailVal('');
                       }
                     }}
                     style={{
-                      border: 'none',
-                      background: 'transparent',
+                      height: '38px',
+                      borderRadius: '10px',
+                      border: '1px solid #CBD5E1',
+                      background: '#FFFFFF',
                       fontSize: '13px',
-                      fontWeight: 'bold',
+                      fontWeight: 600,
                       color: 'var(--t)',
+                      padding: '0 12px',
                       outline: 'none',
+                      boxSizing: 'border-box',
                       width: '100%',
-                      height: '100%',
-                      padding: 0,
-                      margin: 0,
-                      fontFamily: 'inherit',
                     }}
                   />
-                  <span
-                    onClick={() => {
-                      setIsAddingInline(false);
-                      setInlineAddVal('');
-                    }}
+
+                  <input
+                    type="search"
+                    autoComplete="off"
+                    autoCorrect="off"
+                    spellCheck="false"
+                    data-1p-ignore
+                    data-lpignore="true"
+                    placeholder="Email (optional)"
+                    value={inlineEmailVal}
+                    onChange={(e) => setInlineEmailVal(e.target.value)}
+                    onKeyDown={(e) => { if (e.key === 'Enter') handleInlineAdd(); }}
                     style={{
-                      cursor: 'pointer',
-                      opacity: 0.6,
+                      height: '38px',
+                      borderRadius: '10px',
+                      border: '1px solid #CBD5E1',
+                      background: '#FFFFFF',
+                      fontSize: '12px',
+                      fontWeight: 500,
+                      color: '#334155',
+                      padding: '0 12px',
+                      outline: 'none',
+                      boxSizing: 'border-box',
+                      width: '100%',
+                    }}
+                  />
+
+                  <button
+                    onClick={() => handleInlineAdd()}
+                    style={{
+                      marginTop: '4px',
+                      width: '100%',
+                      padding: '10px',
+                      borderRadius: '10px',
+                      border: 'none',
+                      background: '#10B981',
+                      color: '#FFFFFF',
+                      fontWeight: 700,
                       fontSize: '13px',
-                      color: '#EF4444',
-                      fontWeight: 'bold',
-                      marginLeft: '8px',
-                      padding: '0 4px',
+                      cursor: 'pointer',
+                      boxShadow: '0 4px 6px -1px rgba(16, 185, 129, 0.2)',
                     }}
                   >
-                    ✕
-                  </span>
+                    Add to Group
+                  </button>
                 </div>
-              )}
-
-              {/* Optional email — if known, they auto-join (no "pick your name"
-                  step) when they sign in with it. */}
-              {isAddingInline && (
-                <input
-                  type="search"
-                  autoComplete="off"
-                  autoCorrect="off"
-                  spellCheck="false"
-                  data-1p-ignore
-                  data-lpignore="true"
-                  placeholder="Email (optional)"
-                  value={inlineEmailVal}
-                  onChange={(e) => setInlineEmailVal(e.target.value)}
-                  onKeyDown={(e) => { if (e.key === 'Enter') handleInlineAdd(); }}
-                  style={{
-                    width: '100%', height: '34px', borderRadius: '10px', marginTop: '6px',
-                    border: '1px solid #E2E8F0', background: '#fff', fontSize: '12px',
-                    fontWeight: 500, color: '#334155', padding: '0 12px', outline: 'none',
-                    boxSizing: 'border-box',
-                  }}
-                />
               )}
 
               {/* Suggestions: people you've split with before */}
