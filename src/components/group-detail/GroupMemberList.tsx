@@ -272,7 +272,21 @@ export const GroupMemberList: React.FC<GroupMemberListProps> = ({
         }}
       >
         {/* HEADER */}
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '4px' }}>
+        <div style={{ 
+          display: 'flex', 
+          alignItems: 'center', 
+          justifyContent: 'space-between', 
+          marginBottom: '24px',
+          position: 'sticky',
+          top: '-24px',
+          paddingTop: '24px',
+          paddingBottom: '16px',
+          background: 'var(--bg)',
+          zIndex: 10,
+          margin: '-24px -20px 24px -20px',
+          paddingLeft: '20px',
+          paddingRight: '20px'
+        }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
             <button
               type="button"
@@ -980,55 +994,6 @@ export const GroupMemberList: React.FC<GroupMemberListProps> = ({
             </div>
           </div>
         )}
-
-
-        {/* BOTTOM SAVE BUTTON */}
-        <div
-          style={{
-            position: 'fixed',
-            bottom: 0,
-            left: '50%',
-            transform: 'translateX(-50%)',
-            width: '100%',
-            maxWidth: '540px',
-            padding: '16px 16px 24px 16px',
-            backgroundColor: 'var(--bg)',
-            boxSizing: 'border-box',
-            zIndex: 10000,
-          }}
-        >
-          <button
-            type="button"
-            className="btn-green"
-            onClick={() => {
-              if (isAddingInline && inlineAddVal.trim()) {
-                handleInlineAdd();
-              }
-              setShowFriendsList(false);
-            }}
-            style={{
-              width: '100%',
-              padding: '12px',
-              fontSize: '14px',
-              fontWeight: 600,
-              borderRadius: '14px',
-              cursor: 'pointer',
-              border: 'none',
-              transition: 'all 0.2s ease',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-            }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.transform = 'scale(1.01)';
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.transform = 'scale(1)';
-            }}
-          >
-            Save Changes
-          </button>
-        </div>
       </div>
     </div>
   );
