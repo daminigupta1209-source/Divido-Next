@@ -805,7 +805,24 @@ export const GroupMemberList: React.FC<GroupMemberListProps> = ({
                   </div>
                 </div>
               ))}
-              {isAddingInline && (
+            </div>
+          </div>
+        )}
+
+        {/* ADD FRIEND — shared across all tabs */}
+        <div
+          className="card"
+          style={{
+            background: 'var(--w)',
+            borderRadius: '24px',
+            border: '1.5px solid #F1F5F9',
+            padding: '16px',
+            display: 'flex',
+            flexDirection: 'column',
+            gap: '10px',
+          }}
+        >
+          {isAddingInline && (
                 <div
                   style={{
                     display: 'flex',
@@ -956,10 +973,8 @@ export const GroupMemberList: React.FC<GroupMemberListProps> = ({
                   </div>
                 );
               })()}
-            </div>
-
             {(!isAddingInline || inlineAddVal.length > 0) && (
-              <div style={{ display: 'flex', justifyContent: 'center', marginTop: '10px' }}>
+              <div style={{ display: 'flex', justifyContent: 'center', marginTop: '2px' }}>
                 <button
                   type="button"
                   onClick={() => {
@@ -976,18 +991,20 @@ export const GroupMemberList: React.FC<GroupMemberListProps> = ({
                     background: '#F97316',
                     color: '#FFFFFF',
                     border: 'none',
-                    padding: '8px 22px',
+                    padding: '14px 28px',
                     borderRadius: '999px',
                     fontFamily: 'inherit',
-                    fontWeight: 600,
-                    fontSize: '13.5px',
+                    fontWeight: 700,
+                    fontSize: '16px',
                     letterSpacing: '0.2px',
                     lineHeight: 1,
                     cursor: 'pointer',
+                    width: '100%',
+                    boxShadow: '0 4px 10px -2px rgba(249, 115, 22, 0.4)',
                     display: 'inline-flex',
                     alignItems: 'center',
                     justifyContent: 'center',
-                    gap: '5px',
+                    gap: '7px',
                     transition: 'all 0.2s ease',
                   }}
                   onMouseEnter={(e) => {
@@ -999,13 +1016,12 @@ export const GroupMemberList: React.FC<GroupMemberListProps> = ({
                     e.currentTarget.style.background = '#F97316';
                   }}
                 >
-                  <span style={{ fontSize: '16px', fontWeight: 600, lineHeight: 1, color: '#FFFFFF', display: 'flex', alignItems: 'center' }}>+</span>
-                  <span style={{ color: '#FFFFFF', lineHeight: 1, display: 'flex', alignItems: 'center' }}>Friend</span>
+                  <span style={{ fontSize: '20px', fontWeight: 700, lineHeight: 1, color: '#FFFFFF', display: 'flex', alignItems: 'center' }}>+</span>
+                  <span style={{ color: '#FFFFFF', lineHeight: 1, display: 'flex', alignItems: 'center' }}>Add Friend</span>
                 </button>
               </div>
             )}
-          </div>
-        )}
+        </div>
 
         {/* LEFT TAB */}
         {activeTab === 'left' && (
