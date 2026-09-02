@@ -49,6 +49,7 @@ interface GroupDetailProps {
   onDeleteGroup?: (id: string | number) => void;
   onRemoveMember?: (memberName: string) => void;
   onWriteOff?: (memberName: string) => void;
+  onSettleMember?: (memberName: string) => void;
   onLeaveGroup?: () => void;
   onReinviteMember?: (memberName: string, inviteUrl: string) => void;
   onRemindAllPending?: (pendingNames: string[]) => void;
@@ -100,6 +101,7 @@ export const GroupDetail: React.FC<GroupDetailProps> = ({
   onDeleteGroup,
   onRemoveMember,
   onWriteOff,
+  onSettleMember,
   onLeaveGroup,
   onReinviteMember,
   onRemindAllPending,
@@ -561,6 +563,7 @@ export const GroupDetail: React.FC<GroupDetailProps> = ({
           }}
           onRemoveMember={onRemoveMember}
           onWriteOff={onWriteOff}
+          onSettleMember={onSettleMember}
           onLeaveGroup={onLeaveGroup}
           onReinviteMember={onReinviteMember}
           onRemindAllPending={onRemindAllPending}

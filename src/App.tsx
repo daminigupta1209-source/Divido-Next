@@ -2311,7 +2311,7 @@ function App() {
           parts.push(`${cur}${Math.abs(amt as number).toFixed(0)} to ${(amt as number) < 0 ? 'pay' : 'collect'}`);
         }
       }
-      if (parts.length) leaveBalLine = ` You still have ${parts.join(', ')} here. It stays saved.`;
+      if (parts.length) leaveBalLine = ` You still have ${parts.join(', ')} here.`;
     }
     // Extracted so both the plain confirm (delete/standalone) and the bespoke
     // leave card run the exact same leave/delete logic.
@@ -2428,13 +2428,18 @@ function App() {
       // otherwise a plain Leave. ✕ cancels.
       setBalanceCard(leaveBalLine
         ? {
+            // Zero-to-remove: you can't just walk away from a live balance. The
+            // only two ways out are to Settle up (record the payment) or Write
+            // off (forgive/cancel the balance) — both leave the group's ledger at
+            // zero for you, so no phantom debt is stranded. There is deliberately
+            // no plain "Leave anyway" here.
             title: `Leave "${g.name}"?`,
             desc: leaveBalLine.trim(),
             primaryLabel: 'Settle up →',
             primaryColor: '#10B981',
             onPrimary: () => { setBalanceCard(null); setGlobalSettleDataSecure({ name: me, gId: id }); },
-            secondaryLabel: 'Leave anyway',
-            onSecondary: () => { performLeaveDelete(); },
+            secondaryLabel: 'Write off & leave',
+            onSecondary: () => { performWriteOff(id, me); performLeaveDelete(); },
           }
         : {
             title: `Leave "${g.name}"?`,
@@ -3566,6 +3571,7 @@ function App() {
               setShowAddFriendModal(true);
             }}
             onWriteOff={(memberName: string) => { if (selectedId && selectedId !== 'STANDALONE') performWriteOff(selectedId, memberName); }}
+            onSettleMember={(memberName: string) => { if (selectedId && selectedId !== 'STANDALONE') setGlobalSettleDataSecure({ name: memberName.replace(/\s*\(Left\)$/i, '').trim(), gId: selectedId }); }}
             onLeaveGroup={() => { if (selectedId && selectedId !== 'STANDALONE') handleDeleteGroup(selectedId); }}
             onRemoveMember={async (memberName) => {
               if (!selectedId || selectedId === 'STANDALONE') return;

@@ -2,8 +2,8 @@
 
 React + Vite expense-splitting **PWA**. Backend: **Supabase** (Postgres + RLS + realtime + storage). Deploy: push to `main` → **Vercel** auto-deploys. Live URL: https://divido-next.vercel.app
 
-> Latest commit at handoff: **b07147f** (service-worker cache **v84**). Everything below is live on `main`.
-> The **"Session 2026-08-27/28"** section near the bottom is the freshest work — read it first.
+> Latest commit at handoff: **67dbb7b** (settle-direction/balance-consistency fix). Everything below is live on `main`.
+> The **"Session 2026-09-01"** section (settle/removal redesign + balance-consistency fix) is the freshest work — read it first, then "Session 2026-08-27/28".
 
 ## Working rules
 1. **Verify every change with `npm run build`** (`tsc -b && vite build`). A failed build silently leaves the OLD version live on Vercel.
@@ -127,6 +127,35 @@ See memory `divido-sync-risks` for the full audit. Fixed: **field-level updates*
 ## Prior handoff to-dos — addressed
 - **Search UI (Activities/Photos):** both already existed & matched; the Photos search bar was actually **broken** (App passed `searchQuery={globalSearchQuery}`, making its `onChange` a no-op). Now locally controlled and typeable, like Activities (`GroupGallery.tsx`).
 - **Photo→expense didn't update the tile:** the code edits in place and preserves the attachment; the original failure was the expense-id swap race, now removed by the permanent-expense-id fix. Re-test to confirm; if it still repros, add a targeted reconciliation.
+
+## Session 2026-09-01 — settle/removal redesign + balance-consistency fix (freshest)
+
+### The money bug that drove this session (fixed)
+The global **settle sheet** showed "you collect ₹6523" while the **friend card** said "you pay ₹3517" for the SAME person — opposite direction, wrong total, wrong for every friend. Two root causes, both = not using the single source of truth:
+1. The settle sheet had its **own hand-rolled pairwise math** instead of `computeRawPairwiseTransactions`. Fixed by routing the settle effect through the same canonical engine with the same `effectiveMembers`.
+2. It decided direction with `item.paidBy === me` — a **per-group transaction name** compared to the flat global `me`. After a claim/rename the per-group name ≠ global name, so every line flipped. Fixed with identity-based `iAmPayer = getPersonKey(payer) === myKey`.
+See memory `divido-balance-consistency-rule`. Commits: `71d0672`→`67dbb7b`.
+
+### Rules to prevent this class of bug (enforce in review)
+1. **One engine, always.** Every balance/direction goes through `computeRawPairwiseTransactions` / `simplifyMultiCurrencyDebts` / `balancesByIdentity`, with `getPersonKey` for identity. Never hand-roll pairwise math.
+2. **Never compare people by raw name for direction.** Ban `=== me` / name-equality; compare identity keys.
+3. **Consistency test** now exists — `src/lib/identity.test.ts` › `cross-screen balance consistency`: asserts friend-card net == settle-sheet net == group balance from the one `balancesByIdentity` engine (even when `me`'s per-group name differs), and that raw vs simplified give the same per-person net. `npx vitest run` → 27 pass.
+
+### Settle / removal redesign — status
+- ✅ **Write-off inside the settle card** (creditor-only) — shipped (`e73520b`, `222a148`, `71d0672`).
+- ⏭️ **Zero-to-remove rule** — can't leave/remove a member until their balance is settled or written off (Splitwise path).
+- ⏭️ **Multi-currency zero check** on removal.
+- ⏭️ **Admin-leaving → admin transfer / auto-promote** rule.
+- ⏭️ **Past Members → lightweight "Left" history + Re-invite** (drop the balance clutter).
+- ⏭️ **"Remind"** = clarify it's a share message, not a push (until native).
+
+### Other open tracks (carried forward)
+- ⏭️ **Offline hardening** — full precache-all-code (shell precache done).
+- ⏭️ **Half 2 — identity re-keying (Stage 5)** — let two identical names coexist in one group (see also TOP priority #2 below).
+- ⏭️ **Add-friend** — single smart-input polish (spec in `docs/add-friend-identity-spec.md`).
+- ⏭️ **Native app** — real contacts picker (Capacitor; Android first).
+
+---
 
 ## TOP priorities right now (2026-08-28)
 1. **Two-phone sync test** — the money-sync core was just hardened (field-level updates, upsert, per-row resilience). Before building more sync, confirm on two devices: both add at once; one edits amount while other edits title of the SAME expense (both should survive); settle/write-off same person; offline→online; bulk delete stays deleted. See memory `divido-sync-risks`.

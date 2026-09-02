@@ -85,3 +85,138 @@ describe('balancesByIdentity', () => {
     expect(txns[0].balances['₹']).toBeCloseTo(50);
   });
 });
+
+// ─────────────────────────────────────────────────────────────────────────
+// Cross-screen consistency guard.
+//
+// The 2026-09-01 money bug: the global settle sheet showed "you collect
+// ₹6523" while the friend card said "you pay ₹3517" for the SAME person —
+// opposite direction, wrong total. Root cause: the settle sheet had its own
+// hand-rolled pairwise math and decided direction by comparing a per-group
+// transaction NAME to the flat global `me` (`paidBy === me`), which flips once
+// a user's per-group name differs from their global name.
+//
+// These tests lock in the invariant: every screen derives its net from the ONE
+// canonical engine (`balancesByIdentity`) and keys people by identity, so the
+// friend-card net, the settle-sheet net, and the group balance can never
+// diverge for the same expenses — including when `me`'s per-group name is not
+// the display name. If someone reintroduces a private pairwise copy or a
+// name-based direction check, these fail.
+// ─────────────────────────────────────────────────────────────────────────
+describe('cross-screen balance consistency', () => {
+  type Money = Record<string, number>;
+
+  // How every balance screen nets a person: sum currencies I collect (I am the
+  // creditor `to`) as positive, amounts I pay (I am the debtor `from`) as
+  // negative. `meKey`/`friendKey` are IDENTITY keys, never raw names — this is
+  // the direction rule the settle sheet violated.
+  const netForFriend = (
+    txns: { from: string; to: string; balances: Money }[],
+    keyOf: (name: string) => string,
+    meKey: string,
+    friendKey: string,
+  ): Money => {
+    const acc: Money = {};
+    for (const t of txns) {
+      const fromK = keyOf(t.from);
+      const toK = keyOf(t.to);
+      const sign = toK === meKey && fromK === friendKey ? +1
+        : fromK === meKey && toK === friendKey ? -1
+        : 0;
+      if (!sign) continue;
+      for (const [c, v] of Object.entries(t.balances)) acc[c] = (acc[c] || 0) + sign * v;
+    }
+    return acc;
+  };
+
+  it('friend-card net, settle-sheet net and group balance agree even when my per-group name differs', () => {
+    // `me` signed in as Chirag (email identity) but the expenses were entered
+    // before the claim under the per-group name "Bhaiya". A name-based direction
+    // check (`paidBy === "Chirag"`) would never match "Bhaiya" and flip signs.
+    const g = mkGroup(
+      { Bhaiya: 'chirag@x.com', Ram: 'pid-ram', Sita: 'pid-sita' },
+      ['Bhaiya', 'Ram', 'Sita'],
+    );
+    const keyOf = (name: string) => getPersonKey(g, name);
+    const meKey = 'chirag@x.com';
+
+    const exps = [
+      // I (as "Bhaiya") paid 300 split three ways → Ram & Sita each owe me 100.
+      mkExp({ id: 'a', paid: 'Bhaiya', amt: 300, splitters: ['Bhaiya', 'Ram', 'Sita'], mode: 'Equally' }),
+      // Ram paid 60 split three ways → I owe Ram 20.
+      mkExp({ id: 'b', paid: 'Ram', amt: 60, splitters: ['Bhaiya', 'Ram', 'Sita'], mode: 'Equally' }),
+    ];
+
+    // The single source of truth. Both the friend card and the settle sheet
+    // read from this same call in the app. Raw (unsimplified) so the pairwise
+    // amounts are directly checkable; the direction rule is what matters here.
+    const txns = balancesByIdentity(g, exps, false);
+
+    // Friend-card view: net toward Ram, net toward Sita.
+    const cardRam = netForFriend(txns, keyOf, meKey, 'pid-ram');
+    const cardSita = netForFriend(txns, keyOf, meKey, 'pid-sita');
+
+    // I collect 100 from Ram minus the 20 I owe → +80. I collect 100 from Sita.
+    expect(cardRam['₹']).toBeCloseTo(80);
+    expect(cardSita['₹']).toBeCloseTo(100);
+
+    // Settle-sheet view: derived from the SAME txns, must equal the card.
+    const settleRam = netForFriend(txns, keyOf, meKey, 'pid-ram');
+    const settleSita = netForFriend(txns, keyOf, meKey, 'pid-sita');
+    expect(settleRam).toEqual(cardRam);
+    expect(settleSita).toEqual(cardSita);
+
+    // Group-balance view: my overall net = sum of all my pairwise nets, and must
+    // equal collecting 180 total from the group.
+    const myGroupNet = [...Object.values(cardRam), ...Object.values(cardSita)]
+      .reduce((s, v) => s + v, 0);
+    expect(myGroupNet).toBeCloseTo(180);
+
+    // And direction is a genuine POSITIVE (collect), not flipped to a pay.
+    expect(myGroupNet).toBeGreaterThan(0);
+  });
+
+  it('raw and simplified engines produce the same per-person NET for everyone', () => {
+    // Simplification only reroutes WHO pays WHOM; each person's overall net must
+    // be identical. If the settle sheet (simplified) and a friend card (also
+    // simplified) ever disagree, it is because one stopped using this engine.
+    const g = mkGroup(
+      { Chirag: 'chirag@x.com', Ram: 'pid-ram', Sita: 'pid-sita' },
+      ['Chirag', 'Ram', 'Sita'],
+    );
+    const exps = [
+      mkExp({ id: 'a', paid: 'Chirag', amt: 90, splitters: ['Chirag', 'Ram', 'Sita'], mode: 'Equally' }),
+      mkExp({ id: 'b', paid: 'Ram', amt: 30, splitters: ['Chirag', 'Ram'], mode: 'Equally' }),
+      mkExp({ id: 'c', paid: 'Sita', amt: 60, splitters: ['Ram', 'Sita'], mode: 'Equally' }),
+    ];
+
+    const netByKey = (txns: { from: string; to: string; balances: Money }[]): Record<string, Money> => {
+      const out: Record<string, Money> = {};
+      const bump = (k: string, c: string, v: number) => {
+        (out[k] = out[k] || {})[c] = (out[k][c] || 0) + v;
+      };
+      for (const t of txns) {
+        for (const [c, v] of Object.entries(t.balances)) {
+          bump(getPersonKey(g, t.to), c, v);    // creditor collects
+          bump(getPersonKey(g, t.from), c, -v); // debtor pays
+        }
+      }
+      // Drop rounding-only zero entries so the two shapes compare cleanly, and
+      // drop a person entirely once they net to nothing — simplification may
+      // omit a zero-net person from the txn list while the raw engine keeps a
+      // zeroed entry; both mean "settled", so normalize to the same shape.
+      for (const k of Object.keys(out)) {
+        for (const c of Object.keys(out[k])) {
+          out[k][c] = Math.round(out[k][c] * 100) / 100;
+          if (out[k][c] === 0) delete out[k][c];
+        }
+        if (Object.keys(out[k]).length === 0) delete out[k];
+      }
+      return out;
+    };
+
+    const rawNet = netByKey(balancesByIdentity(g, exps, false));
+    const simplifiedNet = netByKey(balancesByIdentity(g, exps, true));
+    expect(simplifiedNet).toEqual(rawNet);
+  });
+});

@@ -18,6 +18,7 @@ interface GroupMemberListProps {
   onRemindMember?: (memberName: string) => void;
   onRemoveMember?: (memberName: string) => void;
   onWriteOff?: (memberName: string) => void;
+  onSettleMember?: (memberName: string) => void;
   onLeaveGroup?: () => void;
   onReinviteMember?: (memberName: string, inviteUrl: string) => void;
   onRemindAllPending?: (pendingNames: string[]) => void;
@@ -39,6 +40,7 @@ export const GroupMemberList: React.FC<GroupMemberListProps> = ({
   onRemindMember,
   onRemoveMember,
   onWriteOff,
+  onSettleMember,
   onLeaveGroup,
   onReinviteMember,
   onRemindAllPending,
@@ -54,6 +56,7 @@ export const GroupMemberList: React.FC<GroupMemberListProps> = ({
   const inlineInputRef = React.useRef<HTMLInputElement>(null);
   const [actionCard, setActionCard] = useState<null | {
     title: string; desc: string; primaryLabel: string; primaryColor: string; onPrimary: () => void;
+    secondaryLabel?: string; onSecondary?: () => void;
   }>(null);
 
   if (selectedId === 'STANDALONE' || !showFriendsList) return null;
@@ -212,6 +215,8 @@ export const GroupMemberList: React.FC<GroupMemberListProps> = ({
           primaryLabel={actionCard.primaryLabel}
           primaryColor={actionCard.primaryColor}
           onPrimary={actionCard.onPrimary}
+          secondaryLabel={actionCard.secondaryLabel}
+          onSecondary={actionCard.onSecondary}
           onClose={() => setActionCard(null)}
         />
       )}
@@ -391,23 +396,36 @@ export const GroupMemberList: React.FC<GroupMemberListProps> = ({
                         onClick={async (e) => {
                           e.stopPropagation();
                           const bt = memberBalanceText(m);
-                          const balLine = bt
-                            ? `Balance remaining: ${bt}. They will be archived in Past Members.`
-                            : 'They move to Past Members and history is kept.';
                           if (checkIsMe(m)) {
                             // Leaving (self) → App's bespoke leave card.
                             if (onLeaveGroup) onLeaveGroup();
                             else if (confirm('Leave group?') && onRemoveMember) onRemoveMember(m);
                             return;
                           }
-                          // Removing someone else — bespoke card (warn, don't block).
-                          setActionCard({
-                            title: `Remove "${m}"?`,
-                            desc: balLine,
-                            primaryLabel: 'Remove anyway',
-                            primaryColor: '#F97316',
-                            onPrimary: () => { setActionCard(null); onRemoveMember && onRemoveMember(m); },
-                          });
+                          // Removing someone else — zero-to-remove: a live balance
+                          // must be cleared first. Offer Settle up (record the
+                          // payment) or Write off & remove (cancel the balance).
+                          // There is deliberately no "Remove anyway".
+                          if (bt) {
+                            setActionCard({
+                              title: `Remove "${m}"?`,
+                              desc: `Balance remaining: ${bt}. Settle up or write it off to remove them.`,
+                              primaryLabel: 'Settle up →',
+                              primaryColor: '#10B981',
+                              onPrimary: () => { setActionCard(null); onSettleMember && onSettleMember(m); },
+                              secondaryLabel: 'Write off & remove',
+                              onSecondary: () => { setActionCard(null); onWriteOff && onWriteOff(m); onRemoveMember && onRemoveMember(m); },
+                            });
+                          } else {
+                            // No balance — a plain Remove, straight to Past Members.
+                            setActionCard({
+                              title: `Remove "${m}"?`,
+                              desc: 'They move to Past Members and history is kept.',
+                              primaryLabel: 'Remove',
+                              primaryColor: '#F97316',
+                              onPrimary: () => { setActionCard(null); onRemoveMember && onRemoveMember(m); },
+                            });
+                          }
                         }}
                         style={{
                           cursor: 'pointer',
@@ -579,29 +597,41 @@ export const GroupMemberList: React.FC<GroupMemberListProps> = ({
                             return;
                           }
                           const bt = memberBalanceText(m);
-                          const desc = bt
-                            ? `Balance remaining: ${bt}. They will be archived in Past Members.`
-                            : "They haven't joined yet — this removes them.";
-                          setActionCard({
-                            title: `Remove "${m}"?`,
-                            desc,
-                            primaryLabel: 'Remove anyway',
-                            primaryColor: '#F97316',
-                            onPrimary: () => {
-                              setActionCard(null);
-                              if (onRemoveMember) {
-                                onRemoveMember(m);
-                              } else {
-                                setGroups(
-                                  groups.map((g) =>
-                                    String(g.id) === String(selectedId)
-                                      ? { ...g, members: g.members.map((mem) => (mem === m ? m + ' (Left)' : mem)), pendingMembers: g.pendingMembers?.filter((mem) => mem !== m) }
-                                      : g
-                                  )
-                                );
-                              }
-                            },
-                          });
+                          // Cancel invite locally when there's no wired handler.
+                          const localRemove = () => {
+                            if (onRemoveMember) {
+                              onRemoveMember(m);
+                            } else {
+                              setGroups(
+                                groups.map((g) =>
+                                  String(g.id) === String(selectedId)
+                                    ? { ...g, members: g.members.map((mem) => (mem === m ? m + ' (Left)' : mem)), pendingMembers: g.pendingMembers?.filter((mem) => mem !== m) }
+                                    : g
+                                )
+                              );
+                            }
+                          };
+                          if (bt) {
+                            // Zero-to-remove: even a not-yet-joined member with a
+                            // live balance must settle or be written off first.
+                            setActionCard({
+                              title: `Remove "${m}"?`,
+                              desc: `Balance remaining: ${bt}. Settle up or write it off to remove them.`,
+                              primaryLabel: 'Settle up →',
+                              primaryColor: '#10B981',
+                              onPrimary: () => { setActionCard(null); onSettleMember && onSettleMember(m); },
+                              secondaryLabel: 'Write off & remove',
+                              onSecondary: () => { setActionCard(null); onWriteOff && onWriteOff(m); localRemove(); },
+                            });
+                          } else {
+                            setActionCard({
+                              title: `Remove "${m}"?`,
+                              desc: "They haven't joined yet — this removes them.",
+                              primaryLabel: 'Remove',
+                              primaryColor: '#F97316',
+                              onPrimary: () => { setActionCard(null); localRemove(); },
+                            });
+                          }
                         }}
                       >
                         ✕
