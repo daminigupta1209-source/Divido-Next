@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Group, Expense, UserMetadata } from '../../lib/types';
 import { BalanceActionCard } from '../BalanceActionCard';
-import { buildPeopleSuggestions, balancesByIdentity, getPersonKey } from '../../lib/identity';
+import { buildPeopleSuggestions, balancesByIdentity, getPersonKey, isValidEmail } from '../../lib/identity';
 
 interface GroupMemberListProps {
   selectedGroup: Group;
@@ -22,7 +22,7 @@ interface GroupMemberListProps {
   onLeaveGroup?: () => void;
   onReinviteMember?: (memberName: string, inviteUrl: string) => void;
   onRemindAllPending?: (pendingNames: string[]) => void;
-  onAddMembers?: (names: string[], emails?: Record<string, string>) => void;
+  onAddMembers?: (names: string[], emails?: Record<string, string>, identities?: Record<string, string>) => void;
 }
 
 export const GroupMemberList: React.FC<GroupMemberListProps> = ({
@@ -162,10 +162,19 @@ export const GroupMemberList: React.FC<GroupMemberListProps> = ({
     }
   };
 
-  const handleInlineAdd = (rawName?: string, emailArg?: string) => {
+  const handleInlineAdd = (rawName?: string, emailArg?: string, identityArg?: string) => {
     const fromArg = typeof rawName === 'string' ? rawName : undefined;
     const trimmed = (fromArg ?? inlineAddVal).trim();
     if (!trimmed) return;
+
+    // Typed path: an email is optional, but reject obvious junk (no silent drop).
+    if (fromArg === undefined) {
+      const typed = inlineEmailVal.trim();
+      if (typed && !isValidEmail(typed)) {
+        alert("That doesn't look like a valid email. Leave it blank or fix it.");
+        return;
+      }
+    }
 
     // Check duplicates against selectedGroup.members (case-insensitive)
     const isDuplicate = selectedGroup.members.some(
@@ -188,7 +197,11 @@ export const GroupMemberList: React.FC<GroupMemberListProps> = ({
       // the new member is keyed by it and auto-claims when they sign in with it.
       const email = (typeof emailArg === 'string' ? emailArg : inlineEmailVal).trim().toLowerCase();
       const emails = email.includes('@') ? { [trimmed]: email } : undefined;
-      onAddMembers([trimmed], emails);
+      // Reuse a picked person's stable id (email or hidden person_id) so the same
+      // name-only friend stays ONE person across groups instead of duplicating.
+      const identity = (email.includes('@') ? email : (identityArg || '')).trim();
+      const identities = identity ? { [trimmed]: identity } : undefined;
+      onAddMembers([trimmed], emails, identities);
     }
     if (fromArg === undefined) { setInlineAddVal(''); setInlineEmailVal(''); }
     // Automatically refocus the input box for consecutive additions
@@ -761,7 +774,7 @@ export const GroupMemberList: React.FC<GroupMemberListProps> = ({
                         <button
                           key={s.email || s.name}
                           type="button"
-                          onClick={() => handleInlineAdd(s.name, s.email)}
+                          onClick={() => handleInlineAdd(s.name, s.email, s.identity)}
                           style={{ display: 'flex', alignItems: 'center', gap: '10px', width: '100%', textAlign: 'left', background: '#F8FAFC', border: '1px solid #EEF2F7', borderRadius: '10px', padding: '7px 10px', cursor: 'pointer' }}
                         >
                           <span style={{ width: '26px', height: '26px', borderRadius: '50%', background: '#EEF2FF', color: '#4338CA', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '11px', fontWeight: 700, flexShrink: 0 }}>

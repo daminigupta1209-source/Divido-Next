@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { getPersonKey, cleanMemberName, balancesByIdentity, buildKeyToName } from './identity';
+import { getPersonKey, cleanMemberName, balancesByIdentity, buildKeyToName, buildPeopleSuggestions, isValidEmail } from './identity';
 import { Group, Expense } from './types';
 
 const mkGroup = (memberIdentities?: Record<string, string>, members: string[] = []): Group =>
@@ -83,6 +83,56 @@ describe('balancesByIdentity', () => {
     const txns = balancesByIdentity(g, exps, false);
     expect(txns.length).toBe(1);
     expect(txns[0].balances['₹']).toBeCloseTo(50);
+  });
+});
+
+describe('isValidEmail', () => {
+  it('accepts a normal address and rejects obvious junk', () => {
+    expect(isValidEmail('ravi@gmail.com')).toBe(true);
+    expect(isValidEmail('  ravi@gmail.com  ')).toBe(true);
+    expect(isValidEmail('hello')).toBe(false);
+    expect(isValidEmail('a@@b')).toBe(false);
+    expect(isValidEmail('a@b')).toBe(false);      // no dot/TLD
+    expect(isValidEmail('a b@c.com')).toBe(false); // space
+    expect(isValidEmail('')).toBe(false);
+  });
+});
+
+describe('buildPeopleSuggestions', () => {
+  const mk = (id: string, name: string, members: string[], mi: Record<string, string>): Group =>
+    ({ id, name, currency: '₹', members, memberIdentities: mi } as unknown as Group);
+
+  it('carries a name-only person\'s hidden id so it can be reused across groups', () => {
+    // Ravi is name-only in "Goa" with a stable person_id. Adding a NEW group,
+    // his suggestion must carry that id (not an email, and not blank) so the
+    // picker re-links to the same person instead of minting a duplicate.
+    const groups = [mk('goa', 'Goa', ['Chirag', 'Ravi'], { Chirag: 'chirag@x.com', Ravi: 'pid-ravi' })];
+    const out = buildPeopleSuggestions(groups, 'new', [], 'Chirag');
+    const ravi = out.find((s) => s.name === 'Ravi');
+    expect(ravi).toBeTruthy();
+    expect(ravi!.email).toBe('');
+    expect(ravi!.identity).toBe('pid-ravi');
+  });
+
+  it('uses the email as identity for an email-bearing person', () => {
+    const groups = [mk('goa', 'Goa', ['Chirag', 'Meera'], { Chirag: 'chirag@x.com', Meera: 'meera@x.com' })];
+    const out = buildPeopleSuggestions(groups, 'new', [], 'Chirag');
+    const meera = out.find((s) => s.name === 'Meera');
+    expect(meera!.email).toBe('meera@x.com');
+    expect(meera!.identity).toBe('meera@x.com');
+  });
+
+  it('excludes me and people already in the current group', () => {
+    const groups = [
+      mk('goa', 'Goa', ['Chirag', 'Ravi'], { Chirag: 'chirag@x.com', Ravi: 'pid-ravi' }),
+      mk('trip', 'Trip', ['Chirag', 'Zoya'], { Chirag: 'chirag@x.com', Zoya: 'pid-zoya' }),
+    ];
+    // Current group already has Ravi → he shouldn't be suggested again; me is excluded.
+    const out = buildPeopleSuggestions(groups, 'new', ['Ravi'], 'Chirag');
+    const names = out.map((s) => s.name);
+    expect(names).toContain('Zoya');
+    expect(names).not.toContain('Ravi');
+    expect(names).not.toContain('Chirag');
   });
 });
 

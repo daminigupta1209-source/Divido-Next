@@ -24,6 +24,10 @@ import {
 // Every balance-bucketing caller should use THIS function rather than reaching
 // into memberIdentities inline, so the resolution rule lives in one place.
 // ─────────────────────────────────────────────────────────────────────────
+// A light email format check — enough to reject obvious junk ("hello", "a@@b")
+// without rejecting valid-but-unusual real addresses. Not a deliverability check.
+export const isValidEmail = (s: string): boolean => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test((s || '').trim());
+
 export const getPersonKey = (group: Group | undefined | null, name: string): string => {
   const mi = group?.memberIdentities;
   if (!mi) return name;
@@ -56,11 +60,12 @@ export const buildPeopleSuggestions = (
   currentGroupId: string | number | null,
   currentMembers: string[],
   me: string,
-): { name: string; email: string }[] => {
+): { name: string; email: string; identity: string }[] => {
   const meLower = (me || '').replace(/\s*\((me|Left)\)$/i, '').trim().toLowerCase();
   const curMembers = new Set((currentMembers || []).map((m) => m.replace(/\s*\(Left\)$/i, '').trim().toLowerCase()));
-  // Collect one raw entry per (group member): name + email (if any).
-  const raw: { name: string; email: string }[] = [];
+  // Collect one raw entry per (group member): name + their stable identity
+  // (email OR person_id) from that group's memberIdentities.
+  const raw: { name: string; email: string; identity: string }[] = [];
   for (const g of groups || []) {
     if (!g || g.id === 'STANDALONE' || String(g.id) === String(currentGroupId)) continue;
     const mi = g.memberIdentities || {};
@@ -69,24 +74,28 @@ export const buildPeopleSuggestions = (
       const lower = clean.toLowerCase();
       if (!clean || lower === meLower || curMembers.has(lower)) continue;
       const identity = typeof mi[m] === 'string' ? mi[m] : '';
-      raw.push({ name: clean, email: identity.includes('@') ? identity : '' });
+      raw.push({ name: clean, email: identity.includes('@') ? identity : '', identity });
     }
   }
   // Group by lowercased name; within a name, emit one row per distinct email,
-  // plus a single name-only row only when that name has no email at all.
-  const byName = new Map<string, { name: string; emails: Set<string>; nameOnly: boolean }>();
+  // plus a single name-only row only when that name has no email at all. Each
+  // row carries an `identity` (email, or a name-only person's person_id) so the
+  // picker can REUSE that person's stable id instead of minting a new one — this
+  // is what stops the same name-only friend becoming duplicate people per group.
+  const byName = new Map<string, { name: string; emails: Set<string>; nameOnly: boolean; nameOnlyId: string }>();
   for (const r of raw) {
     const k = r.name.toLowerCase();
-    if (!byName.has(k)) byName.set(k, { name: r.name, emails: new Set(), nameOnly: false });
+    if (!byName.has(k)) byName.set(k, { name: r.name, emails: new Set(), nameOnly: false, nameOnlyId: '' });
     const e = byName.get(k)!;
-    if (r.email) e.emails.add(r.email.toLowerCase()); else e.nameOnly = true;
+    if (r.email) e.emails.add(r.email.toLowerCase());
+    else { e.nameOnly = true; if (!e.nameOnlyId && r.identity && !r.identity.includes('@')) e.nameOnlyId = r.identity; }
   }
-  const out: { name: string; email: string }[] = [];
+  const out: { name: string; email: string; identity: string }[] = [];
   for (const e of byName.values()) {
     if (e.emails.size > 0) {
-      for (const em of e.emails) out.push({ name: e.name, email: em });
+      for (const em of e.emails) out.push({ name: e.name, email: em, identity: em });
     } else if (e.nameOnly) {
-      out.push({ name: e.name, email: '' });
+      out.push({ name: e.name, email: '', identity: e.nameOnlyId });
     }
   }
   return out.sort((a, b) => a.name.localeCompare(b.name));

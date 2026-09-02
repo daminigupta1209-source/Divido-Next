@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { Group, UserMetadata } from '../lib/types';
 import { escManager } from '../lib/escManager';
-import { buildPeopleSuggestions } from '../lib/identity';
+import { buildPeopleSuggestions, isValidEmail } from '../lib/identity';
 
 interface AddFriendModalProps {
   setShowAddFriendModal: (show: boolean) => void;
@@ -11,7 +11,7 @@ interface AddFriendModalProps {
   selectedId: string | number | null;
   me: string;
   setSelectedId: (id: string | number | null) => void;
-  onAdd?: (names: string[], emails?: Record<string, string>) => void;
+  onAdd?: (names: string[], emails?: Record<string, string>, identities?: Record<string, string>) => void;
   currentSplitters?: string[];
   userMetadata: Record<string, UserMetadata>;
   setUserMetadata: (meta: Record<string, UserMetadata>) => void;
@@ -35,6 +35,8 @@ export const AddFriendModal: React.FC<AddFriendModalProps> = ({
   const [name, setName] = useState('');
   const [emailInput, setEmailInput] = useState('');
   const [pendingEmails, setPendingEmails] = useState<Record<string, string>>({});
+  // name → stable identity (email or a reused hidden person_id from a suggestion).
+  const [pendingIdentities, setPendingIdentities] = useState<Record<string, string>>({});
   const [pending, setPending] = useState<string[]>([]);
   const [copied, setCopied] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -82,10 +84,20 @@ export const AddFriendModal: React.FC<AddFriendModalProps> = ({
       return;
     }
 
+    // Typed path: an email is optional, but if one is entered it must look valid
+    // — no junk identities. (Suggestion picks already carry a known identity.)
+    const typedEmail = fromArg === undefined ? emailInput.trim().toLowerCase() : '';
+    if (typedEmail && !isValidEmail(typedEmail)) {
+      setError("That doesn't look like a valid email. Leave it blank or fix it.");
+      return;
+    }
+
     setPending((prev) => [...prev, trimmed]);
     if (fromArg === undefined) {
-      const em = emailInput.trim().toLowerCase();
-      if (em.includes('@')) setPendingEmails((prev) => ({ ...prev, [trimmed]: em }));
+      if (typedEmail) {
+        setPendingEmails((prev) => ({ ...prev, [trimmed]: typedEmail }));
+        setPendingIdentities((prev) => ({ ...prev, [trimmed]: typedEmail }));
+      }
       setName('');
       setEmailInput('');
     }
@@ -94,7 +106,7 @@ export const AddFriendModal: React.FC<AddFriendModalProps> = ({
   const handleConfirm = () => {
     if (pending.length === 0) return;
     if (onAdd) {
-      onAdd(pending, pendingEmails);
+      onAdd(pending, pendingEmails, pendingIdentities);
     } else if (selectedGroup) {
       const newMembers = [...selectedGroup.members];
       pending.forEach((n) => { if (!newMembers.includes(n)) newMembers.push(n); });
@@ -407,7 +419,13 @@ export const AddFriendModal: React.FC<AddFriendModalProps> = ({
                       {shown.map((s) => (
                         <button
                           key={s.email || s.name}
-                          onClick={() => { if (s.email) setPendingEmails((prev) => ({ ...prev, [s.name]: s.email })); handleAddName(s.name); }}
+                          onClick={() => {
+                            if (s.email) setPendingEmails((prev) => ({ ...prev, [s.name]: s.email }));
+                            // Reuse this person's known identity (email or hidden
+                            // id) so they stay ONE person across groups.
+                            if (s.identity) setPendingIdentities((prev) => ({ ...prev, [s.name]: s.identity }));
+                            handleAddName(s.name);
+                          }}
                           style={{ display: 'flex', alignItems: 'center', gap: '10px', width: '100%', textAlign: 'left', background: '#F8FAFC', border: '1px solid #EEF2F7', borderRadius: '10px', padding: '8px 10px', cursor: 'pointer' }}
                         >
                           <span style={{ width: '28px', height: '28px', borderRadius: '50%', background: '#EEF2FF', color: '#4338CA', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '12px', fontWeight: 700, flexShrink: 0 }}>

@@ -500,6 +500,7 @@ function App() {
     index: number;
     addNames: string[];
     addEmails?: Record<string, string>;
+    addIdentities?: Record<string, string>;
   }>(null);
 
   // Helper to get current UI state for history syncing
@@ -2652,7 +2653,7 @@ function App() {
     return Object.values(byId).map((c) => ({ identity: c.identity, name: c.name, groups: Array.from(c.groups) }));
   };
 
-  const commitAddMembers = (groupId: string | number, names: string[], emails?: Record<string, string>) => {
+  const commitAddMembers = (groupId: string | number, names: string[], emails?: Record<string, string>, identities?: Record<string, string>) => {
     // Enforce "no duplicate names in a group" — case-insensitively, and against
     // EVERY existing state (joined, pending, and "(Left)" past members). A plain
     // Set only de-dupes exact strings, so "didi" would slip past an existing
@@ -2685,7 +2686,12 @@ function App() {
       const newIdentities = { ...(x.memberIdentities || {}) };
       toAdd.forEach((n) => {
         const em = emails?.[n];
+        const id = identities?.[n];
+        // Prefer an email identity; otherwise reuse the person's existing hidden
+        // id (from a "Recently split with" pick) so the same name-only friend is
+        // ONE person across groups instead of a fresh duplicate each time.
         if (em && em.includes('@')) newIdentities[n] = em.trim().toLowerCase();
+        else if (id) newIdentities[n] = id;
       });
       return { ...x, members: newMembers, pendingMembers: newPending, memberIdentities: newIdentities };
     }));
@@ -2694,7 +2700,7 @@ function App() {
 
   const resolvePersonChoice = (identity: string | null) => {
     if (!samePersonPrompt) return;
-    const { groupId, queue, index, addNames, addEmails } = samePersonPrompt;
+    const { groupId, queue, index, addNames, addEmails, addIdentities } = samePersonPrompt;
     const item = queue[index];
     if (identity) {
       try {
@@ -2725,7 +2731,7 @@ function App() {
     const nextIndex = index + 1;
     if (nextIndex >= queue.length) {
       setSamePersonPrompt(null);
-      if (addNames && addNames.length > 0) commitAddMembers(groupId, addNames, addEmails);
+      if (addNames && addNames.length > 0) commitAddMembers(groupId, addNames, addEmails, addIdentities);
     } else {
       setSamePersonPrompt({ ...samePersonPrompt, index: nextIndex });
     }
@@ -3737,17 +3743,18 @@ function App() {
               // bounced out to the groups list. (Removing someone else never
               // navigated away, so this only changes the self-removal case.)
             }}
-            onAddMembers={(names, emails) => {
+            onAddMembers={(names, emails, identities) => {
               if (selectedId && selectedId !== 'STANDALONE') {
-                // An email settles identity, so skip the "same person?" prompt for
-                // any name added WITH an email — it auto-merges by email instead.
+                // Skip the "same person?" prompt when identity is already settled:
+                // an email, or a "Recently split with" pick that carried the
+                // person's hidden id (you already told us who they are).
                 const clashing = names
                   .map((n) => ({ name: n, candidates: findPersonCandidates(n, selectedId) }))
-                  .filter((x) => x.candidates.length > 0 && !(emails && emails[x.name]));
+                  .filter((x) => x.candidates.length > 0 && !(emails && emails[x.name]) && !(identities && identities[x.name]));
                 if (clashing.length > 0) {
-                  setSamePersonPrompt({ groupId: selectedId, queue: clashing, index: 0, addNames: names, addEmails: emails });
+                  setSamePersonPrompt({ groupId: selectedId, queue: clashing, index: 0, addNames: names, addEmails: emails, addIdentities: identities });
                 } else {
-                  commitAddMembers(selectedId, names, emails);
+                  commitAddMembers(selectedId, names, emails, identities);
                 }
               }
             }}
@@ -3928,19 +3935,21 @@ function App() {
            targetReminderName={activeReminderName}
            customRejoinLink={activeRejoinLink}
            shareOnly={addFriendShareOnly}
-           onAdd={(names, emails) => {
+           onAdd={(names, emails, identities) => {
              if (selectedId === 'STANDALONE') {
                setNewlyAddedFriends(names);
              } else if (selectedId) {
                // If any added name already exists elsewhere, ask "same person?" —
-               // but skip that for names added WITH an email (email settles it).
+               // but skip that when identity is already settled: an email, or a
+               // "Recently split with" pick that carried the person's hidden id
+               // (you already told us who they are by picking them).
                const clashing = names
                  .map((n) => ({ name: n, candidates: findPersonCandidates(n, selectedId) }))
-                 .filter((x) => x.candidates.length > 0 && !(emails && emails[x.name]));
+                 .filter((x) => x.candidates.length > 0 && !(emails && emails[x.name]) && !(identities && identities[x.name]));
                if (clashing.length > 0) {
-                 setSamePersonPrompt({ groupId: selectedId, queue: clashing, index: 0, addNames: names, addEmails: emails });
+                 setSamePersonPrompt({ groupId: selectedId, queue: clashing, index: 0, addNames: names, addEmails: emails, addIdentities: identities });
                } else {
-                 commitAddMembers(selectedId, names, emails);
+                 commitAddMembers(selectedId, names, emails, identities);
                }
              } else {
                if (!requireSignInToCreate()) return;

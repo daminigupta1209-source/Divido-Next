@@ -13,7 +13,7 @@
 //     cached the first time they're visited online.
 //   * Cross-origin requests (Supabase auth/data/storage) -> never touched.
 
-const CACHE = 'divido-cache-v88';
+const CACHE = 'divido-cache-v89';
 const CORE = ['/index.html', '/manifest.json'];
 
 // Precache the shell: core files plus every hashed /assets/*.js and *.css that
