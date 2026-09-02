@@ -94,13 +94,17 @@ export const GroupMemberList: React.FC<GroupMemberListProps> = ({
     });
     return bal;
   };
-  // "₹400 to pay, $10 to collect" across every currency with a real amount.
+  // Member-centric balance line, e.g. "Ravi has ₹400 to pay, $10 to collect".
+  // NOTE: this describes the OTHER member's own net, so it must NOT be phrased
+  // as "You pay/collect" — that flips the subject and reads as the current
+  // user's balance (the direction/subject bug the consistency rule warns about).
   const memberBalanceText = (name: string): string => {
+    const clean = name.replace(/\s*\(Left\)$/i, '').trim();
     const parts: string[] = [];
     for (const [c, amt] of Object.entries(getMemberBalanceByCurrency(name))) {
-      if (Math.abs(amt) >= 0.5) parts.push(`You ${amt < 0 ? 'pay' : 'collect'} ${c}${Math.abs(amt).toFixed(0)}`);
+      if (Math.abs(amt) >= 0.5) parts.push(`${c}${Math.abs(amt).toFixed(0)} to ${amt < 0 ? 'pay' : 'collect'}`);
     }
-    return parts.join(', ');
+    return parts.length ? `${clean} has ${parts.join(', ')}` : '';
   };
   const memberHasBalance = (name: string): boolean =>
     Object.values(getMemberBalanceByCurrency(name)).some((v) => Math.abs(v) >= 0.5);
