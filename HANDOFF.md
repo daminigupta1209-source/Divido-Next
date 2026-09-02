@@ -2,8 +2,8 @@
 
 React + Vite expense-splitting **PWA**. Backend: **Supabase** (Postgres + RLS + realtime + storage). Deploy: push to `main` → **Vercel** auto-deploys. Live URL: https://divido-next.vercel.app
 
-> Latest commit at handoff: **67dbb7b** (settle-direction/balance-consistency fix). Everything below is live on `main`.
-> The **"Session 2026-09-01"** section (settle/removal redesign + balance-consistency fix) is the freshest work — read it first, then "Session 2026-08-27/28".
+> Latest commit at handoff: **185c4ee** (identity-reuse for suggestions + email validation, SW cache **v89**). Everything below is live on `main`.
+> The **"Session 2026-09-02"** section is the freshest work — read it first, then 2026-09-01, then 2026-08-27/28.
 
 ## Working rules
 1. **Verify every change with `npm run build`** (`tsc -b && vite build`). A failed build silently leaves the OLD version live on Vercel.
@@ -128,7 +128,86 @@ See memory `divido-sync-risks` for the full audit. Fixed: **field-level updates*
 - **Search UI (Activities/Photos):** both already existed & matched; the Photos search bar was actually **broken** (App passed `searchQuery={globalSearchQuery}`, making its `onChange` a no-op). Now locally controlled and typeable, like Activities (`GroupGallery.tsx`).
 - **Photo→expense didn't update the tile:** the code edits in place and preserves the attachment; the original failure was the expense-id swap race, now removed by the permanent-expense-id fix. Re-test to confirm; if it still repros, add a targeted reconciliation.
 
-## Session 2026-09-01 — settle/removal redesign + balance-consistency fix (freshest)
+## Session 2026-09-02 — zero-to-remove, settle-card fixes, identity reuse (freshest, read first)
+
+All shipped to `main`. Each change was verified live in the browser (demo mode: run
+`VITE_SUPABASE_URL="" VITE_SUPABASE_ANON_KEY="" npx vite` → no cloud clobber → seed
+localStorage with `divido_e2e_testing=true` + a mock group; see memory `divido-testing-and-cache`).
+
+### Zero-to-remove enforced (commit `27404f8`)
+You can no longer walk away from a live balance. **Leaving a group** or **removing a
+member** with a non-zero balance now requires reaching zero first — **Settle up** (record
+the payment) or **Write off** (cancel it). The old "Leave anyway" / "Remove anyway" escape
+hatches are gone. Applies to self-leave AND removing others (active + pending). Files:
+`handleDeleteGroup` (App.tsx), the two ✕ sites in `GroupMemberList.tsx`. New `onSettleMember`
+prop threaded App → GroupDetail → GroupMemberList; `BalanceActionCard` now wired for a
+secondary button.
+
+### Member-centric balance wording (commit `a26df58`)
+The remove card said "You pay ₹X" for ANOTHER person's balance — wrong subject (it's THEM,
+not you). Now "**Ravi has ₹500 to pay**". `memberBalanceText` reworded. See memory
+`divido-member-balance-wording`. Rule: never phrase someone else's balance as "You …".
+
+### Settle button + wrong figure on the remove card (commit `340fca7`)
+Two bugs from two-phone testing:
+- **"Settle up" looked dead** — the global settle sheet is `z-index: 4000` but the member-list
+  panel is `z-index: 9999`, so it opened BEHIND it. Fix: close the member list first.
+- **Wrong balance shown** (e.g. ₹4000 when it should be ₹1000) — the card used a hand-rolled
+  `getMemberBalanceByCurrency` that summed the member's total net with EVERYONE and diverged
+  from the canonical engine. Rewired to `balancesByIdentity` + `getPersonKey`, **pairwise
+  (me ↔ them)**, matching the Settle tab / friend card. (Consistency rule again — see
+  `divido-balance-consistency-rule`.)
+
+### Name-only friend suggestions reuse identity + email validation (commit `185c4ee`)
+Splitwise-style fix for "suggestions show names with no email":
+- **Reuse identity.** `buildPeopleSuggestions` now carries each person's stable identity
+  (email, or a name-only person's hidden `person_id`). Picking a *Recently split with*
+  suggestion attaches that SAME id to the new group's member → the same name-only friend is
+  ONE person across groups, not a fresh duplicate each time. Skips the redundant "same
+  person?" prompt. Threaded an `identities` map through `onAdd`/`onAddMembers` →
+  `commitAddMembers` and the `samePersonPrompt` queue. Both add paths (AddFriendModal + inline
+  member-list add).
+- **Validate email.** Email stays optional, but a typed non-empty value must look valid
+  (`isValidEmail` in identity.ts) — "that doesn't look like a valid email" — no more junk
+  identities. Verified: Ravi reused his pid across two groups (no prompt); junk email blocked,
+  valid allowed.
+
+### Tests
+`src/lib/identity.test.ts` now has: the cross-screen consistency guard (friend-card net ==
+settle-sheet net == group balance; raw == simplified per-person net), `buildPeopleSuggestions`
+identity-carry, and `isValidEmail`. `npx vitest run src/lib/identity.test.ts
+src/lib/calculations.test.ts` → **31 pass**.
+
+### ⏭️ TO DO NEXT SESSION (start here)
+1. **Two-phone test of everything above** — still not done on real devices. Priority.
+   Check: (a) can't leave/remove with a balance (Settle/Write-off only); (b) Settle up opens
+   the sheet; (c) same-person numbers match across group card / Balances tab / Settle sheet
+   (both direction AND amount); (d) same name-only friend added to two groups shows as ONE
+   person with combined balance; (e) double write-off from two phones collapses to one entry.
+2. **Extend identity-reuse to the create-group screen** (`CreateGroupView` / `handleCreateGroup`
+   in App.tsx ~2848). Today it keys new members by email-or-name only; it does NOT carry a
+   name-only person's hidden id like the add-friend flow now does. Small follow-up so a person
+   added at group-creation also links across groups.
+3. **Past Members → lightweight "Left" history + Re-invite** — shrink the Past Members block to
+   a compact "Left" history line + an "Invite again" action, drop the balance clutter (balance
+   is now always zero once zero-to-remove is enforced, so the old balance display is moot).
+4. **`performWriteOff` still matches people by RAW NAME**, not `getPersonKey` (App.tsx ~2218).
+   Pre-existing, works for typical cases, but it's the same class the consistency rule warns
+   about. Route it through identity keys. Do carefully (money-critical).
+5. **Zero-to-remove edge — debts with a THIRD party.** The gate uses the member's PAIRWISE
+   balance with ME. If a member owes someone *else* (not me) but is settled with me, removal
+   isn't blocked and Write off (which zeroes ALL their balances) is not forced. Acceptable for
+   v1 (me-centric model), but note it. Splitwise blocks on total balance.
+6. **Multi-currency zero check on removal** — confirm the gate lists every currency (it reads
+   `getMemberBalanceByCurrency` which is per-currency, so likely fine — verify).
+7. **Admin-leaving → admin transfer / auto-promote** rule (partially there in `handleDeleteGroup`
+   — notifies next member; confirm the promotion is real and surfaced).
+8. Longer-horizon (unchanged): offline precache-all-code; **Stage 5** permanent `person_id` on
+   expenses (kills the raw-name matching at the source — makes #4 moot); native contacts picker.
+
+---
+
+## Session 2026-09-01 — settle/removal redesign + balance-consistency fix
 
 ### The money bug that drove this session (fixed)
 The global **settle sheet** showed "you collect ₹6523" while the **friend card** said "you pay ₹3517" for the SAME person — opposite direction, wrong total, wrong for every friend. Two root causes, both = not using the single source of truth:
