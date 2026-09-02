@@ -117,6 +117,23 @@ export const GroupMemberList: React.FC<GroupMemberListProps> = ({
   const memberHasBalance = (name: string): boolean =>
     Object.values(getMemberBalanceByCurrency(name)).some((v) => Math.abs(v) >= 0.5);
 
+  const memberHasThirdPartyBalance = (name: string): boolean => {
+    const groupExps = expenses.filter((e) => String(e.gId) === String(selectedId));
+    const txns = balancesByIdentity(selectedGroup, groupExps, !!selectedGroup.simplifyDebts);
+    const memberKey = getPersonKey(selectedGroup, name);
+    let myG = me;
+    try { const c = localStorage.getItem(`divido_identity_${selectedId}`); if (c) myG = c; } catch { /* ignore */ }
+    const meKey = getPersonKey(selectedGroup, myG);
+
+    return txns.some((t) => {
+      const fromK = getPersonKey(selectedGroup, t.from);
+      const toK = getPersonKey(selectedGroup, t.to);
+      if (fromK !== memberKey && toK !== memberKey) return false;
+      if ((fromK === meKey && toK === memberKey) || (fromK === memberKey && toK === meKey)) return false;
+      return Object.values(t.balances).some((v) => Math.abs(v) >= 0.5);
+    });
+  };
+
   const activeMembers = selectedGroup.members.filter((m) => !m.endsWith(' (Left)'));
   const adminName = activeMembers[0] || selectedGroup.members[0];
   const cleanMe = me.replace(/\s*\(me\)$/i, '').replace(/\s*\(Left\)$/i, '').toLowerCase();
@@ -431,7 +448,16 @@ export const GroupMemberList: React.FC<GroupMemberListProps> = ({
                           // must be cleared first. Offer Settle up (record the
                           // payment) or Write off & remove (cancel the balance).
                           // There is deliberately no "Remove anyway".
-                          if (bt) {
+                          const hasThirdPartyDebt = memberHasThirdPartyBalance(m);
+                          if (hasThirdPartyDebt) {
+                            setActionCard({
+                              title: `Cannot remove "${m}"`,
+                              desc: 'They have unsettled debts with others in the group. All their debts must be settled before they can be removed.',
+                              primaryLabel: 'Got it',
+                              primaryColor: '#3B82F6',
+                              onPrimary: () => setActionCard(null),
+                            });
+                          } else if (bt) {
                             setActionCard({
                               title: `Remove "${m}"?`,
                               desc: `Balance remaining: ${bt}. Settle up or write it off to remove them.`,
@@ -638,7 +664,16 @@ export const GroupMemberList: React.FC<GroupMemberListProps> = ({
                               );
                             }
                           };
-                          if (bt) {
+                          const hasThirdPartyDebt = memberHasThirdPartyBalance(m);
+                          if (hasThirdPartyDebt) {
+                            setActionCard({
+                              title: `Cannot remove "${m}"`,
+                              desc: 'They have unsettled debts with others in the group. All their debts must be settled before they can be removed.',
+                              primaryLabel: 'Got it',
+                              primaryColor: '#3B82F6',
+                              onPrimary: () => setActionCard(null),
+                            });
+                          } else if (bt) {
                             // Zero-to-remove: even a not-yet-joined member with a
                             // live balance must settle or be written off first.
                             setActionCard({
