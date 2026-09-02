@@ -54,6 +54,8 @@ export const GroupMemberList: React.FC<GroupMemberListProps> = ({
   const [inlineAddVal, setInlineAddVal] = React.useState('');
   const [inlineEmailVal, setInlineEmailVal] = React.useState('');
   const inlineInputRef = React.useRef<HTMLInputElement>(null);
+  const touchStartX = React.useRef<number | null>(null);
+  const touchStartY = React.useRef<number | null>(null);
   const [actionCard, setActionCard] = useState<null | {
     title: string; desc: string; primaryLabel: string; primaryColor: string; onPrimary: () => void;
     secondaryLabel?: string; onSecondary?: () => void;
@@ -306,10 +308,23 @@ export const GroupMemberList: React.FC<GroupMemberListProps> = ({
       )}
       <div
         className="content-width-limit"
+        onTouchStart={(e) => { touchStartX.current = e.touches[0].clientX; touchStartY.current = e.touches[0].clientY; }}
+        onTouchEnd={(e) => {
+          if (touchStartX.current == null || touchStartY.current == null) return;
+          const dx = e.changedTouches[0].clientX - touchStartX.current;
+          const dy = e.changedTouches[0].clientY - touchStartY.current;
+          touchStartX.current = null; touchStartY.current = null;
+          // Horizontal swipe only (ignore vertical scrolls), min 50px.
+          if (Math.abs(dx) < 50 || Math.abs(dx) < Math.abs(dy)) return;
+          const order: (typeof activeTab)[] = ['joined', 'pending', 'left'];
+          const i = order.indexOf(activeTab);
+          const ni = Math.min(order.length - 1, Math.max(0, i + (dx < 0 ? 1 : -1)));
+          if (ni !== i) setActiveTab(order[ni]);
+        }}
         style={{
           display: 'flex',
           flexDirection: 'column',
-          gap: '20px',
+          gap: '12px',
           width: '100%',
         }}
       >
@@ -318,14 +333,14 @@ export const GroupMemberList: React.FC<GroupMemberListProps> = ({
           display: 'flex', 
           alignItems: 'center', 
           justifyContent: 'space-between', 
-          marginBottom: '24px',
+          marginBottom: '4px',
           position: 'sticky',
           top: '-24px',
           paddingTop: '24px',
-          paddingBottom: '16px',
+          paddingBottom: '10px',
           background: 'var(--bg)',
           zIndex: 10,
-          margin: '-24px -20px 24px -20px',
+          margin: '-24px -20px 4px -20px',
           paddingLeft: '20px',
           paddingRight: '20px'
         }}>
@@ -444,6 +459,7 @@ export const GroupMemberList: React.FC<GroupMemberListProps> = ({
         <div
           className="card"
           style={{
+            order: 2,
             background: 'var(--w)',
             borderRadius: '24px',
             border: '1.5px solid #F1F5F9',
@@ -599,6 +615,7 @@ export const GroupMemberList: React.FC<GroupMemberListProps> = ({
         <div
           className="card"
           style={{
+            order: 2,
             background: 'var(--w)',
             borderRadius: '24px',
             border: '1.5px solid #F1F5F9',
@@ -809,14 +826,12 @@ export const GroupMemberList: React.FC<GroupMemberListProps> = ({
           </div>
         )}
 
-        {/* ADD FRIEND — shared across all tabs */}
+        {/* ADD FRIEND — shared across all tabs, pinned above the lists */}
         <div
-          className="card"
           style={{
-            background: 'var(--w)',
-            borderRadius: '24px',
-            border: '1.5px solid #F1F5F9',
-            padding: '16px',
+            order: 1,
+            background: 'transparent',
+            padding: 0,
             display: 'flex',
             flexDirection: 'column',
             gap: '10px',
@@ -974,7 +989,7 @@ export const GroupMemberList: React.FC<GroupMemberListProps> = ({
                 );
               })()}
             {(!isAddingInline || inlineAddVal.length > 0) && (
-              <div style={{ display: 'flex', justifyContent: 'center', marginTop: '2px' }}>
+              <div style={{ display: 'flex', justifyContent: 'center' }}>
                 <button
                   type="button"
                   onClick={() => {
@@ -991,24 +1006,22 @@ export const GroupMemberList: React.FC<GroupMemberListProps> = ({
                     background: '#F97316',
                     color: '#FFFFFF',
                     border: 'none',
-                    padding: '14px 28px',
+                    padding: '7px 18px',
                     borderRadius: '999px',
                     fontFamily: 'inherit',
-                    fontWeight: 700,
-                    fontSize: '16px',
+                    fontWeight: 600,
+                    fontSize: '13px',
                     letterSpacing: '0.2px',
                     lineHeight: 1,
                     cursor: 'pointer',
-                    width: '100%',
-                    boxShadow: '0 4px 10px -2px rgba(249, 115, 22, 0.4)',
                     display: 'inline-flex',
                     alignItems: 'center',
                     justifyContent: 'center',
-                    gap: '7px',
+                    gap: '5px',
                     transition: 'all 0.2s ease',
                   }}
                   onMouseEnter={(e) => {
-                    e.currentTarget.style.transform = 'scale(1.02)';
+                    e.currentTarget.style.transform = 'scale(1.03)';
                     e.currentTarget.style.background = '#EA580C';
                   }}
                   onMouseLeave={(e) => {
@@ -1016,7 +1029,7 @@ export const GroupMemberList: React.FC<GroupMemberListProps> = ({
                     e.currentTarget.style.background = '#F97316';
                   }}
                 >
-                  <span style={{ fontSize: '20px', fontWeight: 700, lineHeight: 1, color: '#FFFFFF', display: 'flex', alignItems: 'center' }}>+</span>
+                  <span style={{ fontSize: '15px', fontWeight: 600, lineHeight: 1, color: '#FFFFFF', display: 'flex', alignItems: 'center' }}>+</span>
                   <span style={{ color: '#FFFFFF', lineHeight: 1, display: 'flex', alignItems: 'center' }}>Add Friend</span>
                 </button>
               </div>
