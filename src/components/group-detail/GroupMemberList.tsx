@@ -452,7 +452,7 @@ export const GroupMemberList: React.FC<GroupMemberListProps> = ({
                           if (hasThirdPartyDebt) {
                             setActionCard({
                               title: `Cannot remove "${m}"`,
-                              desc: 'They have unsettled debts with others in the group. All their debts must be settled before they can be removed.',
+                              desc: 'They have unsettled debts with other members.',
                               primaryLabel: 'Got it',
                               primaryColor: '#3B82F6',
                               onPrimary: () => setActionCard(null),
@@ -668,7 +668,7 @@ export const GroupMemberList: React.FC<GroupMemberListProps> = ({
                           if (hasThirdPartyDebt) {
                             setActionCard({
                               title: `Cannot remove "${m}"`,
-                              desc: 'They have unsettled debts with others in the group. All their debts must be settled before they can be removed.',
+                              desc: 'They have unsettled debts with other members.',
                               primaryLabel: 'Got it',
                               primaryColor: '#3B82F6',
                               onPrimary: () => setActionCard(null),
