@@ -4381,19 +4381,18 @@ function App() {
                   Not listed? Join as a new member.
                 </p>
               )}
-              <input
-                type="search"
-                value={joinNewName}
-                onChange={(e) => setJoinNewName(e.target.value)}
-                placeholder="Your name"
-                disabled={submittingLinkRequest}
-                style={{ width: '100%', padding: '11px 12px', borderRadius: '12px', border: '1.5px solid #E2E8F0', fontSize: '14px', fontWeight: 600, marginBottom: '8px', boxSizing: 'border-box', textAlign: 'center' }}
-              />
+              {/* The "Join as new member" section is now a single, distinct button 
+                  instead of an input that looks like a claim card. */}
               <button
-                disabled={submittingLinkRequest || !joinNewName.trim()}
+                disabled={submittingLinkRequest}
                 onClick={async () => {
-                  const typed = joinNewName.trim();
-                  if (!typed) return;
+                  // Fallback to "New Member" if we don't have a real name yet.
+                  // They'll be redirected to Google if they aren't signed in anyway.
+                  let typed = joinNewName.trim();
+                  if (!typed || typed === 'You' || typed === 'Guest') {
+                    typed = (userName && userName !== 'You' && userName !== 'Guest') ? userName.trim() : 'New Member';
+                  }
+
                   setSubmittingLinkRequest(true);
                   try {
                     const { data: { session } } = await supabase.auth.getSession();
@@ -4486,25 +4485,27 @@ function App() {
                   } finally {
                     setSubmittingLinkRequest(false);
                     const cleanUrl = window.location.protocol + '//' + window.location.host + window.location.pathname;
-                    // Seed a HOME base entry (not an empty one) so a back-swipe from the
-            // group you just entered/claimed goes to the home screen instead of
-            // exiting the app. The detail entry is pushed on top by the history sync.
-            window.history.replaceState({ _divido: true, uiState: { view: 'summary', selectedId: null } }, '', cleanUrl);
+                    window.history.replaceState({ _divido: true, uiState: { view: 'summary', selectedId: null } }, '', cleanUrl);
                   }
                 }}
+                className="hover-up-mini"
                 style={{
                   width: '100%',
-                  padding: '12px',
+                  padding: '14px',
                   borderRadius: '12px',
                   border: 'none',
-                  background: joinNewName.trim() ? '#6366F1' : '#CBD5E1',
+                  background: '#6366F1',
                   color: '#FFFFFF',
                   fontWeight: 800,
-                  fontSize: '13px',
-                  cursor: joinNewName.trim() ? 'pointer' : 'not-allowed',
+                  fontSize: '14px',
+                  cursor: 'pointer',
+                  boxShadow: '0 4px 12px rgba(99, 102, 241, 0.25)',
+                  marginTop: '8px',
                 }}
               >
-                Join as new member
+                {joinNewName && joinNewName !== 'You' && joinNewName !== 'Guest'
+                  ? `Join as "${joinNewName}"`
+                  : 'Join as new member'}
               </button>
             </div>
             )}
