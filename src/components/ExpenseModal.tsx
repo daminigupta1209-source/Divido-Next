@@ -492,7 +492,7 @@ export const ExpenseModal: React.FC<ExpenseModalProps> = ({
                 {(() => {
                   if (localGId === 'STANDALONE') {
                     return (
-                      <div style={{ width: '24px', height: '24px', borderRadius: '50%', background: '#E2E8F0', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '12px', flexShrink: 0 }}>👤</div>
+                      <div style={{ width: '24px', height: '24px', borderRadius: '50%', background: '#E2E8F0', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '11px', fontWeight: 600, color: '#475569', flexShrink: 0 }}>NG</div>
                     );
                   }
                   if (activeGroup) {
@@ -558,7 +558,7 @@ export const ExpenseModal: React.FC<ExpenseModalProps> = ({
                       marginBottom: '4px',
                     }}
                   >
-                    <div style={{ width: '30px', height: '30px', borderRadius: '50%', background: '#F1F5F9', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '14px', flexShrink: 0 }}>👤</div>
+                    <div style={{ width: '30px', height: '30px', borderRadius: '50%', background: '#F1F5F9', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '12px', fontWeight: 600, color: '#475569', flexShrink: 0 }}>NG</div>
                     <span style={{ fontSize: '12px', fontWeight: 600, color: 'var(--t)' }}>Non-Group Split</span>
                   </div>
 
@@ -658,7 +658,12 @@ export const ExpenseModal: React.FC<ExpenseModalProps> = ({
                         color: '#6366F1',
                       }}
                     >
-                      <div style={{ width: '30px', height: '30px', borderRadius: '8px', background: '#EEF2FF', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '16px', flexShrink: 0 }}>➕</div>
+                      <div style={{ width: '30px', height: '30px', borderRadius: '50%', background: '#EEF2FF', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#6366F1', flexShrink: 0 }}>
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                          <line x1="12" y1="5" x2="12" y2="19"></line>
+                          <line x1="5" y1="12" x2="19" y2="12"></line>
+                        </svg>
+                      </div>
                       <span style={{ fontSize: '12px', fontWeight: 600 }}>New Group</span>
                     </div>
                   </div>
