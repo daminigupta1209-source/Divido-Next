@@ -689,28 +689,6 @@ export const GroupMemberList: React.FC<GroupMemberListProps> = ({
             gap: '4px',
           }}
         >
-          {pendingMembersList.length > 0 && (
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', paddingTop: '10px' }}>
-              <button
-                onClick={handleRemindAll}
-                style={{
-                  background: '#FFEDD5',
-                  border: 'none',
-                  borderRadius: '12px',
-                  padding: '5px 12px',
-                  color: '#EA580C',
-                  fontSize: '11px',
-                  fontWeight: 600,
-                  cursor: 'pointer',
-                  transition: '0.15s all ease',
-                }}
-                onMouseEnter={(e) => { e.currentTarget.style.background = '#FED7AA'; }}
-                onMouseLeave={(e) => { e.currentTarget.style.background = '#FFEDD5'; }}
-              >
-                Remind all
-              </button>
-            </div>
-          )}
           {pendingMembersList.length === 0 && (
             <p style={{ margin: 0, padding: '20px 4px', fontSize: '13px', color: '#94A3B8', textAlign: 'center' }}>
               No pending invites.
@@ -888,6 +866,36 @@ export const GroupMemberList: React.FC<GroupMemberListProps> = ({
                 </div>
               ))}
             </div>
+            {pendingMembersList.length > 1 && (
+              <button
+                onClick={handleRemindAll}
+                style={{
+                  marginTop: '10px',
+                  width: '100%',
+                  background: '#FFF7ED',
+                  border: '1px solid #FFEDD5',
+                  borderRadius: '12px',
+                  padding: '10px 0',
+                  color: '#EA580C',
+                  fontSize: '13px',
+                  fontWeight: 600,
+                  cursor: 'pointer',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: '6px',
+                  transition: '0.15s all ease',
+                }}
+                onMouseEnter={(e) => { e.currentTarget.style.background = '#FFEDD5'; }}
+                onMouseLeave={(e) => { e.currentTarget.style.background = '#FFF7ED'; }}
+              >
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9" />
+                  <path d="M10.3 21a1.94 1.94 0 0 0 3.4 0" />
+                </svg>
+                Remind all
+              </button>
+            )}
           </div>
         )}
 
