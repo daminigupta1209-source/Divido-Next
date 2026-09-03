@@ -966,9 +966,24 @@ export const GroupDetail: React.FC<GroupDetailProps> = ({
                             cursor: 'pointer',
                           }}
                         >
-                          <div style={{ width: '40px', height: '40px', borderRadius: '50%', background: avBg, color: '#FFFFFF', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '16px', fontWeight: 600, flexShrink: 0 }}>
-                            {m.charAt(0).toUpperCase()}
-                          </div>
+                          {(() => {
+                            const id = selectedGroup.memberIdentities?.[m];
+                            const email = typeof id === 'string' && id.includes('@') ? id.toLowerCase() : '';
+                            const photo = (email && memberAvatars?.[email]) || '';
+                            return photo ? (
+                              <img
+                                src={photo}
+                                alt={m}
+                                referrerPolicy="no-referrer"
+                                onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = 'none'; }}
+                                style={{ width: '40px', height: '40px', borderRadius: '50%', objectFit: 'cover', flexShrink: 0 }}
+                              />
+                            ) : (
+                              <div style={{ width: '40px', height: '40px', borderRadius: '50%', background: avBg, color: '#FFFFFF', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '16px', fontWeight: 600, flexShrink: 0 }}>
+                                {m.charAt(0).toUpperCase()}
+                              </div>
+                            );
+                          })()}
 
                           <div style={{ minWidth: 0, flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center', gap: '6px' }}>
                             <h3  style={{ fontSize: '16px', fontWeight: 600, color: '#2E2A25', margin: 0, textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap', textTransform: 'capitalize' }}>{m}</h3>

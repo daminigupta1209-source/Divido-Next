@@ -4685,6 +4685,26 @@ function App() {
             >
               ✕
             </div>
+            {(() => {
+              let email = globalSettleData.identity && String(globalSettleData.identity).includes('@')
+                ? String(globalSettleData.identity).toLowerCase() : '';
+              if (!email && globalSettleData.gId) {
+                const g = groups.find((gr) => String(gr.id) === String(globalSettleData.gId));
+                const id = (g as any)?.memberIdentities?.[globalSettleData.name];
+                if (typeof id === 'string' && id.includes('@')) email = id.toLowerCase();
+              }
+              const photo = (email && memberAvatars?.[email]) || '';
+              if (!photo) return null;
+              return (
+                <img
+                  src={photo}
+                  alt={globalSettleData.name}
+                  referrerPolicy="no-referrer"
+                  onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = 'none'; }}
+                  style={{ width: '56px', height: '56px', borderRadius: '50%', objectFit: 'cover', display: 'block', margin: '0 auto 10px' }}
+                />
+              );
+            })()}
             <h3 className="nunito" style={{
               fontSize: '20px',
               fontWeight: 800,
