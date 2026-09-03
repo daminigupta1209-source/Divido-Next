@@ -419,60 +419,86 @@ export const MasterSummary: React.FC<MasterSummaryProps> = ({
 
       {exceededBudgets.length > 0 && !budgetBannerDismissed && (
         <div
-          className="card shadow-sm hover-up-mini"
+          className="shadow-sm hover-up-mini"
+          onClick={(e) => {
+            if ((e.target as HTMLElement).closest('button')) return;
+            setView('analytics');
+          }}
           style={{
-            background: '#FFF5F5',
-            border: '1px solid #FCA5A5',
-            borderRadius: '14px',
+            background: 'linear-gradient(135deg, #FFF1F2 0%, #FFE4E6 100%)',
+            border: '1px solid rgba(225, 29, 72, 0.2)',
+            borderRadius: '16px',
             padding: '12px 16px',
             marginBottom: '20px',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'space-between',
-            flexWrap: 'wrap',
             gap: '12px',
             animation: 'fadeIn 0.4s ease-out',
             textAlign: 'left',
-            position: 'relative',
+            cursor: 'pointer',
           }}
         >
-          <button
-            onClick={() => { setBudgetBannerDismissed(true); localStorage.setItem(budgetDismissKey, '1'); }}
-            style={{
-              position: 'absolute', top: '10px', right: '12px',
-              background: 'none', border: 'none', cursor: 'pointer',
-              fontSize: '16px', color: '#FCA5A5', lineHeight: 1, padding: '2px',
-              fontWeight: 600,
-            }}
-            title="Dismiss"
-          >×</button>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '16px', flex: 1 }}>
-            <span style={{ fontSize: '28px' }}>⚠️</span>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
-              <h4  style={{ fontSize: '15px', color: '#B91C1C', margin: 0, fontWeight: 600 }}>
-                Monthly Budget Exceeded!
-              </h4>
-              <p style={{ fontSize: '12px', fontWeight: 600, color: '#DC2626', margin: 0, opacity: 0.8 }}>
-                You have exceeded your limit in: {exceededBudgets.map(b => `${b.emoji} (${b.spent.toFixed(0)} / ${b.limit})`).join(', ')}
-              </p>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flex: 1 }}>
+            <div style={{ 
+              width: '32px', 
+              height: '32px', 
+              borderRadius: '50%', 
+              background: 'rgba(225, 29, 72, 0.1)', 
+              display: 'flex', 
+              alignItems: 'center', 
+              justifyContent: 'center',
+              flexShrink: 0
+            }}>
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#E11D48" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                <circle cx="12" cy="12" r="10"></circle>
+                <line x1="12" y1="8" x2="12" y2="12"></line>
+                <line x1="12" y1="16" x2="12.01" y2="16"></line>
+              </svg>
+            </div>
+            <div style={{ display: 'flex', flexDirection: 'column' }}>
+              <span style={{ fontSize: '14px', color: '#9F1239', fontWeight: 700 }}>
+                Budget Exceeded
+              </span>
+              <span style={{ fontSize: '13px', color: '#BE123C', fontWeight: 500 }}>
+                {exceededBudgets.map(b => `${b.emoji} ₹${b.spent.toFixed(0)}`).join(', ')}
+              </span>
             </div>
           </div>
-          <button
-            onClick={() => setView('analytics')}
-            style={{
-              padding: '8px 16px',
-              background: '#EF4444',
-              color: 'white',
-              border: 'none',
-              borderRadius: '10px',
-              fontSize: '12px',
-              fontWeight: 600,
-              cursor: 'pointer',
-              boxShadow: '0 4px 6px rgba(239, 68, 68, 0.15)'
-            }}
-          >
-            Check Analytics
-          </button>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#E11D48" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ opacity: 0.6 }}>
+              <polyline points="9 18 15 12 9 6"></polyline>
+            </svg>
+            <button
+              onClick={(e) => { 
+                e.stopPropagation();
+                setBudgetBannerDismissed(true); 
+                localStorage.setItem(budgetDismissKey, '1'); 
+              }}
+              style={{
+                background: 'rgba(225, 29, 72, 0.1)',
+                border: 'none',
+                cursor: 'pointer',
+                width: '26px',
+                height: '26px',
+                borderRadius: '50%',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                color: '#E11D48',
+                marginLeft: '4px',
+                transition: 'transform 0.2s ease',
+              }}
+              onMouseEnter={(e) => { e.currentTarget.style.transform = 'scale(1.1)'; }}
+              onMouseLeave={(e) => { e.currentTarget.style.transform = 'scale(1)'; }}
+              title="Dismiss"
+            >
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                <line x1="18" y1="6" x2="6" y2="18"></line>
+                <line x1="6" y1="6" x2="18" y2="18"></line>
+              </svg>
+            </button>
+          </div>
         </div>
       )}
 
