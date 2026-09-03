@@ -804,6 +804,7 @@ export const MobileHeader: React.FC<MobileHeaderProps> = ({
                 style={{
                   position: 'absolute',
                   left: (view === 'gallery' || view === 'detail' || (view === 'analytics' && analyticsGroupId !== null && analyticsGroupId !== 'ALL')) ? '34px' : '52px',
+                  right: isHomeStyle ? '135px' : '52px',
                   top: '50%',
                   transform: 'translateY(-50%)',
                   display: 'flex',
@@ -828,9 +829,12 @@ export const MobileHeader: React.FC<MobileHeaderProps> = ({
                     lineHeight: 1.1,
                     pointerEvents: 'auto',
                     whiteSpace: 'nowrap',
+                    overflow: 'hidden',
+                    textOverflow: 'ellipsis',
+                    width: '100%'
                   }}
                 >
-                  <span>
+                  <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                     {view === 'summary' && `Hi ${me}!`}
                     {view === 'groups' && 'Your Groups'}
                     {view === 'friends' && 'All balances'}
