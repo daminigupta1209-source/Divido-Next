@@ -519,15 +519,7 @@ export const ExpenseRow: React.FC<ExpenseRowProps> = ({
             {e.currency || selectedGroup.currency || '₹'} {formatExactAmount(e.amt)}
           </span>
         </div>
-        <div
-          className="dropdown"
-          style={{ position: 'relative', cursor: 'pointer', fontSize: '18px', padding: '4px', color: '#CBD5E1' }}
-          onClick={(ev) => {
-            ev.stopPropagation();
-            setOpenExpId(openExpId === e.id ? null : e.id);
-          }}
-        >
-          ⋮
+        <div style={{ position: 'relative' }}>
           {openExpId === e.id && (
             <div
               className="card shadow-xl dropdown-content"
