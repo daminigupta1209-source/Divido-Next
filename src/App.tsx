@@ -57,7 +57,7 @@ import { CurrencySetupModal } from './components/CurrencySetupModal';
 import { GroupGallery } from './components/GroupGallery';
 import { checkIfDemoMode } from './lib/demoMode';
 import { ensureArray, ensureObject, isLegacyRenameLog, formatCompactAmount, genGroupId, genExpenseId, titleCaseName } from './lib/utils';
-import { getPersonKey, toIdentitySpace } from './lib/identity';
+import { getPersonKey, toIdentitySpace, pickCanonicalIdentity, type DuplicateEntry } from './lib/identity';
 import { useSupabaseSync, getGidRemap } from './hooks/useSupabaseSync';
 import { BalanceActionCard } from './components/BalanceActionCard';
 import { useAppHotkeys } from './hooks/useAppHotkeys';
@@ -1288,6 +1288,41 @@ function App() {
     } catch (e) {
       console.error('Failed to load avatars:', e);
     }
+  };
+
+  // Merge several roster entries that are the SAME person (usually fragmented
+  // after an account deletion dropped their email) into one shared identity, so
+  // they collapse to a single person in balances/suggestions everywhere.
+  // Writes a shared key onto each row (invite_email when the canonical is an
+  // email, else the hidden person_id) and mirrors it into local memberIdentities.
+  const mergePeople = async (entries: DuplicateEntry[]) => {
+    if (!entries || entries.length < 2) return;
+    const canonical = pickCanonicalIdentity(entries);
+    const isEmail = canonical.includes('@');
+    if (!checkIfDemoMode() && isAuthenticated) {
+      for (const e of entries) {
+        const upd: Record<string, unknown> = isEmail
+          ? { invite_email: canonical }
+          : { person_id: canonical };
+        try {
+          await supabase
+            .from('group_members')
+            .update(upd)
+            .eq('group_id', e.groupId)
+            .eq('name', e.memberName);
+        } catch (err) {
+          console.error('Failed to merge member on Supabase:', err);
+        }
+      }
+    }
+    // Reflect immediately in local state so the UI consolidates without a reload.
+    setGroups((prev) => prev.map((g) => {
+      const es = entries.filter((e) => String(e.groupId) === String(g.id));
+      if (es.length === 0) return g;
+      const mi = { ...((g as any).memberIdentities || {}) };
+      es.forEach((e) => { mi[e.memberName] = canonical; });
+      return { ...g, memberIdentities: mi } as typeof g;
+    }));
   };
 
   useEffect(() => {
@@ -3246,6 +3281,7 @@ function App() {
             setGlobalSettleData={setGlobalSettleData}
             userMetadata={userMetadata}
             memberAvatars={memberAvatars}
+            onMergePeople={mergePeople}
             setUserMetadata={setUserMetadata}
             searchQuery={globalSearchQuery}
             showConvertModal={showFriendsConvert}
@@ -5410,12 +5446,19 @@ function App() {
                       if (memberships && memberships.length > 0) {
                         for (const m of memberships) {
                           const cleanName = m.name.replace(' (Left)', '');
-                          // 2. Mark them as past members and unlink email
+                          // 2. Mark them as past members and unlink the live account,
+                          //    but PRESERVE the email as invite_email so this person's
+                          //    identity stays glued across every group. Nulling it
+                          //    outright made their entries fragment into per-group ids,
+                          //    showing the same person as several duplicates in
+                          //    balances/suggestions. Keeping the email as invite_email
+                          //    also lets them auto-claim if they ever sign up again.
                           await supabase
                             .from('group_members')
                             .update({
                               name: cleanName + ' (Left)',
                               user_email: null,
+                              invite_email: userEmail,
                               is_pending: true
                             })
                             .eq('id', m.id);

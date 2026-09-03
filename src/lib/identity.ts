@@ -101,6 +101,69 @@ export const buildPeopleSuggestions = (
   return out.sort((a, b) => a.name.localeCompare(b.name));
 };
 
+// ─────────────────────────────────────────────────────────────────────────
+// Duplicate-person detection for the "Merge people" tool.
+//
+// The same real person can end up with DIFFERENT identity keys across groups —
+// most often after they delete their account (their email is dropped, so each
+// group falls back to a per-group person_id) — which makes them show up as
+// several separate people in balances/suggestions. This finds names that
+// resolve to 2+ distinct identities so the user can review and merge them.
+// It only SUGGESTS by matching name; the user confirms, because two genuinely
+// different people can share a name.
+// ─────────────────────────────────────────────────────────────────────────
+export interface DuplicateEntry {
+  groupId: string | number;
+  groupName: string;
+  memberName: string; // exact roster string (may end in " (Left)")
+  identity: string;
+  email: string;
+}
+export interface DuplicatePerson {
+  name: string;
+  entries: DuplicateEntry[];
+}
+
+export const findDuplicatePeople = (groups: Group[], me: string): DuplicatePerson[] => {
+  const meLower = (me || '').replace(/\s*\((me|Left)\)$/i, '').trim().toLowerCase();
+  const byName = new Map<string, DuplicateEntry[]>();
+  for (const g of groups || []) {
+    if (!g || g.id === 'STANDALONE') continue;
+    const mi = g.memberIdentities || {};
+    for (const m of g.members || []) {
+      const clean = m.replace(/\s*\(Left\)$/i, '').trim();
+      const lower = clean.toLowerCase();
+      if (!clean || lower === meLower) continue;
+      const identity = typeof mi[m] === 'string' && mi[m] ? mi[m] : clean;
+      if (!byName.has(lower)) byName.set(lower, []);
+      byName.get(lower)!.push({
+        groupId: g.id,
+        groupName: g.name,
+        memberName: m,
+        identity,
+        email: identity.includes('@') ? identity : '',
+      });
+    }
+  }
+  const out: DuplicatePerson[] = [];
+  for (const entries of byName.values()) {
+    const distinct = new Set(entries.map((e) => e.identity.toLowerCase()));
+    if (distinct.size >= 2) {
+      out.push({ name: entries[0].memberName.replace(/\s*\(Left\)$/i, '').trim(), entries });
+    }
+  }
+  return out.sort((a, b) => a.name.localeCompare(b.name));
+};
+
+// Pick the identity all merged rows should share: prefer a real email, then an
+// existing hidden person_id, else mint a stable merged id.
+export const pickCanonicalIdentity = (entries: DuplicateEntry[]): string => {
+  const email = entries.map((e) => e.identity).find((id) => id.includes('@'));
+  if (email) return email.toLowerCase();
+  const pid = entries.map((e) => e.identity).find((id) => id && !id.includes('@'));
+  return pid || `merged-${Date.now()}`;
+};
+
 // Strip the "(Left)" / "(me)" display suffixes to get the bare name. Kept here
 // next to getPersonKey because both are about turning a raw member string into
 // something comparable; callers that need the plain name for display use this.

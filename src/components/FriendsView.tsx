@@ -3,13 +3,79 @@ import { BalanceDisplay } from './BalanceDisplay';
 
 import { Group, Expense, UserMetadata, GlobalSettleData } from '../lib/types';
 import { simplifyMultiCurrencyDebts, computeRawPairwiseTransactions } from '../lib/calculations';
-import { getPersonKey } from '../lib/identity';
+import { getPersonKey, findDuplicatePeople, type DuplicateEntry, type DuplicatePerson } from '../lib/identity';
 import { worldCurrencies, formatExactAmount, formatCompactAmount } from '../lib/utils';
 import { SearchableCurrencyPicker } from './SearchableCurrencyPicker';
 import { StyledDropdown } from './StyledDropdown';
 
 // Small translucent count chip for extra currencies in the Net Balance pill.
 const pillChipStyle: React.CSSProperties = { background: 'rgba(255,255,255,0.28)', borderRadius: '999px', padding: '1px 7px', fontSize: '11px', fontWeight: 700, flexShrink: 0 };
+
+// Review-and-merge sheet: lists each name that resolves to 2+ identities and
+// lets the user merge them into one person. Merging is only suggested (people
+// can share a name), so each group is confirmed individually.
+const MergeDuplicatesModal: React.FC<{
+  duplicates: DuplicatePerson[];
+  onClose: () => void;
+  onMerge: (entries: DuplicateEntry[]) => Promise<void>;
+}> = ({ duplicates, onClose, onMerge }) => {
+  const [busy, setBusy] = useState<string | null>(null);
+  return (
+    <div
+      onClick={onClose}
+      style={{ position: 'fixed', inset: 0, background: 'rgba(15,23,42,0.45)', zIndex: 10001, display: 'flex', alignItems: 'flex-end', justifyContent: 'center' }}
+    >
+      <div
+        onClick={(e) => e.stopPropagation()}
+        style={{ width: '100%', maxWidth: '480px', background: '#FFFFFF', borderRadius: '24px 24px 0 0', padding: '14px 16px calc(20px + env(safe-area-inset-bottom))', maxHeight: '85vh', overflowY: 'auto', boxSizing: 'border-box', boxShadow: '0 -8px 30px rgba(0,0,0,0.18)' }}
+      >
+        <div style={{ width: '40px', height: '4px', borderRadius: '999px', background: '#E2E8F0', margin: '0 auto 14px' }} />
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '4px' }}>
+          <h3 style={{ margin: 0, fontSize: '17px', fontWeight: 700, color: '#1E293B' }}>Merge duplicates</h3>
+          <span onClick={onClose} style={{ cursor: 'pointer', fontSize: '16px', color: '#94A3B8', fontWeight: 'bold', padding: '0 4px' }}>✕</span>
+        </div>
+        <p style={{ margin: '0 0 14px', fontSize: '12px', color: '#64748B' }}>
+          These names show up more than once. Merge the ones that are the same person — their balances and history will combine. Leave separate anyone who just shares a name.
+        </p>
+
+        {duplicates.length === 0 && (
+          <p style={{ textAlign: 'center', color: '#16A34A', fontWeight: 600, fontSize: '14px', padding: '20px 0' }}>
+            All merged — no duplicates left. 🎉
+          </p>
+        )}
+
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
+          {duplicates.map((d) => (
+            <div key={d.name + d.entries.map((e) => e.groupId).join(',')} style={{ border: '1px solid #F1F5F9', borderRadius: '16px', padding: '12px 14px' }}>
+              <div style={{ fontSize: '15px', fontWeight: 700, color: '#334155', marginBottom: '8px' }}>{d.name}</div>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', marginBottom: '12px' }}>
+                {d.entries.map((e, i) => (
+                  <div key={i} style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '12px', color: '#64748B' }}>
+                    <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#CBD5E1', flexShrink: 0 }} />
+                    <span style={{ fontWeight: 600, color: '#475569' }}>{e.groupName}</span>
+                    <span style={{ color: '#94A3B8', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                      {e.email ? e.email : (e.memberName.endsWith(' (Left)') ? 'past member · no email' : 'no email')}
+                    </span>
+                  </div>
+                ))}
+              </div>
+              <button
+                disabled={busy === d.name}
+                onClick={async () => {
+                  setBusy(d.name);
+                  try { await onMerge(d.entries); } finally { setBusy(null); }
+                }}
+                style={{ width: '100%', padding: '11px', borderRadius: '12px', border: 'none', background: busy === d.name ? '#A7F3D0' : '#10B981', color: '#FFFFFF', fontWeight: 700, fontSize: '13px', cursor: busy === d.name ? 'default' : 'pointer' }}
+              >
+                {busy === d.name ? 'Merging…' : `Merge these ${d.entries.length} into one`}
+              </button>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+};
 
 // Shrink the amount line to fit when the exact figure gets long, so big
 // balances (e.g. ₹1,250,000 to collect) always fit on one line instead of
@@ -49,6 +115,7 @@ interface FriendsViewProps {
   setGlobalSettleData: (data: GlobalSettleData | null) => void;
   userMetadata: Record<string, UserMetadata>;
   memberAvatars?: Record<string, string>;
+  onMergePeople?: (entries: DuplicateEntry[]) => void | Promise<void>;
   setUserMetadata: (meta: Record<string, UserMetadata>) => void;
   searchQuery?: string;
   showConvertModal?: boolean;
@@ -65,6 +132,7 @@ export const FriendsView: React.FC<FriendsViewProps> = ({
   setGlobalSettleData,
   userMetadata,
   memberAvatars,
+  onMergePeople,
   setUserMetadata,
   searchQuery = '',
   showConvertModal = false,
@@ -86,6 +154,10 @@ export const FriendsView: React.FC<FriendsViewProps> = ({
   const [showConvertPicker, setShowConvertPicker] = useState(false);
   const [manualRates, setManualRates] = useState(false);
   const [sourceCurr, setSourceCurr] = useState<string>('ALL');
+  const [showMergeModal, setShowMergeModal] = useState(false);
+  // People who appear under one name but with 2+ identities (usually fragmented
+  // after an account deletion) — offered for review/merge. Recompute on data.
+  const duplicatePeople: DuplicatePerson[] = useMemo(() => findDuplicatePeople(groups, me), [groups, me]);
 
   // Heavy balance derivation depends only on groups/expenses/me, so memoize it
   // to avoid recomputing every friend's balance on unrelated re-renders (typing
@@ -357,6 +429,26 @@ export const FriendsView: React.FC<FriendsViewProps> = ({
 
   return (
     <div className="content-width-limit">
+      {/* Duplicate-person review banner */}
+      {onMergePeople && duplicatePeople.length > 0 && (
+        <div
+          onClick={() => setShowMergeModal(true)}
+          style={{ display: 'flex', alignItems: 'center', gap: '10px', background: '#FFF7ED', border: '1px solid #FED7AA', borderRadius: '14px', padding: '10px 14px', marginBottom: '14px', cursor: 'pointer' }}
+        >
+          <span style={{ fontSize: '18px' }}>🔗</span>
+          <span style={{ flex: 1, minWidth: 0, fontSize: '13px', fontWeight: 600, color: '#9A3412' }}>
+            {duplicatePeople.length} {duplicatePeople.length === 1 ? 'person appears' : 'people appear'} more than once — review &amp; merge
+          </span>
+          <span style={{ color: '#EA580C', fontSize: '18px', fontWeight: 700 }}>›</span>
+        </div>
+      )}
+      {showMergeModal && (
+        <MergeDuplicatesModal
+          duplicates={duplicatePeople}
+          onClose={() => setShowMergeModal(false)}
+          onMerge={async (entries) => { if (onMergePeople) await onMergePeople(entries); }}
+        />
+      )}
       {/* Universal Net Balance Card — kept above the search bar */}
       <div style={{ marginBottom: '18px', width: '100%', animation: 'fadeIn 0.25s ease-out' }}>
         <span style={{ fontSize: '11px', fontWeight: 700, letterSpacing: '1.5px', textTransform: 'uppercase', color: '#B0A79C', marginBottom: '10px', marginLeft: '2px', display: 'block' }}>
