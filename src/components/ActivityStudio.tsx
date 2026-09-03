@@ -85,18 +85,11 @@ export const ActivityStudio: React.FC<ActivityStudioProps> = ({
   const [showFilters, setShowFilters] = React.useState(false);
   const longPressTimerRef = React.useRef<ReturnType<typeof setTimeout> | null>(null);
   const [longPressId, setLongPressId] = React.useState<string | number | null>(null);
+  const [actionSheetExp, setActionSheetExp] = React.useState<Expense | null>(null);
 
   const handleLongPress = (e: Expense) => {
     setLongPressId(e.id);
-    if (e.isDeleted) {
-      if (confirm('Restore this activity? It will affect balances again.')) {
-        setExpenses(expenses.map(x => x.id === e.id ? { ...x, isDeleted: false } : x));
-      }
-    } else {
-      if (confirm('Delete this activity? It will be crossed out and removed from balances.')) {
-        setExpenses(expenses.map(x => x.id === e.id ? { ...x, isDeleted: true } : x));
-      }
-    }
+    setActionSheetExp(e);
     setTimeout(() => setLongPressId(null), 300);
   };
 
@@ -691,6 +684,38 @@ export const ActivityStudio: React.FC<ActivityStudioProps> = ({
           })
         )}
       </div>
+
+      {actionSheetExp && (
+        <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.5)', zIndex: 1000, display: 'flex', flexDirection: 'column', justifyContent: 'flex-end' }} onClick={() => setActionSheetExp(null)}>
+          <div className="card shadow-xl" style={{ margin: '16px', background: 'var(--w)', borderRadius: '24px', padding: '16px', animation: 'slideUp 0.3s ease-out' }} onClick={(e) => e.stopPropagation()}>
+            <h3 style={{ textAlign: 'center', margin: '0 0 16px 0', fontSize: '16px' }}>
+              {actionSheetExp.isDeleted ? 'Restore Activity?' : 'Delete Activity?'}
+            </h3>
+            <p style={{ textAlign: 'center', fontSize: '14px', color: '#64748B', marginBottom: '24px' }}>
+              {actionSheetExp.isDeleted ? 'It will affect balances again.' : 'It will be crossed out and removed from balances.'}
+            </p>
+            <div style={{ display: 'flex', gap: '12px' }}>
+              <button
+                className="btn-outline"
+                style={{ flex: 1, padding: '12px', borderRadius: '12px' }}
+                onClick={() => setActionSheetExp(null)}
+              >
+                Cancel
+              </button>
+              <button
+                className="btn-primary"
+                style={{ flex: 1, padding: '12px', borderRadius: '12px', background: actionSheetExp.isDeleted ? '#10B981' : '#EF4444', borderColor: actionSheetExp.isDeleted ? '#10B981' : '#EF4444', color: '#fff' }}
+                onClick={() => {
+                  setExpenses(expenses.map(x => x.id === actionSheetExp.id ? { ...x, isDeleted: !actionSheetExp.isDeleted } : x));
+                  setActionSheetExp(null);
+                }}
+              >
+                {actionSheetExp.isDeleted ? 'Restore' : 'Delete'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
