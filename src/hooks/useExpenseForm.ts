@@ -228,6 +228,8 @@ export function useExpenseForm({
   const [showValidationErrorPopup, setShowValidationErrorPopup] = useState<boolean>(false);
   const [showFriendPickerPopup, setShowFriendPickerPopup] = useState<boolean>(false);
   const [friendPickerSearch, setFriendPickerSearch] = useState<string>('');
+  // Non-group: optional email captured when picking/adding the other person.
+  const [friendPickerEmail, setFriendPickerEmail] = useState<string>(editingExpense?.otherEmail || '');
   const [apiError, setApiError] = useState<string | null>(null);
 
   const openScanner = () => {
@@ -487,6 +489,10 @@ export function useExpenseForm({
         recurrence: recurrence === 'none' ? undefined : recurrence,
         nextOccurrence: recurrence === 'none' ? undefined : calculateNextOccurrenceDate(date, recurrence),
         tags: tagsInput.split(',').map(t => t.trim().replace(/^#/, '')).filter(t => t.length > 0),
+        otherEmail:
+          localGId === 'STANDALONE' && friendPickerEmail.trim().includes('@')
+            ? friendPickerEmail.trim().toLowerCase()
+            : (localGId === 'STANDALONE' ? editingExpense?.otherEmail : undefined),
       };
 
       setExpenses(
@@ -915,6 +921,8 @@ export function useExpenseForm({
     setShowFriendPickerPopup,
     friendPickerSearch,
     setFriendPickerSearch,
+    friendPickerEmail,
+    setFriendPickerEmail,
     apiError,
     setApiError,
     openScanner,

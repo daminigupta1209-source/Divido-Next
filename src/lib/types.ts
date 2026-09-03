@@ -24,6 +24,11 @@ export interface Group {
   // member's email (signed-in) OR the name itself (legacy, unlinked). Used only
   // for cross-group balance bucketing so two same-named people don't merge.
   memberIdentities?: Record<string, string>;
+  // A "direct" 2-person thread created by SHARING a non-group card. It reuses
+  // all the group machinery (invite link, sync, RLS, edit, settle) but is
+  // presented under Non-Group Expenses, never in the Groups list, and is capped
+  // at 2 members. Backed by the `groups.is_direct` column.
+  isDirect?: boolean;
 }
 
 export interface PendingMatchPrompt {
@@ -64,6 +69,9 @@ export interface Expense {
   recurrence?: 'weekly' | 'monthly' | 'yearly' | 'none';
   nextOccurrence?: string;
   tags?: string[];
+  // Non-group (STANDALONE) only: the other person's email, captured optionally
+  // when they're added, so the card can later be shared / settled with them.
+  otherEmail?: string;
 }
 
 export interface ConfirmState {

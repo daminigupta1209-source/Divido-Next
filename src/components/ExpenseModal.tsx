@@ -135,6 +135,8 @@ export const ExpenseModal: React.FC<ExpenseModalProps> = ({
     setShowFriendPickerPopup,
     friendPickerSearch,
     setFriendPickerSearch,
+    friendPickerEmail,
+    setFriendPickerEmail,
     apiError,
     openScanner,
     handleScanComplete,
@@ -892,87 +894,106 @@ export const ExpenseModal: React.FC<ExpenseModalProps> = ({
                 )}
               </div>
               <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginTop: '2px', position: 'relative' }}>
-                <div
-                  style={{
-                    flex: 1,
-                    background: '#FFFFFF',
-                    borderRadius: '20px',
-                    padding: '6px 12px',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'space-between',
-                    boxShadow: '0 4px 20px rgba(0,0,0,0.03)',
-                    border: '1.5px solid #F8FAFC',
-                    minWidth: 0,
-                  }}
-                >
-                  <div
-                    onClick={(e) => { 
-                      e.stopPropagation(); 
-                      setShowFriendPickerPopup((prev) => !prev);
-                      setHighlightAddFriend(false);
-                    }}
-                    style={{ display: 'flex', alignItems: 'center', gap: '6px', cursor: 'pointer', flex: 1, minWidth: 0 }}
-                  >
-                    <div style={{ display: 'flex', alignItems: 'center', position: 'relative', height: '32px', width: `${Math.min(selectedSplitters.length, 4) * 20 + 8}px`, flexShrink: 0 }}>
-                      {selectedSplitters.slice(0, 4).map((member, idx) => {
-                        const isMe = member === me;
-                        const initials = (() => {
-                          if (isMe) return 'YO';
-                          const p = member.trim().split(/\s+/);
-                          if (p.length === 1) return p[0].substring(0, 2).toUpperCase();
-                          return (p[0].charAt(0) + p[p.length - 1].charAt(0)).toUpperCase();
-                        })();
-                        
-                        const avatarColors = ['#E0F2FE', '#F0FDF4', '#FEF2F2', '#FFFBEB', '#F5F3FF', '#FFF1F2'];
-                        const textColors = ['#0369A1', '#15803D', '#B91C1C', '#B45309', '#6D28D9', '#BE123C'];
-                        const colorIdx = member.charCodeAt(0) % avatarColors.length;
+                {(() => {
+                  const other = selectedSplitters.find((s) => s !== me);
+                  const otherInitials = other
+                    ? (() => {
+                        const p = other.trim().split(/\s+/);
+                        if (p.length === 1) return p[0].substring(0, 2).toUpperCase();
+                        return (p[0].charAt(0) + p[p.length - 1].charAt(0)).toUpperCase();
+                      })()
+                    : '';
+                  const avatarColors = ['#E0F2FE', '#F0FDF4', '#FEF2F2', '#FFFBEB', '#F5F3FF', '#FFF1F2'];
+                  const textColors = ['#0369A1', '#15803D', '#B91C1C', '#B45309', '#6D28D9', '#BE123C'];
+                  const colorIdx = other ? other.charCodeAt(0) % avatarColors.length : 0;
+                  return (
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap', flex: 1, minWidth: 0 }}>
+                      {/* You — static, no dropdown */}
+                      <div
+                        style={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '7px',
+                          background: '#FFFFFF',
+                          borderRadius: '20px',
+                          padding: '5px 12px 5px 5px',
+                          border: '1.5px solid #F1F5F9',
+                          flexShrink: 0,
+                        }}
+                      >
+                        <img
+                          src="/divido_laughing_cat_mascot_1778063273427.png"
+                          alt="You"
+                          style={{ width: '26px', height: '26px', borderRadius: '50%', objectFit: 'cover' }}
+                        />
+                        <span style={{ fontSize: '12.5px', fontWeight: 700, color: '#334155' }}>You</span>
+                      </div>
 
-                        const baseCircle: React.CSSProperties = {
-                          width: '28px',
-                          height: '28px',
-                          borderRadius: '50%',
-                          border: '2px solid #FFFFFF',
-                          position: 'absolute',
-                          left: `${idx * 20}px`,
-                          boxShadow: '0 2px 4px rgba(0,0,0,0.05)',
-                          zIndex: 4 - idx,
-                        };
-
-                        return isMe ? (
-                          <img
-                            key={member}
-                            src="/divido_laughing_cat_mascot_1778063273427.png"
-                            alt="You"
-                            style={{ ...baseCircle, objectFit: 'cover' }}
-                          />
+                      {/* Other person — tappable dropdown */}
+                      <div
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setShowFriendPickerPopup((prev) => !prev);
+                          setHighlightAddFriend(false);
+                        }}
+                        style={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '7px',
+                          background: '#FFFFFF',
+                          borderRadius: '20px',
+                          padding: other ? '5px 10px 5px 5px' : '6px 14px',
+                          border: `1.5px solid ${other ? '#BFDBFE' : '#CBD5E1'}`,
+                          borderStyle: other ? 'solid' : 'dashed',
+                          cursor: 'pointer',
+                          minWidth: 0,
+                          maxWidth: '100%',
+                        }}
+                      >
+                        {other ? (
+                          <>
+                            <div
+                              style={{
+                                width: '26px',
+                                height: '26px',
+                                borderRadius: '50%',
+                                background: avatarColors[colorIdx],
+                                color: textColors[colorIdx],
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                fontSize: '9.5px',
+                                fontWeight: 600,
+                                flexShrink: 0,
+                              }}
+                            >
+                              {otherInitials}
+                            </div>
+                            <span
+                              style={{
+                                fontSize: '12.5px',
+                                fontWeight: 700,
+                                color: '#334155',
+                                whiteSpace: 'nowrap',
+                                overflow: 'hidden',
+                                textOverflow: 'ellipsis',
+                                minWidth: 0,
+                              }}
+                            >
+                              {other}
+                            </span>
+                          </>
                         ) : (
-                          <div
-                            key={member}
-                            style={{
-                              ...baseCircle,
-                              background: avatarColors[colorIdx],
-                              color: textColors[colorIdx],
-                              display: 'flex',
-                              alignItems: 'center',
-                              justifyContent: 'center',
-                              fontSize: '9.5px',
-                              fontWeight: 600,
-                            }}
-                          >
-                            {initials}
-                          </div>
-                        );
-                      })}
+                          <>
+                            <span style={{ fontSize: '15px', color: '#64748B', lineHeight: 1 }}>+</span>
+                            <span style={{ fontSize: '12.5px', fontWeight: 700, color: '#64748B' }}>Add friend</span>
+                          </>
+                        )}
+                        <span style={{ fontSize: '10px', color: other ? '#3B82F6' : '#94A3B8', flexShrink: 0 }}>▾</span>
+                      </div>
                     </div>
-                    <span style={{ fontSize: '11.5px', fontWeight: 700, color: '#94A3B8', letterSpacing: '0.1px' }}>
-                      {selectedSplitters.length} {selectedSplitters.length === 1 ? 'Member' : 'Members'}
-                    </span>
-                  </div>
-
-                  {/* Non-group is strictly you + one other person — no invite,
-                      no friends list. The one person is chosen in the popup below. */}
-                </div>
+                  );
+                })()}
 
                 {/* Friends popup — centered overlay */}
                 {showFriendPickerPopup && (
@@ -1051,21 +1072,33 @@ export const ExpenseModal: React.FC<ExpenseModalProps> = ({
                           .map((f) => f.replace(' (Left)', ''))
                           .filter((f, i, arr) => f && f.toLowerCase() !== (me || '').toLowerCase() && arr.indexOf(f) === i && (!ql || f.toLowerCase().includes(ql)));
                         const exact = recents.some((f) => f.toLowerCase() === ql) || ql === (me || '').toLowerCase();
-                        const pick = (name: string) => {
+                        const pick = (name: string, email?: string) => {
                           setSelectedSplitters([me, name]);
+                          setFriendPickerEmail(email && email.trim().includes('@') ? email.trim() : '');
                           setFriendPickerSearch('');
                           setShowFriendPickerPopup(false);
                         };
                         return (
-                          <div style={{ maxHeight: '260px', overflowY: 'auto', padding: '0 8px 12px 8px' }}>
+                          <div style={{ maxHeight: '300px', overflowY: 'auto', padding: '0 8px 12px 8px' }}>
                             {q && !exact && (
-                              <div
-                                onClick={() => pick(q)}
-                                style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '10px', borderRadius: '12px', cursor: 'pointer', color: '#059669', fontWeight: 700, fontSize: '13px' }}
-                              >
-                                <span style={{ width: '30px', height: '30px', borderRadius: '50%', border: '1.5px dashed #10B981', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '16px', flexShrink: 0 }}>+</span>
-                                Add “{q}” as new
-                              </div>
+                              <>
+                                {/* Optional email — pins their identity so the card
+                                    can later be shared / settled. Skippable. */}
+                                <input
+                                  type="search"
+                                  value={friendPickerEmail}
+                                  onChange={(e) => setFriendPickerEmail(e.target.value)}
+                                  placeholder="Email (optional)"
+                                  style={{ width: '100%', height: '38px', borderRadius: '12px', border: '1.5px solid #E2E8F0', background: '#FFFFFF', fontSize: '13px', fontWeight: 600, color: 'var(--t)', padding: '0 12px', outline: 'none', boxSizing: 'border-box', margin: '0 0 8px' }}
+                                />
+                                <div
+                                  onClick={() => pick(q, friendPickerEmail)}
+                                  style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', padding: '12px', borderRadius: '12px', cursor: 'pointer', color: '#059669', fontWeight: 700, fontSize: '13px', border: '1.5px dashed #10B981', marginBottom: '8px' }}
+                                >
+                                  <span style={{ fontSize: '15px', lineHeight: 1 }}>+</span>
+                                  Add “{q}” as new
+                                </div>
+                              </>
                             )}
                             {recents.map((friend) => {
                               const isCurrent = friend.toLowerCase() === other.toLowerCase();
