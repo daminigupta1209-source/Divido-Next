@@ -878,51 +878,29 @@ export const GroupMemberList: React.FC<GroupMemberListProps> = ({
           </div>
         )}
 
-        {/* ADD FRIEND — bottom sheet */}
+        {/* ADD FRIEND — full screen */}
         {isAddingInline && (
-          <div
-            onClick={() => { setIsAddingInline(false); setInlineAddVal(''); setInlineEmailVal(''); }}
-            style={{ position: 'fixed', inset: 0, background: 'rgba(15,23,42,0.45)', zIndex: 10001, display: 'flex', alignItems: 'flex-end', justifyContent: 'center' }}
-          >
-            <div
-              onClick={(e) => e.stopPropagation()}
-              style={{ width: '100%', maxWidth: '480px', background: 'var(--w)', borderRadius: '24px 24px 0 0', padding: '14px 16px calc(20px + env(safe-area-inset-bottom))', boxShadow: '0 -8px 30px rgba(0,0,0,0.18)', maxHeight: '85vh', overflowY: 'auto', boxSizing: 'border-box' }}
-            >
-              <div style={{ width: '40px', height: '4px', borderRadius: '999px', background: '#E2E8F0', margin: '0 auto 14px' }} />
+          <div style={{ position: 'fixed', inset: 0, background: 'var(--bg)', zIndex: 10001, overflowY: 'auto', padding: '20px 16px calc(24px + env(safe-area-inset-bottom))', boxSizing: 'border-box', display: 'flex', flexDirection: 'column', gap: '22px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+                <button
+                  type="button"
+                  onClick={() => { setIsAddingInline(false); setInlineAddVal(''); setInlineEmailVal(''); }}
+                  style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--t)', padding: 0, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: '32px', height: '32px', marginLeft: '-6px' }}
+                >
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.8" strokeLinecap="round" strokeLinejoin="round" style={{ width: '18px', height: '18px' }}>
+                    <polyline points="15 18 9 12 15 6" />
+                  </svg>
+                </button>
+                <h1 style={{ fontSize: '20px', fontWeight: 600, color: 'var(--t)', margin: 0 }}>Add friend</h1>
+              </div>
                 <div
                   style={{
                     display: 'flex',
                     flexDirection: 'column',
-                    gap: '8px',
-                    padding: '12px',
-                    background: '#F8FAFC',
-                    borderRadius: '16px',
-                    border: '1.5px solid #E2E8F0',
+                    gap: '12px',
                     boxSizing: 'border-box',
                   }}
                 >
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '4px' }}>
-                    <span style={{ fontSize: '11px', fontWeight: 700, color: '#64748B', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
-                      Add New Member
-                    </span>
-                    <span
-                      onClick={() => {
-                        setIsAddingInline(false);
-                        setInlineAddVal('');
-                        setInlineEmailVal('');
-                      }}
-                      style={{
-                        cursor: 'pointer',
-                        fontSize: '14px',
-                        color: '#94A3B8',
-                        fontWeight: 'bold',
-                        padding: '0 4px',
-                      }}
-                    >
-                      ✕
-                    </span>
-                  </div>
-                  
                   <input
                     ref={inlineInputRef}
                     id="dv-member-add"
@@ -944,14 +922,14 @@ export const GroupMemberList: React.FC<GroupMemberListProps> = ({
                       }
                     }}
                     style={{
-                      height: '38px',
-                      borderRadius: '10px',
-                      border: '1px solid #CBD5E1',
-                      background: '#FFFFFF',
-                      fontSize: '13px',
+                      height: '50px',
+                      borderRadius: '14px',
+                      border: '1.5px solid #E2E8F0',
+                      background: 'var(--w)',
+                      fontSize: '15px',
                       fontWeight: 600,
                       color: 'var(--t)',
-                      padding: '0 12px',
+                      padding: '0 16px',
                       outline: 'none',
                       boxSizing: 'border-box',
                       width: '100%',
@@ -970,14 +948,14 @@ export const GroupMemberList: React.FC<GroupMemberListProps> = ({
                     onChange={(e) => setInlineEmailVal(e.target.value)}
                     onKeyDown={(e) => { if (e.key === 'Enter') handleInlineAdd(); }}
                     style={{
-                      height: '38px',
-                      borderRadius: '10px',
-                      border: '1px solid #CBD5E1',
-                      background: '#FFFFFF',
-                      fontSize: '12px',
+                      height: '50px',
+                      borderRadius: '14px',
+                      border: '1.5px solid #E2E8F0',
+                      background: 'var(--w)',
+                      fontSize: '14px',
                       fontWeight: 500,
                       color: '#334155',
-                      padding: '0 12px',
+                      padding: '0 16px',
                       outline: 'none',
                       boxSizing: 'border-box',
                       width: '100%',
@@ -989,15 +967,15 @@ export const GroupMemberList: React.FC<GroupMemberListProps> = ({
                     style={{
                       marginTop: '4px',
                       width: '100%',
-                      padding: '10px',
-                      borderRadius: '10px',
+                      padding: '15px',
+                      borderRadius: '14px',
                       border: 'none',
                       background: '#10B981',
                       color: '#FFFFFF',
                       fontWeight: 700,
-                      fontSize: '13px',
+                      fontSize: '15px',
                       cursor: 'pointer',
-                      boxShadow: '0 4px 6px -1px rgba(16, 185, 129, 0.2)',
+                      boxShadow: '0 4px 10px -2px rgba(16, 185, 129, 0.3)',
                     }}
                   >
                     Add to Group
@@ -1038,7 +1016,6 @@ export const GroupMemberList: React.FC<GroupMemberListProps> = ({
                   </div>
                 );
               })()}
-            </div>
           </div>
         )}
 
