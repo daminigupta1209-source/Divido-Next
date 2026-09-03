@@ -174,7 +174,7 @@ export const MasterSummary: React.FC<MasterSummaryProps> = ({
   };
 
   const nonGroupBal = getMemberBalance('STANDALONE', me);
-  const nonGroupExps = expenses.filter((e) => String(e.gId) === 'STANDALONE');
+  const nonGroupExps = expenses.filter((e) => String(e.gId) === 'STANDALONE' && !e.isDeleted);
   const nonGroupMembers = Array.from(new Set(nonGroupExps.flatMap((e) => e.splitters || [])));
   
   const nonGroupRels = nonGroupMembers

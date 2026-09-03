@@ -83,6 +83,22 @@ export const ActivityStudio: React.FC<ActivityStudioProps> = ({
   });
 
   const [showFilters, setShowFilters] = React.useState(false);
+  const longPressTimerRef = React.useRef<ReturnType<typeof setTimeout> | null>(null);
+  const [longPressId, setLongPressId] = React.useState<string | number | null>(null);
+
+  const handleLongPress = (e: Expense) => {
+    setLongPressId(e.id);
+    if (e.isDeleted) {
+      if (confirm('Restore this activity? It will affect balances again.')) {
+        setExpenses(expenses.map(x => x.id === e.id ? { ...x, isDeleted: false } : x));
+      }
+    } else {
+      if (confirm('Delete this activity? It will be crossed out and removed from balances.')) {
+        setExpenses(expenses.map(x => x.id === e.id ? { ...x, isDeleted: true } : x));
+      }
+    }
+    setTimeout(() => setLongPressId(null), 300);
+  };
 
   return (
     <div className="content-width-limit">
@@ -525,7 +541,25 @@ export const ActivityStudio: React.FC<ActivityStudioProps> = ({
                 ) : (
                   <div
                     className="card hover-up-mini"
-                    onClick={() => handleEdit(e)}
+                    onContextMenu={(ev) => {
+                      ev.preventDefault();
+                      handleLongPress(e);
+                    }}
+                    onTouchStart={() => {
+                      longPressTimerRef.current = setTimeout(() => {
+                        handleLongPress(e);
+                      }, 500);
+                    }}
+                    onTouchEnd={() => {
+                      if (longPressTimerRef.current) clearTimeout(longPressTimerRef.current);
+                    }}
+                    onTouchMove={() => {
+                      if (longPressTimerRef.current) clearTimeout(longPressTimerRef.current);
+                    }}
+                    onClick={() => {
+                      if (longPressId === e.id) return;
+                      handleEdit(e);
+                    }}
                     style={{
                       display: 'flex',
                       justifyContent: 'space-between',
@@ -539,6 +573,7 @@ export const ActivityStudio: React.FC<ActivityStudioProps> = ({
                       boxShadow: '0 4px 6px -1px rgba(0,0,0,0.01)',
                       minHeight: '70px',
                       boxSizing: 'border-box',
+                      opacity: e.isDeleted ? 0.5 : 1,
                     }}
                   >
                     <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flex: 1, minWidth: 0 }}>
@@ -560,9 +595,10 @@ export const ActivityStudio: React.FC<ActivityStudioProps> = ({
                       </div>
                       <div style={{ minWidth: 0, flex: 1, marginRight: '16px' }}>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '6px', whiteSpace: 'nowrap', overflow: 'hidden', minWidth: 0 }}>
-                          <h3  style={{ fontSize: isSettlement ? '13px' : '15px', color: 'var(--t)', margin: 0, fontWeight: 700, display: 'flex', alignItems: 'center', gap: '4px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', flexShrink: 0 }}>
+                          <h3  style={{ fontSize: isSettlement ? '13px' : '15px', color: 'var(--t)', margin: 0, fontWeight: 700, display: 'flex', alignItems: 'center', gap: '4px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', flexShrink: 0, textDecoration: e.isDeleted ? 'line-through' : 'none' }}>
                             {isSettlement ? 'Payment Recorded' : e.title}
                           </h3>
+                          {e.isDeleted && <span style={{fontSize: '10px', background: '#FEE2E2', color: '#EF4444', padding: '2px 6px', borderRadius: '4px', fontWeight: 600}}>Deleted</span>}
                           {e.gId !== 'STANDALONE' && (
                             <span
                               onClick={(ev) => {
@@ -642,7 +678,7 @@ export const ActivityStudio: React.FC<ActivityStudioProps> = ({
                       <div style={{ textAlign: 'right' }}>
                         {/* Write-offs show a struck-through amount as a "settled" cue,
                             but the card stays clickable/editable (partial write-offs). */}
-                        <span style={{ fontSize: '14px', fontWeight: 600, color: isWriteOff ? '#94A3B8' : 'var(--t)', textDecoration: isWriteOff ? 'line-through' : 'none' }}>
+                        <span style={{ fontSize: '14px', fontWeight: 600, color: isWriteOff ? '#94A3B8' : 'var(--t)', textDecoration: isWriteOff || e.isDeleted ? 'line-through' : 'none' }}>
                           {e.currency || '₹'} {formatExactAmount((Number(e.amt) || 0))}
                         </span>
                       </div>

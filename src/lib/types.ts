@@ -58,6 +58,7 @@ export interface Expense {
   fromCurr?: string;
   origAmt?: number;
   origShares?: Record<string, number>;
+  isDeleted?: boolean;
   prevCurr?: string;
   isRecurring?: boolean;
   recurrence?: 'weekly' | 'monthly' | 'yearly' | 'none';

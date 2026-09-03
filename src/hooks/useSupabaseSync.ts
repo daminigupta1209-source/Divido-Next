@@ -492,6 +492,7 @@ export function useSupabaseSync({
           currency: e.currency,
           notes: e.notes,
           attachments: e.attachments || [],
+          isDeleted: e.is_deleted || false,
           isRecurring: e.is_recurring,
           recurrence: e.recurrence,
           nextOccurrence: e.next_occurrence
@@ -1084,6 +1085,7 @@ export function useSupabaseSync({
                   currency: updatedExpense.currency,
                   notes: updatedExpense.notes,
                   attachments: updatedExpense.attachments || [],
+                  is_deleted: updatedExpense.isDeleted || false,
                   is_recurring: updatedExpense.isRecurring || false,
                   recurrence: updatedExpense.recurrence || 'none',
                   next_occurrence: updatedExpense.nextOccurrence
@@ -1112,6 +1114,7 @@ export function useSupabaseSync({
               if (old.currency !== updatedExpense.currency) updates.currency = updatedExpense.currency;
               if (old.notes !== updatedExpense.notes) updates.notes = updatedExpense.notes;
               if (JSON.stringify(old.attachments) !== JSON.stringify(updatedExpense.attachments)) updates.attachments = updatedExpense.attachments || [];
+              if (old.isDeleted !== updatedExpense.isDeleted) updates.is_deleted = updatedExpense.isDeleted || false;
               if (old.isRecurring !== updatedExpense.isRecurring) updates.is_recurring = updatedExpense.isRecurring || false;
               if (old.recurrence !== updatedExpense.recurrence) updates.recurrence = updatedExpense.recurrence || 'none';
               if (old.nextOccurrence !== updatedExpense.nextOccurrence) updates.next_occurrence = updatedExpense.nextOccurrence;

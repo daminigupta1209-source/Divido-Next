@@ -255,7 +255,7 @@ export const Analytics: React.FC<AnalyticsProps> = ({ expenses, groups, me, user
     const [recentFilter, setRecentFilter] = useState<'1W' | '1M' | '6M' | 'YTD' | '1Y' | '5Y' | 'Max'>('1M');
     
     const baseExpenses = useMemo(() => {
-      const base = selectedGroupId === 'ALL' ? expenses : expenses.filter((e) => String(e.gId) === String(selectedGroupId));
+      const base = selectedGroupId === 'ALL' ? expenses.filter(e => !e.isDeleted) : expenses.filter((e) => !e.isDeleted && String(e.gId) === String(selectedGroupId));
       return base.filter((e: Expense) => {
         const t = e.title || '';
         return !(

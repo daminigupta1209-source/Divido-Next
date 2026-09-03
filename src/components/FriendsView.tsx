@@ -183,7 +183,7 @@ export const FriendsView: React.FC<FriendsViewProps> = ({
   // Calculate friends' net balances by using the simplified transaction plans from each group.
   // This ensures that FriendsView perfectly syncs with simplified group balances.
   groups.forEach((g) => {
-    const groupExps = expenses.filter((e) => String(e.gId) === String(g.id));
+    const groupExps = expenses.filter((e) => !e.isDeleted && String(e.gId) === String(g.id));
     // The user's OWN name within this group (per-group claimed identity), not
     // the flat global first name — otherwise, on a device where they differ,
     // the user's own transactions get mis-attributed (they can even show up as
@@ -241,7 +241,7 @@ export const FriendsView: React.FC<FriendsViewProps> = ({
   });
 
   // Include non-group standalone expenses too
-  const standaloneExps = expenses.filter((e) => e.gId === 'STANDALONE');
+  const standaloneExps = expenses.filter((e) => !e.isDeleted && e.gId === 'STANDALONE');
   const standaloneMembers = Array.from(new Set([
     me,
     ...standaloneExps.flatMap((e) => [e.paid, ...(e.splitters || [])])

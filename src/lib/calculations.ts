@@ -33,6 +33,7 @@ export const simplifyMultiCurrencyDebts = (
     members.forEach(m => { balances[m] = 0; });
 
     expenses.forEach(e => {
+      if (e.isDeleted) return;
       const expCurrency = e.currency || defaultCurrency;
       if (expCurrency !== c) return;
 
@@ -135,6 +136,7 @@ export const computeRawPairwiseTransactions = (
 ): SimplifiedTransaction[] => {
   const pairDebts: Record<string, Record<string, number>> = {};
   expenses.forEach((e) => {
+    if (e.isDeleted) return;
     const splitters = e.splitters || members;
     const c = e.currency || defaultCurrency;
     // Defensive coercion — see simplifyMultiCurrencyDebts above.
