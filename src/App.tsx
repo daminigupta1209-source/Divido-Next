@@ -3438,6 +3438,23 @@ function App() {
             onBack={() => { setSelectedId(null); setView('summary'); }}
             onOpenExpense={(exp) => { setEditingExpenseSecure(exp); setShowExpModalSecure(true); }}
             onSettlePerson={(name) => setGlobalSettleDataSecure({ name: name.replace(/\s*\(Left\)$/i, '').trim(), gId: 'STANDALONE' })}
+            onRemindPerson={async (name) => {
+              const clean = name.replace(/\s*\(Left\)$/i, '').trim();
+              // In-app reminder (fire-and-forget so it doesn't consume the tap's
+              // activation before the native share sheet).
+              notifyFriend(clean, {
+                type: 'reminder',
+                title: `${userName} sent you a reminder`,
+                body: 'You have a pending balance to settle',
+                groupId: null,
+              });
+              const shareText = `Hey ${clean}! Just a reminder to settle up on Divido 💸`;
+              if (typeof navigator !== 'undefined' && (navigator as any).share) {
+                try {
+                  await (navigator as any).share({ title: 'Settle up on Divido', text: shareText, url: window.location.origin });
+                } catch { /* dismissed */ }
+              }
+            }}
           />
         ) : (
           <GroupDetail

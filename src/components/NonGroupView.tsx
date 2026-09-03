@@ -13,6 +13,7 @@ interface NonGroupViewProps {
   onBack: () => void;
   onOpenExpense: (exp: Expense) => void;
   onSettlePerson: (name: string) => void;
+  onRemindPerson?: (name: string) => void;
   onSharePerson?: (name: string) => void;
 }
 
@@ -48,6 +49,7 @@ export const NonGroupView: React.FC<NonGroupViewProps> = ({
   getMemberBalance,
   onOpenExpense,
   onSettlePerson,
+  onRemindPerson,
   onSharePerson,
 }) => {
   const [selectedPerson, setSelectedPerson] = React.useState<string | null>(null);
@@ -67,20 +69,26 @@ export const NonGroupView: React.FC<NonGroupViewProps> = ({
     [expenses]
   );
 
-  // One entry per OTHER person, with their expense count and canonical balance.
+  // One entry per OTHER person, with their expense count, canonical balance and
+  // email (captured optionally when they were added — Expense.otherEmail).
   const people = React.useMemo(() => {
-    const byName = new Map<string, { name: string; count: number }>();
+    const byName = new Map<string, { name: string; count: number; email: string }>();
     nonGroupExps.forEach((e) => {
       const names = new Set<string>();
       if (e.paid) names.add(e.paid);
       (e.splitters || []).forEach((s) => names.add(s));
+      const otherEmail = (e.otherEmail || '').trim().toLowerCase();
       names.forEach((raw) => {
         const c = cleanName(raw);
         if (!c || c.toLowerCase() === meLower) return;
         const key = c.toLowerCase();
         const cur = byName.get(key);
-        if (cur) cur.count += 1;
-        else byName.set(key, { name: c, count: 1 });
+        if (cur) {
+          cur.count += 1;
+          if (!cur.email && otherEmail.includes('@')) cur.email = otherEmail;
+        } else {
+          byName.set(key, { name: c, count: 1, email: otherEmail.includes('@') ? otherEmail : '' });
+        }
       });
     });
     return Array.from(byName.values())
@@ -371,27 +379,43 @@ export const NonGroupView: React.FC<NonGroupViewProps> = ({
             <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
               {people.map((p) => {
                 const b = balanceText(p.bal);
-                const owes = myPerspective(p.bal).length > 0;
+                const lines = myPerspective(p.bal);
+                const owes = lines.length > 0;
+                // Remind only makes sense when they owe ME (I collect).
+                const theyOweMe = lines.some((l) => l.amount > 0);
+                const btnStyle: React.CSSProperties = { border: '1.5px solid #CBD5E1', background: '#FFFFFF', borderRadius: '9px', padding: '6px 12px', fontSize: '12px', fontWeight: 700, color: '#334155', cursor: 'pointer', whiteSpace: 'nowrap' };
                 return (
                   <div
                     key={p.name}
                     className="hover-up-mini"
                     onClick={() => setSelectedPerson(p.name)}
-                    style={{ display: 'flex', alignItems: 'center', gap: '12px', background: '#FFFFFF', border: '0.5px solid #EFE7DC', borderRadius: '16px', padding: '12px 16px', boxShadow: '0 2px 10px rgba(0,0,0,0.03)', cursor: 'pointer' }}
+                    style={{ display: 'flex', alignItems: 'center', gap: '12px', background: '#FFFFFF', border: '0.5px solid #EFE7DC', borderRadius: '16px', padding: '13px 16px', boxShadow: '0 2px 10px rgba(0,0,0,0.03)', cursor: 'pointer' }}
                   >
-                    <Avatar name={p.name} size={32} />
+                    <Avatar name={p.name} size={44} />
                     <div style={{ flex: 1, minWidth: 0 }}>
-                      <div style={{ fontSize: '13.5px', fontWeight: 700, color: '#0F172A', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{p.name}</div>
-                      <div style={{ fontSize: '11.5px', fontWeight: 600, color: b.color }}>{b.text}</div>
+                      <div style={{ fontSize: '14px', fontWeight: 700, color: '#0F172A', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{p.name}</div>
+                      {p.email && (
+                        <div style={{ fontSize: '11px', color: '#94A3B8', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{p.email}</div>
+                      )}
+                      <div style={{ fontSize: '11.5px', marginTop: '1px' }}>
+                        <span style={{ fontWeight: 600, color: b.color }}>{b.text}</span>
+                        <span style={{ color: '#CBD5E1' }}> · </span>
+                        <span style={{ color: '#94A3B8' }}>{p.count} {p.count === 1 ? 'expense' : 'expenses'}</span>
+                      </div>
                     </div>
-                    {owes && (
-                    <button
-                      type="button"
-                      onClick={(ev) => { ev.stopPropagation(); onSettlePerson(p.name); }}
-                      style={{ border: '1.5px solid #CBD5E1', background: '#FFFFFF', borderRadius: '9px', padding: '7px 12px', fontSize: '12px', fontWeight: 700, color: '#334155', cursor: 'pointer', whiteSpace: 'nowrap' }}
-                    >
-                      Settle up
-                    </button>
+                    {(owes || theyOweMe) && (
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', flexShrink: 0 }}>
+                        {owes && (
+                          <button type="button" onClick={(ev) => { ev.stopPropagation(); onSettlePerson(p.name); }} style={btnStyle}>
+                            Settle
+                          </button>
+                        )}
+                        {theyOweMe && onRemindPerson && (
+                          <button type="button" onClick={(ev) => { ev.stopPropagation(); onRemindPerson(p.name); }} style={btnStyle}>
+                            Remind
+                          </button>
+                        )}
+                      </div>
                     )}
                   </div>
                 );
