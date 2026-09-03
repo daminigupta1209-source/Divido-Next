@@ -970,26 +970,8 @@ export const ExpenseModal: React.FC<ExpenseModalProps> = ({
                     </span>
                   </div>
 
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setShowFriendPickerPopup(false);
-                      setSelectedId(localGId === 'STANDALONE' ? 'STANDALONE' : localGId);
-                      setShowAddFriendModal(true);
-                      setHighlightAddFriend(false);
-                    }}
-                    style={{
-                      width: '28px', height: '28px', borderRadius: '50%',
-                      background: 'var(--w)', border: '1.5px dashed #CBD5E1',
-                      fontSize: '16px', fontWeight: 600, color: '#94A3B8',
-                      cursor: 'pointer', display: 'flex', alignItems: 'center',
-                      justifyContent: 'center', outline: 'none', padding: 0, flexShrink: 0,
-                    }}
-                    className="hover-up-mini"
-                    title="Invite Friend"
-                  >
-                    +
-                  </button>
+                  {/* Non-group is strictly you + one other person — no invite,
+                      no friends list. The one person is chosen in the popup below. */}
                 </div>
 
                 {/* Friends popup — centered overlay */}
@@ -1024,7 +1006,7 @@ export const ExpenseModal: React.FC<ExpenseModalProps> = ({
                       {/* Header */}
                       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '16px 16px 10px 16px' }}>
                         <span style={{ fontSize: '14px', fontWeight: 600, color: 'var(--t)' }}>
-                          Who's splitting? ✅
+                          Split with (just you two)
                         </span>
                         <button
                           type="button"
@@ -1049,142 +1031,66 @@ export const ExpenseModal: React.FC<ExpenseModalProps> = ({
                         </button>
                       </div>
 
-                      {/* Friends list */}
-                      <div style={{ maxHeight: '260px', overflowY: 'auto', padding: '0 8px 4px 8px' }}>
-                        {friendsToSelect.filter(f => f !== me).map((friend) => {
-                          const cleanFriend = friend.replace(' (Left)', '');
-                          const isChecked = selectedSplitters.includes(cleanFriend);
-                          return (
-                            <div
-                              key={friend}
-                              onClick={() => {
-                                if (cleanFriend === selectedId) return;
-                                setSelectedSplitters(
-                                  isChecked
-                                    ? selectedSplitters.filter((s) => s !== cleanFriend)
-                                    : [...selectedSplitters, cleanFriend]
-                                );
-                              }}
-                              style={{
-                                display: 'flex',
-                                alignItems: 'center',
-                                gap: '10px',
-                                padding: '10px 10px',
-                                borderRadius: '12px',
-                                cursor: cleanFriend === selectedId ? 'default' : 'pointer',
-                                transition: 'background 0.15s ease',
-                                background: isChecked ? 'rgba(16, 185, 129, 0.06)' : 'transparent',
-                                opacity: cleanFriend === selectedId ? 0.7 : 1,
-                              }}
-                              onMouseEnter={(e) => {
-                                if (cleanFriend !== selectedId) {
-                                  e.currentTarget.style.background = isChecked ? 'rgba(16, 185, 129, 0.1)' : '#F8FAFC';
-                                }
-                              }}
-                              onMouseLeave={(e) => {
-                                if (cleanFriend !== selectedId) {
-                                  e.currentTarget.style.background = isChecked ? 'rgba(16, 185, 129, 0.06)' : 'transparent';
-                                }
-                              }}
-                            >
-                              <div
-                                style={{
-                                  width: '20px',
-                                  height: '20px',
-                                  borderRadius: '6px',
-                                  border: `2px solid ${isChecked ? '#10B981' : '#CBD5E1'}`,
-                                  background: isChecked ? '#10B981' : 'transparent',
-                                  display: 'flex',
-                                  alignItems: 'center',
-                                  justifyContent: 'center',
-                                  flexShrink: 0,
-                                  transition: 'all 0.2s ease',
-                                }}
-                              >
-                                {isChecked && <span style={{ color: 'white', fontSize: '11px', fontWeight: 600 }}>✓</span>}
-                              </div>
-                              <div
-                                style={{
-                                  width: '30px',
-                                  height: '30px',
-                                  borderRadius: '50%',
-                                  background: 'linear-gradient(135deg, #E0F2FE, #DBEAFE)',
-                                  display: 'flex',
-                                  alignItems: 'center',
-                                  justifyContent: 'center',
-                                  fontSize: '12px',
-                                  fontWeight: 600,
-                                  color: '#3B82F6',
-                                  flexShrink: 0,
-                                }}
-                              >
-                                {friend.charAt(0).toUpperCase()}
-                              </div>
-                              <span style={{ fontSize: '13px', fontWeight: 700, color: 'var(--t)', flex: 1 }}>
-                                {friend}
-                              </span>
-                            </div>
-                          );
-                        })}
-                         {friendsToSelect.filter(f => f !== me).length === 0 && (
-                          <div style={{ padding: '16px 10px', display: 'flex', justifyContent: 'center' }}>
-                            <button
-                              type="button"
-                              onClick={() => {
-                                setShowFriendPickerPopup(false);
-                                setSelectedId(localGId === 'STANDALONE' ? 'STANDALONE' : localGId);
-                                setShowAddFriendModal(true);
-                              }}
-                              style={{
-                                height: '34px',
-                                padding: '0 16px',
-                                borderRadius: '999px',
-                                background: 'transparent',
-                                border: '1.5px solid #059669',
-                                fontSize: '12px',
-                                fontWeight: 600,
-                                color: '#059669',
-                                cursor: 'pointer',
-                                display: 'flex',
-                                alignItems: 'center',
-                                gap: '4px',
-                              }}
-                            >
-                              + Friend
-                            </button>
-                          </div>
-                        )}
+                      {/* Search / type the ONE person you're splitting with */}
+                      <div style={{ padding: '0 12px 8px' }}>
+                        <input
+                          autoFocus
+                          type="search"
+                          value={friendPickerSearch}
+                          onChange={(e) => setFriendPickerSearch(e.target.value)}
+                          placeholder="Search or type a name"
+                          style={{ width: '100%', height: '40px', borderRadius: '12px', border: '1.5px solid #E2E8F0', background: '#FFFFFF', fontSize: '13px', fontWeight: 600, color: 'var(--t)', padding: '0 12px', outline: 'none', boxSizing: 'border-box' }}
+                        />
                       </div>
 
-                      {/* Bottom row: Confirm */}
-                      <div style={{ borderTop: '1px solid #F1F5F9', padding: '10px 16px 16px 16px', display: 'flex', gap: '8px' }}>
-                        <div style={{ flex: 1 }} />
-                        <button
-                          type="button"
-                          onClick={() => setShowFriendPickerPopup(false)}
-                          style={{
-                            flex: 1,
-                            padding: '10px 0',
-                            borderRadius: '12px',
-                            border: 'none',
-                            background: '#10B981',
-                            fontSize: '12px',
-                            fontWeight: 600,
-                            color: 'white',
-                            cursor: 'pointer',
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            gap: '6px',
-                            transition: 'all 0.2s',
-                            boxShadow: '0 2px 0 #059669',
-                          }}
-                          onMouseEnter={(e) => { e.currentTarget.style.background = '#059669'; }}
-                          onMouseLeave={(e) => { e.currentTarget.style.background = '#10B981'; }}
-                        >
-                          ✓ Confirm
-                        </button>
-                      </div>
+                      {(() => {
+                        const q = friendPickerSearch.trim();
+                        const ql = q.toLowerCase();
+                        const other = selectedSplitters.find((s) => s !== me) || '';
+                        const recents = allKnownFriends
+                          .map((f) => f.replace(' (Left)', ''))
+                          .filter((f, i, arr) => f && f.toLowerCase() !== (me || '').toLowerCase() && arr.indexOf(f) === i && (!ql || f.toLowerCase().includes(ql)));
+                        const exact = recents.some((f) => f.toLowerCase() === ql) || ql === (me || '').toLowerCase();
+                        const pick = (name: string) => {
+                          setSelectedSplitters([me, name]);
+                          setFriendPickerSearch('');
+                          setShowFriendPickerPopup(false);
+                        };
+                        return (
+                          <div style={{ maxHeight: '260px', overflowY: 'auto', padding: '0 8px 12px 8px' }}>
+                            {q && !exact && (
+                              <div
+                                onClick={() => pick(q)}
+                                style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '10px', borderRadius: '12px', cursor: 'pointer', color: '#059669', fontWeight: 700, fontSize: '13px' }}
+                              >
+                                <span style={{ width: '30px', height: '30px', borderRadius: '50%', border: '1.5px dashed #10B981', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '16px', flexShrink: 0 }}>+</span>
+                                Add “{q}” as new
+                              </div>
+                            )}
+                            {recents.map((friend) => {
+                              const isCurrent = friend.toLowerCase() === other.toLowerCase();
+                              return (
+                                <div
+                                  key={friend}
+                                  onClick={() => pick(friend)}
+                                  style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '10px', borderRadius: '12px', cursor: 'pointer', background: isCurrent ? 'rgba(16, 185, 129, 0.08)' : 'transparent' }}
+                                >
+                                  <div style={{ width: '30px', height: '30px', borderRadius: '50%', background: 'linear-gradient(135deg, #E0F2FE, #DBEAFE)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '12px', fontWeight: 600, color: '#3B82F6', flexShrink: 0 }}>
+                                    {friend.charAt(0).toUpperCase()}
+                                  </div>
+                                  <span style={{ fontSize: '13px', fontWeight: 700, color: 'var(--t)', flex: 1 }}>{friend}</span>
+                                  {isCurrent && <span style={{ color: '#10B981', fontSize: '14px', fontWeight: 700 }}>✓</span>}
+                                </div>
+                              );
+                            })}
+                            {recents.length === 0 && !q && (
+                              <p style={{ padding: '14px 10px', margin: 0, fontSize: '12px', color: '#94A3B8', textAlign: 'center' }}>
+                                Type a name to add the person you split with.
+                              </p>
+                            )}
+                          </div>
+                        );
+                      })()}
                     </div>
                   </>
                 )}
