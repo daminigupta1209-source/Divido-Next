@@ -314,6 +314,7 @@ export const ExpenseRow: React.FC<ExpenseRowProps> = ({
           cursor: 'pointer',
           transition: '0.2s all',
           marginBottom: '8px',
+          opacity: e.isDeleted ? 0.5 : 1,
         }}
       >
         <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flex: 1, minWidth: 0 }}>
@@ -334,9 +335,10 @@ export const ExpenseRow: React.FC<ExpenseRowProps> = ({
             ✅
           </div>
           <div style={{ minWidth: 0, flex: 1, marginRight: '16px' }}>
-            <h3 style={{ fontSize: '14px', color: 'var(--t)', margin: 0, fontWeight: 600, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+            <h3 style={{ fontSize: '14px', color: 'var(--t)', margin: 0, fontWeight: 600, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', textDecoration: e.isDeleted ? 'line-through' : 'none' }}>
               Payment Recorded
             </h3>
+            {e.isDeleted && <span style={{fontSize: '10px', background: '#FEE2E2', color: '#EF4444', padding: '2px 6px', borderRadius: '4px', fontWeight: 600, marginLeft: '6px'}}>Deleted</span>}
             <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '11px', color: '#94A3B8', marginTop: '6px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
               <span style={{ color: '#16A34A', fontWeight: 700 }}>
                 {e.paid === me ? 'You' : e.paid} paid {e.splitters?.[0] === me ? 'you' : e.splitters?.[0]}
@@ -369,7 +371,7 @@ export const ExpenseRow: React.FC<ExpenseRowProps> = ({
           onClick={(ev) => ev.stopPropagation()}
         >
           <div style={{ textAlign: 'right' }}>
-            <span style={{ fontSize: '14px', fontWeight: 600, color: 'var(--t)' }}>
+            <span style={{ fontSize: '14px', fontWeight: 600, color: 'var(--t)', textDecoration: e.isDeleted ? 'line-through' : 'none' }}>
               {e.currency || selectedGroup.currency || '₹'} {formatExactAmount((Number(e.amt) || 0))}
             </span>
           </div>
@@ -380,13 +382,15 @@ export const ExpenseRow: React.FC<ExpenseRowProps> = ({
                 style={{ display: 'block', position: 'absolute', right: 0, top: '100%', minWidth: '110px', zIndex: 100, background: '#FFFFFF', padding: '6px', borderRadius: '12px', border: '1.5px solid #F1F5F9' }}
               >
               <div
-                style={{ color: '#DB2777' }}
-                onClick={() => {
-                  deleteExpense(e.id);
+                style={{ color: e.isDeleted ? '#10B981' : '#DB2777', padding: '8px 10px', fontSize: '12px', fontWeight: 600, cursor: 'pointer', borderRadius: '8px' }}
+                className="hover-bg"
+                onClick={(ev) => {
+                  ev.stopPropagation();
+                  setExpenses((prev) => prev.map(x => x.id === e.id ? { ...x, isDeleted: !e.isDeleted } : x));
                   setOpenExpId(null);
                 }}
               >
-                🗑️ Delete
+                {e.isDeleted ? 'Restore Payment' : 'Undo Payment'}
               </div>
             </div>
             )}
