@@ -165,59 +165,41 @@ export const NonGroupView: React.FC<NonGroupViewProps> = ({
 
     return (
       <div className="content-width-limit" style={{ paddingTop: '4px' }}>
-        {/* Clean header — just avatar, name and balance */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '14px' }}>
-          <Avatar name={person} size={46} />
-          <div style={{ flex: 1, minWidth: 0 }}>
-            <div style={{ fontSize: '17px', fontWeight: 700, color: '#0F172A', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{person}</div>
-            <div style={{ fontSize: '13px', fontWeight: 500, color: !hasBalance ? '#94A3B8' : allCollect ? '#047857' : '#B91C1C' }}>
-              {!hasBalance
-                ? 'All settled up'
-                : lines.map((l) => `${l.amount > 0 ? 'You collect' : 'You pay'} ${l.curr}${fmt(l.amount)}`).join(' · ')}
-            </div>
+        {/* Centered header — avatar, name, balance */}
+        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center', marginBottom: '16px' }}>
+          <Avatar name={person} size={56} />
+          <div style={{ fontSize: '18px', fontWeight: 700, color: '#0F172A', marginTop: '8px' }}>{person}</div>
+          <div style={{ fontSize: '14px', fontWeight: 600, color: !hasBalance ? '#94A3B8' : allCollect ? '#047857' : '#B91C1C', marginTop: '2px' }}>
+            {!hasBalance
+              ? 'All settled up'
+              : lines.map((l) => `${l.amount > 0 ? 'You collect' : 'You pay'} ${l.curr}${fmt(l.amount)}`).join(' · ')}
           </div>
         </div>
 
-        {/* Actions — Settle up (primary) with Remind / Add grouped beside it */}
-        <div style={{ display: 'flex', gap: '8px', marginBottom: '22px' }}>
-          {hasBalance ? (
-            <button
-              type="button"
-              onClick={() => onSettlePerson(person)}
-              style={{ flex: 1, padding: '12px', borderRadius: '12px', border: 'none', background: '#10B981', color: '#FFFFFF', fontSize: '14px', fontWeight: 700, cursor: 'pointer' }}
-            >
-              Settle up
-            </button>
-          ) : onAddWithPerson ? (
-            <button
-              type="button"
-              onClick={() => onAddWithPerson(person)}
-              style={{ flex: 1, padding: '12px', borderRadius: '12px', border: '0.5px solid #CBD5E1', background: '#FFFFFF', color: '#334155', fontSize: '14px', fontWeight: 700, cursor: 'pointer' }}
-            >
-              ＋ Add an expense
-            </button>
-          ) : null}
-          {hasBalance && allCollect && onRemindPerson && (
-            <button
-              type="button"
-              onClick={() => onRemindPerson(person)}
-              title="Send a reminder"
-              style={{ width: '46px', borderRadius: '12px', border: '0.5px solid #CBD5E1', background: '#FFFFFF', color: '#64748B', fontSize: '17px', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', flexShrink: 0 }}
-            >
-              🔔
-            </button>
-          )}
-          {hasBalance && onAddWithPerson && (
-            <button
-              type="button"
-              onClick={() => onAddWithPerson(person)}
-              title={`Add an expense with ${person}`}
-              style={{ width: '46px', borderRadius: '12px', border: 'none', background: '#10B981', color: '#FFFFFF', fontSize: '20px', lineHeight: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', flexShrink: 0 }}
-            >
-              +
-            </button>
-          )}
-        </div>
+        {/* Actions — three equal ghost buttons */}
+        {(() => {
+          const ghost: React.CSSProperties = { flex: 1, padding: '11px 8px', borderRadius: '12px', border: '0.5px solid #E2E8F0', background: '#FFFFFF', color: '#334155', fontSize: '13.5px', fontWeight: 600, cursor: 'pointer', whiteSpace: 'nowrap' };
+          const allPay = hasBalance && lines.every((l) => l.amount < 0);
+          return (
+            <div style={{ display: 'flex', gap: '8px', marginBottom: '22px' }}>
+              {hasBalance && (
+                <button type="button" onClick={() => onSettlePerson(person)} style={ghost}>Settle</button>
+              )}
+              {hasBalance && onRemindPerson && (
+                <button
+                  type="button"
+                  onClick={() => (allPay ? onSettlePerson(person) : onRemindPerson(person))}
+                  style={ghost}
+                >
+                  {allPay ? 'Pay now' : 'Remind'}
+                </button>
+              )}
+              {onAddWithPerson && (
+                <button type="button" onClick={() => onAddWithPerson(person)} style={ghost}>+ Expense</button>
+              )}
+            </div>
+          );
+        })()}
 
         <div style={{ fontSize: '10px', fontWeight: 600, letterSpacing: '1.2px', color: '#94A3B8', textTransform: 'uppercase', marginBottom: '8px' }}>
           Expenses with {person}
