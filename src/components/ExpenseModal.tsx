@@ -659,7 +659,7 @@ export const ExpenseModal: React.FC<ExpenseModalProps> = ({
               )}
             </div>
           </div>
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: '2px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: '12px' }}>
             <input
               ref={uploadInputRef}
               type="file"
