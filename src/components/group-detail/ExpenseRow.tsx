@@ -37,6 +37,11 @@ export const ExpenseRow: React.FC<ExpenseRowProps> = ({
   groups,
   deleteExpense,
 }) => {
+  const longPressTimerRef = React.useRef<ReturnType<typeof setTimeout> | null>(null);
+  const handleLongPress = (e: Expense) => {
+    setOpenExpId(e.id);
+  };
+
   if (e.paid === 'SYSTEM') {
     const getSystemTitle = (title: string) => {
       const cleanMe = me.replace(/\s*\(me\)$/i, '').replace(/\s*\(Left\)$/i, '').toLowerCase();
@@ -390,7 +395,23 @@ export const ExpenseRow: React.FC<ExpenseRowProps> = ({
     <div
       tabIndex={0}
       className="card hover-bright"
+      onContextMenu={(ev) => {
+        ev.preventDefault();
+        handleLongPress(e);
+      }}
+      onTouchStart={() => {
+        longPressTimerRef.current = setTimeout(() => {
+          handleLongPress(e);
+        }, 500);
+      }}
+      onTouchEnd={() => {
+        if (longPressTimerRef.current) clearTimeout(longPressTimerRef.current);
+      }}
+      onTouchMove={() => {
+        if (longPressTimerRef.current) clearTimeout(longPressTimerRef.current);
+      }}
       onClick={() => {
+        if (openExpId === e.id) return;
         setEditingExpense(e);
         setShowExpModal(true);
       }}
@@ -409,6 +430,7 @@ export const ExpenseRow: React.FC<ExpenseRowProps> = ({
         marginBottom: '8px',
         minHeight: '70px',
         boxSizing: 'border-box',
+        opacity: e.isDeleted ? 0.5 : 1,
       }}
     >
       <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flex: 1, minWidth: 0 }}>
@@ -430,9 +452,10 @@ export const ExpenseRow: React.FC<ExpenseRowProps> = ({
           {e.title === 'Written off' ? '➖' : (getEmoji(e.title) || (e.attachments && e.attachments.length > 0 ? '🖼️' : '⚡'))}
         </div>
         <div style={{ minWidth: 0, flex: 1, marginRight: '16px' }}>
-          <h3 style={{ fontSize: '14px', color: 'var(--t)', margin: 0, fontWeight: 600, display: 'flex', alignItems: 'center', gap: '4px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+          <h3 style={{ fontSize: '14px', color: 'var(--t)', margin: 0, fontWeight: 600, display: 'flex', alignItems: 'center', gap: '4px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', textDecoration: e.isDeleted ? 'line-through' : 'none' }}>
             {e.title}
           </h3>
+          {e.isDeleted && <span style={{fontSize: '10px', background: '#FEE2E2', color: '#EF4444', padding: '2px 6px', borderRadius: '4px', fontWeight: 600}}>Deleted</span>}
           <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '11px', color: '#94A3B8', marginTop: '6px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
             <span style={{ color: e.paid === me ? '#16A34A' : '#DE7093', fontWeight: 700 }}>{(() => {
               // Write-offs show "who paid whom" for a clearer picture.
@@ -492,9 +515,48 @@ export const ExpenseRow: React.FC<ExpenseRowProps> = ({
           {/* Write-offs keep the struck-through amount as a "settled" cue, but the
               card stays clickable/editable so the amount can be adjusted (e.g. a
               partial write-off). */}
-          <span style={{ fontSize: '14px', fontWeight: 600, color: isWriteOff ? '#94A3B8' : 'var(--t)', textDecoration: isWriteOff ? 'line-through' : 'none' }}>
+          <span style={{ fontSize: '14px', fontWeight: 600, color: isWriteOff ? '#94A3B8' : 'var(--t)', textDecoration: isWriteOff || e.isDeleted ? 'line-through' : 'none' }}>
             {e.currency || selectedGroup.currency || '₹'} {formatExactAmount(e.amt)}
           </span>
+        </div>
+        <div
+          className="dropdown"
+          style={{ position: 'relative', cursor: 'pointer', fontSize: '18px', padding: '4px', color: '#CBD5E1' }}
+          onClick={(ev) => {
+            ev.stopPropagation();
+            setOpenExpId(openExpId === e.id ? null : e.id);
+          }}
+        >
+          ⋮
+          {openExpId === e.id && (
+            <div
+              className="card shadow-xl dropdown-content"
+              style={{
+                display: 'block',
+                position: 'absolute',
+                right: 0,
+                top: '100%',
+                background: '#FFFFFF',
+                zIndex: 100,
+                minWidth: '140px',
+                padding: '6px',
+                borderRadius: '12px',
+                border: '1.5px solid #F1F5F9',
+              }}
+            >
+              <div
+                onClick={(ev) => {
+                  ev.stopPropagation();
+                  setExpenses((prev) => prev.map(x => x.id === e.id ? { ...x, isDeleted: !e.isDeleted } : x));
+                  setOpenExpId(null);
+                }}
+                style={{ padding: '8px 10px', fontSize: '12px', fontWeight: 600, cursor: 'pointer', borderRadius: '8px', color: e.isDeleted ? '#10B981' : '#EF4444' }}
+                className="hover-bg"
+              >
+                {e.isDeleted ? '↺ Restore Activity' : '🗑️ Delete Activity'}
+              </div>
+            </div>
+          )}
         </div>
       </div>
     </div>

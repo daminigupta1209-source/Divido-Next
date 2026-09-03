@@ -85,11 +85,10 @@ export const ActivityStudio: React.FC<ActivityStudioProps> = ({
   const [showFilters, setShowFilters] = React.useState(false);
   const longPressTimerRef = React.useRef<ReturnType<typeof setTimeout> | null>(null);
   const [longPressId, setLongPressId] = React.useState<string | number | null>(null);
-  const [actionSheetExp, setActionSheetExp] = React.useState<Expense | null>(null);
 
   const handleLongPress = (e: Expense) => {
     setLongPressId(e.id);
-    setActionSheetExp(e);
+    setOpenExpId(e.id);
     setTimeout(() => setLongPressId(null), 300);
   };
 
@@ -667,7 +666,7 @@ export const ActivityStudio: React.FC<ActivityStudioProps> = ({
                         )}
                       </div>
                     </div>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '16px', flexShrink: 0 }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flexShrink: 0 }}>
                       <div style={{ textAlign: 'right' }}>
                         {/* Write-offs show a struck-through amount as a "settled" cue,
                             but the card stays clickable/editable (partial write-offs). */}
@@ -675,7 +674,45 @@ export const ActivityStudio: React.FC<ActivityStudioProps> = ({
                           {e.currency || '₹'} {formatExactAmount((Number(e.amt) || 0))}
                         </span>
                       </div>
-
+                      <div
+                        className="dropdown"
+                        style={{ position: 'relative', cursor: 'pointer', fontSize: '18px', padding: '4px', color: '#CBD5E1' }}
+                        onClick={(ev) => {
+                          ev.stopPropagation();
+                          setOpenExpId(openExpId === e.id ? null : e.id);
+                        }}
+                      >
+                        ⋮
+                        {openExpId === e.id && (
+                          <div
+                            className="card shadow-xl dropdown-content"
+                            style={{
+                              display: 'block',
+                              position: 'absolute',
+                              right: 0,
+                              top: '100%',
+                              background: 'var(--w)',
+                              zIndex: 100,
+                              minWidth: '140px',
+                              padding: '6px',
+                              borderRadius: '12px',
+                              border: '1.5px solid #F1F5F9',
+                            }}
+                          >
+                            <div
+                              onClick={(ev) => {
+                                ev.stopPropagation();
+                                setExpenses(expenses.map(x => x.id === e.id ? { ...x, isDeleted: !e.isDeleted } : x));
+                                setOpenExpId(null);
+                              }}
+                              style={{ padding: '8px 10px', fontSize: '12px', fontWeight: 600, cursor: 'pointer', borderRadius: '8px', color: e.isDeleted ? '#10B981' : '#EF4444' }}
+                              className="hover-bg"
+                            >
+                              {e.isDeleted ? '↺ Restore Activity' : '🗑️ Delete Activity'}
+                            </div>
+                          </div>
+                        )}
+                      </div>
                     </div>
                   </div>
                 )}
@@ -684,38 +721,6 @@ export const ActivityStudio: React.FC<ActivityStudioProps> = ({
           })
         )}
       </div>
-
-      {actionSheetExp && (
-        <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.5)', zIndex: 1000, display: 'flex', flexDirection: 'column', justifyContent: 'flex-end' }} onClick={() => setActionSheetExp(null)}>
-          <div className="card shadow-xl" style={{ margin: '16px', background: 'var(--w)', borderRadius: '24px', padding: '16px', animation: 'slideUp 0.3s ease-out' }} onClick={(e) => e.stopPropagation()}>
-            <h3 style={{ textAlign: 'center', margin: '0 0 16px 0', fontSize: '16px' }}>
-              {actionSheetExp.isDeleted ? 'Restore Activity?' : 'Delete Activity?'}
-            </h3>
-            <p style={{ textAlign: 'center', fontSize: '14px', color: '#64748B', marginBottom: '24px' }}>
-              {actionSheetExp.isDeleted ? 'It will affect balances again.' : 'It will be crossed out and removed from balances.'}
-            </p>
-            <div style={{ display: 'flex', gap: '12px' }}>
-              <button
-                className="btn-outline"
-                style={{ flex: 1, padding: '12px', borderRadius: '12px' }}
-                onClick={() => setActionSheetExp(null)}
-              >
-                Cancel
-              </button>
-              <button
-                className="btn-primary"
-                style={{ flex: 1, padding: '12px', borderRadius: '12px', background: actionSheetExp.isDeleted ? '#10B981' : '#EF4444', borderColor: actionSheetExp.isDeleted ? '#10B981' : '#EF4444', color: '#fff' }}
-                onClick={() => {
-                  setExpenses(expenses.map(x => x.id === actionSheetExp.id ? { ...x, isDeleted: !actionSheetExp.isDeleted } : x));
-                  setActionSheetExp(null);
-                }}
-              >
-                {actionSheetExp.isDeleted ? 'Restore' : 'Delete'}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 };
