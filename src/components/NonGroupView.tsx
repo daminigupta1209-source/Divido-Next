@@ -191,7 +191,7 @@ export const NonGroupView: React.FC<NonGroupViewProps> = ({
                   onClick={() => (allPay ? onSettlePerson(person) : onRemindPerson(person))}
                   style={ghost}
                 >
-                  {allPay ? 'Pay now' : 'Remind'}
+                  {allPay ? 'Pay now' : 'Invite'}
                 </button>
               )}
               {onAddWithPerson && (
