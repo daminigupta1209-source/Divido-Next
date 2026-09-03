@@ -341,7 +341,7 @@ export const GroupMemberList: React.FC<GroupMemberListProps> = ({
           cursor: 'pointer',
         }}
       >
-        <div style={{ width: '38px', height: '38px', borderRadius: '50%', border: '1.5px dashed #F97316', color: '#F97316', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '20px', fontWeight: 600, flex: 'none' }}>+</div>
+        <div style={{ width: '38px', height: '38px', borderRadius: '50%', background: '#F97316', color: '#FFFFFF', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '22px', fontWeight: 600, flex: 'none', boxShadow: '0 4px 10px -2px rgba(249, 115, 22, 0.5)' }}>+</div>
         <span style={{ fontSize: '14px', fontWeight: 600, color: '#F97316' }}>Add friend</span>
       </div>
     );
