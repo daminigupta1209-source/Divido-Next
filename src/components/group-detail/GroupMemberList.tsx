@@ -68,6 +68,16 @@ export const GroupMemberList: React.FC<GroupMemberListProps> = ({
   const [activeTab, setActiveTab] = useState<'joined' | 'pending' | 'left'>('pending');
   // Names added in the last few seconds, highlighted in the Pending list so the
   // user sees their new invite land.
+  // People ticked in the Add Friend screen but not yet committed. Lets the user
+  // pick several from "recently split with" (shown as pills) and add them all at
+  // once instead of returning to the list between each.
+  const [selectedFriends, setSelectedFriends] = useState<{ name: string; email: string; identity: string }[]>([]);
+  const selKey = (s: { name: string; identity: string }) => (s.identity || s.name).toLowerCase();
+  const isSelected = (s: { name: string; identity: string }) => selectedFriends.some((f) => selKey(f) === selKey(s));
+  const toggleSelect = (s: { name: string; email: string; identity: string }) => {
+    setSelectedFriends((prev) => (prev.some((f) => selKey(f) === selKey(s)) ? prev.filter((f) => selKey(f) !== selKey(s)) : [...prev, s]));
+  };
+
   const [justAddedNames, setJustAddedNames] = useState<string[]>([]);
   // Names added this session, newest first — used to float fresh invites to the
   // top of the Pending list (persists past the highlight so they don't jump back).
@@ -85,8 +95,12 @@ export const GroupMemberList: React.FC<GroupMemberListProps> = ({
   // the members list on Back.
   React.useEffect(() => {
     if (!isAddingInline) return;
-    window.history.pushState({ _divido: true, dividoAddFriend: true }, '');
-    const onPop = () => { setIsAddingInline(false); setInlineAddVal(''); setInlineEmailVal(''); };
+    // Guard against a duplicate marker (e.g. StrictMode double-invoke) so a single
+    // history.back() reliably closes the screen.
+    if (!(window.history.state && (window.history.state as any).dividoAddFriend)) {
+      window.history.pushState({ _divido: true, dividoAddFriend: true }, '');
+    }
+    const onPop = () => { setIsAddingInline(false); setInlineAddVal(''); setInlineEmailVal(''); setSelectedFriends([]); };
     window.addEventListener('popstate', onPop);
     return () => window.removeEventListener('popstate', onPop);
   }, [isAddingInline]);
@@ -262,6 +276,37 @@ export const GroupMemberList: React.FC<GroupMemberListProps> = ({
       // Close the full-screen add view via history so Back stays consistent.
       window.history.back();
     }
+  };
+
+  // Commit every ticked friend at once (from the multi-select picker).
+  const commitSelected = () => {
+    if (selectedFriends.length === 0) return;
+    const existing = new Set(
+      selectedGroup.members.map((m) => m.replace(/\s*\(Left\)$/i, '').trim().toLowerCase())
+    );
+    const names: string[] = [];
+    const emails: Record<string, string> = {};
+    const identities: Record<string, string> = {};
+    for (const f of selectedFriends) {
+      const nm = f.name.trim();
+      if (!nm || existing.has(nm.toLowerCase())) continue; // skip dupes silently
+      names.push(nm);
+      const email = (f.email || '').trim().toLowerCase();
+      if (email.includes('@')) emails[nm] = email;
+      const identity = (email.includes('@') ? email : (f.identity || '')).trim();
+      if (identity) identities[nm] = identity;
+      markJustAdded(nm);
+    }
+    // Add FIRST (while the add screen is still open and selectedId is valid),
+    // then close — mirroring the single-add path.
+    if (names.length && onAddMembers) {
+      onAddMembers(names, Object.keys(emails).length ? emails : undefined, Object.keys(identities).length ? identities : undefined);
+    }
+    setSelectedFriends([]);
+    setInlineAddVal('');
+    setInlineEmailVal('');
+    setActiveTab('pending');
+    if (isAddingInline) window.history.back();
   };
 
   const joinedMembersList = selectedGroup.members.filter(m => !selectedGroup.pendingMembers?.includes(m) && !m.endsWith(' (Left)'));
@@ -976,6 +1021,19 @@ export const GroupMemberList: React.FC<GroupMemberListProps> = ({
                 />
               </div>
 
+              {/* Ticked friends, shown as removable pills */}
+              {selectedFriends.length > 0 && (
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
+                  {selectedFriends.map((f) => (
+                    <span key={selKey(f)} style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', background: '#ECFDF5', border: '1px solid #A7F3D0', color: '#047857', borderRadius: '999px', padding: '5px 8px 5px 6px', fontSize: '13px', fontWeight: 600 }}>
+                      <span style={{ width: '22px', height: '22px', borderRadius: '50%', background: '#10B981', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '11px', fontWeight: 700 }}>{f.name.charAt(0).toUpperCase()}</span>
+                      {f.name}
+                      <span onClick={() => toggleSelect(f)} style={{ cursor: 'pointer', color: '#059669', fontWeight: 700, marginLeft: '2px' }}>✕</span>
+                    </span>
+                  ))}
+                </div>
+              )}
+
               {(() => {
                 const qRaw = inlineAddVal.trim();
                 const q = qRaw.toLowerCase();
@@ -987,7 +1045,8 @@ export const GroupMemberList: React.FC<GroupMemberListProps> = ({
                   (m) => m.replace(/\s*\(Left\)$/i, '').trim().toLowerCase() === q
                 );
                 const exactSug = allSug.some((s) => s.name.toLowerCase() === q);
-                const canAddNew = qRaw.length > 0 && !existsInGroup && !exactSug;
+                const alreadyPicked = selectedFriends.some((f) => f.name.toLowerCase() === q);
+                const canAddNew = qRaw.length > 0 && !existsInGroup && !exactSug && !alreadyPicked;
                 return (
                   <>
                     {canAddNew && (
@@ -1002,7 +1061,6 @@ export const GroupMemberList: React.FC<GroupMemberListProps> = ({
                           placeholder="Email (optional)"
                           value={inlineEmailVal}
                           onChange={(e) => setInlineEmailVal(e.target.value)}
-                          onKeyDown={(e) => { if (e.key === 'Enter') handleInlineAdd(); }}
                           style={{
                             height: '50px',
                             borderRadius: '14px',
@@ -1018,21 +1076,17 @@ export const GroupMemberList: React.FC<GroupMemberListProps> = ({
                           }}
                         />
                         <button
-                          onClick={() => handleInlineAdd()}
-                          style={{
-                            width: '100%',
-                            padding: '15px',
-                            borderRadius: '14px',
-                            border: 'none',
-                            background: '#10B981',
-                            color: '#FFFFFF',
-                            fontWeight: 700,
-                            fontSize: '15px',
-                            cursor: 'pointer',
-                            boxShadow: '0 4px 10px -2px rgba(16, 185, 129, 0.3)',
+                          onClick={() => {
+                            const em = inlineEmailVal.trim();
+                            if (em && !isValidEmail(em)) { alert("That doesn't look like a valid email. Leave it blank or fix it."); return; }
+                            toggleSelect({ name: qRaw, email: em, identity: '' });
+                            setInlineAddVal('');
+                            setInlineEmailVal('');
+                            setTimeout(() => inlineInputRef.current?.focus(), 30);
                           }}
+                          style={{ width: '100%', padding: '13px', borderRadius: '14px', border: '1.5px dashed #10B981', background: 'transparent', color: '#059669', fontWeight: 700, fontSize: '14px', cursor: 'pointer' }}
                         >
-                          Add “{qRaw}” as new
+                          + Add “{qRaw}” as new
                         </button>
                       </div>
                     )}
@@ -1043,28 +1097,37 @@ export const GroupMemberList: React.FC<GroupMemberListProps> = ({
                           Recently split with
                         </p>
                         <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                          {shown.map((s) => (
-                            <button
-                              key={s.email || s.name}
-                              type="button"
-                              onClick={() => handleInlineAdd(s.name, s.email, s.identity)}
-                              style={{ display: 'flex', alignItems: 'center', gap: '12px', width: '100%', textAlign: 'left', background: 'var(--w)', border: '1.5px solid #F1F5F9', borderRadius: '14px', padding: '12px 14px', cursor: 'pointer' }}
-                            >
-                              <span style={{ width: '38px', height: '38px', borderRadius: '50%', background: '#EEF2FF', color: '#4338CA', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '14px', fontWeight: 700, flexShrink: 0 }}>
-                                {s.name.charAt(0).toUpperCase()}
-                              </span>
-                              <span style={{ minWidth: 0, flex: 1 }}>
-                                <span style={{ display: 'block', fontSize: '14px', fontWeight: 600, color: '#334155', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{s.name}</span>
-                                {s.email && <span style={{ display: 'block', fontSize: '11px', color: '#94A3B8', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{s.email}</span>}
-                              </span>
-                              <span style={{ color: '#6366F1', fontSize: '20px', fontWeight: 700, flexShrink: 0 }}>+</span>
-                            </button>
-                          ))}
+                          {shown.map((s) => {
+                            const on = isSelected(s);
+                            return (
+                              <button
+                                key={s.email || s.name}
+                                type="button"
+                                onClick={() => toggleSelect(s)}
+                                style={{ display: 'flex', alignItems: 'center', gap: '12px', width: '100%', textAlign: 'left', background: on ? '#ECFDF5' : 'var(--w)', border: `1.5px solid ${on ? '#A7F3D0' : '#F1F5F9'}`, borderRadius: '14px', padding: '12px 14px', cursor: 'pointer', transition: '0.15s all ease' }}
+                              >
+                                <span style={{ width: '38px', height: '38px', borderRadius: '50%', background: '#EEF2FF', color: '#4338CA', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '14px', fontWeight: 700, flexShrink: 0 }}>
+                                  {s.name.charAt(0).toUpperCase()}
+                                </span>
+                                <span style={{ minWidth: 0, flex: 1 }}>
+                                  <span style={{ display: 'block', fontSize: '14px', fontWeight: 600, color: '#334155', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{s.name}</span>
+                                  {s.email && <span style={{ display: 'block', fontSize: '11px', color: '#94A3B8', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{s.email}</span>}
+                                </span>
+                                {on ? (
+                                  <span style={{ width: '24px', height: '24px', borderRadius: '50%', background: '#10B981', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12" /></svg>
+                                  </span>
+                                ) : (
+                                  <span style={{ color: '#6366F1', fontSize: '20px', fontWeight: 700, flexShrink: 0 }}>+</span>
+                                )}
+                              </button>
+                            );
+                          })}
                         </div>
                       </div>
                     )}
 
-                    {shown.length === 0 && !canAddNew && (
+                    {shown.length === 0 && !canAddNew && selectedFriends.length === 0 && (
                       <p style={{ margin: '4px 0 0', fontSize: '13px', color: '#94A3B8', textAlign: 'center' }}>
                         Type a name to add someone new.
                       </p>
@@ -1072,6 +1135,15 @@ export const GroupMemberList: React.FC<GroupMemberListProps> = ({
                   </>
                 );
               })()}
+
+              {selectedFriends.length > 0 && (
+                <button
+                  onClick={commitSelected}
+                  style={{ width: '100%', padding: '15px', borderRadius: '14px', border: 'none', background: '#10B981', color: '#FFFFFF', fontWeight: 700, fontSize: '15px', cursor: 'pointer' }}
+                >
+                  Add {selectedFriends.length} {selectedFriends.length === 1 ? 'friend' : 'friends'} to group
+                </button>
+              )}
           </div>
         )}
 
