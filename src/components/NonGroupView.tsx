@@ -21,14 +21,8 @@ interface NonGroupViewProps {
 
 const cleanName = (n: string) => (n || '').replace(/\s*\(Left\)$/i, '').trim();
 
-const initialsOf = (name: string): string => {
-  const p = cleanName(name).split(/\s+/);
-  if (p.length === 1) return p[0].substring(0, 2).toUpperCase();
-  return (p[0].charAt(0) + p[p.length - 1].charAt(0)).toUpperCase();
-};
-
-const AVATAR_BG = ['#E0F2FE', '#F0FDF4', '#FEF2F2', '#FFFBEB', '#F5F3FF', '#FFF1F2'];
-const AVATAR_FG = ['#0369A1', '#15803D', '#B91C1C', '#B45309', '#6D28D9', '#BE123C'];
+// Same solid avatar palette as the All-balances (Friends) view.
+const AVATAR_BG = ['#B39DDB', '#F48FB1', '#80CBC4', '#FFB74D', '#9FA8DA', '#A5D6A7', '#EF9A9A', '#7FC8CE'];
 
 const fmt = (v: number) => {
   const abs = Math.abs(v);
@@ -121,7 +115,8 @@ export const NonGroupView: React.FC<NonGroupViewProps> = ({
         />
       );
     }
-    const idx = cleanName(name).charCodeAt(0) % AVATAR_BG.length;
+    // Match the All-balances avatar: solid colour + a single white initial.
+    const idx = (cleanName(name).charCodeAt(0) || 0) % AVATAR_BG.length;
     return (
       <div
         style={{
@@ -129,28 +124,28 @@ export const NonGroupView: React.FC<NonGroupViewProps> = ({
           height: size,
           borderRadius: '50%',
           background: AVATAR_BG[idx],
-          color: AVATAR_FG[idx],
+          color: '#FFFFFF',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
-          fontSize: size <= 28 ? '10px' : '13px',
-          fontWeight: 700,
+          fontSize: Math.round(size * 0.4),
+          fontWeight: 600,
           flexShrink: 0,
         }}
       >
-        {initialsOf(name)}
+        {cleanName(name).charAt(0).toUpperCase()}
       </div>
     );
   };
 
+  // Wording + colours match the All-balances (Friends) cards.
   const balanceText = (bal: Record<string, number>): { text: string; color: string } => {
     const lines = myPerspective(bal);
-    if (lines.length === 0) return { text: 'settled', color: '#94A3B8' };
-    const parts = lines.map((l) => `${l.amount > 0 ? 'collect' : 'pay'} ${l.curr}${fmt(l.amount)}`);
-    // If mixed currencies just join; the common case is one currency.
-    const anyCollect = lines.some((l) => l.amount > 0);
+    if (lines.length === 0) return { text: 'Settled up', color: '#94A3B8' };
+    const parts = lines.map((l) => `${l.amount > 0 ? 'You collect' : 'You pay'} ${l.curr}${fmt(l.amount)}`);
     const allCollect = lines.every((l) => l.amount > 0);
-    const color = allCollect ? '#16A34A' : anyCollect ? '#334155' : '#DC2626';
+    const allPay = lines.every((l) => l.amount < 0);
+    const color = allCollect ? '#047857' : allPay ? '#B91C1C' : '#334155';
     return { text: parts.join(' · '), color };
   };
 
@@ -175,7 +170,7 @@ export const NonGroupView: React.FC<NonGroupViewProps> = ({
           <Avatar name={person} size={46} />
           <div style={{ flex: 1, minWidth: 0 }}>
             <div style={{ fontSize: '17px', fontWeight: 700, color: '#0F172A', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{person}</div>
-            <div style={{ fontSize: '13px', fontWeight: 600, color: !hasBalance ? '#94A3B8' : allCollect ? '#16A34A' : '#DC2626' }}>
+            <div style={{ fontSize: '13px', fontWeight: 500, color: !hasBalance ? '#94A3B8' : allCollect ? '#047857' : '#B91C1C' }}>
               {!hasBalance
                 ? 'All settled up'
                 : lines.map((l) => `${l.amount > 0 ? 'You collect' : 'You pay'} ${l.curr}${fmt(l.amount)}`).join(' · ')}
@@ -404,18 +399,15 @@ export const NonGroupView: React.FC<NonGroupViewProps> = ({
                     key={p.name}
                     className="hover-up-mini"
                     onClick={() => setSelectedPerson(p.name)}
-                    style={{ display: 'flex', alignItems: 'center', gap: '12px', background: '#FFFFFF', border: '0.5px solid #EFE7DC', borderRadius: '16px', padding: '13px 16px', boxShadow: '0 2px 10px rgba(0,0,0,0.03)', cursor: 'pointer' }}
+                    style={{ display: 'flex', alignItems: 'center', gap: '12px', background: '#FFFFFF', border: '0.5px solid #EFE7DC', borderRadius: '20px', padding: '16px', boxShadow: '0 2px 10px rgba(0,0,0,0.04)', cursor: 'pointer' }}
                   >
-                    <Avatar name={p.name} size={44} />
-                    <div style={{ flex: 1, minWidth: 0 }}>
-                      <div style={{ fontSize: '14px', fontWeight: 700, color: '#0F172A', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                        {p.name}
-                        <span style={{ fontWeight: 500, color: '#94A3B8', fontSize: '12px' }}> ({p.count} {p.count === 1 ? 'expense' : 'expenses'})</span>
+                    <Avatar name={p.name} size={40} />
+                    <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                      <div style={{ display: 'flex', alignItems: 'baseline', gap: '6px', minWidth: 0 }}>
+                        <h3 style={{ fontSize: '16px', fontWeight: 600, color: '#2E2A25', margin: 0, textTransform: 'capitalize', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', flexShrink: 1 }}>{p.name}</h3>
+                        <span style={{ fontSize: '13px', fontWeight: 500, color: '#94A3B8', whiteSpace: 'nowrap', flexShrink: 0 }}>({p.count} {p.count === 1 ? 'expense' : 'expenses'})</span>
                       </div>
-                      {p.email && (
-                        <div style={{ fontSize: '11px', color: '#94A3B8', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{p.email}</div>
-                      )}
-                      <div style={{ fontSize: '12px', fontWeight: 600, color: b.color, marginTop: '1px' }}>{b.text}</div>
+                      <span style={{ fontSize: '13px', fontWeight: 500, color: b.color }}>{b.text}</span>
                     </div>
                     {onAddWithPerson && (
                       <button
