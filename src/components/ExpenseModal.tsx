@@ -903,76 +903,90 @@ export const ExpenseModal: React.FC<ExpenseModalProps> = ({
                         return (p[0].charAt(0) + p[p.length - 1].charAt(0)).toUpperCase();
                       })()
                     : '';
-                  const avatarColors = ['#E0F2FE', '#F0FDF4', '#FEF2F2', '#FFFBEB', '#F5F3FF', '#FFF1F2'];
-                  const textColors = ['#0369A1', '#15803D', '#B91C1C', '#B45309', '#6D28D9', '#BE123C'];
-                  const colorIdx = other ? other.charCodeAt(0) % avatarColors.length : 0;
-                  const label = other ? `You & ${other}` : 'You — tap to add a friend';
                   return (
-                    <div
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        setShowFriendPickerPopup((prev) => !prev);
-                        setHighlightAddFriend(false);
-                      }}
-                      style={{
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: '10px',
-                        background: '#FFFFFF',
-                        borderRadius: '22px',
-                        padding: '5px 14px 5px 5px',
-                        border: '1.5px solid #F1F5F9',
-                        boxShadow: '0 4px 20px rgba(0,0,0,0.03)',
-                        cursor: 'pointer',
-                        flex: 1,
-                        minWidth: 0,
-                      }}
-                    >
-                      {/* Overlapping avatars: You + the other person */}
-                      <div style={{ display: 'flex', position: 'relative', width: other ? '42px' : '26px', height: '26px', flexShrink: 0 }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap', flex: 1, minWidth: 0 }}>
+                      {/* You — soft warm tint, static (no dropdown) */}
+                      <div
+                        style={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '7px',
+                          background: '#FFFBEB',
+                          borderRadius: '20px',
+                          padding: '5px 14px 5px 5px',
+                          flexShrink: 0,
+                        }}
+                      >
                         <img
                           src="/divido_laughing_cat_mascot_1778063273427.png"
                           alt="You"
-                          style={{ width: '26px', height: '26px', borderRadius: '50%', objectFit: 'cover', border: '2px solid #FFFFFF', position: 'absolute', left: 0, zIndex: 2 }}
+                          style={{ width: '26px', height: '26px', borderRadius: '50%', objectFit: 'cover', border: '2px solid #FFFFFF' }}
                         />
-                        {other && (
-                          <div
-                            style={{
-                              width: '26px',
-                              height: '26px',
-                              borderRadius: '50%',
-                              background: avatarColors[colorIdx],
-                              color: textColors[colorIdx],
-                              display: 'flex',
-                              alignItems: 'center',
-                              justifyContent: 'center',
-                              fontSize: '9.5px',
-                              fontWeight: 600,
-                              border: '2px solid #FFFFFF',
-                              position: 'absolute',
-                              left: '16px',
-                              zIndex: 1,
-                            }}
-                          >
-                            {otherInitials}
-                          </div>
-                        )}
+                        <span style={{ fontSize: '12.5px', fontWeight: 700, color: '#B45309' }}>You</span>
                       </div>
-                      <span
+
+                      {/* Other person — soft blue tint, tappable dropdown */}
+                      <div
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setShowFriendPickerPopup((prev) => !prev);
+                          setHighlightAddFriend(false);
+                        }}
                         style={{
-                          fontSize: '13px',
-                          fontWeight: 700,
-                          color: other ? '#334155' : '#94A3B8',
-                          whiteSpace: 'nowrap',
-                          overflow: 'hidden',
-                          textOverflow: 'ellipsis',
-                          flex: 1,
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '7px',
+                          background: other ? '#EFF6FF' : '#FFFFFF',
+                          borderRadius: '20px',
+                          padding: other ? '5px 12px 5px 5px' : '6px 14px',
+                          border: other ? 'none' : '1.5px dashed #CBD5E1',
+                          cursor: 'pointer',
                           minWidth: 0,
+                          maxWidth: '100%',
                         }}
                       >
-                        {label}
-                      </span>
-                      <span style={{ fontSize: '11px', color: '#CBD5E1', flexShrink: 0 }}>▾</span>
+                        {other ? (
+                          <>
+                            <div
+                              style={{
+                                width: '26px',
+                                height: '26px',
+                                borderRadius: '50%',
+                                background: '#FFFFFF',
+                                color: '#2563EB',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                fontSize: '9.5px',
+                                fontWeight: 700,
+                                flexShrink: 0,
+                              }}
+                            >
+                              {otherInitials}
+                            </div>
+                            <span
+                              style={{
+                                fontSize: '12.5px',
+                                fontWeight: 700,
+                                color: '#1D4ED8',
+                                whiteSpace: 'nowrap',
+                                overflow: 'hidden',
+                                textOverflow: 'ellipsis',
+                                minWidth: 0,
+                              }}
+                            >
+                              {other}
+                            </span>
+                            <span style={{ fontSize: '10px', color: '#2563EB', flexShrink: 0 }}>▾</span>
+                          </>
+                        ) : (
+                          <>
+                            <span style={{ fontSize: '15px', color: '#64748B', lineHeight: 1 }}>+</span>
+                            <span style={{ fontSize: '12.5px', fontWeight: 700, color: '#64748B' }}>Add friend</span>
+                            <span style={{ fontSize: '10px', color: '#94A3B8', flexShrink: 0 }}>▾</span>
+                          </>
+                        )}
+                      </div>
                     </div>
                   );
                 })()}
