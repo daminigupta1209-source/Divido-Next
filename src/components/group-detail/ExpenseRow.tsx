@@ -340,7 +340,7 @@ export const ExpenseRow: React.FC<ExpenseRowProps> = ({
             </h3>
             {e.isDeleted && <span style={{fontSize: '10px', background: '#FEE2E2', color: '#EF4444', padding: '2px 6px', borderRadius: '4px', fontWeight: 600, marginLeft: '6px'}}>Deleted</span>}
             <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '11px', color: '#94A3B8', marginTop: '6px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-              <span style={{ color: '#16A34A', fontWeight: 700 }}>
+              <span style={{ color: '#16A34A', fontWeight: 500 }}>
                 {e.paid === me ? 'You' : e.paid} paid {e.splitters?.[0] === me ? 'you' : e.splitters?.[0]}
               </span>
               <span>•</span>
@@ -471,7 +471,7 @@ export const ExpenseRow: React.FC<ExpenseRowProps> = ({
           </h3>
           {e.isDeleted && <span style={{fontSize: '10px', background: '#FEE2E2', color: '#EF4444', padding: '2px 6px', borderRadius: '4px', fontWeight: 600}}>Deleted</span>}
           <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '11px', color: '#94A3B8', marginTop: '6px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-            <span style={{ color: e.paid === me ? '#16A34A' : '#DE7093', fontWeight: 700 }}>{(() => {
+            <span style={{ color: e.paid === me ? '#16A34A' : '#DE7093', fontWeight: 500 }}>{(() => {
               // Write-offs show "who paid whom" for a clearer picture.
               const receiver = Array.isArray(e.splitters) ? e.splitters[0] : undefined;
               if (e.title === 'Written off' && receiver) {
