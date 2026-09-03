@@ -300,28 +300,6 @@ export const GroupMemberList: React.FC<GroupMemberListProps> = ({
     setTimeout(() => { inlineInputRef.current?.focus(); }, 50);
   };
 
-  // The "+ Add friend" row shown as the last item in a tab's list. Hidden while
-  // the add form is open (the form takes its place at the top).
-  const AddFriendRow: React.FC<{ topBorder?: boolean }> = ({ topBorder }) => {
-    if (isAddingInline) return null;
-    return (
-      <div
-        onClick={openAddFriend}
-        style={{
-          display: 'flex',
-          alignItems: 'center',
-          gap: '11px',
-          padding: '11px 2px',
-          borderTop: topBorder ? '1px solid #F1F5F9' : 'none',
-          cursor: 'pointer',
-        }}
-      >
-        <div style={{ width: '38px', height: '38px', borderRadius: '50%', border: '1.5px dashed #F97316', color: '#F97316', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '20px', fontWeight: 600, flex: 'none' }}>+</div>
-        <span style={{ fontSize: '14px', fontWeight: 600, color: '#F97316' }}>Add friend</span>
-      </div>
-    );
-  };
-
   return (
     <div
       onClick={(e) => e.stopPropagation()}
@@ -656,7 +634,6 @@ export const GroupMemberList: React.FC<GroupMemberListProps> = ({
                 </div>
               );
             })}
-            <AddFriendRow topBorder={joinedMembersList.length > 0} />
           </div>
         </div>
         )}
@@ -873,7 +850,6 @@ export const GroupMemberList: React.FC<GroupMemberListProps> = ({
                   </div>
                 </div>
               ))}
-              <AddFriendRow topBorder={pendingMembersList.length > 0} />
             </div>
           </div>
         )}
@@ -889,6 +865,34 @@ export const GroupMemberList: React.FC<GroupMemberListProps> = ({
             gap: '10px',
           }}
         >
+          {!isAddingInline && (
+            <button
+              type="button"
+              onClick={openAddFriend}
+              style={{
+                width: '100%',
+                background: 'transparent',
+                color: '#F97316',
+                border: '1.5px dashed #F97316',
+                borderRadius: '14px',
+                padding: '12px 0',
+                fontFamily: 'inherit',
+                fontWeight: 600,
+                fontSize: '14px',
+                cursor: 'pointer',
+                display: 'inline-flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: '6px',
+                transition: 'all 0.15s ease',
+              }}
+              onMouseEnter={(e) => { e.currentTarget.style.background = 'rgba(249,115,22,0.06)'; }}
+              onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent'; }}
+            >
+              <span style={{ fontSize: '17px', fontWeight: 600, lineHeight: 1 }}>+</span>
+              Add friend
+            </button>
+          )}
           {isAddingInline && (
                 <div
                   style={{
@@ -1118,7 +1122,6 @@ export const GroupMemberList: React.FC<GroupMemberListProps> = ({
                   </div>
                 );
               })}
-            <AddFriendRow topBorder={leftMembersList.length > 0} />
             </div>
           </div>
         )}
