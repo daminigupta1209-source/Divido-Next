@@ -69,8 +69,12 @@ export const GroupMemberList: React.FC<GroupMemberListProps> = ({
   // Names added in the last few seconds, highlighted in the Pending list so the
   // user sees their new invite land.
   const [justAddedNames, setJustAddedNames] = useState<string[]>([]);
+  // Names added this session, newest first — used to float fresh invites to the
+  // top of the Pending list (persists past the highlight so they don't jump back).
+  const [sessionAddedNames, setSessionAddedNames] = useState<string[]>([]);
   const markJustAdded = (name: string) => {
     setJustAddedNames((prev) => (prev.includes(name) ? prev : [...prev, name]));
+    setSessionAddedNames((prev) => [name, ...prev.filter((n) => n.toLowerCase() !== name.toLowerCase())]);
     setTimeout(() => setJustAddedNames((prev) => prev.filter((n) => n !== name)), 5000);
   };
 
@@ -261,7 +265,15 @@ export const GroupMemberList: React.FC<GroupMemberListProps> = ({
   };
 
   const joinedMembersList = selectedGroup.members.filter(m => !selectedGroup.pendingMembers?.includes(m) && !m.endsWith(' (Left)'));
-  const pendingMembersList = selectedGroup.pendingMembers || [];
+  const rawPendingList = selectedGroup.pendingMembers || [];
+  // Float this session's freshly-added invites to the top (newest first), then
+  // the rest in their original order.
+  const pendingMembersList = [
+    ...sessionAddedNames
+      .map((n) => rawPendingList.find((m) => m.replace(/\s*\(me\)$/i, '').trim().toLowerCase() === n.toLowerCase()))
+      .filter((m): m is string => !!m),
+    ...rawPendingList.filter((m) => !sessionAddedNames.some((n) => n.toLowerCase() === m.replace(/\s*\(me\)$/i, '').trim().toLowerCase())),
+  ];
   const leftMembersList = selectedGroup.members.filter((m) => m.endsWith(' (Left)'));
 
   // Two-letter initials for a member's avatar (first + last word, else first two
