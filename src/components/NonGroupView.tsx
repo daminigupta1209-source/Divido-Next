@@ -147,7 +147,7 @@ export const NonGroupView: React.FC<NonGroupViewProps> = ({
     const allCollect = hasBalance && lines.every((l) => l.amount > 0);
 
     return (
-      <div style={{ padding: '16px', maxWidth: '640px', margin: '0 auto' }}>
+      <div className="content-width-limit">
         {/* Header */}
         <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '16px' }}>
           <button
@@ -286,7 +286,7 @@ export const NonGroupView: React.FC<NonGroupViewProps> = ({
   };
 
   return (
-    <div style={{ padding: '16px', maxWidth: '640px', margin: '0 auto' }}>
+    <div className="content-width-limit">
       {/* Net balance card — styled to match the home page pill */}
       <div style={{ marginBottom: '22px' }}>
         <div style={{ fontSize: '11px', fontWeight: 700, letterSpacing: '1.5px', textTransform: 'uppercase', color: '#B0A79C', marginBottom: '10px', marginLeft: '2px' }}>
