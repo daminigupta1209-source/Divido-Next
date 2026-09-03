@@ -914,123 +914,136 @@ export const GroupMemberList: React.FC<GroupMemberListProps> = ({
                 </button>
                 <h1 style={{ fontSize: '20px', fontWeight: 600, color: 'var(--t)', margin: 0 }}>Add friend</h1>
               </div>
-                <div
+
+              {/* Search / type a name */}
+              <div style={{ position: 'relative' }}>
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#94A3B8" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" style={{ position: 'absolute', left: '16px', top: '50%', transform: 'translateY(-50%)' }}>
+                  <circle cx="11" cy="11" r="7" /><path d="m21 21-4.3-4.3" />
+                </svg>
+                <input
+                  ref={inlineInputRef}
+                  id="dv-member-add"
+                  autoFocus
+                  type="search"
+                  autoComplete="off"
+                  autoCorrect="off"
+                  spellCheck="false"
+                  data-1p-ignore
+                  data-lpignore="true"
+                  placeholder="Search or type a new name"
+                  value={inlineAddVal}
+                  onChange={(e) => setInlineAddVal(e.target.value)}
+                  onKeyDown={(e) => { if (e.key === 'Escape') { window.history.back(); } }}
                   style={{
-                    display: 'flex',
-                    flexDirection: 'column',
-                    gap: '12px',
+                    height: '50px',
+                    borderRadius: '14px',
+                    border: '1.5px solid #E2E8F0',
+                    background: 'var(--w)',
+                    fontSize: '15px',
+                    fontWeight: 600,
+                    color: 'var(--t)',
+                    padding: '0 16px 0 44px',
+                    outline: 'none',
                     boxSizing: 'border-box',
+                    width: '100%',
                   }}
-                >
-                  <input
-                    ref={inlineInputRef}
-                    id="dv-member-add"
-                    autoFocus
-                    type="search"
-                    autoComplete="off"
-                    autoCorrect="off"
-                    spellCheck="false"
-                    data-1p-ignore
-                    data-lpignore="true"
-                    placeholder="Enter name..."
-                    value={inlineAddVal}
-                    onChange={(e) => setInlineAddVal(e.target.value)}
-                    onKeyDown={(e) => {
-                      if (e.key === 'Escape') { window.history.back(); }
-                    }}
-                    style={{
-                      height: '50px',
-                      borderRadius: '14px',
-                      border: '1.5px solid #E2E8F0',
-                      background: 'var(--w)',
-                      fontSize: '15px',
-                      fontWeight: 600,
-                      color: 'var(--t)',
-                      padding: '0 16px',
-                      outline: 'none',
-                      boxSizing: 'border-box',
-                      width: '100%',
-                    }}
-                  />
+                />
+              </div>
 
-                  <input
-                    type="search"
-                    autoComplete="off"
-                    autoCorrect="off"
-                    spellCheck="false"
-                    data-1p-ignore
-                    data-lpignore="true"
-                    placeholder="Email (optional)"
-                    value={inlineEmailVal}
-                    onChange={(e) => setInlineEmailVal(e.target.value)}
-                    onKeyDown={(e) => { if (e.key === 'Enter') handleInlineAdd(); }}
-                    style={{
-                      height: '50px',
-                      borderRadius: '14px',
-                      border: '1.5px solid #E2E8F0',
-                      background: 'var(--w)',
-                      fontSize: '14px',
-                      fontWeight: 500,
-                      color: '#334155',
-                      padding: '0 16px',
-                      outline: 'none',
-                      boxSizing: 'border-box',
-                      width: '100%',
-                    }}
-                  />
-
-                  <button
-                    onClick={() => handleInlineAdd()}
-                    style={{
-                      marginTop: '4px',
-                      width: '100%',
-                      padding: '15px',
-                      borderRadius: '14px',
-                      border: 'none',
-                      background: '#10B981',
-                      color: '#FFFFFF',
-                      fontWeight: 700,
-                      fontSize: '15px',
-                      cursor: 'pointer',
-                      boxShadow: '0 4px 10px -2px rgba(16, 185, 129, 0.3)',
-                    }}
-                  >
-                    Add to Group
-                  </button>
-                </div>
-
-              {/* Suggestions: people you've split with before */}
               {(() => {
-                const q = inlineAddVal.trim().toLowerCase();
-                const shown = buildSuggestions()
+                const qRaw = inlineAddVal.trim();
+                const q = qRaw.toLowerCase();
+                const allSug = buildSuggestions();
+                const shown = allSug
                   .filter((s) => !q || s.name.toLowerCase().includes(q) || s.email.toLowerCase().includes(q))
-                  .slice(0, 6);
-                if (shown.length === 0) return null;
+                  .slice(0, 8);
+                const existsInGroup = selectedGroup.members.some(
+                  (m) => m.replace(/\s*\(Left\)$/i, '').trim().toLowerCase() === q
+                );
+                const exactSug = allSug.some((s) => s.name.toLowerCase() === q);
+                const canAddNew = qRaw.length > 0 && !existsInGroup && !exactSug;
                 return (
-                  <div style={{ marginTop: '4px' }}>
-                    <p style={{ margin: '0 0 10px 0', fontSize: '11px', fontWeight: 600, color: '#94A3B8', textTransform: 'uppercase', letterSpacing: '0.5px', textAlign: 'left' }}>
-                      Recently split with
-                    </p>
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                      {shown.map((s) => (
+                  <>
+                    {canAddNew && (
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                        <input
+                          type="search"
+                          autoComplete="off"
+                          autoCorrect="off"
+                          spellCheck="false"
+                          data-1p-ignore
+                          data-lpignore="true"
+                          placeholder="Email (optional)"
+                          value={inlineEmailVal}
+                          onChange={(e) => setInlineEmailVal(e.target.value)}
+                          onKeyDown={(e) => { if (e.key === 'Enter') handleInlineAdd(); }}
+                          style={{
+                            height: '50px',
+                            borderRadius: '14px',
+                            border: '1.5px solid #E2E8F0',
+                            background: 'var(--w)',
+                            fontSize: '14px',
+                            fontWeight: 500,
+                            color: '#334155',
+                            padding: '0 16px',
+                            outline: 'none',
+                            boxSizing: 'border-box',
+                            width: '100%',
+                          }}
+                        />
                         <button
-                          key={s.email || s.name}
-                          type="button"
-                          onClick={() => handleInlineAdd(s.name, s.email, s.identity)}
-                          style={{ display: 'flex', alignItems: 'center', gap: '12px', width: '100%', textAlign: 'left', background: 'var(--w)', border: '1.5px solid #F1F5F9', borderRadius: '14px', padding: '12px 14px', cursor: 'pointer' }}
+                          onClick={() => handleInlineAdd()}
+                          style={{
+                            width: '100%',
+                            padding: '15px',
+                            borderRadius: '14px',
+                            border: 'none',
+                            background: '#10B981',
+                            color: '#FFFFFF',
+                            fontWeight: 700,
+                            fontSize: '15px',
+                            cursor: 'pointer',
+                            boxShadow: '0 4px 10px -2px rgba(16, 185, 129, 0.3)',
+                          }}
                         >
-                          <span style={{ width: '38px', height: '38px', borderRadius: '50%', background: '#EEF2FF', color: '#4338CA', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '14px', fontWeight: 700, flexShrink: 0 }}>
-                            {s.name.charAt(0).toUpperCase()}
-                          </span>
-                          <span style={{ minWidth: 0, flex: 1 }}>
-                            <span style={{ display: 'block', fontSize: '14px', fontWeight: 600, color: '#334155', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{s.name}</span>
-                            {s.email && <span style={{ display: 'block', fontSize: '11px', color: '#94A3B8', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{s.email}</span>}
-                          </span>
-                          <span style={{ color: '#6366F1', fontSize: '20px', fontWeight: 700, flexShrink: 0 }}>+</span>
+                          Add “{qRaw}” as new
                         </button>
-                      ))}
-                    </div>
-                  </div>
+                      </div>
+                    )}
+
+                    {shown.length > 0 && (
+                      <div>
+                        <p style={{ margin: '0 0 10px 0', fontSize: '11px', fontWeight: 600, color: '#94A3B8', textTransform: 'uppercase', letterSpacing: '0.5px', textAlign: 'left' }}>
+                          Recently split with
+                        </p>
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                          {shown.map((s) => (
+                            <button
+                              key={s.email || s.name}
+                              type="button"
+                              onClick={() => handleInlineAdd(s.name, s.email, s.identity)}
+                              style={{ display: 'flex', alignItems: 'center', gap: '12px', width: '100%', textAlign: 'left', background: 'var(--w)', border: '1.5px solid #F1F5F9', borderRadius: '14px', padding: '12px 14px', cursor: 'pointer' }}
+                            >
+                              <span style={{ width: '38px', height: '38px', borderRadius: '50%', background: '#EEF2FF', color: '#4338CA', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '14px', fontWeight: 700, flexShrink: 0 }}>
+                                {s.name.charAt(0).toUpperCase()}
+                              </span>
+                              <span style={{ minWidth: 0, flex: 1 }}>
+                                <span style={{ display: 'block', fontSize: '14px', fontWeight: 600, color: '#334155', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{s.name}</span>
+                                {s.email && <span style={{ display: 'block', fontSize: '11px', color: '#94A3B8', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{s.email}</span>}
+                              </span>
+                              <span style={{ color: '#6366F1', fontSize: '20px', fontWeight: 700, flexShrink: 0 }}>+</span>
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    {shown.length === 0 && !canAddNew && (
+                      <p style={{ margin: '4px 0 0', fontSize: '13px', color: '#94A3B8', textAlign: 'center' }}>
+                        Type a name to add someone new.
+                      </p>
+                    )}
+                  </>
                 );
               })()}
           </div>
