@@ -1032,14 +1032,14 @@ export const GroupMemberList: React.FC<GroupMemberListProps> = ({
                     if (e.key === 'Enter' && canAddNew) { e.preventDefault(); handleAddNew(); }
                   }}
                   style={{
-                    height: '42px',
-                    borderRadius: '12px',
+                    height: '36px',
+                    borderRadius: '10px',
                     border: '1.5px solid #E2E8F0',
                     background: 'var(--w)',
-                    fontSize: '15px',
+                    fontSize: '14px',
                     fontWeight: 600,
                     color: 'var(--t)',
-                    padding: canAddNew ? '0 54px 0 44px' : '0 16px 0 44px',
+                    padding: canAddNew ? '0 48px 0 44px' : '0 16px 0 44px',
                     outline: 'none',
                     boxSizing: 'border-box',
                     width: '100%',
@@ -1053,8 +1053,8 @@ export const GroupMemberList: React.FC<GroupMemberListProps> = ({
                       right: '12px',
                       top: '50%',
                       transform: 'translateY(-50%)',
-                      width: '28px',
-                      height: '28px',
+                      width: '24px',
+                      height: '24px',
                       background: 'transparent',
                       border: 'none',
                       cursor: 'pointer',
@@ -1085,18 +1085,18 @@ export const GroupMemberList: React.FC<GroupMemberListProps> = ({
                   onChange={(e) => setInlineEmailVal(e.target.value)}
                   onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); handleAddNew(); } }}
                   style={{
-                    height: '42px',
-                    borderRadius: '12px',
+                    height: '36px',
+                    borderRadius: '10px',
                     border: '1.5px solid #E2E8F0',
                     background: 'var(--w)',
-                    fontSize: '14px',
+                    fontSize: '13px',
                     fontWeight: 500,
                     color: '#334155',
                     padding: '0 16px',
                     outline: 'none',
                     boxSizing: 'border-box',
                     width: '100%',
-                    marginTop: '-12px',
+                    marginTop: '-14px',
                   }}
                 />
               )}
