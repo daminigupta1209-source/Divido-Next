@@ -892,160 +892,105 @@ export const ExpenseModal: React.FC<ExpenseModalProps> = ({
                 )}
               </div>
               <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginTop: '2px', position: 'relative' }}>
-                {/* You pill — always shown, non-interactive */}
                 <div
                   style={{
+                    flex: 1,
+                    background: '#FFFFFF',
+                    borderRadius: '20px',
                     padding: '6px 12px',
-                    borderRadius: '10px',
-                    background: 'rgba(16, 185, 129, 0.1)',
-                    border: '1.5px solid #10B981',
-                    fontSize: '12px',
-                    fontWeight: 600,
-                    color: '#065F46',
                     display: 'flex',
                     alignItems: 'center',
-                    gap: '6px',
-                    flexShrink: 0,
+                    justifyContent: 'space-between',
+                    boxShadow: '0 4px 20px rgba(0,0,0,0.03)',
+                    border: '1.5px solid #F8FAFC',
+                    minWidth: 0,
                   }}
                 >
-                  <img
-                    src="/divido_laughing_cat_mascot_1778063273427.png"
-                    style={{ width: '18px', height: '18px', borderRadius: '50%' }}
-                    alt="cat avatar"
-                  />
-                  You ✓
-                </div>
+                  <div
+                    onClick={(e) => { 
+                      e.stopPropagation(); 
+                      setShowFriendPickerPopup((prev) => !prev);
+                      setHighlightAddFriend(false);
+                    }}
+                    style={{ display: 'flex', alignItems: 'center', gap: '6px', cursor: 'pointer', flex: 1, minWidth: 0 }}
+                  >
+                    <div style={{ display: 'flex', alignItems: 'center', position: 'relative', height: '32px', width: `${Math.min(selectedSplitters.length, 4) * 20 + 8}px`, flexShrink: 0 }}>
+                      {selectedSplitters.slice(0, 4).map((member, idx) => {
+                        const isMe = member === me;
+                        const initials = (() => {
+                          if (isMe) return 'YO';
+                          const p = member.trim().split(/\s+/);
+                          if (p.length === 1) return p[0].substring(0, 2).toUpperCase();
+                          return (p[0].charAt(0) + p[p.length - 1].charAt(0)).toUpperCase();
+                        })();
+                        
+                        const avatarColors = ['#E0F2FE', '#F0FDF4', '#FEF2F2', '#FFFBEB', '#F5F3FF', '#FFF1F2'];
+                        const textColors = ['#0369A1', '#15803D', '#B91C1C', '#B45309', '#6D28D9', '#BE123C'];
+                        const colorIdx = member.charCodeAt(0) % avatarColors.length;
 
-                {friendsToSelect.filter(f => f !== me).length === 0 ? (
-                  /* No friends yet — show + Friend */
+                        const baseCircle: React.CSSProperties = {
+                          width: '28px',
+                          height: '28px',
+                          borderRadius: '50%',
+                          border: '2px solid #FFFFFF',
+                          position: 'absolute',
+                          left: `${idx * 20}px`,
+                          boxShadow: '0 2px 4px rgba(0,0,0,0.05)',
+                          zIndex: 4 - idx,
+                        };
+
+                        return isMe ? (
+                          <img
+                            key={member}
+                            src="/divido_laughing_cat_mascot_1778063273427.png"
+                            alt="You"
+                            style={{ ...baseCircle, objectFit: 'cover' }}
+                          />
+                        ) : (
+                          <div
+                            key={member}
+                            style={{
+                              ...baseCircle,
+                              background: avatarColors[colorIdx],
+                              color: textColors[colorIdx],
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              fontSize: '9.5px',
+                              fontWeight: 600,
+                            }}
+                          >
+                            {initials}
+                          </div>
+                        );
+                      })}
+                    </div>
+                    <span style={{ fontSize: '11.5px', fontWeight: 700, color: '#94A3B8', letterSpacing: '0.1px' }}>
+                      {selectedSplitters.length} {selectedSplitters.length === 1 ? 'Member' : 'Members'}
+                    </span>
+                  </div>
+
                   <button
                     type="button"
                     onClick={() => {
                       setShowFriendPickerPopup(false);
                       setSelectedId(localGId === 'STANDALONE' ? 'STANDALONE' : localGId);
                       setShowAddFriendModal(true);
+                      setHighlightAddFriend(false);
                     }}
                     style={{
-                      height: '34px',
-                      padding: '0 16px',
-                      borderRadius: '999px',
-                      background: 'transparent',
-                      border: '1.5px solid #059669',
-                      fontSize: '12px',
-                      fontWeight: 600,
-                      color: '#059669',
-                      cursor: 'pointer',
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '4px',
-                      flexShrink: 0,
+                      width: '28px', height: '28px', borderRadius: '50%',
+                      background: 'var(--w)', border: '1.5px dashed #CBD5E1',
+                      fontSize: '16px', fontWeight: 600, color: '#94A3B8',
+                      cursor: 'pointer', display: 'flex', alignItems: 'center',
+                      justifyContent: 'center', outline: 'none', padding: 0, flexShrink: 0,
                     }}
+                    className="hover-up-mini"
+                    title="Invite Friend"
                   >
-                    + Friend
+                    +
                   </button>
-                ) : (
-                  <>
-                    <div
-                      style={{
-                        flex: 1,
-                        background: '#FFFFFF',
-                        borderRadius: '20px',
-                        padding: '6px 12px',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'space-between',
-                        boxShadow: '0 4px 20px rgba(0,0,0,0.03)',
-                        border: '1.5px solid #F8FAFC',
-                        minWidth: 0,
-                      }}
-                    >
-                      <div
-                        onClick={(e) => { 
-                          e.stopPropagation(); 
-                          setShowFriendPickerPopup((prev) => !prev);
-                          setHighlightAddFriend(false);
-                        }}
-                        style={{ display: 'flex', alignItems: 'center', gap: '6px', cursor: 'pointer', flex: 1, minWidth: 0 }}
-                      >
-                        <div style={{ display: 'flex', alignItems: 'center', position: 'relative', height: '32px', width: `${Math.min(selectedSplitters.filter(f => f !== me).length, 4) * 20 + 8}px`, flexShrink: 0 }}>
-                          {selectedSplitters.filter(f => f !== me).slice(0, 4).map((member, idx) => {
-                            const isMe = member === me;
-                            const initials = (() => {
-                              if (isMe) return 'YO';
-                              const p = member.trim().split(/\s+/);
-                              if (p.length === 1) return p[0].substring(0, 2).toUpperCase();
-                              return (p[0].charAt(0) + p[p.length - 1].charAt(0)).toUpperCase();
-                            })();
-                            
-                            const avatarColors = ['#E0F2FE', '#F0FDF4', '#FEF2F2', '#FFFBEB', '#F5F3FF', '#FFF1F2'];
-                            const textColors = ['#0369A1', '#15803D', '#B91C1C', '#B45309', '#6D28D9', '#BE123C'];
-                            const colorIdx = member.charCodeAt(0) % avatarColors.length;
-
-                            const baseCircle: React.CSSProperties = {
-                              width: '28px',
-                              height: '28px',
-                              borderRadius: '50%',
-                              border: '2px solid #FFFFFF',
-                              position: 'absolute',
-                              left: `${idx * 20}px`,
-                              boxShadow: '0 2px 4px rgba(0,0,0,0.05)',
-                              zIndex: 4 - idx,
-                            };
-
-                            return isMe ? (
-                              <img
-                                key={member}
-                                src="/divido_laughing_cat_mascot_1778063273427.png"
-                                alt="You"
-                                style={{ ...baseCircle, objectFit: 'cover' }}
-                              />
-                            ) : (
-                              <div
-                                key={member}
-                                style={{
-                                  ...baseCircle,
-                                  background: avatarColors[colorIdx],
-                                  color: textColors[colorIdx],
-                                  display: 'flex',
-                                  alignItems: 'center',
-                                  justifyContent: 'center',
-                                  fontSize: '9.5px',
-                                  fontWeight: 600,
-                                }}
-                              >
-                                {initials}
-                              </div>
-                            );
-                          })}
-                        </div>
-                        <span style={{ fontSize: '11.5px', fontWeight: 700, color: '#94A3B8', letterSpacing: '0.1px' }}>
-                          {selectedSplitters.filter(f => f !== me).length} {selectedSplitters.filter(f => f !== me).length === 1 ? 'Member' : 'Members'}
-                        </span>
-                      </div>
-
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setShowFriendPickerPopup(false);
-                          setSelectedId(localGId === 'STANDALONE' ? 'STANDALONE' : localGId);
-                          setShowAddFriendModal(true);
-                          setHighlightAddFriend(false);
-                        }}
-                        style={{
-                          width: '28px', height: '28px', borderRadius: '50%',
-                          background: 'var(--w)', border: '1.5px dashed #CBD5E1',
-                          fontSize: '16px', fontWeight: 600, color: '#94A3B8',
-                          cursor: 'pointer', display: 'flex', alignItems: 'center',
-                          justifyContent: 'center', outline: 'none', padding: 0, flexShrink: 0,
-                        }}
-                        className="hover-up-mini"
-                        title="Invite Friend"
-                      >
-                        +
-                      </button>
-                    </div>
-                  </>
-                )}
+                </div>
 
                 {/* Friends popup — centered overlay */}
                 {showFriendPickerPopup && (
