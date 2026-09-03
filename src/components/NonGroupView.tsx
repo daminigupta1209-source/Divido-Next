@@ -52,7 +52,6 @@ export const NonGroupView: React.FC<NonGroupViewProps> = ({
   onSettlePerson,
   onRemindPerson,
   onAddWithPerson,
-  onSharePerson,
 }) => {
   const [selectedPerson, setSelectedPerson] = React.useState<string | null>(null);
   // Bottom toggle on the front page: Settle | Photos (swipe left/right).
@@ -171,69 +170,49 @@ export const NonGroupView: React.FC<NonGroupViewProps> = ({
           <span style={{ fontSize: '13px', color: '#94A3B8' }}>Non-Group Expenses</span>
         </div>
 
-        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center', marginBottom: '16px' }}>
-          <Avatar name={person} size={56} />
-          <div style={{ fontSize: '17px', fontWeight: 700, color: '#0F172A', marginTop: '8px' }}>{person}</div>
-        </div>
-
-        {/* Balance pill */}
-        <div
-          style={{
-            background: !hasBalance ? '#F1F5F9' : allCollect ? '#16A34A' : '#DC2626',
-            borderRadius: '14px',
-            padding: '14px 16px',
-            marginBottom: '12px',
-            textAlign: 'center',
-          }}
-        >
-          <span style={{ fontSize: '15px', fontWeight: 700, color: !hasBalance ? '#64748B' : '#FFFFFF' }}>
-            {!hasBalance
-              ? 'All settled up'
-              : lines
-                  .map((l) => `${l.amount > 0 ? 'You collect' : 'You pay'} ${l.curr}${fmt(l.amount)}`)
-                  .join('  ·  ')}
-          </span>
-        </div>
-
-        {/* Actions */}
-        <div style={{ display: 'flex', gap: '8px', marginBottom: '20px' }}>
-          {hasBalance && (
-            <button
-              type="button"
-              onClick={() => onSettlePerson(person)}
-              style={actionBtnStyle}
-            >
-              💸 Settle up
-            </button>
-          )}
+        {/* Compact header — avatar, name + balance, small icon actions */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '14px' }}>
+          <Avatar name={person} size={46} />
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <div style={{ fontSize: '16px', fontWeight: 700, color: '#0F172A', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{person}</div>
+            <div style={{ fontSize: '13px', fontWeight: 600, color: !hasBalance ? '#94A3B8' : allCollect ? '#16A34A' : '#DC2626' }}>
+              {!hasBalance
+                ? 'All settled up'
+                : lines.map((l) => `${l.amount > 0 ? 'You collect' : 'You pay'} ${l.curr}${fmt(l.amount)}`).join(' · ')}
+            </div>
+          </div>
           {hasBalance && allCollect && onRemindPerson && (
             <button
               type="button"
               onClick={() => onRemindPerson(person)}
-              style={actionBtnStyle}
+              title="Send a reminder"
+              style={{ width: '38px', height: '38px', borderRadius: '50%', border: '0.5px solid #CBD5E1', background: '#FFFFFF', color: '#64748B', fontSize: '17px', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', flexShrink: 0 }}
             >
-              🔔 Remind
+              🔔
             </button>
           )}
           {onAddWithPerson && (
             <button
               type="button"
               onClick={() => onAddWithPerson(person)}
-              style={actionBtnStyle}
+              title={`Add an expense with ${person}`}
+              style={{ width: '38px', height: '38px', borderRadius: '50%', border: 'none', background: '#10B981', color: '#FFFFFF', fontSize: '20px', lineHeight: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', flexShrink: 0, boxShadow: '0 2px 8px rgba(16,185,129,0.35)' }}
             >
-              ＋ Add expense
-            </button>
-          )}
-          {onSharePerson && (
-            <button
-              type="button"
-              onClick={() => onSharePerson(person)}
-              style={actionBtnStyle}
-            >
-              🔗 Share
+              +
             </button>
           )}
         </div>
+
+        {/* Primary Settle button */}
+        {hasBalance && (
+          <button
+            type="button"
+            onClick={() => onSettlePerson(person)}
+            style={{ width: '100%', padding: '13px', borderRadius: '12px', border: 'none', background: '#0F766E', color: '#FFFFFF', fontSize: '14px', fontWeight: 700, cursor: 'pointer', marginBottom: '20px' }}
+          >
+            Settle up
+          </button>
+        )}
 
         <div style={{ fontSize: '10px', fontWeight: 600, letterSpacing: '1.2px', color: '#94A3B8', textTransform: 'uppercase', marginBottom: '8px' }}>
           Expenses with {person}
@@ -453,17 +432,4 @@ export const NonGroupView: React.FC<NonGroupViewProps> = ({
       </div>
     </div>
   );
-};
-
-const actionBtnStyle: React.CSSProperties = {
-  flex: 1,
-  textAlign: 'center',
-  padding: '9px',
-  border: '1.5px solid #CBD5E1',
-  borderRadius: '10px',
-  fontSize: '12.5px',
-  fontWeight: 700,
-  color: '#334155',
-  background: '#FFFFFF',
-  cursor: 'pointer',
 };
