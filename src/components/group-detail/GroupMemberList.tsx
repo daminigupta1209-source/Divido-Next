@@ -1032,8 +1032,8 @@ export const GroupMemberList: React.FC<GroupMemberListProps> = ({
                     if (e.key === 'Enter' && canAddNew) { e.preventDefault(); handleAddNew(); }
                   }}
                   style={{
-                    height: '50px',
-                    borderRadius: '14px',
+                    height: '42px',
+                    borderRadius: '12px',
                     border: '1.5px solid #E2E8F0',
                     background: 'var(--w)',
                     fontSize: '15px',
@@ -1085,8 +1085,8 @@ export const GroupMemberList: React.FC<GroupMemberListProps> = ({
                   onChange={(e) => setInlineEmailVal(e.target.value)}
                   onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); handleAddNew(); } }}
                   style={{
-                    height: '50px',
-                    borderRadius: '14px',
+                    height: '42px',
+                    borderRadius: '12px',
                     border: '1.5px solid #E2E8F0',
                     background: 'var(--w)',
                     fontSize: '14px',
