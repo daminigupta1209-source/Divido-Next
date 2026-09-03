@@ -1010,16 +1010,19 @@ export const GroupMemberList: React.FC<GroupMemberListProps> = ({
               </div>
 
               {/* Search / type a name */}
-              <div style={{
-                display: 'flex',
-                alignItems: 'center',
-                height: '36px',
-                borderRadius: '10px',
-                border: '1.5px solid #E2E8F0',
-                background: 'var(--w)',
-                padding: '0 12px 0 16px',
-                boxSizing: 'border-box',
-                width: '100%',
+              <div 
+                onClick={() => inlineInputRef.current?.focus()}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  height: '36px',
+                  borderRadius: '10px',
+                  border: '1.5px solid #E2E8F0',
+                  background: 'var(--w)',
+                  padding: '0 12px 0 16px',
+                  boxSizing: 'border-box',
+                  width: '100%',
+                  cursor: 'text',
               }}>
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#94A3B8" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
                   <circle cx="11" cy="11" r="7" /><path d="m21 21-4.3-4.3" />
@@ -1043,15 +1046,16 @@ export const GroupMemberList: React.FC<GroupMemberListProps> = ({
                   }}
                   style={{
                     flex: 1,
-                    height: '100%',
                     border: 'none',
                     background: 'transparent',
                     fontSize: '14px',
                     fontWeight: 600,
                     color: 'var(--t)',
                     padding: '0 10px',
+                    margin: 0,
                     outline: 'none',
                     minWidth: 0,
+                    lineHeight: 'normal',
                   }}
                 />
                 {canAddNew && (
@@ -1080,32 +1084,46 @@ export const GroupMemberList: React.FC<GroupMemberListProps> = ({
 
               {/* Email Box directly under name box if canAddNew */}
               {canAddNew && (
-                <input
-                  type="search"
-                  autoComplete="off"
-                  autoCorrect="off"
-                  spellCheck="false"
-                  data-1p-ignore
-                  data-lpignore="true"
-                  placeholder="Email (optional)"
-                  value={inlineEmailVal}
-                  onChange={(e) => setInlineEmailVal(e.target.value)}
-                  onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); handleAddNew(); } }}
+                <div 
                   style={{
+                    display: 'flex',
+                    alignItems: 'center',
                     height: '36px',
                     borderRadius: '10px',
                     border: '1.5px solid #E2E8F0',
                     background: 'var(--w)',
-                    fontSize: '13px',
-                    fontWeight: 500,
-                    color: '#334155',
                     padding: '0 16px',
-                    outline: 'none',
                     boxSizing: 'border-box',
                     width: '100%',
                     marginTop: '-14px',
                   }}
-                />
+                >
+                  <input
+                    type="search"
+                    autoComplete="off"
+                    autoCorrect="off"
+                    spellCheck="false"
+                    data-1p-ignore
+                    data-lpignore="true"
+                    placeholder="Email (optional)"
+                    value={inlineEmailVal}
+                    onChange={(e) => setInlineEmailVal(e.target.value)}
+                    onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); handleAddNew(); } }}
+                    style={{
+                      flex: 1,
+                      border: 'none',
+                      background: 'transparent',
+                      fontSize: '13px',
+                      fontWeight: 500,
+                      color: '#334155',
+                      padding: 0,
+                      margin: 0,
+                      outline: 'none',
+                      minWidth: 0,
+                      lineHeight: 'normal',
+                    }}
+                  />
+                </div>
               )}
 
               {/* Ticked friends, shown as removable pills */}
