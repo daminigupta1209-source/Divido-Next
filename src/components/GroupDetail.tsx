@@ -30,6 +30,7 @@ interface GroupDetailProps {
   me: string;
   setShowConvertModalId: (id: string | number | null) => void;
   userMetadata: Record<string, UserMetadata>;
+  memberAvatars?: Record<string, string>;
   setUserMetadata?: (meta: Record<string, UserMetadata>) => void;
   deleteExpense: (id: string | number) => void;
   onShowQR: (payee: string, amt: number, curr: string) => void;
@@ -82,6 +83,7 @@ export const GroupDetail: React.FC<GroupDetailProps> = ({
   me,
   setShowConvertModalId,
   userMetadata,
+  memberAvatars,
   setUserMetadata = () => {},
   deleteExpense,
   onShowQR,
@@ -554,6 +556,7 @@ export const GroupDetail: React.FC<GroupDetailProps> = ({
           setShowAddFriendModal={setShowAddFriendModal}
           me={me}
           userMetadata={userMetadata}
+          memberAvatars={memberAvatars}
           expenses={expenses}
           setGroups={setGroups}
               groups={groups}

@@ -171,3 +171,34 @@ DROP POLICY IF EXISTS "Allow users to update/delete their own uploads" ON storag
 CREATE POLICY "Allow users to update/delete their own uploads" ON storage.objects FOR ALL
 TO authenticated
 USING (bucket_id = 'expense-attachments' AND owner = auth.uid());
+
+-- 9. Member avatars (shared display pictures, keyed by email)
+-- Lets group members see each other's profile photo. Read is open to any
+-- signed-in user (the member list is already world-readable to authenticated
+-- users); writes are restricted so you can only set YOUR OWN avatar.
+CREATE TABLE IF NOT EXISTS public.member_avatars (
+    email text PRIMARY KEY,
+    avatar_url text,
+    updated_at timestamp with time zone DEFAULT now()
+);
+
+ALTER TABLE public.member_avatars ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS "Anyone signed in can read avatars" ON public.member_avatars;
+CREATE POLICY "Anyone signed in can read avatars"
+ON public.member_avatars FOR SELECT
+TO authenticated
+USING (true);
+
+DROP POLICY IF EXISTS "Insert own avatar" ON public.member_avatars;
+CREATE POLICY "Insert own avatar"
+ON public.member_avatars FOR INSERT
+TO authenticated
+WITH CHECK (lower(email) = lower(auth.jwt() ->> 'email'));
+
+DROP POLICY IF EXISTS "Update own avatar" ON public.member_avatars;
+CREATE POLICY "Update own avatar"
+ON public.member_avatars FOR UPDATE
+TO authenticated
+USING (lower(email) = lower(auth.jwt() ->> 'email'))
+WITH CHECK (lower(email) = lower(auth.jwt() ->> 'email'));

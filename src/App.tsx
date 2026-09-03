@@ -416,6 +416,10 @@ function App() {
   // account's real profile with its empty local defaults on first login).
   const [userId, setUserId] = useState<string | null>(null);
   const profileSyncReady = useRef(false);
+  // Shared member display pictures, keyed by lowercased email → image URL.
+  // Populated from the member_avatars table so group members can see each
+  // other's Google (or uploaded) photo. See loadMemberAvatars / saveMyAvatar.
+  const [memberAvatars, setMemberAvatars] = useState<Record<string, string>>({});
 
   // Dynamically resolve active identity (me) for the selected group (Tricount cookie fallback)
   const me = (() => {
@@ -1247,9 +1251,61 @@ function App() {
     }
   };
 
+  // Save my own display picture to the shared member_avatars table so other
+  // group members can see it. Called at sign-in (with the Google photo) and
+  // whenever I change my profile photo. Only my own row is writable (RLS).
+  const saveMyAvatar = async (email: string, avatarUrl: string) => {
+    const em = (email || '').trim().toLowerCase();
+    if (!em || !avatarUrl) return;
+    try {
+      await supabase
+        .from('member_avatars')
+        .upsert({ email: em, avatar_url: avatarUrl, updated_at: new Date().toISOString() }, { onConflict: 'email' });
+      setMemberAvatars((prev) => ({ ...prev, [em]: avatarUrl }));
+    } catch (e) {
+      console.error('Failed to save avatar:', e);
+    }
+  };
+
+  // Fetch avatars for a set of emails and merge them into state.
+  const loadMemberAvatars = async (emails: string[]) => {
+    const list = Array.from(new Set(emails.map((e) => (e || '').trim().toLowerCase()).filter((e) => e.includes('@'))));
+    if (list.length === 0) return;
+    try {
+      const { data, error } = await supabase
+        .from('member_avatars')
+        .select('email, avatar_url')
+        .in('email', list);
+      if (!error && data) {
+        setMemberAvatars((prev) => {
+          const next = { ...prev };
+          data.forEach((row: { email: string; avatar_url: string | null }) => {
+            if (row.avatar_url) next[row.email.toLowerCase()] = row.avatar_url;
+          });
+          return next;
+        });
+      }
+    } catch (e) {
+      console.error('Failed to load avatars:', e);
+    }
+  };
+
   useEffect(() => {
     try { sessionStorage.removeItem('divido_chunk_reloaded'); } catch {}
   }, []);
+
+  // Whenever groups change, refresh avatars for everyone in them (plus me).
+  useEffect(() => {
+    if (!isAuthenticated) return;
+    const emails: string[] = [];
+    if (userEmail) emails.push(userEmail);
+    groups.forEach((g) => {
+      const ids = (g as any).memberIdentities || {};
+      Object.values(ids).forEach((v) => { if (typeof v === 'string' && v.includes('@')) emails.push(v); });
+    });
+    if (emails.length) loadMemberAvatars(emails);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [groups, isAuthenticated, userEmail]);
 
   useEffect(() => {
     // Listen to changes in auth state from Supabase
@@ -1264,6 +1320,9 @@ function App() {
         // Await background linking so database has user_email set before sync fetches
         if (session.user?.email) {
           await linkGuestIdentities(session.user.email);
+          // Capture the Google (or provider) profile photo so co-members see it.
+          const googlePic = session.user?.user_metadata?.avatar_url || session.user?.user_metadata?.picture;
+          if (googlePic) saveMyAvatar(session.user.email, googlePic);
         }
         if (session.user?.id) {
           setUserId(session.user.id);
@@ -1301,6 +1360,9 @@ function App() {
         // Await background linking so database has user_email set before sync fetches
         if (session.user?.email) {
           await linkGuestIdentities(session.user.email);
+          // Capture the Google (or provider) profile photo so co-members see it.
+          const googlePic = session.user?.user_metadata?.avatar_url || session.user?.user_metadata?.picture;
+          if (googlePic) saveMyAvatar(session.user.email, googlePic);
         }
         if (session.user?.id) {
           setUserId(session.user.id);
@@ -1752,6 +1814,8 @@ function App() {
         .then(({ error }) => {
           if (error) console.error('Failed to save profile to Supabase:', error);
         });
+      // A manually-uploaded photo should also be visible to co-members.
+      if (md.profilePhoto && userEmail) saveMyAvatar(userEmail, md.profilePhoto);
     }, 800);
     return () => clearTimeout(t);
   }, [isAuthenticated, userId, userName, userMetadata]);
@@ -3310,6 +3374,7 @@ function App() {
             setShowConvertModalId={setShowConvertModalId}
             wasRemovedByAdmin={notifications.some((n) => n.type === 'removed' && String(n.groupId) === String(selectedId))}
             userMetadata={userMetadata}
+            memberAvatars={memberAvatars}
             setUserMetadata={setUserMetadata}
             deleteExpense={deleteExpenseSecure}
             onDeleteGroup={handleDeleteGroup}

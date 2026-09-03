@@ -11,6 +11,7 @@ interface GroupMemberListProps {
   setShowAddFriendModal: (b: boolean) => void;
   me: string;
   userMetadata: Record<string, UserMetadata>;
+  memberAvatars?: Record<string, string>;
   expenses: Expense[];
   setGroups: React.Dispatch<React.SetStateAction<Group[]>>;
   groups: Group[];
@@ -33,6 +34,7 @@ export const GroupMemberList: React.FC<GroupMemberListProps> = ({
   setShowAddFriendModal,
   me,
   userMetadata,
+  memberAvatars,
   expenses,
   setGroups,
   groups,
@@ -262,14 +264,31 @@ export const GroupMemberList: React.FC<GroupMemberListProps> = ({
   const STATUS_DOT: Record<'joined' | 'pending' | 'left', string> = {
     joined: '#1D9E75', pending: '#EF9F27', left: '#94A3B8',
   };
-  // A round avatar with a status dot, shared across all three tabs.
+  // The shared display picture for a member, looked up by their email identity.
+  const avatarUrlFor = (name: string): string => {
+    const email = emailFor(name).toLowerCase();
+    return (email && memberAvatars?.[email]) || '';
+  };
+  // A round avatar with a status dot, shared across all three tabs. Shows the
+  // member's Google/uploaded photo when we have one, else colored initials.
   const Avatar: React.FC<{ name: string; status: 'joined' | 'pending' | 'left' }> = ({ name, status }) => {
     const [bg, fg] = avatarColor(name);
+    const photo = avatarUrlFor(name);
     return (
       <div style={{ position: 'relative', width: '38px', height: '38px', flex: 'none' }}>
-        <div style={{ width: '38px', height: '38px', borderRadius: '50%', background: bg, color: fg, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '13px', fontWeight: 700 }}>
-          {initialsFor(name)}
-        </div>
+        {photo ? (
+          <img
+            src={photo}
+            alt={name}
+            referrerPolicy="no-referrer"
+            onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = 'none'; }}
+            style={{ width: '38px', height: '38px', borderRadius: '50%', objectFit: 'cover', display: 'block' }}
+          />
+        ) : (
+          <div style={{ width: '38px', height: '38px', borderRadius: '50%', background: bg, color: fg, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '13px', fontWeight: 700 }}>
+            {initialsFor(name)}
+          </div>
+        )}
         <span style={{ position: 'absolute', right: '-1px', bottom: '-1px', width: '11px', height: '11px', borderRadius: '50%', background: STATUS_DOT[status], border: '2.5px solid var(--w)' }} />
       </div>
     );
