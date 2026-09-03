@@ -151,6 +151,24 @@ body {
 .no-scrollbar::-webkit-scrollbar { display: none; }
 .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
 
+/* Light Scrollbar for specific containers */
+.light-scrollbar {
+  scrollbar-width: thin;
+  scrollbar-color: #CBD5E1 transparent;
+}
+.light-scrollbar::-webkit-scrollbar {
+  width: 4px;
+  height: 4px;
+  display: block;
+}
+.light-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}
+.light-scrollbar::-webkit-scrollbar-thumb {
+  background-color: #CBD5E1;
+  border-radius: 4px;
+}
+
 @keyframes undoBarDeplete { from { transform: scaleX(1); } to { transform: scaleX(0); } }
 
 @keyframes laugh-bounce {

@@ -602,7 +602,7 @@ export const CreateGroupView: React.FC<CreateGroupViewProps> = ({
 
               {/* Suggestions: people you've split with before */}
               {(() => {
-                const shown = buildPeopleSuggestions(groups, null, participants, me).slice(0, 6);
+                const shown = buildPeopleSuggestions(groups, null, participants, me);
                 if (shown.length === 0) return null;
                 const norm = (n: string) => n.replace(/\s*\(Left\)$/i, '').trim().toLowerCase();
                 return (
@@ -610,7 +610,7 @@ export const CreateGroupView: React.FC<CreateGroupViewProps> = ({
                     <p style={{ margin: '0 0 6px 0', fontSize: '10px', fontWeight: 700, color: '#94A3B8', textTransform: 'uppercase', letterSpacing: '0.5px', textAlign: 'center' }}>
                       Recently split with
                     </p>
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', maxHeight: '150px', overflowY: 'auto' }}>
+                    <div className="light-scrollbar" style={{ display: 'flex', flexDirection: 'column', gap: '4px', maxHeight: '150px', overflowY: 'auto', paddingRight: '4px' }}>
                       {shown.map((s) => (
                         <button
                           key={s.email || s.name}

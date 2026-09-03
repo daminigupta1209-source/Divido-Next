@@ -407,15 +407,14 @@ export const AddFriendModal: React.FC<AddFriendModalProps> = ({
                 const pendLower = new Set(pending.map((p) => p.toLowerCase()));
                 const shown = suggestions
                   .filter((s) => !pendLower.has(s.name.toLowerCase()))
-                  .filter((s) => !q || s.name.toLowerCase().includes(q) || s.email.toLowerCase().includes(q))
-                  .slice(0, 6);
+                  .filter((s) => !q || s.name.toLowerCase().includes(q) || s.email.toLowerCase().includes(q));
                 if (shown.length === 0) return null;
                 return (
                   <div style={{ marginTop: '12px' }}>
                     <p style={{ margin: '0 0 6px 0', fontSize: '11px', fontWeight: 700, color: '#94A3B8', textTransform: 'uppercase', letterSpacing: '0.5px', textAlign: 'left' }}>
                       Recently split with
                     </p>
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', maxHeight: '160px', overflowY: 'auto' }}>
+                    <div className="light-scrollbar" style={{ display: 'flex', flexDirection: 'column', gap: '4px', maxHeight: '160px', overflowY: 'auto', paddingRight: '4px' }}>
                       {shown.map((s) => (
                         <button
                           key={s.email || s.name}
