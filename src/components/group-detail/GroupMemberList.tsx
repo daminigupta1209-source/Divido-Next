@@ -65,7 +65,14 @@ export const GroupMemberList: React.FC<GroupMemberListProps> = ({
   // Which segment of the members screen is showing. One list at a time replaces
   // the old three stacked cards (and makes the duplicate-section render bug
   // impossible — only the active tab is ever mounted).
-  const [activeTab, setActiveTab] = useState<'joined' | 'pending' | 'left'>('joined');
+  const [activeTab, setActiveTab] = useState<'joined' | 'pending' | 'left'>('pending');
+  // Names added in the last few seconds, highlighted in the Pending list so the
+  // user sees their new invite land.
+  const [justAddedNames, setJustAddedNames] = useState<string[]>([]);
+  const markJustAdded = (name: string) => {
+    setJustAddedNames((prev) => (prev.includes(name) ? prev : [...prev, name]));
+    setTimeout(() => setJustAddedNames((prev) => prev.filter((n) => n !== name)), 5000);
+  };
 
   // The full-screen Add Friend view is a sub-screen of the members list, so the
   // device Back button (or gesture) must close IT first and return to the member
@@ -241,11 +248,16 @@ export const GroupMemberList: React.FC<GroupMemberListProps> = ({
       const identities = identity ? { [trimmed]: identity } : undefined;
       onAddMembers([trimmed], emails, identities);
     }
-    if (fromArg === undefined) { setInlineAddVal(''); setInlineEmailVal(''); }
-    // Automatically refocus the input box for consecutive additions
-    setTimeout(() => {
-      inlineInputRef.current?.focus();
-    }, 50);
+    setInlineAddVal('');
+    setInlineEmailVal('');
+    // Show the new invite where it lands: jump to Pending, flag it as just
+    // added, and close the Add Friend screen so the user sees it in the list.
+    markJustAdded(trimmed);
+    setActiveTab('pending');
+    if (isAddingInline) {
+      // Close the full-screen add view via history so Back stays consistent.
+      window.history.back();
+    }
   };
 
   const joinedMembersList = selectedGroup.members.filter(m => !selectedGroup.pendingMembers?.includes(m) && !m.endsWith(' (Left)'));
@@ -696,7 +708,9 @@ export const GroupMemberList: React.FC<GroupMemberListProps> = ({
           )}
             <div style={{ display: 'flex', flexDirection: 'column' }}>
               <AddFriendRow bottomBorder={pendingMembersList.length > 0} />
-              {pendingMembersList.map((m, idx) => (
+              {pendingMembersList.map((m, idx) => {
+                const isJustAdded = justAddedNames.some((n) => n.toLowerCase() === m.replace(/\s*\(me\)$/i, '').trim().toLowerCase());
+                return (
                 <div
                   key={m}
                   style={{
@@ -704,9 +718,13 @@ export const GroupMemberList: React.FC<GroupMemberListProps> = ({
                     alignItems: 'center',
                     justifyContent: 'space-between',
                     gap: '11px',
-                    padding: '11px 2px',
-                    borderBottom: idx < pendingMembersList.length - 1 ? '1px solid #F1F5F9' : 'none',
+                    padding: '11px 8px',
+                    margin: '0 -6px',
+                    borderRadius: isJustAdded ? '12px' : 0,
+                    background: isJustAdded ? '#ECFDF5' : 'transparent',
+                    borderBottom: idx < pendingMembersList.length - 1 && !isJustAdded ? '1px solid #F1F5F9' : 'none',
                     boxSizing: 'border-box',
+                    transition: 'background 0.4s ease',
                   }}
                 >
                   <Avatar name={m} status="pending" />
@@ -753,7 +771,7 @@ export const GroupMemberList: React.FC<GroupMemberListProps> = ({
                       >
                         {checkIsMe(m) ? 'You' : m.replace(/\s*\(me\)$/i, '')} {checkIsAdmin(m) && <span style={{ fontSize: '10px', fontWeight: 600, color: '#7C3AED', background: '#F5F3FF', padding: '1px 6px', borderRadius: '4px', marginLeft: '6px' }}>Admin</span>}
                       </span>
-                      <span style={{ fontSize: '11px', color: '#94A3B8', fontWeight: 500 }}>Invite sent</span>
+                      <span style={{ fontSize: '11px', color: isJustAdded ? '#059669' : '#94A3B8', fontWeight: isJustAdded ? 700 : 500 }}>{isJustAdded ? '✓ Just added' : 'Invite sent'}</span>
                       </>
                     )}
                   </div>
@@ -864,7 +882,8 @@ export const GroupMemberList: React.FC<GroupMemberListProps> = ({
                     )}
                   </div>
                 </div>
-              ))}
+                );
+              })}
             </div>
             {pendingMembersList.length > 1 && (
               <button
