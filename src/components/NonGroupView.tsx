@@ -61,6 +61,18 @@ export const NonGroupView: React.FC<NonGroupViewProps> = ({
 
   const meLower = cleanName(me).toLowerCase();
 
+  // With the on-screen breadcrumb gone, make the phone/browser back button
+  // return from a person's page to the people list (instead of leaving the
+  // non-group screen entirely). Push one history entry while a person is open
+  // and pop back to the list when the user goes back.
+  React.useEffect(() => {
+    if (!selectedPerson) return;
+    window.history.pushState({ dividoNonGroupPerson: true }, '');
+    const onPop = () => setSelectedPerson(null);
+    window.addEventListener('popstate', onPop);
+    return () => window.removeEventListener('popstate', onPop);
+  }, [selectedPerson]);
+
   // All non-group (STANDALONE) expenses, newest first.
   const nonGroupExps = React.useMemo(
     () =>
@@ -156,20 +168,7 @@ export const NonGroupView: React.FC<NonGroupViewProps> = ({
     const allCollect = hasBalance && lines.every((l) => l.amount > 0);
 
     return (
-      <div className="content-width-limit">
-        {/* Header */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '16px' }}>
-          <button
-            type="button"
-            onClick={() => setSelectedPerson(null)}
-            style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0, display: 'flex', alignItems: 'center' }}
-            aria-label="Back to people"
-          >
-            <span style={{ fontSize: '22px', color: '#64748B', lineHeight: 1 }}>‹</span>
-          </button>
-          <span style={{ fontSize: '13px', color: '#94A3B8' }}>Non-Group Expenses</span>
-        </div>
-
+      <div className="content-width-limit" style={{ paddingTop: '4px' }}>
         {/* Compact header — avatar, name + balance, small icon actions */}
         <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '14px' }}>
           <Avatar name={person} size={46} />
@@ -208,7 +207,7 @@ export const NonGroupView: React.FC<NonGroupViewProps> = ({
           <button
             type="button"
             onClick={() => onSettlePerson(person)}
-            style={{ width: '100%', padding: '13px', borderRadius: '12px', border: 'none', background: '#0F766E', color: '#FFFFFF', fontSize: '14px', fontWeight: 700, cursor: 'pointer', marginBottom: '20px' }}
+            style={{ width: '100%', padding: '13px', borderRadius: '12px', border: 'none', background: '#10B981', color: '#FFFFFF', fontSize: '14px', fontWeight: 700, cursor: 'pointer', marginBottom: '20px' }}
           >
             Settle up
           </button>
