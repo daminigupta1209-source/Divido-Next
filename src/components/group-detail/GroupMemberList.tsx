@@ -713,11 +713,6 @@ export const GroupMemberList: React.FC<GroupMemberListProps> = ({
             gap: '4px',
           }}
         >
-          {pendingMembersList.length === 0 && (
-            <p style={{ margin: 0, padding: '20px 4px', fontSize: '13px', color: '#94A3B8', textAlign: 'center' }}>
-              No pending invites.
-            </p>
-          )}
             <div style={{ display: 'flex', flexDirection: 'column' }}>
               <AddFriendRow bottomBorder={pendingMembersList.length > 0} />
               {pendingMembersList.map((m, idx) => {
