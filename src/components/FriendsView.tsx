@@ -663,7 +663,7 @@ export const FriendsView: React.FC<FriendsViewProps> = ({
         </div>
       )}
 
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(340px, 1fr))', gap: '20px' }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(min(100%, 340px), 1fr))', gap: '20px' }}>
         {filteredFriends.map((f) => {
           const activeBals = getConvertedBals(f.bals);
           const isOwed = Object.values(activeBals).some((v) => v > 0.01);
