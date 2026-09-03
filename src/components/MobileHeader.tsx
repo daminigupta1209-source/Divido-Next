@@ -459,8 +459,8 @@ export const MobileHeader: React.FC<MobileHeaderProps> = ({
             {/* ⋮ Vertical three-dots button — positioned at the rightmost edge */}
             {selectedGroup && (
               <div style={{ zIndex: 9999, display: 'inline-flex', alignItems: 'center', flexShrink: 0, marginLeft: 'auto' }}>
-                {/* Share Group Link Button */}
-                {!amIPastMember && (
+                {/* Share Group Link Button — not for Non-Group (no single group to share) */}
+                {!amIPastMember && selectedId !== 'STANDALONE' && (
                   <button
                     onClick={() => { onInviteFriend && onInviteFriend(); }}
                     style={{

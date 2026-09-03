@@ -218,15 +218,17 @@ export const NonGroupView: React.FC<NonGroupViewProps> = ({
             return (
               <div
                 key={e.id}
+                className="hover-up-mini"
                 onClick={() => onOpenExpense(e)}
                 style={{
                   display: 'flex',
                   alignItems: 'center',
                   gap: '12px',
                   background: '#FFFFFF',
-                  border: '1.5px solid #E2E8F0',
-                  borderRadius: '12px',
-                  padding: '12px',
+                  border: '0.5px solid #EFE7DC',
+                  borderRadius: '16px',
+                  padding: '14px 16px',
+                  boxShadow: '0 2px 10px rgba(0,0,0,0.03)',
                   cursor: 'pointer',
                 }}
               >
@@ -342,8 +344,9 @@ export const NonGroupView: React.FC<NonGroupViewProps> = ({
             return (
               <div
                 key={p.name}
+                className="hover-up-mini"
                 onClick={() => setSelectedPerson(p.name)}
-                style={{ display: 'flex', alignItems: 'center', gap: '12px', background: '#FFFFFF', border: '1.5px solid #E2E8F0', borderRadius: '12px', padding: '12px', cursor: 'pointer' }}
+                style={{ display: 'flex', alignItems: 'center', gap: '12px', background: '#FFFFFF', border: '0.5px solid #EFE7DC', borderRadius: '16px', padding: '14px 16px', boxShadow: '0 2px 10px rgba(0,0,0,0.03)', cursor: 'pointer' }}
               >
                 <Avatar name={p.name} size={38} />
                 <div style={{ flex: 1, minWidth: 0 }}>
@@ -379,7 +382,7 @@ export const NonGroupView: React.FC<NonGroupViewProps> = ({
                 return (
                   <div
                     key={p.name}
-                    style={{ display: 'flex', alignItems: 'center', gap: '12px', background: '#FFFFFF', border: '1.5px solid #E2E8F0', borderRadius: '12px', padding: '10px 12px' }}
+                    style={{ display: 'flex', alignItems: 'center', gap: '12px', background: '#FFFFFF', border: '0.5px solid #EFE7DC', borderRadius: '16px', padding: '12px 16px', boxShadow: '0 2px 10px rgba(0,0,0,0.03)' }}
                   >
                     <Avatar name={p.name} size={32} />
                     <div style={{ flex: 1, minWidth: 0 }}>
