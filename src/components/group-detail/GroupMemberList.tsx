@@ -1061,7 +1061,6 @@ export const GroupMemberList: React.FC<GroupMemberListProps> = ({
               </p>
             )}
             <div style={{ display: 'flex', flexDirection: 'column' }}>
-              <AddFriendRow bottomBorder={leftMembersList.length > 0} />
               {leftMembersList.map((m, idx) => {
                 const cleanName = m.replace(' (Left)', '');
                 return (
