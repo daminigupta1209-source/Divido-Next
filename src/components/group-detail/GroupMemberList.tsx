@@ -1050,12 +1050,12 @@ export const GroupMemberList: React.FC<GroupMemberListProps> = ({
                     onClick={handleAddNew}
                     style={{
                       position: 'absolute',
-                      right: '8px',
+                      right: '10px',
                       top: '50%',
                       transform: 'translateY(-50%)',
-                      width: '34px',
-                      height: '34px',
-                      borderRadius: '10px',
+                      width: '32px',
+                      height: '32px',
+                      borderRadius: '8px',
                       background: '#10B981',
                       border: 'none',
                       cursor: 'pointer',
@@ -1065,7 +1065,7 @@ export const GroupMemberList: React.FC<GroupMemberListProps> = ({
                       color: 'white',
                     }}
                   >
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="square">
                       <polyline points="20 6 9 17 4 12" />
                     </svg>
                   </button>
