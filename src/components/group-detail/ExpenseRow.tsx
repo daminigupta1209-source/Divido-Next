@@ -119,6 +119,21 @@ export const ExpenseRow: React.FC<ExpenseRowProps> = ({
     return (
       <div
         className="card hover-bright"
+        onContextMenu={(ev) => {
+          ev.preventDefault();
+          handleLongPress(e);
+        }}
+        onTouchStart={() => {
+          longPressTimerRef.current = setTimeout(() => {
+            handleLongPress(e);
+          }, 500);
+        }}
+        onTouchEnd={() => {
+          if (longPressTimerRef.current) clearTimeout(longPressTimerRef.current);
+        }}
+        onTouchMove={() => {
+          if (longPressTimerRef.current) clearTimeout(longPressTimerRef.current);
+        }}
         style={{
           position: 'relative',
           padding: '14px 16px',
@@ -196,19 +211,12 @@ export const ExpenseRow: React.FC<ExpenseRowProps> = ({
           style={{ display: 'flex', alignItems: 'center', gap: '12px', position: 'relative', zIndex: 10 }}
           onClick={(ev) => ev.stopPropagation()}
         >
-          <div
-            className="dropdown"
-            style={{ position: 'relative', cursor: 'pointer', fontSize: '16px', padding: '6px', color: 'var(--g)' }}
-            onClick={(ev) => {
-              ev.stopPropagation();
-              setOpenExpId(openExpId === e.id ? null : e.id);
-            }}
-          >
-            ⋮
-            <div
-              className="dropdown-content"
-              style={{ display: openExpId === e.id ? 'block' : 'none', right: 0, top: '100%', minWidth: '160px', zIndex: 100 }}
-            >
+          <div style={{ position: 'relative' }}>
+            {openExpId === e.id && (
+              <div
+                className="card shadow-xl dropdown-content"
+                style={{ display: 'block', position: 'absolute', right: 0, top: '100%', minWidth: '160px', zIndex: 100, background: '#FFFFFF', padding: '6px', borderRadius: '12px', border: '1.5px solid #F1F5F9' }}
+              >
               <div
                 onClick={(ev) => {
                   ev.stopPropagation();
@@ -262,6 +270,7 @@ export const ExpenseRow: React.FC<ExpenseRowProps> = ({
                 Delete Activity
               </div>
             </div>
+            )}
           </div>
         </div>
       </div>
@@ -272,7 +281,23 @@ export const ExpenseRow: React.FC<ExpenseRowProps> = ({
     const timeStr = getExactTime(e.id);
     return (
       <div
+        onContextMenu={(ev) => {
+          ev.preventDefault();
+          handleLongPress(e);
+        }}
+        onTouchStart={() => {
+          longPressTimerRef.current = setTimeout(() => {
+            handleLongPress(e);
+          }, 500);
+        }}
+        onTouchEnd={() => {
+          if (longPressTimerRef.current) clearTimeout(longPressTimerRef.current);
+        }}
+        onTouchMove={() => {
+          if (longPressTimerRef.current) clearTimeout(longPressTimerRef.current);
+        }}
         onClick={() => {
+          if (openExpId === e.id) return;
           setEditingExpense(e);
           setShowExpModal(true);
         }}
@@ -348,28 +373,12 @@ export const ExpenseRow: React.FC<ExpenseRowProps> = ({
               {e.currency || selectedGroup.currency || '₹'} {formatExactAmount((Number(e.amt) || 0))}
             </span>
           </div>
-          <div
-            className="dropdown"
-            style={{ position: 'relative', cursor: 'pointer', fontSize: '16px', padding: '2px', color: 'var(--g)' }}
-            onClick={(ev) => {
-              ev.stopPropagation();
-              setOpenExpId(openExpId === e.id ? null : e.id);
-            }}
-          >
-            ⋮
-            <div
-              className="dropdown-content"
-              style={{ display: openExpId === e.id ? 'block' : 'none', right: 0, top: '100%', minWidth: '90px', zIndex: 100 }}
-            >
+          <div style={{ position: 'relative' }}>
+            {openExpId === e.id && (
               <div
-                onClick={() => {
-                  setEditingExpense(e);
-                  setShowExpModal(true);
-                  setOpenExpId(null);
-                }}
+                className="card shadow-xl dropdown-content"
+                style={{ display: 'block', position: 'absolute', right: 0, top: '100%', minWidth: '110px', zIndex: 100, background: '#FFFFFF', padding: '6px', borderRadius: '12px', border: '1.5px solid #F1F5F9' }}
               >
-                ✏️ Edit
-              </div>
               <div
                 style={{ color: '#DB2777' }}
                 onClick={() => {
@@ -380,6 +389,7 @@ export const ExpenseRow: React.FC<ExpenseRowProps> = ({
                 🗑️ Delete
               </div>
             </div>
+            )}
           </div>
         </div>
       </div>

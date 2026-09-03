@@ -367,8 +367,22 @@ export const ActivityStudio: React.FC<ActivityStudioProps> = ({
 
                 {e.isConversion ? (
                   <div
-                    className="card hover-up-mini"
-                    onClick={() => setShowConvertModalId(e.gId)}
+                    className="card hover-bright"
+                    onContextMenu={(ev) => {
+                      ev.preventDefault();
+                      handleLongPress(e);
+                    }}
+                    onTouchStart={() => {
+                      longPressTimerRef.current = setTimeout(() => {
+                        handleLongPress(e);
+                      }, 500);
+                    }}
+                    onTouchEnd={() => {
+                      if (longPressTimerRef.current) clearTimeout(longPressTimerRef.current);
+                    }}
+                    onTouchMove={() => {
+                      if (longPressTimerRef.current) clearTimeout(longPressTimerRef.current);
+                    }}
                     style={{
                       display: 'flex',
                       justifyContent: 'space-between',
@@ -440,16 +454,7 @@ export const ActivityStudio: React.FC<ActivityStudioProps> = ({
                       style={{ display: 'flex', alignItems: 'center', gap: '12px', flexShrink: 0 }}
                       onClick={(ev) => ev.stopPropagation()}
                     >
-                      <div className="dropdown" style={{ position: 'relative' }}>
-                        <div
-                          style={{ fontSize: '20px', color: '#6D28D9', padding: '6px', cursor: 'pointer', opacity: 0.6 }}
-                          onClick={(ev) => {
-                            ev.stopPropagation();
-                            setOpenExpId(openExpId === e.id ? null : e.id);
-                          }}
-                        >
-                          ⋮
-                        </div>
+                      <div style={{ position: 'relative' }}>
                         {openExpId === e.id && (
                           <div
                             className="card shadow-xl"
