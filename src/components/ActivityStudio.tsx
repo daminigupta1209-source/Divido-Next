@@ -671,7 +671,7 @@ export const ActivityStudio: React.FC<ActivityStudioProps> = ({
                         )}
                       </div>
                     </div>
-                    <div style={{ display: 'flex', alignItems: 'center', flexShrink: 0 }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flexShrink: 0 }}>
                       <div style={{ textAlign: 'right' }}>
                         {/* Write-offs show a struck-through amount as a "settled" cue,
                             but the card stays clickable/editable (partial write-offs). */}
