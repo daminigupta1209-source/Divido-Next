@@ -2,8 +2,8 @@
 
 React + Vite expense-splitting **PWA**. Backend: **Supabase** (Postgres + RLS + realtime + storage). Deploy: push to `main` → **Vercel** auto-deploys. Live URL: https://divido-next.vercel.app
 
-> Latest commit at handoff: **3ea6eea** (history back-swipe fix, strict third-party zero-to-remove block, SW cache **v89**). Everything below is live on `main`.
-> The **"Session 2026-09-02"** section is the freshest work — read it first, then 2026-09-01, then 2026-08-27/28.
+> Latest commit at handoff: **02ca265** (Group Members redesign + display pictures + Merge People tool + account-deletion identity fix + Add-Friend full-screen multi-select). Everything below is live on `main`.
+> The **"Session 2026-09-03"** section is the freshest work — read it first, then 2026-09-02, 2026-09-01, then 2026-08-27/28.
 
 ## Working rules
 1. **Verify every change with `npm run build`** (`tsc -b && vite build`). A failed build silently leaves the OLD version live on Vercel.
@@ -11,6 +11,35 @@ React + Vite expense-splitting **PWA**. Backend: **Supabase** (Postgres + RLS + 
 3. **DB changes:** the assistant does NOT connect to Supabase directly. When a schema change is needed, hand the owner the exact SQL to run in the Supabase SQL Editor, and (if the new code depends on it) run the SQL FIRST, then push code.
 4. **One task at a time**; after each change show what changed and stop for confirmation.
 5. Owner prefers **plain language** and **simple, short UI copy**. Use **"pay"/"collect"**, never "owe"/"owed". No emojis in the leave/remove/write-off cards.
+
+---
+
+## Session 2026-09-03 — Group Members redesign, display pictures, Merge People (freshest, read first)
+
+All shipped to `main`, each verified live in the in-app browser preview (guest/localStorage seed; dev server + PWA service worker cache aggressively — had to **restart the dev server** several times to see fresh code, and clear SW + caches. On real devices the same rule: fully close/reopen after deploy).
+
+### Group Members screen — full redesign (`src/components/group-detail/GroupMemberList.tsx`)
+- **Segmented tabs** Joined / Pending / Left replace the three stacked cards — only the active tab is mounted (the old duplicate-"Pending"-section render bug is now structurally impossible). **Opens on the Pending tab first.**
+- **Swipe** left/right anywhere on the full-screen overlay switches tabs (handlers on the outer fixed container; `touch-action: pan-y` + `overflow-x: hidden` + `overscroll-behavior: contain` stop the horizontal page shake).
+- **Avatar rows**: colored initials + status dot (green joined / amber pending / gray left), admin badge, email under name. Rows separated by hairlines, not nested pills.
+- **Add friend**: a solid-orange "+" circle row at the TOP of Joined/Pending lists (NOT on Left) + a matching **floating "+" FAB** (bottom:60px right:20px). Both open a **full-screen Add Friend view** (see below). Both hidden while that view is open.
+- **Remind all**: moved to a full-width footer button on Pending (only when 2+ pending).
+- A **just-added invite** floats to the TOP of Pending and shows a green "✓ Just added" highlight for ~5s (`sessionAddedNames` orders, `justAddedNames` highlights).
+
+### Add Friend — full screen, recent-first, MULTI-SELECT
+Full-screen view (own history entry so device Back closes IT and returns to the member list, not the group home — a guarded `pushState`/`popstate` marker; `commitSelected`/`handleInlineAdd` call `onAddMembers` BEFORE `history.back()` so a raised "same person?" prompt isn't cleared by the back).
+- One search field; **"recently split with"** list front and center (no height cap).
+- **Tap to tick** several people (green check + highlight); ticked ones show as removable **pills** up top; typing a new name reveals an optional email + "Add "X" as new" that adds to the selection. One **"Add N friends to group"** commits all at once, lands on Pending.
+
+### Member display pictures (DPs) — see memory `divido-member-avatars`
+New shared table **`member_avatars`** (email PK → avatar_url; RLS: any authed user can read, you can only write your own row). SQL is in `api/supabase_setup.sql` §9 (owner ran it). App captures the **Google photo** at sign-in (`session.user.user_metadata.avatar_url|picture` → `saveMyAvatar`), fetches avatars for all group emails (`loadMemberAvatars` → `memberAvatars` state), and shows them (fallback: initials; `referrerPolicy="no-referrer"` + onError-hide) on: member list, group balances/Settle tab, settle sheet header, group-header avatar strip, and the **All balances (Friends)** page. **Expense rows deliberately keep the category emoji** (not a person). A DP only appears once THAT account opens Divido post-deploy (Google gives nothing from just an email).
+
+### Merge People + account-deletion identity fix — see memory `divido-merge-people`
+- **Root cause fixed**: deleting an account ran `user_email: null` on every `group_members` row, dropping the person's unifying identity → each group fell back to a per-group `person_id` → the same person fragmented into MULTIPLE duplicates in balances/suggestions (owner hit this with "Chirag Gupta"). Deletion now also sets `invite_email: userEmail` (identity stays glued; also enables auto-claim on re-signup). App.tsx delete-account handler.
+- **Merge People tool**: `findDuplicatePeople`/`pickCanonicalIdentity` in `identity.ts`; `mergePeople` in App writes a shared key (`invite_email` if canonical is email, else `person_id`) to each row + mirrors into local `memberIdentities`. UI = a "N people appear more than once — review & merge" banner on **All balances** → a bottom-sheet listing each name's entries with a "Merge these N into one" button. Only suggests by name; user confirms (two real people can share a name). Limitation: merging two DIFFERENT live email accounts isn't fully supported.
+
+### Owner action still pending
+Once deployed, owner should go to **All balances → review banner → merge the real Chirag Gupta entries** (his old email is gone from the DB, so the tool merges by the user's confirmation).
 
 ---
 
@@ -184,13 +213,9 @@ src/lib/calculations.test.ts` → **31 pass**.
 - **Group Members UX Polish**: Removed the redundant "Save Changes" button at the bottom of the list, and made the top header (with the green tick) sticky during scroll. All tasks from the previous session (Identity reuse in create group, identity-aware write-offs, simplifying "Left" past members) were also verified as complete.
 
 ### ⏭️ TO DO NEXT SESSION (start here)
-1. **Two-phone test of everything above** — still not done on real devices. Priority.
-   Check: (a) can't leave/remove with a balance (Settle/Write-off only); (b) Settle up opens
-   the sheet; (c) same-person numbers match across group card / Balances tab / Settle sheet
-   (both direction AND amount); (d) same name-only friend added to two groups shows as ONE
-   person with combined balance; (e) double write-off from two phones collapses to one entry; (f) Third-party debts block member removal.
-2. **Longer-horizon (unchanged)**: offline precache-all-code; **Stage 5** permanent `person_id` on
-   expenses (kills the raw-name matching at the source); native contacts picker.
+1. **Owner: merge the real "Chirag Gupta"** via All balances → "review & merge" banner (verify the entries are all him before merging). Then confirm the DP appears once his account (and other members) reopen the app post-deploy.
+2. **Two-phone test** (still not done on real devices): (a) can't leave/remove with a balance (Settle/Write-off only); (b) Settle up opens the sheet; (c) same-person numbers match across group card / Balances tab / Settle sheet; (d) same name-only friend added to two groups shows as ONE person; (e) double write-off collapses to one entry; (f) third-party debts block removal; (g) NEW: multi-select add friend, merge-people, and display pictures across two devices.
+3. **Longer-horizon (unchanged)**: offline precache-all-code; **Stage 5** permanent `person_id` on expenses (kills raw-name matching at the source); native contacts picker.
 
 ---
 
