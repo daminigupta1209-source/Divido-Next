@@ -269,9 +269,6 @@ export const NonGroupView: React.FC<NonGroupViewProps> = ({
     (e.attachments || []).map((url) => ({ url, exp: e }))
   );
 
-  // People with a live balance — the ones you can actually settle.
-  const owing = people.filter((p) => myPerspective(p.bal).length > 0);
-
   const onTouchStart = (e: React.TouchEvent) => {
     touchStartX.current = e.touches[0].clientX;
     touchStartY.current = e.touches[0].clientY;
@@ -322,40 +319,6 @@ export const NonGroupView: React.FC<NonGroupViewProps> = ({
         </div>
       </div>
 
-      {/* People — always on top */}
-      <div style={{ fontSize: '10px', fontWeight: 600, letterSpacing: '1.2px', color: '#94A3B8', textTransform: 'uppercase', marginBottom: '10px' }}>
-        People you split with
-      </div>
-      {people.length === 0 ? (
-        <p style={{ fontSize: '13px', color: '#94A3B8', textAlign: 'center', padding: '40px 0' }}>
-          No non-group expenses yet. Add a quick expense with someone and it'll show up here.
-        </p>
-      ) : (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginBottom: '22px' }}>
-          {people.map((p) => {
-            const b = balanceText(p.bal);
-            return (
-              <div
-                key={p.name}
-                className="hover-up-mini"
-                onClick={() => setSelectedPerson(p.name)}
-                style={{ display: 'flex', alignItems: 'center', gap: '12px', background: '#FFFFFF', border: '0.5px solid #EFE7DC', borderRadius: '16px', padding: '14px 16px', boxShadow: '0 2px 10px rgba(0,0,0,0.03)', cursor: 'pointer' }}
-              >
-                <Avatar name={p.name} size={38} />
-                <div style={{ flex: 1, minWidth: 0 }}>
-                  <div style={{ fontSize: '14px', fontWeight: 700, color: '#0F172A', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{p.name}</div>
-                  <div style={{ fontSize: '11.5px', color: '#94A3B8' }}>{p.count} {p.count === 1 ? 'expense' : 'expenses'}</div>
-                </div>
-                <div style={{ textAlign: 'right', display: 'flex', alignItems: 'center', gap: '6px' }}>
-                  <span style={{ fontSize: '12.5px', fontWeight: 600, color: b.color, whiteSpace: 'nowrap' }}>{b.text}</span>
-                  <span style={{ fontSize: '14px', color: '#CBD5E1' }}>›</span>
-                </div>
-              </div>
-            );
-          })}
-        </div>
-      )}
-
       {/* Settle / Photos toggle (swipeable) — matches the home Groups/Activities tabs */}
       <div style={{ marginBottom: '14px', marginTop: '4px' }}>
         <div style={{ display: 'flex', borderBottom: '1.5px solid #F1F5F9' }}>
@@ -400,31 +363,36 @@ export const NonGroupView: React.FC<NonGroupViewProps> = ({
 
       <div onTouchStart={onTouchStart} onTouchEnd={onTouchEnd} style={{ minHeight: '80px' }}>
         {activeTab === 'settle' ? (
-          owing.length === 0 ? (
+          people.length === 0 ? (
             <p style={{ fontSize: '13px', color: '#94A3B8', textAlign: 'center', padding: '24px 0' }}>
-              Nothing to settle — you're all square.
+              No non-group expenses yet. Add a quick expense with someone and it'll show up here.
             </p>
           ) : (
             <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-              {owing.map((p) => {
+              {people.map((p) => {
                 const b = balanceText(p.bal);
+                const owes = myPerspective(p.bal).length > 0;
                 return (
                   <div
                     key={p.name}
-                    style={{ display: 'flex', alignItems: 'center', gap: '12px', background: '#FFFFFF', border: '0.5px solid #EFE7DC', borderRadius: '16px', padding: '12px 16px', boxShadow: '0 2px 10px rgba(0,0,0,0.03)' }}
+                    className="hover-up-mini"
+                    onClick={() => setSelectedPerson(p.name)}
+                    style={{ display: 'flex', alignItems: 'center', gap: '12px', background: '#FFFFFF', border: '0.5px solid #EFE7DC', borderRadius: '16px', padding: '12px 16px', boxShadow: '0 2px 10px rgba(0,0,0,0.03)', cursor: 'pointer' }}
                   >
                     <Avatar name={p.name} size={32} />
                     <div style={{ flex: 1, minWidth: 0 }}>
                       <div style={{ fontSize: '13.5px', fontWeight: 700, color: '#0F172A', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{p.name}</div>
                       <div style={{ fontSize: '11.5px', fontWeight: 600, color: b.color }}>{b.text}</div>
                     </div>
+                    {owes && (
                     <button
                       type="button"
-                      onClick={() => onSettlePerson(p.name)}
+                      onClick={(ev) => { ev.stopPropagation(); onSettlePerson(p.name); }}
                       style={{ border: '1.5px solid #CBD5E1', background: '#FFFFFF', borderRadius: '9px', padding: '7px 12px', fontSize: '12px', fontWeight: 700, color: '#334155', cursor: 'pointer', whiteSpace: 'nowrap' }}
                     >
                       Settle up
                     </button>
+                    )}
                   </div>
                 );
               })}
