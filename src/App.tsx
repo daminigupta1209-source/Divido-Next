@@ -3245,6 +3245,7 @@ function App() {
             setSelectedId={setSelectedId}
             setGlobalSettleData={setGlobalSettleData}
             userMetadata={userMetadata}
+            memberAvatars={memberAvatars}
             setUserMetadata={setUserMetadata}
             searchQuery={globalSearchQuery}
             showConvertModal={showFriendsConvert}

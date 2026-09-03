@@ -48,6 +48,7 @@ interface FriendsViewProps {
   setSelectedId: (id: string | number | null) => void;
   setGlobalSettleData: (data: GlobalSettleData | null) => void;
   userMetadata: Record<string, UserMetadata>;
+  memberAvatars?: Record<string, string>;
   setUserMetadata: (meta: Record<string, UserMetadata>) => void;
   searchQuery?: string;
   showConvertModal?: boolean;
@@ -63,6 +64,7 @@ export const FriendsView: React.FC<FriendsViewProps> = ({
   setSelectedId,
   setGlobalSettleData,
   userMetadata,
+  memberAvatars,
   setUserMetadata,
   searchQuery = '',
   showConvertModal = false,
@@ -622,9 +624,23 @@ export const FriendsView: React.FC<FriendsViewProps> = ({
               }}
             >
               {/* Avatar */}
-              <div style={{ width: '40px', height: '40px', borderRadius: '50%', background: avBg, color: '#FFFFFF', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '16px', fontWeight: 600, flexShrink: 0 }}>
-                {f.name.charAt(0).toUpperCase()}
-              </div>
+              {(() => {
+                const email = f.id && String(f.id).includes('@') ? String(f.id).toLowerCase() : '';
+                const photo = (email && memberAvatars?.[email]) || '';
+                return photo ? (
+                  <img
+                    src={photo}
+                    alt={f.name}
+                    referrerPolicy="no-referrer"
+                    onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = 'none'; }}
+                    style={{ width: '40px', height: '40px', borderRadius: '50%', objectFit: 'cover', flexShrink: 0 }}
+                  />
+                ) : (
+                  <div style={{ width: '40px', height: '40px', borderRadius: '50%', background: avBg, color: '#FFFFFF', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '16px', fontWeight: 600, flexShrink: 0 }}>
+                    {f.name.charAt(0).toUpperCase()}
+                  </div>
+                );
+              })()}
 
               {/* Name with the amount stacked right below it (left-aligned) */}
               <div style={{ minWidth: 0, flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center', gap: '6px' }}>
