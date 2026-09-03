@@ -967,8 +967,8 @@ export const ExpenseModal: React.FC<ExpenseModalProps> = ({
                         }}
                         style={{ display: 'flex', alignItems: 'center', gap: '6px', cursor: 'pointer', flex: 1, minWidth: 0 }}
                       >
-                        <div style={{ display: 'flex', alignItems: 'center', position: 'relative', height: '32px', width: `${Math.min(selectedSplitters.length, 4) * 20 + 8}px`, flexShrink: 0 }}>
-                          {selectedSplitters.slice(0, 4).map((member, idx) => {
+                        <div style={{ display: 'flex', alignItems: 'center', position: 'relative', height: '32px', width: `${Math.min(selectedSplitters.filter(f => f !== me).length, 4) * 20 + 8}px`, flexShrink: 0 }}>
+                          {selectedSplitters.filter(f => f !== me).slice(0, 4).map((member, idx) => {
                             const isMe = member === me;
                             const initials = (() => {
                               if (isMe) return 'YO';
@@ -1019,7 +1019,7 @@ export const ExpenseModal: React.FC<ExpenseModalProps> = ({
                           })}
                         </div>
                         <span style={{ fontSize: '11.5px', fontWeight: 700, color: '#94A3B8', letterSpacing: '0.1px' }}>
-                          {selectedSplitters.length} Members
+                          {selectedSplitters.filter(f => f !== me).length} {selectedSplitters.filter(f => f !== me).length === 1 ? 'Member' : 'Members'}
                         </span>
                       </div>
 
