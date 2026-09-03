@@ -971,8 +971,31 @@ export const GroupMemberList: React.FC<GroupMemberListProps> = ({
         )}
 
         {/* ADD FRIEND — full screen */}
-        {isAddingInline && (
-          <div style={{ position: 'fixed', inset: 0, background: 'var(--bg)', zIndex: 10001, overflowY: 'auto', padding: '20px 16px calc(24px + env(safe-area-inset-bottom))', boxSizing: 'border-box', display: 'flex', flexDirection: 'column', gap: '22px' }}>
+        {isAddingInline && (() => {
+          const qRaw = inlineAddVal.trim();
+          const q = qRaw.toLowerCase();
+          const allSug = buildSuggestions();
+          const shown = allSug
+            .filter((s) => !q || s.name.toLowerCase().includes(q) || s.email.toLowerCase().includes(q))
+            .slice(0, 8);
+          const existsInGroup = selectedGroup.members.some(
+            (m) => m.replace(/\s*\(Left\)$/i, '').trim().toLowerCase() === q
+          );
+          const exactSug = allSug.some((s) => s.name.toLowerCase() === q);
+          const alreadyPicked = selectedFriends.some((f) => f.name.toLowerCase() === q);
+          const canAddNew = qRaw.length > 0 && !existsInGroup && !exactSug && !alreadyPicked;
+
+          const handleAddNew = () => {
+            const em = inlineEmailVal.trim();
+            if (em && !isValidEmail(em)) { alert("That doesn't look like a valid email. Leave it blank or fix it."); return; }
+            toggleSelect({ name: qRaw, email: em, identity: '' });
+            setInlineAddVal('');
+            setInlineEmailVal('');
+            setTimeout(() => inlineInputRef.current?.focus(), 30);
+          };
+
+          return (
+            <div style={{ position: 'fixed', inset: 0, background: 'var(--bg)', zIndex: 10001, overflowY: 'auto', padding: '20px 16px calc(24px + env(safe-area-inset-bottom))', boxSizing: 'border-box', display: 'flex', flexDirection: 'column', gap: '22px' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
                 <button
                   type="button"
@@ -1004,7 +1027,10 @@ export const GroupMemberList: React.FC<GroupMemberListProps> = ({
                   placeholder="Search or type a new name"
                   value={inlineAddVal}
                   onChange={(e) => setInlineAddVal(e.target.value)}
-                  onKeyDown={(e) => { if (e.key === 'Escape') { window.history.back(); } }}
+                  onKeyDown={(e) => { 
+                    if (e.key === 'Escape') { window.history.back(); }
+                    if (e.key === 'Enter' && canAddNew) { e.preventDefault(); handleAddNew(); }
+                  }}
                   style={{
                     height: '50px',
                     borderRadius: '14px',
@@ -1013,13 +1039,68 @@ export const GroupMemberList: React.FC<GroupMemberListProps> = ({
                     fontSize: '15px',
                     fontWeight: 600,
                     color: 'var(--t)',
-                    padding: '0 16px 0 44px',
+                    padding: canAddNew ? '0 54px 0 44px' : '0 16px 0 44px',
                     outline: 'none',
                     boxSizing: 'border-box',
                     width: '100%',
                   }}
                 />
+                {canAddNew && (
+                  <button
+                    onClick={handleAddNew}
+                    style={{
+                      position: 'absolute',
+                      right: '8px',
+                      top: '50%',
+                      transform: 'translateY(-50%)',
+                      width: '34px',
+                      height: '34px',
+                      borderRadius: '10px',
+                      background: '#10B981',
+                      border: 'none',
+                      cursor: 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      color: 'white',
+                    }}
+                  >
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+                      <polyline points="20 6 9 17 4 12" />
+                    </svg>
+                  </button>
+                )}
               </div>
+
+              {/* Email Box directly under name box if canAddNew */}
+              {canAddNew && (
+                <input
+                  type="search"
+                  autoComplete="off"
+                  autoCorrect="off"
+                  spellCheck="false"
+                  data-1p-ignore
+                  data-lpignore="true"
+                  placeholder="Email (optional)"
+                  value={inlineEmailVal}
+                  onChange={(e) => setInlineEmailVal(e.target.value)}
+                  onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); handleAddNew(); } }}
+                  style={{
+                    height: '50px',
+                    borderRadius: '14px',
+                    border: '1.5px solid #E2E8F0',
+                    background: 'var(--w)',
+                    fontSize: '14px',
+                    fontWeight: 500,
+                    color: '#334155',
+                    padding: '0 16px',
+                    outline: 'none',
+                    boxSizing: 'border-box',
+                    width: '100%',
+                    marginTop: '-12px',
+                  }}
+                />
+              )}
 
               {/* Ticked friends, shown as removable pills */}
               {selectedFriends.length > 0 && (
@@ -1034,118 +1115,69 @@ export const GroupMemberList: React.FC<GroupMemberListProps> = ({
                 </div>
               )}
 
-              {(() => {
-                const qRaw = inlineAddVal.trim();
-                const q = qRaw.toLowerCase();
-                const allSug = buildSuggestions();
-                const shown = allSug
-                  .filter((s) => !q || s.name.toLowerCase().includes(q) || s.email.toLowerCase().includes(q))
-                  .slice(0, 8);
-                const existsInGroup = selectedGroup.members.some(
-                  (m) => m.replace(/\s*\(Left\)$/i, '').trim().toLowerCase() === q
-                );
-                const exactSug = allSug.some((s) => s.name.toLowerCase() === q);
-                const alreadyPicked = selectedFriends.some((f) => f.name.toLowerCase() === q);
-                const canAddNew = qRaw.length > 0 && !existsInGroup && !exactSug && !alreadyPicked;
-                return (
-                  <>
-                    {canAddNew && (
-                      <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-                        <input
-                          type="search"
-                          autoComplete="off"
-                          autoCorrect="off"
-                          spellCheck="false"
-                          data-1p-ignore
-                          data-lpignore="true"
-                          placeholder="Email (optional)"
-                          value={inlineEmailVal}
-                          onChange={(e) => setInlineEmailVal(e.target.value)}
-                          style={{
-                            height: '50px',
-                            borderRadius: '14px',
-                            border: '1.5px solid #E2E8F0',
-                            background: 'var(--w)',
-                            fontSize: '14px',
-                            fontWeight: 500,
-                            color: '#334155',
-                            padding: '0 16px',
-                            outline: 'none',
-                            boxSizing: 'border-box',
-                            width: '100%',
-                          }}
-                        />
+              {/* + Add as new button */}
+              {canAddNew && (
+                <button
+                  onClick={handleAddNew}
+                  style={{ width: '100%', padding: '13px', borderRadius: '14px', border: '1.5px dashed #10B981', background: 'transparent', color: '#059669', fontWeight: 700, fontSize: '14px', cursor: 'pointer' }}
+                >
+                  + Add “{qRaw}” as new
+                </button>
+              )}
+
+              {shown.length > 0 && (
+                <div>
+                  <p style={{ margin: '0 0 10px 0', fontSize: '11px', fontWeight: 600, color: '#94A3B8', textTransform: 'uppercase', letterSpacing: '0.5px', textAlign: 'left' }}>
+                    Recently split with
+                  </p>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                    {shown.map((s) => {
+                      const on = isSelected(s);
+                      return (
                         <button
-                          onClick={() => {
-                            const em = inlineEmailVal.trim();
-                            if (em && !isValidEmail(em)) { alert("That doesn't look like a valid email. Leave it blank or fix it."); return; }
-                            toggleSelect({ name: qRaw, email: em, identity: '' });
-                            setInlineAddVal('');
-                            setInlineEmailVal('');
-                            setTimeout(() => inlineInputRef.current?.focus(), 30);
-                          }}
-                          style={{ width: '100%', padding: '13px', borderRadius: '14px', border: '1.5px dashed #10B981', background: 'transparent', color: '#059669', fontWeight: 700, fontSize: '14px', cursor: 'pointer' }}
+                          key={s.email || s.name}
+                          type="button"
+                          onClick={() => toggleSelect(s)}
+                          style={{ display: 'flex', alignItems: 'center', gap: '12px', width: '100%', textAlign: 'left', background: on ? '#ECFDF5' : 'var(--w)', border: `1.5px solid ${on ? '#A7F3D0' : '#F1F5F9'}`, borderRadius: '14px', padding: '12px 14px', cursor: 'pointer', transition: '0.15s all ease' }}
                         >
-                          + Add “{qRaw}” as new
+                          <span style={{ width: '38px', height: '38px', borderRadius: '50%', background: '#EEF2FF', color: '#4338CA', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '14px', fontWeight: 700, flexShrink: 0 }}>
+                            {s.name.charAt(0).toUpperCase()}
+                          </span>
+                          <span style={{ minWidth: 0, flex: 1 }}>
+                            <span style={{ display: 'block', fontSize: '14px', fontWeight: 600, color: '#334155', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{s.name}</span>
+                            {s.email && <span style={{ display: 'block', fontSize: '11px', color: '#94A3B8', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{s.email}</span>}
+                          </span>
+                          {on ? (
+                            <span style={{ width: '24px', height: '24px', borderRadius: '50%', background: '#10B981', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12" /></svg>
+                            </span>
+                          ) : (
+                            <span style={{ color: '#6366F1', fontSize: '20px', fontWeight: 700, flexShrink: 0 }}>+</span>
+                          )}
                         </button>
-                      </div>
-                    )}
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
 
-                    {shown.length > 0 && (
-                      <div>
-                        <p style={{ margin: '0 0 10px 0', fontSize: '11px', fontWeight: 600, color: '#94A3B8', textTransform: 'uppercase', letterSpacing: '0.5px', textAlign: 'left' }}>
-                          Recently split with
-                        </p>
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                          {shown.map((s) => {
-                            const on = isSelected(s);
-                            return (
-                              <button
-                                key={s.email || s.name}
-                                type="button"
-                                onClick={() => toggleSelect(s)}
-                                style={{ display: 'flex', alignItems: 'center', gap: '12px', width: '100%', textAlign: 'left', background: on ? '#ECFDF5' : 'var(--w)', border: `1.5px solid ${on ? '#A7F3D0' : '#F1F5F9'}`, borderRadius: '14px', padding: '12px 14px', cursor: 'pointer', transition: '0.15s all ease' }}
-                              >
-                                <span style={{ width: '38px', height: '38px', borderRadius: '50%', background: '#EEF2FF', color: '#4338CA', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '14px', fontWeight: 700, flexShrink: 0 }}>
-                                  {s.name.charAt(0).toUpperCase()}
-                                </span>
-                                <span style={{ minWidth: 0, flex: 1 }}>
-                                  <span style={{ display: 'block', fontSize: '14px', fontWeight: 600, color: '#334155', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{s.name}</span>
-                                  {s.email && <span style={{ display: 'block', fontSize: '11px', color: '#94A3B8', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{s.email}</span>}
-                                </span>
-                                {on ? (
-                                  <span style={{ width: '24px', height: '24px', borderRadius: '50%', background: '#10B981', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12" /></svg>
-                                  </span>
-                                ) : (
-                                  <span style={{ color: '#6366F1', fontSize: '20px', fontWeight: 700, flexShrink: 0 }}>+</span>
-                                )}
-                              </button>
-                            );
-                          })}
-                        </div>
-                      </div>
-                    )}
-
-                    {shown.length === 0 && !canAddNew && selectedFriends.length === 0 && (
-                      <p style={{ margin: '4px 0 0', fontSize: '13px', color: '#94A3B8', textAlign: 'center' }}>
-                        Type a name to add someone new.
-                      </p>
-                    )}
-                  </>
-                );
-              })()}
+              {shown.length === 0 && !canAddNew && selectedFriends.length === 0 && (
+                <p style={{ margin: '4px 0 0', fontSize: '13px', color: '#94A3B8', textAlign: 'center' }}>
+                  Type a name to add someone new.
+                </p>
+              )}
 
               {selectedFriends.length > 0 && (
                 <button
                   onClick={commitSelected}
-                  style={{ width: '100%', padding: '15px', borderRadius: '14px', border: 'none', background: '#10B981', color: '#FFFFFF', fontWeight: 700, fontSize: '15px', cursor: 'pointer' }}
+                  style={{ width: '100%', padding: '15px', borderRadius: '14px', border: 'none', background: '#10B981', color: '#FFFFFF', fontWeight: 700, fontSize: '15px', cursor: 'pointer', marginTop: 'auto' }}
                 >
                   Add {selectedFriends.length} {selectedFriends.length === 1 ? 'friend' : 'friends'} to group
                 </button>
               )}
-          </div>
-        )}
+            </div>
+          );
+        })()}
 
         {/* LEFT TAB */}
         {activeTab === 'left' && (
