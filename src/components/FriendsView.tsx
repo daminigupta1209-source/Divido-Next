@@ -737,9 +737,11 @@ export const FriendsView: React.FC<FriendsViewProps> = ({
               {/* Name with the amount stacked right below it (left-aligned) */}
               <div style={{ minWidth: 0, flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center', gap: '6px' }}>
                 <h3 style={{ fontSize: '16px', fontWeight: 600, color: '#2E2A25', margin: 0, textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap', textTransform: 'capitalize' }}>{f.name}</h3>
-                {f.id && String(f.id).includes('@') && (
+                {f.id && String(f.id).includes('@') ? (
                   <span style={{ fontSize: '11px', fontWeight: 500, color: '#94A3B8', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{f.id}</span>
-                )}
+                ) : f.groups && f.groups.length > 0 ? (
+                  <span style={{ fontSize: '11px', fontWeight: 500, color: '#94A3B8', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{f.groups.join(', ')}</span>
+                ) : null}
                 {!active ? (
                   <span style={{ fontSize: '13px', fontWeight: 500, color: '#94A3B8' }}>Settled up</span>
                 ) : (
