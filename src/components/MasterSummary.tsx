@@ -310,11 +310,24 @@ export const MasterSummary: React.FC<MasterSummaryProps> = ({
       return acc;
     }, {});
 
+    const defaultCategories = [
+      { emoji: '🍕', label: 'Food & Dining' },
+      { emoji: '🚕', label: 'Travel & Transport' },
+      { emoji: '🏠', label: 'Rent & Utilities' },
+      { emoji: '🛒', label: 'Groceries' },
+      { emoji: '🍻', label: 'Drinks & Nightlife' },
+      { emoji: '🛍️', label: 'Shopping' },
+      { emoji: '⚡', label: 'Others' }
+    ];
+    const customCategories = userMetadata[me]?.customBudgetCategories || [];
+    const allCategories = [...defaultCategories, ...customCategories];
+
     return budgetEntries
       .map(([emoji, limit]) => {
         const spent = spentByCategory[emoji] || 0;
         const limitNum = parseFloat(String(limit)) || 0;
-        return { emoji, spent, limit: limitNum };
+        const label = allCategories.find(c => c.emoji === emoji)?.label || 'Category';
+        return { emoji, label, spent, limit: limitNum };
       })
       .filter((b) => b.spent > b.limit);
   })();
@@ -461,7 +474,7 @@ export const MasterSummary: React.FC<MasterSummaryProps> = ({
                 Budget Exceeded
               </span>
               <span style={{ fontSize: '13px', color: '#BE123C', fontWeight: 500 }}>
-                {exceededBudgets.map(b => `${b.emoji} ₹${b.spent.toFixed(0)}`).join(', ')}
+                {exceededBudgets.map(b => `${b.emoji} ${b.label}: ₹${b.spent.toFixed(0)}`).join(', ')}
               </span>
             </div>
           </div>
