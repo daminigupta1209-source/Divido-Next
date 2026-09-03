@@ -28,6 +28,7 @@ interface GroupDetailProps {
   setShowCurrPickerId: (id: string | null) => void;
   showCurrPickerId: string | null;
   me: string;
+  myEmail?: string;
   setShowConvertModalId: (id: string | number | null) => void;
   userMetadata: Record<string, UserMetadata>;
   memberAvatars?: Record<string, string>;
@@ -81,6 +82,7 @@ export const GroupDetail: React.FC<GroupDetailProps> = ({
   setShowCurrPickerId,
   showCurrPickerId,
   me,
+  myEmail,
   setShowConvertModalId,
   userMetadata,
   memberAvatars,
@@ -571,6 +573,7 @@ export const GroupDetail: React.FC<GroupDetailProps> = ({
           setShowFriendsList={setShowFriendsList}
           setShowAddFriendModal={setShowAddFriendModal}
           me={me}
+          myEmail={myEmail}
           userMetadata={userMetadata}
           memberAvatars={memberAvatars}
           expenses={expenses}

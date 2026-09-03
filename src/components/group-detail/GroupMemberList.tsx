@@ -10,6 +10,7 @@ interface GroupMemberListProps {
   setShowFriendsList: (b: boolean) => void;
   setShowAddFriendModal: (b: boolean) => void;
   me: string;
+  myEmail?: string;
   userMetadata: Record<string, UserMetadata>;
   memberAvatars?: Record<string, string>;
   expenses: Expense[];
@@ -33,6 +34,7 @@ export const GroupMemberList: React.FC<GroupMemberListProps> = ({
   setShowFriendsList,
   setShowAddFriendModal,
   me,
+  myEmail,
   userMetadata,
   memberAvatars,
   expenses,
@@ -117,7 +119,7 @@ export const GroupMemberList: React.FC<GroupMemberListProps> = ({
   };
 
   // "People you've split with before" — see buildPeopleSuggestions (identity.ts).
-  const buildSuggestions = () => buildPeopleSuggestions(groups, selectedGroup.id, selectedGroup.members, me);
+  const buildSuggestions = () => buildPeopleSuggestions(groups, selectedGroup.id, selectedGroup.members, me, myEmail);
 
   // Per-currency net for a member (positive = to collect, negative = to pay).
   // This member's balance WITH ME in this group, via the ONE canonical engine +

@@ -60,8 +60,13 @@ export const buildPeopleSuggestions = (
   currentGroupId: string | number | null,
   currentMembers: string[],
   me: string,
+  myEmail?: string,
 ): { name: string; email: string; identity: string }[] => {
   const meLower = (me || '').replace(/\s*\((me|Left)\)$/i, '').trim().toLowerCase();
+  // Also exclude MYSELF by identity/email, not just by name: across other groups
+  // I may be listed under a slightly different name than `me`, so a name-only
+  // filter lets me leak into my own suggestions (and lets me add myself).
+  const myEmailLower = (myEmail || '').trim().toLowerCase();
   const curMembers = new Set((currentMembers || []).map((m) => m.replace(/\s*\(Left\)$/i, '').trim().toLowerCase()));
   // Collect one raw entry per (group member): name + their stable identity
   // (email OR person_id) from that group's memberIdentities.
@@ -74,6 +79,8 @@ export const buildPeopleSuggestions = (
       const lower = clean.toLowerCase();
       if (!clean || lower === meLower || curMembers.has(lower)) continue;
       const identity = typeof mi[m] === 'string' ? mi[m] : '';
+      // Skip my own account no matter what name it wears in another group.
+      if (myEmailLower && identity.toLowerCase() === myEmailLower) continue;
       raw.push({ name: clean, email: identity.includes('@') ? identity : '', identity });
     }
   }

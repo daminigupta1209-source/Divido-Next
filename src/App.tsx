@@ -1072,6 +1072,13 @@ function App() {
     }
   });
   
+  // A "direct" group is a shared non-group card (isDirect). Its expenses are
+  // presented as Non-Group Expenses, and the group itself is hidden from the
+  // Groups list. This predicate is the single source of truth for "does this
+  // expense belong under Non-Group Expenses?".
+  const directGroupIdSet = new Set(groups.filter((g) => g.isDirect).map((g) => String(g.id)));
+  const isNonGroupExpense = (e: Expense) => String(e.gId) === 'STANDALONE' || directGroupIdSet.has(String(e.gId));
+
   // Always-current mirror of `groups` so deferred callbacks (e.g. the delayed
   // remove-sweep) can read the latest state instead of a stale closure.
   const groupsRef = useRef(groups);
@@ -3001,6 +3008,36 @@ function App() {
     }
   };
 
+  // Promote a private, local Non-Group ("STANDALONE") expense into a hidden
+  // 2-person "direct" group so it can be shared/invited/edited — reusing all the
+  // normal group machinery, but presented under Non-Group Expenses (isDirect).
+  // Returns the new group id (for building the invite link), or null.
+  const promoteNonGroupExpense = (expenseId: string | number, otherName: string, otherEmail?: string): string | null => {
+    const exp = expenses.find((e) => String(e.id) === String(expenseId));
+    if (!exp || String(exp.gId) !== 'STANDALONE') return null;
+    const other = (otherName || (exp.splitters || []).find((s) => s !== me) || '').trim();
+    if (!other) return null;
+    const gid = genGroupId();
+    const email = (otherEmail || '').trim().toLowerCase();
+    const memberIdentities: Record<string, string> = {};
+    if (email.includes('@')) memberIdentities[other] = email;
+    const newGroup = {
+      id: gid,
+      name: `${me} & ${other}`, // internal label only — never shown as a group
+      currency: exp.currency || myDefaultCurrency || '₹',
+      members: [me, other],
+      simplifyDebts: false,
+      createdDate: new Date().toISOString().split('T')[0],
+      pendingMembers: [other], // the other person is pending until they open the link
+      memberIdentities,
+      isDirect: true,
+      pendingSync: true,
+    } as Group;
+    setGroups((prev) => [...prev, newGroup]);
+    setExpenses((prev) => prev.map((e) => (String(e.id) === String(expenseId) ? { ...e, gId: gid } : e)));
+    return gid;
+  };
+
   const handleUpdateGroup = async (groupId: string | number, groupData: { name: string; currency: string; members: string[]; emoji: string; createdDate?: string }) => {
     // 1. Update local groups state. Names added during the edit are brand-new
     // invitees, so mark them pending so they show under "Pending Invites".
@@ -3411,6 +3448,7 @@ function App() {
             setShowCurrPickerId={setShowCurrPickerId}
             showCurrPickerId={showCurrPickerId}
             me={me}
+            myEmail={userEmail}
             setShowConvertModalId={setShowConvertModalId}
             wasRemovedByAdmin={notifications.some((n) => n.type === 'removed' && String(n.groupId) === String(selectedId))}
             userMetadata={userMetadata}
