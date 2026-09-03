@@ -1131,8 +1131,8 @@ export const GroupMemberList: React.FC<GroupMemberListProps> = ({
             onClick={openAddFriend}
             style={{
               position: 'fixed',
-              right: 'calc(20px + env(safe-area-inset-right))',
-              bottom: 'calc(24px + env(safe-area-inset-bottom))',
+              right: '20px',
+              bottom: '100px',
               width: '56px',
               height: '56px',
               borderRadius: '50%',
