@@ -51,6 +51,10 @@ export const NonGroupView: React.FC<NonGroupViewProps> = ({
   onSharePerson,
 }) => {
   const [selectedPerson, setSelectedPerson] = React.useState<string | null>(null);
+  // Bottom toggle on the front page: Settle | Photos (swipe left/right).
+  const [activeTab, setActiveTab] = React.useState<'settle' | 'photos'>('settle');
+  const touchStartX = React.useRef<number | null>(null);
+  const touchStartY = React.useRef<number | null>(null);
 
   const meLower = cleanName(me).toLowerCase();
 
@@ -246,37 +250,100 @@ export const NonGroupView: React.FC<NonGroupViewProps> = ({
     );
   }
 
-  // ── People list ─────────────────────────────────────────────────────────────
+  // ── People list (front page) ─────────────────────────────────────────────────
   // The top bar (back + "Non-Group Expenses" title) is provided by MobileHeader,
-  // so this view starts straight at the people list.
+  // so this view starts at the net-balance card.
+
+  // My overall non-group position (positive currency = I collect) — same engine.
+  const myBal = getMemberBalance('STANDALONE', me);
+  const netLines = Object.entries(myBal)
+    .map(([curr, val]) => ({ curr, amount: val }))
+    .filter((x) => Math.abs(x.amount) > 0.01);
+  const netHasBalance = netLines.length > 0;
+  const netAllCollect = netHasBalance && netLines.every((l) => l.amount > 0);
+
+  // Every receipt/photo attached to a non-group expense, newest first.
+  const photos = nonGroupExps.flatMap((e) =>
+    (e.attachments || []).map((url) => ({ url, exp: e }))
+  );
+
+  // People with a live balance — the ones you can actually settle.
+  const owing = people.filter((p) => myPerspective(p.bal).length > 0);
+
+  const onTouchStart = (e: React.TouchEvent) => {
+    touchStartX.current = e.touches[0].clientX;
+    touchStartY.current = e.touches[0].clientY;
+  };
+  const onTouchEnd = (e: React.TouchEvent) => {
+    if (touchStartX.current === null || touchStartY.current === null) return;
+    const dx = e.changedTouches[0].clientX - touchStartX.current;
+    const dy = e.changedTouches[0].clientY - touchStartY.current;
+    touchStartX.current = null;
+    touchStartY.current = null;
+    // Horizontal swipe only (ignore vertical scrolls).
+    if (Math.abs(dx) < 50 || Math.abs(dx) < Math.abs(dy)) return;
+    if (dx < 0) setActiveTab('photos');
+    else setActiveTab('settle');
+  };
+
+  const TabButton: React.FC<{ id: 'settle' | 'photos'; label: string }> = ({ id, label }) => (
+    <button
+      type="button"
+      onClick={() => setActiveTab(id)}
+      style={{
+        background: 'none',
+        border: 'none',
+        padding: '0 0 8px',
+        cursor: 'pointer',
+        fontSize: '14px',
+        fontWeight: activeTab === id ? 700 : 600,
+        color: activeTab === id ? '#0F172A' : '#94A3B8',
+        borderBottom: `2px solid ${activeTab === id ? '#F97316' : 'transparent'}`,
+      }}
+    >
+      {label}
+    </button>
+  );
+
   return (
     <div style={{ padding: '16px', maxWidth: '640px', margin: '0 auto' }}>
+      {/* Net balance card (non-group only) */}
+      <div style={{ fontSize: '10px', fontWeight: 600, letterSpacing: '1.2px', color: '#94A3B8', textTransform: 'uppercase', marginBottom: '6px' }}>
+        Net balance
+      </div>
+      <div
+        style={{
+          background: !netHasBalance ? '#F1F5F9' : netAllCollect ? '#16A34A' : '#DC2626',
+          borderRadius: '14px',
+          padding: '14px 18px',
+          marginBottom: '18px',
+          textAlign: 'center',
+        }}
+      >
+        <span style={{ fontSize: '15px', fontWeight: 700, color: !netHasBalance ? '#64748B' : '#FFFFFF' }}>
+          {!netHasBalance
+            ? 'All settled up'
+            : netLines.map((l) => `${l.amount > 0 ? 'You collect' : 'You pay'} ${l.curr}${fmt(l.amount)}`).join('  ·  ')}
+        </span>
+      </div>
+
+      {/* People — always on top */}
       <div style={{ fontSize: '10px', fontWeight: 600, letterSpacing: '1.2px', color: '#94A3B8', textTransform: 'uppercase', marginBottom: '10px' }}>
         People you split with
       </div>
-
       {people.length === 0 ? (
         <p style={{ fontSize: '13px', color: '#94A3B8', textAlign: 'center', padding: '40px 0' }}>
           No non-group expenses yet. Add a quick expense with someone and it'll show up here.
         </p>
       ) : (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginBottom: '22px' }}>
           {people.map((p) => {
             const b = balanceText(p.bal);
             return (
               <div
                 key={p.name}
                 onClick={() => setSelectedPerson(p.name)}
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '12px',
-                  background: '#FFFFFF',
-                  border: '1.5px solid #E2E8F0',
-                  borderRadius: '12px',
-                  padding: '12px',
-                  cursor: 'pointer',
-                }}
+                style={{ display: 'flex', alignItems: 'center', gap: '12px', background: '#FFFFFF', border: '1.5px solid #E2E8F0', borderRadius: '12px', padding: '12px', cursor: 'pointer' }}
               >
                 <Avatar name={p.name} size={38} />
                 <div style={{ flex: 1, minWidth: 0 }}>
@@ -292,6 +359,63 @@ export const NonGroupView: React.FC<NonGroupViewProps> = ({
           })}
         </div>
       )}
+
+      {/* Settle / Photos toggle (swipeable) */}
+      <div style={{ display: 'flex', gap: '24px', borderBottom: '0.5px solid #E2E8F0', marginBottom: '14px' }}>
+        <TabButton id="settle" label="Settle" />
+        <TabButton id="photos" label="Photos" />
+      </div>
+
+      <div onTouchStart={onTouchStart} onTouchEnd={onTouchEnd} style={{ minHeight: '80px' }}>
+        {activeTab === 'settle' ? (
+          owing.length === 0 ? (
+            <p style={{ fontSize: '13px', color: '#94A3B8', textAlign: 'center', padding: '24px 0' }}>
+              Nothing to settle — you're all square.
+            </p>
+          ) : (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+              {owing.map((p) => {
+                const b = balanceText(p.bal);
+                return (
+                  <div
+                    key={p.name}
+                    style={{ display: 'flex', alignItems: 'center', gap: '12px', background: '#FFFFFF', border: '1.5px solid #E2E8F0', borderRadius: '12px', padding: '10px 12px' }}
+                  >
+                    <Avatar name={p.name} size={32} />
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <div style={{ fontSize: '13.5px', fontWeight: 700, color: '#0F172A', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{p.name}</div>
+                      <div style={{ fontSize: '11.5px', fontWeight: 600, color: b.color }}>{b.text}</div>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => onSettlePerson(p.name)}
+                      style={{ border: '1.5px solid #CBD5E1', background: '#FFFFFF', borderRadius: '9px', padding: '7px 12px', fontSize: '12px', fontWeight: 700, color: '#334155', cursor: 'pointer', whiteSpace: 'nowrap' }}
+                    >
+                      Settle up
+                    </button>
+                  </div>
+                );
+              })}
+            </div>
+          )
+        ) : photos.length === 0 ? (
+          <p style={{ fontSize: '13px', color: '#94A3B8', textAlign: 'center', padding: '24px 0' }}>
+            No receipts yet. Attach a photo to a non-group expense and it'll appear here.
+          </p>
+        ) : (
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(88px, 1fr))', gap: '8px' }}>
+            {photos.map((ph, i) => (
+              <div
+                key={`${ph.exp.id}-${i}`}
+                onClick={() => onOpenExpense(ph.exp)}
+                style={{ position: 'relative', aspectRatio: '1', borderRadius: '10px', overflow: 'hidden', cursor: 'pointer', border: '1px solid #E2E8F0' }}
+              >
+                <img src={ph.url} alt={ph.exp.title} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
     </div>
   );
 };
