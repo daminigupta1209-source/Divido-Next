@@ -945,76 +945,105 @@ export const ExpenseModal: React.FC<ExpenseModalProps> = ({
                   </button>
                 ) : (
                   <>
-                    {/* Render each selected friend explicitly */}
-                    {selectedSplitters.filter(f => f !== me).map((friend) => {
-                      const isLocked = friend === selectedId;
-                      return (
-                        <div
-                          key={friend}
-                          onClick={() => {
-                            if (!isLocked) {
-                              setSelectedSplitters(selectedSplitters.filter(s => s !== friend));
-                            }
-                          }}
-                          style={{
-                            padding: '6px 12px',
-                            borderRadius: '10px',
-                            background: 'rgba(16, 185, 129, 0.1)',
-                            border: '1.5px solid #10B981',
-                            fontSize: '12px',
-                            fontWeight: 600,
-                            color: '#065F46',
-                            display: 'flex',
-                            alignItems: 'center',
-                            gap: '6px',
-                            flexShrink: 0,
-                            cursor: isLocked ? 'default' : 'pointer',
-                            opacity: isLocked ? 1 : 0.9,
-                          }}
-                          title={isLocked ? "Cannot remove this friend in Quick Expense" : "Click to remove"}
-                        >
-                          <div
-                            style={{
-                              width: '18px',
-                              height: '18px',
-                              borderRadius: '50%',
-                              background: 'linear-gradient(135deg, #E0F2FE, #DBEAFE)',
-                              display: 'flex',
-                              alignItems: 'center',
-                              justifyContent: 'center',
-                              fontSize: '9px',
-                              fontWeight: 600,
-                              color: '#3B82F6',
-                            }}
-                          >
-                            {friend.charAt(0).toUpperCase()}
-                          </div>
-                          {friend} {isLocked ? '🔒' : '✕'}
-                        </div>
-                      );
-                    })}
-
-                    {/* + button to invite more */}
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setShowFriendPickerPopup(false);
-                        setSelectedId(localGId === 'STANDALONE' ? 'STANDALONE' : localGId);
-                        setShowAddFriendModal(true);
-                        setHighlightAddFriend(false);
-                      }}
+                    <div
                       style={{
-                        width: '34px', height: '34px', borderRadius: '10px',
-                        background: 'var(--w)', border: '1.5px dashed #CBD5E1',
-                        fontSize: '18px', fontWeight: 600, color: '#94A3B8',
-                        cursor: 'pointer', display: 'flex', alignItems: 'center',
-                        justifyContent: 'center', outline: 'none', padding: 0, flexShrink: 0,
+                        flex: 1,
+                        background: '#FFFFFF',
+                        borderRadius: '20px',
+                        padding: '6px 12px',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'space-between',
+                        boxShadow: '0 4px 20px rgba(0,0,0,0.03)',
+                        border: '1.5px solid #F8FAFC',
+                        minWidth: 0,
                       }}
-                      className="hover-up-mini"
-                      title="Invite Friend"
                     >
-                      +
-                    </button>
+                      <div
+                        onClick={(e) => { 
+                          e.stopPropagation(); 
+                          setShowFriendPickerPopup((prev) => !prev);
+                          setHighlightAddFriend(false);
+                        }}
+                        style={{ display: 'flex', alignItems: 'center', gap: '6px', cursor: 'pointer', flex: 1, minWidth: 0 }}
+                      >
+                        <div style={{ display: 'flex', alignItems: 'center', position: 'relative', height: '32px', width: `${Math.min(selectedSplitters.length, 4) * 20 + 8}px`, flexShrink: 0 }}>
+                          {selectedSplitters.slice(0, 4).map((member, idx) => {
+                            const isMe = member === me;
+                            const initials = (() => {
+                              if (isMe) return 'YO';
+                              const p = member.trim().split(/\s+/);
+                              if (p.length === 1) return p[0].substring(0, 2).toUpperCase();
+                              return (p[0].charAt(0) + p[p.length - 1].charAt(0)).toUpperCase();
+                            })();
+                            
+                            const avatarColors = ['#E0F2FE', '#F0FDF4', '#FEF2F2', '#FFFBEB', '#F5F3FF', '#FFF1F2'];
+                            const textColors = ['#0369A1', '#15803D', '#B91C1C', '#B45309', '#6D28D9', '#BE123C'];
+                            const colorIdx = member.charCodeAt(0) % avatarColors.length;
+
+                            const baseCircle: React.CSSProperties = {
+                              width: '28px',
+                              height: '28px',
+                              borderRadius: '50%',
+                              border: '2px solid #FFFFFF',
+                              position: 'absolute',
+                              left: `${idx * 20}px`,
+                              boxShadow: '0 2px 4px rgba(0,0,0,0.05)',
+                              zIndex: 4 - idx,
+                            };
+
+                            return isMe ? (
+                              <img
+                                key={member}
+                                src="/divido_laughing_cat_mascot_1778063273427.png"
+                                alt="You"
+                                style={{ ...baseCircle, objectFit: 'cover' }}
+                              />
+                            ) : (
+                              <div
+                                key={member}
+                                style={{
+                                  ...baseCircle,
+                                  background: avatarColors[colorIdx],
+                                  color: textColors[colorIdx],
+                                  display: 'flex',
+                                  alignItems: 'center',
+                                  justifyContent: 'center',
+                                  fontSize: '9.5px',
+                                  fontWeight: 600,
+                                }}
+                              >
+                                {initials}
+                              </div>
+                            );
+                          })}
+                        </div>
+                        <span style={{ fontSize: '11.5px', fontWeight: 700, color: '#94A3B8', letterSpacing: '0.1px' }}>
+                          {selectedSplitters.length} Members
+                        </span>
+                      </div>
+
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setShowFriendPickerPopup(false);
+                          setSelectedId(localGId === 'STANDALONE' ? 'STANDALONE' : localGId);
+                          setShowAddFriendModal(true);
+                          setHighlightAddFriend(false);
+                        }}
+                        style={{
+                          width: '28px', height: '28px', borderRadius: '50%',
+                          background: 'var(--w)', border: '1.5px dashed #CBD5E1',
+                          fontSize: '16px', fontWeight: 600, color: '#94A3B8',
+                          cursor: 'pointer', display: 'flex', alignItems: 'center',
+                          justifyContent: 'center', outline: 'none', padding: 0, flexShrink: 0,
+                        }}
+                        className="hover-up-mini"
+                        title="Invite Friend"
+                      >
+                        +
+                      </button>
+                    </div>
                   </>
                 )}
 
@@ -1084,6 +1113,7 @@ export const ExpenseModal: React.FC<ExpenseModalProps> = ({
                             <div
                               key={friend}
                               onClick={() => {
+                                if (cleanFriend === selectedId) return;
                                 setSelectedSplitters(
                                   isChecked
                                     ? selectedSplitters.filter((s) => s !== cleanFriend)
@@ -1096,12 +1126,21 @@ export const ExpenseModal: React.FC<ExpenseModalProps> = ({
                                 gap: '10px',
                                 padding: '10px 10px',
                                 borderRadius: '12px',
-                                cursor: 'pointer',
+                                cursor: cleanFriend === selectedId ? 'default' : 'pointer',
                                 transition: 'background 0.15s ease',
                                 background: isChecked ? 'rgba(16, 185, 129, 0.06)' : 'transparent',
+                                opacity: cleanFriend === selectedId ? 0.7 : 1,
                               }}
-                              onMouseEnter={(e) => (e.currentTarget.style.background = isChecked ? 'rgba(16, 185, 129, 0.1)' : '#F8FAFC')}
-                              onMouseLeave={(e) => (e.currentTarget.style.background = isChecked ? 'rgba(16, 185, 129, 0.06)' : 'transparent')}
+                              onMouseEnter={(e) => {
+                                if (cleanFriend !== selectedId) {
+                                  e.currentTarget.style.background = isChecked ? 'rgba(16, 185, 129, 0.1)' : '#F8FAFC';
+                                }
+                              }}
+                              onMouseLeave={(e) => {
+                                if (cleanFriend !== selectedId) {
+                                  e.currentTarget.style.background = isChecked ? 'rgba(16, 185, 129, 0.06)' : 'transparent';
+                                }
+                              }}
                             >
                               <div
                                 style={{
