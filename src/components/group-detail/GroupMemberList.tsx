@@ -1132,7 +1132,7 @@ export const GroupMemberList: React.FC<GroupMemberListProps> = ({
             style={{
               position: 'fixed',
               right: '20px',
-              bottom: '100px',
+              bottom: '60px',
               width: '56px',
               height: '56px',
               borderRadius: '50%',
