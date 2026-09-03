@@ -3237,6 +3237,7 @@ function App() {
             setView={setView}
             setGroups={setGroups}
             setExpenses={setExpenses}
+            setGroupDetailTab={setGroupDetailTab}
             setShowCurrPickerId={setShowCurrPickerId}
             showCurrPickerId={showCurrPickerId}
             handleRenameGroup={handleRenameGroup}

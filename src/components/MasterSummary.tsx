@@ -16,6 +16,7 @@ interface MasterSummaryProps {
   getMemberBalance: (groupId: string | number, memberName: string) => Record<string, number>;
   setSelectedId: (id: string | number | null) => void;
   setView: (view: string) => void;
+  setGroupDetailTab?: (tab: 'expenses' | 'balances' | 'photos') => void;
   setGroups: React.Dispatch<React.SetStateAction<Group[]>>;
   setExpenses: React.Dispatch<React.SetStateAction<Expense[]>>;
   setShowCurrPickerId: (id: string | null) => void;
@@ -54,6 +55,7 @@ export const MasterSummary: React.FC<MasterSummaryProps> = ({
   getMemberBalance,
   setSelectedId,
   setView,
+  setGroupDetailTab,
   setGroups,
   setExpenses,
   setShowCurrPickerId,
@@ -904,6 +906,7 @@ export const MasterSummary: React.FC<MasterSummaryProps> = ({
               key={g.id}
               className="hover-up-mini"
               onClick={() => {
+                if (setGroupDetailTab) setGroupDetailTab('expenses');
                 setSelectedId(g.id);
                 setView('detail');
               }}
