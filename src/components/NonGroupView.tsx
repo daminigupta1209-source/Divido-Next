@@ -1,5 +1,6 @@
 import React from 'react';
 import type { Expense } from '../lib/types';
+import { formatDate, getEmoji, formatExactAmount } from '../lib/utils';
 
 interface NonGroupViewProps {
   expenses: Expense[];
@@ -169,49 +170,59 @@ export const NonGroupView: React.FC<NonGroupViewProps> = ({
 
     return (
       <div className="content-width-limit" style={{ paddingTop: '4px' }}>
-        {/* Compact header — avatar, name + balance, small icon actions */}
+        {/* Clean header — just avatar, name and balance */}
         <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '14px' }}>
           <Avatar name={person} size={46} />
           <div style={{ flex: 1, minWidth: 0 }}>
-            <div style={{ fontSize: '16px', fontWeight: 700, color: '#0F172A', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{person}</div>
+            <div style={{ fontSize: '17px', fontWeight: 700, color: '#0F172A', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{person}</div>
             <div style={{ fontSize: '13px', fontWeight: 600, color: !hasBalance ? '#94A3B8' : allCollect ? '#16A34A' : '#DC2626' }}>
               {!hasBalance
                 ? 'All settled up'
                 : lines.map((l) => `${l.amount > 0 ? 'You collect' : 'You pay'} ${l.curr}${fmt(l.amount)}`).join(' · ')}
             </div>
           </div>
+        </div>
+
+        {/* Actions — Settle up (primary) with Remind / Add grouped beside it */}
+        <div style={{ display: 'flex', gap: '8px', marginBottom: '22px' }}>
+          {hasBalance ? (
+            <button
+              type="button"
+              onClick={() => onSettlePerson(person)}
+              style={{ flex: 1, padding: '12px', borderRadius: '12px', border: 'none', background: '#10B981', color: '#FFFFFF', fontSize: '14px', fontWeight: 700, cursor: 'pointer' }}
+            >
+              Settle up
+            </button>
+          ) : onAddWithPerson ? (
+            <button
+              type="button"
+              onClick={() => onAddWithPerson(person)}
+              style={{ flex: 1, padding: '12px', borderRadius: '12px', border: '0.5px solid #CBD5E1', background: '#FFFFFF', color: '#334155', fontSize: '14px', fontWeight: 700, cursor: 'pointer' }}
+            >
+              ＋ Add an expense
+            </button>
+          ) : null}
           {hasBalance && allCollect && onRemindPerson && (
             <button
               type="button"
               onClick={() => onRemindPerson(person)}
               title="Send a reminder"
-              style={{ width: '38px', height: '38px', borderRadius: '50%', border: '0.5px solid #CBD5E1', background: '#FFFFFF', color: '#64748B', fontSize: '17px', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', flexShrink: 0 }}
+              style={{ width: '46px', borderRadius: '12px', border: '0.5px solid #CBD5E1', background: '#FFFFFF', color: '#64748B', fontSize: '17px', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', flexShrink: 0 }}
             >
               🔔
             </button>
           )}
-          {onAddWithPerson && (
+          {hasBalance && onAddWithPerson && (
             <button
               type="button"
               onClick={() => onAddWithPerson(person)}
               title={`Add an expense with ${person}`}
-              style={{ width: '38px', height: '38px', borderRadius: '50%', border: 'none', background: '#10B981', color: '#FFFFFF', fontSize: '20px', lineHeight: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', flexShrink: 0, boxShadow: '0 2px 8px rgba(16,185,129,0.35)' }}
+              style={{ width: '46px', borderRadius: '12px', border: 'none', background: '#10B981', color: '#FFFFFF', fontSize: '20px', lineHeight: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', flexShrink: 0 }}
             >
               +
             </button>
           )}
         </div>
-
-        {/* Primary Settle button */}
-        {hasBalance && (
-          <button
-            type="button"
-            onClick={() => onSettlePerson(person)}
-            style={{ width: '100%', padding: '13px', borderRadius: '12px', border: 'none', background: '#10B981', color: '#FFFFFF', fontSize: '14px', fontWeight: 700, cursor: 'pointer', marginBottom: '20px' }}
-          >
-            Settle up
-          </button>
-        )}
 
         <div style={{ fontSize: '10px', fontWeight: 600, letterSpacing: '1.2px', color: '#94A3B8', textTransform: 'uppercase', marginBottom: '8px' }}>
           Expenses with {person}
@@ -221,34 +232,45 @@ export const NonGroupView: React.FC<NonGroupViewProps> = ({
           {theirExps.map((e) => {
             const curr = e.currency || defaultCurrency;
             const iPaid = cleanName(e.paid).toLowerCase() === meLower;
+            const avatarColors = ['#E0F2FE', '#F0FDF4', '#FEF2F2', '#FFFBEB', '#F5F3FF', '#FFF1F2'];
+            const textColors = ['#0369A1', '#15803D', '#B91C1C', '#B45309', '#6D28D9', '#BE123C'];
+            const colIdx = (e.title.charCodeAt(0) + (e.title.charCodeAt(1) || 0)) % avatarColors.length;
             return (
               <div
                 key={e.id}
-                className="hover-up-mini"
+                className="card hover-bright"
                 onClick={() => onOpenExpense(e)}
                 style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '12px',
+                  position: 'relative',
+                  padding: '14px 24px 14px 16px',
                   background: '#FFFFFF',
                   border: '0.5px solid #EFE7DC',
-                  borderRadius: '16px',
-                  padding: '14px 16px',
                   boxShadow: '0 2px 10px rgba(0,0,0,0.03)',
+                  borderRadius: '20px',
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'center',
                   cursor: 'pointer',
+                  transition: '0.2s all',
+                  minHeight: '70px',
+                  boxSizing: 'border-box',
                 }}
               >
-                <div style={{ width: '34px', height: '34px', borderRadius: '50%', background: '#F1F5F9', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '15px', flexShrink: 0 }}>
-                  {e.category || '⚡'}
-                </div>
-                <div style={{ flex: 1, minWidth: 0 }}>
-                  <div style={{ fontSize: '14px', fontWeight: 700, color: '#0F172A', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{e.title}</div>
-                  <div style={{ fontSize: '11.5px', color: '#64748B' }}>
-                    {iPaid ? 'you paid' : `${cleanName(e.paid)} paid`} · {e.date}
+                <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flex: 1, minWidth: 0 }}>
+                  <div style={{ width: '40px', height: '40px', background: avatarColors[colIdx], color: textColors[colIdx], borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '18px', fontWeight: 600, flexShrink: 0 }}>
+                    {getEmoji(e.title) || (e.attachments && e.attachments.length > 0 ? '🖼️' : '⚡')}
+                  </div>
+                  <div style={{ minWidth: 0, flex: 1, marginRight: '16px' }}>
+                    <h3 style={{ fontSize: '14px', color: 'var(--t)', margin: 0, fontWeight: 600, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{e.title}</h3>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '11px', color: '#94A3B8', marginTop: '6px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                      <span style={{ color: iPaid ? '#16A34A' : '#DE7093', fontWeight: 500 }}>{iPaid ? 'You paid' : `${cleanName(e.paid)} paid`}</span>
+                      <span>•</span>
+                      <span>{formatDate(e.date)}</span>
+                    </div>
                   </div>
                 </div>
-                <div style={{ fontSize: '14px', fontWeight: 700, color: '#0F172A', whiteSpace: 'nowrap' }}>
-                  {curr}{fmt(Number(e.amt) || 0)}
+                <div style={{ textAlign: 'right' }}>
+                  <span style={{ fontSize: '14px', fontWeight: 600, color: 'var(--t)' }}>{curr} {formatExactAmount(Number(e.amt) || 0)}</span>
                 </div>
               </div>
             );
