@@ -1007,26 +1007,26 @@ export const GroupMemberList: React.FC<GroupMemberListProps> = ({
                   .slice(0, 6);
                 if (shown.length === 0) return null;
                 return (
-                  <div style={{ marginTop: '8px' }}>
-                    <p style={{ margin: '0 0 6px 0', fontSize: '10px', fontWeight: 600, color: '#94A3B8', textTransform: 'uppercase', letterSpacing: '0.5px', textAlign: 'left' }}>
+                  <div style={{ marginTop: '4px' }}>
+                    <p style={{ margin: '0 0 10px 0', fontSize: '11px', fontWeight: 600, color: '#94A3B8', textTransform: 'uppercase', letterSpacing: '0.5px', textAlign: 'left' }}>
                       Recently split with
                     </p>
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', maxHeight: '150px', overflowY: 'auto' }}>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
                       {shown.map((s) => (
                         <button
                           key={s.email || s.name}
                           type="button"
                           onClick={() => handleInlineAdd(s.name, s.email, s.identity)}
-                          style={{ display: 'flex', alignItems: 'center', gap: '10px', width: '100%', textAlign: 'left', background: '#F8FAFC', border: '1px solid #EEF2F7', borderRadius: '10px', padding: '7px 10px', cursor: 'pointer' }}
+                          style={{ display: 'flex', alignItems: 'center', gap: '12px', width: '100%', textAlign: 'left', background: 'var(--w)', border: '1.5px solid #F1F5F9', borderRadius: '14px', padding: '12px 14px', cursor: 'pointer' }}
                         >
-                          <span style={{ width: '26px', height: '26px', borderRadius: '50%', background: '#EEF2FF', color: '#4338CA', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '11px', fontWeight: 700, flexShrink: 0 }}>
+                          <span style={{ width: '38px', height: '38px', borderRadius: '50%', background: '#EEF2FF', color: '#4338CA', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '14px', fontWeight: 700, flexShrink: 0 }}>
                             {s.name.charAt(0).toUpperCase()}
                           </span>
                           <span style={{ minWidth: 0, flex: 1 }}>
-                            <span style={{ display: 'block', fontSize: '12px', fontWeight: 600, color: '#334155', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{s.name}</span>
-                            {s.email && <span style={{ display: 'block', fontSize: '10px', color: '#94A3B8', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{s.email}</span>}
+                            <span style={{ display: 'block', fontSize: '14px', fontWeight: 600, color: '#334155', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{s.name}</span>
+                            {s.email && <span style={{ display: 'block', fontSize: '11px', color: '#94A3B8', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{s.email}</span>}
                           </span>
-                          <span style={{ color: '#6366F1', fontSize: '16px', fontWeight: 700, flexShrink: 0 }}>+</span>
+                          <span style={{ color: '#6366F1', fontSize: '20px', fontWeight: 700, flexShrink: 0 }}>+</span>
                         </button>
                       ))}
                     </div>
