@@ -29,6 +29,7 @@ interface ExpenseModalProps {
   setShowCurrPickerId: (id: string | null) => void;
   showCurrPickerId: string | null;
   me: string;
+  myEmail?: string;
   groups: Group[];
   setGroups: React.Dispatch<React.SetStateAction<Group[]>>;
   setShowAddFriendModal: (show: boolean) => void;
@@ -58,6 +59,7 @@ export const ExpenseModal: React.FC<ExpenseModalProps> = ({
   setShowCurrPickerId,
   showCurrPickerId,
   me,
+  myEmail,
   groups,
   setGroups,
   setShowAddFriendModal,
@@ -169,6 +171,7 @@ export const ExpenseModal: React.FC<ExpenseModalProps> = ({
     setShowCurrPickerId,
     showCurrPickerId,
     me,
+    myEmail,
     groups,
     setGroups,
     setShowAddFriendModal,

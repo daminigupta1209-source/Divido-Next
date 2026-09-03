@@ -4035,6 +4035,7 @@ function App() {
           setShowCurrPickerId={setShowCurrPickerId}
           showCurrPickerId={showCurrPickerId}
           me={me}
+          myEmail={userEmail}
           groups={groups}
           setGroups={setGroups}
           setShowAddFriendModal={setShowAddFriendModal}

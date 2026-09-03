@@ -15,6 +15,7 @@ export interface UseExpenseFormProps {
   setShowCurrPickerId: (id: string | null) => void;
   showCurrPickerId: string | null;
   me: string;
+  myEmail?: string;
   groups: Group[];
   setGroups: React.Dispatch<React.SetStateAction<Group[]>>;
   setShowAddFriendModal: (show: boolean) => void;
@@ -41,6 +42,7 @@ export function useExpenseForm({
   setShowCurrPickerId,
   showCurrPickerId,
   me,
+  myEmail,
   groups,
   setGroups,
   setShowAddFriendModal,
@@ -266,10 +268,28 @@ export function useExpenseForm({
         }
         return acc;
       }, []);
+    const meLower = (me || '').replace(/\s*\(Left\)$/i, '').trim().toLowerCase();
+    const myEmailLower = (myEmail || '').trim().toLowerCase();
+    // Names that resolve to MY account across any group (I may be listed under a
+    // different name elsewhere) — so I never suggest or let anyone pick myself.
+    const myNames = new Set<string>();
+    if (myEmailLower) {
+      for (const g of groups || []) {
+        const mi = g?.memberIdentities || {};
+        for (const [nm, id] of Object.entries(mi)) {
+          if (typeof id === 'string' && id.toLowerCase() === myEmailLower) {
+            myNames.add(nm.replace(/\s*\(Left\)$/i, '').trim().toLowerCase());
+          }
+        }
+      }
+    }
     return Array.from(
       new Set([...allGroupMembers, ...standaloneParticipants])
-    ).filter((f) => f !== me);
-  }, [groups, expenses, me]);
+    ).filter((f) => {
+      const fl = (f || '').replace(/\s*\(Left\)$/i, '').trim().toLowerCase();
+      return fl !== meLower && !myNames.has(fl);
+    });
+  }, [groups, expenses, me, myEmail]);
 
   const friendsToSelect = useMemo(() => {
     if (localGId !== 'STANDALONE') {
