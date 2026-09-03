@@ -278,6 +278,19 @@ export const GroupMemberList: React.FC<GroupMemberListProps> = ({
   return (
     <div
       onClick={(e) => e.stopPropagation()}
+      onTouchStart={(e) => { touchStartX.current = e.touches[0].clientX; touchStartY.current = e.touches[0].clientY; }}
+      onTouchEnd={(e) => {
+        if (touchStartX.current == null || touchStartY.current == null) return;
+        const dx = e.changedTouches[0].clientX - touchStartX.current;
+        const dy = e.changedTouches[0].clientY - touchStartY.current;
+        touchStartX.current = null; touchStartY.current = null;
+        // Horizontal swipe only (ignore vertical scrolls), min 45px.
+        if (Math.abs(dx) < 45 || Math.abs(dx) < Math.abs(dy)) return;
+        const order: (typeof activeTab)[] = ['joined', 'pending', 'left'];
+        const i = order.indexOf(activeTab);
+        const ni = Math.min(order.length - 1, Math.max(0, i + (dx < 0 ? 1 : -1)));
+        if (ni !== i) setActiveTab(order[ni]);
+      }}
       style={{
         position: 'fixed',
         top: 0,
@@ -308,19 +321,6 @@ export const GroupMemberList: React.FC<GroupMemberListProps> = ({
       )}
       <div
         className="content-width-limit"
-        onTouchStart={(e) => { touchStartX.current = e.touches[0].clientX; touchStartY.current = e.touches[0].clientY; }}
-        onTouchEnd={(e) => {
-          if (touchStartX.current == null || touchStartY.current == null) return;
-          const dx = e.changedTouches[0].clientX - touchStartX.current;
-          const dy = e.changedTouches[0].clientY - touchStartY.current;
-          touchStartX.current = null; touchStartY.current = null;
-          // Horizontal swipe only (ignore vertical scrolls), min 50px.
-          if (Math.abs(dx) < 50 || Math.abs(dx) < Math.abs(dy)) return;
-          const order: (typeof activeTab)[] = ['joined', 'pending', 'left'];
-          const i = order.indexOf(activeTab);
-          const ni = Math.min(order.length - 1, Math.max(0, i + (dx < 0 ? 1 : -1)));
-          if (ni !== i) setActiveTab(order[ni]);
-        }}
         style={{
           display: 'flex',
           flexDirection: 'column',
