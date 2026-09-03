@@ -3438,6 +3438,7 @@ function App() {
             onBack={() => { setSelectedId(null); setView('summary'); }}
             onOpenExpense={(exp) => { setEditingExpenseSecure(exp); setShowExpModalSecure(true); }}
             onSettlePerson={(name) => setGlobalSettleDataSecure({ name: name.replace(/\s*\(Left\)$/i, '').trim(), gId: 'STANDALONE' })}
+            onAddWithPerson={(name) => quickAddExpenseWithFriend(name)}
             onRemindPerson={async (name) => {
               const clean = name.replace(/\s*\(Left\)$/i, '').trim();
               // In-app reminder (fire-and-forget so it doesn't consume the tap's

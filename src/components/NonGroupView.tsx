@@ -14,6 +14,7 @@ interface NonGroupViewProps {
   onOpenExpense: (exp: Expense) => void;
   onSettlePerson: (name: string) => void;
   onRemindPerson?: (name: string) => void;
+  onAddWithPerson?: (name: string) => void;
   onSharePerson?: (name: string) => void;
 }
 
@@ -50,6 +51,7 @@ export const NonGroupView: React.FC<NonGroupViewProps> = ({
   onOpenExpense,
   onSettlePerson,
   onRemindPerson,
+  onAddWithPerson,
   onSharePerson,
 }) => {
   const [selectedPerson, setSelectedPerson] = React.useState<string | null>(null);
@@ -202,6 +204,24 @@ export const NonGroupView: React.FC<NonGroupViewProps> = ({
               style={actionBtnStyle}
             >
               💸 Settle up
+            </button>
+          )}
+          {hasBalance && allCollect && onRemindPerson && (
+            <button
+              type="button"
+              onClick={() => onRemindPerson(person)}
+              style={actionBtnStyle}
+            >
+              🔔 Remind
+            </button>
+          )}
+          {onAddWithPerson && (
+            <button
+              type="button"
+              onClick={() => onAddWithPerson(person)}
+              style={actionBtnStyle}
+            >
+              ＋ Add expense
             </button>
           )}
           {onSharePerson && (
@@ -379,11 +399,6 @@ export const NonGroupView: React.FC<NonGroupViewProps> = ({
             <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
               {people.map((p) => {
                 const b = balanceText(p.bal);
-                const lines = myPerspective(p.bal);
-                const owes = lines.length > 0;
-                // Remind only makes sense when they owe ME (I collect).
-                const theyOweMe = lines.some((l) => l.amount > 0);
-                const btnStyle: React.CSSProperties = { border: '1.5px solid #CBD5E1', background: '#FFFFFF', borderRadius: '9px', padding: '6px 12px', fontSize: '12px', fontWeight: 700, color: '#334155', cursor: 'pointer', whiteSpace: 'nowrap' };
                 return (
                   <div
                     key={p.name}
@@ -393,30 +408,26 @@ export const NonGroupView: React.FC<NonGroupViewProps> = ({
                   >
                     <Avatar name={p.name} size={44} />
                     <div style={{ flex: 1, minWidth: 0 }}>
-                      <div style={{ fontSize: '14px', fontWeight: 700, color: '#0F172A', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{p.name}</div>
+                      <div style={{ fontSize: '14px', fontWeight: 700, color: '#0F172A', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                        {p.name}
+                        <span style={{ fontWeight: 500, color: '#94A3B8', fontSize: '12px' }}> ({p.count} {p.count === 1 ? 'expense' : 'expenses'})</span>
+                      </div>
                       {p.email && (
                         <div style={{ fontSize: '11px', color: '#94A3B8', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{p.email}</div>
                       )}
-                      <div style={{ fontSize: '11.5px', marginTop: '1px' }}>
-                        <span style={{ fontWeight: 600, color: b.color }}>{b.text}</span>
-                        <span style={{ color: '#CBD5E1' }}> · </span>
-                        <span style={{ color: '#94A3B8' }}>{p.count} {p.count === 1 ? 'expense' : 'expenses'}</span>
-                      </div>
+                      <div style={{ fontSize: '12px', fontWeight: 600, color: b.color, marginTop: '1px' }}>{b.text}</div>
                     </div>
-                    {(owes || theyOweMe) && (
-                      <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', flexShrink: 0 }}>
-                        {owes && (
-                          <button type="button" onClick={(ev) => { ev.stopPropagation(); onSettlePerson(p.name); }} style={btnStyle}>
-                            Settle
-                          </button>
-                        )}
-                        {theyOweMe && onRemindPerson && (
-                          <button type="button" onClick={(ev) => { ev.stopPropagation(); onRemindPerson(p.name); }} style={btnStyle}>
-                            Remind
-                          </button>
-                        )}
-                      </div>
+                    {onAddWithPerson && (
+                      <button
+                        type="button"
+                        onClick={(ev) => { ev.stopPropagation(); onAddWithPerson(p.name); }}
+                        title={`Add an expense with ${p.name}`}
+                        style={{ width: '34px', height: '34px', borderRadius: '50%', background: '#10B981', border: 'none', color: '#FFFFFF', fontSize: '20px', lineHeight: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', flexShrink: 0, boxShadow: '0 2px 8px rgba(16,185,129,0.35)' }}
+                      >
+                        +
+                      </button>
                     )}
+                    <span style={{ fontSize: '16px', color: '#CBD5E1', flexShrink: 0 }}>›</span>
                   </div>
                 );
               })}
