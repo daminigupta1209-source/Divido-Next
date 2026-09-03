@@ -1010,8 +1010,18 @@ export const GroupMemberList: React.FC<GroupMemberListProps> = ({
               </div>
 
               {/* Search / type a name */}
-              <div style={{ position: 'relative' }}>
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#94A3B8" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" style={{ position: 'absolute', left: '16px', top: '50%', transform: 'translateY(-50%)' }}>
+              <div style={{
+                display: 'flex',
+                alignItems: 'center',
+                height: '36px',
+                borderRadius: '10px',
+                border: '1.5px solid #E2E8F0',
+                background: 'var(--w)',
+                padding: '0 12px 0 16px',
+                boxSizing: 'border-box',
+                width: '100%',
+              }}>
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#94A3B8" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
                   <circle cx="11" cy="11" r="7" /><path d="m21 21-4.3-4.3" />
                 </svg>
                 <input
@@ -1032,27 +1042,22 @@ export const GroupMemberList: React.FC<GroupMemberListProps> = ({
                     if (e.key === 'Enter' && canAddNew) { e.preventDefault(); handleAddNew(); }
                   }}
                   style={{
-                    height: '36px',
-                    borderRadius: '10px',
-                    border: '1.5px solid #E2E8F0',
-                    background: 'var(--w)',
+                    flex: 1,
+                    height: '100%',
+                    border: 'none',
+                    background: 'transparent',
                     fontSize: '14px',
                     fontWeight: 600,
                     color: 'var(--t)',
-                    padding: canAddNew ? '0 48px 0 44px' : '0 16px 0 44px',
+                    padding: '0 10px',
                     outline: 'none',
-                    boxSizing: 'border-box',
-                    width: '100%',
+                    minWidth: 0,
                   }}
                 />
                 {canAddNew && (
                   <button
                     onClick={handleAddNew}
                     style={{
-                      position: 'absolute',
-                      right: '12px',
-                      top: '50%',
-                      transform: 'translateY(-50%)',
                       width: '24px',
                       height: '24px',
                       background: 'transparent',
@@ -1061,7 +1066,9 @@ export const GroupMemberList: React.FC<GroupMemberListProps> = ({
                       display: 'flex',
                       alignItems: 'center',
                       justifyContent: 'center',
-                      color: '#059669', // Match the green color in the image
+                      color: '#059669',
+                      padding: 0,
+                      flexShrink: 0,
                     }}
                   >
                     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3.5" strokeLinecap="round" strokeLinejoin="round">
