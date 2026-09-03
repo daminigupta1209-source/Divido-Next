@@ -288,45 +288,38 @@ export const NonGroupView: React.FC<NonGroupViewProps> = ({
     else setActiveTab('settle');
   };
 
-  const TabButton: React.FC<{ id: 'settle' | 'photos'; label: string }> = ({ id, label }) => (
-    <button
-      type="button"
-      onClick={() => setActiveTab(id)}
-      style={{
-        background: 'none',
-        border: 'none',
-        padding: '0 0 8px',
-        cursor: 'pointer',
-        fontSize: '14px',
-        fontWeight: activeTab === id ? 700 : 600,
-        color: activeTab === id ? '#0F172A' : '#94A3B8',
-        borderBottom: `2px solid ${activeTab === id ? '#F97316' : 'transparent'}`,
-      }}
-    >
-      {label}
-    </button>
-  );
-
   return (
     <div style={{ padding: '16px', maxWidth: '640px', margin: '0 auto' }}>
-      {/* Net balance card (non-group only) */}
-      <div style={{ fontSize: '10px', fontWeight: 600, letterSpacing: '1.2px', color: '#94A3B8', textTransform: 'uppercase', marginBottom: '6px' }}>
-        Net balance
-      </div>
-      <div
-        style={{
-          background: !netHasBalance ? '#F1F5F9' : netAllCollect ? '#16A34A' : '#DC2626',
-          borderRadius: '14px',
-          padding: '14px 18px',
-          marginBottom: '18px',
-          textAlign: 'center',
-        }}
-      >
-        <span style={{ fontSize: '15px', fontWeight: 700, color: !netHasBalance ? '#64748B' : '#FFFFFF' }}>
-          {!netHasBalance
-            ? 'All settled up'
-            : netLines.map((l) => `${l.amount > 0 ? 'You collect' : 'You pay'} ${l.curr}${fmt(l.amount)}`).join('  ·  ')}
-        </span>
+      {/* Net balance card — styled to match the home page pill */}
+      <div style={{ marginBottom: '22px' }}>
+        <div style={{ fontSize: '11px', fontWeight: 700, letterSpacing: '1.5px', textTransform: 'uppercase', color: '#B0A79C', marginBottom: '10px', marginLeft: '2px' }}>
+          Net Balance
+        </div>
+        <div style={{ position: 'relative', display: 'flex', height: '38px', borderRadius: '999px', overflow: 'hidden', boxShadow: '0 6px 16px rgba(0,0,0,0.06)' }}>
+          <div
+            style={{
+              flex: 1,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              color: '#FFFFFF',
+              fontSize: '13px',
+              fontWeight: 600,
+              whiteSpace: 'nowrap',
+              overflow: 'hidden',
+              textOverflow: 'ellipsis',
+              padding: '0 18px',
+              background: !netHasBalance ? '#10B981' : netAllCollect ? '#10B981' : '#E11D48',
+            }}
+          >
+            {!netHasBalance
+              ? 'All settled up'
+              : netLines.map((l) => `${l.amount > 0 ? 'You collect' : 'You pay'} ${l.curr}${fmt(l.amount)}`).join('  ·  ')}
+          </div>
+          {netHasBalance && (
+            <span style={{ position: 'absolute', right: '14px', top: '50%', transform: 'translateY(-50%)', color: '#FFFFFF', fontSize: '18px', fontWeight: 600, lineHeight: 1, pointerEvents: 'none', opacity: 0.9 }}>›</span>
+          )}
+        </div>
       </div>
 
       {/* People — always on top */}
@@ -363,10 +356,46 @@ export const NonGroupView: React.FC<NonGroupViewProps> = ({
         </div>
       )}
 
-      {/* Settle / Photos toggle (swipeable) */}
-      <div style={{ display: 'flex', gap: '24px', borderBottom: '0.5px solid #E2E8F0', marginBottom: '14px' }}>
-        <TabButton id="settle" label="Settle" />
-        <TabButton id="photos" label="Photos" />
+      {/* Settle / Photos toggle (swipeable) — matches the home Groups/Activities tabs */}
+      <div style={{ marginBottom: '14px', marginTop: '4px' }}>
+        <div style={{ display: 'flex', borderBottom: '1.5px solid #F1F5F9' }}>
+          {([{ id: 'settle', label: 'Settle' }, { id: 'photos', label: 'Photos' }] as const).map((tab) => {
+            const isActive = tab.id === activeTab;
+            return (
+              <button
+                key={tab.id}
+                onClick={() => setActiveTab(tab.id)}
+                style={{
+                  flex: 1,
+                  position: 'relative',
+                  background: 'transparent',
+                  border: 'none',
+                  padding: '10px 4px 12px',
+                  fontSize: '14px',
+                  fontWeight: isActive ? 800 : 600,
+                  cursor: 'pointer',
+                  color: isActive ? '#1E293B' : '#94A3B8',
+                  transition: '0.2s all',
+                }}
+              >
+                {tab.label}
+                <span
+                  style={{
+                    position: 'absolute',
+                    bottom: '-1.5px',
+                    left: 0,
+                    right: 0,
+                    height: '3px',
+                    background: isActive ? '#EA580C' : 'transparent',
+                    borderRadius: '3px 3px 0 0',
+                    transition: '0.2s all',
+                    opacity: isActive ? 1 : 0,
+                  }}
+                />
+              </button>
+            );
+          })}
+        </div>
       </div>
 
       <div onTouchStart={onTouchStart} onTouchEnd={onTouchEnd} style={{ minHeight: '80px' }}>
