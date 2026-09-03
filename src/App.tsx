@@ -3,6 +3,7 @@ import { Login } from './components/Login';
 import { supabase } from './lib/supabaseClient';
 import { Sidebar } from './components/Sidebar';
 import { GroupDetail } from './components/GroupDetail';
+import { NonGroupView } from './components/NonGroupView';
 import { GroupsView } from './components/GroupsView';
 import { CreateGroupView } from './components/CreateGroupView';
 function safeLazy<T extends React.ComponentType<any>>(
@@ -3425,6 +3426,18 @@ function App() {
               setView('detail');
               setShowFriendsList(true);
             }}
+          />
+        ) : selectedId === 'STANDALONE' ? (
+          <NonGroupView
+            expenses={expenses}
+            me={me}
+            myEmail={userEmail}
+            defaultCurrency={myDefaultCurrency}
+            memberAvatars={memberAvatars}
+            getMemberBalance={getMemberBalance}
+            onBack={() => { setSelectedId(null); setView('summary'); }}
+            onOpenExpense={(exp) => { setEditingExpenseSecure(exp); setShowExpModalSecure(true); }}
+            onSettlePerson={(name) => setGlobalSettleDataSecure({ name: name.replace(/\s*\(Left\)$/i, '').trim(), gId: 'STANDALONE' })}
           />
         ) : (
           <GroupDetail
