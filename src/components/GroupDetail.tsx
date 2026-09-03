@@ -446,14 +446,35 @@ export const GroupDetail: React.FC<GroupDetailProps> = ({
                     const avatarColors = ['#E0F2FE', '#F0FDF4', '#FEF2F2', '#FFFBEB', '#F5F3FF', '#FFF1F2'];
                     const textColors = ['#0369A1', '#15803D', '#B91C1C', '#B45309', '#6D28D9', '#BE123C'];
                     const colorIdx = member.charCodeAt(0) % avatarColors.length;
+                    const mId = selectedGroup.memberIdentities?.[member];
+                    const mEmail = typeof mId === 'string' && mId.includes('@') ? mId.toLowerCase() : '';
+                    const mPhoto = (mEmail && memberAvatars?.[mEmail]) || '';
 
-                    return (
+                    const baseCircle: React.CSSProperties = {
+                      width: '28px',
+                      height: '28px',
+                      borderRadius: '50%',
+                      border: '2px solid #FFFFFF',
+                      position: 'absolute',
+                      left: `${idx * 20}px`,
+                      boxShadow: '0 2px 4px rgba(0,0,0,0.05)',
+                      zIndex: 4 - idx,
+                    };
+
+                    return mPhoto ? (
+                      <img
+                        key={member}
+                        src={mPhoto}
+                        alt={member}
+                        referrerPolicy="no-referrer"
+                        onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = 'none'; }}
+                        style={{ ...baseCircle, objectFit: 'cover' }}
+                      />
+                    ) : (
                       <div
                         key={member}
                         style={{
-                          width: '28px',
-                          height: '28px',
-                          borderRadius: '50%',
+                          ...baseCircle,
                           background: avatarColors[colorIdx],
                           color: textColors[colorIdx],
                           display: 'flex',
@@ -461,11 +482,6 @@ export const GroupDetail: React.FC<GroupDetailProps> = ({
                           justifyContent: 'center',
                           fontSize: '9.5px',
                           fontWeight: 600,
-                          border: '2px solid #FFFFFF',
-                          position: 'absolute',
-                          left: `${idx * 20}px`,
-                          boxShadow: '0 2px 4px rgba(0,0,0,0.05)',
-                          zIndex: 4 - idx,
                         }}
                       >
                         {initials}
