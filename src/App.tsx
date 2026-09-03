@@ -2548,7 +2548,7 @@ function App() {
             desc: leaveBalLine.trim(),
             primaryLabel: 'Settle up →',
             primaryColor: '#10B981',
-            onPrimary: () => { setBalanceCard(null); setGlobalSettleDataSecure({ name: me, gId: id }); },
+            onPrimary: () => { setBalanceCard(null); setGroupDetailTab('balances'); },
             secondaryLabel: 'Write off & leave',
             onSecondary: () => { performWriteOff(id, me); performLeaveDelete(); },
           }
