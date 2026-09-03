@@ -878,18 +878,17 @@ export const GroupMemberList: React.FC<GroupMemberListProps> = ({
           </div>
         )}
 
-        {/* ADD FRIEND — shared across all tabs, pinned above the lists */}
-        <div
-          style={{
-            order: 1,
-            background: 'transparent',
-            padding: 0,
-            display: 'flex',
-            flexDirection: 'column',
-            gap: '10px',
-          }}
-        >
-          {isAddingInline && (
+        {/* ADD FRIEND — bottom sheet */}
+        {isAddingInline && (
+          <div
+            onClick={() => { setIsAddingInline(false); setInlineAddVal(''); setInlineEmailVal(''); }}
+            style={{ position: 'fixed', inset: 0, background: 'rgba(15,23,42,0.45)', zIndex: 10001, display: 'flex', alignItems: 'flex-end', justifyContent: 'center' }}
+          >
+            <div
+              onClick={(e) => e.stopPropagation()}
+              style={{ width: '100%', maxWidth: '480px', background: 'var(--w)', borderRadius: '24px 24px 0 0', padding: '14px 16px calc(20px + env(safe-area-inset-bottom))', boxShadow: '0 -8px 30px rgba(0,0,0,0.18)', maxHeight: '85vh', overflowY: 'auto', boxSizing: 'border-box' }}
+            >
+              <div style={{ width: '40px', height: '4px', borderRadius: '999px', background: '#E2E8F0', margin: '0 auto 14px' }} />
                 <div
                   style={{
                     display: 'flex',
@@ -1004,10 +1003,9 @@ export const GroupMemberList: React.FC<GroupMemberListProps> = ({
                     Add to Group
                   </button>
                 </div>
-              )}
 
               {/* Suggestions: people you've split with before */}
-              {isAddingInline && (() => {
+              {(() => {
                 const q = inlineAddVal.trim().toLowerCase();
                 const shown = buildSuggestions()
                   .filter((s) => !q || s.name.toLowerCase().includes(q) || s.email.toLowerCase().includes(q))
@@ -1040,7 +1038,9 @@ export const GroupMemberList: React.FC<GroupMemberListProps> = ({
                   </div>
                 );
               })()}
-        </div>
+            </div>
+          </div>
+        )}
 
         {/* LEFT TAB */}
         {activeTab === 'left' && (
