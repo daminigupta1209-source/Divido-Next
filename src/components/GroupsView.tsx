@@ -33,6 +33,7 @@ interface GroupsViewProps {
   getMemberBalance: (groupId: string | number, memberName: string) => Record<string, number>;
   setSelectedId: (id: string | number | null) => void;
   setView: (view: string) => void;
+  setShowFriendsList?: (b: boolean) => void;
   setGroups: React.Dispatch<React.SetStateAction<Group[]>>;
   handleRenameGroup: (id: string | number) => void;
   handleDeleteGroup: (id: string | number) => void;
@@ -45,6 +46,7 @@ export const GroupsView: React.FC<GroupsViewProps> = ({
   getMemberBalance,
   setSelectedId,
   setView,
+  setShowFriendsList,
   setGroups,
   handleRenameGroup,
   handleDeleteGroup,
@@ -336,6 +338,7 @@ export const GroupsView: React.FC<GroupsViewProps> = ({
           key="STANDALONE"
           className="hover-up-mini"
           onClick={() => {
+            if (setShowFriendsList) setShowFriendsList(false);
             setSelectedId('STANDALONE');
             setView('detail');
           }}
@@ -433,6 +436,7 @@ export const GroupsView: React.FC<GroupsViewProps> = ({
               key={g.id}
               className="hover-up-mini"
               onClick={() => {
+                if (setShowFriendsList) setShowFriendsList(false);
                 setSelectedId(g.id);
                 setView('detail');
               }}

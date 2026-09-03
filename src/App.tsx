@@ -3238,6 +3238,7 @@ function App() {
             setGroups={setGroups}
             setExpenses={setExpenses}
             setGroupDetailTab={setGroupDetailTab}
+            setShowFriendsList={setShowFriendsList}
             setShowCurrPickerId={setShowCurrPickerId}
             showCurrPickerId={showCurrPickerId}
             handleRenameGroup={handleRenameGroup}
@@ -3267,6 +3268,7 @@ function App() {
             getMemberBalance={getMemberBalance}
             setSelectedId={setSelectedId}
             setView={setView}
+            setShowFriendsList={setShowFriendsList}
             setGroups={setGroups}
             handleRenameGroup={handleRenameGroup}
             handleDeleteGroup={handleDeleteGroup}

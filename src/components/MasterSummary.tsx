@@ -17,6 +17,7 @@ interface MasterSummaryProps {
   setSelectedId: (id: string | number | null) => void;
   setView: (view: string) => void;
   setGroupDetailTab?: (tab: 'expenses' | 'balances' | 'photos') => void;
+  setShowFriendsList?: (b: boolean) => void;
   setGroups: React.Dispatch<React.SetStateAction<Group[]>>;
   setExpenses: React.Dispatch<React.SetStateAction<Expense[]>>;
   setShowCurrPickerId: (id: string | null) => void;
@@ -56,6 +57,7 @@ export const MasterSummary: React.FC<MasterSummaryProps> = ({
   setSelectedId,
   setView,
   setGroupDetailTab,
+  setShowFriendsList,
   setGroups,
   setExpenses,
   setShowCurrPickerId,
@@ -755,6 +757,7 @@ export const MasterSummary: React.FC<MasterSummaryProps> = ({
           key="STANDALONE"
           className="hover-up-mini"
           onClick={() => {
+            if (setShowFriendsList) setShowFriendsList(false);
             setSelectedId('STANDALONE');
             setView('detail');
           }}
@@ -907,6 +910,7 @@ export const MasterSummary: React.FC<MasterSummaryProps> = ({
               className="hover-up-mini"
               onClick={() => {
                 if (setGroupDetailTab) setGroupDetailTab('expenses');
+                if (setShowFriendsList) setShowFriendsList(false); // never open a card straight into the Members overlay
                 setSelectedId(g.id);
                 setView('detail');
               }}
