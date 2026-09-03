@@ -523,7 +523,7 @@ export const ActivityStudio: React.FC<ActivityStudioProps> = ({
                               }}
                               className="hover-bg"
                             >
-                              🗑️ Delete Activity
+                              Delete Activity
                             </div>
                           </div>
                         )}
@@ -708,7 +708,7 @@ export const ActivityStudio: React.FC<ActivityStudioProps> = ({
                               style={{ padding: '8px 10px', fontSize: '12px', fontWeight: 600, cursor: 'pointer', borderRadius: '8px', color: e.isDeleted ? '#10B981' : '#EF4444' }}
                               className="hover-bg"
                             >
-                              {e.isDeleted ? '↺ Restore Activity' : '🗑️ Delete Activity'}
+                              {e.isDeleted ? 'Restore Activity' : 'Delete Activity'}
                             </div>
                           </div>
                         )}

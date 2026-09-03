@@ -259,7 +259,7 @@ export const ExpenseRow: React.FC<ExpenseRowProps> = ({
                   setOpenExpId(null);
                 }}
               >
-                🗑️ Delete Activity
+                Delete Activity
               </div>
             </div>
           </div>
@@ -553,7 +553,7 @@ export const ExpenseRow: React.FC<ExpenseRowProps> = ({
                 style={{ padding: '8px 10px', fontSize: '12px', fontWeight: 600, cursor: 'pointer', borderRadius: '8px', color: e.isDeleted ? '#10B981' : '#EF4444' }}
                 className="hover-bg"
               >
-                {e.isDeleted ? '↺ Restore Activity' : '🗑️ Delete Activity'}
+                {e.isDeleted ? 'Restore Activity' : 'Delete Activity'}
               </div>
             </div>
           )}
