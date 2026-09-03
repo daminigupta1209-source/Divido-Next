@@ -451,7 +451,7 @@ export const ActivityStudio: React.FC<ActivityStudioProps> = ({
                       </div>
                     </div>
                     <div
-                      style={{ display: 'flex', alignItems: 'center', gap: '12px', flexShrink: 0 }}
+                      style={{ display: 'flex', alignItems: 'center', flexShrink: 0 }}
                       onClick={(ev) => ev.stopPropagation()}
                     >
                       <div style={{ position: 'relative' }}>
@@ -561,7 +561,7 @@ export const ActivityStudio: React.FC<ActivityStudioProps> = ({
                       display: 'flex',
                       justifyContent: 'space-between',
                       alignItems: 'center',
-                      padding: '14px 24px 14px 16px',
+                      padding: '14px 16px',
                       borderRadius: '16px',
                       background: 'var(--w)',
                       border: '1.5px solid #F1F5F9',
