@@ -67,6 +67,19 @@ export const GroupMemberList: React.FC<GroupMemberListProps> = ({
   // impossible — only the active tab is ever mounted).
   const [activeTab, setActiveTab] = useState<'joined' | 'pending' | 'left'>('joined');
 
+  // The full-screen Add Friend view is a sub-screen of the members list, so the
+  // device Back button (or gesture) must close IT first and return to the member
+  // list — not fall through to the app's history handler (which would close the
+  // whole members screen). Push a history entry while it's open and pop back to
+  // the members list on Back.
+  React.useEffect(() => {
+    if (!isAddingInline) return;
+    window.history.pushState({ _divido: true, dividoAddFriend: true }, '');
+    const onPop = () => { setIsAddingInline(false); setInlineAddVal(''); setInlineEmailVal(''); };
+    window.addEventListener('popstate', onPop);
+    return () => window.removeEventListener('popstate', onPop);
+  }, [isAddingInline]);
+
   if (selectedId === 'STANDALONE' || !showFriendsList) return null;
 
   // The email tied to a member (from their hidden identity), shown under the
@@ -884,7 +897,7 @@ export const GroupMemberList: React.FC<GroupMemberListProps> = ({
               <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
                 <button
                   type="button"
-                  onClick={() => { setIsAddingInline(false); setInlineAddVal(''); setInlineEmailVal(''); }}
+                  onClick={() => { window.history.back(); }}
                   style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--t)', padding: 0, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: '32px', height: '32px', marginLeft: '-6px' }}
                 >
                   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.8" strokeLinecap="round" strokeLinejoin="round" style={{ width: '18px', height: '18px' }}>
@@ -915,11 +928,7 @@ export const GroupMemberList: React.FC<GroupMemberListProps> = ({
                     value={inlineAddVal}
                     onChange={(e) => setInlineAddVal(e.target.value)}
                     onKeyDown={(e) => {
-                      if (e.key === 'Escape') {
-                        setIsAddingInline(false);
-                        setInlineAddVal('');
-                        setInlineEmailVal('');
-                      }
+                      if (e.key === 'Escape') { window.history.back(); }
                     }}
                     style={{
                       height: '50px',
