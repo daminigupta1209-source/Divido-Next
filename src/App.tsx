@@ -4026,6 +4026,10 @@ function App() {
             }
             */
           }}
+          onCreateNewGroup={() => {
+            setShowExpModal(false);
+            setView('create_group');
+          }}
         />
         </React.Suspense>
       )}

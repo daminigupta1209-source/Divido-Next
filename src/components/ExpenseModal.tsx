@@ -44,6 +44,7 @@ interface ExpenseModalProps {
   onRequireSignIn?: () => boolean;
   deleteExpense?: (id: string | number) => void;
   onExpenseSaved?: (savedExpense: Expense, activeGroup?: Group) => void;
+  onCreateNewGroup?: () => void;
 }
 
 export const ExpenseModal: React.FC<ExpenseModalProps> = ({
@@ -72,6 +73,7 @@ export const ExpenseModal: React.FC<ExpenseModalProps> = ({
   onRequireSignIn,
   deleteExpense,
   onExpenseSaved,
+  onCreateNewGroup,
 }) => {
   const {
     localGId,
@@ -631,18 +633,23 @@ export const ExpenseModal: React.FC<ExpenseModalProps> = ({
                         e.preventDefault();
                         setShowGroupDropdown(false);
                         if (onRequireSignIn && !onRequireSignIn()) return;
-                        const name = prompt('Ledger Name:', 'New Group 🏡');
-                        if (name) {
-                          if (groups.some((g) => g.name.trim().toLowerCase() === name.trim().toLowerCase())) {
-                            alert('A group with that name already exists. Please pick a different name.');
-                            return;
+                        
+                        if (onCreateNewGroup) {
+                          onCreateNewGroup();
+                        } else {
+                          const name = prompt('Ledger Name:', 'New Group 🏡');
+                          if (name) {
+                            if (groups.some((g) => g.name.trim().toLowerCase() === name.trim().toLowerCase())) {
+                              alert('A group with that name already exists. Please pick a different name.');
+                              return;
+                            }
+                            const id = genGroupId();
+                            const newG = { id, name, members: [me], currency: '₹', pendingSync: true };
+                            setGroups([...groups, newG]);
+                            setLocalGId(id);
+                            setSelectedSplitters([me]);
+                            setCurr('₹');
                           }
-                          const id = genGroupId();
-                          const newG = { id, name, members: [me], currency: '₹', pendingSync: true };
-                          setGroups([...groups, newG]);
-                          setLocalGId(id);
-                          setSelectedSplitters([me]);
-                          setCurr('₹');
                         }
                       }}
                       style={{
@@ -652,7 +659,7 @@ export const ExpenseModal: React.FC<ExpenseModalProps> = ({
                       }}
                     >
                       <div style={{ width: '30px', height: '30px', borderRadius: '8px', background: '#EEF2FF', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '16px', flexShrink: 0 }}>➕</div>
-                      <span style={{ fontSize: '12px', fontWeight: 600 }}>Create New Group</span>
+                      <span style={{ fontSize: '12px', fontWeight: 600 }}>New Group</span>
                     </div>
                   </div>
                 </div>
