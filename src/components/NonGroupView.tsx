@@ -415,9 +415,9 @@ export const NonGroupView: React.FC<NonGroupViewProps> = ({
                                     ev.stopPropagation();
                                     if (window.confirm(`Delete "${e.title}" (${curr}${formatExactAmount(Number(e.amt) || 0)})? This can't be undone.`)) onDeleteExpense(e.id);
                                   }}
-                                  style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#CBD5E1', display: 'flex', alignItems: 'center', padding: '2px', flexShrink: 0 }}
+                                  style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#DC2626', display: 'flex', alignItems: 'center', padding: '2px', flexShrink: 0 }}
                                 >
-                                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#94A3B8" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#DC2626" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                                     <path d="M3 6h18" /><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" /><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6" />
                                   </svg>
                                 </button>
