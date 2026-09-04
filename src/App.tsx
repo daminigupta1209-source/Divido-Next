@@ -1364,6 +1364,34 @@ function App() {
     });
   };
 
+  // Delete a whole non-group thread with one person: all STANDALONE expenses
+  // involving them, plus their leftover shared "direct" thread (local + cloud).
+  const deletePersonNonGroup = async (personName: string, directGroupId?: string) => {
+    const cl = (personName || '').replace(/\s*\(Left\)$/i, '').trim().toLowerCase();
+    if (!cl) return;
+    const involves = (e: Expense) =>
+      (e.paid || '').replace(/\s*\(Left\)$/i, '').trim().toLowerCase() === cl ||
+      (e.splitters || []).some((s) => (s || '').replace(/\s*\(Left\)$/i, '').trim().toLowerCase() === cl);
+    setExpenses((prev) => prev.filter((e) => {
+      if (String(e.gId) === 'STANDALONE' && involves(e)) return false;
+      if (directGroupId && String(e.gId) === String(directGroupId)) return false;
+      return true;
+    }));
+    everHadLocalStandaloneRef.current = true; // let the backup snapshot update
+    if (directGroupId) {
+      setGroups((prev) => prev.filter((g) => String(g.id) !== String(directGroupId)));
+      try {
+        if (!checkIfDemoMode()) {
+          await supabase.from('expenses').delete().eq('group_id', directGroupId);
+          await supabase.from('group_members').delete().eq('group_id', directGroupId);
+          await supabase.from('groups').delete().eq('id', directGroupId);
+        }
+      } catch (e) {
+        console.error('deletePersonNonGroup cloud cleanup failed:', e);
+      }
+    }
+  };
+
   // Wipe ALL non-group data for a fresh start: local STANDALONE expenses, any
   // leftover shared "direct" threads (local + cloud), and the cloud backup.
   const clearAllNonGroup = async () => {
@@ -3570,7 +3598,7 @@ function App() {
             })()}
             onRestoreBackup={restoreNonGroupBackup}
             onClearAll={clearAllNonGroup}
-            onDeleteExpense={deleteExpenseSecure}
+            onDeletePerson={deletePersonNonGroup}
             onRemindPerson={async (name) => {
               const clean = name.replace(/\s*\(Left\)$/i, '').trim();
               // In-app reminder (fire-and-forget so it doesn't consume the tap's
