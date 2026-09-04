@@ -62,7 +62,7 @@ export const buildPeopleSuggestions = (
   me: string,
   myEmail?: string,
 ): { name: string; email: string; identity: string }[] => {
-  const meLower = (me || '').replace(/\s*\((me|Left)\)$/i, '').trim().toLowerCase();
+  const meLower = (me || '').replace(/\s*\((me|you|left)\)$/i, '').trim().toLowerCase();
   // Also exclude MYSELF by identity/email, not just by name: across other groups
   // I may be listed under a slightly different name than `me`, so a name-only
   // filter lets me leak into my own suggestions (and lets me add myself).
@@ -132,7 +132,7 @@ export interface DuplicatePerson {
 }
 
 export const findDuplicatePeople = (groups: Group[], me: string): DuplicatePerson[] => {
-  const meLower = (me || '').replace(/\s*\((me|Left)\)$/i, '').trim().toLowerCase();
+  const meLower = (me || '').replace(/\s*\((me|you|left)\)$/i, '').trim().toLowerCase();
   const byName = new Map<string, DuplicateEntry[]>();
   for (const g of groups || []) {
     if (!g || g.id === 'STANDALONE') continue;
@@ -175,7 +175,7 @@ export const pickCanonicalIdentity = (entries: DuplicateEntry[]): string => {
 // next to getPersonKey because both are about turning a raw member string into
 // something comparable; callers that need the plain name for display use this.
 export const cleanMemberName = (name: string): string =>
-  name.replace(/\s*\((Left|me)\)\s*$/i, '').trim();
+  name.replace(/\s*\((left|me|you)\)\s*$/i, '').trim();
 
 const isLeftName = (name: string): boolean => /\s*\(Left\)\s*$/i.test(name);
 
