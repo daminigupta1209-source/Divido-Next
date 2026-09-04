@@ -55,6 +55,7 @@ export const NonGroupView: React.FC<NonGroupViewProps> = ({
   onSettlePerson,
   onRemindPerson,
   onAddWithPerson,
+  onSharePerson,
   backupMissingCount = 0,
   onRestoreBackup,
 }) => {
@@ -470,10 +471,10 @@ export const NonGroupView: React.FC<NonGroupViewProps> = ({
                         </div>
                         <span style={{ fontSize: '13px', fontWeight: 500, color: b.color }}>{b.text}</span>
                       </div>
-                      {onRemindPerson && (
+                      {(onSharePerson || onRemindPerson) && (
                         <button
                           type="button"
-                          onClick={(ev) => { ev.stopPropagation(); onRemindPerson(p.name); }}
+                          onClick={(ev) => { ev.stopPropagation(); (onSharePerson || onRemindPerson)!(p.name); }}
                           title={`Invite ${p.name}`}
                           style={{ width: '34px', height: '34px', borderRadius: '50%', background: '#FFF4EC', border: 'none', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', flexShrink: 0 }}
                         >
