@@ -3504,6 +3504,22 @@ function App() {
             defaultCurrency={myDefaultCurrency}
             memberAvatars={memberAvatars}
             getMemberBalance={getMemberBalance}
+            directThreads={(() => {
+              const clean = (n: string) => (n || '').replace(/\s*\(Left\)$/i, '').trim();
+              return groups
+                .filter((g) => g.isDirect)
+                .map((g) => {
+                  const otherRaw = (g.members || []).find((m) => clean(m) && clean(m).toLowerCase() !== me.toLowerCase()) || '';
+                  const other = clean(otherRaw);
+                  return {
+                    groupId: String(g.id),
+                    otherName: other,
+                    email: (g.memberIdentities?.[otherRaw] || '').includes('@') ? g.memberIdentities![otherRaw] : '',
+                    pending: (g.pendingMembers || []).some((pm) => clean(pm).toLowerCase() === other.toLowerCase()),
+                  };
+                })
+                .filter((t) => t.otherName);
+            })()}
             onBack={() => { setSelectedId(null); setView('summary'); }}
             onOpenExpense={(exp) => { setEditingExpenseSecure(exp); setShowExpModalSecure(true); }}
             onSettlePerson={(name) => setGlobalSettleDataSecure({ name: name.replace(/\s*\(Left\)$/i, '').trim(), gId: 'STANDALONE' })}

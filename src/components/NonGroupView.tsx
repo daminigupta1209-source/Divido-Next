@@ -11,6 +11,10 @@ interface NonGroupViewProps {
   // Canonical balance engine (same one Friends/Balances use). For STANDALONE it
   // returns the person's net position per currency: negative = they owe me.
   getMemberBalance: (groupId: string | number | null, memberName: string) => Record<string, number>;
+  // Hidden 2-person "direct" groups = shared non-group threads. Their expenses
+  // are shown here alongside plain STANDALONE ones so a person never disappears
+  // from this screen after being shared/invited.
+  directThreads?: { groupId: string; otherName: string; email: string; pending: boolean }[];
   onBack: () => void;
   onOpenExpense: (exp: Expense) => void;
   onSettlePerson: (name: string) => void;
@@ -46,6 +50,7 @@ export const NonGroupView: React.FC<NonGroupViewProps> = ({
   defaultCurrency,
   memberAvatars,
   getMemberBalance,
+  directThreads = [],
   onOpenExpense,
   onSettlePerson,
   onRemindPerson,
@@ -75,41 +80,73 @@ export const NonGroupView: React.FC<NonGroupViewProps> = ({
     return () => window.removeEventListener('popstate', onPop);
   }, [selectedPerson]);
 
-  // All non-group (STANDALONE) expenses, newest first.
+  const directGroupIds = React.useMemo(() => new Set(directThreads.map((t) => String(t.groupId))), [directThreads]);
+
+  // Does an expense involve this person (by paid or splitter)?
+  const expenseInvolves = React.useCallback((e: Expense, lowerName: string) => {
+    if (cleanName(e.paid).toLowerCase() === lowerName) return true;
+    return (e.splitters || []).some((s) => cleanName(s).toLowerCase() === lowerName);
+  }, []);
+
+  // Non-group expenses = plain STANDALONE ones PLUS any in a shared 2-person
+  // "direct" thread. Newest first.
   const nonGroupExps = React.useMemo(
     () =>
       expenses
-        .filter((e) => e && String(e.gId) === 'STANDALONE' && !e.isDeleted)
+        .filter((e) => e && !e.isDeleted && (String(e.gId) === 'STANDALONE' || directGroupIds.has(String(e.gId))))
         .sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0)),
-    [expenses]
+    [expenses, directGroupIds]
   );
 
-  // One entry per OTHER person, with their expense count, canonical balance and
-  // email (captured optionally when they were added — Expense.otherEmail).
+  // One entry per OTHER person. Balance is combined across both buckets (their
+  // plain STANDALONE net + their net in a shared direct thread) via the canonical
+  // engine — never hand-rolled.
   const people = React.useMemo(() => {
-    const byName = new Map<string, { name: string; count: number; email: string }>();
-    nonGroupExps.forEach((e) => {
-      const names = new Set<string>();
-      if (e.paid) names.add(e.paid);
-      (e.splitters || []).forEach((s) => names.add(s));
-      const otherEmail = (e.otherEmail || '').trim().toLowerCase();
-      names.forEach((raw) => {
-        const c = cleanName(raw);
-        if (!c || c.toLowerCase() === meLower) return;
-        const key = c.toLowerCase();
-        const cur = byName.get(key);
-        if (cur) {
-          cur.count += 1;
-          if (!cur.email && otherEmail.includes('@')) cur.email = otherEmail;
-        } else {
-          byName.set(key, { name: c, count: 1, email: otherEmail.includes('@') ? otherEmail : '' });
-        }
-      });
+    type P = { name: string; email: string; standalone: boolean; directGroupId?: string; otherNameInGroup?: string; pending: boolean };
+    const byName = new Map<string, P>();
+    // Seed shared (direct) threads first so pending/email are captured.
+    directThreads.forEach((t) => {
+      const c = cleanName(t.otherName);
+      if (!c || c.toLowerCase() === meLower) return;
+      const key = c.toLowerCase();
+      const ex = byName.get(key);
+      if (ex) {
+        ex.directGroupId = String(t.groupId);
+        ex.otherNameInGroup = t.otherName;
+        ex.pending = ex.pending || t.pending;
+        if (!ex.email && t.email) ex.email = t.email;
+      } else {
+        byName.set(key, { name: c, email: t.email || '', standalone: false, directGroupId: String(t.groupId), otherNameInGroup: t.otherName, pending: t.pending });
+      }
     });
+    // Add plain STANDALONE participants.
+    expenses
+      .filter((e) => e && String(e.gId) === 'STANDALONE' && !e.isDeleted)
+      .forEach((e) => {
+        const names = new Set<string>();
+        if (e.paid) names.add(e.paid);
+        (e.splitters || []).forEach((s) => names.add(s));
+        const otherEmail = (e.otherEmail || '').trim().toLowerCase();
+        names.forEach((raw) => {
+          const c = cleanName(raw);
+          if (!c || c.toLowerCase() === meLower) return;
+          const key = c.toLowerCase();
+          const ex = byName.get(key);
+          if (ex) { ex.standalone = true; if (!ex.email && otherEmail.includes('@')) ex.email = otherEmail; }
+          else byName.set(key, { name: c, email: otherEmail.includes('@') ? otherEmail : '', standalone: true, pending: false });
+        });
+      });
     return Array.from(byName.values())
-      .map((p) => ({ ...p, bal: getMemberBalance('STANDALONE', p.name) }))
+      .map((p) => {
+        const key = p.name.toLowerCase();
+        const bal: Record<string, number> = {};
+        if (p.standalone) Object.entries(getMemberBalance('STANDALONE', p.name)).forEach(([c, v]) => { bal[c] = (bal[c] || 0) + v; });
+        if (p.directGroupId && p.otherNameInGroup) Object.entries(getMemberBalance(p.directGroupId, p.otherNameInGroup)).forEach(([c, v]) => { bal[c] = (bal[c] || 0) + v; });
+        const count = nonGroupExps.filter((e) => expenseInvolves(e, key)).length;
+        return { name: p.name, email: p.email, pending: p.pending, directGroupId: p.directGroupId, bal, count };
+      })
       .sort((a, b) => a.name.localeCompare(b.name));
-  }, [nonGroupExps, meLower, getMemberBalance]);
+  }, [expenses, directThreads, nonGroupExps, meLower, getMemberBalance, expenseInvolves]);
 
   const Avatar: React.FC<{ name: string; size?: number }> = ({ name, size = 38 }) => {
     const url = memberAvatars?.[name] || memberAvatars?.[cleanName(name)];
