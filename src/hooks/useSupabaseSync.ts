@@ -267,7 +267,12 @@ export function useSupabaseSync({
           }
           const unsynced = groups.filter(g => g.pendingSync);
           setGroups(unsynced);
-          setExpenses([]);
+          // Keep local-only expenses that belong to no synced group: non-group
+          // (STANDALONE) ones and any on a still-unsynced group. Previously this
+          // wiped them to [], so a user whose only data is non-group expenses lost
+          // them from view on load until a manual restore.
+          const unsyncedIds = new Set(unsynced.map(g => String(g.id)));
+          setExpenses(expenses.filter(e => e && (String(e.gId) === 'STANDALONE' || unsyncedIds.has(String(e.gId)))));
           initialLoadDoneRef.current = true;
           setIsInitialLoadDone(true);
           return;
@@ -468,6 +473,7 @@ export function useSupabaseSync({
               pendingMembers,
               pendingLinkRequests,
               memberIdentities,
+              isDirect: !!group.is_direct,
             });
           }
 
@@ -823,7 +829,8 @@ export function useSupabaseSync({
                   currency: g.currency,
                   emoji: g.emoji,
                   simplify_debts: g.simplifyDebts,
-                  created_date: g.createdDate
+                  created_date: g.createdDate,
+                  is_direct: g.isDirect || false,
                 })
                 .select();
 
