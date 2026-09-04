@@ -3491,6 +3491,7 @@ function App() {
         ) : view === 'create_group' ? (
           <CreateGroupView
             me={me}
+            myEmail={userEmail}
             myDefaultCurrency={myDefaultCurrency}
             onCancel={() => {
               setView(editingGroupId ? 'detail' : 'summary');

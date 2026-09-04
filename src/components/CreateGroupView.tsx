@@ -7,6 +7,7 @@ import { SearchableCurrencyPicker } from './SearchableCurrencyPicker';
 
 interface CreateGroupViewProps {
   me: string;
+  myEmail?: string;
   myDefaultCurrency: string;
   onCancel: () => void;
   onCreateGroup: (groupData: { name: string; currency: string; members: string[]; emoji: string; createdDate?: string; memberEmails?: Record<string, string>; memberIdentities?: Record<string, string> }) => void;
@@ -18,6 +19,7 @@ interface CreateGroupViewProps {
 
 export const CreateGroupView: React.FC<CreateGroupViewProps> = ({
   me,
+  myEmail,
   myDefaultCurrency,
   onCancel,
   onCreateGroup,
@@ -670,7 +672,7 @@ export const CreateGroupView: React.FC<CreateGroupViewProps> = ({
         onClose={() => setIsAddingFriend(false)}
         onAddFriends={handleAddFriendsFromModal}
         existingMembers={participants}
-        suggestions={buildPeopleSuggestions(groups, null, participants, me)}
+        suggestions={buildPeopleSuggestions(groups, null, participants, me, myEmail)}
       />
     </form>
   );
