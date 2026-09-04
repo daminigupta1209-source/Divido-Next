@@ -3127,10 +3127,6 @@ function App() {
     )?.id;
 
     if (!gid) {
-      // First-time share moves these private expenses into a shared cloud thread.
-      // Confirm so an accidental tap can't push data to the cloud.
-      const ok = window.confirm(`Share your expenses with ${clean}?\n\nThey'll be able to open and settle them. Your other non-group expenses stay private.`);
-      if (!ok) return;
       gid = genGroupId();
       const em = (email || '').trim().toLowerCase();
       const memberIdentities: Record<string, string> = {};
