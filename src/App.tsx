@@ -3570,6 +3570,7 @@ function App() {
             })()}
             onRestoreBackup={restoreNonGroupBackup}
             onClearAll={clearAllNonGroup}
+            onDeleteExpense={deleteExpenseSecure}
             onRemindPerson={async (name) => {
               const clean = name.replace(/\s*\(Left\)$/i, '').trim();
               // In-app reminder (fire-and-forget so it doesn't consume the tap's
