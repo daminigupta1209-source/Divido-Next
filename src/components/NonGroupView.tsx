@@ -132,6 +132,9 @@ export const NonGroupView: React.FC<NonGroupViewProps> = ({
         const count = nonGroupExps.filter((e) => expenseInvolves(e, key)).length;
         return { name: p.name, email: p.email, pending: p.pending, directGroupId: p.directGroupId, bal, count };
       })
+      // Hide empty leftovers: a person with no expenses AND no balance (e.g. a
+      // stray/abandoned direct thread) shouldn't clutter the list.
+      .filter((p) => p.count > 0 || Object.values(p.bal).some((v) => Math.abs(v) > 0.01))
       .sort((a, b) => a.name.localeCompare(b.name));
   }, [expenses, directThreads, nonGroupExps, meLower, getMemberBalance, expenseInvolves]);
 
