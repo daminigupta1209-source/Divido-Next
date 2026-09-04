@@ -232,7 +232,17 @@ export const CreateGroupView: React.FC<CreateGroupViewProps> = ({
       }}
     >
       {/* HEADER */}
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '14px' }}>
+      <div style={{ 
+        display: 'flex', 
+        alignItems: 'center', 
+        justifyContent: 'space-between', 
+        position: 'sticky',
+        top: 0,
+        background: 'var(--bg)',
+        zIndex: 10,
+        margin: '-20px -16px 0 -16px',
+        padding: '20px 16px 14px 16px',
+      }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
           <button
             type="button"
