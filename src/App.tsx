@@ -1364,6 +1364,32 @@ function App() {
     });
   };
 
+  // Wipe ALL non-group data for a fresh start: local STANDALONE expenses, any
+  // leftover shared "direct" threads (local + cloud), and the cloud backup.
+  const clearAllNonGroup = async () => {
+    if (!window.confirm('Delete ALL non-group expenses?\n\nThis clears them from this device, removes shared threads, and empties your cloud backup. This cannot be undone.')) return;
+    const directIds = groups.filter((g) => g.isDirect).map((g) => String(g.id));
+    const directIdSet = new Set(directIds);
+    setExpenses((prev) => prev.filter((e) => !(String(e.gId) === 'STANDALONE' || directIdSet.has(String(e.gId)))));
+    setGroups((prev) => prev.filter((g) => !g.isDirect));
+    everHadLocalStandaloneRef.current = true; // let the empty snapshot overwrite the backup
+    try {
+      if (!checkIfDemoMode() && userEmail) {
+        await supabase
+          .from('nongroup_backups')
+          .upsert({ user_email: userEmail.toLowerCase(), data: [], updated_at: new Date().toISOString() }, { onConflict: 'user_email' });
+        setNonGroupBackup([]);
+        for (const gid of directIds) {
+          await supabase.from('expenses').delete().eq('group_id', gid);
+          await supabase.from('group_members').delete().eq('group_id', gid);
+          await supabase.from('groups').delete().eq('id', gid);
+        }
+      }
+    } catch (e) {
+      console.error('clearAllNonGroup cloud cleanup failed:', e);
+    }
+  };
+
   // Merge several roster entries that are the SAME person (usually fragmented
   // after an account deletion dropped their email) into one shared identity, so
   // they collapse to a single person in balances/suggestions everywhere.
@@ -3542,6 +3568,7 @@ function App() {
               return nonGroupBackup.filter((e) => e && String(e.gId) === 'STANDALONE' && !ids.has(String(e.id))).length;
             })()}
             onRestoreBackup={restoreNonGroupBackup}
+            onClearAll={clearAllNonGroup}
             onRemindPerson={async (name) => {
               const clean = name.replace(/\s*\(Left\)$/i, '').trim();
               // In-app reminder (fire-and-forget so it doesn't consume the tap's

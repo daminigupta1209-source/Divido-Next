@@ -24,6 +24,7 @@ interface NonGroupViewProps {
   // How many backed-up non-group expenses aren't present locally (for restore).
   backupMissingCount?: number;
   onRestoreBackup?: () => void;
+  onClearAll?: () => void;
 }
 
 const cleanName = (n: string) => (n || '').replace(/\s*\(Left\)$/i, '').trim();
@@ -57,6 +58,7 @@ export const NonGroupView: React.FC<NonGroupViewProps> = ({
   onAddWithPerson,
   backupMissingCount = 0,
   onRestoreBackup,
+  onClearAll,
 }) => {
   // Bottom toggle on the front page: Settle | Photos (swipe left/right).
   const [activeTab, setActiveTab] = React.useState<'settle' | 'photos'>('settle');
@@ -411,6 +413,15 @@ export const NonGroupView: React.FC<NonGroupViewProps> = ({
                   </div>
                 );
               })}
+              {onClearAll && (
+                <button
+                  type="button"
+                  onClick={onClearAll}
+                  style={{ alignSelf: 'center', marginTop: '10px', background: 'none', border: 'none', color: '#B91C1C', fontSize: '12px', fontWeight: 600, cursor: 'pointer', textDecoration: 'underline' }}
+                >
+                  Clear all non-group expenses
+                </button>
+              )}
             </div>
           )
         ) : photos.length === 0 ? (
