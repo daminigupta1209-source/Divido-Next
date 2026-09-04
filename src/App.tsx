@@ -2375,6 +2375,9 @@ function App() {
   };
 
   const handleDeleteGroup = (id: string | number) => {
+    // Hard safety net: the Non-Group bucket is not a real group and must never be
+    // "left"/"deleted" — doing so wiped every non-group expense. Never proceed.
+    if (String(id) === 'STANDALONE') return;
     const isStandalone = String(id) === 'STANDALONE';
     const g = isStandalone
       ? { name: 'Non-Group Expenses', members: [] as string[] }

@@ -688,6 +688,10 @@ export const MobileHeader: React.FC<MobileHeaderProps> = ({
                   );
                 })()}
 
+                {/* Non-Group is a bucket, not a real group — its options menu
+                    (Leave/Delete, Edit, Convert…) doesn't apply and Delete would
+                    wipe every non-group expense, so hide it entirely. */}
+                {selectedId !== 'STANDALONE' && (
                 <button
                   onClick={(e) => {
                     e.stopPropagation();
@@ -716,7 +720,8 @@ export const MobileHeader: React.FC<MobileHeaderProps> = ({
                     <line x1="14" y1="18" x2="20" y2="18" />
                   </svg>
                 </button>
-                {mobileShowGroupOptionsMenu && selectedGroup && (
+                )}
+                {selectedId !== 'STANDALONE' && mobileShowGroupOptionsMenu && selectedGroup && (
                   <GroupSettingsModal
                     group={selectedGroup}
                     me={me}
