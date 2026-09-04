@@ -36,6 +36,7 @@ export const CreateGroupView: React.FC<CreateGroupViewProps> = ({
   // Identities (email or person_id) from suggestions.
   const [participantIdentities, setParticipantIdentities] = useState<Record<string, string>>({});
   const [isAddingFriend, setIsAddingFriend] = useState(false);
+  const [showEmojiPicker, setShowEmojiPicker] = useState(false);
 
   // Read-only member rows for Edit mode, tagged by category. Actions (remove /
   // remind / invite-again) live on the group members card, opened via
@@ -106,26 +107,7 @@ export const CreateGroupView: React.FC<CreateGroupViewProps> = ({
     reader.readAsDataURL(file);
   };
 
-  // Focus the newly-added name field so the user can type immediately.
-  const lastFieldRef = useRef<HTMLInputElement>(null);
-  const [focusLastField, setFocusLastField] = useState(false);
-  useEffect(() => {
-    if (focusLastField) {
-      lastFieldRef.current?.focus();
-      setFocusLastField(false);
-    }
-  }, [focusLastField, participants.length]);
 
-  const handleAddParticipant = () => {
-    setParticipants([...participants, '']);
-    setFocusLastField(true);
-  };
-
-  const handleParticipantChange = (index: number, val: string) => {
-    const updated = [...participants];
-    updated[index] = val;
-    setParticipants(updated);
-  };
 
 
   const handleAddFriendsFromModal = (friends: { name: string; email: string; identity?: string }[]) => {
@@ -527,7 +509,7 @@ export const CreateGroupView: React.FC<CreateGroupViewProps> = ({
               </button>
             </>
           ) : (
-            /* CREATE MODE — editable list to add initial members */
+            /* CREATE MODE — list to add initial members */
             <div
               className={shakeFriends ? 'shake' : ''}
               style={{
@@ -550,29 +532,20 @@ export const CreateGroupView: React.FC<CreateGroupViewProps> = ({
                     gap: '8px',
                     background: 'var(--bg)',
                     borderRadius: '12px',
-                    padding: '4px 12px',
+                    padding: '8px 12px',
                     border: duplicateIndices.has(index) ? '1.5px solid #EF4444' : '1.5px solid transparent',
                   }}
                 >
-                  <input
-                    type="search"
-                    ref={index === participants.length - 1 ? lastFieldRef : null}
-                    value={index === 0 ? `${(participant && participant !== me ? participant : userName).replace(/\s*\(you\)$/i, '')} (You)` : participant}
-                    placeholder={index === 0 ? "Your name" : `Friend ${index + 1}`}
-                    onChange={(e) => handleParticipantChange(index, e.target.value)}
-                    disabled={index === 0 || isExistingMember(participant)}
+                  <span
                     style={{
                       flex: 1,
-                      height: '36px',
-                      border: 'none',
-                      background: 'transparent',
-                      outline: 'none',
                       fontSize: '14px',
                       fontWeight: 700,
                       color: index === 0 ? 'var(--g)' : 'var(--t)',
-                      
                     }}
-                  />
+                  >
+                    {index === 0 ? `${(participant && participant !== me ? participant : userName).replace(/\s*\(you\)$/i, '')} (You)` : participant}
+                  </span>
                   {index > 0 && !isExistingMember(participant) && (
                     <button
                       type="button"
@@ -594,12 +567,9 @@ export const CreateGroupView: React.FC<CreateGroupViewProps> = ({
                 </div>
               ))}
 
-              {/* Add Friend button — orange pill, centered. Clicking it adds a
-                  new name field and focuses it so the user can type right away. */}
-              {(participants.length === 0 || participants[participants.length - 1].trim() !== '') && (
               <button
                 type="button"
-                onClick={handleAddParticipant}
+                onClick={() => setIsAddingFriend(true)}
                 style={{
                   background: '#F97316',
                   color: '#FFFFFF',
@@ -620,62 +590,10 @@ export const CreateGroupView: React.FC<CreateGroupViewProps> = ({
                   margin: '8px auto 0',
                   transition: 'all 0.2s ease',
                 }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.transform = 'scale(1.02)';
-                  e.currentTarget.style.background = '#EA580C';
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.transform = 'scale(1)';
-                  e.currentTarget.style.background = '#F97316';
-                }}
               >
-                <span style={{ fontSize: '16px', fontWeight: 600, lineHeight: 1, color: '#FFFFFF', display: 'flex', alignItems: 'center' }}>+</span>
-                <span style={{ color: '#FFFFFF', lineHeight: 1, display: 'flex', alignItems: 'center' }}>Friend</span>
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="5" x2="12" y2="19" /><line x1="5" y1="12" x2="19" y2="12" /></svg>
+                Add friend
               </button>
-              )}
-
-              {/* Suggestions: people you've split with before */}
-              {(() => {
-                const shown = buildPeopleSuggestions(groups, null, participants, me);
-                if (shown.length === 0) return null;
-                const norm = (n: string) => n.replace(/\s*\(Left\)$/i, '').trim().toLowerCase();
-                return (
-                  <div style={{ marginTop: '10px' }}>
-                    <p style={{ margin: '0 0 6px 0', fontSize: '10px', fontWeight: 700, color: '#94A3B8', textTransform: 'uppercase', letterSpacing: '0.5px', textAlign: 'center' }}>
-                      Recently split with
-                    </p>
-                    <div className="light-scrollbar" style={{ display: 'flex', flexDirection: 'column', gap: '4px', maxHeight: '150px', overflowY: 'auto', paddingRight: '4px' }}>
-                      {shown.map((s) => (
-                        <button
-                          key={s.email || s.name}
-                          type="button"
-                          onClick={() => {
-                            if (participants.some((p) => norm(p) === norm(s.name))) return;
-                            setParticipants((prev) => [...prev, s.name]);
-                            if (s.email) setParticipantEmails((prev) => ({ ...prev, [s.name]: s.email }));
-                            if (s.identity) setParticipantIdentities((prev) => ({ ...prev, [s.name]: s.identity }));
-                          }}
-                          style={{ display: 'flex', alignItems: 'center', gap: '10px', width: '100%', textAlign: 'left', background: 'var(--bg)', border: '1px solid var(--border)', borderRadius: '10px', padding: '7px 10px', cursor: 'pointer' }}
-                        >
-                          <span style={{ width: '26px', height: '26px', borderRadius: '50%', background: '#FEF0E6', color: '#EA580C', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '11px', fontWeight: 700, flexShrink: 0 }}>
-                            {s.name.charAt(0).toUpperCase()}
-                          </span>
-                          <span style={{ minWidth: 0, flex: 1 }}>
-                            <span style={{ display: 'block', fontSize: '12px', fontWeight: 600, color: 'var(--t)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{s.name}</span>
-                            {s.email && <span style={{ display: 'block', fontSize: '10px', color: '#94A3B8', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{s.email}</span>}
-                          </span>
-                          <span style={{ color: '#F97316', fontSize: '16px', fontWeight: 700, flexShrink: 0 }}>+</span>
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-                );
-              })()}
-              {duplicateIndices.size > 0 && (
-                <p style={{ margin: '10px 4px 0', fontSize: '12px', fontWeight: 700, color: '#EF4444', textAlign: 'center' }}>
-                  Each friend needs a different name.
-                </p>
-              )}
             </div>
           )}
         </div>
@@ -745,6 +663,14 @@ export const CreateGroupView: React.FC<CreateGroupViewProps> = ({
           setSelectedCurrency(symbol);
           setShowCurrencyPicker(false);
         }}
+      />
+
+      <FullScreenAddFriend
+        isOpen={isAddingFriend}
+        onClose={() => setIsAddingFriend(false)}
+        onAddFriends={handleAddFriendsFromModal}
+        existingMembers={participants}
+        suggestions={buildPeopleSuggestions(groups, null, participants, me)}
       />
     </form>
   );
