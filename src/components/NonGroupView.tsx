@@ -404,7 +404,6 @@ export const NonGroupView: React.FC<NonGroupViewProps> = ({
                 const b = balanceText(p.bal);
                 const isOpen = expandedPerson === p.name;
                 const hasBal = myPerspective(p.bal).length > 0;
-                const theyOweMe = myPerspective(p.bal).some((l) => l.amount > 0);
                 const pLower = p.name.toLowerCase();
                 const theirExps = isOpen
                   ? nonGroupExps.filter((e) => {
@@ -434,14 +433,14 @@ export const NonGroupView: React.FC<NonGroupViewProps> = ({
                         </div>
                         <span style={{ fontSize: '13px', fontWeight: 500, color: b.color }}>{b.text}</span>
                       </div>
-                      {onAddWithPerson && (
+                      {onRemindPerson && (
                         <button
                           type="button"
-                          onClick={(ev) => { ev.stopPropagation(); onAddWithPerson(p.name); }}
-                          title={`Add an expense with ${p.name}`}
-                          style={{ width: '34px', height: '34px', borderRadius: '50%', background: '#10B981', border: 'none', color: '#FFFFFF', fontSize: '20px', lineHeight: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', flexShrink: 0, boxShadow: '0 2px 8px rgba(16,185,129,0.35)' }}
+                          onClick={(ev) => { ev.stopPropagation(); onRemindPerson(p.name); }}
+                          title={`Invite ${p.name}`}
+                          style={{ width: '34px', height: '34px', borderRadius: '50%', background: '#FFFFFF', border: '0.5px solid #CBD5E1', color: '#64748B', fontSize: '15px', lineHeight: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', flexShrink: 0 }}
                         >
-                          +
+                          🔔
                         </button>
                       )}
                       <span style={{ fontSize: '14px', color: '#94A3B8', flexShrink: 0, transition: 'transform 0.2s', transform: isOpen ? 'rotate(180deg)' : 'rotate(0deg)' }}>▾</span>
@@ -452,9 +451,13 @@ export const NonGroupView: React.FC<NonGroupViewProps> = ({
                       <div style={{ borderTop: '0.5px solid #EFE7DC', padding: '12px 16px', background: '#FBFAF8' }}>
                         <div style={{ display: 'flex', gap: '8px', marginBottom: theirExps.length ? '12px' : '0' }}>
                           {hasBal && <button type="button" onClick={() => onSettlePerson(p.name)} style={innerBtn}>Settle</button>}
-                          {onRemindPerson && (
-                            <button type="button" onClick={() => onRemindPerson(p.name)} style={innerBtn}>
-                              {hasBal && !theyOweMe ? 'Pay now' : 'Invite'}
+                          {onAddWithPerson && (
+                            <button
+                              type="button"
+                              onClick={() => onAddWithPerson(p.name)}
+                              style={{ ...innerBtn, background: '#10B981', border: 'none', color: '#FFFFFF' }}
+                            >
+                              + Expense
                             </button>
                           )}
                         </div>
