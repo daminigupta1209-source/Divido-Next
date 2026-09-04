@@ -97,38 +97,36 @@ export const FullScreenAddFriend: React.FC<FullScreenAddFriendProps> = ({
           </button>
           <h1 style={{ fontSize: '20px', fontWeight: 600, color: 'var(--t)', margin: 0 }}>Add friend</h1>
         </div>
-        {selectedFriends.length > 0 && (
-          <button
-            type="button"
-            onClick={commitSelected}
-            style={{
-              background: 'transparent',
-              border: 'none',
-              color: '#10B981',
-              cursor: 'pointer',
-              padding: '8px',
-              marginRight: '-8px',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              lineHeight: 1,
-              transition: 'all 0.2s',
-            }}
+        <button
+          type="button"
+          onClick={commitSelected}
+          style={{
+            background: 'transparent',
+            border: 'none',
+            color: '#10B981',
+            cursor: 'pointer',
+            padding: '8px',
+            marginRight: '-8px',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            lineHeight: 1,
+            transition: 'all 0.2s',
+          }}
+        >
+          <svg
+            width="28"
+            height="28"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="3.5"
+            strokeLinecap="round"
+            strokeLinejoin="round"
           >
-            <svg
-              width="28"
-              height="28"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="3.5"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            >
-              <polyline points="20 6 9 17 4 12" />
-            </svg>
-          </button>
-        )}
+            <polyline points="20 6 9 17 4 12" />
+          </svg>
+        </button>
       </div>
 
       {/* Search / type a name */}
