@@ -574,6 +574,7 @@ export const CreateGroupView: React.FC<CreateGroupViewProps> = ({
 
               {/* Add Friend button — orange pill, centered. Clicking it adds a
                   new name field and focuses it so the user can type right away. */}
+              {(participants.length === 0 || participants[participants.length - 1].trim() !== '') && (
               <button
                 type="button"
                 onClick={handleAddParticipant}
@@ -609,6 +610,7 @@ export const CreateGroupView: React.FC<CreateGroupViewProps> = ({
                 <span style={{ fontSize: '16px', fontWeight: 600, lineHeight: 1, color: '#FFFFFF', display: 'flex', alignItems: 'center' }}>+</span>
                 <span style={{ color: '#FFFFFF', lineHeight: 1, display: 'flex', alignItems: 'center' }}>Friend</span>
               </button>
+              )}
 
               {/* Suggestions: people you've split with before */}
               {(() => {
