@@ -59,7 +59,6 @@ export const NonGroupView: React.FC<NonGroupViewProps> = ({
   backupMissingCount = 0,
   onRestoreBackup,
 }) => {
-  const [selectedPerson, setSelectedPerson] = React.useState<string | null>(null);
   // Bottom toggle on the front page: Settle | Photos (swipe left/right).
   const [activeTab, setActiveTab] = React.useState<'settle' | 'photos'>('settle');
   // Which person's row is expanded inline (accordion) on the Settle tab.
@@ -68,18 +67,6 @@ export const NonGroupView: React.FC<NonGroupViewProps> = ({
   const touchStartY = React.useRef<number | null>(null);
 
   const meLower = cleanName(me).toLowerCase();
-
-  // With the on-screen breadcrumb gone, make the phone/browser back button
-  // return from a person's page to the people list (instead of leaving the
-  // non-group screen entirely). Push one history entry while a person is open
-  // and pop back to the list when the user goes back.
-  React.useEffect(() => {
-    if (!selectedPerson) return;
-    window.history.pushState({ dividoNonGroupPerson: true }, '');
-    const onPop = () => setSelectedPerson(null);
-    window.addEventListener('popstate', onPop);
-    return () => window.removeEventListener('popstate', onPop);
-  }, [selectedPerson]);
 
   const directGroupIds = React.useMemo(() => new Set(directThreads.map((t) => String(t.groupId))), [directThreads]);
 
@@ -193,114 +180,6 @@ export const NonGroupView: React.FC<NonGroupViewProps> = ({
     const color = allCollect ? '#047857' : allPay ? '#B91C1C' : '#334155';
     return { text: parts.join(' · '), color };
   };
-
-  // ── Person detail ──────────────────────────────────────────────────────────
-  if (selectedPerson) {
-    const person = selectedPerson;
-    const bal = getMemberBalance('STANDALONE', person);
-    const lines = myPerspective(bal);
-    const theirExps = nonGroupExps.filter((e) => {
-      const names = new Set<string>();
-      if (e.paid) names.add(cleanName(e.paid).toLowerCase());
-      (e.splitters || []).forEach((s) => names.add(cleanName(s).toLowerCase()));
-      return names.has(person.toLowerCase());
-    });
-    const hasBalance = lines.length > 0;
-    const allCollect = hasBalance && lines.every((l) => l.amount > 0);
-
-    return (
-      <div className="content-width-limit" style={{ paddingTop: '4px' }}>
-        {/* Centered header — avatar, name, balance */}
-        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center', marginBottom: '16px' }}>
-          <Avatar name={person} size={56} />
-          <div style={{ fontSize: '18px', fontWeight: 700, color: '#0F172A', marginTop: '8px' }}>{person}</div>
-          <div style={{ fontSize: '14px', fontWeight: 600, color: !hasBalance ? '#94A3B8' : allCollect ? '#047857' : '#B91C1C', marginTop: '2px' }}>
-            {!hasBalance
-              ? 'All settled up'
-              : lines.map((l) => `${l.amount > 0 ? 'You collect' : 'You pay'} ${l.curr}${fmt(l.amount)}`).join(' · ')}
-          </div>
-        </div>
-
-        {/* Actions — three equal ghost buttons */}
-        {(() => {
-          const ghost: React.CSSProperties = { flex: 1, padding: '11px 8px', borderRadius: '12px', border: '0.5px solid #E2E8F0', background: '#FFFFFF', color: '#334155', fontSize: '13.5px', fontWeight: 600, cursor: 'pointer', whiteSpace: 'nowrap' };
-          const allPay = hasBalance && lines.every((l) => l.amount < 0);
-          return (
-            <div style={{ display: 'flex', gap: '8px', marginBottom: '22px' }}>
-              {hasBalance && (
-                <button type="button" onClick={() => onSettlePerson(person)} style={ghost}>Settle</button>
-              )}
-              {hasBalance && onRemindPerson && (
-                <button
-                  type="button"
-                  onClick={() => (allPay ? onSettlePerson(person) : onRemindPerson(person))}
-                  style={ghost}
-                >
-                  {allPay ? 'Pay now' : 'Invite'}
-                </button>
-              )}
-              {onAddWithPerson && (
-                <button type="button" onClick={() => onAddWithPerson(person)} style={ghost}>+ Expense</button>
-              )}
-            </div>
-          );
-        })()}
-
-        <div style={{ fontSize: '10px', fontWeight: 600, letterSpacing: '1.2px', color: '#94A3B8', textTransform: 'uppercase', marginBottom: '8px' }}>
-          Expenses with {person}
-        </div>
-
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-          {theirExps.map((e) => {
-            const curr = e.currency || defaultCurrency;
-            const iPaid = cleanName(e.paid).toLowerCase() === meLower;
-            const avatarColors = ['#E0F2FE', '#F0FDF4', '#FEF2F2', '#FFFBEB', '#F5F3FF', '#FFF1F2'];
-            const textColors = ['#0369A1', '#15803D', '#B91C1C', '#B45309', '#6D28D9', '#BE123C'];
-            const colIdx = (e.title.charCodeAt(0) + (e.title.charCodeAt(1) || 0)) % avatarColors.length;
-            return (
-              <div
-                key={e.id}
-                className="card hover-bright"
-                onClick={() => onOpenExpense(e)}
-                style={{
-                  position: 'relative',
-                  padding: '14px 24px 14px 16px',
-                  background: '#FFFFFF',
-                  border: '0.5px solid #EFE7DC',
-                  boxShadow: '0 2px 10px rgba(0,0,0,0.03)',
-                  borderRadius: '20px',
-                  display: 'flex',
-                  justifyContent: 'space-between',
-                  alignItems: 'center',
-                  cursor: 'pointer',
-                  transition: '0.2s all',
-                  minHeight: '70px',
-                  boxSizing: 'border-box',
-                }}
-              >
-                <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flex: 1, minWidth: 0 }}>
-                  <div style={{ width: '40px', height: '40px', background: avatarColors[colIdx], color: textColors[colIdx], borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '18px', fontWeight: 600, flexShrink: 0 }}>
-                    {getEmoji(e.title) || (e.attachments && e.attachments.length > 0 ? '🖼️' : '⚡')}
-                  </div>
-                  <div style={{ minWidth: 0, flex: 1, marginRight: '16px' }}>
-                    <h3 style={{ fontSize: '14px', color: 'var(--t)', margin: 0, fontWeight: 600, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{e.title}</h3>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '11px', color: '#94A3B8', marginTop: '6px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                      <span style={{ color: iPaid ? '#16A34A' : '#DE7093', fontWeight: 500 }}>{iPaid ? 'You paid' : `${cleanName(e.paid)} paid`}</span>
-                      <span>•</span>
-                      <span>{formatDate(e.date)}</span>
-                    </div>
-                  </div>
-                </div>
-                <div style={{ textAlign: 'right' }}>
-                  <span style={{ fontSize: '14px', fontWeight: 600, color: 'var(--t)' }}>{curr} {formatExactAmount(Number(e.amt) || 0)}</span>
-                </div>
-              </div>
-            );
-          })}
-        </div>
-      </div>
-    );
-  }
 
   // ── People list (front page) ─────────────────────────────────────────────────
   // The top bar (back + "Non-Group Expenses" title) is provided by MobileHeader,
@@ -468,6 +347,9 @@ export const NonGroupView: React.FC<NonGroupViewProps> = ({
                         <div style={{ display: 'flex', alignItems: 'baseline', gap: '6px', minWidth: 0 }}>
                           <h3 style={{ fontSize: '16px', fontWeight: 600, color: '#2E2A25', margin: 0, textTransform: 'capitalize', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', flexShrink: 1 }}>{p.name}</h3>
                           <span style={{ fontSize: '13px', fontWeight: 500, color: '#94A3B8', whiteSpace: 'nowrap', flexShrink: 0 }}>({p.count} {p.count === 1 ? 'expense' : 'expenses'})</span>
+                          {p.pending && (
+                            <span style={{ fontSize: '10px', fontWeight: 700, color: '#B45309', background: '#FFF4EC', border: '0.5px solid #FED7AA', borderRadius: '6px', padding: '1px 6px', whiteSpace: 'nowrap', flexShrink: 0 }}>Invited</span>
+                          )}
                         </div>
                         <span style={{ fontSize: '13px', fontWeight: 500, color: b.color }}>{b.text}</span>
                       </div>
