@@ -118,6 +118,7 @@ export const GroupsView: React.FC<GroupsViewProps> = ({
 
   // 2. Filter groups
   const filteredGroups = groups.filter((g) => {
+    if (g.isDirect) return false; // direct (shared non-group) threads live under Non-Group Expenses
     if (g.name.trim() === '' && !expenses.some((e) => String(e.gId) === String(g.id)) && g.members.length <= 1) {
       return false;
     }

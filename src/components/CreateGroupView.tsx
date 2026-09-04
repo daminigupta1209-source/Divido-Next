@@ -2,6 +2,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import { worldCurrencies } from '../lib/utils';
 import { Group } from '../lib/types';
 import { buildPeopleSuggestions } from '../lib/identity';
+import { FullScreenAddFriend } from './FullScreenAddFriend';
 import { SearchableCurrencyPicker } from './SearchableCurrencyPicker';
 
 interface CreateGroupViewProps {
@@ -34,6 +35,7 @@ export const CreateGroupView: React.FC<CreateGroupViewProps> = ({
   const [participantEmails, setParticipantEmails] = useState<Record<string, string>>({});
   // Identities (email or person_id) from suggestions.
   const [participantIdentities, setParticipantIdentities] = useState<Record<string, string>>({});
+  const [isAddingFriend, setIsAddingFriend] = useState(false);
 
   // Read-only member rows for Edit mode, tagged by category. Actions (remove /
   // remind / invite-again) live on the group members card, opened via
@@ -123,6 +125,26 @@ export const CreateGroupView: React.FC<CreateGroupViewProps> = ({
     const updated = [...participants];
     updated[index] = val;
     setParticipants(updated);
+  };
+
+
+  const handleAddFriendsFromModal = (friends: { name: string; email: string; identity?: string }[]) => {
+    if (friends.length === 0) return;
+    const existing = new Set(participants.map(p => normName(p)));
+    const namesToAdd: string[] = [];
+    const newEmails = { ...participantEmails };
+    const newIdentities = { ...participantIdentities };
+    for (const f of friends) {
+      const nm = f.name.trim();
+      if (!nm || existing.has(normName(nm))) continue;
+      namesToAdd.push(nm);
+      if (f.email) newEmails[nm] = f.email;
+      if (f.identity) newIdentities[nm] = f.identity;
+    }
+    setParticipants([...participants, ...namesToAdd]);
+    setParticipantEmails(newEmails);
+    setParticipantIdentities(newIdentities);
+    setIsAddingFriend(false);
   };
 
   const handleRemoveParticipant = (index: number) => {

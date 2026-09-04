@@ -178,7 +178,12 @@ export const MasterSummary: React.FC<MasterSummaryProps> = ({
   };
 
   const nonGroupBal = getMemberBalance('STANDALONE', me);
-  const nonGroupExps = expenses.filter((e) => String(e.gId) === 'STANDALONE' && !e.isDeleted);
+  // A "direct" group (created by sharing a non-group card) is presented as a
+  // Non-Group expense, not as its own group. So non-group = plain STANDALONE
+  // expenses PLUS any expense living in an isDirect group.
+  const directGroupIds = new Set(groups.filter((g) => g.isDirect).map((g) => String(g.id)));
+  const isNonGroupExpense = (e: Expense) => String(e.gId) === 'STANDALONE' || directGroupIds.has(String(e.gId));
+  const nonGroupExps = expenses.filter((e) => isNonGroupExpense(e) && !e.isDeleted);
   const nonGroupMembers = Array.from(new Set(nonGroupExps.flatMap((e) => e.splitters || [])));
   
   const nonGroupRels = nonGroupMembers
@@ -200,6 +205,9 @@ export const MasterSummary: React.FC<MasterSummaryProps> = ({
     .filter((r) => Object.values(r.balances).some((v) => Math.abs(v) > 0.01));
 
   const filteredGroups = groups.filter((g) => {
+    // Direct (shared non-group) threads never appear in the Groups list — their
+    // cards live under Non-Group Expenses.
+    if (g.isDirect) return false;
     if (g.name.trim() === '' && !expenses.some((e) => String(e.gId) === String(g.id)) && g.members.length <= 1) {
       return false;
     }
@@ -230,7 +238,7 @@ export const MasterSummary: React.FC<MasterSummaryProps> = ({
     return true;
   });
 
-  const standaloneExps = expenses.filter((e) => e.gId === 'STANDALONE');
+  const standaloneExps = expenses.filter((e) => isNonGroupExpense(e));
   standaloneExps.forEach((e) => {
     const c = e.currency || '₹';
     const splitters = e.splitters || [e.paid];
