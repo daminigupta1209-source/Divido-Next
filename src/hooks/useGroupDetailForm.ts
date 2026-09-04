@@ -437,6 +437,9 @@ export function useGroupDetailForm({
   };
 
   const handleClearAll = () => {
+    // Never bulk-clear the Non-Group bucket — that would wipe all non-group
+    // expenses (they belong to different people, not one group).
+    if (String(selectedId) === 'STANDALONE') return;
     if (
       confirm(
         'Are you sure you want to clear all activity in this group? 🧹\n\nThis will permanently delete all expenses and settlements in this group.'

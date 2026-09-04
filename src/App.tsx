@@ -421,6 +421,11 @@ function App() {
   // Populated from the member_avatars table so group members can see each
   // other's Google (or uploaded) photo. See loadMemberAvatars / saveMyAvatar.
   const [memberAvatars, setMemberAvatars] = useState<Record<string, string>>({});
+  // Cloud backup of my non-group (STANDALONE) expenses. They are local-only, so
+  // this private per-user snapshot is what makes them recoverable on a new device
+  // or after an accidental wipe. Never merged live into group sync.
+  const [nonGroupBackup, setNonGroupBackup] = useState<Expense[]>([]);
+  const everHadLocalStandaloneRef = useRef(false);
 
   // Dynamically resolve active identity (me) for the selected group (Tricount cookie fallback)
   const me = (() => {
@@ -749,6 +754,12 @@ function App() {
       setNotifications((prev) => (prev.some((p) => String(p.id) === String(n.id)) ? prev : [n, ...prev]));
     });
     return unsub;
+  }, [userEmail]);
+
+  // Load my non-group cloud backup on sign-in (so a restore banner can appear).
+  useEffect(() => {
+    if (!userEmail) { setNonGroupBackup([]); everHadLocalStandaloneRef.current = false; return; }
+    loadNonGroupBackup(userEmail);
   }, [userEmail]);
 
   const unreadNotifCount = notifications.filter((n) => !n.isRead).length;
@@ -1080,6 +1091,19 @@ function App() {
   const directGroupIdSet = new Set(groups.filter((g) => g.isDirect).map((g) => String(g.id)));
   const isNonGroupExpense = (e: Expense) => String(e.gId) === 'STANDALONE' || directGroupIdSet.has(String(e.gId));
 
+  // Debounced cloud backup of my non-group expenses whenever they change. Guard
+  // against clobbering a good cloud backup with an empty set on a fresh device:
+  // only write an empty snapshot once the user has actually had non-group
+  // expenses this session (a genuine local clear), never before a restore.
+  useEffect(() => {
+    if (!userEmail || checkIfDemoMode()) return;
+    const standalone = expenses.filter((e) => e && String(e.gId) === 'STANDALONE' && !e.isDeleted);
+    if (standalone.length > 0) everHadLocalStandaloneRef.current = true;
+    if (standalone.length === 0 && !everHadLocalStandaloneRef.current) return;
+    const t = setTimeout(() => { saveNonGroupBackup(userEmail, standalone); }, 2000);
+    return () => clearTimeout(t);
+  }, [expenses, userEmail]);
+
   // Always-current mirror of `groups` so deferred callbacks (e.g. the delayed
   // remove-sweep) can read the latest state instead of a stale closure.
   const groupsRef = useRef(groups);
@@ -1296,6 +1320,48 @@ function App() {
     } catch (e) {
       console.error('Failed to load avatars:', e);
     }
+  };
+
+  // ── Non-group cloud backup ──────────────────────────────────────────────────
+  const saveNonGroupBackup = async (email: string, exps: Expense[]) => {
+    const em = (email || '').trim().toLowerCase();
+    if (!em || checkIfDemoMode()) return;
+    try {
+      await supabase
+        .from('nongroup_backups')
+        .upsert({ user_email: em, data: exps, updated_at: new Date().toISOString() }, { onConflict: 'user_email' });
+    } catch (e) {
+      console.error('Failed to save non-group backup:', e);
+    }
+  };
+
+  const loadNonGroupBackup = async (email: string) => {
+    const em = (email || '').trim().toLowerCase();
+    if (!em) return;
+    try {
+      const { data, error } = await supabase
+        .from('nongroup_backups')
+        .select('data')
+        .eq('user_email', em)
+        .maybeSingle();
+      if (!error && data && Array.isArray((data as any).data)) {
+        setNonGroupBackup((data as any).data as Expense[]);
+      }
+    } catch (e) {
+      console.error('Failed to load non-group backup:', e);
+    }
+  };
+
+  // Restore any backed-up non-group expenses that aren't already present locally.
+  const restoreNonGroupBackup = () => {
+    setExpenses((prev) => {
+      const ids = new Set(prev.map((e) => String(e.id)));
+      const missing = nonGroupBackup.filter(
+        (e) => e && String(e.gId) === 'STANDALONE' && !ids.has(String(e.id))
+      );
+      if (missing.length === 0) return prev;
+      return [...missing, ...prev];
+    });
   };
 
   // Merge several roster entries that are the SAME person (usually fragmented
@@ -3442,6 +3508,11 @@ function App() {
             onOpenExpense={(exp) => { setEditingExpenseSecure(exp); setShowExpModalSecure(true); }}
             onSettlePerson={(name) => setGlobalSettleDataSecure({ name: name.replace(/\s*\(Left\)$/i, '').trim(), gId: 'STANDALONE' })}
             onAddWithPerson={(name) => quickAddExpenseWithFriend(name)}
+            backupMissingCount={(() => {
+              const ids = new Set(expenses.map((e) => String(e.id)));
+              return nonGroupBackup.filter((e) => e && String(e.gId) === 'STANDALONE' && !ids.has(String(e.id))).length;
+            })()}
+            onRestoreBackup={restoreNonGroupBackup}
             onRemindPerson={async (name) => {
               const clean = name.replace(/\s*\(Left\)$/i, '').trim();
               // In-app reminder (fire-and-forget so it doesn't consume the tap's

@@ -202,3 +202,37 @@ ON public.member_avatars FOR UPDATE
 TO authenticated
 USING (lower(email) = lower(auth.jwt() ->> 'email'))
 WITH CHECK (lower(email) = lower(auth.jwt() ->> 'email'));
+
+-- ============================================================================
+-- §10. NON-GROUP BACKUPS
+-- A private per-user snapshot of the user's non-group ("STANDALONE") expenses.
+-- Those expenses are stored locally on the device only; this table makes them
+-- recoverable on a new device or after an accidental wipe. Only the owner can
+-- read or write their own row.
+-- ============================================================================
+CREATE TABLE IF NOT EXISTS public.nongroup_backups (
+    user_email text PRIMARY KEY,
+    data jsonb NOT NULL DEFAULT '[]'::jsonb,
+    updated_at timestamp with time zone DEFAULT now()
+);
+
+ALTER TABLE public.nongroup_backups ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS "Read own nongroup backup" ON public.nongroup_backups;
+CREATE POLICY "Read own nongroup backup"
+ON public.nongroup_backups FOR SELECT
+TO authenticated
+USING (lower(user_email) = lower(auth.jwt() ->> 'email'));
+
+DROP POLICY IF EXISTS "Insert own nongroup backup" ON public.nongroup_backups;
+CREATE POLICY "Insert own nongroup backup"
+ON public.nongroup_backups FOR INSERT
+TO authenticated
+WITH CHECK (lower(user_email) = lower(auth.jwt() ->> 'email'));
+
+DROP POLICY IF EXISTS "Update own nongroup backup" ON public.nongroup_backups;
+CREATE POLICY "Update own nongroup backup"
+ON public.nongroup_backups FOR UPDATE
+TO authenticated
+USING (lower(user_email) = lower(auth.jwt() ->> 'email'))
+WITH CHECK (lower(user_email) = lower(auth.jwt() ->> 'email'));

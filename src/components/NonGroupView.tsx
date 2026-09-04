@@ -17,6 +17,9 @@ interface NonGroupViewProps {
   onRemindPerson?: (name: string) => void;
   onAddWithPerson?: (name: string) => void;
   onSharePerson?: (name: string) => void;
+  // How many backed-up non-group expenses aren't present locally (for restore).
+  backupMissingCount?: number;
+  onRestoreBackup?: () => void;
 }
 
 const cleanName = (n: string) => (n || '').replace(/\s*\(Left\)$/i, '').trim();
@@ -47,6 +50,8 @@ export const NonGroupView: React.FC<NonGroupViewProps> = ({
   onSettlePerson,
   onRemindPerson,
   onAddWithPerson,
+  backupMissingCount = 0,
+  onRestoreBackup,
 }) => {
   const [selectedPerson, setSelectedPerson] = React.useState<string | null>(null);
   // Bottom toggle on the front page: Settle | Photos (swipe left/right).
@@ -292,6 +297,25 @@ export const NonGroupView: React.FC<NonGroupViewProps> = ({
 
   return (
     <div className="content-width-limit">
+      {/* Cloud-backup restore banner — appears when the cloud has non-group
+          expenses that aren't on this device (new device / after a wipe). */}
+      {backupMissingCount > 0 && onRestoreBackup && (
+        <div style={{ display: 'flex', alignItems: 'center', gap: '10px', background: '#EFF6FF', border: '1px solid #BFDBFE', borderRadius: '14px', padding: '12px 14px', marginBottom: '16px' }}>
+          <span style={{ fontSize: '18px' }}>☁️</span>
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <div style={{ fontSize: '13px', fontWeight: 700, color: '#1E3A8A' }}>Restore from backup</div>
+            <div style={{ fontSize: '11.5px', color: '#3B82F6' }}>{backupMissingCount} non-group {backupMissingCount === 1 ? 'expense' : 'expenses'} saved in your cloud backup.</div>
+          </div>
+          <button
+            type="button"
+            onClick={onRestoreBackup}
+            style={{ border: 'none', background: '#2563EB', color: '#FFFFFF', borderRadius: '10px', padding: '8px 14px', fontSize: '12.5px', fontWeight: 700, cursor: 'pointer', flexShrink: 0 }}
+          >
+            Restore
+          </button>
+        </div>
+      )}
+
       {/* Net balance card — styled to match the home page pill */}
       <div style={{ marginBottom: '22px' }}>
         <div style={{ fontSize: '11px', fontWeight: 700, letterSpacing: '1.5px', textTransform: 'uppercase', color: '#B0A79C', marginBottom: '10px', marginLeft: '2px' }}>
