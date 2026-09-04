@@ -56,6 +56,8 @@ export const NonGroupView: React.FC<NonGroupViewProps> = ({
   const [selectedPerson, setSelectedPerson] = React.useState<string | null>(null);
   // Bottom toggle on the front page: Settle | Photos (swipe left/right).
   const [activeTab, setActiveTab] = React.useState<'settle' | 'photos'>('settle');
+  // Which person's row is expanded inline (accordion) on the Settle tab.
+  const [expandedPerson, setExpandedPerson] = React.useState<string | null>(null);
   const touchStartX = React.useRef<number | null>(null);
   const touchStartY = React.useRef<number | null>(null);
 
@@ -400,32 +402,84 @@ export const NonGroupView: React.FC<NonGroupViewProps> = ({
             <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
               {people.map((p) => {
                 const b = balanceText(p.bal);
+                const isOpen = expandedPerson === p.name;
+                const hasBal = myPerspective(p.bal).length > 0;
+                const theyOweMe = myPerspective(p.bal).some((l) => l.amount > 0);
+                const pLower = p.name.toLowerCase();
+                const theirExps = isOpen
+                  ? nonGroupExps.filter((e) => {
+                      const names = new Set<string>();
+                      if (e.paid) names.add(cleanName(e.paid).toLowerCase());
+                      (e.splitters || []).forEach((s) => names.add(cleanName(s).toLowerCase()));
+                      return names.has(pLower);
+                    })
+                  : [];
+                const innerBtn: React.CSSProperties = { flex: 1, textAlign: 'center', padding: '9px', borderRadius: '10px', border: '0.5px solid #E2E8F0', background: '#FFFFFF', color: '#334155', fontSize: '12.5px', fontWeight: 600, cursor: 'pointer' };
                 return (
                   <div
                     key={p.name}
-                    className="hover-up-mini"
-                    onClick={() => setSelectedPerson(p.name)}
-                    style={{ display: 'flex', alignItems: 'center', gap: '12px', background: '#FFFFFF', border: '0.5px solid #EFE7DC', borderRadius: '20px', padding: '16px', boxShadow: '0 2px 10px rgba(0,0,0,0.04)', cursor: 'pointer' }}
+                    style={{ background: '#FFFFFF', border: '0.5px solid #EFE7DC', borderRadius: '20px', boxShadow: '0 2px 10px rgba(0,0,0,0.04)', overflow: 'hidden' }}
                   >
-                    <Avatar name={p.name} size={40} />
-                    <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                      <div style={{ display: 'flex', alignItems: 'baseline', gap: '6px', minWidth: 0 }}>
-                        <h3 style={{ fontSize: '16px', fontWeight: 600, color: '#2E2A25', margin: 0, textTransform: 'capitalize', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', flexShrink: 1 }}>{p.name}</h3>
-                        <span style={{ fontSize: '13px', fontWeight: 500, color: '#94A3B8', whiteSpace: 'nowrap', flexShrink: 0 }}>({p.count} {p.count === 1 ? 'expense' : 'expenses'})</span>
+                    {/* Row header — tap to expand/collapse */}
+                    <div
+                      className="hover-up-mini"
+                      onClick={() => setExpandedPerson(isOpen ? null : p.name)}
+                      style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '16px', cursor: 'pointer' }}
+                    >
+                      <Avatar name={p.name} size={40} />
+                      <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                        <div style={{ display: 'flex', alignItems: 'baseline', gap: '6px', minWidth: 0 }}>
+                          <h3 style={{ fontSize: '16px', fontWeight: 600, color: '#2E2A25', margin: 0, textTransform: 'capitalize', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', flexShrink: 1 }}>{p.name}</h3>
+                          <span style={{ fontSize: '13px', fontWeight: 500, color: '#94A3B8', whiteSpace: 'nowrap', flexShrink: 0 }}>({p.count} {p.count === 1 ? 'expense' : 'expenses'})</span>
+                        </div>
+                        <span style={{ fontSize: '13px', fontWeight: 500, color: b.color }}>{b.text}</span>
                       </div>
-                      <span style={{ fontSize: '13px', fontWeight: 500, color: b.color }}>{b.text}</span>
+                      {onAddWithPerson && (
+                        <button
+                          type="button"
+                          onClick={(ev) => { ev.stopPropagation(); onAddWithPerson(p.name); }}
+                          title={`Add an expense with ${p.name}`}
+                          style={{ width: '34px', height: '34px', borderRadius: '50%', background: '#10B981', border: 'none', color: '#FFFFFF', fontSize: '20px', lineHeight: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', flexShrink: 0, boxShadow: '0 2px 8px rgba(16,185,129,0.35)' }}
+                        >
+                          +
+                        </button>
+                      )}
+                      <span style={{ fontSize: '14px', color: '#94A3B8', flexShrink: 0, transition: 'transform 0.2s', transform: isOpen ? 'rotate(180deg)' : 'rotate(0deg)' }}>▾</span>
                     </div>
-                    {onAddWithPerson && (
-                      <button
-                        type="button"
-                        onClick={(ev) => { ev.stopPropagation(); onAddWithPerson(p.name); }}
-                        title={`Add an expense with ${p.name}`}
-                        style={{ width: '34px', height: '34px', borderRadius: '50%', background: '#10B981', border: 'none', color: '#FFFFFF', fontSize: '20px', lineHeight: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', flexShrink: 0, boxShadow: '0 2px 8px rgba(16,185,129,0.35)' }}
-                      >
-                        +
-                      </button>
+
+                    {/* Expanded body — actions + this person's expenses */}
+                    {isOpen && (
+                      <div style={{ borderTop: '0.5px solid #EFE7DC', padding: '12px 16px', background: '#FBFAF8' }}>
+                        <div style={{ display: 'flex', gap: '8px', marginBottom: theirExps.length ? '12px' : '0' }}>
+                          {hasBal && <button type="button" onClick={() => onSettlePerson(p.name)} style={innerBtn}>Settle</button>}
+                          {onRemindPerson && (
+                            <button type="button" onClick={() => onRemindPerson(p.name)} style={innerBtn}>
+                              {hasBal && !theyOweMe ? 'Pay now' : 'Invite'}
+                            </button>
+                          )}
+                        </div>
+                        {theirExps.map((e) => {
+                          const curr = e.currency || defaultCurrency;
+                          const iPaid = cleanName(e.paid).toLowerCase() === meLower;
+                          return (
+                            <div
+                              key={e.id}
+                              onClick={() => onOpenExpense(e)}
+                              style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '9px 0', borderBottom: '0.5px solid #EFE7DC', cursor: 'pointer' }}
+                            >
+                              <div style={{ width: '30px', height: '30px', borderRadius: '50%', background: '#F1EFE8', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '14px', flexShrink: 0 }}>
+                                {getEmoji(e.title) || '⚡'}
+                              </div>
+                              <div style={{ flex: 1, minWidth: 0 }}>
+                                <div style={{ fontSize: '13px', fontWeight: 600, color: '#0F172A', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{e.title}</div>
+                                <div style={{ fontSize: '11px', color: '#94A3B8' }}>{iPaid ? 'You paid' : `${cleanName(e.paid)} paid`} · {formatDate(e.date)}</div>
+                              </div>
+                              <span style={{ fontSize: '13px', fontWeight: 600, color: '#0F172A' }}>{curr} {formatExactAmount(Number(e.amt) || 0)}</span>
+                            </div>
+                          );
+                        })}
+                      </div>
                     )}
-                    <span style={{ fontSize: '16px', color: '#CBD5E1', flexShrink: 0 }}>›</span>
                   </div>
                 );
               })}
