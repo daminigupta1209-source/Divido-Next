@@ -3108,58 +3108,6 @@ function App() {
     return gid;
   };
 
-  // Share ALL of a person's non-group expenses with them: promote them into one
-  // hidden 2-person "direct" thread (so they sync to the cloud and the friend can
-  // open/settle them), then open the invite link. Reuses an existing thread if the
-  // person already has one. Needs a real account (sharing = cloud).
-  const sharePersonNonGroup = async (personName: string, email?: string) => {
-    if (!requireSignInToCreate()) return;
-    const clean = (personName || '').replace(/\s*\(Left\)$/i, '').trim();
-    if (!clean) return;
-    const cl = clean.toLowerCase();
-    const involves = (e: Expense) =>
-      (e.paid || '').replace(/\s*\(Left\)$/i, '').trim().toLowerCase() === cl ||
-      (e.splitters || []).some((s) => (s || '').replace(/\s*\(Left\)$/i, '').trim().toLowerCase() === cl);
-
-    // Reuse an existing shared thread with this person if there is one.
-    let gid: string | number | undefined = groups.find(
-      (g) => g.isDirect && (g.members || []).some((m) => (m || '').replace(/\s*\(Left\)$/i, '').trim().toLowerCase() === cl)
-    )?.id;
-
-    if (!gid) {
-      gid = genGroupId();
-      const em = (email || '').trim().toLowerCase();
-      const memberIdentities: Record<string, string> = {};
-      if (em.includes('@')) memberIdentities[clean] = em;
-      const theirs = expenses.filter((e) => e && String(e.gId) === 'STANDALONE' && !e.isDeleted && involves(e));
-      const currency = theirs[0]?.currency || myDefaultCurrency || '₹';
-      const newGroup = {
-        id: gid,
-        name: `${me} & ${clean}`,
-        currency,
-        members: [me, clean],
-        simplifyDebts: false,
-        createdDate: new Date().toISOString().split('T')[0],
-        pendingMembers: [clean],
-        memberIdentities,
-        isDirect: true,
-        pendingSync: true,
-      } as Group;
-      const targetGid = gid;
-      setGroups((prev) => [...prev, newGroup]);
-      setExpenses((prev) => prev.map((e) => (String(e.gId) === 'STANDALONE' && involves(e) ? { ...e, gId: targetGid } : e)));
-    }
-
-    const link = `${window.location.origin}/?joinGroupId=${gid}`;
-    const shareText = `Hey ${clean}! Here are our shared expenses on Divido — open to see and settle up 💸`;
-    if (typeof navigator !== 'undefined' && (navigator as any).share) {
-      try { await (navigator as any).share({ title: 'Divido — shared expenses', text: shareText, url: link }); } catch { /* dismissed */ }
-    } else {
-      setActiveReminderName(clean);
-      setShowAddFriendModal(true);
-    }
-  };
-
   const handleUpdateGroup = async (groupId: string | number, groupData: { name: string; currency: string; members: string[]; emoji: string; createdDate?: string }) => {
     // 1. Update local groups state. Names added during the edit are brand-new
     // invitees, so mark them pending so they show under "Pending Invites".
@@ -3589,7 +3537,6 @@ function App() {
             onOpenExpense={(exp) => { setEditingExpenseSecure(exp); setShowExpModalSecure(true); }}
             onSettlePerson={(name) => setGlobalSettleDataSecure({ name: name.replace(/\s*\(Left\)$/i, '').trim(), gId: 'STANDALONE' })}
             onAddWithPerson={(name) => quickAddExpenseWithFriend(name)}
-            onSharePerson={(name) => sharePersonNonGroup(name)}
             backupMissingCount={(() => {
               const ids = new Set(expenses.map((e) => String(e.id)));
               return nonGroupBackup.filter((e) => e && String(e.gId) === 'STANDALONE' && !ids.has(String(e.id))).length;
