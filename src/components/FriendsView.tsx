@@ -231,16 +231,14 @@ export const FriendsView: React.FC<FriendsViewProps> = ({
       if (getPersonKey(g, t.from) === myKey) {
         const friend = t.to;
         const id = resolveId(g, friend);
-        const lbl = g.isDirect ? `with ${friend.replace(/\s*\(Left\)$/i, '').trim()}` : gLabel;
         Object.entries(t.balances).forEach(([curr, val]) => {
-          bumpBal(id, friend, lbl, curr, -val);
+          bumpBal(id, friend, gLabel, curr, -val);
         });
       } else if (getPersonKey(g, t.to) === myKey) {
         const friend = t.from;
         const id = resolveId(g, friend);
-        const lbl = g.isDirect ? `with ${friend.replace(/\s*\(Left\)$/i, '').trim()}` : gLabel;
         Object.entries(t.balances).forEach(([curr, val]) => {
-          bumpBal(id, friend, lbl, curr, val);
+          bumpBal(id, friend, gLabel, curr, val);
         });
       }
     });
