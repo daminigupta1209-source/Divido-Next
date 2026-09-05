@@ -1416,10 +1416,16 @@ function App() {
       }
     }
     const link = `${window.location.origin}/?joinGroupId=${gid}`;
-    // Always show + copy the EXACT invite link (the OS share sheet hid the query
-    // param, which made people send the bare app URL). Copy first, then show it.
-    try { await navigator.clipboard.writeText(link); } catch { /* clipboard blocked */ }
-    alert('Invite link (copied — send THIS exact link):\n\n' + link);
+    const shareText = `Open our shared expenses on Divido 💸`;
+    // Prefer the phone's native share sheet (WhatsApp, etc.) with the FULL link.
+    if (typeof navigator !== 'undefined' && (navigator as any).share) {
+      try {
+        await (navigator as any).share({ title: 'Divido — shared expenses', text: shareText, url: link });
+        return;
+      } catch { /* user dismissed, or share unavailable — fall through to copy */ }
+    }
+    // Desktop / no share support: copy the link and show it.
+    try { await navigator.clipboard.writeText(link); alert('Invite link copied:\n\n' + link); } catch { alert(link); }
   };
 
   // Delete a whole non-group thread with one person: all STANDALONE expenses
