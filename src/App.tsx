@@ -1091,6 +1091,29 @@ function App() {
   const directGroupIdSet = new Set(groups.filter((g) => g.isDirect).map((g) => String(g.id)));
   const isNonGroupExpense = (e: Expense) => String(e.gId) === 'STANDALONE' || directGroupIdSet.has(String(e.gId));
 
+  // Back-fill: older shared threads were created before the `isDirect` flag
+  // existed (or the flag failed to round-trip), so they leak into the Groups
+  // list as "Damini & Abhishek" cards the user never made. Our generator always
+  // names a direct thread exactly `${members[0]} & ${members[1]}`, so any
+  // 2-member group matching that signature is really a direct thread — mark it
+  // (locally and in the cloud) so every isDirect filter hides it.
+  useEffect(() => {
+    const orphans = groups.filter(
+      (g) =>
+        !g.isDirect &&
+        String(g.id) !== 'STANDALONE' &&
+        Array.isArray(g.members) &&
+        g.members.length === 2 &&
+        (g.name || '').trim() === `${g.members[0]} & ${g.members[1]}`
+    );
+    if (orphans.length === 0) return;
+    const ids = new Set(orphans.map((g) => String(g.id)));
+    setGroups((prev) => prev.map((g) => (ids.has(String(g.id)) ? { ...g, isDirect: true } : g)));
+    orphans.forEach((g) => {
+      supabase.from('groups').update({ is_direct: true }).eq('id', g.id).then(() => {});
+    });
+  }, [groups]);
+
   // Debounced cloud backup of my non-group expenses whenever they change. Guard
   // against clobbering a good cloud backup with an empty set on a fresh device:
   // only write an empty snapshot once the user has actually had non-group
