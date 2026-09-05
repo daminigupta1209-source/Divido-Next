@@ -255,7 +255,15 @@ export const Analytics: React.FC<AnalyticsProps> = ({ expenses, groups, me, user
     const [recentFilter, setRecentFilter] = useState<'1W' | '1M' | '6M' | 'YTD' | '1Y' | '5Y' | 'Max'>('1M');
     
     const baseExpenses = useMemo(() => {
-      const base = selectedGroupId === 'ALL' ? expenses.filter(e => !e.isDeleted) : expenses.filter((e) => !e.isDeleted && String(e.gId) === String(selectedGroupId));
+      // Non-Group = plain STANDALONE expenses PLUS any in a shared "direct" thread,
+      // so its analytics include shared non-group expenses too.
+      const directGroupIds = new Set(groups.filter((g) => g.isDirect).map((g) => String(g.id)));
+      const isNonGroup = (e: Expense) => String(e.gId) === 'STANDALONE' || directGroupIds.has(String(e.gId));
+      const base = selectedGroupId === 'ALL'
+        ? expenses.filter((e) => !e.isDeleted)
+        : String(selectedGroupId) === 'STANDALONE'
+          ? expenses.filter((e) => !e.isDeleted && isNonGroup(e))
+          : expenses.filter((e) => !e.isDeleted && String(e.gId) === String(selectedGroupId));
       return base.filter((e: Expense) => {
         const t = e.title || '';
         return !(
@@ -265,7 +273,7 @@ export const Analytics: React.FC<AnalyticsProps> = ({ expenses, groups, me, user
           t === 'Written off' || e.notes === 'Written off'
         );
       });
-    }, [expenses, selectedGroupId]);
+    }, [expenses, selectedGroupId, groups]);
 
     const allDailyData = useMemo(() => {
       const sorted = [...baseExpenses].sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
