@@ -177,7 +177,6 @@ export const MasterSummary: React.FC<MasterSummaryProps> = ({
     return me;
   };
 
-  const nonGroupBal = getMemberBalance('STANDALONE', me);
   // A "direct" group (created by sharing a non-group card) is presented as a
   // Non-Group expense, not as its own group. So non-group = plain STANDALONE
   // expenses PLUS any expense living in an isDirect group.
@@ -830,7 +829,11 @@ export const MasterSummary: React.FC<MasterSummaryProps> = ({
               </span>
             ) : (
               (() => {
-                const nonGroupEntries = Object.entries(nonGroupBal).filter(([_, v]) => Math.abs(v) > 0.01);
+                // Net across all non-group people (STANDALONE + shared threads),
+                // from the same per-person balances that drive the Settled check.
+                const netByCurr: Record<string, number> = {};
+                nonGroupRels.forEach((r) => Object.entries(r.balances).forEach(([c, v]) => { netByCurr[c] = (netByCurr[c] || 0) + v; }));
+                const nonGroupEntries = Object.entries(netByCurr).filter(([_, v]) => Math.abs(v) > 0.01);
                 return (
                   <span style={{ fontSize: '13px', fontWeight: 600, whiteSpace: 'nowrap' }}>
                     {nonGroupEntries.slice(0, 2).map(([curr, val], idx, shown) => {
