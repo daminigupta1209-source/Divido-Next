@@ -666,7 +666,7 @@ export const Analytics: React.FC<AnalyticsProps> = ({ expenses, groups, me, user
               items: filteredExpenses.map((e) => ({
                 text: e.title,
                 val: `₹${e.amt}`,
-                sub: groups.find((g) => g.id === e.gId)?.name || 'Non-Group',
+                sub: (() => { const g = groups.find((gr) => gr.id === e.gId); return (!g || g.isDirect) ? 'Non-Group' : g.name; })(),
               })),
             })
           }
@@ -880,7 +880,7 @@ export const Analytics: React.FC<AnalyticsProps> = ({ expenses, groups, me, user
                             text: e.title,
                             icon: getEmoji(e.title),
                             val: `₹${e.amt}`,
-                            sub: showByGroup ? (new Date(e.date).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })) : groups.find((g) => g.id === e.gId)?.name,
+                            sub: showByGroup ? (new Date(e.date).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })) : (() => { const g = groups.find((gr) => gr.id === e.gId); return (!g || g.isDirect) ? 'Non-Group' : g.name; })(),
                           })),
                         })
                       }
