@@ -5054,47 +5054,28 @@ function App() {
                 makes mobile Chrome treat the modal as a login form and pop the
                 password-manager bar over the real inputs. */}
             <input type="text" name="username" style={{ display: 'none' }} tabIndex={-1} autoComplete="off" />
-            <div
-              onClick={() => setGlobalSettleData(null)}
-              aria-label="Back"
-              style={{
-                position: 'fixed',
-                top: 'calc(14px + env(safe-area-inset-top))',
-                left: '16px',
-                zIndex: 4100,
-                cursor: 'pointer',
-                width: '34px',
-                height: '34px',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-              }}
-            >
-              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#475569" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                <polyline points="15 18 9 12 15 6" />
-              </svg>
-            </div>
-            <div
-              onClick={() => setGlobalSettleData(null)}
-              style={{
-                position: 'fixed',
-                top: 'calc(14px + env(safe-area-inset-top))',
-                right: '16px',
-                zIndex: 4100,
-                cursor: 'pointer',
-                fontSize: '18px',
-                color: '#475569',
-                width: '34px',
-                height: '34px',
-                borderRadius: '50%',
-                background: 'rgba(241,245,249,0.9)',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                boxShadow: '0 2px 8px rgba(0,0,0,0.08)',
-              }}
-            >
-              ✕
+            {/* Inline header row — back arrow + close, same padding as the page
+                so the back arrow sits in the standard place with consistent
+                spacing around it (not floating in the corner). */}
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '16px' }}>
+              <button
+                type="button"
+                onClick={() => setGlobalSettleData(null)}
+                aria-label="Back"
+                style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0, marginLeft: '-4px', width: '30px', height: '40px', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}
+              >
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#475569" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                  <polyline points="15 18 9 12 15 6" />
+                </svg>
+              </button>
+              <button
+                type="button"
+                onClick={() => setGlobalSettleData(null)}
+                aria-label="Close"
+                style={{ background: 'rgba(241,245,249,0.9)', border: 'none', cursor: 'pointer', fontSize: '16px', color: '#475569', width: '32px', height: '32px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}
+              >
+                ✕
+              </button>
             </div>
             {(() => {
               let email = globalSettleData.identity && String(globalSettleData.identity).includes('@')
