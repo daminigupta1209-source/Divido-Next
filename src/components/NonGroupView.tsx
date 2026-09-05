@@ -66,6 +66,8 @@ export const NonGroupView: React.FC<NonGroupViewProps> = ({
   const [activeTab, setActiveTab] = React.useState<'settle' | 'photos'>('settle');
   // Which person's row is expanded inline (accordion) on the Settle tab.
   const [expandedPerson, setExpandedPerson] = React.useState<string | null>(null);
+  // Which person's full profile page is open (tapping their DP/avatar).
+  const [profilePerson, setProfilePerson] = React.useState<string | null>(null);
   const touchStartX = React.useRef<number | null>(null);
   const touchStartY = React.useRef<number | null>(null);
 
@@ -186,6 +188,71 @@ export const NonGroupView: React.FC<NonGroupViewProps> = ({
     const color = allCollect ? '#047857' : allPay ? '#B91C1C' : '#334155';
     return { text: parts.join(' · '), color };
   };
+
+  // ── Person profile (tap the DP) ──────────────────────────────────────────────
+  if (profilePerson) {
+    const p = people.find((x) => x.name.toLowerCase() === profilePerson.toLowerCase());
+    const b = p ? balanceText(p.bal) : { text: 'Settled up', color: '#94A3B8' };
+    const hasBal = p ? myPerspective(p.bal).length > 0 : false;
+    const pLower = profilePerson.toLowerCase();
+    const theirExps = nonGroupExps.filter((e) => {
+      const names = new Set<string>();
+      if (e.paid) names.add(cleanName(e.paid).toLowerCase());
+      (e.splitters || []).forEach((s) => names.add(cleanName(s).toLowerCase()));
+      return names.has(pLower);
+    });
+    return (
+      <div className="content-width-limit" style={{ paddingTop: '4px' }}>
+        <button type="button" onClick={() => setProfilePerson(null)} style={{ display: 'flex', alignItems: 'center', gap: '4px', background: 'none', border: 'none', cursor: 'pointer', color: '#94A3B8', fontSize: '13px', marginBottom: '12px', padding: 0 }}>
+          <span style={{ fontSize: '18px', lineHeight: 1 }}>‹</span> Non-Group
+        </button>
+
+        {/* Pair header — you & them */}
+        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center', marginBottom: '14px' }}>
+          <div style={{ display: 'flex', position: 'relative', width: '76px', height: '52px', marginBottom: '6px' }}>
+            <div style={{ position: 'absolute', left: 0, border: '2px solid #FFFFFF', borderRadius: '50%' }}><Avatar name={me} size={52} /></div>
+            <div style={{ position: 'absolute', left: '24px', border: '2px solid #FFFFFF', borderRadius: '50%' }}><Avatar name={profilePerson} size={52} /></div>
+          </div>
+          <div style={{ fontSize: '17px', fontWeight: 700, color: '#0F172A' }}>You &amp; {profilePerson}</div>
+          <div style={{ fontSize: '12px', color: '#94A3B8', display: 'flex', alignItems: 'center', gap: '6px', justifyContent: 'center', flexWrap: 'wrap', marginTop: '2px' }}>
+            {p?.email && <span>{p.email}</span>}
+            {p?.pending && <span style={{ fontSize: '10px', fontWeight: 700, color: '#B45309', background: '#FFF4EC', border: '0.5px solid #FED7AA', borderRadius: '6px', padding: '1px 6px' }}>Invited</span>}
+          </div>
+          <div style={{ fontSize: '14px', fontWeight: 600, color: b.color, marginTop: '6px' }}>{hasBal ? b.text : 'All settled up'}</div>
+        </div>
+
+        {/* Actions */}
+        <div style={{ display: 'flex', gap: '8px', marginBottom: '20px' }}>
+          {hasBal && <button type="button" onClick={() => onSettlePerson(profilePerson)} style={profileBtn}>Settle</button>}
+          {onAddWithPerson && <button type="button" onClick={() => onAddWithPerson(profilePerson, p?.directGroupId)} style={profileBtn}>+ Expense</button>}
+          {onSharePerson && <button type="button" onClick={() => onSharePerson(profilePerson, p?.directGroupId)} style={profileBtn}>Share</button>}
+        </div>
+
+        <div style={{ fontSize: '10px', fontWeight: 600, letterSpacing: '1.2px', color: '#94A3B8', textTransform: 'uppercase', marginBottom: '8px' }}>
+          {p?.directGroupId ? 'Shared activities' : 'Activities'}
+        </div>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+          {theirExps.map((e) => {
+            const curr = e.currency || defaultCurrency;
+            const iPaid = cleanName(e.paid).toLowerCase() === meLower;
+            return (
+              <div key={e.id} className="hover-up-mini" onClick={() => onOpenExpense(e)} style={{ display: 'flex', alignItems: 'center', gap: '12px', background: '#FFFFFF', border: '0.5px solid #EFE7DC', borderRadius: '14px', padding: '12px 14px', boxShadow: '0 2px 10px rgba(0,0,0,0.03)', cursor: 'pointer' }}>
+                <div style={{ width: '34px', height: '34px', borderRadius: '50%', background: '#F1EFE8', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '15px', flexShrink: 0 }}>{getEmoji(e.title) || '⚡'}</div>
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div style={{ fontSize: '14px', fontWeight: 600, color: '#0F172A', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{e.title}</div>
+                  <div style={{ fontSize: '11px', color: '#94A3B8' }}>{iPaid ? 'You paid' : `${cleanName(e.paid)} paid`} · {formatDate(e.date)}</div>
+                </div>
+                <span style={{ fontSize: '14px', fontWeight: 600, color: '#0F172A' }}>{curr} {formatExactAmount(Number(e.amt) || 0)}</span>
+              </div>
+            );
+          })}
+          {theirExps.length === 0 && (
+            <p style={{ fontSize: '13px', color: '#94A3B8', textAlign: 'center', padding: '20px 0' }}>No activities yet.</p>
+          )}
+        </div>
+      </div>
+    );
+  }
 
   // ── People list (front page) ─────────────────────────────────────────────────
   // The top bar (back + "Non-Group Expenses" title) is provided by MobileHeader,
@@ -349,7 +416,9 @@ export const NonGroupView: React.FC<NonGroupViewProps> = ({
                       onClick={() => setExpandedPerson(isOpen ? null : p.name)}
                       style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '16px', cursor: 'pointer' }}
                     >
-                      <Avatar name={p.name} size={40} />
+                      <div onClick={(ev) => { ev.stopPropagation(); setProfilePerson(p.name); }} style={{ cursor: 'pointer', flexShrink: 0 }} title={`View ${p.name}`}>
+                        <Avatar name={p.name} size={40} />
+                      </div>
                       <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', gap: '4px' }}>
                         <div style={{ display: 'flex', alignItems: 'baseline', gap: '6px', minWidth: 0 }}>
                           <h3 style={{ fontSize: '16px', fontWeight: 600, color: '#2E2A25', margin: 0, textTransform: 'capitalize', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', flexShrink: 1 }}>{p.name}</h3>
@@ -472,4 +541,17 @@ export const NonGroupView: React.FC<NonGroupViewProps> = ({
       </div>
     </div>
   );
+};
+
+const profileBtn: React.CSSProperties = {
+  flex: 1,
+  textAlign: 'center',
+  padding: '10px',
+  borderRadius: '10px',
+  border: '0.5px solid #CBD5E1',
+  background: '#FFFFFF',
+  color: '#334155',
+  fontSize: '13px',
+  fontWeight: 600,
+  cursor: 'pointer',
 };
