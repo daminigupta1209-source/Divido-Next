@@ -1505,6 +1505,38 @@ function App() {
     }
   };
 
+  // Remove only EMPTY shared threads — direct (isDirect) groups that carry no
+  // non-deleted expenses. These are the leftover "X & Y" cards created during
+  // sharing/testing that clutter the list but hold no data, so it's always safe
+  // to drop them (local + cloud). Returns the count removed.
+  const cleanupEmptyThreads = async (): Promise<number> => {
+    const empties = groups.filter(
+      (g) =>
+        g.isDirect &&
+        !expenses.some((e) => String(e.gId) === String(g.id) && !e.isDeleted)
+    );
+    if (empties.length === 0) {
+      window.alert('No empty threads to clean up.');
+      return 0;
+    }
+    if (!window.confirm(`Remove ${empties.length} empty ${empties.length === 1 ? 'thread' : 'threads'} (no expenses)?\n\nThis only deletes threads with nothing in them. It cannot be undone.`)) return 0;
+    const ids = new Set(empties.map((g) => String(g.id)));
+    setGroups((prev) => prev.filter((g) => !ids.has(String(g.id))));
+    try {
+      if (!checkIfDemoMode()) {
+        for (const gid of ids) {
+          await supabase.from('expenses').delete().eq('group_id', gid);
+          await supabase.from('group_members').delete().eq('group_id', gid);
+          await supabase.from('groups').delete().eq('id', gid);
+        }
+      }
+    } catch (e) {
+      console.error('cleanupEmptyThreads cloud cleanup failed:', e);
+    }
+    window.alert(`Removed ${empties.length} empty ${empties.length === 1 ? 'thread' : 'threads'}.`);
+    return empties.length;
+  };
+
   // Merge several roster entries that are the SAME person (usually fragmented
   // after an account deletion dropped their email) into one shared identity, so
   // they collapse to a single person in balances/suggestions everywhere.
@@ -3744,6 +3776,7 @@ function App() {
             })()}
             onRestoreBackup={restoreNonGroupBackup}
             onClearAll={clearAllNonGroup}
+            onCleanupEmpty={cleanupEmptyThreads}
             onDeletePerson={deletePersonNonGroup}
             onSharePerson={(name) => { sharePersonNonGroupBeta(name, ''); }}
             onRemindPerson={async (name) => {
