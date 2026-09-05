@@ -1383,14 +1383,15 @@ function App() {
       (g) => g.isDirect && (g.members || []).some((m) => (m || '').replace(/\s*\(Left\)$/i, '').trim().toLowerCase() === cl)
     )?.id;
     if (!gid) {
-      // Creating a new shared thread needs the friend's email (for the invite).
-      if (!em.includes('@') || !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(em)) { alert('Enter a valid email to share.'); return; }
+      // No email needed: the private link's single open spot is claimed by whoever
+      // opens it. If an email IS known, we still set it (nicer auto-match).
+      const emValid = em.includes('@') && /^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(em);
       gid = genGroupId();
       const theirs = expenses.filter((e) => e && String(e.gId) === 'STANDALONE' && !e.isDeleted && involves(e));
       const currency = theirs[0]?.currency || myDefaultCurrency || '₹';
       const memberIdentities: Record<string, string> = {};
       if (userEmail) memberIdentities[me] = userEmail.toLowerCase();
-      memberIdentities[clean] = em;
+      if (emValid) memberIdentities[clean] = em;
       const newGroup = {
         id: gid, name: `${me} & ${clean}`, currency, members: [me, clean], simplifyDebts: false,
         createdDate: new Date().toISOString().split('T')[0], pendingMembers: [clean], memberIdentities,
@@ -1405,7 +1406,7 @@ function App() {
         if (gRes.error) { alert("Couldn't start the share. Check your connection and try again."); return; }
         const mRes = await supabase.from('group_members').insert([
           { group_id: gid, name: me, user_email: (userEmail || '').toLowerCase() || null, is_pending: false, invite_email: null, person_id: null },
-          { group_id: gid, name: clean, user_email: null, is_pending: true, invite_email: em, person_id: null },
+          { group_id: gid, name: clean, user_email: null, is_pending: true, invite_email: emValid ? em : null, person_id: null },
         ]);
         if (mRes.error) { alert("Couldn't start the share. Check your connection and try again."); return; }
         for (const e of theirs) {
@@ -2299,7 +2300,7 @@ function App() {
           .select('*')
           .eq('group_id', joinGroupId);
 
-        if (!existingMembers) { alert('[invite] No members found for this thread.'); return; }
+        if (!existingMembers) return;
 
         const rejoinName = urlParams.get('rejoinName');
         const { data: { session } } = await supabase.auth.getSession();
@@ -2351,10 +2352,17 @@ function App() {
           // email-identity magic.
           const normEmail = (s: string) => (s || '').trim().toLowerCase().replace(/[\s.]+$/, '');
           const myEmailNorm = normEmail(myEmail);
-          const inviteMatch = existingMembers.find((m: any) =>
+          let inviteMatch = existingMembers.find((m: any) =>
             m.invite_email && normEmail(String(m.invite_email)) === myEmailNorm &&
             !m.user_email && m.is_pending && !m.name.toLowerCase().endsWith(' (left)')
           );
+          // Private 1:1 share link: no email was set on the invite, but a direct
+          // thread has exactly ONE open spot — whoever opens the link claims it
+          // (the link itself is the access). So no email entry needed to invite.
+          if (!inviteMatch && groupData.is_direct) {
+            const openSpots = existingMembers.filter((m: any) => m.is_pending && !m.user_email && !m.name.toLowerCase().endsWith(' (left)'));
+            if (openSpots.length === 1) inviteMatch = openSpots[0];
+          }
           if (inviteMatch) {
             const placeholderName = String(inviteMatch.name).replace(/\s*\(Left\)$/i, '');
             // Once you join, your name = your OWN profile name (not the placeholder
@@ -3701,11 +3709,7 @@ function App() {
             onRestoreBackup={restoreNonGroupBackup}
             onClearAll={clearAllNonGroup}
             onDeletePerson={deletePersonNonGroup}
-            onSharePerson={(name, directGroupId) => {
-              if (directGroupId) { sharePersonNonGroupBeta(name, ''); return; } // already shared → just re-copy the link
-              const email = window.prompt(`Enter ${name}'s email to share this expense:`, '');
-              if (email && email.trim()) sharePersonNonGroupBeta(name, email);
-            }}
+            onSharePerson={(name) => { sharePersonNonGroupBeta(name, ''); }}
             onRemindPerson={async (name) => {
               const clean = name.replace(/\s*\(Left\)$/i, '').trim();
               // In-app reminder (fire-and-forget so it doesn't consume the tap's
