@@ -1413,11 +1413,10 @@ function App() {
       }
     }
     const link = `${window.location.origin}/?joinGroupId=${gid}`;
-    if (typeof navigator !== 'undefined' && (navigator as any).share) {
-      try { await (navigator as any).share({ title: 'Divido — shared expenses', text: `Open our shared expenses on Divido 💸`, url: link }); } catch { /* dismissed */ }
-    } else {
-      try { await navigator.clipboard.writeText(link); alert('Invite link copied:\n' + link); } catch { alert(link); }
-    }
+    // Always show + copy the EXACT invite link (the OS share sheet hid the query
+    // param, which made people send the bare app URL). Copy first, then show it.
+    try { await navigator.clipboard.writeText(link); } catch { /* clipboard blocked */ }
+    alert('Invite link (copied — send THIS exact link):\n\n' + link);
   };
 
   // Delete a whole non-group thread with one person: all STANDALONE expenses
