@@ -211,9 +211,7 @@ export const GroupsView: React.FC<GroupsViewProps> = ({
           <span
             onClick={() => setView('summary')}
             style={{
-              fontSize: '22px',
               cursor: 'pointer',
-              opacity: 0.4,
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
@@ -222,7 +220,7 @@ export const GroupsView: React.FC<GroupsViewProps> = ({
               flexShrink: 0,
             }}
           >
-            ←
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#475569" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="15 18 9 12 15 6" /></svg>
           </span>
 
           {/* Search Input */}

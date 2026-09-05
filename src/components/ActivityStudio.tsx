@@ -99,12 +99,12 @@ export const ActivityStudio: React.FC<ActivityStudioProps> = ({
           <span
             onClick={() => setView('summary')}
             style={{
-              fontSize: '22px', cursor: 'pointer', opacity: 0.4,
+              cursor: 'pointer',
               display: 'flex', alignItems: 'center', justifyContent: 'center',
               height: '38px', width: '24px', flexShrink: 0,
             }}
           >
-            ←
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#475569" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="15 18 9 12 15 6" /></svg>
           </span>
         )}
 
