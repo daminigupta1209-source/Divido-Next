@@ -1640,7 +1640,14 @@ function App() {
           return String(g.id) === String(globalSettleData.gId);
         }
         if (targetGroupNames) {
-          return targetGroupNames.includes(String(g.name));
+          // Direct/shared threads are tagged "Non-Group" in the friends list, not
+          // by their internal name — so match the display label, else the settle
+          // sheet finds no groups and renders blank. STANDALONE is "Non-Group" too.
+          if (String(g.id) === 'STANDALONE') {
+            return targetGroupNames.includes('Non-Group') || targetGroupNames.includes('Non-Group Expenses');
+          }
+          const gLabel = (g as any).isDirect ? 'Non-Group' : String(g.name);
+          return targetGroupNames.includes(gLabel) || targetGroupNames.includes(String(g.name));
         }
         return true;
       });
