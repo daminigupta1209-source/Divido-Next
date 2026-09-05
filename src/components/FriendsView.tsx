@@ -266,7 +266,7 @@ export const FriendsView: React.FC<FriendsViewProps> = ({
             : e.mode === 'Unequally'
             ? parseFloat(e.shares?.[m]?.toString() || '0')
             : (amount * parseFloat(e.shares?.[m]?.toString() || '0')) / 100;
-        bumpBal(m, m, null, c, otherShare);
+        bumpBal(m, m, 'Non-Group', c, otherShare);
       });
     } else if (splitters.includes(me)) {
       const payer = e.paid;
@@ -276,7 +276,7 @@ export const FriendsView: React.FC<FriendsViewProps> = ({
           : e.mode === 'Unequally'
           ? parseFloat(e.shares?.[me]?.toString() || '0')
           : (amount * parseFloat(e.shares?.[me]?.toString() || '0')) / 100;
-      bumpBal(payer, payer, null, c, -myShare);
+      bumpBal(payer, payer, 'Non-Group', c, -myShare);
     }
   });
 
