@@ -3160,15 +3160,26 @@ function App() {
     // so it syncs to them (a STANDALONE one would stay private and never reach the
     // other side). Use that group's roster name for the other member.
     const dg = directGroupId ? groups.find((g) => String(g.id) === String(directGroupId)) : undefined;
-    const other = dg ? ((dg.members || []).find((m) => m.replace(/\s*\(Left\)$/i, '').trim().toLowerCase() !== me.toLowerCase()) || clean) : clean;
+    const cln = (n: string) => n.replace(/\s*\(Left\)$/i, '').trim();
+    const myEmailLower = (userEmail || '').trim().toLowerCase();
+    // Use the names AS THEY ARE in the shared group's roster (full names), so the
+    // payer/splitter match the group's member options (else PAID BY is blank).
+    const myNameInGroup = dg
+      ? (cln((dg.members || []).find((m) => (dg.memberIdentities?.[m] || '').toLowerCase() === myEmailLower) || '')
+         || cln((dg.members || []).find((m) => cln(m).toLowerCase() === me.toLowerCase()) || '')
+         || me)
+      : me;
+    const other = dg
+      ? cln((dg.members || []).find((m) => cln(m).toLowerCase() !== myNameInGroup.toLowerCase()) || clean)
+      : clean;
     setEditingExpenseSecure({
       id: 'temp-' + Date.now(),
       gId: dg ? dg.id : 'STANDALONE',
       title: '',
       amt: 0,
       date: new Date().toISOString().split('T')[0],
-      splitters: [me, other.replace(/\s*\(Left\)$/i, '').trim()],
-      paid: me,
+      splitters: [myNameInGroup, other],
+      paid: myNameInGroup,
     } as any);
     setShowExpModalSecure(true);
   };
