@@ -5056,6 +5056,30 @@ function App() {
             <input type="text" name="username" style={{ display: 'none' }} tabIndex={-1} autoComplete="off" />
             <div
               onClick={() => setGlobalSettleData(null)}
+              aria-label="Back"
+              style={{
+                position: 'fixed',
+                top: 'calc(14px + env(safe-area-inset-top))',
+                left: '16px',
+                zIndex: 4100,
+                cursor: 'pointer',
+                fontSize: '22px',
+                lineHeight: 1,
+                color: '#475569',
+                width: '34px',
+                height: '34px',
+                borderRadius: '50%',
+                background: 'rgba(241,245,249,0.9)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                boxShadow: '0 2px 8px rgba(0,0,0,0.08)',
+              }}
+            >
+              ‹
+            </div>
+            <div
+              onClick={() => setGlobalSettleData(null)}
               style={{
                 position: 'fixed',
                 top: 'calc(14px + env(safe-area-inset-top))',
