@@ -2281,7 +2281,17 @@ function App() {
           .eq('id', joinGroupId)
           .single();
 
-        if (groupErr || !groupData) { alert(`[invite] Thread not found in cloud (id ${joinGroupId}). ${groupErr?.message || ''}`); return; }
+        if (groupErr || !groupData) {
+          // The thread genuinely isn't in the cloud — stop retrying this invite on
+          // every app open, clean the URL, and fall through to the normal app.
+          try { localStorage.removeItem('divido_pending_join'); } catch { /* ignore */ }
+          try {
+            const cleanUrl = window.location.protocol + '//' + window.location.host + window.location.pathname;
+            window.history.replaceState({ _divido: true, uiState: { view: 'summary', selectedId: null } }, '', cleanUrl);
+          } catch { /* ignore */ }
+          alert(`[invite] This shared thread isn't in the cloud yet (id ${joinGroupId}). It may not have uploaded. ${groupErr?.message || ''}`);
+          return;
+        }
 
         // Fetch members of the group
         const { data: existingMembers } = await supabase
