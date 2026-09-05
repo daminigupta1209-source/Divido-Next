@@ -209,6 +209,10 @@ export const FriendsView: React.FC<FriendsViewProps> = ({
       if (name && getPersonKey(g, name) !== myKey) allSharedMembers.add(name);
     });
 
+    // A shared "direct" thread is presented as Non-Group everywhere, so its
+    // disambiguation tag should read "Non-Group", not its hidden internal name.
+    const gLabel = g.isDirect ? 'Non-Group' : g.name;
+
     // Determine if we should simplify debts for this group (standalone is never simplified)
     const useSimplify = g.id !== 'STANDALONE' && !!g.simplifyDebts;
     
@@ -228,13 +232,13 @@ export const FriendsView: React.FC<FriendsViewProps> = ({
         const friend = t.to;
         const id = resolveId(g, friend);
         Object.entries(t.balances).forEach(([curr, val]) => {
-          bumpBal(id, friend, g.name, curr, -val);
+          bumpBal(id, friend, gLabel, curr, -val);
         });
       } else if (getPersonKey(g, t.to) === myKey) {
         const friend = t.from;
         const id = resolveId(g, friend);
         Object.entries(t.balances).forEach(([curr, val]) => {
-          bumpBal(id, friend, g.name, curr, val);
+          bumpBal(id, friend, gLabel, curr, val);
         });
       }
     });
