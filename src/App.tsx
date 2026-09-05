@@ -1364,35 +1364,61 @@ function App() {
     });
   };
 
-  // One-time cleanup: the sharing beta promoted some non-group expenses into
-  // hidden 2-person "direct" threads that then didn't display correctly (they
-  // appeared to vanish). Un-promote any such thread back to plain private
-  // non-group (STANDALONE) so those expenses reappear, and delete the leftover
-  // cloud thread so it can't resurrect. Runs once when a direct thread is seen.
-  const unpromoteRanRef = useRef(false);
-  useEffect(() => {
-    if (unpromoteRanRef.current) return;
-    const directs = groups.filter((g) => g.isDirect);
-    if (directs.length === 0) return;
-    unpromoteRanRef.current = true;
-    const directIds = directs.map((g) => String(g.id));
-    const idSet = new Set(directIds);
-    setExpenses((prev) => prev.map((e) => (idSet.has(String(e.gId)) ? { ...e, gId: 'STANDALONE' } : e)));
-    setGroups((prev) => prev.filter((g) => !g.isDirect));
-    everHadLocalStandaloneRef.current = true;
-    (async () => {
-      if (checkIfDemoMode()) return;
-      for (const gid of directIds) {
+  // [BETA] Share a person's non-group expenses: promote them into a hidden
+  // 2-person "direct" thread written to the cloud immediately, then open the
+  // invite link. Identity-first (email-keyed) so balances/names resolve on both
+  // sides and the friend auto-claims by email.
+  const sharePersonNonGroupBeta = async (personName: string, otherEmail: string) => {
+    if (!requireSignInToCreate()) return;
+    const clean = (personName || '').replace(/\s*\(Left\)$/i, '').trim();
+    const em = (otherEmail || '').trim().toLowerCase();
+    if (!clean || !em.includes('@')) { alert('Enter a valid email to share.'); return; }
+    const cl = clean.toLowerCase();
+    const involves = (e: Expense) =>
+      (e.paid || '').replace(/\s*\(Left\)$/i, '').trim().toLowerCase() === cl ||
+      (e.splitters || []).some((s) => (s || '').replace(/\s*\(Left\)$/i, '').trim().toLowerCase() === cl);
+    let gid: string | number | undefined = groups.find(
+      (g) => g.isDirect && (g.members || []).some((m) => (m || '').replace(/\s*\(Left\)$/i, '').trim().toLowerCase() === cl)
+    )?.id;
+    if (!gid) {
+      gid = genGroupId();
+      const theirs = expenses.filter((e) => e && String(e.gId) === 'STANDALONE' && !e.isDeleted && involves(e));
+      const currency = theirs[0]?.currency || myDefaultCurrency || '₹';
+      const memberIdentities: Record<string, string> = {};
+      if (userEmail) memberIdentities[me] = userEmail.toLowerCase();
+      memberIdentities[clean] = em;
+      const newGroup = {
+        id: gid, name: `${me} & ${clean}`, currency, members: [me, clean], simplifyDebts: false,
+        createdDate: new Date().toISOString().split('T')[0], pendingMembers: [clean], memberIdentities,
+        isDirect: true, pendingSync: false,
+      } as Group;
+      const targetGid = gid;
+      setGroups((prev) => [...prev, newGroup]);
+      setExpenses((prev) => prev.map((e) => (String(e.gId) === 'STANDALONE' && involves(e) ? { ...e, gId: targetGid } : e)));
+      if (!checkIfDemoMode()) {
         try {
-          await supabase.from('expenses').delete().eq('group_id', gid);
-          await supabase.from('group_members').delete().eq('group_id', gid);
-          await supabase.from('groups').delete().eq('id', gid);
-        } catch (e) {
-          console.error('un-promote cleanup failed:', e);
+          await supabase.from('groups').insert({ id: gid, name: newGroup.name, currency, emoji: '👤', simplify_debts: false, created_date: newGroup.createdDate, is_direct: true });
+          await supabase.from('group_members').insert([
+            { group_id: gid, name: me, user_email: (userEmail || '').toLowerCase() || null, is_pending: false, invite_email: null, person_id: null },
+            { group_id: gid, name: clean, user_email: null, is_pending: true, invite_email: em, person_id: null },
+          ]);
+          for (const e of theirs) {
+            await supabase.from('expenses').upsert({ id: String(e.id), group_id: gid, title: e.title, amt: e.amt, paid: e.paid, date: e.date, mode: e.mode || 'Equally', splitters: e.splitters || [], shares: e.shares, category: e.category, currency: e.currency, notes: e.notes, attachments: e.attachments || [], is_deleted: false, is_recurring: false, recurrence: 'none' }, { onConflict: 'id' });
+          }
+          alert(`[share] Uploaded thread ${gid} with ${theirs.length} expense(s). Invite email: ${em}`);
+        } catch (err: any) {
+          alert('[share] Cloud write FAILED: ' + (err?.message || err));
+          return;
         }
       }
-    })();
-  }, [groups]);
+    }
+    const link = `${window.location.origin}/?joinGroupId=${gid}`;
+    if (typeof navigator !== 'undefined' && (navigator as any).share) {
+      try { await (navigator as any).share({ title: 'Divido — shared expenses', text: `Open our shared expenses on Divido 💸`, url: link }); } catch { /* dismissed */ }
+    } else {
+      try { await navigator.clipboard.writeText(link); alert('Invite link copied:\n' + link); } catch { alert(link); }
+    }
+  };
 
   // Delete a whole non-group thread with one person: all STANDALONE expenses
   // involving them, plus their leftover shared "direct" thread (local + cloud).
@@ -2255,7 +2281,7 @@ function App() {
           .eq('id', joinGroupId)
           .single();
 
-        if (groupErr || !groupData) return;
+        if (groupErr || !groupData) { alert(`[invite] Thread not found in cloud (id ${joinGroupId}). ${groupErr?.message || ''}`); return; }
 
         // Fetch members of the group
         const { data: existingMembers } = await supabase
@@ -2263,11 +2289,15 @@ function App() {
           .select('*')
           .eq('group_id', joinGroupId);
 
-        if (!existingMembers) return;
+        if (!existingMembers) { alert('[invite] No members found for this thread.'); return; }
 
         const rejoinName = urlParams.get('rejoinName');
         const { data: { session } } = await supabase.auth.getSession();
         const myEmail = session?.user?.email || userEmail;
+        {
+          const im = existingMembers.find((m: any) => m.invite_email && String(m.invite_email).toLowerCase() === (myEmail || '').toLowerCase());
+          alert(`[invite] signed in as: ${myEmail || 'NOT SIGNED IN'}\nthread: ${groupData.name} (direct: ${groupData.is_direct})\nmembers: ${existingMembers.map((m: any) => m.name + (m.invite_email ? ' <inv:' + m.invite_email + '>' : '') + (m.user_email ? ' <usr:' + m.user_email + '>' : '')).join(', ')}\nyour invite match: ${im ? 'YES (' + im.name + ')' : 'NO'}`);
+        }
 
         if (rejoinName && myEmail) {
           const matchLeftMember = existingMembers.find((m: any) =>
@@ -3635,6 +3665,10 @@ function App() {
             onRestoreBackup={restoreNonGroupBackup}
             onClearAll={clearAllNonGroup}
             onDeletePerson={deletePersonNonGroup}
+            onSharePerson={(name) => {
+              const email = window.prompt(`[Beta] Enter ${name}'s email to share this thread:`, '');
+              if (email && email.trim()) sharePersonNonGroupBeta(name, email);
+            }}
             onRemindPerson={async (name) => {
               const clean = name.replace(/\s*\(Left\)$/i, '').trim();
               // In-app reminder (fire-and-forget so it doesn't consume the tap's
