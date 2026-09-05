@@ -214,7 +214,8 @@ export const NonGroupView: React.FC<NonGroupViewProps> = ({
     return (
       <div className="content-width-limit" style={{ paddingTop: '4px' }}>
         <button type="button" onClick={() => setProfilePerson(null)} style={{ display: 'flex', alignItems: 'center', gap: '4px', background: 'none', border: 'none', cursor: 'pointer', color: '#94A3B8', fontSize: '13px', marginBottom: '12px', padding: 0 }}>
-          <span style={{ fontSize: '18px', lineHeight: 1 }}>‹</span> Non-Group
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#475569" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="15 18 9 12 15 6" /></svg>
+          Non-Group
         </button>
 
         {/* Pair header — you & them */}

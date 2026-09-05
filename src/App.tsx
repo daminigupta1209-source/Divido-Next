@@ -5063,9 +5063,6 @@ function App() {
                 left: '16px',
                 zIndex: 4100,
                 cursor: 'pointer',
-                fontSize: '26px',
-                lineHeight: 1,
-                color: '#475569',
                 width: '34px',
                 height: '34px',
                 display: 'flex',
@@ -5073,7 +5070,9 @@ function App() {
                 justifyContent: 'center',
               }}
             >
-              ‹
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#475569" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                <polyline points="15 18 9 12 15 6" />
+              </svg>
             </div>
             <div
               onClick={() => setGlobalSettleData(null)}
