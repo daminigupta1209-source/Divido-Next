@@ -1371,10 +1371,10 @@ function App() {
   const sharePersonNonGroupBeta = async (personName: string, otherEmail: string) => {
     if (!requireSignInToCreate()) return;
     const clean = (personName || '').replace(/\s*\(Left\)$/i, '').trim();
+    if (!clean) return;
     // Normalize: trim, lowercase, strip trailing dots/spaces (a stray "." after
     // .com silently broke the invite-email match).
     const em = (otherEmail || '').trim().toLowerCase().replace(/[\s.]+$/, '');
-    if (!clean || !em.includes('@') || !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(em)) { alert('Enter a valid email to share.'); return; }
     const cl = clean.toLowerCase();
     const involves = (e: Expense) =>
       (e.paid || '').replace(/\s*\(Left\)$/i, '').trim().toLowerCase() === cl ||
@@ -1383,6 +1383,8 @@ function App() {
       (g) => g.isDirect && (g.members || []).some((m) => (m || '').replace(/\s*\(Left\)$/i, '').trim().toLowerCase() === cl)
     )?.id;
     if (!gid) {
+      // Creating a new shared thread needs the friend's email (for the invite).
+      if (!em.includes('@') || !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(em)) { alert('Enter a valid email to share.'); return; }
       gid = genGroupId();
       const theirs = expenses.filter((e) => e && String(e.gId) === 'STANDALONE' && !e.isDeleted && involves(e));
       const currency = theirs[0]?.currency || myDefaultCurrency || '₹';
@@ -1400,19 +1402,16 @@ function App() {
       if (!checkIfDemoMode()) {
         // supabase-js returns { error } instead of throwing — check each one.
         const gRes = await supabase.from('groups').insert({ id: gid, name: newGroup.name, currency, emoji: '👤', simplify_debts: false, created_date: newGroup.createdDate, is_direct: true });
-        if (gRes.error) { alert('[share] GROUP insert failed:\n' + gRes.error.message); return; }
+        if (gRes.error) { alert("Couldn't start the share. Check your connection and try again."); return; }
         const mRes = await supabase.from('group_members').insert([
           { group_id: gid, name: me, user_email: (userEmail || '').toLowerCase() || null, is_pending: false, invite_email: null, person_id: null },
           { group_id: gid, name: clean, user_email: null, is_pending: true, invite_email: em, person_id: null },
         ]);
-        if (mRes.error) { alert('[share] MEMBERS insert failed:\n' + mRes.error.message); return; }
+        if (mRes.error) { alert("Couldn't start the share. Check your connection and try again."); return; }
         for (const e of theirs) {
           const eRes = await supabase.from('expenses').upsert({ id: String(e.id), group_id: gid, title: e.title, amt: e.amt, paid: e.paid, date: e.date, mode: e.mode || 'Equally', splitters: e.splitters || [], shares: e.shares, category: e.category, currency: e.currency, notes: e.notes, attachments: e.attachments || [], is_deleted: false, is_recurring: false, recurrence: 'none' }, { onConflict: 'id' });
-          if (eRes.error) { alert('[share] EXPENSE upsert failed:\n' + eRes.error.message); return; }
+          if (eRes.error) { alert("Couldn't upload an expense to the share. Try again."); return; }
         }
-        // Verify it's really readable back before declaring success.
-        const check = await supabase.from('groups').select('id').eq('id', gid).maybeSingle();
-        alert(`[share] Uploaded thread ${gid} with ${theirs.length} expense(s).\nRead-back: ${check.data ? 'FOUND ✓' : 'NOT FOUND ✗'} ${check.error ? '(' + check.error.message + ')' : ''}`);
       }
     }
     const link = `${window.location.origin}/?joinGroupId=${gid}`;
@@ -2291,7 +2290,6 @@ function App() {
             const cleanUrl = window.location.protocol + '//' + window.location.host + window.location.pathname;
             window.history.replaceState({ _divido: true, uiState: { view: 'summary', selectedId: null } }, '', cleanUrl);
           } catch { /* ignore */ }
-          alert(`[invite] This shared thread isn't in the cloud yet (id ${joinGroupId}). It may not have uploaded. ${groupErr?.message || ''}`);
           return;
         }
 
@@ -2306,10 +2304,6 @@ function App() {
         const rejoinName = urlParams.get('rejoinName');
         const { data: { session } } = await supabase.auth.getSession();
         const myEmail = session?.user?.email || userEmail;
-        {
-          const im = existingMembers.find((m: any) => m.invite_email && String(m.invite_email).toLowerCase() === (myEmail || '').toLowerCase());
-          alert(`[invite] signed in as: ${myEmail || 'NOT SIGNED IN'}\nthread: ${groupData.name} (direct: ${groupData.is_direct})\nmembers: ${existingMembers.map((m: any) => m.name + (m.invite_email ? ' <inv:' + m.invite_email + '>' : '') + (m.user_email ? ' <usr:' + m.user_email + '>' : '')).join(', ')}\nyour invite match: ${im ? 'YES (' + im.name + ')' : 'NO'}`);
-        }
 
         if (rejoinName && myEmail) {
           const matchLeftMember = existingMembers.find((m: any) =>
@@ -3707,8 +3701,9 @@ function App() {
             onRestoreBackup={restoreNonGroupBackup}
             onClearAll={clearAllNonGroup}
             onDeletePerson={deletePersonNonGroup}
-            onSharePerson={(name) => {
-              const email = window.prompt(`[Beta] Enter ${name}'s email to share this thread:`, '');
+            onSharePerson={(name, directGroupId) => {
+              if (directGroupId) { sharePersonNonGroupBeta(name, ''); return; } // already shared → just re-copy the link
+              const email = window.prompt(`Enter ${name}'s email to share this expense:`, '');
               if (email && email.trim()) sharePersonNonGroupBeta(name, email);
             }}
             onRemindPerson={async (name) => {

@@ -20,7 +20,7 @@ interface NonGroupViewProps {
   onSettlePerson: (name: string) => void;
   onRemindPerson?: (name: string) => void;
   onAddWithPerson?: (name: string, directGroupId?: string) => void;
-  onSharePerson?: (name: string) => void;
+  onSharePerson?: (name: string, directGroupId?: string) => void;
   // How many backed-up non-group expenses aren't present locally (for restore).
   backupMissingCount?: number;
   onRestoreBackup?: () => void;
@@ -55,7 +55,6 @@ export const NonGroupView: React.FC<NonGroupViewProps> = ({
   directThreads = [],
   onOpenExpense,
   onSettlePerson,
-  onRemindPerson,
   onAddWithPerson,
   backupMissingCount = 0,
   onRestoreBackup,
@@ -361,16 +360,16 @@ export const NonGroupView: React.FC<NonGroupViewProps> = ({
                         </div>
                         <span style={{ fontSize: '13px', fontWeight: 500, color: b.color }}>{b.text}</span>
                       </div>
-                      {onRemindPerson && (
+                      {onSharePerson && (
                         <button
                           type="button"
-                          onClick={(ev) => { ev.stopPropagation(); onRemindPerson(p.name); }}
-                          title={`Invite ${p.name}`}
+                          onClick={(ev) => { ev.stopPropagation(); onSharePerson(p.name, p.directGroupId); }}
+                          title={p.directGroupId ? `Copy invite link for ${p.name}` : `Share with ${p.name}`}
                           style={{ width: '34px', height: '34px', borderRadius: '50%', background: '#FFF4EC', border: 'none', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', flexShrink: 0 }}
                         >
                           <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#F97316" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                            <path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9" />
-                            <path d="M10.3 21a1.94 1.94 0 0 0 3.4 0" />
+                            <circle cx="18" cy="5" r="3" /><circle cx="6" cy="12" r="3" /><circle cx="18" cy="19" r="3" />
+                            <line x1="8.59" y1="13.51" x2="15.42" y2="17.49" /><line x1="15.41" y1="6.51" x2="8.59" y2="10.49" />
                           </svg>
                         </button>
                       )}
@@ -389,16 +388,6 @@ export const NonGroupView: React.FC<NonGroupViewProps> = ({
                               style={{ ...innerBtn, background: '#10B981', border: 'none', color: '#FFFFFF' }}
                             >
                               + Expense
-                            </button>
-                          )}
-                          {onSharePerson && (
-                            <button
-                              type="button"
-                              onClick={() => onSharePerson(p.name)}
-                              title="Share this thread (beta)"
-                              style={{ ...innerBtn, borderColor: '#C4B5FD', color: '#6D28D9' }}
-                            >
-                              Share (beta)
                             </button>
                           )}
                         </div>
