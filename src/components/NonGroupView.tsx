@@ -269,10 +269,14 @@ export const NonGroupView: React.FC<NonGroupViewProps> = ({
   // The top bar (back + "Non-Group Expenses" title) is provided by MobileHeader,
   // so this view starts at the net-balance card.
 
-  // My overall non-group position (positive currency = I collect) — same engine.
-  const myBal = getMemberBalance('STANDALONE', me);
-  const netLines = Object.entries(myBal)
-    .map(([curr, val]) => ({ curr, amount: val }))
+  // My overall non-group position: sum every person's balance from MY perspective
+  // across BOTH buckets (private STANDALONE + shared threads). Summing only
+  // STANDALONE wrongly showed "All settled up" when the balances live in shared
+  // threads.
+  const netByCurr: Record<string, number> = {};
+  people.forEach((p) => myPerspective(p.bal).forEach((l) => { netByCurr[l.curr] = (netByCurr[l.curr] || 0) + l.amount; }));
+  const netLines = Object.entries(netByCurr)
+    .map(([curr, amount]) => ({ curr, amount }))
     .filter((x) => Math.abs(x.amount) > 0.01);
   const netHasBalance = netLines.length > 0;
   const netAllCollect = netHasBalance && netLines.every((l) => l.amount > 0);
