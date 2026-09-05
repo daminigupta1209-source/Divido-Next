@@ -1396,20 +1396,21 @@ function App() {
       setGroups((prev) => [...prev, newGroup]);
       setExpenses((prev) => prev.map((e) => (String(e.gId) === 'STANDALONE' && involves(e) ? { ...e, gId: targetGid } : e)));
       if (!checkIfDemoMode()) {
-        try {
-          await supabase.from('groups').insert({ id: gid, name: newGroup.name, currency, emoji: '👤', simplify_debts: false, created_date: newGroup.createdDate, is_direct: true });
-          await supabase.from('group_members').insert([
-            { group_id: gid, name: me, user_email: (userEmail || '').toLowerCase() || null, is_pending: false, invite_email: null, person_id: null },
-            { group_id: gid, name: clean, user_email: null, is_pending: true, invite_email: em, person_id: null },
-          ]);
-          for (const e of theirs) {
-            await supabase.from('expenses').upsert({ id: String(e.id), group_id: gid, title: e.title, amt: e.amt, paid: e.paid, date: e.date, mode: e.mode || 'Equally', splitters: e.splitters || [], shares: e.shares, category: e.category, currency: e.currency, notes: e.notes, attachments: e.attachments || [], is_deleted: false, is_recurring: false, recurrence: 'none' }, { onConflict: 'id' });
-          }
-          alert(`[share] Uploaded thread ${gid} with ${theirs.length} expense(s). Invite email: ${em}`);
-        } catch (err: any) {
-          alert('[share] Cloud write FAILED: ' + (err?.message || err));
-          return;
+        // supabase-js returns { error } instead of throwing — check each one.
+        const gRes = await supabase.from('groups').insert({ id: gid, name: newGroup.name, currency, emoji: '👤', simplify_debts: false, created_date: newGroup.createdDate, is_direct: true });
+        if (gRes.error) { alert('[share] GROUP insert failed:\n' + gRes.error.message); return; }
+        const mRes = await supabase.from('group_members').insert([
+          { group_id: gid, name: me, user_email: (userEmail || '').toLowerCase() || null, is_pending: false, invite_email: null, person_id: null },
+          { group_id: gid, name: clean, user_email: null, is_pending: true, invite_email: em, person_id: null },
+        ]);
+        if (mRes.error) { alert('[share] MEMBERS insert failed:\n' + mRes.error.message); return; }
+        for (const e of theirs) {
+          const eRes = await supabase.from('expenses').upsert({ id: String(e.id), group_id: gid, title: e.title, amt: e.amt, paid: e.paid, date: e.date, mode: e.mode || 'Equally', splitters: e.splitters || [], shares: e.shares, category: e.category, currency: e.currency, notes: e.notes, attachments: e.attachments || [], is_deleted: false, is_recurring: false, recurrence: 'none' }, { onConflict: 'id' });
+          if (eRes.error) { alert('[share] EXPENSE upsert failed:\n' + eRes.error.message); return; }
         }
+        // Verify it's really readable back before declaring success.
+        const check = await supabase.from('groups').select('id').eq('id', gid).maybeSingle();
+        alert(`[share] Uploaded thread ${gid} with ${theirs.length} expense(s).\nRead-back: ${check.data ? 'FOUND ✓' : 'NOT FOUND ✗'} ${check.error ? '(' + check.error.message + ')' : ''}`);
       }
     }
     const link = `${window.location.origin}/?joinGroupId=${gid}`;
