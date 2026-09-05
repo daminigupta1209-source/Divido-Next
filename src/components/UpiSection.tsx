@@ -52,6 +52,30 @@ export const UpiSection: React.FC<UpiSectionProps> = ({
     }
   }, []);
 
+  // Debounced auto-save for UPI ID (fixes the bug where closing Profile via Back button erases the ID)
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      const trimmed = localUpi.trim();
+      if (trimmed && !validateUpi(trimmed)) {
+        setUpiError('Invalid UPI format');
+        return;
+      }
+      setUpiError(null);
+      if ((userMetadata[me]?.upiId || '') !== trimmed) {
+        setUserMetadata({
+          ...userMetadata,
+          [me]: {
+            ...userMetadata[me],
+            upiId: trimmed,
+            upiVerified: trimmed === userMetadata[me]?.upiId ? userMetadata[me]?.upiVerified : false
+          },
+        });
+      }
+    }, 500); // 500ms debounce
+    return () => clearTimeout(timer);
+  }, [localUpi, me, userMetadata, setUserMetadata]);
+
+
   useEffect(() => {
     // Auto-advance to "verifying" only when the user genuinely left to their UPI
     // app and came back — NOT when they just opened and dismissed the "Open with"
@@ -175,18 +199,6 @@ export const UpiSection: React.FC<UpiSectionProps> = ({
             onChange={(e) => {
               setLocalUpi(e.target.value);
               setUpiError(null);
-            }}
-            onBlur={() => {
-              const trimmed = localUpi.trim();
-              if (trimmed && !validateUpi(trimmed)) {
-                setUpiError('Invalid UPI format');
-              } else {
-                setUpiError(null);
-                setUserMetadata({
-                  ...userMetadata,
-                  [me]: { ...userMetadata[me], upiId: trimmed, upiVerified: trimmed === userMetadata[me]?.upiId ? userMetadata[me]?.upiVerified : false },
-                });
-              }
             }}
             onKeyDown={handleKeyDown}
             placeholder="username@bank"
