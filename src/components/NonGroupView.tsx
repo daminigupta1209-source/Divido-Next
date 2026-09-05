@@ -73,6 +73,16 @@ export const NonGroupView: React.FC<NonGroupViewProps> = ({
 
   const meLower = cleanName(me).toLowerCase();
 
+  // Phone/browser back closes the open profile (returns to the list) instead of
+  // leaving the non-group screen entirely.
+  React.useEffect(() => {
+    if (!profilePerson) return;
+    window.history.pushState({ dividoNonGroupProfile: true }, '');
+    const onPop = () => setProfilePerson(null);
+    window.addEventListener('popstate', onPop);
+    return () => window.removeEventListener('popstate', onPop);
+  }, [profilePerson]);
+
   const directGroupIds = React.useMemo(() => new Set(directThreads.map((t) => String(t.groupId))), [directThreads]);
 
   // Does an expense involve this person (by paid or splitter)?
