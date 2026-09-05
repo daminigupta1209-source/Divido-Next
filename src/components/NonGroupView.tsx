@@ -222,9 +222,10 @@ export const NonGroupView: React.FC<NonGroupViewProps> = ({
 
   return (
     <div className="content-width-limit">
-      {/* Cloud-backup restore banner — appears when the cloud has non-group
-          expenses that aren't on this device (new device / after a wipe). */}
-      {backupMissingCount > 0 && onRestoreBackup && (
+      {/* Cloud-backup restore banner — only when this device has NO non-group
+          expenses at all (the real "new device / after a wipe" case). Once you
+          already have data, a stale backup entry shouldn't nag you. */}
+      {backupMissingCount > 0 && onRestoreBackup && nonGroupExps.length === 0 && (
         <div style={{ display: 'flex', alignItems: 'center', gap: '10px', background: '#EFF6FF', border: '1px solid #BFDBFE', borderRadius: '14px', padding: '12px 14px', marginBottom: '16px' }}>
           <span style={{ fontSize: '18px' }}>☁️</span>
           <div style={{ flex: 1, minWidth: 0 }}>
