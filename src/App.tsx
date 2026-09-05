@@ -3151,18 +3151,23 @@ function App() {
   // Quick "add expense with a friend" from the Balances list — opens the expense
   // form prefilled as a Non-Group (standalone) expense split between me + friend,
   // so there's no group/typing step.
-  const quickAddExpenseWithFriend = (friendName: string) => {
+  const quickAddExpenseWithFriend = (friendName: string, directGroupId?: string) => {
     if (!requireSignInToCreate()) return;
     const clean = friendName.replace(/\s*\(Left\)$/i, '').trim();
     if (!clean) return;
     setAutoOpenScanner(false);
+    // If this person has a shared "direct" thread, add the expense INTO that group
+    // so it syncs to them (a STANDALONE one would stay private and never reach the
+    // other side). Use that group's roster name for the other member.
+    const dg = directGroupId ? groups.find((g) => String(g.id) === String(directGroupId)) : undefined;
+    const other = dg ? ((dg.members || []).find((m) => m.replace(/\s*\(Left\)$/i, '').trim().toLowerCase() !== me.toLowerCase()) || clean) : clean;
     setEditingExpenseSecure({
       id: 'temp-' + Date.now(),
-      gId: 'STANDALONE',
+      gId: dg ? dg.id : 'STANDALONE',
       title: '',
       amt: 0,
       date: new Date().toISOString().split('T')[0],
-      splitters: [me, clean],
+      splitters: [me, other.replace(/\s*\(Left\)$/i, '').trim()],
       paid: me,
     } as any);
     setShowExpModalSecure(true);
@@ -3671,7 +3676,7 @@ function App() {
             onBack={() => { setSelectedId(null); setView('summary'); }}
             onOpenExpense={(exp) => { setEditingExpenseSecure(exp); setShowExpModalSecure(true); }}
             onSettlePerson={(name) => setGlobalSettleDataSecure({ name: name.replace(/\s*\(Left\)$/i, '').trim(), gId: 'STANDALONE' })}
-            onAddWithPerson={(name) => quickAddExpenseWithFriend(name)}
+            onAddWithPerson={(name, directGroupId) => quickAddExpenseWithFriend(name, directGroupId)}
             backupMissingCount={(() => {
               const ids = new Set(expenses.map((e) => String(e.id)));
               return nonGroupBackup.filter((e) => e && String(e.gId) === 'STANDALONE' && !ids.has(String(e.id))).length;

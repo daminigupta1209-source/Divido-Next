@@ -19,7 +19,7 @@ interface NonGroupViewProps {
   onOpenExpense: (exp: Expense) => void;
   onSettlePerson: (name: string) => void;
   onRemindPerson?: (name: string) => void;
-  onAddWithPerson?: (name: string) => void;
+  onAddWithPerson?: (name: string, directGroupId?: string) => void;
   onSharePerson?: (name: string) => void;
   // How many backed-up non-group expenses aren't present locally (for restore).
   backupMissingCount?: number;
@@ -385,7 +385,7 @@ export const NonGroupView: React.FC<NonGroupViewProps> = ({
                           {onAddWithPerson && (
                             <button
                               type="button"
-                              onClick={() => onAddWithPerson(p.name)}
+                              onClick={() => onAddWithPerson(p.name, p.directGroupId)}
                               style={{ ...innerBtn, background: '#10B981', border: 'none', color: '#FFFFFF' }}
                             >
                               + Expense
