@@ -1395,8 +1395,35 @@ function App() {
         pendingMembers: [clean], memberIdentities, isDirect: true, pendingSync: true,
       } as Group;
       const targetGid = gid;
-      setGroups((prev) => [...prev, newGroup]);
+      setGroups((prev) => [...prev, { ...newGroup, pendingSync: false }]);
       setExpenses((prev) => prev.map((e) => (String(e.gId) === 'STANDALONE' && involves(e) ? { ...e, gId: targetGid } : e)));
+
+      // Write the thread to the cloud NOW (not via debounced background sync), so
+      // the invite link works the instant the friend opens it.
+      if (!checkIfDemoMode()) {
+        try {
+          await supabase.from('groups').insert({
+            id: gid, name: newGroup.name, currency, emoji: '👤',
+            simplify_debts: false, created_date: newGroup.createdDate, is_direct: true,
+          });
+          await supabase.from('group_members').insert([
+            { group_id: gid, name: me, user_email: (userEmail || '').toLowerCase() || null, is_pending: false, invite_email: null, person_id: null },
+            { group_id: gid, name: clean, user_email: null, is_pending: true, invite_email: em, person_id: null },
+          ]);
+          for (const e of theirs) {
+            await supabase.from('expenses').upsert({
+              id: String(e.id), group_id: gid, title: e.title, amt: e.amt, paid: e.paid, date: e.date,
+              mode: e.mode || 'Equally', splitters: e.splitters || [], shares: e.shares, category: e.category,
+              currency: e.currency, notes: e.notes, attachments: e.attachments || [], is_deleted: false,
+              is_recurring: false, recurrence: 'none',
+            }, { onConflict: 'id' });
+          }
+        } catch (err) {
+          console.error('beta share cloud write failed:', err);
+          alert('Could not upload the shared thread. Check your connection and try again.');
+          return;
+        }
+      }
     }
 
     const link = `${window.location.origin}/?joinGroupId=${gid}`;
