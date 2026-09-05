@@ -1371,8 +1371,10 @@ function App() {
   const sharePersonNonGroupBeta = async (personName: string, otherEmail: string) => {
     if (!requireSignInToCreate()) return;
     const clean = (personName || '').replace(/\s*\(Left\)$/i, '').trim();
-    const em = (otherEmail || '').trim().toLowerCase();
-    if (!clean || !em.includes('@')) { alert('Enter a valid email to share.'); return; }
+    // Normalize: trim, lowercase, strip trailing dots/spaces (a stray "." after
+    // .com silently broke the invite-email match).
+    const em = (otherEmail || '').trim().toLowerCase().replace(/[\s.]+$/, '');
+    if (!clean || !em.includes('@') || !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(em)) { alert('Enter a valid email to share.'); return; }
     const cl = clean.toLowerCase();
     const involves = (e: Expense) =>
       (e.paid || '').replace(/\s*\(Left\)$/i, '').trim().toLowerCase() === cl ||
@@ -2353,8 +2355,10 @@ function App() {
           // email (invite_email), they are unambiguously that member — claim it
           // silently and go straight in. No "pick your name" card. This is the
           // email-identity magic.
+          const normEmail = (s: string) => (s || '').trim().toLowerCase().replace(/[\s.]+$/, '');
+          const myEmailNorm = normEmail(myEmail);
           const inviteMatch = existingMembers.find((m: any) =>
-            m.invite_email && String(m.invite_email).toLowerCase() === myEmail.toLowerCase() &&
+            m.invite_email && normEmail(String(m.invite_email)) === myEmailNorm &&
             !m.user_email && m.is_pending && !m.name.toLowerCase().endsWith(' (left)')
           );
           if (inviteMatch) {
