@@ -61,7 +61,6 @@ export const NonGroupView: React.FC<NonGroupViewProps> = ({
   onRestoreBackup,
   onClearAll,
   onDeletePerson,
-  onSharePerson,
 }) => {
   // Bottom toggle on the front page: Settle | Photos (swipe left/right).
   const [activeTab, setActiveTab] = React.useState<'settle' | 'photos'>('settle');
@@ -389,16 +388,6 @@ export const NonGroupView: React.FC<NonGroupViewProps> = ({
                               style={{ ...innerBtn, background: '#10B981', border: 'none', color: '#FFFFFF' }}
                             >
                               + Expense
-                            </button>
-                          )}
-                          {onSharePerson && (
-                            <button
-                              type="button"
-                              onClick={() => onSharePerson(p.name)}
-                              title="Share this thread (beta)"
-                              style={{ ...innerBtn, borderColor: '#C4B5FD', color: '#6D28D9' }}
-                            >
-                              Share (beta)
                             </button>
                           )}
                         </div>
