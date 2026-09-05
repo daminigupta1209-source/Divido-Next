@@ -746,7 +746,7 @@ export const FriendsView: React.FC<FriendsViewProps> = ({
                     <span style={{ fontSize: '13px', fontWeight: 500, color: '#94A3B8', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', flexShrink: 1 }}>({f.groups.join(', ')})</span>
                   )}
                 </div>
-                {isDupName(f.name) && f.id && String(f.id).includes('@') && (
+                {f.id && String(f.id).includes('@') && (
                   <span style={{ fontSize: '12px', fontWeight: 500, color: '#94A3B8', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{f.id}</span>
                 )}
                 {!active ? (
