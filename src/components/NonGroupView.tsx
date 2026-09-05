@@ -353,7 +353,6 @@ export const NonGroupView: React.FC<NonGroupViewProps> = ({
                       <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', gap: '4px' }}>
                         <div style={{ display: 'flex', alignItems: 'baseline', gap: '6px', minWidth: 0 }}>
                           <h3 style={{ fontSize: '16px', fontWeight: 600, color: '#2E2A25', margin: 0, textTransform: 'capitalize', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', flexShrink: 1 }}>{p.name}</h3>
-                          <span style={{ fontSize: '13px', fontWeight: 500, color: '#94A3B8', whiteSpace: 'nowrap', flexShrink: 0 }}>({p.count} {p.count === 1 ? 'expense' : 'expenses'})</span>
                           {p.pending && (
                             <span style={{ fontSize: '10px', fontWeight: 700, color: '#B45309', background: '#FFF4EC', border: '0.5px solid #FED7AA', borderRadius: '6px', padding: '1px 6px', whiteSpace: 'nowrap', flexShrink: 0 }}>Invited</span>
                           )}
@@ -394,6 +393,11 @@ export const NonGroupView: React.FC<NonGroupViewProps> = ({
                             </button>
                           )}
                         </div>
+                        {theirExps.length > 0 && (
+                          <div style={{ fontSize: '10px', fontWeight: 600, letterSpacing: '1px', color: '#94A3B8', textTransform: 'uppercase', marginBottom: '4px' }}>
+                            {theirExps.length} {theirExps.length === 1 ? 'expense' : 'expenses'}
+                          </div>
+                        )}
                         {theirExps.map((e) => {
                           const curr = e.currency || defaultCurrency;
                           const iPaid = cleanName(e.paid).toLowerCase() === meLower;
