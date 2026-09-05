@@ -131,6 +131,15 @@ export const MobileHeader: React.FC<MobileHeaderProps> = ({
       return cleanM === cleanMe && m.toLowerCase().endsWith(' (left)');
     });
   })();
+  // A shared "direct" thread reads as "with <other person>" instead of its
+  // internal "Me & Them" name.
+  const directOther = (() => {
+    if (!selectedGroup?.isDirect) return '';
+    const cleanMe = (me || '').replace(/\s*\((me|Left)\)$/i, '').trim().toLowerCase();
+    const o = (selectedGroup.members || []).find((m: string) => m.replace(/\s*\(Left\)$/i, '').trim().toLowerCase() !== cleanMe);
+    return o ? o.replace(/\s*\(Left\)$/i, '').trim() : '';
+  })();
+  const displayGroupName = selectedGroup?.isDirect && directOther ? `with ${directOther}` : (selectedGroup?.name || 'Untitled Group');
   const uploadInputRef = React.useRef<HTMLInputElement>(null);
   const [selectedPhoto, setSelectedPhoto] = React.useState<string | null>(null);
   const [showDecisionModal, setShowDecisionModal] = React.useState(false);
@@ -353,7 +362,7 @@ export const MobileHeader: React.FC<MobileHeaderProps> = ({
               {selectedGroup.emoji && (selectedGroup.emoji.startsWith('data:image/') || selectedGroup.emoji.startsWith('http')) ? (
                 <img src={selectedGroup.emoji} style={{ width: '100%', height: '100%', objectFit: 'cover' }} alt="" />
               ) : (
-                selectedGroup.name?.charAt(0).toUpperCase() || '👤'
+                (selectedGroup.isDirect && directOther ? directOther.charAt(0).toUpperCase() : selectedGroup.name?.charAt(0).toUpperCase()) || '👤'
               )}
             </div>
 
@@ -449,7 +458,7 @@ export const MobileHeader: React.FC<MobileHeaderProps> = ({
                       width: '100%',
                       display: 'inline-block',
                     }}>
-                      {selectedGroup?.name || 'Untitled Group'}
+                      {displayGroupName}
                     </span>
                   </h1>
                 </>
