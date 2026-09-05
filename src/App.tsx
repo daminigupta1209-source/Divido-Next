@@ -3161,25 +3161,37 @@ function App() {
     // other side). Use that group's roster name for the other member.
     const dg = directGroupId ? groups.find((g) => String(g.id) === String(directGroupId)) : undefined;
     const cln = (n: string) => n.replace(/\s*\(Left\)$/i, '').trim();
-    const myEmailLower = (userEmail || '').trim().toLowerCase();
-    // Use the names AS THEY ARE in the shared group's roster (full names), so the
-    // payer/splitter match the group's member options (else PAID BY is blank).
-    const myNameInGroup = dg
-      ? (cln((dg.members || []).find((m) => (dg.memberIdentities?.[m] || '').toLowerCase() === myEmailLower) || '')
-         || cln((dg.members || []).find((m) => cln(m).toLowerCase() === me.toLowerCase()) || '')
-         || me)
-      : me;
-    const other = dg
-      ? cln((dg.members || []).find((m) => cln(m).toLowerCase() !== myNameInGroup.toLowerCase()) || clean)
-      : clean;
+    if (dg) {
+      // Enter the shared group's context so `me` resolves to my per-group name
+      // (via divido_identity_<gid>) and the payer defaults correctly — the exact
+      // path a normal group expense uses. Splitters = both roster members.
+      let myInGroup = me;
+      try { myInGroup = localStorage.getItem(`divido_identity_${dg.id}`) || me; } catch { /* ignore */ }
+      const myEmailLower = (userEmail || '').trim().toLowerCase();
+      const byEmail = (dg.members || []).find((m) => (dg.memberIdentities?.[m] || '').toLowerCase() === myEmailLower);
+      if (byEmail) myInGroup = cln(byEmail);
+      setSelectedId(dg.id);
+      setView('detail');
+      setEditingExpenseSecure({
+        id: 'temp-' + Date.now(),
+        gId: dg.id,
+        title: '',
+        amt: 0,
+        date: new Date().toISOString().split('T')[0],
+        splitters: (dg.members || []).map(cln),
+        paid: myInGroup,
+      } as any);
+      setShowExpModalSecure(true);
+      return;
+    }
     setEditingExpenseSecure({
       id: 'temp-' + Date.now(),
-      gId: dg ? dg.id : 'STANDALONE',
+      gId: 'STANDALONE',
       title: '',
       amt: 0,
       date: new Date().toISOString().split('T')[0],
-      splitters: [myNameInGroup, other],
-      paid: myNameInGroup,
+      splitters: [me, clean],
+      paid: me,
     } as any);
     setShowExpModalSecure(true);
   };
