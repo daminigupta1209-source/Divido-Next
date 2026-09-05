@@ -3706,7 +3706,7 @@ function App() {
             })()}
             onBack={() => { setSelectedId(null); setView('summary'); }}
             onOpenExpense={(exp) => { setEditingExpenseSecure(exp); setShowExpModalSecure(true); }}
-            onSettlePerson={(name) => setGlobalSettleDataSecure({ name: name.replace(/\s*\(Left\)$/i, '').trim(), gId: 'STANDALONE' })}
+            onSettlePerson={(name, directGroupId) => setGlobalSettleDataSecure({ name: name.replace(/\s*\(Left\)$/i, '').trim(), gId: directGroupId || 'STANDALONE' })}
             onAddWithPerson={(name, directGroupId) => quickAddExpenseWithFriend(name, directGroupId)}
             backupMissingCount={(() => {
               const ids = new Set(expenses.map((e) => String(e.id)));

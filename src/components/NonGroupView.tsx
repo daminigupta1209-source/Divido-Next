@@ -17,7 +17,7 @@ interface NonGroupViewProps {
   directThreads?: { groupId: string; otherName: string; email: string; pending: boolean }[];
   onBack: () => void;
   onOpenExpense: (exp: Expense) => void;
-  onSettlePerson: (name: string) => void;
+  onSettlePerson: (name: string, directGroupId?: string) => void;
   onRemindPerson?: (name: string) => void;
   onAddWithPerson?: (name: string, directGroupId?: string) => void;
   onSharePerson?: (name: string, directGroupId?: string) => void;
@@ -233,7 +233,7 @@ export const NonGroupView: React.FC<NonGroupViewProps> = ({
 
         {/* Actions */}
         <div style={{ display: 'flex', gap: '8px', marginBottom: '20px' }}>
-          {hasBal && <button type="button" onClick={() => onSettlePerson(profilePerson)} style={profileBtn}>Settle</button>}
+          {hasBal && <button type="button" onClick={() => onSettlePerson(profilePerson, p?.directGroupId)} style={profileBtn}>Settle</button>}
           {onAddWithPerson && <button type="button" onClick={() => onAddWithPerson(profilePerson, p?.directGroupId)} style={profileBtn}>+ Expense</button>}
           {onSharePerson && <button type="button" onClick={() => onSharePerson(profilePerson, p?.directGroupId)} style={profileBtn}>Share</button>}
         </div>
@@ -461,7 +461,7 @@ export const NonGroupView: React.FC<NonGroupViewProps> = ({
                     {isOpen && (
                       <div style={{ borderTop: '0.5px solid #EFE7DC', padding: '12px 16px', background: '#FBFAF8' }}>
                         <div style={{ display: 'flex', gap: '8px', marginBottom: theirExps.length ? '12px' : '0' }}>
-                          {hasBal && <button type="button" onClick={() => onSettlePerson(p.name)} style={innerBtn}>Settle</button>}
+                          {hasBal && <button type="button" onClick={() => onSettlePerson(p.name, p.directGroupId)} style={innerBtn}>Settle</button>}
                           {onAddWithPerson && (
                             <button
                               type="button"
