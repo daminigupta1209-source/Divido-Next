@@ -742,7 +742,7 @@ export const FriendsView: React.FC<FriendsViewProps> = ({
               <div style={{ minWidth: 0, flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center', gap: '6px' }}>
                 <div style={{ display: 'flex', alignItems: 'baseline', gap: '8px', minWidth: 0 }}>
                   <h3 style={{ fontSize: '16px', fontWeight: 600, color: '#2E2A25', margin: 0, textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap', textTransform: 'capitalize', flexShrink: 1 }}>{f.name}</h3>
-                  {isDupName(f.name) && !(f.id && String(f.id).includes('@')) && f.groups && f.groups.length > 0 && (
+                  {!(f.id && String(f.id).includes('@')) && f.groups && f.groups.length > 0 && (
                     <span style={{ fontSize: '13px', fontWeight: 500, color: '#94A3B8', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', flexShrink: 1 }}>({f.groups.join(', ')})</span>
                   )}
                 </div>
