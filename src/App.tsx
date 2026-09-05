@@ -1364,6 +1364,50 @@ function App() {
     });
   };
 
+  // [BETA] Share a person's non-group expenses: promote them into a hidden
+  // 2-person "direct" thread that syncs to the cloud, then open the invite link.
+  // Identity-first: store MY email + the friend's email so balances/names resolve
+  // by email on both sides, and the friend auto-claims by email (invite_email).
+  const sharePersonNonGroupBeta = async (personName: string, otherEmail: string) => {
+    if (!requireSignInToCreate()) return;
+    const clean = (personName || '').replace(/\s*\(Left\)$/i, '').trim();
+    const em = (otherEmail || '').trim().toLowerCase();
+    if (!clean || !em.includes('@')) { alert('Enter a valid email to share.'); return; }
+    const cl = clean.toLowerCase();
+    const involves = (e: Expense) =>
+      (e.paid || '').replace(/\s*\(Left\)$/i, '').trim().toLowerCase() === cl ||
+      (e.splitters || []).some((s) => (s || '').replace(/\s*\(Left\)$/i, '').trim().toLowerCase() === cl);
+
+    let gid: string | number | undefined = groups.find(
+      (g) => g.isDirect && (g.members || []).some((m) => (m || '').replace(/\s*\(Left\)$/i, '').trim().toLowerCase() === cl)
+    )?.id;
+
+    if (!gid) {
+      gid = genGroupId();
+      const theirs = expenses.filter((e) => e && String(e.gId) === 'STANDALONE' && !e.isDeleted && involves(e));
+      const currency = theirs[0]?.currency || myDefaultCurrency || '₹';
+      const memberIdentities: Record<string, string> = {};
+      if (userEmail) memberIdentities[me] = userEmail.toLowerCase();
+      memberIdentities[clean] = em;
+      const newGroup = {
+        id: gid, name: `${me} & ${clean}`, currency, members: [me, clean],
+        simplifyDebts: false, createdDate: new Date().toISOString().split('T')[0],
+        pendingMembers: [clean], memberIdentities, isDirect: true, pendingSync: true,
+      } as Group;
+      const targetGid = gid;
+      setGroups((prev) => [...prev, newGroup]);
+      setExpenses((prev) => prev.map((e) => (String(e.gId) === 'STANDALONE' && involves(e) ? { ...e, gId: targetGid } : e)));
+    }
+
+    const link = `${window.location.origin}/?joinGroupId=${gid}`;
+    const shareText = `Hey ${clean}! Here are our shared expenses on Divido — open to see and settle up 💸`;
+    if (typeof navigator !== 'undefined' && (navigator as any).share) {
+      try { await (navigator as any).share({ title: 'Divido — shared expenses', text: shareText, url: link }); } catch { /* dismissed */ }
+    } else {
+      try { await navigator.clipboard.writeText(link); alert('Invite link copied:\n' + link); } catch { alert(link); }
+    }
+  };
+
   // Delete a whole non-group thread with one person: all STANDALONE expenses
   // involving them, plus their leftover shared "direct" thread (local + cloud).
   const deletePersonNonGroup = async (personName: string, directGroupId?: string) => {
@@ -2302,7 +2346,13 @@ function App() {
               m.id !== inviteMatch.id &&
               String(m.name).replace(/\s*\(Left\)$/i, '').trim().toLowerCase() === profileName.toLowerCase()
             );
-            const claimedName = (profileName && !profileClash) ? profileName : placeholderName;
+            // For a shared 2-person "direct" thread, KEEP the inviter's chosen
+            // name (don't rename to the joiner's Google name). Renaming there
+            // desynced the expense splitter strings → wrong balances. Just link
+            // the email + clear pending; identity is by email, not the label.
+            const claimedName = groupData.is_direct
+              ? placeholderName
+              : ((profileName && !profileClash) ? profileName : placeholderName);
             await supabase.from('group_members')
               .update({ name: claimedName, user_email: myEmail, is_pending: false })
               .eq('id', inviteMatch.id);
@@ -3599,6 +3649,10 @@ function App() {
             onRestoreBackup={restoreNonGroupBackup}
             onClearAll={clearAllNonGroup}
             onDeletePerson={deletePersonNonGroup}
+            onSharePerson={(name) => {
+              const email = window.prompt(`[Beta] Enter ${name}'s email to share this thread:`, '');
+              if (email && email.trim()) sharePersonNonGroupBeta(name, email);
+            }}
             onRemindPerson={async (name) => {
               const clean = name.replace(/\s*\(Left\)$/i, '').trim();
               // In-app reminder (fire-and-forget so it doesn't consume the tap's
