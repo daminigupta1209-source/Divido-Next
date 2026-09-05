@@ -5057,7 +5057,7 @@ function App() {
             {/* Inline header row — back arrow + close, same padding as the page
                 so the back arrow sits in the standard place with consistent
                 spacing around it (not floating in the corner). */}
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '16px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>
               <button
                 type="button"
                 onClick={() => setGlobalSettleData(null)}
@@ -5068,6 +5068,9 @@ function App() {
                   <polyline points="15 18 9 12 15 6" />
                 </svg>
               </button>
+              <h3 className="nunito" style={{ flex: 1, minWidth: 0, textAlign: 'center', fontSize: '19px', fontWeight: 800, color: '#1E293B', margin: 0, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                Settle with {globalSettleData.name}
+              </h3>
               <button
                 type="button"
                 onClick={() => setGlobalSettleData(null)}
@@ -5077,37 +5080,8 @@ function App() {
                 ✕
               </button>
             </div>
-            {(() => {
-              let email = globalSettleData.identity && String(globalSettleData.identity).includes('@')
-                ? String(globalSettleData.identity).toLowerCase() : '';
-              if (!email && globalSettleData.gId) {
-                const g = groups.find((gr) => String(gr.id) === String(globalSettleData.gId));
-                const id = (g as any)?.memberIdentities?.[globalSettleData.name];
-                if (typeof id === 'string' && id.includes('@')) email = id.toLowerCase();
-              }
-              const photo = (email && memberAvatars?.[email]) || '';
-              if (!photo) return null;
-              return (
-                <img
-                  src={photo}
-                  alt={globalSettleData.name}
-                  referrerPolicy="no-referrer"
-                  onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = 'none'; }}
-                  style={{ width: '56px', height: '56px', borderRadius: '50%', objectFit: 'cover', display: 'block', margin: '0 auto 10px' }}
-                />
-              );
-            })()}
-            <h3 className="nunito" style={{
-              fontSize: '20px',
-              fontWeight: 800,
-              color: '#1E293B',
-              marginBottom: '4px',
-              textAlign: 'center'
-            }}>
-              Settle with {globalSettleData.name}
-            </h3>
             {globalSettleData.identity && String(globalSettleData.identity).includes('@') && (
-              <p style={{ textAlign: 'center', color: '#94A3B8', fontSize: '12px', fontWeight: 500, marginBottom: '4px', wordBreak: 'break-all' }}>
+              <p style={{ textAlign: 'center', color: '#94A3B8', fontSize: '12px', fontWeight: 500, marginBottom: '2px', wordBreak: 'break-all' }}>
                 {globalSettleData.identity}
               </p>
             )}
