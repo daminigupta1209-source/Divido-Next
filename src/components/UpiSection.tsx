@@ -221,11 +221,15 @@ export const UpiSection: React.FC<UpiSectionProps> = ({
             <label style={{ fontSize: '11px', fontWeight: 700, color: '#B3A897', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
               UPI ID
             </label>
-            {isVerified && (
+            {isVerified ? (
               <span style={{ fontSize: '11px', color: '#16A34A', fontWeight: 700 }}>
                 Verified ✓
               </span>
-            )}
+            ) : upiError ? (
+              <span style={{ fontSize: '10px', color: '#EF4444', fontWeight: 700 }}>
+                {upiError}
+              </span>
+            ) : null}
           </div>
           <div style={{ position: 'relative', width: '100%' }}>
             <input
@@ -342,11 +346,6 @@ export const UpiSection: React.FC<UpiSectionProps> = ({
         )}
       </div>
 
-      {upiError && (
-        <span style={{ fontSize: '10px', color: '#EF4444', fontWeight: 700 }}>
-          {upiError}
-        </span>
-      )}
 
       {verificationStep !== 'idle' && (
         <div style={{
