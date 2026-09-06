@@ -306,7 +306,7 @@ export const UpiSection: React.FC<UpiSectionProps> = ({
                 onMouseEnter={(e) => e.currentTarget.style.color = '#166FE5'}
                 onMouseLeave={(e) => e.currentTarget.style.color = '#1877F2'}
               >
-                Upload QR to verify
+                Upload Your QR Code
               </button>
             </div>
           )}
