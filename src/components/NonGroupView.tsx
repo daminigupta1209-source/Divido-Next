@@ -195,12 +195,11 @@ export const NonGroupView: React.FC<NonGroupViewProps> = ({
     const lines = myPerspective(bal);
     if (lines.length === 0) return { text: 'Settled up', color: '#94A3B8' };
     const parts = lines.map((l) => `${l.amount > 0 ? 'You collect' : 'You pay'} ${l.curr}${fmt(l.amount)}`);
-    const allCollect = lines.every((l) => l.amount > 0);
-    const allPay = lines.every((l) => l.amount < 0);
-    const color = allCollect ? '#047857' : allPay ? '#B91C1C' : '#334155';
     // Show the primary currency; fold the rest into a compact "+N more" so 2-3
-    // currencies don't crowd the row.
+    // currencies don't crowd the row. Colour follows the PRIMARY line's direction
+    // (green = collect, red = pay) so it never washes out to grey.
     const text = lines.length > 1 ? `${parts[0]} · +${lines.length - 1} more` : parts[0];
+    const color = lines[0].amount > 0 ? '#047857' : '#B91C1C';
     return { text, color };
   };
 
