@@ -24,7 +24,9 @@ export const UpiSection: React.FC<UpiSectionProps> = ({
   handleKeyDown,
 }) => {
   const [upiError, setUpiError] = useState<string | null>(null);
-  const [verificationStep, setVerificationStep] = useState<'idle' | 'awaiting_action' | 'verifying' | 'confirm_resolved'>('idle');
+  const [verificationStep, setVerificationStep] = useState<'idle' | 'awaiting_action' | 'verifying' | 'confirm_resolved' | 'confirm_qr'>('idle');
+  const [qrPreviewUrl, setQrPreviewUrl] = useState<string | null>(null);
+  const [qrExtractedUpi, setQrExtractedUpi] = useState<string>('');
   const isVerified = !!userMetadata[me]?.upiVerified && userMetadata[me]?.upiId === localUpi.trim();
 
   const upiInputRef = useRef<HTMLInputElement>(null);
@@ -73,15 +75,9 @@ export const UpiSection: React.FC<UpiSectionProps> = ({
           }
 
           if (pa && validateUpi(pa)) {
-            setLocalUpi(pa);
-            setUserMetadata({
-              ...userMetadata,
-              [me]: {
-                ...userMetadata[me],
-                upiId: pa,
-                upiVerified: true
-              }
-            });
+            setQrPreviewUrl(event.target?.result as string);
+            setQrExtractedUpi(pa);
+            setVerificationStep('confirm_qr');
             setUpiError(null);
           } else {
             setUpiError('No valid UPI ID found in QR code.');
@@ -536,6 +532,86 @@ export const UpiSection: React.FC<UpiSectionProps> = ({
                     }}
                   >
                     No, Cancel
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {verificationStep === 'confirm_qr' && (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', textAlign: 'center', alignItems: 'center' }}>
+                <div style={{ fontSize: '13px', color: '#475569', fontWeight: 700, lineHeight: 1.4 }}>
+                  Confirm extracted details
+                </div>
+                {qrPreviewUrl && (
+                  <div style={{ width: '100%', maxWidth: '200px', height: '140px', overflow: 'hidden', borderRadius: '12px', border: '1px solid #E2E8F0', background: '#F8FAFC' }}>
+                    <img src={qrPreviewUrl} alt="QR Preview" style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
+                  </div>
+                )}
+                <input
+                  type="text"
+                  value={qrExtractedUpi}
+                  onChange={(e) => setQrExtractedUpi(e.target.value)}
+                  style={{
+                    width: '100%',
+                    padding: '12px',
+                    borderRadius: '12px',
+                    border: '1.5px solid #E2E8F0',
+                    fontSize: '14px',
+                    fontWeight: 600,
+                    textAlign: 'center',
+                    outline: 'none',
+                    color: '#2E2A25',
+                  }}
+                />
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', width: '100%' }}>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const finalUpi = qrExtractedUpi.trim();
+                      if (validateUpi(finalUpi)) {
+                        setLocalUpi(finalUpi);
+                        setUserMetadata({ ...userMetadata, [me]: { ...userMetadata[me], upiId: finalUpi, upiVerified: true } });
+                        setVerificationStep('idle');
+                        setUpiError(null);
+                        setQrPreviewUrl(null);
+                      } else {
+                        setUpiError('Invalid UPI ID format');
+                      }
+                    }}
+                    style={{
+                      width: '100%',
+                      fontSize: '14px',
+                      fontWeight: 600,
+                      background: '#10B981',
+                      color: 'white',
+                      border: 'none',
+                      padding: '12px',
+                      borderRadius: '14px',
+                      cursor: 'pointer',
+                      boxShadow: '0 4px 6px -1px rgba(16, 185, 129, 0.2)'
+                    }}
+                  >
+                    Confirm & Verify
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setVerificationStep('idle');
+                      setQrPreviewUrl(null);
+                    }}
+                    style={{
+                      width: '100%',
+                      fontSize: '12px',
+                      fontWeight: 600,
+                      background: '#FFFFFF',
+                      border: '1.5px solid #F1F5F9',
+                      color: '#64748B',
+                      padding: '10px',
+                      borderRadius: '12px',
+                      cursor: 'pointer'
+                    }}
+                  >
+                    Cancel
                   </button>
                 </div>
               </div>
