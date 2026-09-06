@@ -527,28 +527,6 @@ export const NonGroupView: React.FC<NonGroupViewProps> = ({
                   </div>
                 );
               })}
-              {(onCleanupEmpty || onClearAll) && (
-                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px', marginTop: '10px' }}>
-                  {onCleanupEmpty && (
-                    <button
-                      type="button"
-                      onClick={onCleanupEmpty}
-                      style={{ background: 'none', border: 'none', color: '#64748B', fontSize: '12px', fontWeight: 600, cursor: 'pointer', textDecoration: 'underline' }}
-                    >
-                      Clean up empty threads
-                    </button>
-                  )}
-                  {onClearAll && (
-                    <button
-                      type="button"
-                      onClick={onClearAll}
-                      style={{ background: 'none', border: 'none', color: '#B91C1C', fontSize: '12px', fontWeight: 600, cursor: 'pointer', textDecoration: 'underline' }}
-                    >
-                      Clear all non-group expenses
-                    </button>
-                  )}
-                </div>
-              )}
             </div>
           )
         ) : photos.length === 0 ? (
