@@ -112,7 +112,7 @@ export const UpiSection: React.FC<UpiSectionProps> = ({
   // Debounced auto-save for UPI ID (fixes the bug where closing Profile via Back button erases the ID)
   useEffect(() => {
     const timer = setTimeout(() => {
-      const trimmed = localUpi.trim();
+      const trimmed = (localUpi || '').trim();
       if (trimmed && !validateUpi(trimmed)) {
         setUpiError('Invalid UPI format');
         return;
@@ -178,10 +178,10 @@ export const UpiSection: React.FC<UpiSectionProps> = ({
   }, [verificationStep]);
 
   useEffect(() => {
-    if (!verifyCanvasRef.current || !localUpi.trim()) return;
+    if (!verifyCanvasRef.current || !(localUpi || '').trim()) return;
 
     if (verificationStep === 'awaiting_action') {
-      const upiLink = `upi://pay?pa=${encodeURIComponent(localUpi.trim())}&pn=${encodeURIComponent(userName)}&am=1.00&cu=INR&tn=Divido Verify`;
+      const upiLink = `upi://pay?pa=${encodeURIComponent((localUpi || '').trim())}&pn=${encodeURIComponent(userName || '')}&am=1.00&cu=INR&tn=Divido Verify`;
       QRCode.toCanvas(
         verifyCanvasRef.current,
         upiLink,
@@ -195,7 +195,7 @@ export const UpiSection: React.FC<UpiSectionProps> = ({
         }
       );
     } else if (verificationStep === 'show_qr') {
-      const upiLink = `upi://pay?pa=${encodeURIComponent(localUpi.trim())}&pn=${encodeURIComponent(userName)}`;
+      const upiLink = `upi://pay?pa=${encodeURIComponent((localUpi || '').trim())}&pn=${encodeURIComponent(userName || '')}`;
       QRCode.toCanvas(
         verifyCanvasRef.current,
         upiLink,
@@ -236,9 +236,9 @@ export const UpiSection: React.FC<UpiSectionProps> = ({
             spellCheck="false"
             data-1p-ignore
             data-lpignore="true"
-            value={localUpi}
+            value={localUpi || ''}
             onChange={(e) => {
-              setLocalUpi(e.target.value);
+              setLocalUpi(e.target.value || '');
               setUpiError(null);
             }}
             onKeyDown={handleKeyDown}
@@ -296,7 +296,7 @@ export const UpiSection: React.FC<UpiSectionProps> = ({
           )}
           <input type="file" accept="image/*" ref={qrUploadRef} style={{ display: 'none' }} onChange={handleQRUpload} />
 
-          {localUpi.trim() && !upiError && isVerified && (
+          {(localUpi || '').trim() && !upiError && isVerified && (
             <div style={{ flex: 1 }}>
               <button
                   type="button"
@@ -405,7 +405,7 @@ export const UpiSection: React.FC<UpiSectionProps> = ({
                       type="button"
                       onClick={() => {
                         mobileReturnPendingRef.current = Date.now();
-                        window.location.href = `upi://pay?pa=${encodeURIComponent(localUpi.trim())}&pn=${encodeURIComponent(userName)}&am=1.00&cu=INR&tn=Divido Verify`;
+                        window.location.href = `upi://pay?pa=${encodeURIComponent((localUpi || '').trim())}&pn=${encodeURIComponent(userName || '')}&am=1.00&cu=INR&tn=Divido Verify`;
                       }}
                       style={{
                         marginTop: '8px',
@@ -490,7 +490,7 @@ export const UpiSection: React.FC<UpiSectionProps> = ({
                   <button
                     type="button"
                     onClick={() => {
-                      setUserMetadata({ ...userMetadata, [me]: { ...userMetadata[me], upiId: localUpi.trim(), upiVerified: true } });
+                      setUserMetadata({ ...userMetadata, [me]: { ...userMetadata[me], upiId: (localUpi || '').trim(), upiVerified: true } });
                       setVerificationStep('idle');
                     }}
                     style={{
@@ -631,18 +631,18 @@ export const UpiSection: React.FC<UpiSectionProps> = ({
                   ✨ Tap QR to upload a different image
                 </div>
                 <div style={{ fontSize: '14px', fontWeight: 600, color: '#334155', background: '#F8FAFC', padding: '8px 16px', borderRadius: '8px', border: '1px dashed #CBD5E1', width: '100%', boxSizing: 'border-box' }}>
-                  {localUpi}
+                  {localUpi || ''}
                 </div>
                 <button
                   type="button"
                   onClick={() => {
                     if (navigator.share) {
                       navigator.share({
-                        title: `Pay ${userName} on Divido`,
-                        text: `Here is my UPI ID: ${localUpi}\nYou can pay me directly using this link: upi://pay?pa=${encodeURIComponent(localUpi)}&pn=${encodeURIComponent(userName)}`,
+                        title: `Pay ${userName || ''} on Divido`,
+                        text: `Here is my UPI ID: ${localUpi || ''}\nYou can pay me directly using this link: upi://pay?pa=${encodeURIComponent(localUpi || '')}&pn=${encodeURIComponent(userName || '')}`,
                       }).catch(console.error);
                     } else {
-                      navigator.clipboard.writeText(`upi://pay?pa=${encodeURIComponent(localUpi)}&pn=${encodeURIComponent(userName)}`);
+                      navigator.clipboard.writeText(`upi://pay?pa=${encodeURIComponent(localUpi || '')}&pn=${encodeURIComponent(userName || '')}`);
                       alert('Payment link copied to clipboard!');
                     }
                   }}
