@@ -698,16 +698,25 @@ export const UpiSection: React.FC<UpiSectionProps> = ({
                     marginTop: '8px',
                     fontSize: '14px',
                     fontWeight: 600,
-                    background: '#10B981',
+                    background: '#1877F2',
                     color: 'white',
                     border: 'none',
                     padding: '12px',
                     borderRadius: '14px',
                     cursor: 'pointer',
-                    boxShadow: '0 4px 6px -1px rgba(16, 185, 129, 0.2)'
+                    boxShadow: '0 4px 6px -1px rgba(24, 119, 242, 0.2)',
+                    transition: 'all 0.2s ease'
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.transform = 'scale(1.02)';
+                    e.currentTarget.style.background = '#166FE5';
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.transform = 'scale(1)';
+                    e.currentTarget.style.background = '#1877F2';
                   }}
                 >
-                  Share via...
+                  Share QR Code
                 </button>
               </div>
             )}
