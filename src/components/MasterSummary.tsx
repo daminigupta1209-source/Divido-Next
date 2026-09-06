@@ -983,18 +983,29 @@ export const MasterSummary: React.FC<MasterSummaryProps> = ({
                 {balEntries.length === 0 ? (
                   <span style={{ fontSize: '13px', fontWeight: 500, color: '#94A3B8' }}>Settled up</span>
                 ) : (
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '1px', minWidth: 0 }}>
-                    {payList.map(([curr, val]) => (
-                      <span key={`pay-${curr}`} style={{ fontSize: '13px', fontWeight: 500, color: '#E11D48', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                        You pay {curr}{formatExactAmount(Math.abs(val))}
-                      </span>
-                    ))}
-                    {collectList.map(([curr, val]) => (
-                      <span key={`col-${curr}`} style={{ fontSize: '13px', fontWeight: 500, color: '#3FA97C', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                        You collect {curr}{formatExactAmount(val)}
-                      </span>
-                    ))}
-                  </div>
+                  (() => {
+                    // Show only the primary currency per direction; fold the rest
+                    // into a subtle "+N more" (full split shows inside the group).
+                    const shown = (payList.length > 0 ? 1 : 0) + (collectList.length > 0 ? 1 : 0);
+                    const more = (payList.length + collectList.length) - shown;
+                    return (
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '1px', minWidth: 0 }}>
+                        {payList.length > 0 && (
+                          <span style={{ fontSize: '13px', fontWeight: 500, color: '#E11D48', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                            You pay {payList[0][0]}{formatExactAmount(Math.abs(payList[0][1]))}
+                          </span>
+                        )}
+                        {collectList.length > 0 && (
+                          <span style={{ fontSize: '13px', fontWeight: 500, color: '#3FA97C', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                            You collect {collectList[0][0]}{formatExactAmount(collectList[0][1])}
+                          </span>
+                        )}
+                        {more > 0 && (
+                          <span style={{ fontSize: '11px', fontWeight: 500, color: '#94A3B8', whiteSpace: 'nowrap' }}>+{more} more</span>
+                        )}
+                      </div>
+                    );
+                  })()
                 )}
               </div>
 
