@@ -485,6 +485,16 @@ export const NonGroupView: React.FC<NonGroupViewProps> = ({
                             </button>
                           )}
                         </div>
+                        {/* Full per-currency breakdown (so "+N more" is readable). */}
+                        {myPerspective(p.bal).length > 0 && (
+                          <div style={{ display: 'flex', flexDirection: 'column', gap: '2px', marginBottom: '12px' }}>
+                            {myPerspective(p.bal).map((l) => (
+                              <span key={l.curr} style={{ fontSize: '13px', fontWeight: 600, color: l.amount > 0 ? '#047857' : '#B91C1C' }}>
+                                {l.amount > 0 ? 'You collect' : 'You pay'} {l.curr}{fmt(l.amount)}
+                              </span>
+                            ))}
+                          </div>
+                        )}
                         {theirExps.length > 0 && (
                           <div style={{ fontSize: '10px', fontWeight: 600, letterSpacing: '1px', color: '#94A3B8', textTransform: 'uppercase', marginBottom: '4px' }}>
                             {theirExps.length} {theirExps.length === 1 ? 'expense' : 'expenses'}
