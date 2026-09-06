@@ -257,7 +257,7 @@ export const CurrencyConverterModal: React.FC<CurrencyConverterModalProps> = ({
         {
           id: genExpenseId(),
           gId: group.id,
-          title: `Currency Conversion to ${targetCurr} 💎`,
+          title: `Currency Conversion to ${targetCurr}`,
           amt: 0,
           isNormalization: true,
           ratesUsed: JSON.stringify(filteredRates),
