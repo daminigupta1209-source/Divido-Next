@@ -963,10 +963,9 @@ export const MasterSummary: React.FC<MasterSummaryProps> = ({
                 )}
               </div>
 
-              {/* Name + subtitle */}
-              <div style={{ minWidth: 0, flex: 1 }}>
+              {/* Name + balance line (You pay / You collect, under the name) */}
+              <div style={{ minWidth: 0, flex: 1, display: 'flex', flexDirection: 'column', gap: '3px' }}>
                 <h3
-                  
                   style={{
                     fontSize: '17px',
                     color: '#2E2A25',
@@ -981,37 +980,44 @@ export const MasterSummary: React.FC<MasterSummaryProps> = ({
                 >
                   {g.name || 'Untitled Group'}
                 </h3>
-              </div>
-
-              {/* Balance pills */}
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '0px', alignItems: 'flex-end', flexShrink: 0 }}>
                 {balEntries.length === 0 ? (
-                  <span style={{ ...pillBase, color: '#2C8A63' }}>Settled up</span>
+                  <span style={{ fontSize: '13px', fontWeight: 500, color: '#94A3B8' }}>Settled up</span>
                 ) : (
-                  <>
-                    {payList.length > 0 && (() => {
-                      const textStr = `You pay ${joinGroupPrimary(payList)}`;
-                      const fSize = textStr.length > 22 ? '9.5px' : textStr.length > 17 ? '11px' : '13px';
-                      return (
-                        <span style={{ ...pillBase, fontSize: fSize, color: '#E11D48', display: 'inline-flex', alignItems: 'center', justifyContent: 'flex-end', gap: '5px', maxWidth: '145px' }}>
-                          <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{textStr}</span>
-                          {payList.length > 1 && <span style={{...cardChip, flexShrink: 0}}>+{payList.length - 1}</span>}
-                        </span>
-                      );
-                    })()}
-                    {collectList.length > 0 && (() => {
-                      const textStr = `You collect ${joinGroupPrimary(collectList)}`;
-                      const fSize = textStr.length > 22 ? '9.5px' : textStr.length > 17 ? '11px' : '13px';
-                      return (
-                        <span style={{ ...pillBase, fontSize: fSize, color: '#3FA97C', display: 'inline-flex', alignItems: 'center', justifyContent: 'flex-end', gap: '5px', maxWidth: '145px' }}>
-                          <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{textStr}</span>
-                          {collectList.length > 1 && <span style={{...cardChip, flexShrink: 0}}>+{collectList.length - 1}</span>}
-                        </span>
-                      );
-                    })()}
-                  </>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '1px', minWidth: 0 }}>
+                    {payList.length > 0 && (
+                      <span style={{ fontSize: '13px', fontWeight: 600, color: '#E11D48', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                        You pay {joinGroupPrimary(payList)}{payList.length > 1 ? ` +${payList.length - 1}` : ''}
+                      </span>
+                    )}
+                    {collectList.length > 0 && (
+                      <span style={{ fontSize: '13px', fontWeight: 600, color: '#3FA97C', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                        You collect {joinGroupPrimary(collectList)}{collectList.length > 1 ? ` +${collectList.length - 1}` : ''}
+                      </span>
+                    )}
+                  </div>
                 )}
               </div>
+
+              {/* Quick-add expense — same style as the All-balances '+' */}
+              <button
+                type="button"
+                className="hover-up-mini"
+                onClick={(ev) => {
+                  ev.stopPropagation();
+                  if (setGroupDetailTab) setGroupDetailTab('expenses');
+                  if (setShowFriendsList) setShowFriendsList(false);
+                  setSelectedId(g.id);
+                  setView('detail');
+                  setEditingExpense(null);
+                  setShowExpModal(true);
+                }}
+                title={`Add expense in ${g.name || 'this group'}`}
+                style={{ flexShrink: 0, width: '30px', height: '30px', borderRadius: '50%', background: '#059669', color: '#FFFFFF', border: 'none', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', padding: 0, boxShadow: '0 2px 6px rgba(5,150,105,0.25)' }}
+              >
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.6" strokeLinecap="round" style={{ width: '15px', height: '15px' }}>
+                  <line x1="12" y1="5" x2="12" y2="19" /><line x1="5" y1="12" x2="19" y2="12" />
+                </svg>
+              </button>
 
               <span style={{ fontSize: '18px', color: '#C9BEB2', fontWeight: 600, lineHeight: 1, flexShrink: 0 }}>›</span>
             </div>
