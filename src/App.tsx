@@ -67,7 +67,7 @@ import { MobileHeader } from './components/MobileHeader';
 import { InstallPrompt } from './components/InstallPrompt';
 import { useExportCSV } from './hooks/useExportCSV';
 import { AppNotification, fetchNotifications, markAllNotificationsRead, subscribeNotifications, clearAllNotifications } from './lib/notifications';
-import { calculateNextOccurrenceDate, simplifyMultiCurrencyDebts, computeRawPairwiseTransactions } from './lib/calculations';
+import { calculateNextOccurrenceDate, simplifyMultiCurrencyDebts, computeRawPairwiseTransactions, memberNetBalances } from './lib/calculations';
 
 const pageDescriptions: Record<string, string> = {
   summary: "Track net balances, scan bills, and quickly settle with friends.",
@@ -2947,79 +2947,17 @@ function App() {
     });
 
     // Populate balances for all groups (including groups with no expenses yet)
+    // via the ONE canonical net-balance engine, so the home cards / Non-Group /
+    // getMemberBalance can never diverge from FriendsView / GroupDetail.
     groups.forEach((g) => {
       if (!g) return;
       const gId = String(g.id);
-      const groupExps = expensesByGroup[gId] || [];
-      const gMembers = g.members || [];
-      const defaultCurr = g.currency || '₹';
-
-      const balances: Record<string, Record<string, number>> = {};
-      
-      // Initialize balance records for each member
-      gMembers.forEach((m) => {
-        balances[m] = {};
-      });
-
-      groupExps.forEach((e) => {
-        const c = e.currency || defaultCurr;
-        const amount = Number(e.amt) || 0;
-        const splitters = e.splitters || gMembers || [];
-
-        // Add payment to payer
-        const payer = e.paid;
-        if (payer) {
-          if (!balances[payer]) balances[payer] = {};
-          balances[payer][c] = (balances[payer][c] || 0) + amount;
-        }
-
-        // Deduct split shares
-        splitters.forEach((s) => {
-          if (!balances[s]) balances[s] = {};
-          const share =
-            !e.mode || e.mode === 'Equally'
-              ? amount / (splitters.length || 1)
-              : e.mode === 'Unequally'
-              ? Number(e.shares?.[s]) || 0
-              : (amount * (Number(e.shares?.[s]) || 0)) / 100;
-          balances[s][c] = (balances[s][c] || 0) - share;
-        });
-      });
-
-      map[gId] = balances;
+      map[gId] = memberNetBalances(g.members || [], expensesByGroup[gId] || [], g.currency || '₹');
     });
 
-    // Handle STANDALONE (Non-Group Expenses)
-    const standaloneId = 'STANDALONE';
-    const standaloneExps = expensesByGroup[standaloneId] || [];
-    const standaloneBalances: Record<string, Record<string, number>> = {};
-
-    standaloneExps.forEach((e) => {
-      const c = e.currency || '₹';
-      const amount = Number(e.amt) || 0;
-      const splitters = e.splitters || [];
-
-      // Payer gets credit
-      const payer = e.paid;
-      if (payer) {
-        if (!standaloneBalances[payer]) standaloneBalances[payer] = {};
-        standaloneBalances[payer][c] = (standaloneBalances[payer][c] || 0) + amount;
-      }
-
-      // Splitters get debits
-      splitters.forEach((s) => {
-        if (!standaloneBalances[s]) standaloneBalances[s] = {};
-        const share =
-          !e.mode || e.mode === 'Equally'
-            ? amount / (splitters.length || 1)
-            : e.mode === 'Unequally'
-            ? Number(e.shares?.[s]) || 0
-            : (amount * (Number(e.shares?.[s]) || 0)) / 100;
-        standaloneBalances[s][c] = (standaloneBalances[s][c] || 0) - share;
-      });
-    });
-
-    map[standaloneId] = standaloneBalances;
+    // STANDALONE (Non-Group) has no roster — seed from expense participants only
+    // (pass [] members), matching the previous behaviour.
+    map['STANDALONE'] = memberNetBalances([], expensesByGroup['STANDALONE'] || [], '₹');
 
     return map;
   }, [groups, expenses]);

@@ -203,6 +203,51 @@ export const computeRawPairwiseTransactions = (
   return rawTransactions;
 };
 
+/**
+ * Canonical per-member NET balance for a group, keyed by member name then
+ * currency (positive = net owed TO them / they collect; negative = they owe).
+ *
+ * This is the single source of truth for "each person's standing" — the home
+ * cards, Non-Group net balance and getMemberBalance all read from it, so they
+ * can never disagree about who is up or down. Soft-deleted expenses are excluded
+ * (a struck payment/write-off/expense must drop out of every balance). Members
+ * with no expenses still get an (empty) entry so the roster shows "settled up".
+ */
+export const memberNetBalances = (
+  members: string[],
+  expenses: GroupExpense[],
+  defaultCurrency: string = '₹'
+): Record<string, Record<string, number>> => {
+  const balances: Record<string, Record<string, number>> = {};
+  (members || []).forEach((m) => { balances[m] = {}; });
+
+  (expenses || []).forEach((e) => {
+    if (!e || e.isDeleted) return;
+    const c = e.currency || defaultCurrency;
+    const amt = Number(e.amt) || 0;
+    const splitters = e.splitters || members || [];
+
+    const payer = e.paid;
+    if (payer) {
+      if (!balances[payer]) balances[payer] = {};
+      balances[payer][c] = (balances[payer][c] || 0) + amt;
+    }
+
+    splitters.forEach((s) => {
+      if (!balances[s]) balances[s] = {};
+      const share =
+        !e.mode || e.mode === 'Equally'
+          ? amt / (splitters.length || 1)
+          : e.mode === 'Unequally'
+          ? Number(e.shares?.[s]) || 0
+          : (amt * (Number(e.shares?.[s]) || 0)) / 100;
+      balances[s][c] = (balances[s][c] || 0) - share;
+    });
+  });
+
+  return balances;
+};
+
 export const calculateNextOccurrenceDate = (
   dateStr: string,
   recurrence: 'weekly' | 'monthly' | 'yearly'
