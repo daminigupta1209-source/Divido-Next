@@ -4016,10 +4016,12 @@ function App() {
               setActiveReminderName(memberName);
               setShowAddFriendModal(true);
             }}
-            onReinviteMember={async (memberName, inviteUrl) => {
+            onReinviteMember={async (memberName, inviteUrl, silent) => {
               const grpName = selectedGroup?.name;
               const shareText = `Hey ${memberName}! Rejoin ${grpName ? `"${grpName}"` : 'our group'} on Divido 💸`;
-              const nativeShare = typeof navigator !== 'undefined' && (navigator as any).share;
+              // `silent` (re-add from the friend list) just reactivates them to
+              // pending — no share sheet, no rejoin-link fallback popup.
+              const nativeShare = !silent && typeof navigator !== 'undefined' && (navigator as any).share;
 
               // Fire the phone's own share sheet FIRST — the awaited DB
               // reactivation below would otherwise consume the tap's activation.
@@ -4080,7 +4082,7 @@ function App() {
                 )
               );
 
-              if (!nativeShare) {
+              if (!nativeShare && !silent) {
                 setActiveReminderName(memberName);
                 setActiveRejoinLink(inviteUrl);
                 setShowAddFriendModal(true);

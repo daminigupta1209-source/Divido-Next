@@ -23,7 +23,7 @@ interface GroupMemberListProps {
   onWriteOff?: (memberName: string) => void;
   onSettleMember?: (memberName: string) => void;
   onLeaveGroup?: () => void;
-  onReinviteMember?: (memberName: string, inviteUrl: string) => void;
+  onReinviteMember?: (memberName: string, inviteUrl: string, silent?: boolean) => void;
   onRemindAllPending?: (pendingNames: string[]) => void;
   onAddMembers?: (names: string[], emails?: Record<string, string>, identities?: Record<string, string>) => void;
 }
@@ -254,7 +254,7 @@ export const GroupMemberList: React.FC<GroupMemberListProps> = ({
         // Revive a past member via the same "Invite again" path.
         if (onReinviteMember) {
           const inviteUrl = `${window.location.origin}/?joinGroupId=${selectedGroup.id}&rejoinName=${encodeURIComponent(nm)}`;
-          onReinviteMember(nm, inviteUrl);
+          onReinviteMember(nm, inviteUrl, true); // silent: just reactivate to pending, no share sheet
         }
         markJustAdded(nm);
         continue;
