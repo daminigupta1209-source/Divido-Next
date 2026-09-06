@@ -1586,9 +1586,13 @@ function App() {
   // they collapse to a single person in balances/suggestions everywhere.
   // Writes a shared key onto each row (invite_email when the canonical is an
   // email, else the hidden person_id) and mirrors it into local memberIdentities.
-  const mergePeople = async (entries: DuplicateEntry[]) => {
+  const mergePeople = async (entries: DuplicateEntry[], canonicalOverride?: string) => {
     if (!entries || entries.length < 2) return;
-    const canonical = pickCanonicalIdentity(entries);
+    // The user can choose the primary email to merge everyone into; otherwise
+    // fall back to the automatic pick (existing email > person_id).
+    const canonical = (canonicalOverride && canonicalOverride.trim())
+      ? canonicalOverride.trim().toLowerCase()
+      : pickCanonicalIdentity(entries);
     const isEmail = canonical.includes('@');
     if (!checkIfDemoMode() && isAuthenticated) {
       for (const e of entries) {

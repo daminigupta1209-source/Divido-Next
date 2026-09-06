@@ -3,7 +3,7 @@ import { BalanceDisplay } from './BalanceDisplay';
 
 import { Group, Expense, UserMetadata, GlobalSettleData } from '../lib/types';
 import { simplifyMultiCurrencyDebts, computeRawPairwiseTransactions } from '../lib/calculations';
-import { getPersonKey, findDuplicatePeople, type DuplicateEntry, type DuplicatePerson } from '../lib/identity';
+import { getPersonKey, findDuplicatePeople, isValidEmail, type DuplicateEntry, type DuplicatePerson } from '../lib/identity';
 import { worldCurrencies, formatExactAmount, formatCompactAmount } from '../lib/utils';
 import { SearchableCurrencyPicker } from './SearchableCurrencyPicker';
 import { StyledDropdown } from './StyledDropdown';
@@ -14,12 +14,76 @@ const pillChipStyle: React.CSSProperties = { background: 'rgba(255,255,255,0.28)
 // Review-and-merge sheet: lists each name that resolves to 2+ identities and
 // lets the user merge them into one person. Merging is only suggested (people
 // can share a name), so each group is confirmed individually.
+// One reviewable duplicate person: tick which appearances are really the same
+// person, choose the primary email to merge them into, then merge.
+const MergeRow: React.FC<{
+  d: DuplicatePerson;
+  onMerge: (entries: DuplicateEntry[], canonicalEmail?: string) => Promise<void>;
+}> = ({ d, onMerge }) => {
+  const [busy, setBusy] = useState(false);
+  // All entries ticked by default (the common case is they ARE the same person).
+  const [checked, setChecked] = useState<boolean[]>(() => d.entries.map(() => true));
+  // Prefill the "merge into" email with the first existing email among entries.
+  const [email, setEmail] = useState<string>(() => d.entries.find((e) => e.email)?.email || '');
+
+  const selectedCount = checked.filter(Boolean).length;
+  const emailTrim = email.trim();
+  const emailOk = emailTrim === '' || isValidEmail(emailTrim);
+  const canMerge = selectedCount >= 2 && emailOk && !busy;
+
+  const toggle = (i: number) => setChecked((prev) => prev.map((v, idx) => (idx === i ? !v : v)));
+
+  return (
+    <div style={{ border: '1px solid #F1F5F9', borderRadius: '16px', padding: '12px 14px' }}>
+      <div style={{ fontSize: '15px', fontWeight: 700, color: '#334155', marginBottom: '8px' }}>{d.name}</div>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '2px', marginBottom: '10px' }}>
+        {d.entries.map((e, i) => (
+          <label key={i} style={{ display: 'flex', alignItems: 'center', gap: '10px', fontSize: '12px', color: '#64748B', padding: '6px 4px', cursor: 'pointer' }}>
+            <input type="checkbox" checked={checked[i]} onChange={() => toggle(i)} style={{ width: '17px', height: '17px', accentColor: '#10B981', flexShrink: 0 }} />
+            <span style={{ fontWeight: 600, color: '#475569' }}>{e.groupName}</span>
+            <span style={{ color: '#94A3B8', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+              {e.email ? e.email : (e.memberName.endsWith(' (Left)') ? 'past member · no email' : 'no email')}
+            </span>
+          </label>
+        ))}
+      </div>
+
+      {/* Primary email everyone gets merged into (optional but recommended). */}
+      <div style={{ marginBottom: '10px' }}>
+        <div style={{ fontSize: '11px', fontWeight: 600, color: '#64748B', marginBottom: '4px' }}>Merge into this email (optional)</div>
+        <input
+          type="search"
+          inputMode="email"
+          autoComplete="off"
+          placeholder="name@example.com"
+          value={email}
+          onChange={(ev) => setEmail(ev.target.value)}
+          style={{ width: '100%', boxSizing: 'border-box', padding: '9px 12px', borderRadius: '10px', border: `1.5px solid ${emailOk ? '#E2E8F0' : '#FCA5A5'}`, fontSize: '13px', fontWeight: 500, color: '#334155', outline: 'none', background: '#FFFFFF' }}
+        />
+        {!emailOk && <div style={{ fontSize: '10.5px', color: '#DC2626', marginTop: '3px' }}>That doesn't look like a valid email.</div>}
+      </div>
+
+      <button
+        disabled={!canMerge}
+        onClick={async () => {
+          const entries = d.entries.filter((_, i) => checked[i]);
+          if (entries.length < 2) return;
+          setBusy(true);
+          try { await onMerge(entries, emailTrim || undefined); } finally { setBusy(false); }
+        }}
+        style={{ width: '100%', padding: '11px', borderRadius: '12px', border: 'none', background: canMerge ? '#10B981' : '#CBD5E1', color: '#FFFFFF', fontWeight: 700, fontSize: '13px', cursor: canMerge ? 'pointer' : 'default' }}
+      >
+        {busy ? 'Merging…' : selectedCount < 2 ? 'Tick at least 2 to merge' : `Merge ${selectedCount} into one`}
+      </button>
+    </div>
+  );
+};
+
 const MergeDuplicatesModal: React.FC<{
   duplicates: DuplicatePerson[];
   onClose: () => void;
-  onMerge: (entries: DuplicateEntry[]) => Promise<void>;
+  onMerge: (entries: DuplicateEntry[], canonicalEmail?: string) => Promise<void>;
 }> = ({ duplicates, onClose, onMerge }) => {
-  const [busy, setBusy] = useState<string | null>(null);
   return (
     <div
       onClick={onClose}
@@ -46,30 +110,7 @@ const MergeDuplicatesModal: React.FC<{
 
         <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
           {duplicates.map((d) => (
-            <div key={d.name + d.entries.map((e) => e.groupId).join(',')} style={{ border: '1px solid #F1F5F9', borderRadius: '16px', padding: '12px 14px' }}>
-              <div style={{ fontSize: '15px', fontWeight: 700, color: '#334155', marginBottom: '8px' }}>{d.name}</div>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', marginBottom: '12px' }}>
-                {d.entries.map((e, i) => (
-                  <div key={i} style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '12px', color: '#64748B' }}>
-                    <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#CBD5E1', flexShrink: 0 }} />
-                    <span style={{ fontWeight: 600, color: '#475569' }}>{e.groupName}</span>
-                    <span style={{ color: '#94A3B8', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                      {e.email ? e.email : (e.memberName.endsWith(' (Left)') ? 'past member · no email' : 'no email')}
-                    </span>
-                  </div>
-                ))}
-              </div>
-              <button
-                disabled={busy === d.name}
-                onClick={async () => {
-                  setBusy(d.name);
-                  try { await onMerge(d.entries); } finally { setBusy(null); }
-                }}
-                style={{ width: '100%', padding: '11px', borderRadius: '12px', border: 'none', background: busy === d.name ? '#A7F3D0' : '#10B981', color: '#FFFFFF', fontWeight: 700, fontSize: '13px', cursor: busy === d.name ? 'default' : 'pointer' }}
-              >
-                {busy === d.name ? 'Merging…' : `Merge these ${d.entries.length} into one`}
-              </button>
-            </div>
+            <MergeRow key={d.name + d.entries.map((e) => e.groupId).join(',')} d={d} onMerge={onMerge} />
           ))}
         </div>
       </div>
@@ -115,7 +156,7 @@ interface FriendsViewProps {
   setGlobalSettleData: (data: GlobalSettleData | null) => void;
   userMetadata: Record<string, UserMetadata>;
   memberAvatars?: Record<string, string>;
-  onMergePeople?: (entries: DuplicateEntry[]) => void | Promise<void>;
+  onMergePeople?: (entries: DuplicateEntry[], canonicalEmail?: string) => void | Promise<void>;
   setUserMetadata: (meta: Record<string, UserMetadata>) => void;
   searchQuery?: string;
   showConvertModal?: boolean;
@@ -450,7 +491,7 @@ export const FriendsView: React.FC<FriendsViewProps> = ({
         <MergeDuplicatesModal
           duplicates={duplicatePeople}
           onClose={() => setShowMergeModal(false)}
-          onMerge={async (entries) => { if (onMergePeople) await onMergePeople(entries); }}
+          onMerge={async (entries, canonicalEmail) => { if (onMergePeople) await onMergePeople(entries, canonicalEmail); }}
         />
       )}
       {/* Universal Net Balance Card — kept above the search bar */}
