@@ -25,8 +25,6 @@ export const UpiSection: React.FC<UpiSectionProps> = ({
 }) => {
   const [upiError, setUpiError] = useState<string | null>(null);
   const [verificationStep, setVerificationStep] = useState<'idle' | 'awaiting_action' | 'verifying' | 'confirm_resolved'>('idle');
-  // Brief on-screen hint shown while the phone's UPI app chooser opens.
-  const [showVerifyHint, setShowVerifyHint] = useState(false);
   const isVerified = !!userMetadata[me]?.upiVerified && userMetadata[me]?.upiId === localUpi.trim();
 
   const upiInputRef = useRef<HTMLInputElement>(null);
@@ -196,43 +194,7 @@ export const UpiSection: React.FC<UpiSectionProps> = ({
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-      {/* Compact horizontal hint shown for 3s while the phone's UPI app chooser
-          opens — with a shrinking timer bar and a small dismiss button. */}
-      {showVerifyHint && (
-        <div
-          style={{
-            position: 'fixed',
-            top: '14px',
-            left: '50%',
-            transform: 'translateX(-50%)',
-            zIndex: 10001,
-            width: 'calc(100% - 24px)',
-            maxWidth: '380px',
-            background: '#FFFFFF',
-            borderRadius: '12px',
-            boxShadow: '0 10px 24px -8px rgba(0,0,0,0.15)',
-            overflow: 'hidden',
-          }}
-        >
-          <div style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '10px 14px' }}>
-            <span style={{ flex: 1, color: '#2E2A25', fontSize: '12px', fontWeight: 700, lineHeight: 1.35 }}>
-              Check your name in your UPI app and press back. No payment required.
-            </span>
-            <button
-              type="button"
-              onClick={() => setShowVerifyHint(false)}
-              aria-label="Dismiss"
-              style={{ background: 'none', border: 'none', color: '#64748B', fontSize: '14px', cursor: 'pointer', padding: '0 4px', flexShrink: 0, lineHeight: 1 }}
-            >
-              ✕
-            </button>
-          </div>
-          <div style={{ height: '3px', background: '#F1F5F9' }}>
-            <div style={{ height: '100%', background: '#F97316', width: '100%', animation: 'dividoHintTimer 5s linear forwards' }} />
-          </div>
-          <style>{`@keyframes dividoHintTimer { from { width: 100%; } to { width: 0%; } }`}</style>
-        </div>
-      )}
+      {/* Removed verify hint toast in favor of the full modal flow */}
 
       <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', width: '100%' }}>
         <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
@@ -313,14 +275,7 @@ export const UpiSection: React.FC<UpiSectionProps> = ({
                   type="button"
                   onClick={() => {
                     setUpiError(null);
-                    if (isMobile) {
-                      setShowVerifyHint(true);
-                      setTimeout(() => setShowVerifyHint(false), 5000);
-                      mobileReturnPendingRef.current = Date.now();
-                      window.location.href = `upi://pay?pa=${encodeURIComponent(localUpi.trim())}&pn=${encodeURIComponent(userName)}&am=1.00&cu=INR&tn=Divido Verify`;
-                    } else {
-                      setVerificationStep('awaiting_action');
-                    }
+                    setVerificationStep('awaiting_action');
                   }}
                   style={{
                     width: '100%',
@@ -441,36 +396,64 @@ export const UpiSection: React.FC<UpiSectionProps> = ({
               </button>
             </div>
 
-            {/* Desktop only: mobile opens the phone's UPI app chooser directly. */}
             {verificationStep === 'awaiting_action' && (
               <div style={{ display: 'flex', flexDirection: 'column', gap: '14px', alignItems: 'center', textAlign: 'center' }}>
-                <p style={{ fontSize: '12px', color: '#64748B', fontWeight: 700, margin: 0, lineHeight: 1.4 }}>
-                  Scan this QR code using GPay/PhonePe to see the registered bank name on your phone.
-                </p>
-
-                <div style={{ display: 'flex', justifyContent: 'center', margin: '8px 0', background: '#F8FAFC', padding: '16px', borderRadius: '16px', border: '1px solid #E2E8F0' }}>
-                  <canvas ref={verifyCanvasRef} style={{ background: '#FFFFFF', padding: '8px', borderRadius: '8px', border: '1px solid #E2E8F0' }} />
-                </div>
+                {isMobile ? (
+                  <>
+                    <p style={{ fontSize: '13px', color: '#64748B', fontWeight: 600, margin: 0, lineHeight: 1.5 }}>
+                      We will open your UPI app with a ₹1 test payment. <strong style={{color:'#EF4444'}}>Do not pay it!</strong> Just check the name on the screen and press back.
+                    </p>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        mobileReturnPendingRef.current = Date.now();
+                        window.location.href = `upi://pay?pa=${encodeURIComponent(localUpi.trim())}&pn=${encodeURIComponent(userName)}&am=1.00&cu=INR&tn=Divido Verify`;
+                      }}
+                      style={{
+                        marginTop: '8px',
+                        width: '100%',
+                        fontSize: '14px',
+                        fontWeight: 700,
+                        color: '#FFFFFF',
+                        background: '#EA580C',
+                        padding: '12px 16px',
+                        border: 'none',
+                        borderRadius: '12px',
+                        cursor: 'pointer',
+                        transition: 'background 0.2s',
+                        boxShadow: '0 4px 12px rgba(234, 88, 12, 0.25)'
+                      }}
+                    >
+                      Open UPI App
+                    </button>
+                  </>
+                ) : (
+                  <>
+                    <p style={{ fontSize: '12px', color: '#64748B', fontWeight: 700, margin: 0, lineHeight: 1.4 }}>
+                      Scan this QR code using GPay/PhonePe to see the registered bank name on your phone.
+                    </p>
+                    <div style={{ display: 'flex', justifyContent: 'center', margin: '8px 0', background: '#F8FAFC', padding: '16px', borderRadius: '16px', border: '1px solid #E2E8F0' }}>
+                      <canvas ref={verifyCanvasRef} style={{ background: '#FFFFFF', padding: '8px', borderRadius: '8px', border: '1px solid #E2E8F0' }} />
+                    </div>
+                  </>
+                )}
 
                 <button
                   type="button"
                   onClick={() => setVerificationStep('verifying')}
                   style={{
                     marginTop: '8px',
-                    fontSize: '12px',
+                    fontSize: '13px',
                     fontWeight: 600,
                     color: '#64748B',
-                    border: '1.5px solid #E2E8F0',
-                    background: '#FFFFFF',
-                    padding: '8px 16px',
-                    borderRadius: '12px',
+                    border: 'none',
+                    background: 'transparent',
+                    textDecoration: 'underline',
                     cursor: 'pointer',
-                    transition: 'all 0.2s',
+                    padding: '8px',
                   }}
-                  onMouseEnter={(e) => e.currentTarget.style.background = '#F8FAFC'}
-                  onMouseLeave={(e) => e.currentTarget.style.background = '#FFFFFF'}
                 >
-                  I have opened the UPI app
+                  I have checked my name
                 </button>
               </div>
             )}
