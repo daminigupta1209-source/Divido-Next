@@ -646,8 +646,19 @@ export const UpiSection: React.FC<UpiSectionProps> = ({
                 >
                   <canvas ref={verifyCanvasRef} />
                 </div>
-                <div style={{ fontSize: '11px', color: '#94A3B8', fontWeight: 600, marginTop: '-8px' }}>
-                  Tap QR to upload a different image
+                <div
+                  style={{
+                    fontSize: '12px',
+                    fontWeight: 700,
+                    marginTop: '-6px',
+                    background: 'linear-gradient(135deg, #8B5CF6, #EC4899, #F59E0B)',
+                    WebkitBackgroundClip: 'text',
+                    WebkitTextFillColor: 'transparent',
+                    display: 'inline-block',
+                    textAlign: 'center'
+                  }}
+                >
+                  ✨ Tap QR to upload a different image
                 </div>
                 <input
                   type="text"
