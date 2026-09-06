@@ -2433,6 +2433,14 @@ function App() {
           }
           if (inviteMatch) {
             const placeholderName = String(inviteMatch.name).replace(/\s*\(Left\)$/i, '');
+            // Ask before merging: this card was created for a name the inviter
+            // typed. Confirm it's really this account before we attach the email
+            // and pull the card's history in — otherwise fall through to the
+            // manual "pick your name / join as new" list.
+            const wantsMerge = window.confirm(
+              `This "${placeholderName}" card looks like you.\n\nMerge it with your account (${myEmail})?\n\nAll expenses on this card become yours. Choose Cancel if this isn't you.`
+            );
+            if (wantsMerge) {
             // Once you join, your name = your OWN profile name (not the placeholder
             // the inviter typed). Adopt the Google profile name, unless it would
             // collide with another member here (then keep the placeholder).
@@ -2535,6 +2543,7 @@ function App() {
             // exiting the app. The detail entry is pushed on top by the history sync.
             window.history.replaceState({ _divido: true, uiState: { view: 'summary', selectedId: null } }, '', cleanUrl);
             return;
+            } // end if (wantsMerge) — declined falls through to the claim list
           }
         }
 
