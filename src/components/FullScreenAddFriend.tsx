@@ -288,7 +288,7 @@ export const FullScreenAddFriend: React.FC<FullScreenAddFriendProps> = ({
                     {s.name.charAt(0).toUpperCase()}
                   </span>
                   <span style={{ minWidth: 0, flex: 1 }}>
-                    <span style={{ display: 'block', fontSize: '14px', fontWeight: 600, color: '#334155', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', textDecoration: s.pastMember ? 'line-through' : 'none' }}>{s.name}</span>
+                    <span style={{ display: 'block', fontSize: '14px', fontWeight: 600, color: s.pastMember ? '#94A3B8' : '#334155', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', textDecoration: s.pastMember ? 'line-through' : 'none' }}>{s.name}</span>
                     {s.email && <span style={{ display: 'block', fontSize: '11px', color: '#94A3B8', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{s.email}</span>}
                   </span>
                   {on ? (
