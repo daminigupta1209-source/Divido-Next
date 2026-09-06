@@ -802,7 +802,7 @@ export const ExpenseModal: React.FC<ExpenseModalProps> = ({
                     ? 'Undo this write-off? It un-settles it and the balance reappears.'
                     : isSettlement
                     ? 'Undo this payment? The balance it settled will reappear.'
-                    : 'Delete this activity? This cannot be undone.';
+                    : 'Remove this activity? It will be struck out — you can restore it from the menu.';
                   if (confirm(msg)) {
                     // Soft-delete (strike through), matching the long-press menu —
                     // the card stays, struck out, and is restorable in place rather
