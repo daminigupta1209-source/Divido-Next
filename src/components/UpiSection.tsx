@@ -217,9 +217,16 @@ export const UpiSection: React.FC<UpiSectionProps> = ({
 
       <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', width: '100%' }}>
         <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-          <label style={{ fontSize: '11px', fontWeight: 700, color: '#B3A897', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
-            UPI ID
-          </label>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end' }}>
+            <label style={{ fontSize: '11px', fontWeight: 700, color: '#B3A897', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+              UPI ID
+            </label>
+            {isVerified && (
+              <span style={{ fontSize: '11px', color: '#16A34A', fontWeight: 700 }}>
+                Verified ✓
+              </span>
+            )}
+          </div>
           <input
             ref={upiInputRef}
             type="search"
@@ -318,54 +325,29 @@ export const UpiSection: React.FC<UpiSectionProps> = ({
                 </button>
               )}
               {isVerified && (
-                <div style={{ display: 'flex', gap: '8px', width: '100%' }}>
-                  <button
-                    type="button"
-                    onClick={() => setUserMetadata({ ...userMetadata, [me]: { ...userMetadata[me], upiVerified: false } })}
-                    style={{
-                      flex: 1,
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      padding: '12px',
-                      background: '#F0FDF4',
-                      color: '#16A34A',
-                      border: '1.5px solid #DCFCE7',
-                      borderRadius: '12px',
-                      fontSize: '14px',
-                      fontWeight: 600,
-                      cursor: 'pointer',
-                      transition: 'all 0.2s'
-                    }}
-                    onMouseEnter={(e) => e.currentTarget.style.background = '#DCFCE7'}
-                    onMouseLeave={(e) => e.currentTarget.style.background = '#F0FDF4'}
-                  >
-                    Verified ✓
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setVerificationStep('show_qr')}
-                    style={{
-                      flex: 1,
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      padding: '12px',
-                      background: '#F8FAFC',
-                      color: '#475569',
-                      border: '1.5px solid #E2E8F0',
-                      borderRadius: '12px',
-                      fontSize: '14px',
-                      fontWeight: 600,
-                      cursor: 'pointer',
-                      transition: 'all 0.2s'
-                    }}
-                    onMouseEnter={(e) => e.currentTarget.style.background = '#F1F5F9'}
-                    onMouseLeave={(e) => e.currentTarget.style.background = '#F8FAFC'}
-                  >
-                    Show My QR
-                  </button>
-                </div>
+                <button
+                  type="button"
+                  onClick={() => setVerificationStep('show_qr')}
+                  style={{
+                    width: '100%',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    padding: '12px',
+                    background: '#F8FAFC',
+                    color: '#475569',
+                    border: '1.5px solid #E2E8F0',
+                    borderRadius: '12px',
+                    fontSize: '14px',
+                    fontWeight: 600,
+                    cursor: 'pointer',
+                    transition: 'all 0.2s'
+                  }}
+                  onMouseEnter={(e) => e.currentTarget.style.background = '#F1F5F9'}
+                  onMouseLeave={(e) => e.currentTarget.style.background = '#F8FAFC'}
+                >
+                  Show My QR
+                </button>
               )}
             </div>
           )}
