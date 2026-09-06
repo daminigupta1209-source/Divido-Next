@@ -287,30 +287,31 @@ export const UpiSection: React.FC<UpiSectionProps> = ({
             )}
           </div>
           {!isVerified && (
-            <button
-              type="button"
-              onClick={() => qrUploadRef.current?.click()}
-              style={{
-                background: 'none',
-                border: 'none',
-                color: '#1877F2',
-                fontSize: '11px',
-                fontWeight: 600,
-                cursor: 'pointer',
-                padding: 0,
-                display: 'flex',
-                alignItems: 'center',
-                gap: '4px',
-                transition: 'color 0.2s',
-                textDecoration: 'underline',
-                alignSelf: 'flex-start',
-                marginTop: '2px'
-              }}
-              onMouseEnter={(e) => e.currentTarget.style.color = '#166FE5'}
-              onMouseLeave={(e) => e.currentTarget.style.color = '#1877F2'}
-            >
-              Upload QR to verify
-            </button>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '6px', alignSelf: 'flex-start', marginTop: '2px' }}>
+              <span style={{ fontSize: '11px', color: '#94A3B8', fontWeight: 500 }}>or</span>
+              <button
+                type="button"
+                onClick={() => qrUploadRef.current?.click()}
+                style={{
+                  background: 'none',
+                  border: 'none',
+                  color: '#1877F2',
+                  fontSize: '11px',
+                  fontWeight: 600,
+                  cursor: 'pointer',
+                  padding: 0,
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '4px',
+                  transition: 'color 0.2s',
+                  textDecoration: 'underline',
+                }}
+                onMouseEnter={(e) => e.currentTarget.style.color = '#166FE5'}
+                onMouseLeave={(e) => e.currentTarget.style.color = '#1877F2'}
+              >
+                Upload QR to verify
+              </button>
+            </div>
           )}
         </div>
 
