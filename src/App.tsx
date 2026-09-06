@@ -2445,14 +2445,10 @@ function App() {
           }
           if (inviteMatch) {
             const placeholderName = String(inviteMatch.name).replace(/\s*\(Left\)$/i, '');
-            // Ask before merging: this card was created for a name the inviter
-            // typed. Confirm it's really this account before we attach the email
-            // and pull the card's history in — otherwise fall through to the
-            // manual "pick your name / join as new" list.
-            const wantsMerge = window.confirm(
-              `This "${placeholderName}" card looks like you.\n\nMerge it with your account (${myEmail})?\n\nAll expenses on this card become yours. Choose Cancel if this isn't you.`
-            );
-            if (wantsMerge) {
+            // No merge prompt here: an exact-email match or a private 1:1 link's
+            // single open spot is unambiguously this person, so claim it silently
+            // and take them straight in.
+            {
             // Once you join, your name = your OWN profile name (not the placeholder
             // the inviter typed). Adopt the Google profile name, unless it would
             // collide with another member here (then keep the placeholder).
@@ -4894,7 +4890,7 @@ function App() {
                         return [...prev, updatedGroup];
                       });
 
-                      setSelectedId(linkRequestGroup.id);
+                      setSelectedId((linkRequestGroup as any).is_direct || (linkRequestGroup as any).isDirect ? 'STANDALONE' : linkRequestGroup.id);
                       setView('detail');
                       setShowFriendsList(false); // Clear any lingering overlay state
                       setLinkRequestGroup(null);
@@ -5033,7 +5029,7 @@ function App() {
                     setGroups(prev => prev.some(g => g.id === updatedGroup.id)
                       ? prev.map(g => g.id === updatedGroup.id ? updatedGroup : g)
                       : [...prev, updatedGroup]);
-                    setSelectedId(linkRequestGroup.id);
+                    setSelectedId((linkRequestGroup as any).is_direct || (linkRequestGroup as any).isDirect ? 'STANDALONE' : linkRequestGroup.id);
                     setView('detail');
                     setLinkRequestGroup(null);
                     setJoinNewName('');
