@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { getPersonKey, cleanMemberName, balancesByIdentity, buildKeyToName, buildPeopleSuggestions, isValidEmail, canonicalRosterName } from './identity';
+import { getPersonKey, cleanMemberName, balancesByIdentity, buildKeyToName, buildPeopleSuggestions, isValidEmail, canonicalRosterName, findDuplicateGroups } from './identity';
 import { Group, Expense } from './types';
 
 const mkGroup = (memberIdentities?: Record<string, string>, members: string[] = []): Group =>
@@ -296,5 +296,44 @@ describe('canonicalRosterName', () => {
 
   it('returns the name as-is with no roster', () => {
     expect(canonicalRosterName('Damini', [])).toBe('Damini');
+  });
+});
+
+describe('findDuplicateGroups', () => {
+  const g = (id: string, name: string, members: string[], extra: any = {}): Group =>
+    ({ id, name, currency: '₹', members, memberIdentities: {}, ...extra } as unknown as Group);
+
+  it('flags same-name groups with the same member set', () => {
+    const dups = findDuplicateGroups([
+      g('a', 'Trip', ['Chirag', 'Ravi']),
+      g('b', 'Trip', ['Ravi', 'Chirag']), // same members, different order
+    ]);
+    expect(dups.length).toBe(1);
+    expect(dups[0].groups.map((x) => x.id).sort()).toEqual(['a', 'b']);
+  });
+
+  it('does NOT flag two same-name groups with different members', () => {
+    const dups = findDuplicateGroups([
+      g('a', 'Trip', ['Chirag', 'Ravi']),
+      g('b', 'Trip', ['Chirag', 'Meera']),
+    ]);
+    expect(dups.length).toBe(0);
+  });
+
+  it('ignores direct threads and STANDALONE', () => {
+    const dups = findDuplicateGroups([
+      g('a', 'X & Y', ['X', 'Y'], { isDirect: true }),
+      g('b', 'X & Y', ['X', 'Y'], { isDirect: true }),
+      g('STANDALONE', 'Non-Group', []),
+    ]);
+    expect(dups.length).toBe(0);
+  });
+
+  it('ignores (Left) suffixes when comparing members', () => {
+    const dups = findDuplicateGroups([
+      g('a', 'Goa', ['Chirag', 'Ravi']),
+      g('b', 'Goa', ['Chirag', 'Ravi (Left)']),
+    ]);
+    expect(dups.length).toBe(1);
   });
 });

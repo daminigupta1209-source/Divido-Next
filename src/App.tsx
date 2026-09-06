@@ -58,7 +58,7 @@ import { CurrencySetupModal } from './components/CurrencySetupModal';
 import { GroupGallery } from './components/GroupGallery';
 import { checkIfDemoMode } from './lib/demoMode';
 import { ensureArray, ensureObject, isLegacyRenameLog, formatCompactAmount, genGroupId, genExpenseId, titleCaseName } from './lib/utils';
-import { getPersonKey, toIdentitySpace, pickCanonicalIdentity, type DuplicateEntry } from './lib/identity';
+import { getPersonKey, toIdentitySpace, pickCanonicalIdentity, findDuplicateGroups, type DuplicateEntry } from './lib/identity';
 import { useSupabaseSync, getGidRemap } from './hooks/useSupabaseSync';
 import { BalanceActionCard } from './components/BalanceActionCard';
 import { useAppHotkeys } from './hooks/useAppHotkeys';
@@ -1506,6 +1506,47 @@ function App() {
     } catch (e) {
       console.error('clearAllNonGroup cloud cleanup failed:', e);
     }
+  };
+
+  // Duplicate groups the user probably created twice (same name AND same member
+  // set). Never auto-merged — surfaced as a prompt the user confirms.
+  const duplicateGroups = React.useMemo(() => findDuplicateGroups(groups), [groups]);
+
+  // Merge one accidental duplicate group into another: move the dropped group's
+  // expenses onto the kept group, union members/identities, then delete the
+  // dropped group (local + cloud). Only ever called after user confirmation.
+  const mergeGroups = async (keepId: string | number, dropId: string | number) => {
+    if (String(keepId) === String(dropId)) return;
+    const keep = groups.find((g) => String(g.id) === String(keepId));
+    const drop = groups.find((g) => String(g.id) === String(dropId));
+    if (!keep || !drop) return;
+
+    // Move the dropped group's expenses onto the kept group locally.
+    setExpenses((prev) => prev.map((e) => (String(e.gId) === String(dropId) ? { ...e, gId: keepId } : e)));
+
+    // Union members (dedup by clean lower-case name) + merge identities (keep wins).
+    const cleanLower = (m: string) => m.replace(/\s*\(Left\)$/i, '').trim().toLowerCase();
+    const seen = new Set((keep.members || []).map(cleanLower));
+    const mergedMembers = [...(keep.members || [])];
+    (drop.members || []).forEach((m) => { if (!seen.has(cleanLower(m))) { seen.add(cleanLower(m)); mergedMembers.push(m); } });
+    const mergedIdentities = { ...(drop.memberIdentities || {}), ...(keep.memberIdentities || {}) };
+
+    setGroups((prev) =>
+      prev
+        .map((g) => (String(g.id) === String(keepId) ? { ...g, members: mergedMembers, memberIdentities: mergedIdentities } : g))
+        .filter((g) => String(g.id) !== String(dropId))
+    );
+
+    if (!checkIfDemoMode()) {
+      try {
+        await supabase.from('expenses').update({ group_id: keepId }).eq('group_id', dropId);
+        await supabase.from('group_members').delete().eq('group_id', dropId);
+        await supabase.from('groups').delete().eq('id', dropId);
+      } catch (err) {
+        console.error('mergeGroups cloud cleanup failed:', err);
+      }
+    }
+    if (String(selectedId) === String(dropId)) setSelectedId(keepId);
   };
 
   // Remove only EMPTY shared threads — direct (isDirect) groups that carry no
@@ -3579,6 +3620,8 @@ function App() {
             setShowSettleModal={setShowSettleModalSecure}
             deleteExpense={deleteExpenseSecure}
             setShowConvertModalId={setShowConvertModalId}
+            duplicateGroups={duplicateGroups}
+            onMergeGroups={mergeGroups}
           />
         ) : view === 'groups' ? (
           <GroupsView

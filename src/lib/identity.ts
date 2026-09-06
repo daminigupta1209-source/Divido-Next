@@ -199,6 +199,35 @@ export const findDuplicatePeople = (groups: Group[], me: string): DuplicatePerso
   return out.sort((a, b) => a.name.localeCompare(b.name));
 };
 
+// Find groups that are almost certainly accidental duplicates of each other —
+// created when two devices made the "same" group at the same moment. To avoid
+// flagging two LEGITIMATELY distinct same-named groups (a user can have two
+// "Trip"s with different people), a cluster requires BOTH the same name AND the
+// same member set. Direct (isDirect) threads and STANDALONE are never included.
+// Returns clusters of 2+; the caller prompts the user to merge (never auto).
+export const findDuplicateGroups = (groups: Group[]): { name: string; groups: Group[] }[] => {
+  const memberSig = (g: Group) =>
+    (g.members || [])
+      .map((m) => m.replace(/\s*\(Left\)$/i, '').trim().toLowerCase())
+      .filter(Boolean)
+      .sort()
+      .join('|');
+  const byKey = new Map<string, Group[]>();
+  for (const g of groups || []) {
+    if (!g || String(g.id) === 'STANDALONE' || (g as { isDirect?: boolean }).isDirect) continue;
+    const name = (g.name || '').trim();
+    if (!name) continue;
+    const key = `${name.toLowerCase()}\x1f${memberSig(g)}`;
+    if (!byKey.has(key)) byKey.set(key, []);
+    byKey.get(key)!.push(g);
+  }
+  const out: { name: string; groups: Group[] }[] = [];
+  for (const gs of byKey.values()) {
+    if (gs.length >= 2) out.push({ name: gs[0].name, groups: gs });
+  }
+  return out;
+};
+
 // Pick the identity all merged rows should share: prefer a real email, then an
 // existing hidden person_id, else mint a stable merged id.
 export const pickCanonicalIdentity = (entries: DuplicateEntry[]): string => {

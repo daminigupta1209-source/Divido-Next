@@ -48,6 +48,8 @@ interface MasterSummaryProps {
   setEditingSettle?: (s: any) => void;
   setShowSettleModal?: (b: boolean) => void;
   deleteExpense?: (id: string | number) => void;
+  duplicateGroups?: { name: string; groups: Group[] }[];
+  onMergeGroups?: (keepId: string | number, dropId: string | number) => void;
 }
 
 export const MasterSummary: React.FC<MasterSummaryProps> = ({
@@ -81,6 +83,8 @@ export const MasterSummary: React.FC<MasterSummaryProps> = ({
   setEditingSettle,
   setShowSettleModal,
   deleteExpense,
+  duplicateGroups = [],
+  onMergeGroups,
 }) => {
   const [openDropdownId, setOpenDropdownId] = useState<string | number | null>(null);
   const [timeFilter, setTimeFilter] = useState<'all' | '30days' | '7days'>('all');
@@ -872,6 +876,39 @@ export const MasterSummary: React.FC<MasterSummaryProps> = ({
             ))}
           </>
         )}
+
+        {/* Duplicate-group notice — same name AND same members means it was very
+            likely created twice by accident. Never auto-merged; the user confirms. */}
+        {onMergeGroups && duplicateGroups.map((dup) => {
+          // Keep the group with more expenses (fall back to the first); drop the other.
+          const sorted = [...dup.groups].sort((a, b) =>
+            expenses.filter((e) => String(e.gId) === String(b.id) && !e.isDeleted).length -
+            expenses.filter((e) => String(e.gId) === String(a.id) && !e.isDeleted).length
+          );
+          const keep = sorted[0];
+          const drop = sorted[1];
+          const dropCount = expenses.filter((e) => String(e.gId) === String(drop.id) && !e.isDeleted).length;
+          return (
+            <div key={`dup-${keep.id}-${drop.id}`} style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '12px 14px', background: '#FFF7ED', border: '1px solid #FED7AA', borderRadius: '14px' }}>
+              <span style={{ fontSize: '18px', flexShrink: 0 }}>⚠️</span>
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div style={{ fontSize: '13px', fontWeight: 700, color: '#9A3412' }}>Duplicate group “{dup.name}”</div>
+                <div style={{ fontSize: '11.5px', color: '#B45309' }}>Two copies with the same members. Merge moves {dropCount} {dropCount === 1 ? 'expense' : 'expenses'} into one.</div>
+              </div>
+              <button
+                type="button"
+                onClick={() => {
+                  if (confirm(`Merge the two “${dup.name}” groups into one?\n\nThe duplicate's ${dropCount} ${dropCount === 1 ? 'expense' : 'expenses'} move into the kept group, then the duplicate is removed. This can't be undone.`)) {
+                    onMergeGroups(keep.id, drop.id);
+                  }
+                }}
+                style={{ flexShrink: 0, background: '#EA580C', color: '#fff', border: 'none', borderRadius: '10px', padding: '7px 14px', fontSize: '12px', fontWeight: 700, cursor: 'pointer' }}
+              >
+                Merge
+              </button>
+            </div>
+          );
+        })}
 
         {/* Group Cards List */}
         {filteredGroups.map((g, i) => {
