@@ -115,9 +115,10 @@ export const buildPeopleSuggestions = (
   }
   const out: { name: string; email: string; identity: string; pastMember?: boolean }[] = [];
   for (const e of byName.values()) {
-    // "Re-invite" badge only when the person exists SOLELY as a past member of
-    // the current group (not currently active anywhere else in your groups).
-    const pastMember = e.seenPast && !e.nonPast;
+    // Struck-through when they LEFT the current group — regardless of being
+    // active elsewhere — so it's clear picking them re-invites them here. (A
+    // current-group active member is excluded from suggestions entirely.)
+    const pastMember = e.seenPast;
     if (e.emails.size > 0) {
       for (const em of e.emails) out.push({ name: e.name, email: em, identity: em, pastMember });
     } else if (e.nameOnly) {
