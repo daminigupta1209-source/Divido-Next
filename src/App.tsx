@@ -2411,7 +2411,10 @@ function App() {
           const alreadyMember = existingMembers.some((m: any) => m.user_email === myEmail);
           if (alreadyMember) {
             localStorage.removeItem('divido_pending_join');
-            setSelectedId(joinGroupId);
+            // A shared (isDirect) thread presents under Non-Group, not as a raw
+            // group page — land the joiner on the Non-Group screen so they don't
+            // see the internal group-detail UI and have to swipe back.
+            setSelectedId(groupData.is_direct ? 'STANDALONE' : joinGroupId);
             setView('detail');
             setShowFriendsList(false);
             // Clean URL parameters
@@ -2544,7 +2547,10 @@ function App() {
               ? prev.map((g) => String(g.id) === String(updatedGroup.id) ? updatedGroup : g)
               : [...prev, updatedGroup]);
 
-            setSelectedId(joinGroupId);
+            // A shared (isDirect) thread presents under Non-Group, not as a raw
+            // group page — land the joiner on the Non-Group screen so they don't
+            // see the internal group-detail UI and have to swipe back.
+            setSelectedId(groupData.is_direct ? 'STANDALONE' : joinGroupId);
             setView('detail');
             const cleanUrl = window.location.protocol + '//' + window.location.host + window.location.pathname;
             // Seed a HOME base entry (not an empty one) so a back-swipe from the
@@ -2566,7 +2572,10 @@ function App() {
           );
           if (stillActive) {
             localStorage.removeItem('divido_pending_join');
-            setSelectedId(joinGroupId);
+            // A shared (isDirect) thread presents under Non-Group, not as a raw
+            // group page — land the joiner on the Non-Group screen so they don't
+            // see the internal group-detail UI and have to swipe back.
+            setSelectedId(groupData.is_direct ? 'STANDALONE' : joinGroupId);
             setView('detail');
             const cleanUrl = window.location.protocol + '//' + window.location.host + window.location.pathname;
             // Seed a HOME base entry (not an empty one) so a back-swipe from the
