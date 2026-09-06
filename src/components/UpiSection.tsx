@@ -262,7 +262,8 @@ export const UpiSection: React.FC<UpiSectionProps> = ({
         </div>
 
         <div style={{ display: 'flex', gap: '10px' }}>
-          <button
+          {!isVerified && (
+            <button
             onClick={() => qrUploadRef.current?.click()}
             type="button"
             title="Upload QR Code"
@@ -292,6 +293,7 @@ export const UpiSection: React.FC<UpiSectionProps> = ({
             </svg>
             Upload QR
           </button>
+          )}
           <input type="file" accept="image/*" ref={qrUploadRef} style={{ display: 'none' }} onChange={handleQRUpload} />
 
           {localUpi.trim() && !upiError && (
