@@ -406,12 +406,14 @@ export const ActivityStudio: React.FC<ActivityStudioProps> = ({
                           display: 'flex',
                           alignItems: 'center',
                           justifyContent: 'center',
-                          fontSize: '20px',
+                          fontSize: '17px',
+                          fontWeight: 700,
+                          color: '#6D28D9',
                           border: '1px solid #DDD6FE',
                           flexShrink: 0,
                         }}
                       >
-                        💱
+                        {e.toCurr || '💱'}
                       </div>
                       <div style={{ minWidth: 0, flex: 1 }}>
                         <div

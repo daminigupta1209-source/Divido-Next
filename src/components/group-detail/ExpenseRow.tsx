@@ -161,12 +161,13 @@ export const ExpenseRow: React.FC<ExpenseRowProps> = ({
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              fontSize: '18px',
+              fontSize: '16px',
+              fontWeight: 700,
               color: '#6D28D9',
               flexShrink: 0,
             }}
           >
-            💱
+            {e.toCurr || '💱'}
           </div>
           <div>
             <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
