@@ -276,6 +276,27 @@ export const CurrencyConverterModal: React.FC<CurrencyConverterModalProps> = ({
     setShowConvertModalId(null);
   };
 
+  // The most recent conversion log for this group (conversions are prepended, so
+  // the first match is the newest). Its snapshot lets us restore the pre-convert
+  // state — the same "Undo conversion" the card's long-press menu offers, but
+  // reachable from inside this modal too.
+  const convLog = expenses.find((e) => String(e.gId) === String(group.id) && e.isConversion);
+  const undoConversion = () => {
+    if (!convLog) return;
+    if (!confirm(`Delete this conversion and restore original currencies? 🔄\n\nEvery expense will go back to the exact amount and currency it had BEFORE this conversion. Nothing is lost.`)) return;
+    const snapshotArr: any[] = convLog.snapshot ? JSON.parse(convLog.snapshot) : [];
+    const snapMap: Record<string, any> = {};
+    snapshotArr.forEach((s) => { snapMap[s.id] = s; });
+    setExpenses((prev) =>
+      prev
+        .map((x) => (snapMap[x.id] ? { ...x, amt: snapMap[x.id].amt, currency: snapMap[x.id].currency, shares: snapMap[x.id].shares } : x))
+        .filter((x) => x.id !== convLog.id)
+    );
+    const restoredCurr = convLog.fromCurr || snapshotArr[0]?.currency || '₹';
+    setGroups(groups.map((g) => (String(g.id) === String(group.id) ? { ...g, currency: restoredCurr } : g)));
+    setShowConvertModalId(null);
+  };
+
   return (
     <div
       className="modal-overlay"
@@ -472,6 +493,15 @@ export const CurrencyConverterModal: React.FC<CurrencyConverterModalProps> = ({
         >
           {isConverting ? 'Normalizing...' : 'Apply Conversion'}
         </button>
+        {convLog && (
+          <button
+            onClick={undoConversion}
+            disabled={isConverting || isFetching}
+            style={{ width: '100%', height: '42px', marginTop: '8px', borderRadius: '14px', fontSize: '13px', fontWeight: 600, background: 'none', border: '1.5px solid #FBCFE8', color: '#DB2777', cursor: (isConverting || isFetching) ? 'default' : 'pointer' }}
+          >
+            Undo conversion
+          </button>
+        )}
       </div>
       <style>{`
         @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
