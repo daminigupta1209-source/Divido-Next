@@ -296,7 +296,7 @@ export const UpiSection: React.FC<UpiSectionProps> = ({
                   background: 'none',
                   border: 'none',
                   color: '#1877F2',
-                  fontSize: '11px',
+                  fontSize: '13px',
                   fontWeight: 600,
                   cursor: 'pointer',
                   padding: 0,
