@@ -465,8 +465,8 @@ export const CurrencyConverterModal: React.FC<CurrencyConverterModalProps> = ({
         />
 
         <button
-          className="btn-green hover-up"
-          style={{ width: '100%', height: '46px', borderRadius: '14px', fontSize: '14px', fontWeight: 600 }}
+          className="btn-green"
+          style={{ width: '100%', height: '46px', borderRadius: '14px', fontSize: '14px', fontWeight: 600, opacity: (isConverting || isFetching) ? 0.6 : 1, cursor: (isConverting || isFetching) ? 'default' : 'pointer' }}
           onClick={handleConvert}
           disabled={isConverting || isFetching}
         >
