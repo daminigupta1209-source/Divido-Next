@@ -232,7 +232,7 @@ export const ExpenseRow: React.FC<ExpenseRowProps> = ({
                   ev.stopPropagation();
                   if (
                     confirm(
-                      `Undo this conversion? 🔄\n\nThis will restore the exact state before this conversion.`
+                      `Delete this conversion and restore original currencies? 🔄\n\nEvery expense will go back to the exact amount and currency it had BEFORE this conversion. Nothing is lost.`
                     )
                   ) {
                     const snapshotArr: any[] = e.snapshot ? JSON.parse(e.snapshot) : [];
@@ -261,7 +261,7 @@ export const ExpenseRow: React.FC<ExpenseRowProps> = ({
                           : g
                       )
                     );
-                  } else if (confirm('Just delete the log entry without undoing?')) {
+                  } else if (confirm('Keep the converted amounts and just remove this log entry? (Currencies will NOT be restored.)')) {
                     setExpenses((prev) => prev.filter((x) => x.id !== e.id));
                   }
                   setOpenExpId(null);
