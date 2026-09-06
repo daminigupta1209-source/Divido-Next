@@ -399,6 +399,9 @@ function App() {
     } catch { /* fall through to no-gate */ }
     return false;
   });
+  // Serializes the invite-resolution effect so overlapping runs (it re-fires on
+  // every groups update) don't race into a half-loaded/empty group screen.
+  const joinInFlightRef = useRef(false);
   const [tempName, setTempName] = useState<string>(() => {
     const saved = localStorage.getItem('divido_username');
     return saved && saved !== 'You' && saved !== 'undefined' ? saved : '';
@@ -2304,6 +2307,12 @@ function App() {
   useEffect(() => {
     if (checkIfDemoMode()) { setIsResolvingInvite(false); return; }
     const joinGroupFromQuery = async () => {
+      // This effect re-runs on every `groups` change (cloud sync streams them in),
+      // so without a lock several async runs overlap and race — the joiner saw
+      // "first click fails, second shows an empty group, third works". Serialize:
+      // only one resolution runs at a time; later groups updates retry after it.
+      if (joinInFlightRef.current) return;
+      joinInFlightRef.current = true;
       try {
         const urlParams = new URLSearchParams(window.location.search);
         let joinGroupId = urlParams.get('joinGroupId');
@@ -2584,7 +2593,9 @@ function App() {
         console.error('Landing error:', err);
       } finally {
         // Resolution finished (claim card shown, admitted, or nothing to do) —
-        // drop the loading gate so the app renders its normal view.
+        // drop the loading gate so the app renders its normal view, and release
+        // the lock so a later groups update can retry if this run bailed early.
+        joinInFlightRef.current = false;
         setIsResolvingInvite(false);
       }
     };
