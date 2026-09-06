@@ -198,7 +198,10 @@ export const NonGroupView: React.FC<NonGroupViewProps> = ({
     const allCollect = lines.every((l) => l.amount > 0);
     const allPay = lines.every((l) => l.amount < 0);
     const color = allCollect ? '#047857' : allPay ? '#B91C1C' : '#334155';
-    return { text: parts.join(' · '), color };
+    // Show the primary currency; fold the rest into a compact "+N more" so 2-3
+    // currencies don't crowd the row.
+    const text = lines.length > 1 ? `${parts[0]} · +${lines.length - 1} more` : parts[0];
+    return { text, color };
   };
 
   // ── Person profile (tap the DP) ──────────────────────────────────────────────
@@ -349,7 +352,10 @@ export const NonGroupView: React.FC<NonGroupViewProps> = ({
           >
             {!netHasBalance
               ? 'All settled up'
-              : netLines.map((l) => `${l.amount > 0 ? 'You collect' : 'You pay'} ${l.curr}${fmt(l.amount)}`).join('  ·  ')}
+              : (() => {
+                  const parts = netLines.map((l) => `${l.amount > 0 ? 'You collect' : 'You pay'} ${l.curr}${fmt(l.amount)}`);
+                  return netLines.length > 1 ? `${parts[0]}  ·  +${netLines.length - 1} more` : parts[0];
+                })()}
           </div>
           {netHasBalance && (
             <span style={{ position: 'absolute', right: '14px', top: '50%', transform: 'translateY(-50%)', color: '#FFFFFF', fontSize: '18px', fontWeight: 600, lineHeight: 1, pointerEvents: 'none', opacity: 0.9 }}>›</span>
