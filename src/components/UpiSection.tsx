@@ -296,38 +296,9 @@ export const UpiSection: React.FC<UpiSectionProps> = ({
           )}
           <input type="file" accept="image/*" ref={qrUploadRef} style={{ display: 'none' }} onChange={handleQRUpload} />
 
-          {localUpi.trim() && !upiError && (
+          {localUpi.trim() && !upiError && isVerified && (
             <div style={{ flex: 1 }}>
-              {!isVerified && verificationStep === 'idle' && (
-                <button
-                  type="button"
-                  onClick={() => {
-                    setUpiError(null);
-                    setVerificationStep('awaiting_action');
-                  }}
-                  style={{
-                    width: '100%',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    padding: '12px',
-                    background: '#FFF7ED',
-                    color: '#EA580C',
-                    border: '1.5px solid #FFEDD5',
-                    borderRadius: '12px',
-                    fontSize: '14px',
-                    fontWeight: 600,
-                    cursor: 'pointer',
-                    transition: 'all 0.2s'
-                  }}
-                  onMouseEnter={(e) => e.currentTarget.style.background = '#FFEDD5'}
-                  onMouseLeave={(e) => e.currentTarget.style.background = '#FFF7ED'}
-                >
-                  Verify ID
-                </button>
-              )}
-              {isVerified && (
-                <button
+              <button
                   type="button"
                   onClick={() => setVerificationStep('show_qr')}
                   style={{
@@ -350,7 +321,6 @@ export const UpiSection: React.FC<UpiSectionProps> = ({
                 >
                   Your QR Code
                 </button>
-              )}
             </div>
           )}
         </div>
