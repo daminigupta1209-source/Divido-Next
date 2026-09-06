@@ -630,26 +630,9 @@ export const UpiSection: React.FC<UpiSectionProps> = ({
                 >
                   ✨ Tap QR to upload a different image
                 </div>
-                <input
-                  type="text"
-                  value={localUpi}
-                  onChange={(e) => setLocalUpi(e.target.value)}
-                  style={{
-                    width: '100%',
-                    fontSize: '14px',
-                    fontWeight: 600,
-                    color: '#334155',
-                    background: '#F8FAFC',
-                    padding: '12px 16px',
-                    borderRadius: '12px',
-                    border: '1.5px solid #E2E8F0',
-                    textAlign: 'center',
-                    outline: 'none',
-                    transition: 'border-color 0.2s',
-                  }}
-                  onFocus={(e) => e.target.style.borderColor = '#10B981'}
-                  onBlur={(e) => e.target.style.borderColor = '#E2E8F0'}
-                />
+                <div style={{ fontSize: '14px', fontWeight: 600, color: '#334155', background: '#F8FAFC', padding: '8px 16px', borderRadius: '8px', border: '1px dashed #CBD5E1', width: '100%', boxSizing: 'border-box' }}>
+                  {localUpi}
+                </div>
                 <button
                   type="button"
                   onClick={() => {
