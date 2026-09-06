@@ -346,7 +346,7 @@ export const UpiSection: React.FC<UpiSectionProps> = ({
                   onMouseEnter={(e) => e.currentTarget.style.background = '#F1F5F9'}
                   onMouseLeave={(e) => e.currentTarget.style.background = '#F8FAFC'}
                 >
-                  Show My QR
+                  Your QR Code
                 </button>
               )}
             </div>
@@ -624,26 +624,6 @@ export const UpiSection: React.FC<UpiSectionProps> = ({
                     }}
                   >
                     Confirm & Verify
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setVerificationStep('idle');
-                      setQrPreviewUrl(null);
-                    }}
-                    style={{
-                      width: '100%',
-                      fontSize: '12px',
-                      fontWeight: 600,
-                      background: '#FFFFFF',
-                      border: '1.5px solid #F1F5F9',
-                      color: '#64748B',
-                      padding: '10px',
-                      borderRadius: '12px',
-                      cursor: 'pointer'
-                    }}
-                  >
-                    Cancel
                   </button>
                 </div>
               </div>
