@@ -639,39 +639,36 @@ export const UpiSection: React.FC<UpiSectionProps> = ({
                 <div style={{ fontSize: '13px', color: '#64748B', fontWeight: 600, marginBottom: '8px' }}>
                   Scan to pay {userName} directly.
                 </div>
-                <div style={{ position: 'relative', display: 'flex', justifyContent: 'center', background: '#FFFFFF', padding: '16px', borderRadius: '24px', border: '1px solid #E2E8F0', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.05)' }}>
+                <div
+                  style={{ display: 'flex', justifyContent: 'center', background: '#FFFFFF', padding: '16px', borderRadius: '24px', border: '1px solid #E2E8F0', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.05)', cursor: 'pointer' }}
+                  onClick={() => qrUploadRef.current?.click()}
+                  title="Tap to upload different QR"
+                >
                   <canvas ref={verifyCanvasRef} />
-                  <button
-                    type="button"
-                    title="Upload different QR"
-                    onClick={() => qrUploadRef.current?.click()}
-                    style={{
-                      position: 'absolute',
-                      top: '8px',
-                      right: '8px',
-                      background: '#F1F5F9',
-                      border: '1px solid #E2E8F0',
-                      borderRadius: '50%',
-                      width: '28px',
-                      height: '28px',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      cursor: 'pointer',
-                      fontSize: '12px',
-                      color: '#475569',
-                      transition: 'all 0.2s',
-                      padding: 0
-                    }}
-                    onMouseEnter={(e) => { e.currentTarget.style.background = '#E2E8F0'; }}
-                    onMouseLeave={(e) => { e.currentTarget.style.background = '#F1F5F9'; }}
-                  >
-                    ✏️
-                  </button>
                 </div>
-                <div style={{ fontSize: '14px', fontWeight: 600, color: '#334155', background: '#F8FAFC', padding: '8px 16px', borderRadius: '8px', border: '1px dashed #CBD5E1' }}>
-                  {localUpi}
+                <div style={{ fontSize: '11px', color: '#94A3B8', fontWeight: 600, marginTop: '-8px' }}>
+                  Tap QR to upload a different image
                 </div>
+                <input
+                  type="text"
+                  value={localUpi}
+                  onChange={(e) => setLocalUpi(e.target.value)}
+                  style={{
+                    width: '100%',
+                    fontSize: '14px',
+                    fontWeight: 600,
+                    color: '#334155',
+                    background: '#F8FAFC',
+                    padding: '12px 16px',
+                    borderRadius: '12px',
+                    border: '1.5px solid #E2E8F0',
+                    textAlign: 'center',
+                    outline: 'none',
+                    transition: 'border-color 0.2s',
+                  }}
+                  onFocus={(e) => e.target.style.borderColor = '#10B981'}
+                  onBlur={(e) => e.target.style.borderColor = '#E2E8F0'}
+                />
                 <button
                   type="button"
                   onClick={() => {
