@@ -100,9 +100,13 @@ export const buildPeopleSuggestions = (
   // row carries an `identity` (email, or a name-only person's person_id) so the
   // picker can REUSE that person's stable id instead of minting a new one — this
   // is what stops the same name-only friend becoming duplicate people per group.
+  // Normalize the merge key so "Vandana Investment", "vandana  investment" and
+  // the like collapse to ONE person — otherwise the same friend can appear both
+  // with their email (active elsewhere) and struck-through (past member here).
+  const nameKey = (s: string) => s.toLowerCase().replace(/\s+/g, ' ').trim();
   const byName = new Map<string, { name: string; emails: Set<string>; nameOnly: boolean; nameOnlyId: string; seenPast: boolean; nonPast: boolean }>();
   for (const r of raw) {
-    const k = r.name.toLowerCase();
+    const k = nameKey(r.name);
     if (!byName.has(k)) byName.set(k, { name: r.name, emails: new Set(), nameOnly: false, nameOnlyId: '', seenPast: false, nonPast: false });
     const e = byName.get(k)!;
     if (r.email) e.emails.add(r.email.toLowerCase());
