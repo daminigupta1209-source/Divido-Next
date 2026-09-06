@@ -3,6 +3,7 @@ import { supabase, uploadAttachment } from '../lib/supabaseClient';
 import { Group, Expense } from '../lib/types';
 import { checkIfDemoMode } from '../lib/demoMode';
 import { ensureArray, ensureObject, isLegacyRenameLog, titleCaseName } from '../lib/utils';
+import { rowToExpenseFields, expenseToRow, diffExpenseRow } from '../lib/expenseSchema';
 
 // Fresh hidden person id for a new name-only member, so two people who share a
 // name in different groups stay separate. Signed-in members are left null and
@@ -480,40 +481,14 @@ export function useSupabaseSync({
           // Redundant auto-heal removed to prevent race conditions resetting is_pending for re-invited members.
         });
 
-        // 5. Map expenses
+        // 5. Map expenses — field mapping lives in ONE place (lib/expenseSchema)
+        // shared by load/save/diff, so a new column can't be half-wired. id and
+        // timestamp are handled here (timestamp derives from DB created_at).
         const loadedExpenses: Expense[] = expenseRecords.map((e: any) => ({
           id: e.id,
           timestamp: e.created_at ? new Date(e.created_at).getTime() : 0,
-          gId: e.group_id,
-          title: e.title,
-          amt: parseFloat(e.amt) || 0,
-          paid: e.paid ? titleCaseName(e.paid) : e.paid,
-          date: e.date,
-          mode: e.mode,
-          splitters: ensureArray(e.splitters).map(titleCaseName),
-          shares: Object.fromEntries(
-            Object.entries(ensureObject(e.shares)).map(([k, v]) => [titleCaseName(k), v])
-          ),
-          category: e.category,
-          currency: e.currency,
-          notes: e.notes,
-          attachments: e.attachments || [],
-          isDeleted: e.is_deleted || false,
-          isRecurring: e.is_recurring,
-          recurrence: e.recurrence,
-          nextOccurrence: e.next_occurrence,
-          // Currency-conversion metadata (so a conversion keeps its undo snapshot
-          // across devices and renders as the 💱 card, not a bare $0 expense).
-          isConversion: e.is_conversion || false,
-          isNormalization: e.is_normalization || false,
-          snapshot: e.snapshot,
-          ratesUsed: e.rates_used,
-          toCurr: e.to_curr,
-          fromCurr: e.from_curr,
-          origAmt: e.orig_amt,
-          origShares: e.orig_shares,
-          prevCurr: e.prev_curr
-        }));
+          ...rowToExpenseFields(e),
+        }) as Expense);
 
         // Safety: backup current local data before overwriting with cloud data
         try {
@@ -1089,36 +1064,7 @@ export function useSupabaseSync({
               const insertId = updatedExpense.id != null ? String(updatedExpense.id) : undefined;
               const { error } = await supabase
                 .from('expenses')
-                .upsert({
-                  id: insertId,
-                  group_id: updatedExpense.gId,
-                  title: updatedExpense.title,
-                  amt: updatedExpense.amt,
-                  paid: updatedExpense.paid,
-                  date: updatedExpense.date,
-                  mode: updatedExpense.mode || 'Equally',
-                  splitters: updatedExpense.splitters || [],
-                  shares: updatedExpense.shares,
-                  category: updatedExpense.category,
-                  currency: updatedExpense.currency,
-                  notes: updatedExpense.notes,
-                  attachments: updatedExpense.attachments || [],
-                  is_deleted: updatedExpense.isDeleted || false,
-                  is_recurring: updatedExpense.isRecurring || false,
-                  recurrence: updatedExpense.recurrence || 'none',
-                  next_occurrence: updatedExpense.nextOccurrence,
-                  // Currency-conversion metadata — without this a conversion loses
-                  // its snapshot on sync and can't be undone on another device.
-                  is_conversion: updatedExpense.isConversion || false,
-                  is_normalization: updatedExpense.isNormalization || false,
-                  snapshot: updatedExpense.snapshot,
-                  rates_used: updatedExpense.ratesUsed,
-                  to_curr: updatedExpense.toCurr,
-                  from_curr: updatedExpense.fromCurr,
-                  orig_amt: updatedExpense.origAmt,
-                  orig_shares: updatedExpense.origShares,
-                  prev_curr: updatedExpense.prevCurr
-                }, { onConflict: 'id' });
+                .upsert({ id: insertId, ...expenseToRow(updatedExpense) }, { onConflict: 'id' });
 
               if (error) throw error;
               // No id remap needed — the id we sent is permanent.
@@ -1130,32 +1076,9 @@ export function useSupabaseSync({
               // other device already changed. Editing the SAME field on both is
               // still last-write-wins (genuinely ambiguous), but different fields
               // no longer destroy each other.
-              const updates: Record<string, any> = {};
-              if (String(old.gId) !== String(updatedExpense.gId)) updates.group_id = updatedExpense.gId;
-              if (old.title !== updatedExpense.title) updates.title = updatedExpense.title;
-              if (old.amt !== updatedExpense.amt) updates.amt = updatedExpense.amt;
-              if (old.paid !== updatedExpense.paid) updates.paid = updatedExpense.paid;
-              if (old.date !== updatedExpense.date) updates.date = updatedExpense.date;
-              if (old.mode !== updatedExpense.mode) updates.mode = updatedExpense.mode || 'Equally';
-              if (JSON.stringify(old.splitters) !== JSON.stringify(updatedExpense.splitters)) updates.splitters = updatedExpense.splitters || [];
-              if (JSON.stringify(old.shares) !== JSON.stringify(updatedExpense.shares)) updates.shares = updatedExpense.shares;
-              if (old.category !== updatedExpense.category) updates.category = updatedExpense.category;
-              if (old.currency !== updatedExpense.currency) updates.currency = updatedExpense.currency;
-              if (old.notes !== updatedExpense.notes) updates.notes = updatedExpense.notes;
-              if (JSON.stringify(old.attachments) !== JSON.stringify(updatedExpense.attachments)) updates.attachments = updatedExpense.attachments || [];
-              if (old.isDeleted !== updatedExpense.isDeleted) updates.is_deleted = updatedExpense.isDeleted || false;
-              if (old.isRecurring !== updatedExpense.isRecurring) updates.is_recurring = updatedExpense.isRecurring || false;
-              if (old.recurrence !== updatedExpense.recurrence) updates.recurrence = updatedExpense.recurrence || 'none';
-              if (old.nextOccurrence !== updatedExpense.nextOccurrence) updates.next_occurrence = updatedExpense.nextOccurrence;
-              if (old.isConversion !== updatedExpense.isConversion) updates.is_conversion = updatedExpense.isConversion || false;
-              if (old.isNormalization !== updatedExpense.isNormalization) updates.is_normalization = updatedExpense.isNormalization || false;
-              if (old.snapshot !== updatedExpense.snapshot) updates.snapshot = updatedExpense.snapshot;
-              if (old.ratesUsed !== updatedExpense.ratesUsed) updates.rates_used = updatedExpense.ratesUsed;
-              if (old.toCurr !== updatedExpense.toCurr) updates.to_curr = updatedExpense.toCurr;
-              if (old.fromCurr !== updatedExpense.fromCurr) updates.from_curr = updatedExpense.fromCurr;
-              if (old.origAmt !== updatedExpense.origAmt) updates.orig_amt = updatedExpense.origAmt;
-              if (JSON.stringify(old.origShares) !== JSON.stringify(updatedExpense.origShares)) updates.orig_shares = updatedExpense.origShares;
-              if (old.prevCurr !== updatedExpense.prevCurr) updates.prev_curr = updatedExpense.prevCurr;
+              // Derived from the SAME field-map as load/upsert, so the diff can't
+              // silently omit a field.
+              const updates = diffExpenseRow(old as Expense, updatedExpense);
 
               if (Object.keys(updates).length > 0) {
                 const { error } = await supabase
