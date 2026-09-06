@@ -106,6 +106,20 @@ export const GroupMemberList: React.FC<GroupMemberListProps> = ({
     const id = selectedGroup.memberIdentities?.[name] || '';
     return typeof id === 'string' && id.includes('@') ? id : '';
   };
+  // Fallback for members this group knows only by name (person_id, no email —
+  // e.g. added by typing): find the same person's email in ANY other group,
+  // matched by normalized name. Used so a left member still shows their email.
+  const emailAnywhere = (name: string): string => {
+    const target = name.replace(/\s*\(Left\)$/i, '').trim().toLowerCase().replace(/\s+/g, ' ');
+    for (const g of groups || []) {
+      const mi = g.memberIdentities || {};
+      for (const key of Object.keys(mi)) {
+        const k = key.replace(/\s*\(Left\)$/i, '').trim().toLowerCase().replace(/\s+/g, ' ');
+        if (k === target && typeof mi[key] === 'string' && mi[key].includes('@')) return mi[key];
+      }
+    }
+    return '';
+  };
 
   // "People you've split with before" — see buildPeopleSuggestions (identity.ts).
   const buildSuggestions = () => buildPeopleSuggestions(groups, selectedGroup.id, selectedGroup.members, me, myEmail);
@@ -953,9 +967,9 @@ export const GroupMemberList: React.FC<GroupMemberListProps> = ({
                       <span style={{ fontWeight: 'bold', fontSize: '14px', color: '#64748B', textDecoration: 'line-through' }}>
                         {checkIsMe(cleanName) ? 'You' : cleanName} {checkIsAdmin(cleanName) && <span style={{ fontSize: '10px', fontWeight: 600, color: '#7C3AED', background: '#F5F3FF', padding: '1px 6px', borderRadius: '4px', marginLeft: '6px' }}>Admin</span>}
                       </span>
-                      {emailFor(m) && (
+                      {(emailFor(m) || emailAnywhere(cleanName)) && (
                         <span style={{ fontSize: '11px', color: '#94A3B8', fontWeight: 500, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                          {emailFor(m)}
+                          {emailFor(m) || emailAnywhere(cleanName)}
                         </span>
                       )}
                     </div>
