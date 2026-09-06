@@ -267,7 +267,7 @@ export const ExpenseRow: React.FC<ExpenseRowProps> = ({
                   setOpenExpId(null);
                 }}
               >
-                Delete Activity
+                Undo conversion
               </div>
             </div>
             )}
