@@ -227,79 +227,79 @@ export const UpiSection: React.FC<UpiSectionProps> = ({
               </span>
             )}
           </div>
-          <input
-            ref={upiInputRef}
-            type="search"
-            name="upiId"
-            autoComplete="off"
-            autoCorrect="off"
-            spellCheck="false"
-            data-1p-ignore
-            data-lpignore="true"
-            value={localUpi}
-            onChange={(e) => {
-              setLocalUpi(e.target.value);
-              setUpiError(null);
-            }}
-            onKeyDown={handleKeyDown}
-            placeholder="username@bank"
-            style={{
-              fontSize: '15px',
-              fontWeight: 600,
-              border: '1.5px solid #E2E8F0',
-              borderRadius: '12px',
-              background: '#F8FAFC',
-              padding: '12px 14px',
-              outline: 'none',
-              color: '#2E2A25',
-              fontFamily: 'inherit',
-              width: '100%',
-              transition: 'all 0.2s',
-            }}
-            onFocus={(e) => e.target.style.borderColor = '#EA580C'}
-            onBlur={(e) => e.target.style.borderColor = '#E2E8F0'}
-          />
+          <div style={{ position: 'relative', width: '100%' }}>
+            <input
+              ref={upiInputRef}
+              type="search"
+              name="upiId"
+              autoComplete="off"
+              autoCorrect="off"
+              spellCheck="false"
+              data-1p-ignore
+              data-lpignore="true"
+              value={localUpi}
+              onChange={(e) => {
+                setLocalUpi(e.target.value);
+                setUpiError(null);
+              }}
+              onKeyDown={handleKeyDown}
+              placeholder="username@bank"
+              style={{
+                fontSize: '15px',
+                fontWeight: 600,
+                border: '1.5px solid #E2E8F0',
+                borderRadius: '12px',
+                background: '#F8FAFC',
+                padding: '12px 48px 12px 14px',
+                outline: 'none',
+                color: '#2E2A25',
+                fontFamily: 'inherit',
+                width: '100%',
+                transition: 'all 0.2s',
+              }}
+              onFocus={(e) => e.target.style.borderColor = '#EA580C'}
+              onBlur={(e) => e.target.style.borderColor = '#E2E8F0'}
+            />
+            {!isVerified && (
+              <button
+                type="button"
+                onClick={() => qrUploadRef.current?.click()}
+                title="Scan QR Code"
+                style={{
+                  position: 'absolute',
+                  right: '6px',
+                  top: '50%',
+                  transform: 'translateY(-50%)',
+                  background: 'transparent',
+                  border: 'none',
+                  padding: '6px',
+                  cursor: 'pointer',
+                  color: '#94A3B8',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  borderRadius: '8px',
+                  transition: 'all 0.2s'
+                }}
+                onMouseEnter={(e) => { e.currentTarget.style.color = '#EA580C'; e.currentTarget.style.background = '#FFEDD5'; }}
+                onMouseLeave={(e) => { e.currentTarget.style.color = '#94A3B8'; e.currentTarget.style.background = 'transparent'; }}
+              >
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                  <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
+                  <circle cx="8.5" cy="8.5" r="1.5"/>
+                  <polyline points="21 15 16 10 5 21"/>
+                </svg>
+              </button>
+            )}
+          </div>
         </div>
 
-        <div style={{ display: 'flex', gap: '10px' }}>
-          {!isVerified && (
-            <button
-            onClick={() => qrUploadRef.current?.click()}
-            type="button"
-            title="Upload QR Code"
-            style={{
-              flex: 1,
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              gap: '6px',
-              padding: '12px',
-              background: '#F1F5F9',
-              border: 'none',
-              borderRadius: '12px',
-              fontSize: '14px',
-              fontWeight: 600,
-              color: '#475569',
-              cursor: 'pointer',
-              transition: 'background 0.2s'
-            }}
-            onMouseEnter={(e) => e.currentTarget.style.background = '#E2E8F0'}
-            onMouseLeave={(e) => e.currentTarget.style.background = '#F1F5F9'}
-          >
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-              <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
-              <circle cx="8.5" cy="8.5" r="1.5"/>
-              <polyline points="21 15 16 10 5 21"/>
-            </svg>
-            Upload QR
-          </button>
-          )}
-          <input type="file" accept="image/*" ref={qrUploadRef} style={{ display: 'none' }} onChange={handleQRUpload} />
+        <input type="file" accept="image/*" ref={qrUploadRef} style={{ display: 'none' }} onChange={handleQRUpload} />
 
-          {localUpi.trim() && !upiError && (
-            <div style={{ flex: 1 }}>
-              {!isVerified && verificationStep === 'idle' && (
-                <button
+        {localUpi.trim() && !upiError && (
+          <div style={{ width: '100%' }}>
+            {!isVerified && verificationStep === 'idle' && (
+              <button
                   type="button"
                   onClick={() => {
                     setUpiError(null);
@@ -354,7 +354,6 @@ export const UpiSection: React.FC<UpiSectionProps> = ({
             </div>
           )}
         </div>
-      </div>
 
       {upiError && (
         <span style={{ fontSize: '10px', color: '#EF4444', fontWeight: 700 }}>
