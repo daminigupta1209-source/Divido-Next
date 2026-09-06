@@ -797,8 +797,11 @@ export const ExpenseModal: React.FC<ExpenseModalProps> = ({
                     return;
                   }
                   const isWriteOff = editingExpense.title === 'Written off' || editingExpense.notes === 'Written off';
+                  const isSettlement = editingExpense.title === 'Payment Recorded' || (editingExpense.title || '').toLowerCase().includes('settlement') || editingExpense.category === '💸' || editingExpense.category === '🤝';
                   const msg = isWriteOff
-                    ? 'Delete this write-off? This un-settles it and the balance will reappear.'
+                    ? 'Undo this write-off? It un-settles it and the balance reappears.'
+                    : isSettlement
+                    ? 'Undo this payment? The balance it settled will reappear.'
                     : 'Delete this activity? This cannot be undone.';
                   if (confirm(msg)) {
                     deleteExpense && deleteExpense(editingExpense.id);
@@ -806,7 +809,7 @@ export const ExpenseModal: React.FC<ExpenseModalProps> = ({
                     setEditingExpense(null);
                   }
                 }}
-                title={editingExpense.isConversion ? 'Undo conversion' : 'Delete activity'}
+                title={editingExpense.isConversion ? 'Undo conversion' : ((editingExpense.title === 'Written off' || editingExpense.notes === 'Written off') ? 'Undo write-off' : 'Delete activity')}
               >
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#EF4444" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
                   <polyline points="3 6 5 6 21 6" />
