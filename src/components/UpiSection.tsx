@@ -248,7 +248,7 @@ export const UpiSection: React.FC<UpiSectionProps> = ({
                   <circle cx="8.5" cy="8.5" r="1.5"/>
                   <polyline points="21 15 16 10 5 21"/>
                 </svg>
-                Upload QR to Verify
+                Upload QR
               </button>
             ) : (
               <span style={{ fontSize: '11px', color: '#16A34A', fontWeight: 700 }}>
@@ -256,38 +256,65 @@ export const UpiSection: React.FC<UpiSectionProps> = ({
               </span>
             )}
           </div>
-          <input
-            ref={upiInputRef}
-            type="search"
-            name="upiId"
-            autoComplete="off"
-            autoCorrect="off"
-            spellCheck="false"
-            data-1p-ignore
-            data-lpignore="true"
-            value={localUpi || ''}
-            onChange={(e) => {
-              setLocalUpi(e.target.value || '');
-              setUpiError(null);
-            }}
-            onKeyDown={handleKeyDown}
-            placeholder="username@bank"
-            style={{
-              fontSize: '15px',
-              fontWeight: 600,
-              border: '1.5px solid #E2E8F0',
-              borderRadius: '12px',
-              background: '#F8FAFC',
-              padding: '12px 14px',
-              outline: 'none',
-              color: '#2E2A25',
-              fontFamily: 'inherit',
-              width: '100%',
-              transition: 'all 0.2s',
-            }}
-            onFocus={(e) => e.target.style.borderColor = '#EA580C'}
-            onBlur={(e) => e.target.style.borderColor = '#E2E8F0'}
-          />
+          <div style={{ position: 'relative', width: '100%' }}>
+            <input
+              ref={upiInputRef}
+              type="search"
+              name="upiId"
+              autoComplete="off"
+              autoCorrect="off"
+              spellCheck="false"
+              data-1p-ignore
+              data-lpignore="true"
+              value={localUpi || ''}
+              onChange={(e) => {
+                setLocalUpi(e.target.value || '');
+                setUpiError(null);
+              }}
+              onKeyDown={handleKeyDown}
+              placeholder="username@bank"
+              style={{
+                fontSize: '15px',
+                fontWeight: 600,
+                border: '1.5px solid #E2E8F0',
+                borderRadius: '12px',
+                background: '#F8FAFC',
+                padding: '12px 76px 12px 14px',
+                outline: 'none',
+                color: '#2E2A25',
+                fontFamily: 'inherit',
+                width: '100%',
+                transition: 'all 0.2s',
+              }}
+              onFocus={(e) => e.target.style.borderColor = '#EA580C'}
+              onBlur={(e) => e.target.style.borderColor = '#E2E8F0'}
+            />
+            {!isVerified && (localUpi || '').trim() && !upiError && (
+              <button
+                type="button"
+                onClick={() => setVerificationStep('awaiting_action')}
+                style={{
+                  position: 'absolute',
+                  right: '6px',
+                  top: '50%',
+                  transform: 'translateY(-50%)',
+                  background: '#FFF7ED',
+                  color: '#EA580C',
+                  border: '1px solid #FFEDD5',
+                  padding: '6px 12px',
+                  borderRadius: '8px',
+                  fontSize: '12px',
+                  fontWeight: 700,
+                  cursor: 'pointer',
+                  transition: 'all 0.2s',
+                }}
+                onMouseEnter={(e) => e.currentTarget.style.background = '#FFEDD5'}
+                onMouseLeave={(e) => e.currentTarget.style.background = '#FFF7ED'}
+              >
+                Verify
+              </button>
+            )}
+          </div>
         </div>
 
         <input type="file" accept="image/*" ref={qrUploadRef} style={{ display: 'none' }} onChange={handleQRUpload} />
