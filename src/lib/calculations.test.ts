@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { simplifyMultiCurrencyDebts, calculateNextOccurrenceDate, computeRawPairwiseTransactions } from './calculations';
+import { simplifyMultiCurrencyDebts, calculateNextOccurrenceDate, computeRawPairwiseTransactions, memberNetBalances } from './calculations';
 import { Expense } from './types';
 
 describe('simplifyMultiCurrencyDebts', () => {
@@ -278,5 +278,64 @@ describe('Integration: Group & Friends View Debt Simplification Sync', () => {
     expect(masterBal['Jia']).toEqual({ '₹': -10 });
     // Alice has no direct transaction with Bob anymore because of simplification!
     expect(masterBal['Bob'] || {}).toEqual({});
+  });
+});
+
+describe('memberNetBalances', () => {
+  const mk = (over: Partial<Expense>): Expense => ({
+    id: Math.random().toString(), gId: 'g1', title: 't', amt: 0, paid: 'Alice',
+    splitters: ['Alice', 'Bob'], date: '2026-09-01', category: 'x',
+    mode: 'Equally', currency: '₹', shares: {}, ...over,
+  });
+
+  it('nets payer credit against split debit', () => {
+    const bal = memberNetBalances(['Alice', 'Bob'], [mk({ amt: 100, paid: 'Alice', splitters: ['Alice', 'Bob'] })], '₹');
+    // Alice paid 100, owes 50 -> +50; Bob owes 50 -> -50
+    expect(bal['Alice']).toEqual({ '₹': 50 });
+    expect(bal['Bob']).toEqual({ '₹': -50 });
+  });
+
+  it('excludes soft-deleted expenses', () => {
+    const exps = [
+      mk({ amt: 100, paid: 'Alice', splitters: ['Alice', 'Bob'] }),
+      mk({ amt: 40, paid: 'Bob', splitters: ['Alice', 'Bob'], isDeleted: true }),
+    ];
+    const bal = memberNetBalances(['Alice', 'Bob'], exps, '₹');
+    // Only the first (non-deleted) counts.
+    expect(bal['Alice']).toEqual({ '₹': 50 });
+    expect(bal['Bob']).toEqual({ '₹': -50 });
+  });
+
+  it('keeps currencies separate', () => {
+    const exps = [
+      mk({ amt: 100, currency: '₹', paid: 'Alice', splitters: ['Alice', 'Bob'] }),
+      mk({ amt: 20, currency: '$', paid: 'Bob', splitters: ['Alice', 'Bob'] }),
+    ];
+    const bal = memberNetBalances(['Alice', 'Bob'], exps, '₹');
+    expect(bal['Alice']).toEqual({ '₹': 50, '$': -10 });
+    expect(bal['Bob']).toEqual({ '₹': -50, '$': 10 });
+  });
+
+  it('handles unequal shares', () => {
+    const bal = memberNetBalances(['Alice', 'Bob'], [mk({ amt: 100, paid: 'Alice', mode: 'Unequally', shares: { Alice: 30, Bob: 70 } })], '₹');
+    expect(bal['Alice']).toEqual({ '₹': 70 }); // paid 100, share 30
+    expect(bal['Bob']).toEqual({ '₹': -70 });
+  });
+
+  it('seeds roster members with empty balance (settled up)', () => {
+    const bal = memberNetBalances(['Alice', 'Bob'], [], '₹');
+    expect(bal['Alice']).toEqual({});
+    expect(bal['Bob']).toEqual({});
+  });
+
+  it('a payment/settlement reverses the balance it settles', () => {
+    const exps = [
+      mk({ amt: 100, paid: 'Alice', splitters: ['Alice', 'Bob'] }), // Bob owes Alice 50
+      mk({ title: 'Payment Recorded', amt: 50, paid: 'Bob', splitters: ['Alice'] }), // Bob pays Alice 50
+    ];
+    const bal = memberNetBalances(['Alice', 'Bob'], exps, '₹');
+    // Net settled: Alice +50 -50 = 0, Bob -50 +50 = 0
+    expect(bal['Alice']).toEqual({ '₹': 0 });
+    expect(bal['Bob']).toEqual({ '₹': 0 });
   });
 });

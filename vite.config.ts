@@ -4,6 +4,12 @@ import react from '@vitejs/plugin-react'
 // https://vite.dev/config/
 export default defineConfig({
   plugins: [react()],
+  // Unit tests (vitest) live next to source as *.test.ts. The Playwright e2e
+  // specs under tests/e2e use a different runner, so exclude them here.
+  test: {
+    include: ['src/**/*.test.ts'],
+    exclude: ['tests/e2e/**', 'node_modules/**'],
+  },
   build: {
     rollupOptions: {
       output: {
