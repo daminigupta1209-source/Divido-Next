@@ -217,11 +217,40 @@ export const UpiSection: React.FC<UpiSectionProps> = ({
 
       <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', width: '100%' }}>
         <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
             <label style={{ fontSize: '11px', fontWeight: 700, color: '#B3A897', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
               UPI ID
             </label>
-            {isVerified && (
+            {!isVerified ? (
+              <button
+                type="button"
+                onClick={() => qrUploadRef.current?.click()}
+                style={{
+                  background: 'none',
+                  border: 'none',
+                  color: '#1877F2',
+                  fontSize: '11px',
+                  fontWeight: 700,
+                  cursor: 'pointer',
+                  padding: 0,
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '4px',
+                  transition: 'color 0.2s',
+                  textTransform: 'uppercase',
+                  letterSpacing: '0.5px'
+                }}
+                onMouseEnter={(e) => e.currentTarget.style.color = '#166FE5'}
+                onMouseLeave={(e) => e.currentTarget.style.color = '#1877F2'}
+              >
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                  <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
+                  <circle cx="8.5" cy="8.5" r="1.5"/>
+                  <polyline points="21 15 16 10 5 21"/>
+                </svg>
+                Upload QR to Verify
+              </button>
+            ) : (
               <span style={{ fontSize: '11px', color: '#16A34A', fontWeight: 700 }}>
                 Verified ✓
               </span>
@@ -261,69 +290,34 @@ export const UpiSection: React.FC<UpiSectionProps> = ({
           />
         </div>
 
-        <div style={{ display: 'flex', gap: '10px' }}>
-          {!isVerified && (
-            <button
-            onClick={() => qrUploadRef.current?.click()}
+        <input type="file" accept="image/*" ref={qrUploadRef} style={{ display: 'none' }} onChange={handleQRUpload} />
+
+        {(localUpi || '').trim() && !upiError && isVerified && (
+          <button
             type="button"
-            title="Upload QR Code"
+            onClick={() => setVerificationStep('show_qr')}
             style={{
-              flex: 1,
+              width: '100%',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              gap: '6px',
               padding: '12px',
-              background: '#F1F5F9',
-              border: 'none',
+              background: '#FFF7ED',
+              color: '#EA580C',
+              border: '1.5px solid #FFEDD5',
               borderRadius: '12px',
               fontSize: '14px',
               fontWeight: 600,
-              color: '#475569',
               cursor: 'pointer',
-              transition: 'background 0.2s'
+              transition: 'all 0.2s',
+              marginTop: '4px'
             }}
-            onMouseEnter={(e) => e.currentTarget.style.background = '#E2E8F0'}
-            onMouseLeave={(e) => e.currentTarget.style.background = '#F1F5F9'}
+            onMouseEnter={(e) => e.currentTarget.style.background = '#FFEDD5'}
+            onMouseLeave={(e) => e.currentTarget.style.background = '#FFF7ED'}
           >
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-              <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
-              <circle cx="8.5" cy="8.5" r="1.5"/>
-              <polyline points="21 15 16 10 5 21"/>
-            </svg>
-            Upload QR
+            Your QR Code
           </button>
-          )}
-          <input type="file" accept="image/*" ref={qrUploadRef} style={{ display: 'none' }} onChange={handleQRUpload} />
-
-          {(localUpi || '').trim() && !upiError && isVerified && (
-            <div style={{ flex: 1 }}>
-              <button
-                  type="button"
-                  onClick={() => setVerificationStep('show_qr')}
-                  style={{
-                    width: '100%',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    padding: '12px',
-                    background: '#FFF7ED',
-                    color: '#EA580C',
-                    border: '1.5px solid #FFEDD5',
-                    borderRadius: '12px',
-                    fontSize: '14px',
-                    fontWeight: 600,
-                    cursor: 'pointer',
-                    transition: 'all 0.2s'
-                  }}
-                  onMouseEnter={(e) => e.currentTarget.style.background = '#FFEDD5'}
-                  onMouseLeave={(e) => e.currentTarget.style.background = '#FFF7ED'}
-                >
-                  Your QR Code
-                </button>
-            </div>
-          )}
-        </div>
+        )}
       </div>
 
       {upiError && (
