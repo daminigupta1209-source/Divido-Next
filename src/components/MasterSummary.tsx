@@ -985,12 +985,12 @@ export const MasterSummary: React.FC<MasterSummaryProps> = ({
                 ) : (
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '1px', minWidth: 0 }}>
                     {payList.map(([curr, val]) => (
-                      <span key={`pay-${curr}`} style={{ fontSize: '13px', fontWeight: 600, color: '#E11D48', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                      <span key={`pay-${curr}`} style={{ fontSize: '13px', fontWeight: 500, color: '#E11D48', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                         You pay {curr}{formatExactAmount(Math.abs(val))}
                       </span>
                     ))}
                     {collectList.map(([curr, val]) => (
-                      <span key={`col-${curr}`} style={{ fontSize: '13px', fontWeight: 600, color: '#3FA97C', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                      <span key={`col-${curr}`} style={{ fontSize: '13px', fontWeight: 500, color: '#3FA97C', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                         You collect {curr}{formatExactAmount(val)}
                       </span>
                     ))}
