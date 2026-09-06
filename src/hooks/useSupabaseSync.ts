@@ -501,7 +501,18 @@ export function useSupabaseSync({
           isDeleted: e.is_deleted || false,
           isRecurring: e.is_recurring,
           recurrence: e.recurrence,
-          nextOccurrence: e.next_occurrence
+          nextOccurrence: e.next_occurrence,
+          // Currency-conversion metadata (so a conversion keeps its undo snapshot
+          // across devices and renders as the 💱 card, not a bare $0 expense).
+          isConversion: e.is_conversion || false,
+          isNormalization: e.is_normalization || false,
+          snapshot: e.snapshot,
+          ratesUsed: e.rates_used,
+          toCurr: e.to_curr,
+          fromCurr: e.from_curr,
+          origAmt: e.orig_amt,
+          origShares: e.orig_shares,
+          prevCurr: e.prev_curr
         }));
 
         // Safety: backup current local data before overwriting with cloud data
@@ -1095,7 +1106,18 @@ export function useSupabaseSync({
                   is_deleted: updatedExpense.isDeleted || false,
                   is_recurring: updatedExpense.isRecurring || false,
                   recurrence: updatedExpense.recurrence || 'none',
-                  next_occurrence: updatedExpense.nextOccurrence
+                  next_occurrence: updatedExpense.nextOccurrence,
+                  // Currency-conversion metadata — without this a conversion loses
+                  // its snapshot on sync and can't be undone on another device.
+                  is_conversion: updatedExpense.isConversion || false,
+                  is_normalization: updatedExpense.isNormalization || false,
+                  snapshot: updatedExpense.snapshot,
+                  rates_used: updatedExpense.ratesUsed,
+                  to_curr: updatedExpense.toCurr,
+                  from_curr: updatedExpense.fromCurr,
+                  orig_amt: updatedExpense.origAmt,
+                  orig_shares: updatedExpense.origShares,
+                  prev_curr: updatedExpense.prevCurr
                 }, { onConflict: 'id' });
 
               if (error) throw error;
@@ -1125,6 +1147,15 @@ export function useSupabaseSync({
               if (old.isRecurring !== updatedExpense.isRecurring) updates.is_recurring = updatedExpense.isRecurring || false;
               if (old.recurrence !== updatedExpense.recurrence) updates.recurrence = updatedExpense.recurrence || 'none';
               if (old.nextOccurrence !== updatedExpense.nextOccurrence) updates.next_occurrence = updatedExpense.nextOccurrence;
+              if (old.isConversion !== updatedExpense.isConversion) updates.is_conversion = updatedExpense.isConversion || false;
+              if (old.isNormalization !== updatedExpense.isNormalization) updates.is_normalization = updatedExpense.isNormalization || false;
+              if (old.snapshot !== updatedExpense.snapshot) updates.snapshot = updatedExpense.snapshot;
+              if (old.ratesUsed !== updatedExpense.ratesUsed) updates.rates_used = updatedExpense.ratesUsed;
+              if (old.toCurr !== updatedExpense.toCurr) updates.to_curr = updatedExpense.toCurr;
+              if (old.fromCurr !== updatedExpense.fromCurr) updates.from_curr = updatedExpense.fromCurr;
+              if (old.origAmt !== updatedExpense.origAmt) updates.orig_amt = updatedExpense.origAmt;
+              if (JSON.stringify(old.origShares) !== JSON.stringify(updatedExpense.origShares)) updates.orig_shares = updatedExpense.origShares;
+              if (old.prevCurr !== updatedExpense.prevCurr) updates.prev_curr = updatedExpense.prevCurr;
 
               if (Object.keys(updates).length > 0) {
                 const { error } = await supabase

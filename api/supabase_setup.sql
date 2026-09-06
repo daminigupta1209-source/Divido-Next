@@ -236,3 +236,20 @@ ON public.nongroup_backups FOR UPDATE
 TO authenticated
 USING (lower(user_email) = lower(auth.jwt() ->> 'email'))
 WITH CHECK (lower(user_email) = lower(auth.jwt() ->> 'email'));
+
+-- ============================================================================
+-- §11. CURRENCY-CONVERSION METADATA ON EXPENSES
+-- A currency conversion writes a special "conversion" expense that stores the
+-- pre-conversion snapshot + rates so it can be UNDONE. Without these columns the
+-- metadata never reaches the cloud, so a conversion degrades to a bare $0
+-- expense on any other device and can no longer be undone. Run once.
+-- ============================================================================
+ALTER TABLE public.expenses ADD COLUMN IF NOT EXISTS is_conversion boolean DEFAULT false;
+ALTER TABLE public.expenses ADD COLUMN IF NOT EXISTS is_normalization boolean DEFAULT false;
+ALTER TABLE public.expenses ADD COLUMN IF NOT EXISTS snapshot text;
+ALTER TABLE public.expenses ADD COLUMN IF NOT EXISTS rates_used text;
+ALTER TABLE public.expenses ADD COLUMN IF NOT EXISTS to_curr text;
+ALTER TABLE public.expenses ADD COLUMN IF NOT EXISTS from_curr text;
+ALTER TABLE public.expenses ADD COLUMN IF NOT EXISTS orig_amt numeric;
+ALTER TABLE public.expenses ADD COLUMN IF NOT EXISTS orig_shares jsonb;
+ALTER TABLE public.expenses ADD COLUMN IF NOT EXISTS prev_curr text;
