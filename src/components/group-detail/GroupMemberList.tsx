@@ -232,15 +232,33 @@ export const GroupMemberList: React.FC<GroupMemberListProps> = ({
 
   const commitSelected = (friends: { name: string; email: string; identity?: string }[]) => {
     if (friends.length === 0) return;
-    const existing = new Set(
-      selectedGroup.members.map((m) => m.replace(/\s*\(Left\)$/i, '').trim().toLowerCase())
+    // Split existing roster into ACTIVE vs LEFT: a currently-active member is a
+    // real duplicate (skip), but a LEFT member picked again should be REVIVED
+    // (brought back to pending) rather than silently dropped — otherwise picking
+    // a past member from "Recently split with" appears to do nothing.
+    const activeSet = new Set(
+      selectedGroup.members.filter((m) => !/\s*\(Left\)$/i.test(m)).map((m) => m.trim().toLowerCase())
+    );
+    const leftSet = new Set(
+      selectedGroup.members.filter((m) => /\s*\(Left\)$/i.test(m)).map((m) => m.replace(/\s*\(Left\)$/i, '').trim().toLowerCase())
     );
     const names: string[] = [];
     const emails: Record<string, string> = {};
     const identities: Record<string, string> = {};
     for (const f of friends) {
       const nm = f.name.trim();
-      if (!nm || existing.has(nm.toLowerCase())) continue; // skip dupes silently
+      if (!nm) continue;
+      const key = nm.toLowerCase();
+      if (activeSet.has(key)) continue; // already in the group — skip
+      if (leftSet.has(key)) {
+        // Revive a past member via the same "Invite again" path.
+        if (onReinviteMember) {
+          const inviteUrl = `${window.location.origin}/?joinGroupId=${selectedGroup.id}&rejoinName=${encodeURIComponent(nm)}`;
+          onReinviteMember(nm, inviteUrl);
+        }
+        markJustAdded(nm);
+        continue;
+      }
       names.push(nm);
       const email = (f.email || '').trim().toLowerCase();
       if (email.includes('@')) emails[nm] = email;
