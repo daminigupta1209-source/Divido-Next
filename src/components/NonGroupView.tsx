@@ -229,7 +229,6 @@ export const NonGroupView: React.FC<NonGroupViewProps> = ({
           <div style={{ fontSize: '17px', fontWeight: 700, color: '#0F172A' }}>You &amp; {profilePerson}</div>
           <div style={{ fontSize: '12px', color: '#94A3B8', display: 'flex', alignItems: 'center', gap: '6px', justifyContent: 'center', flexWrap: 'wrap', marginTop: '2px' }}>
             {p?.email && <span>{p.email}</span>}
-            {p?.pending && <span style={{ fontSize: '10px', fontWeight: 700, color: '#B45309', background: '#FFF4EC', border: '0.5px solid #FED7AA', borderRadius: '6px', padding: '1px 6px' }}>Invited</span>}
           </div>
           <div style={{ fontSize: '14px', fontWeight: 600, color: b.color, marginTop: '6px' }}>{hasBal ? b.text : 'All settled up'}</div>
         </div>
@@ -439,9 +438,6 @@ export const NonGroupView: React.FC<NonGroupViewProps> = ({
                       <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', gap: '4px' }}>
                         <div style={{ display: 'flex', alignItems: 'baseline', gap: '6px', minWidth: 0 }}>
                           <h3 style={{ fontSize: '16px', fontWeight: 600, color: '#2E2A25', margin: 0, textTransform: 'capitalize', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', flexShrink: 1 }}>{p.name}</h3>
-                          {p.pending && (
-                            <span style={{ fontSize: '10px', fontWeight: 700, color: '#B45309', background: '#FFF4EC', border: '0.5px solid #FED7AA', borderRadius: '6px', padding: '1px 6px', whiteSpace: 'nowrap', flexShrink: 0 }}>Invited</span>
-                          )}
                         </div>
                         {p.email && (
                           <span style={{ fontSize: '11.5px', color: '#94A3B8', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{p.email}</span>
