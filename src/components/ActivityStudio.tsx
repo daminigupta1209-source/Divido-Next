@@ -486,7 +486,7 @@ export const ActivityStudio: React.FC<ActivityStudioProps> = ({
                                 ev.stopPropagation();
                                 if (
                                   confirm(
-                                    `Undo this conversion? 🔄\n\nThis will restore the exact state before this conversion.`
+                                    `Delete this conversion and restore original currencies? 🔄\n\nEvery expense will go back to the exact amount and currency it had BEFORE this conversion. Nothing is lost.`
                                   )
                                 ) {
                                   const snapshotArr = e.snapshot ? JSON.parse(e.snapshot) : [];
@@ -513,7 +513,7 @@ export const ActivityStudio: React.FC<ActivityStudioProps> = ({
                                       String(g.id) === String(e.gId) ? { ...g, currency: restoredCurr } : g
                                     )
                                   );
-                                } else if (confirm('Just delete the log entry without undoing?')) {
+                                } else if (confirm('Keep the converted amounts and just remove this log entry? (Currencies will NOT be restored.)')) {
                                   setExpenses(expenses.filter((x) => x.id !== e.id));
                                 }
                                 setOpenExpId(null);
@@ -528,7 +528,7 @@ export const ActivityStudio: React.FC<ActivityStudioProps> = ({
                               }}
                               className="hover-bg"
                             >
-                              Delete Activity
+                              Undo conversion
                             </div>
                           </div>
                         )}
