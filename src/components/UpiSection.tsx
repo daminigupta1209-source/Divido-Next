@@ -49,31 +49,29 @@ export const UpiSection: React.FC<UpiSectionProps> = ({
       const img = new Image();
       img.onload = () => {
         const canvas = document.createElement('canvas');
-        const MAX_WIDTH = 600;
-        let width = img.width;
-        let height = img.height;
-        
-        if (width > MAX_WIDTH) {
-          height = Math.round(height * (MAX_WIDTH / width));
-          width = MAX_WIDTH;
-        }
-
-        canvas.width = width;
-        canvas.height = height;
+        canvas.width = img.width;
+        canvas.height = img.height;
         const ctx = canvas.getContext('2d', { willReadFrequently: true });
         if (!ctx) {
           setUpiError('Could not process image.');
           return;
         }
-        ctx.drawImage(img, 0, 0, width, height);
-        const imageData = ctx.getImageData(0, 0, width, height);
+        ctx.drawImage(img, 0, 0, img.width, img.height);
+        const imageData = ctx.getImageData(0, 0, img.width, img.height);
         const code = jsQR(imageData.data, imageData.width, imageData.height, {
           inversionAttempts: 'attemptBoth',
         });
         
         if (code) {
-          const urlParams = new URLSearchParams(code.data.split('?')[1] || '');
-          const pa = urlParams.get('pa');
+          const rawData = code.data || '';
+          let pa = null;
+          if (rawData.includes('upi://pay')) {
+            const urlParams = new URLSearchParams(rawData.split('?')[1] || '');
+            pa = urlParams.get('pa');
+          } else if (validateUpi(rawData.trim())) {
+            pa = rawData.trim();
+          }
+
           if (pa && validateUpi(pa)) {
             setLocalUpi(pa);
             setUserMetadata({
