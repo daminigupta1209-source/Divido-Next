@@ -3265,6 +3265,20 @@ function App() {
       const myEmailLower = (userEmail || '').trim().toLowerCase();
       const byEmail = (dg.members || []).find((m) => (dg.memberIdentities?.[m] || '').toLowerCase() === myEmailLower);
       if (byEmail) myInGroup = cln(byEmail);
+      // Guard against the flat first name leaking in as the payer: if `myInGroup`
+      // isn't actually a roster member (e.g. "Damini" vs the roster's "Damini
+      // Gupta"), map it to the matching roster name — by email, else by exact
+      // name, else by first-name token. A mismatched payer orphans the expense
+      // (it never matches the person's identity, so it drops out of balances).
+      const rosterHas = (nm: string) => (dg.members || []).some((m) => cln(m).toLowerCase() === nm.toLowerCase());
+      if (!rosterHas(myInGroup)) {
+        const meFirst = (me || '').trim().toLowerCase().split(' ')[0];
+        const match =
+          (dg.members || []).find((m) => (dg.memberIdentities?.[m] || '').toLowerCase() === myEmailLower) ||
+          (dg.members || []).find((m) => cln(m).toLowerCase() === (me || '').trim().toLowerCase()) ||
+          (dg.members || []).find((m) => cln(m).toLowerCase().split(' ')[0] === meFirst);
+        if (match) myInGroup = cln(match);
+      }
       setSelectedId(dg.id);
       setView('detail');
       setEditingExpenseSecure({
