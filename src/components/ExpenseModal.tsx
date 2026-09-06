@@ -804,7 +804,10 @@ export const ExpenseModal: React.FC<ExpenseModalProps> = ({
                     ? 'Undo this payment? The balance it settled will reappear.'
                     : 'Delete this activity? This cannot be undone.';
                   if (confirm(msg)) {
-                    deleteExpense && deleteExpense(editingExpense.id);
+                    // Soft-delete (strike through), matching the long-press menu —
+                    // the card stays, struck out, and is restorable in place rather
+                    // than hard-removed.
+                    setExpenses((prev) => prev.map((x) => (x.id === editingExpense.id ? { ...x, isDeleted: true } : x)));
                     setShowExpModal(false);
                     setEditingExpense(null);
                   }
