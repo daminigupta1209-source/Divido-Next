@@ -4016,7 +4016,7 @@ function App() {
               setActiveReminderName(memberName);
               setShowAddFriendModal(true);
             }}
-            onReinviteMember={async (memberName, inviteUrl, silent) => {
+            onReinviteMember={async (memberName: string, inviteUrl: string, silent?: boolean) => {
               const grpName = selectedGroup?.name;
               const shareText = `Hey ${memberName}! Rejoin ${grpName ? `"${grpName}"` : 'our group'} on Divido 💸`;
               // `silent` (re-add from the friend list) just reactivates them to
