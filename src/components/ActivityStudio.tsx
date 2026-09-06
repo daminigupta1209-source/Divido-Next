@@ -702,7 +702,7 @@ export const ActivityStudio: React.FC<ActivityStudioProps> = ({
                                 setExpenses(expenses.map(x => x.id === e.id ? { ...x, isDeleted: !e.isDeleted } : x));
                                 setOpenExpId(null);
                               }}
-                              style={{ padding: '8px 10px', fontSize: '12px', fontWeight: 600, cursor: 'pointer', borderRadius: '8px', color: e.isDeleted ? '#10B981' : '#EF4444' }}
+                              style={{ padding: '8px 10px', fontSize: '12px', fontWeight: 600, cursor: 'pointer', borderRadius: '8px', color: e.isDeleted ? '#047857' : '#EF4444' }}
                               className="hover-bg"
                             >
                               {e.isDeleted ? (isSettlement ? 'Restore Payment' : 'Restore Activity') : (isWriteOff ? 'Undo write-off' : isSettlement ? 'Undo Payment' : 'Delete Activity')}

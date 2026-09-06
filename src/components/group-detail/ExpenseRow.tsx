@@ -556,7 +556,7 @@ export const ExpenseRow: React.FC<ExpenseRowProps> = ({
                   setExpenses((prev) => prev.map(x => x.id === e.id ? { ...x, isDeleted: !e.isDeleted } : x));
                   setOpenExpId(null);
                 }}
-                style={{ padding: '8px 10px', fontSize: '12px', fontWeight: 600, cursor: 'pointer', borderRadius: '8px', color: e.isDeleted ? '#10B981' : '#EF4444' }}
+                style={{ padding: '8px 10px', fontSize: '12px', fontWeight: 600, cursor: 'pointer', borderRadius: '8px', color: e.isDeleted ? '#047857' : '#EF4444' }}
                 className="hover-bg"
               >
                 {e.isDeleted ? 'Restore Activity' : (isWriteOff ? 'Undo write-off' : 'Delete Activity')}
