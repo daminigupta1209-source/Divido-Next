@@ -3,6 +3,7 @@ import { escManager } from '../lib/escManager';
 import { Group, Expense } from '../lib/types';
 import { calculateNextOccurrenceDate } from '../lib/calculations';
 import { getEmoji, parseExpenseId, genExpenseId } from '../lib/utils';
+import { canonicalRosterName } from '../lib/identity';
 
 export interface UseExpenseFormProps {
   setShowExpModal: (show: boolean) => void;
@@ -482,12 +483,7 @@ export function useExpenseForm({
       // exact roster spelling (case-insensitive match) so the stored data can
       // never hold "didi" and "Didi" as if they were two people.
       const roster = localGId !== 'STANDALONE' && activeGroup?.members ? activeGroup.members : [];
-      const canonName = (nm: string): string => {
-        if (!nm || roster.length === 0) return nm;
-        const target = nm.replace(/\s*\(Left\)$/i, '').trim().toLowerCase();
-        const match = roster.find((m) => m.replace(/\s*\(Left\)$/i, '').trim().toLowerCase() === target);
-        return match ? match.replace(/\s*\(Left\)$/i, '') : nm;
-      };
+      const canonName = (nm: string): string => canonicalRosterName(nm, roster);
       const canonShares: Record<string, number> = {};
       Object.entries(shares || {}).forEach(([nm, v]) => { canonShares[canonName(nm)] = v as number; });
       const savedExp: Expense = {

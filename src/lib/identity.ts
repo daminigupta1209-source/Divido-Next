@@ -28,6 +28,23 @@ import {
 // without rejecting valid-but-unusual real addresses. Not a deliverability check.
 export const isValidEmail = (s: string): boolean => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test((s || '').trim());
 
+// Snap a name to a group's exact roster spelling so one person can't fragment
+// into several name-buckets. Matches, in order: exact (case-insensitive), then
+// an unambiguous first-name token (flat "Damini" -> roster "Damini Gupta", only
+// when exactly one member starts with it). Returns the name unchanged when there
+// is no roster or no confident match.
+export const canonicalRosterName = (name: string, roster: string[]): string => {
+  if (!name || !roster || roster.length === 0) return name;
+  const clean = (m: string) => m.replace(/\s*\(Left\)$/i, '').trim();
+  const target = clean(name).toLowerCase();
+  let match = roster.find((m) => clean(m).toLowerCase() === target);
+  if (!match) {
+    const firstTok = roster.filter((m) => clean(m).toLowerCase().split(' ')[0] === target);
+    if (firstTok.length === 1) match = firstTok[0];
+  }
+  return match ? clean(match) : name;
+};
+
 export const getPersonKey = (group: Group | undefined | null, name: string): string => {
   const mi = group?.memberIdentities;
   if (!mi) return name;

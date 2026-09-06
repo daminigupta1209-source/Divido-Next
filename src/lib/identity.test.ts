@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { getPersonKey, cleanMemberName, balancesByIdentity, buildKeyToName, buildPeopleSuggestions, isValidEmail } from './identity';
+import { getPersonKey, cleanMemberName, balancesByIdentity, buildKeyToName, buildPeopleSuggestions, isValidEmail, canonicalRosterName } from './identity';
 import { Group, Expense } from './types';
 
 const mkGroup = (memberIdentities?: Record<string, string>, members: string[] = []): Group =>
@@ -268,5 +268,33 @@ describe('cross-screen balance consistency', () => {
     const rawNet = netByKey(balancesByIdentity(g, exps, false));
     const simplifiedNet = netByKey(balancesByIdentity(g, exps, true));
     expect(simplifiedNet).toEqual(rawNet);
+  });
+});
+
+describe('canonicalRosterName', () => {
+  const roster = ['Damini Gupta', 'Vandana Investment'];
+
+  it('snaps a flat first name to the full roster name', () => {
+    expect(canonicalRosterName('Damini', roster)).toBe('Damini Gupta');
+  });
+
+  it('keeps an exact match (case-insensitive)', () => {
+    expect(canonicalRosterName('damini gupta', roster)).toBe('Damini Gupta');
+  });
+
+  it('strips a (Left) suffix when matching', () => {
+    expect(canonicalRosterName('Damini', ['Damini Gupta (Left)', 'Vandana Investment'])).toBe('Damini Gupta');
+  });
+
+  it('leaves an ambiguous first name untouched', () => {
+    expect(canonicalRosterName('Ram', ['Ram Kumar', 'Ram Singh'])).toBe('Ram');
+  });
+
+  it('leaves an unknown name untouched', () => {
+    expect(canonicalRosterName('Zoya', roster)).toBe('Zoya');
+  });
+
+  it('returns the name as-is with no roster', () => {
+    expect(canonicalRosterName('Damini', [])).toBe('Damini');
   });
 });
