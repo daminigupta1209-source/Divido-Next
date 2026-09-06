@@ -287,8 +287,8 @@ export const UpiSection: React.FC<UpiSectionProps> = ({
             )}
           </div>
           {!isVerified && (
-            <div style={{ display: 'flex', alignItems: 'center', gap: '6px', alignSelf: 'flex-start', marginTop: '2px' }}>
-              <span style={{ fontSize: '11px', color: '#94A3B8', fontWeight: 500 }}>or</span>
+            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px', alignSelf: 'center', marginTop: '6px' }}>
+              <span style={{ fontSize: '11px', color: '#94A3B8', fontWeight: 500, textTransform: 'uppercase', letterSpacing: '0.5px' }}>or</span>
               <button
                 type="button"
                 onClick={() => qrUploadRef.current?.click()}
@@ -300,9 +300,6 @@ export const UpiSection: React.FC<UpiSectionProps> = ({
                   fontWeight: 600,
                   cursor: 'pointer',
                   padding: 0,
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '4px',
                   transition: 'color 0.2s',
                   textDecoration: 'underline',
                 }}
