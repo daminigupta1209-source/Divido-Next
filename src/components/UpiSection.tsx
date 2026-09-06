@@ -208,27 +208,27 @@ export const UpiSection: React.FC<UpiSectionProps> = ({
             zIndex: 10001,
             width: 'calc(100% - 24px)',
             maxWidth: '380px',
-            background: '#2E2A25',
+            background: '#FFFFFF',
             borderRadius: '12px',
-            boxShadow: '0 10px 24px -8px rgba(0,0,0,0.4)',
+            boxShadow: '0 10px 24px -8px rgba(0,0,0,0.15)',
             overflow: 'hidden',
           }}
         >
-          <div style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '8px 10px 8px 14px' }}>
-            <span style={{ flex: 1, color: '#FFFFFF', fontSize: '11px', fontWeight: 700, lineHeight: 1.35 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '10px 14px' }}>
+            <span style={{ flex: 1, color: '#2E2A25', fontSize: '12px', fontWeight: 700, lineHeight: 1.35 }}>
               Check your name in your UPI app and press back. No payment required.
             </span>
             <button
               type="button"
               onClick={() => setShowVerifyHint(false)}
               aria-label="Dismiss"
-              style={{ background: 'none', border: 'none', color: 'rgba(255,255,255,0.6)', fontSize: '14px', cursor: 'pointer', padding: '0 2px', flexShrink: 0, lineHeight: 1 }}
+              style={{ background: 'none', border: 'none', color: '#64748B', fontSize: '14px', cursor: 'pointer', padding: '0 4px', flexShrink: 0, lineHeight: 1 }}
             >
               ✕
             </button>
           </div>
-          <div style={{ height: '3px', background: 'rgba(255,255,255,0.15)' }}>
-            <div style={{ height: '100%', background: '#F97316', width: '100%', animation: 'dividoHintTimer 3s linear forwards' }} />
+          <div style={{ height: '3px', background: '#F1F5F9' }}>
+            <div style={{ height: '100%', background: '#F97316', width: '100%', animation: 'dividoHintTimer 5s linear forwards' }} />
           </div>
           <style>{`@keyframes dividoHintTimer { from { width: 100%; } to { width: 0%; } }`}</style>
         </div>
@@ -315,7 +315,7 @@ export const UpiSection: React.FC<UpiSectionProps> = ({
                     setUpiError(null);
                     if (isMobile) {
                       setShowVerifyHint(true);
-                      setTimeout(() => setShowVerifyHint(false), 3000);
+                      setTimeout(() => setShowVerifyHint(false), 5000);
                       mobileReturnPendingRef.current = Date.now();
                       window.location.href = `upi://pay?pa=${encodeURIComponent(localUpi.trim())}&pn=${encodeURIComponent(userName)}&am=1.00&cu=INR&tn=Divido Verify`;
                     } else {
