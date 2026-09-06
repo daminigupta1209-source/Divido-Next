@@ -51,6 +51,29 @@ const MergeRow: React.FC<{
       {/* Primary email everyone gets merged into (optional but recommended). */}
       <div style={{ marginBottom: '10px' }}>
         <div style={{ fontSize: '11px', fontWeight: 600, color: '#64748B', marginBottom: '4px' }}>Merge into this email (optional)</div>
+        {/* One-tap: if an appearance already has a claimed account email, offer it
+            as a chip so the user can merge everyone into that identity directly. */}
+        {(() => {
+          const claimed = Array.from(new Set(d.entries.map((e) => e.email).filter(Boolean))) as string[];
+          if (claimed.length === 0) return null;
+          return (
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px', marginBottom: '6px' }}>
+              {claimed.map((em) => {
+                const on = emailTrim.toLowerCase() === em.toLowerCase();
+                return (
+                  <button
+                    key={em}
+                    type="button"
+                    onClick={() => setEmail(em)}
+                    style={{ fontSize: '11.5px', fontWeight: 600, padding: '5px 10px', borderRadius: '999px', cursor: 'pointer', border: `1.5px solid ${on ? '#10B981' : '#E2E8F0'}`, background: on ? '#ECFDF5' : '#FFFFFF', color: on ? '#047857' : '#475569', maxWidth: '100%', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}
+                  >
+                    {on ? '✓ ' : ''}Use {em}
+                  </button>
+                );
+              })}
+            </div>
+          );
+        })()}
         <input
           type="search"
           inputMode="email"
