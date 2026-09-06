@@ -24,7 +24,7 @@ export const UpiSection: React.FC<UpiSectionProps> = ({
   handleKeyDown,
 }) => {
   const [upiError, setUpiError] = useState<string | null>(null);
-  const [verificationStep, setVerificationStep] = useState<'idle' | 'awaiting_action' | 'verifying' | 'confirm_resolved' | 'confirm_qr'>('idle');
+  const [verificationStep, setVerificationStep] = useState<'idle' | 'awaiting_action' | 'verifying' | 'confirm_resolved' | 'confirm_qr' | 'show_qr'>('idle');
   const [qrPreviewUrl, setQrPreviewUrl] = useState<string | null>(null);
   const [qrExtractedUpi, setQrExtractedUpi] = useState<string>('');
   const isVerified = !!userMetadata[me]?.upiVerified && userMetadata[me]?.upiId === localUpi.trim();
@@ -178,7 +178,9 @@ export const UpiSection: React.FC<UpiSectionProps> = ({
   }, [verificationStep]);
 
   useEffect(() => {
-    if (verificationStep === 'awaiting_action' && verifyCanvasRef.current && localUpi.trim()) {
+    if (!verifyCanvasRef.current || !localUpi.trim()) return;
+
+    if (verificationStep === 'awaiting_action') {
       const upiLink = `upi://pay?pa=${encodeURIComponent(localUpi.trim())}&pn=${encodeURIComponent(userName)}&am=1.00&cu=INR&tn=Divido Verify`;
       QRCode.toCanvas(
         verifyCanvasRef.current,
@@ -188,15 +190,26 @@ export const UpiSection: React.FC<UpiSectionProps> = ({
           margin: 1,
           color: {
             dark: '#2E2A25',
-            light: '#FFFFFF',
-          },
-        },
-        (err) => {
-          if (err) console.error('Error generating verification QR:', err);
+            light: '#FFFFFF'
+          }
+        }
+      );
+    } else if (verificationStep === 'show_qr') {
+      const upiLink = `upi://pay?pa=${encodeURIComponent(localUpi.trim())}&pn=${encodeURIComponent(userName)}`;
+      QRCode.toCanvas(
+        verifyCanvasRef.current,
+        upiLink,
+        {
+          width: 200,
+          margin: 1.5,
+          color: {
+            dark: '#1E293B',
+            light: '#FFFFFF'
+          }
         }
       );
     }
-  }, [verificationStep, localUpi]);
+  }, [verificationStep, localUpi, userName]);
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
@@ -305,29 +318,54 @@ export const UpiSection: React.FC<UpiSectionProps> = ({
                 </button>
               )}
               {isVerified && (
-                <button
-                  type="button"
-                  onClick={() => setUserMetadata({ ...userMetadata, [me]: { ...userMetadata[me], upiVerified: false } })}
-                  style={{
-                    width: '100%',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    padding: '12px',
-                    background: '#F0FDF4',
-                    color: '#16A34A',
-                    border: '1.5px solid #DCFCE7',
-                    borderRadius: '12px',
-                    fontSize: '14px',
-                    fontWeight: 600,
-                    cursor: 'pointer',
-                    transition: 'all 0.2s'
-                  }}
-                  onMouseEnter={(e) => e.currentTarget.style.background = '#DCFCE7'}
-                  onMouseLeave={(e) => e.currentTarget.style.background = '#F0FDF4'}
-                >
-                  Verified ✓
-                </button>
+                <div style={{ display: 'flex', gap: '8px', width: '100%' }}>
+                  <button
+                    type="button"
+                    onClick={() => setUserMetadata({ ...userMetadata, [me]: { ...userMetadata[me], upiVerified: false } })}
+                    style={{
+                      flex: 1,
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      padding: '12px',
+                      background: '#F0FDF4',
+                      color: '#16A34A',
+                      border: '1.5px solid #DCFCE7',
+                      borderRadius: '12px',
+                      fontSize: '14px',
+                      fontWeight: 600,
+                      cursor: 'pointer',
+                      transition: 'all 0.2s'
+                    }}
+                    onMouseEnter={(e) => e.currentTarget.style.background = '#DCFCE7'}
+                    onMouseLeave={(e) => e.currentTarget.style.background = '#F0FDF4'}
+                  >
+                    Verified ✓
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setVerificationStep('show_qr')}
+                    style={{
+                      flex: 1,
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      padding: '12px',
+                      background: '#F8FAFC',
+                      color: '#475569',
+                      border: '1.5px solid #E2E8F0',
+                      borderRadius: '12px',
+                      fontSize: '14px',
+                      fontWeight: 600,
+                      cursor: 'pointer',
+                      transition: 'all 0.2s'
+                    }}
+                    onMouseEnter={(e) => e.currentTarget.style.background = '#F1F5F9'}
+                    onMouseLeave={(e) => e.currentTarget.style.background = '#F8FAFC'}
+                  >
+                    Show My QR
+                  </button>
+                </div>
               )}
             </div>
           )}
@@ -626,6 +664,52 @@ export const UpiSection: React.FC<UpiSectionProps> = ({
                     Cancel
                   </button>
                 </div>
+              </div>
+            )}
+
+            {verificationStep === 'show_qr' && (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', textAlign: 'center', alignItems: 'center' }}>
+                <div style={{ fontSize: '18px', color: '#1E293B', fontWeight: 700, lineHeight: 1.4 }}>
+                  My Receiving QR
+                </div>
+                <div style={{ fontSize: '13px', color: '#64748B', fontWeight: 600, marginBottom: '8px' }}>
+                  Scan to pay {userName} directly.
+                </div>
+                <div style={{ display: 'flex', justifyContent: 'center', background: '#FFFFFF', padding: '16px', borderRadius: '24px', border: '1px solid #E2E8F0', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.05)' }}>
+                  <canvas ref={verifyCanvasRef} />
+                </div>
+                <div style={{ fontSize: '14px', fontWeight: 600, color: '#334155', background: '#F8FAFC', padding: '8px 16px', borderRadius: '8px', border: '1px dashed #CBD5E1' }}>
+                  {localUpi}
+                </div>
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (navigator.share) {
+                      navigator.share({
+                        title: `Pay ${userName} on Divido`,
+                        text: `Here is my UPI ID: ${localUpi}\nYou can pay me directly using this link: upi://pay?pa=${encodeURIComponent(localUpi)}&pn=${encodeURIComponent(userName)}`,
+                      }).catch(console.error);
+                    } else {
+                      navigator.clipboard.writeText(`upi://pay?pa=${encodeURIComponent(localUpi)}&pn=${encodeURIComponent(userName)}`);
+                      alert('Payment link copied to clipboard!');
+                    }
+                  }}
+                  style={{
+                    width: '100%',
+                    marginTop: '8px',
+                    fontSize: '14px',
+                    fontWeight: 600,
+                    background: '#10B981',
+                    color: 'white',
+                    border: 'none',
+                    padding: '12px',
+                    borderRadius: '14px',
+                    cursor: 'pointer',
+                    boxShadow: '0 4px 6px -1px rgba(16, 185, 129, 0.2)'
+                  }}
+                >
+                  Share via...
+                </button>
               </div>
             )}
           </div>
