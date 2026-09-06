@@ -984,18 +984,16 @@ export const MasterSummary: React.FC<MasterSummaryProps> = ({
                   <span style={{ fontSize: '13px', fontWeight: 500, color: '#94A3B8' }}>Settled up</span>
                 ) : (
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '1px', minWidth: 0 }}>
-                    {payList.length > 0 && (
-                      <span style={{ fontSize: '13px', fontWeight: 600, color: '#E11D48', display: 'inline-flex', alignItems: 'center', gap: '5px', minWidth: 0 }}>
-                        <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>You pay {joinGroupPrimary(payList)}</span>
-                        {payList.length > 1 && <span style={{ ...cardChip, flexShrink: 0 }}>+{payList.length - 1}</span>}
+                    {payList.map(([curr, val]) => (
+                      <span key={`pay-${curr}`} style={{ fontSize: '13px', fontWeight: 600, color: '#E11D48', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                        You pay {curr}{formatExactAmount(Math.abs(val))}
                       </span>
-                    )}
-                    {collectList.length > 0 && (
-                      <span style={{ fontSize: '13px', fontWeight: 600, color: '#3FA97C', display: 'inline-flex', alignItems: 'center', gap: '5px', minWidth: 0 }}>
-                        <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>You collect {joinGroupPrimary(collectList)}</span>
-                        {collectList.length > 1 && <span style={{ ...cardChip, flexShrink: 0 }}>+{collectList.length - 1}</span>}
+                    ))}
+                    {collectList.map(([curr, val]) => (
+                      <span key={`col-${curr}`} style={{ fontSize: '13px', fontWeight: 600, color: '#3FA97C', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                        You collect {curr}{formatExactAmount(val)}
                       </span>
-                    )}
+                    ))}
                   </div>
                 )}
               </div>
