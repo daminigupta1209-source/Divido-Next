@@ -336,17 +336,17 @@ export const UpiSection: React.FC<UpiSectionProps> = ({
                     alignItems: 'center',
                     justifyContent: 'center',
                     padding: '12px',
-                    background: '#F8FAFC',
-                    color: '#475569',
-                    border: '1.5px solid #E2E8F0',
+                    background: '#FFF7ED',
+                    color: '#EA580C',
+                    border: '1.5px solid #FFEDD5',
                     borderRadius: '12px',
                     fontSize: '14px',
                     fontWeight: 600,
                     cursor: 'pointer',
                     transition: 'all 0.2s'
                   }}
-                  onMouseEnter={(e) => e.currentTarget.style.background = '#F1F5F9'}
-                  onMouseLeave={(e) => e.currentTarget.style.background = '#F8FAFC'}
+                  onMouseEnter={(e) => e.currentTarget.style.background = '#FFEDD5'}
+                  onMouseLeave={(e) => e.currentTarget.style.background = '#FFF7ED'}
                 >
                   Your QR Code
                 </button>
