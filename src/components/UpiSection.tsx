@@ -671,6 +671,27 @@ export const UpiSection: React.FC<UpiSectionProps> = ({
                 >
                   Share QR Code
                 </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (window.confirm("Are you sure you want to remove your UPI ID?")) {
+                      setLocalUpi('');
+                      setVerificationStep('idle');
+                    }
+                  }}
+                  style={{
+                    fontSize: '13px',
+                    fontWeight: 600,
+                    color: '#EF4444',
+                    background: 'transparent',
+                    border: 'none',
+                    cursor: 'pointer',
+                    marginTop: '4px',
+                    padding: '8px'
+                  }}
+                >
+                  Remove QR Code
+                </button>
               </div>
             )}
           </div>
