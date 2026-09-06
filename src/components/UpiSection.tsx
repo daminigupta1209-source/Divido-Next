@@ -64,26 +64,29 @@ export const UpiSection: React.FC<UpiSectionProps> = ({
           inversionAttempts: 'attemptBoth',
         });
         
+        let pa = null;
         if (code) {
           const rawData = code.data || '';
-          let pa = null;
           if (rawData.includes('upi://pay')) {
             const urlParams = new URLSearchParams(rawData.split('?')[1] || '');
             pa = urlParams.get('pa');
           } else if (validateUpi(rawData.trim())) {
             pa = rawData.trim();
           }
+        }
 
-          if (pa && validateUpi(pa)) {
-            setQrPreviewUrl(event.target?.result as string);
-            setQrExtractedUpi(pa);
-            setVerificationStep('confirm_qr');
-            setUpiError(null);
-          } else {
-            setUpiError('No valid UPI ID found in QR code.');
-          }
+        setQrPreviewUrl(event.target?.result as string);
+        setVerificationStep('confirm_qr');
+
+        if (pa && validateUpi(pa)) {
+          setQrExtractedUpi(pa);
+          setUpiError(null);
+        } else if (code) {
+          setQrExtractedUpi('');
+          setUpiError('Could not find a valid UPI ID. Please enter it manually.');
         } else {
-          setUpiError('Could not read QR code. Try a clearer image.');
+          setQrExtractedUpi('');
+          setUpiError('Could not read QR code. Please enter it manually.');
         }
       };
       img.src = event.target?.result as string;
@@ -549,8 +552,12 @@ export const UpiSection: React.FC<UpiSectionProps> = ({
                 )}
                 <input
                   type="text"
+                  placeholder="Enter UPI ID from image"
                   value={qrExtractedUpi}
-                  onChange={(e) => setQrExtractedUpi(e.target.value)}
+                  onChange={(e) => {
+                    setQrExtractedUpi(e.target.value);
+                    setUpiError(null);
+                  }}
                   style={{
                     width: '100%',
                     padding: '12px',
@@ -563,6 +570,11 @@ export const UpiSection: React.FC<UpiSectionProps> = ({
                     color: '#2E2A25',
                   }}
                 />
+                {upiError && (
+                  <div style={{ fontSize: '11px', color: '#EF4444', fontWeight: 700 }}>
+                    {upiError}
+                  </div>
+                )}
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', width: '100%' }}>
                   <button
                     type="button"
