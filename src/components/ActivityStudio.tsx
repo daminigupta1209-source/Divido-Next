@@ -479,7 +479,7 @@ export const ActivityStudio: React.FC<ActivityStudioProps> = ({
                               style={{ padding: '8px 10px', fontSize: '12px', fontWeight: 600, cursor: 'pointer', borderRadius: '8px' }}
                               className="hover-bg"
                             >
-                              ⚙️ Adjust Conversion
+                              Adjust Conversion
                             </div>
                             <div
                               onClick={(ev) => {

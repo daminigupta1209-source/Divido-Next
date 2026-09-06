@@ -224,7 +224,7 @@ export const ExpenseRow: React.FC<ExpenseRowProps> = ({
                   setOpenExpId(null);
                 }}
               >
-                ⚙️ Adjust Conversion
+                Adjust Conversion
               </div>
               <div
                 style={{ color: '#DB2777' }}
