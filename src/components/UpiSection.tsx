@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import QRCode from 'qrcode';
+import jsQR from 'jsqr';
 
 interface UpiSectionProps {
   localUpi: string;
@@ -30,6 +31,7 @@ export const UpiSection: React.FC<UpiSectionProps> = ({
 
   const upiInputRef = useRef<HTMLInputElement>(null);
   const verifyCanvasRef = useRef<HTMLCanvasElement | null>(null);
+  const qrUploadRef = useRef<HTMLInputElement>(null);
   // On mobile we open the phone's own UPI app chooser and wait for the user to
   // come back. This stamps when they left; the visibility handler uses it to
   // start verification only after a genuine round-trip to a UPI app.
@@ -38,6 +40,57 @@ export const UpiSection: React.FC<UpiSectionProps> = ({
   const validateUpi = (upi: string) => {
     if (!upi) return true;
     return /^[\w.\-_]+@[\w\-]+$/.test(upi);
+  };
+
+  const handleQRUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      const img = new Image();
+      img.onload = () => {
+        const canvas = document.createElement('canvas');
+        canvas.width = img.width;
+        canvas.height = img.height;
+        const ctx = canvas.getContext('2d');
+        if (!ctx) {
+          setUpiError('Could not process image.');
+          return;
+        }
+        ctx.drawImage(img, 0, 0, img.width, img.height);
+        const imageData = ctx.getImageData(0, 0, img.width, img.height);
+        const code = jsQR(imageData.data, imageData.width, imageData.height, {
+          inversionAttempts: 'dontInvert',
+        });
+        
+        if (code) {
+          const urlParams = new URLSearchParams(code.data.split('?')[1] || '');
+          const pa = urlParams.get('pa');
+          if (pa && validateUpi(pa)) {
+            setLocalUpi(pa);
+            setUserMetadata({
+              ...userMetadata,
+              [me]: {
+                ...userMetadata[me],
+                upiId: pa,
+                upiVerified: true
+              }
+            });
+            setUpiError(null);
+          } else {
+            setUpiError('No valid UPI ID found in QR code.');
+          }
+        } else {
+          setUpiError('Could not read QR code. Try a clearer image.');
+        }
+      };
+      img.src = event.target?.result as string;
+    };
+    reader.readAsDataURL(file);
+    
+    // reset input so same file can be uploaded again if needed
+    if (qrUploadRef.current) qrUploadRef.current.value = '';
   };
 
   useEffect(() => {
@@ -163,7 +216,7 @@ export const UpiSection: React.FC<UpiSectionProps> = ({
         >
           <div style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '8px 10px 8px 14px' }}>
             <span style={{ flex: 1, color: '#FFFFFF', fontSize: '11px', fontWeight: 700, lineHeight: 1.35 }}>
-              Open your UPI app, check the payee name, then come back.
+              Check your name in your UPI app and press back. No payment required.
             </span>
             <button
               type="button"
@@ -186,34 +239,49 @@ export const UpiSection: React.FC<UpiSectionProps> = ({
           <label style={{ fontSize: '11px', fontWeight: 700, color: '#B3A897', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
             UPI
           </label>
-          <input
-            ref={upiInputRef}
-            type="search"
-            name="upiId"
-            autoComplete="off"
-            autoCorrect="off"
-            spellCheck="false"
-            data-1p-ignore
-            data-lpignore="true"
-            value={localUpi}
-            onChange={(e) => {
-              setLocalUpi(e.target.value);
-              setUpiError(null);
-            }}
-            onKeyDown={handleKeyDown}
-            placeholder="username@bank"
-            style={{
-              fontSize: '15px',
-              fontWeight: 600,
-              border: 'none',
-              background: 'transparent',
-              padding: '2px 2px',
-              outline: 'none',
-              color: '#2E2A25',
-              fontFamily: 'inherit',
-              width: '100%',
-            }}
-          />
+          <div style={{ display: 'flex', alignItems: 'center', width: '100%', gap: '8px' }}>
+            <input
+              ref={upiInputRef}
+              type="search"
+              name="upiId"
+              autoComplete="off"
+              autoCorrect="off"
+              spellCheck="false"
+              data-1p-ignore
+              data-lpignore="true"
+              value={localUpi}
+              onChange={(e) => {
+                setLocalUpi(e.target.value);
+                setUpiError(null);
+              }}
+              onKeyDown={handleKeyDown}
+              placeholder="username@bank"
+              style={{
+                fontSize: '15px',
+                fontWeight: 600,
+                border: 'none',
+                background: 'transparent',
+                padding: '2px 2px',
+                outline: 'none',
+                color: '#2E2A25',
+                fontFamily: 'inherit',
+                width: '100%',
+              }}
+            />
+            <button
+              onClick={() => qrUploadRef.current?.click()}
+              type="button"
+              title="Upload QR Code"
+              style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '0 4px', color: '#94A3B8', display: 'flex', alignItems: 'center' }}
+            >
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
+                <circle cx="8.5" cy="8.5" r="1.5"/>
+                <polyline points="21 15 16 10 5 21"/>
+              </svg>
+            </button>
+            <input type="file" accept="image/*" ref={qrUploadRef} style={{ display: 'none' }} onChange={handleQRUpload} />
+          </div>
         </div>
 
         {localUpi.trim() && !upiError && (
