@@ -949,9 +949,16 @@ export const GroupMemberList: React.FC<GroupMemberListProps> = ({
                     }}
                   >
                     <Avatar name={cleanName} status="left" />
-                    <span style={{ flex: 1, fontWeight: 'bold', fontSize: '14px', color: '#64748B', textDecoration: 'line-through' }}>
-                      {checkIsMe(cleanName) ? 'You' : cleanName} {checkIsAdmin(cleanName) && <span style={{ fontSize: '10px', fontWeight: 600, color: '#7C3AED', background: '#F5F3FF', padding: '1px 6px', borderRadius: '4px', marginLeft: '6px' }}>Admin</span>}
-                    </span>
+                    <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', gap: '2px' }}>
+                      <span style={{ fontWeight: 'bold', fontSize: '14px', color: '#64748B', textDecoration: 'line-through' }}>
+                        {checkIsMe(cleanName) ? 'You' : cleanName} {checkIsAdmin(cleanName) && <span style={{ fontSize: '10px', fontWeight: 600, color: '#7C3AED', background: '#F5F3FF', padding: '1px 6px', borderRadius: '4px', marginLeft: '6px' }}>Admin</span>}
+                      </span>
+                      {emailFor(m) && (
+                        <span style={{ fontSize: '11px', color: '#94A3B8', fontWeight: 500, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                          {emailFor(m)}
+                        </span>
+                      )}
+                    </div>
 
                     {isAdmin && (
                       <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
