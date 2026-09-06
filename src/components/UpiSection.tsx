@@ -295,21 +295,21 @@ export const UpiSection: React.FC<UpiSectionProps> = ({
                 onClick={() => setVerificationStep('awaiting_action')}
                 style={{
                   position: 'absolute',
-                  right: '6px',
+                  right: '14px',
                   top: '50%',
                   transform: 'translateY(-50%)',
-                  background: '#FFF7ED',
-                  color: '#EA580C',
-                  border: '1px solid #FFEDD5',
-                  padding: '6px 12px',
-                  borderRadius: '8px',
-                  fontSize: '12px',
-                  fontWeight: 700,
+                  background: 'transparent',
+                  color: '#10B981',
+                  border: 'none',
+                  padding: '0',
+                  fontSize: '13px',
+                  fontWeight: 600,
+                  textDecoration: 'underline',
                   cursor: 'pointer',
-                  transition: 'all 0.2s',
+                  transition: 'color 0.2s',
                 }}
-                onMouseEnter={(e) => e.currentTarget.style.background = '#FFEDD5'}
-                onMouseLeave={(e) => e.currentTarget.style.background = '#FFF7ED'}
+                onMouseEnter={(e) => e.currentTarget.style.color = '#059669'}
+                onMouseLeave={(e) => e.currentTarget.style.color = '#10B981'}
               >
                 Verify
               </button>
