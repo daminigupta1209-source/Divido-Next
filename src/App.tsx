@@ -2937,7 +2937,10 @@ function App() {
     // Pre-group expenses by their gId to avoid filtering inside inner loops
     const expensesByGroup: Record<string, Expense[]> = {};
     expenses.forEach((e) => {
-      if (!e) return;
+      // Skip soft-deleted (struck) expenses — a deleted payment/write-off/expense
+      // must drop out of balances, matching FriendsView/GroupDetail. Without this
+      // the home cards and Non-Group net balance kept counting deleted entries.
+      if (!e || e.isDeleted) return;
       const gId = String(e.gId);
       if (!expensesByGroup[gId]) expensesByGroup[gId] = [];
       expensesByGroup[gId].push(e);
