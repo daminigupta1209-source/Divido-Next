@@ -439,18 +439,17 @@ export const Profile: React.FC<ProfileProps> = ({
             </button>
             <button
               onClick={() => setShowDeleteAccountModal(true)}
-              className="hover-up-mini"
               style={{
                 width: '100%',
                 background: 'transparent',
-                color: '#EF4444',
-                border: '2px solid #EF4444',
-                padding: '10px',
-                borderRadius: '12px',
-                fontWeight: 600,
-                fontSize: '13px',
+                color: '#94A3B8',
+                border: 'none',
+                textDecoration: 'underline',
+                padding: '8px',
+                marginTop: '4px',
+                fontWeight: 500,
+                fontSize: '12px',
                 cursor: 'pointer',
-                boxSizing: 'border-box',
               }}
             >
               Delete Account
