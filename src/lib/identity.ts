@@ -61,27 +61,38 @@ export const buildPeopleSuggestions = (
   currentMembers: string[],
   me: string,
   myEmail?: string,
-): { name: string; email: string; identity: string }[] => {
+): { name: string; email: string; identity: string; pastMember?: boolean }[] => {
   const meLower = (me || '').replace(/\s*\((me|you|left)\)$/i, '').trim().toLowerCase();
   // Also exclude MYSELF by identity/email, not just by name: across other groups
   // I may be listed under a slightly different name than `me`, so a name-only
   // filter lets me leak into my own suggestions (and lets me add myself).
   const myEmailLower = (myEmail || '').trim().toLowerCase();
-  const curMembers = new Set((currentMembers || []).map((m) => m.replace(/\s*\(Left\)$/i, '').trim().toLowerCase()));
+  // Only the CURRENTLY-active members are off-limits. A member who LEFT the
+  // current group is intentionally offered again (as a "re-invite") below.
+  const curActive = new Set(
+    (currentMembers || [])
+      .filter((m) => !/\s*\(Left\)$/i.test(m))
+      .map((m) => m.trim().toLowerCase())
+  );
   // Collect one raw entry per (group member): name + their stable identity
   // (email OR person_id) from that group's memberIdentities.
-  const raw: { name: string; email: string; identity: string }[] = [];
+  const raw: { name: string; email: string; identity: string; past: boolean }[] = [];
   for (const g of groups || []) {
-    if (!g || g.id === 'STANDALONE' || String(g.id) === String(currentGroupId)) continue;
+    if (!g || g.id === 'STANDALONE') continue;
+    const isCurrent = String(g.id) === String(currentGroupId);
     const mi = g.memberIdentities || {};
     for (const m of g.members || []) {
+      const isLeft = /\s*\(Left\)$/i.test(m);
+      // Current group: surface ONLY past (left) members here — its active
+      // members are already in the group. Other groups: everyone as before.
+      if (isCurrent && !isLeft) continue;
       const clean = m.replace(/\s*\(Left\)$/i, '').trim();
       const lower = clean.toLowerCase();
-      if (!clean || lower === meLower || curMembers.has(lower)) continue;
-      const identity = typeof mi[m] === 'string' ? mi[m] : '';
+      if (!clean || lower === meLower || curActive.has(lower)) continue;
+      const identity = (typeof mi[m] === 'string' && mi[m]) ? mi[m] : (typeof mi[clean] === 'string' ? mi[clean] : '');
       // Skip my own account no matter what name it wears in another group.
       if (myEmailLower && identity.toLowerCase() === myEmailLower) continue;
-      raw.push({ name: clean, email: identity.includes('@') ? identity : '', identity });
+      raw.push({ name: clean, email: identity.includes('@') ? identity : '', identity, past: isCurrent && isLeft });
     }
   }
   // Group by lowercased name; within a name, emit one row per distinct email,
@@ -89,20 +100,24 @@ export const buildPeopleSuggestions = (
   // row carries an `identity` (email, or a name-only person's person_id) so the
   // picker can REUSE that person's stable id instead of minting a new one — this
   // is what stops the same name-only friend becoming duplicate people per group.
-  const byName = new Map<string, { name: string; emails: Set<string>; nameOnly: boolean; nameOnlyId: string }>();
+  const byName = new Map<string, { name: string; emails: Set<string>; nameOnly: boolean; nameOnlyId: string; seenPast: boolean; nonPast: boolean }>();
   for (const r of raw) {
     const k = r.name.toLowerCase();
-    if (!byName.has(k)) byName.set(k, { name: r.name, emails: new Set(), nameOnly: false, nameOnlyId: '' });
+    if (!byName.has(k)) byName.set(k, { name: r.name, emails: new Set(), nameOnly: false, nameOnlyId: '', seenPast: false, nonPast: false });
     const e = byName.get(k)!;
     if (r.email) e.emails.add(r.email.toLowerCase());
     else { e.nameOnly = true; if (!e.nameOnlyId && r.identity && !r.identity.includes('@')) e.nameOnlyId = r.identity; }
+    if (r.past) e.seenPast = true; else e.nonPast = true;
   }
-  const out: { name: string; email: string; identity: string }[] = [];
+  const out: { name: string; email: string; identity: string; pastMember?: boolean }[] = [];
   for (const e of byName.values()) {
+    // "Re-invite" badge only when the person exists SOLELY as a past member of
+    // the current group (not currently active anywhere else in your groups).
+    const pastMember = e.seenPast && !e.nonPast;
     if (e.emails.size > 0) {
-      for (const em of e.emails) out.push({ name: e.name, email: em, identity: em });
+      for (const em of e.emails) out.push({ name: e.name, email: em, identity: em, pastMember });
     } else if (e.nameOnly) {
-      out.push({ name: e.name, email: '', identity: e.nameOnlyId });
+      out.push({ name: e.name, email: '', identity: e.nameOnlyId, pastMember });
     }
   }
   return out.sort((a, b) => a.name.localeCompare(b.name));

@@ -12,7 +12,7 @@ interface FullScreenAddFriendProps {
   onClose: () => void;
   onAddFriends: (friends: FriendSelection[]) => void;
   existingMembers: string[];
-  suggestions: { name: string; email: string; identity?: string }[];
+  suggestions: { name: string; email: string; identity?: string; pastMember?: boolean }[];
 }
 
 export const FullScreenAddFriend: React.FC<FullScreenAddFriendProps> = ({
@@ -288,7 +288,12 @@ export const FullScreenAddFriend: React.FC<FullScreenAddFriendProps> = ({
                     {s.name.charAt(0).toUpperCase()}
                   </span>
                   <span style={{ minWidth: 0, flex: 1 }}>
-                    <span style={{ display: 'block', fontSize: '14px', fontWeight: 600, color: '#334155', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{s.name}</span>
+                    <span style={{ display: 'flex', alignItems: 'center', gap: '6px', minWidth: 0 }}>
+                      <span style={{ fontSize: '14px', fontWeight: 600, color: '#334155', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{s.name}</span>
+                      {s.pastMember && (
+                        <span style={{ flexShrink: 0, fontSize: '10px', fontWeight: 700, color: '#B45309', background: '#FEF3C7', borderRadius: '999px', padding: '2px 7px', textTransform: 'uppercase', letterSpacing: '0.4px' }}>Left · re-invite</span>
+                      )}
+                    </span>
                     {s.email && <span style={{ display: 'block', fontSize: '11px', color: '#94A3B8', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{s.email}</span>}
                   </span>
                   {on ? (
