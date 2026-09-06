@@ -777,6 +777,25 @@ export const ExpenseModal: React.FC<ExpenseModalProps> = ({
                   padding: '4px',
                 }}
                 onClick={() => {
+                  // A conversion log isn't a real expense — deleting it should
+                  // UNDO the conversion (restore original currencies from the
+                  // snapshot), not silently drop the log and leave converted amounts.
+                  if (editingExpense.isConversion) {
+                    if (!confirm('Undo this conversion? 🔄\n\nEvery expense goes back to the exact amount and currency it had BEFORE this conversion. Nothing is lost.')) return;
+                    const snapshotArr: any[] = editingExpense.snapshot ? JSON.parse(editingExpense.snapshot) : [];
+                    const snapMap: Record<string, any> = {};
+                    snapshotArr.forEach((s) => { snapMap[s.id] = s; });
+                    setExpenses((prev) =>
+                      prev
+                        .map((x) => (snapMap[x.id] ? { ...x, amt: snapMap[x.id].amt, currency: snapMap[x.id].currency, shares: snapMap[x.id].shares } : x))
+                        .filter((x) => x.id !== editingExpense.id)
+                    );
+                    const restoredCurr = editingExpense.fromCurr || snapshotArr[0]?.currency || '₹';
+                    setGroups(groups.map((g) => (String(g.id) === String(editingExpense.gId) ? { ...g, currency: restoredCurr } : g)));
+                    setShowExpModal(false);
+                    setEditingExpense(null);
+                    return;
+                  }
                   const isWriteOff = editingExpense.title === 'Written off' || editingExpense.notes === 'Written off';
                   const msg = isWriteOff
                     ? 'Delete this write-off? This un-settles it and the balance will reappear.'
@@ -787,7 +806,7 @@ export const ExpenseModal: React.FC<ExpenseModalProps> = ({
                     setEditingExpense(null);
                   }
                 }}
-                title="Delete activity"
+                title={editingExpense.isConversion ? 'Undo conversion' : 'Delete activity'}
               >
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#EF4444" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
                   <polyline points="3 6 5 6 21 6" />
