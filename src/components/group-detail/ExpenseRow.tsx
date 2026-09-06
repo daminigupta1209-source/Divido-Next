@@ -171,7 +171,7 @@ export const ExpenseRow: React.FC<ExpenseRowProps> = ({
           <div>
             <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
               <h3 style={{ fontSize: '14px', fontWeight: 600, color: '#6D28D9', margin: 0 }}>
-                Currency Conversion <span style={{ fontSize: '10px', opacity: 0.3 }}>✏️</span>
+                Currency Conversion
               </h3>
               <span
                 style={{
