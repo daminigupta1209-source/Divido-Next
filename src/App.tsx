@@ -1728,7 +1728,7 @@ function App() {
         try { const claim = localStorage.getItem(`divido_identity_${g.id}`); if (claim) myG = claim; } catch { /* ignore */ }
         const myKey = getPersonKey(g, myG);
         const mKey = (globalSettleData.identity && !isStandalone) ? globalSettleData.identity : getPersonKey(g, m);
-        const groupExps = expenses.filter((e) => String(e.gId) === String(g.id));
+        const groupExps = expenses.filter((e) => String(e.gId) === String(g.id) && !e.isDeleted);
         const members = isStandalone
           ? Array.from(new Set([
               me,
@@ -2624,7 +2624,7 @@ function App() {
     if (!g) return;
     
     const targetKey = getPersonKey(g, memberRow);
-    const groupExps = expenses.filter((e) => String(e.gId) === String(groupId));
+    const groupExps = expenses.filter((e) => String(e.gId) === String(groupId) && !e.isDeleted);
     
     // Map expenses to identity-space so the math natively collapses duplicate names for the same person
     const { memberKeys, expenses: rekeyedExps, keyToName } = toIdentitySpace(g, groupExps);
