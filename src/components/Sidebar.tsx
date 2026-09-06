@@ -569,10 +569,10 @@ export const Sidebar: React.FC<SidebarProps> = ({
           className="nav-btn"
           style={{
             width: '100%',
-            background: 'linear-gradient(135deg, #FDBA74 0%, #F97316 100%)',
+            background: 'linear-gradient(135deg, #FCA5A5 0%, #EF4444 100%)',
             color: 'white',
             fontWeight: 600,
-            boxShadow: '0 10px 15px -3px rgba(249, 115, 22, 0.2)',
+            boxShadow: '0 10px 15px -3px rgba(239, 68, 68, 0.2)',
             justifyContent: 'center',
             borderRadius: '14px',
             height: '44px',

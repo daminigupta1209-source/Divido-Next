@@ -424,7 +424,7 @@ export const Profile: React.FC<ProfileProps> = ({
               className="hover-up-mini"
               style={{
                 width: '100%',
-                background: 'linear-gradient(135deg, #FDBA74 0%, #F97316 100%)',
+                background: 'linear-gradient(135deg, #FCA5A5 0%, #EF4444 100%)',
                 color: 'white',
                 border: 'none',
                 padding: '10px',
@@ -432,7 +432,7 @@ export const Profile: React.FC<ProfileProps> = ({
                 fontWeight: 600,
                 fontSize: '13px',
                 cursor: 'pointer',
-                boxShadow: '0 10px 15px -3px rgba(249, 115, 22, 0.2)',
+                boxShadow: '0 10px 15px -3px rgba(239, 68, 68, 0.2)',
               }}
             >
               Logout
