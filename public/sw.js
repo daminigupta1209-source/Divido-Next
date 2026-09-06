@@ -13,7 +13,12 @@
 //     cached the first time they're visited online.
 //   * Cross-origin requests (Supabase auth/data/storage) -> never touched.
 
-const CACHE = 'divido-cache-v89';
+// BUILD_ID is replaced with a unique value at build time (scripts/stamp-sw.mjs),
+// so sw.js changes on EVERY deploy — that's what makes the browser detect a new
+// service worker and surface the "New version available" banner even for a
+// code-only deploy. In dev (unstamped) it stays the literal placeholder.
+const BUILD_ID = '__BUILD_ID__';
+const CACHE = 'divido-cache-' + BUILD_ID;
 const CORE = ['/index.html', '/manifest.json'];
 
 // Precache the shell: core files plus every hashed /assets/*.js and *.css that
@@ -69,7 +74,12 @@ self.addEventListener('fetch', (event) => {
   // at chunks that were no longer cached, causing the offline reload loop.
   if (req.mode === 'navigate') {
     event.respondWith(
-      fetch(req)
+      // `cache: 'no-store'` bypasses the browser's OWN HTTP cache so a reload
+      // always pulls the truly-latest index (with the newest asset hashes),
+      // instead of a stale browser-cached copy that points at chunks a new
+      // deploy already replaced — the root of "I reloaded but still see the old
+      // build". Falls back to the SW-cached index only when offline.
+      fetch(req.url, { cache: 'no-store', credentials: 'same-origin' })
         .then((res) => {
           const clone = res.clone();
           caches.open(CACHE).then((c) => c.put('/index.html', clone));
