@@ -234,101 +234,143 @@ export const UpiSection: React.FC<UpiSectionProps> = ({
         </div>
       )}
 
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%', gap: '8px' }}>
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', flex: 1, minWidth: 0 }}>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', width: '100%' }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
           <label style={{ fontSize: '11px', fontWeight: 700, color: '#B3A897', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
-            UPI
+            UPI ID
           </label>
-          <div style={{ display: 'flex', alignItems: 'center', width: '100%', gap: '8px' }}>
-            <input
-              ref={upiInputRef}
-              type="search"
-              name="upiId"
-              autoComplete="off"
-              autoCorrect="off"
-              spellCheck="false"
-              data-1p-ignore
-              data-lpignore="true"
-              value={localUpi}
-              onChange={(e) => {
-                setLocalUpi(e.target.value);
-                setUpiError(null);
-              }}
-              onKeyDown={handleKeyDown}
-              placeholder="username@bank"
-              style={{
-                fontSize: '15px',
-                fontWeight: 600,
-                border: 'none',
-                background: 'transparent',
-                padding: '2px 2px',
-                outline: 'none',
-                color: '#2E2A25',
-                fontFamily: 'inherit',
-                width: '100%',
-              }}
-            />
-            <button
-              onClick={() => qrUploadRef.current?.click()}
-              type="button"
-              title="Upload QR Code"
-              style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '0 4px', color: '#94A3B8', display: 'flex', alignItems: 'center' }}
-            >
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
-                <circle cx="8.5" cy="8.5" r="1.5"/>
-                <polyline points="21 15 16 10 5 21"/>
-              </svg>
-            </button>
-            <input type="file" accept="image/*" ref={qrUploadRef} style={{ display: 'none' }} onChange={handleQRUpload} />
-          </div>
+          <input
+            ref={upiInputRef}
+            type="search"
+            name="upiId"
+            autoComplete="off"
+            autoCorrect="off"
+            spellCheck="false"
+            data-1p-ignore
+            data-lpignore="true"
+            value={localUpi}
+            onChange={(e) => {
+              setLocalUpi(e.target.value);
+              setUpiError(null);
+            }}
+            onKeyDown={handleKeyDown}
+            placeholder="username@bank"
+            style={{
+              fontSize: '15px',
+              fontWeight: 600,
+              border: '1.5px solid #E2E8F0',
+              borderRadius: '12px',
+              background: '#F8FAFC',
+              padding: '12px 14px',
+              outline: 'none',
+              color: '#2E2A25',
+              fontFamily: 'inherit',
+              width: '100%',
+              transition: 'all 0.2s',
+            }}
+            onFocus={(e) => e.target.style.borderColor = '#EA580C'}
+            onBlur={(e) => e.target.style.borderColor = '#E2E8F0'}
+          />
         </div>
 
-        {localUpi.trim() && !upiError && (
-          <div style={{ flexShrink: 0 }}>
-            {!isVerified && verificationStep === 'idle' && (
-              <span
-                onClick={() => {
-                  setUpiError(null);
-                  if (isMobile) {
-                    // Show a brief hint, then open the phone's own UPI app chooser
-                    // (every installed UPI app), and wait for the user to return.
-                    setShowVerifyHint(true);
-                    setTimeout(() => setShowVerifyHint(false), 3000);
-                    mobileReturnPendingRef.current = Date.now();
-                    window.location.href = `upi://pay?pa=${encodeURIComponent(localUpi.trim())}&pn=${encodeURIComponent(userName)}&am=1.00&cu=INR&tn=Divido Verify`;
-                  } else {
-                    // Desktop has no UPI apps — show our QR code to scan instead.
-                    setVerificationStep('awaiting_action');
-                  }
-                }}
-                style={{
-                  fontSize: '13px',
-                  fontWeight: 600,
-                  color: '#EA580C',
-                  cursor: 'pointer',
-                  textDecoration: 'underline',
-                }}
-              >
-                Verify
-              </span>
-            )}
-            {isVerified && (
-              <span
-                onClick={() => setUserMetadata({ ...userMetadata, [me]: { ...userMetadata[me], upiVerified: false } })}
-                style={{
-                  fontSize: '13px',
-                  fontWeight: 600,
-                  color: '#16A34A',
-                  cursor: 'pointer',
-                  textDecoration: 'underline',
-                }}
-              >
-                Verified ✓
-              </span>
-            )}
-          </div>
-        )}
+        <div style={{ display: 'flex', gap: '10px' }}>
+          <button
+            onClick={() => qrUploadRef.current?.click()}
+            type="button"
+            title="Upload QR Code"
+            style={{
+              flex: 1,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: '6px',
+              padding: '12px',
+              background: '#F1F5F9',
+              border: 'none',
+              borderRadius: '12px',
+              fontSize: '14px',
+              fontWeight: 600,
+              color: '#475569',
+              cursor: 'pointer',
+              transition: 'background 0.2s'
+            }}
+            onMouseEnter={(e) => e.currentTarget.style.background = '#E2E8F0'}
+            onMouseLeave={(e) => e.currentTarget.style.background = '#F1F5F9'}
+          >
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+              <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
+              <circle cx="8.5" cy="8.5" r="1.5"/>
+              <polyline points="21 15 16 10 5 21"/>
+            </svg>
+            Upload QR
+          </button>
+          <input type="file" accept="image/*" ref={qrUploadRef} style={{ display: 'none' }} onChange={handleQRUpload} />
+
+          {localUpi.trim() && !upiError && (
+            <div style={{ flex: 1 }}>
+              {!isVerified && verificationStep === 'idle' && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setUpiError(null);
+                    if (isMobile) {
+                      setShowVerifyHint(true);
+                      setTimeout(() => setShowVerifyHint(false), 3000);
+                      mobileReturnPendingRef.current = Date.now();
+                      window.location.href = `upi://pay?pa=${encodeURIComponent(localUpi.trim())}&pn=${encodeURIComponent(userName)}&am=1.00&cu=INR&tn=Divido Verify`;
+                    } else {
+                      setVerificationStep('awaiting_action');
+                    }
+                  }}
+                  style={{
+                    width: '100%',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    padding: '12px',
+                    background: '#FFF7ED',
+                    color: '#EA580C',
+                    border: '1.5px solid #FFEDD5',
+                    borderRadius: '12px',
+                    fontSize: '14px',
+                    fontWeight: 600,
+                    cursor: 'pointer',
+                    transition: 'all 0.2s'
+                  }}
+                  onMouseEnter={(e) => e.currentTarget.style.background = '#FFEDD5'}
+                  onMouseLeave={(e) => e.currentTarget.style.background = '#FFF7ED'}
+                >
+                  Verify ID
+                </button>
+              )}
+              {isVerified && (
+                <button
+                  type="button"
+                  onClick={() => setUserMetadata({ ...userMetadata, [me]: { ...userMetadata[me], upiVerified: false } })}
+                  style={{
+                    width: '100%',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    padding: '12px',
+                    background: '#F0FDF4',
+                    color: '#16A34A',
+                    border: '1.5px solid #DCFCE7',
+                    borderRadius: '12px',
+                    fontSize: '14px',
+                    fontWeight: 600,
+                    cursor: 'pointer',
+                    transition: 'all 0.2s'
+                  }}
+                  onMouseEnter={(e) => e.currentTarget.style.background = '#DCFCE7'}
+                  onMouseLeave={(e) => e.currentTarget.style.background = '#F0FDF4'}
+                >
+                  Verified ✓
+                </button>
+              )}
+            </div>
+          )}
+        </div>
       </div>
 
       {upiError && (
