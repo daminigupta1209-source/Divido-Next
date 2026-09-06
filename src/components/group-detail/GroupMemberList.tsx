@@ -313,7 +313,10 @@ export const GroupMemberList: React.FC<GroupMemberListProps> = ({
   };
   // The shared display picture for a member, looked up by their email identity.
   const avatarUrlFor = (name: string): string => {
-    const email = emailFor(name).toLowerCase();
+    // Try this group's identity for the exact roster name (incl. a "(Left)"
+    // suffix), then fall back to the same person's email in any other group —
+    // otherwise a left member's DP goes missing.
+    const email = (emailFor(name) || emailAnywhere(name)).toLowerCase();
     return (email && memberAvatars?.[email]) || '';
   };
   // A round avatar with a status dot, shared across all three tabs. Shows the
@@ -980,7 +983,7 @@ export const GroupMemberList: React.FC<GroupMemberListProps> = ({
                       opacity: 0.7,
                     }}
                   >
-                    <Avatar name={cleanName} status="left" />
+                    <Avatar name={m} status="left" />
                     <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', gap: '2px' }}>
                       <span style={{ fontWeight: 'bold', fontSize: '14px', color: '#64748B', textDecoration: 'line-through' }}>
                         {checkIsMe(cleanName) ? 'You' : cleanName} {checkIsAdmin(cleanName) && <span style={{ fontSize: '10px', fontWeight: 600, color: '#7C3AED', background: '#F5F3FF', padding: '1px 6px', borderRadius: '4px', marginLeft: '6px' }}>Admin</span>}
