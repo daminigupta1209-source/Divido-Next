@@ -5076,9 +5076,18 @@ function App() {
                   marginTop: '8px',
                 }}
               >
-                {joinNewName && joinNewName !== 'You' && joinNewName !== 'Guest'
-                  ? `Join as "${joinNewName}"`
-                  : 'Join as new member'}
+                {(() => {
+                  // If the prefilled name matches a claimable placeholder above,
+                  // don't mirror it as "Join as <name>" — that looked identical to
+                  // the Claim button and confused joiners into creating a dupe.
+                  // Show the generic label so Claim is the obvious right choice.
+                  const collides = linkRequestPlaceholders.some((p: any) =>
+                    String(p.name || '').replace(/\s*\(Left\)$/i, '').trim().toLowerCase() === (joinNewName || '').trim().toLowerCase()
+                  );
+                  return (!collides && joinNewName && joinNewName !== 'You' && joinNewName !== 'Guest')
+                    ? `Join as "${joinNewName}"`
+                    : 'Join as new member';
+                })()}
               </button>
             </div>
             )}
