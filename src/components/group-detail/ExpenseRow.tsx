@@ -1,6 +1,7 @@
 import React from 'react';
 import { Group, Expense } from '../../lib/types';
 import { formatDate, getEmoji, getExactTime, formatExactAmount } from '../../lib/utils';
+import { revertGroupConversions } from '../../lib/conversions';
 
 interface ExpenseRowProps {
   e: Expense;
@@ -233,28 +234,15 @@ export const ExpenseRow: React.FC<ExpenseRowProps> = ({
                   ev.stopPropagation();
                   if (
                     confirm(
-                      `Delete this conversion and restore original currencies? 🔄\n\nEvery expense will go back to the exact amount and currency it had BEFORE this conversion. Nothing is lost.`
+                      `Undo currency conversion and restore original currencies? 🔄\n\nEvery expense goes back to the exact amount and currency it had BEFORE any conversion. Nothing is lost.`
                     )
                   ) {
-                    const snapshotArr: any[] = e.snapshot ? JSON.parse(e.snapshot) : [];
-                    const snapMap: Record<string, any> = {};
-                    snapshotArr.forEach((s) => {
-                      snapMap[s.id] = s;
+                    let restoredCurr = '₹';
+                    setExpenses((prev) => {
+                      const { expenses: next, restoredCurrency } = revertGroupConversions(prev, e.gId);
+                      restoredCurr = restoredCurrency;
+                      return next;
                     });
-
-                    setExpenses((prev) =>
-                      prev
-                        .map((x) => {
-                          if (snapMap[x.id]) {
-                            const s = snapMap[x.id];
-                            return { ...x, amt: s.amt, currency: s.currency, shares: s.shares };
-                          }
-                          return x;
-                        })
-                        .filter((x) => x.id !== e.id)
-                    );
-
-                    const restoredCurr = e.fromCurr || snapshotArr[0]?.currency || '₹';
                     setGroups(
                       groups.map((g) =>
                         String(g.id) === String(selectedId)

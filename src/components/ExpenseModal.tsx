@@ -1,5 +1,6 @@
 import React from 'react';
 import { Group, Expense } from '../lib/types';
+import { revertGroupConversions } from '../lib/conversions';
 import { downscaleImageFile } from '../lib/imageUtils';
 import { formatDate, GROUP_COLORS, formatCompactAmount, genGroupId } from '../lib/utils';
 import { SearchableCurrencyPicker } from './SearchableCurrencyPicker';
@@ -781,16 +782,13 @@ export const ExpenseModal: React.FC<ExpenseModalProps> = ({
                   // UNDO the conversion (restore original currencies from the
                   // snapshot), not silently drop the log and leave converted amounts.
                   if (editingExpense.isConversion) {
-                    if (!confirm('Undo this conversion? 🔄\n\nEvery expense goes back to the exact amount and currency it had BEFORE this conversion. Nothing is lost.')) return;
-                    const snapshotArr: any[] = editingExpense.snapshot ? JSON.parse(editingExpense.snapshot) : [];
-                    const snapMap: Record<string, any> = {};
-                    snapshotArr.forEach((s) => { snapMap[s.id] = s; });
-                    setExpenses((prev) =>
-                      prev
-                        .map((x) => (snapMap[x.id] ? { ...x, amt: snapMap[x.id].amt, currency: snapMap[x.id].currency, shares: snapMap[x.id].shares } : x))
-                        .filter((x) => x.id !== editingExpense.id)
-                    );
-                    const restoredCurr = editingExpense.fromCurr || snapshotArr[0]?.currency || '₹';
+                    if (!confirm('Undo this conversion? 🔄\n\nEvery expense goes back to the exact amount and currency it had BEFORE any conversion. Nothing is lost.')) return;
+                    let restoredCurr = '₹';
+                    setExpenses((prev) => {
+                      const { expenses: next, restoredCurrency } = revertGroupConversions(prev, editingExpense.gId);
+                      restoredCurr = restoredCurrency;
+                      return next;
+                    });
                     setGroups(groups.map((g) => (String(g.id) === String(editingExpense.gId) ? { ...g, currency: restoredCurr } : g)));
                     setShowExpModal(false);
                     setEditingExpense(null);

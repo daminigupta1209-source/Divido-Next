@@ -2,6 +2,7 @@ import React from 'react';
 import { BalanceDisplay } from './BalanceDisplay';
 import { getEmoji, formatDate, getExactTime, getMonthYearKey, formatExactAmount } from '../lib/utils';
 import { Group, Expense } from '../lib/types';
+import { revertGroupConversions } from '../lib/conversions';
 import { useActivityStudio } from '../hooks/useActivityStudio';
 import { StyledDropdown } from './StyledDropdown';
 
@@ -488,28 +489,15 @@ export const ActivityStudio: React.FC<ActivityStudioProps> = ({
                                 ev.stopPropagation();
                                 if (
                                   confirm(
-                                    `Delete this conversion and restore original currencies? 🔄\n\nEvery expense will go back to the exact amount and currency it had BEFORE this conversion. Nothing is lost.`
+                                    `Undo currency conversion and restore original currencies? 🔄\n\nEvery expense goes back to the exact amount and currency it had BEFORE any conversion. Nothing is lost.`
                                   )
                                 ) {
-                                  const snapshotArr = e.snapshot ? JSON.parse(e.snapshot) : [];
-                                  const snapMap: Record<string, any> = {};
-                                  snapshotArr.forEach((s: any) => {
-                                    snapMap[s.id] = s;
+                                  let restoredCurr = '₹';
+                                  setExpenses((prev) => {
+                                    const { expenses: next, restoredCurrency } = revertGroupConversions(prev, e.gId);
+                                    restoredCurr = restoredCurrency;
+                                    return next;
                                   });
-
-                                  setExpenses((prev) =>
-                                    prev
-                                      .map((x) => {
-                                        if (snapMap[x.id]) {
-                                          const s = snapMap[x.id];
-                                          return { ...x, amt: s.amt, currency: s.currency, shares: s.shares };
-                                        }
-                                        return x;
-                                      })
-                                      .filter((x) => x.id !== e.id)
-                                  );
-
-                                  const restoredCurr = e.fromCurr || snapshotArr[0]?.currency || '₹';
                                   setGroups(
                                     groups.map((g) =>
                                       String(g.id) === String(e.gId) ? { ...g, currency: restoredCurr } : g

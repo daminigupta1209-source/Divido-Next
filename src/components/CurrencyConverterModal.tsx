@@ -4,6 +4,7 @@ import { SearchableCurrencyPicker } from './SearchableCurrencyPicker';
 import { StyledDropdown } from './StyledDropdown';
 
 import { Group, Expense } from '../lib/types';
+import { revertGroupConversions } from '../lib/conversions';
 
 interface CurrencyConverterModalProps {
   setShowConvertModalId: (id: string | number | null) => void;
@@ -182,96 +183,107 @@ export const CurrencyConverterModal: React.FC<CurrencyConverterModalProps> = ({
     setIsConverting(true);
     await new Promise((r) => setTimeout(r, 800));
 
+    const gid = String(group.id);
+    const isThisGroup = (e: Expense) => String(e.gId) === gid;
+
+    // 1. Reconstruct the TRUE ORIGINAL amounts. Every prior conversion stored a
+    // snapshot of the state before it ran; processing them oldest-first and
+    // keeping the EARLIEST snapshot per expense id gives each expense's original
+    // value. This is what lets re-converting always start from the original
+    // (not a half-converted intermediate) and makes undo fully restore.
+    const existingLogs = expenses.filter((e) => isThisGroup(e) && e.isConversion);
+    const logsOldestFirst = [...existingLogs].sort(
+      (a, b) => (a.date || '').localeCompare(b.date || '') || ((a.timestamp || 0) - (b.timestamp || 0))
+    );
+    const originalById: Record<string, { amt: number; currency: string; shares?: Record<string, number> }> = {};
+    for (const log of logsOldestFirst) {
+      let snap: any[] = [];
+      try { snap = log.snapshot ? JSON.parse(log.snapshot) : []; } catch { snap = []; }
+      for (const s of snap) { if (!(s.id in originalById)) originalById[s.id] = s; }
+    }
+
+    // 2. Base = this group's real expenses, reverted to their originals.
+    const baseExpenses = expenses
+      .filter((e) => isThisGroup(e) && !e.isConversion)
+      .map((e) => {
+        const o = originalById[String(e.id)];
+        return o ? { ...e, amt: o.amt, currency: o.currency, shares: o.shares } : e;
+      });
+
+    // 3. Snapshot the originals — a single, always-correct backup for undo.
+    const snapshot = baseExpenses.map((e) => ({
+      id: e.id,
+      amt: e.amt,
+      currency: e.currency || group.currency,
+      shares: e.shares ? JSON.parse(JSON.stringify(e.shares)) : undefined,
+    }));
+
+    // 4. Convert base -> target. Non-matching currencies stay at their original.
     const activeConversions = new Set<string>();
-    const snapshot = expenses
-      .filter((e) => String(e.gId) === String(group.id) && !e.isConversion)
-      .map((e) => ({
-        id: e.id,
-        amt: e.amt,
-        currency: e.currency || group.currency,
-        shares: e.shares ? JSON.parse(JSON.stringify(e.shares)) : undefined,
-      }));
+    let modificationOccurred = false;
+    const finalById: Record<string, { amt: number; currency: string; shares?: Record<string, number> }> = {};
+    baseExpenses.forEach((e) => {
+      const currentCurr = e.currency || group.currency;
+      const matchesSource = sourceCurr === 'ALL' || currentCurr === sourceCurr;
+      if (currentCurr !== targetCurr && matchesSource) {
+        modificationOccurred = true;
+        activeConversions.add(currentCurr);
+        const r = parseFloat(rateMap[currentCurr]) || 1;
+        const newAmt = Math.round(e.amt * r * 100) / 100;
+        let ns = e.shares;
+        if (e.mode === 'Unequally' && e.shares) {
+          ns = {};
+          Object.entries(e.shares).forEach(([m, s]) => { (ns as Record<string, number>)[m] = Math.round((s as number) * r * 100) / 100; });
+        }
+        finalById[String(e.id)] = { amt: newAmt, currency: targetCurr, shares: ns };
+      } else {
+        finalById[String(e.id)] = { amt: e.amt, currency: currentCurr, shares: e.shares };
+      }
+    });
+
+    if (!modificationOccurred) {
+      alert(`Nothing to convert — those expenses are already in ${targetCurr}.`);
+      setIsConverting(false);
+      return;
+    }
+
+    const filteredRates: Record<string, string> = {};
+    activeConversions.forEach((c) => { filteredRates[c] = rateMap[c]; });
+
+    const newLog: any = {
+      id: genExpenseId(),
+      gId: group.id,
+      title: `Currency Conversion to ${targetCurr}`,
+      amt: 0,
+      isNormalization: true,
+      ratesUsed: JSON.stringify(filteredRates),
+      snapshot: JSON.stringify(snapshot),
+      toCurr: targetCurr,
+      fromCurr: sourceCurr,
+      date: new Date().toISOString().split('T')[0],
+      paid: me,
+      isConversion: true,
+      category: '💱',
+    };
+
+    const oldLogIds = new Set(existingLogs.map((l) => String(l.id)));
 
     setExpenses((prev) => {
-      let modificationOccurred = false;
-      const updated = prev.map((e) => {
-        if (String(e.gId) === String(group.id)) {
-          if (e.isConversion) return e;
-          const currentCurr = e.currency || group.currency;
-
-          const matchesSource = sourceCurr === 'ALL' || currentCurr === sourceCurr;
-
-          if (currentCurr !== targetCurr && matchesSource) {
-            modificationOccurred = true;
-            activeConversions.add(currentCurr);
-
-            let newAmt: number;
-            let ns: Record<string, number> | undefined;
-            const isReturning = e.prevCurr === targetCurr && e.origAmt !== undefined;
-            if (isReturning) {
-              newAmt = e.origAmt!;
-              ns = e.origShares;
-            } else {
-              const r = parseFloat(rateMap[currentCurr]) || 1;
-              newAmt = Math.round(e.amt * r * 100) / 100;
-              const computedShares: Record<string, number> = {};
-              if (e.mode === 'Unequally' && e.shares) {
-                Object.entries(e.shares).forEach(([m, s]) => {
-                  computedShares[m] = Math.round(s * r * 100) / 100;
-                });
-              }
-              ns = Object.keys(computedShares).length > 0 ? computedShares : e.shares;
-            }
-
-            return {
-              ...e,
-              amt: newAmt,
-              currency: targetCurr,
-              origAmt: e.origAmt !== undefined ? e.origAmt : e.amt,
-              origShares: e.origShares !== undefined ? e.origShares : e.shares,
-              prevCurr: currentCurr,
-              shares: ns,
-            };
+      const next = prev
+        .filter((e) => !oldLogIds.has(String(e.id))) // remove ALL prior conversion logs (no stacking)
+        .map((e) => {
+          if (isThisGroup(e) && !e.isConversion && finalById[String(e.id)]) {
+            const f = finalById[String(e.id)];
+            return { ...e, amt: f.amt, currency: f.currency, shares: f.shares };
           }
-        }
-        return e;
-      });
-
-      if (!modificationOccurred) {
-        alert('No matching expenses found to convert! 💎');
-        setIsConverting(false);
-        return prev;
-      }
-
-      // Only update master group currency if we converted All Currencies or the base currency itself was converted
-      if (sourceCurr === 'ALL' || sourceCurr === group.currency) {
-        setGroups(groups.map((g) => (g.id === group.id ? { ...g, currency: targetCurr } : g)));
-      }
-
-      const filteredRates: Record<string, string> = {};
-      activeConversions.forEach((c) => {
-        filteredRates[c] = rateMap[c];
-      });
-
-      return [
-        {
-          id: genExpenseId(),
-          gId: group.id,
-          title: `Currency Conversion to ${targetCurr}`,
-          amt: 0,
-          isNormalization: true,
-          ratesUsed: JSON.stringify(filteredRates),
-          snapshot: JSON.stringify(snapshot), // 🛡️ ATOMIC BACKUP
-          toCurr: targetCurr,
-          fromCurr: sourceCurr,
-          date: new Date().toISOString().split('T')[0],
-          paid: me,
-          isConversion: true,
-          category: '💱',
-        },
-        ...updated,
-      ];
+          return e;
+        });
+      return [newLog, ...next];
     });
+
+    if (sourceCurr === 'ALL' || sourceCurr === group.currency) {
+      setGroups(groups.map((g) => (g.id === group.id ? { ...g, currency: targetCurr } : g)));
+    }
 
     setShowConvertModalId(null);
   };
@@ -283,16 +295,15 @@ export const CurrencyConverterModal: React.FC<CurrencyConverterModalProps> = ({
   const convLog = expenses.find((e) => String(e.gId) === String(group.id) && e.isConversion);
   const undoConversion = () => {
     if (!convLog) return;
-    if (!confirm(`Delete this conversion and restore original currencies? 🔄\n\nEvery expense will go back to the exact amount and currency it had BEFORE this conversion. Nothing is lost.`)) return;
-    const snapshotArr: any[] = convLog.snapshot ? JSON.parse(convLog.snapshot) : [];
-    const snapMap: Record<string, any> = {};
-    snapshotArr.forEach((s) => { snapMap[s.id] = s; });
-    setExpenses((prev) =>
-      prev
-        .map((x) => (snapMap[x.id] ? { ...x, amt: snapMap[x.id].amt, currency: snapMap[x.id].currency, shares: snapMap[x.id].shares } : x))
-        .filter((x) => x.id !== convLog.id)
-    );
-    const restoredCurr = convLog.fromCurr || snapshotArr[0]?.currency || '₹';
+    if (!confirm(`Undo currency conversion and restore original currencies? 🔄\n\nEvery expense goes back to the exact amount and currency it had BEFORE any conversion. Nothing is lost.`)) return;
+    // Revert ALL conversion logs in the group at once (robust even if several
+    // were stacked), then restore the group's original currency.
+    let restoredCurr = group.currency;
+    setExpenses((prev) => {
+      const { expenses: next, restoredCurrency } = revertGroupConversions(prev, group.id);
+      restoredCurr = restoredCurrency;
+      return next;
+    });
     setGroups(groups.map((g) => (String(g.id) === String(group.id) ? { ...g, currency: restoredCurr } : g)));
     setShowConvertModalId(null);
   };
