@@ -76,3 +76,4 @@ export async function parseExpenseWithAI(transcript: string, activeGroup: Group,
     throw new Error("Failed to understand the expense details. Please try again or fill manually.");
   }
 }
+// Trigger fresh build  
