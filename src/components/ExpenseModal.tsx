@@ -940,8 +940,8 @@ export const ExpenseModal: React.FC<ExpenseModalProps> = ({
             @keyframes qa-bar { 0%,100%{height:6px} 50%{height:18px} }
           `}</style>
           {aiFilledFrom ? (
-            <div style={{ background: '#ECFDF5', border: '1.5px solid #A7F3D0', borderRadius: '14px', padding: '11px 14px', display: 'flex', alignItems: 'center', gap: '10px' }}>
-              <svg viewBox="0 0 24 24" fill="none" stroke="#047857" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ width: '18px', height: '18px', flexShrink: 0 }}>
+            <div style={{ background: '#ECFDF5', border: '1px solid #A7F3D0', borderRadius: '12px', padding: '8px 12px', display: 'flex', alignItems: 'center', gap: '9px' }}>
+              <svg viewBox="0 0 24 24" fill="none" stroke="#059669" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ width: '16px', height: '16px', flexShrink: 0 }}>
                 <path d="M12 3l1.9 4.6L19 8l-3.5 3.4.8 5-4.3-2.4L7.7 16.4l.8-5L5 8l5.1-.4z" />
               </svg>
               <span style={{ fontSize: '12.5px', fontWeight: 600, color: '#065F46' }}>
@@ -964,42 +964,42 @@ export const ExpenseModal: React.FC<ExpenseModalProps> = ({
               </button>
             </div>
           ) : (isListening || isParsingVoice || isScanning) ? (
-            <div style={{ background: '#4338CA', borderRadius: '14px', padding: '13px 14px', display: 'flex', alignItems: 'center', gap: '11px' }}>
-              <span style={{ position: 'relative', width: '20px', height: '20px', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+            <div style={{ background: '#E0E7FF', border: '1px solid #C7D2FE', borderRadius: '12px', padding: '8px 12px', display: 'flex', alignItems: 'center', gap: '9px' }}>
+              <span style={{ position: 'relative', width: '18px', height: '18px', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
                 {isScanning || isParsingVoice ? (
-                  <span className="spin" style={{ fontSize: '15px' }}>✨</span>
+                  <span className="spin" style={{ fontSize: '14px' }}>✨</span>
                 ) : (
                   <>
-                    <span style={{ position: 'absolute', width: '20px', height: '20px', borderRadius: '50%', background: '#F87171', opacity: 0.5, animation: 'qa-halo 1.4s infinite' }} />
-                    <svg viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ width: '17px', height: '17px', position: 'relative' }}>
+                    <span style={{ position: 'absolute', width: '18px', height: '18px', borderRadius: '50%', background: '#F87171', opacity: 0.5, animation: 'qa-halo 1.4s infinite' }} />
+                    <svg viewBox="0 0 24 24" fill="none" stroke="#4338CA" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ width: '16px', height: '16px', position: 'relative' }}>
                       <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z" /><path d="M19 10v2a7 7 0 0 1-14 0v-2" /><line x1="12" y1="19" x2="12" y2="23" /><line x1="8" y1="23" x2="16" y2="23" />
                     </svg>
                   </>
                 )}
               </span>
-              <span style={{ fontSize: '13px', fontWeight: 600, color: '#fff' }}>
+              <span style={{ fontSize: '12.5px', fontWeight: 600, color: '#3730A3' }}>
                 {isScanning ? 'Scanning receipt…' : isParsingVoice ? 'Understanding…' : 'Listening…'}
               </span>
               {isListening && (
-                <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'flex-end', gap: '3px', height: '20px' }}>
-                  <span style={{ width: '3px', background: '#C7D2FE', borderRadius: '2px', height: '8px', animation: 'qa-bar 0.9s infinite' }} />
-                  <span style={{ width: '3px', background: '#C7D2FE', borderRadius: '2px', height: '16px', animation: 'qa-bar 0.9s infinite 0.15s' }} />
-                  <span style={{ width: '3px', background: '#C7D2FE', borderRadius: '2px', height: '11px', animation: 'qa-bar 0.9s infinite 0.3s' }} />
-                  <span style={{ width: '3px', background: '#C7D2FE', borderRadius: '2px', height: '18px', animation: 'qa-bar 0.9s infinite 0.45s' }} />
+                <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'flex-end', gap: '3px', height: '16px' }}>
+                  <span style={{ width: '3px', background: '#6366F1', borderRadius: '2px', height: '6px', animation: 'qa-bar 0.9s infinite' }} />
+                  <span style={{ width: '3px', background: '#6366F1', borderRadius: '2px', height: '14px', animation: 'qa-bar 0.9s infinite 0.15s' }} />
+                  <span style={{ width: '3px', background: '#6366F1', borderRadius: '2px', height: '9px', animation: 'qa-bar 0.9s infinite 0.3s' }} />
+                  <span style={{ width: '3px', background: '#6366F1', borderRadius: '2px', height: '15px', animation: 'qa-bar 0.9s infinite 0.45s' }} />
                 </div>
               )}
               {isListening && (
-                <button type="button" onClick={stopListening} style={{ marginLeft: '10px', background: 'rgba(255,255,255,0.18)', border: 'none', borderRadius: '8px', color: '#fff', fontSize: '12px', fontWeight: 600, padding: '6px 12px', cursor: 'pointer' }}>
+                <button type="button" onClick={stopListening} style={{ marginLeft: '10px', background: '#C7D2FE', border: 'none', borderRadius: '8px', color: '#3730A3', fontSize: '11.5px', fontWeight: 600, padding: '5px 11px', cursor: 'pointer' }}>
                   Stop
                 </button>
               )}
             </div>
           ) : (
-            <div style={{ background: '#4F46E5', borderRadius: '14px', padding: '13px 14px', display: 'flex', alignItems: 'center', gap: '11px' }}>
-              <svg viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ width: '20px', height: '20px', flexShrink: 0 }}>
+            <div style={{ background: '#EEF2FF', border: '1px solid #C7D2FE', borderRadius: '12px', padding: '8px 12px', display: 'flex', alignItems: 'center', gap: '9px' }}>
+              <svg viewBox="0 0 24 24" fill="none" stroke="#4F46E5" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ width: '17px', height: '17px', flexShrink: 0 }}>
                 <path d="M12 3l1.9 4.6L19 8l-3.5 3.4.8 5-4.3-2.4L7.7 16.4l.8-5L5 8l5.1-.4z" />
               </svg>
-              <span style={{ fontSize: '13.5px', fontWeight: 600, color: '#fff' }}>Quick add</span>
+              <span style={{ fontSize: '13px', fontWeight: 600, color: '#4338CA' }}>Quick add</span>
               <div style={{ marginLeft: 'auto', display: 'flex', gap: '7px' }}>
                 {hasSupport && (
                   <button
@@ -1007,9 +1007,9 @@ export const ExpenseModal: React.FC<ExpenseModalProps> = ({
                     onClick={startListening}
                     title="Use voice to fill"
                     aria-label="Use voice to fill"
-                    style={{ width: '34px', height: '34px', borderRadius: '9px', background: 'rgba(255,255,255,0.18)', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                    style={{ width: '30px', height: '30px', borderRadius: '8px', background: '#fff', border: '1px solid #C7D2FE', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
                   >
-                    <svg viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ width: '18px', height: '18px' }}>
+                    <svg viewBox="0 0 24 24" fill="none" stroke="#4F46E5" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ width: '16px', height: '16px' }}>
                       <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z" /><path d="M19 10v2a7 7 0 0 1-14 0v-2" /><line x1="12" y1="19" x2="12" y2="23" /><line x1="8" y1="23" x2="16" y2="23" />
                     </svg>
                   </button>
@@ -1020,9 +1020,9 @@ export const ExpenseModal: React.FC<ExpenseModalProps> = ({
                   onClick={openScanner}
                   title="Scan receipt"
                   aria-label="Scan receipt"
-                  style={{ width: '34px', height: '34px', borderRadius: '9px', background: 'rgba(255,255,255,0.18)', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                  style={{ width: '30px', height: '30px', borderRadius: '8px', background: '#fff', border: '1px solid #C7D2FE', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
                 >
-                  <svg viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ width: '18px', height: '18px' }}>
+                  <svg viewBox="0 0 24 24" fill="none" stroke="#4F46E5" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ width: '16px', height: '16px' }}>
                     <path d="M4 8V6a2 2 0 0 1 2-2h2" /><path d="M16 4h2a2 2 0 0 1 2 2v2" /><path d="M20 16v2a2 2 0 0 1-2 2h-2" /><path d="M8 20H6a2 2 0 0 1-2-2v-2" /><path d="M4 12h16" />
                   </svg>
                 </button>
