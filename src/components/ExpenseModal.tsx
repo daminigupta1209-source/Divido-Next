@@ -449,7 +449,7 @@ export const ExpenseModal: React.FC<ExpenseModalProps> = ({
             justifyContent: 'space-between',
             alignItems: 'center',
             background: '#F8FAFC',
-            padding: '18px 8px 18px 16px',
+            padding: '18px 16px 18px 16px',
             margin: '-16px -20px 12px -20px',
             borderBottom: 'none',
           }}
@@ -862,6 +862,7 @@ export const ExpenseModal: React.FC<ExpenseModalProps> = ({
                 alignItems: 'center',
                 justifyContent: 'center',
                 padding: '4px 0px',
+                marginRight: '-6px',
                 lineHeight: 1,
                 color: '#10B981',
                 opacity: !isValid || !title ? 0.6 : 1,
