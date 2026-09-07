@@ -427,7 +427,7 @@ export const ActivityStudio: React.FC<ActivityStudioProps> = ({
                           return (
                             <div style={{ display: 'flex', alignItems: 'baseline', gap: '6px', minWidth: 0 }}>
                               <div style={{ fontSize: '14px', fontWeight: 600, color: '#5B21B6', whiteSpace: 'nowrap', textOverflow: 'ellipsis', overflow: 'hidden', flexShrink: 1 }}>
-                                Currency Conversion
+                                Currency swap
                               </div>
                               {gLabel && <span style={{ fontSize: '11px', fontWeight: 600, color: '#94A3B8', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', flexShrink: 1 }}>· {gLabel}</span>}
                             </div>
@@ -576,7 +576,7 @@ export const ActivityStudio: React.FC<ActivityStudioProps> = ({
                       <div style={{ minWidth: 0, flex: 1, marginRight: '16px' }}>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '6px', whiteSpace: 'nowrap', overflow: 'hidden', minWidth: 0 }}>
                           <h3  style={{ fontSize: isSettlement ? '13px' : '15px', color: 'var(--t)', margin: 0, fontWeight: 700, display: 'flex', alignItems: 'center', gap: '4px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', flexShrink: 0, textDecoration: e.isDeleted ? 'line-through' : 'none' }}>
-                            {isSettlement ? 'Payment Recorded' : e.title}
+                            {isSettlement ? 'Settlement' : e.title}
                           </h3>
                           {e.isDeleted && <span style={{fontSize: '10px', background: '#FEE2E2', color: '#EF4444', padding: '2px 6px', borderRadius: '4px', fontWeight: 600}}>Deleted</span>}
                           {e.gId !== 'STANDALONE' && (

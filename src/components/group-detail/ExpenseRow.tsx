@@ -175,7 +175,7 @@ export const ExpenseRow: React.FC<ExpenseRowProps> = ({
           <div>
             <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
               <h3 style={{ fontSize: '14px', fontWeight: 600, color: '#6D28D9', margin: 0 }}>
-                Currency Conversion
+                Currency swap
               </h3>
               <span
                 style={{
@@ -318,7 +318,7 @@ export const ExpenseRow: React.FC<ExpenseRowProps> = ({
           </div>
           <div style={{ minWidth: 0, flex: 1, marginRight: '16px' }}>
             <h3 style={{ fontSize: '14px', color: 'var(--t)', margin: 0, fontWeight: 600, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', textDecoration: e.isDeleted ? 'line-through' : 'none' }}>
-              Payment Recorded
+              Settlement
             </h3>
             {e.isDeleted && <span style={{fontSize: '10px', background: '#FEE2E2', color: '#EF4444', padding: '2px 6px', borderRadius: '4px', fontWeight: 600, marginLeft: '6px'}}>Deleted</span>}
             <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '11px', color: '#94A3B8', marginTop: '6px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
