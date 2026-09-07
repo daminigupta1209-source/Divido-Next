@@ -4980,24 +4980,39 @@ function App() {
                     const roster = gm || [];
                     const norm = (n: string) => n.replace(/\s*\(Left\)$/i, '').trim().toLowerCase();
                     const mine = roster.find((m: any) => m.user_email && String(m.user_email).toLowerCase() === myEmail.toLowerCase());
+                    let claimedPlaceholderName = '';
                     if (!mine) {
-                      if (roster.some((m: any) => norm(m.name) === norm(typed))) {
+                      const clash = roster.find((m: any) => norm(m.name) === norm(typed));
+                      const clashIsUnclaimed = clash && !clash.user_email && !String(clash.name).toLowerCase().endsWith(' (left)');
+                      if (clashIsUnclaimed) {
+                        // A pending placeholder with this exact name is almost
+                        // certainly THIS person (e.g. inviter typed "Chirag Gupta"
+                        // and the joiner's Google name is also "Chirag Gupta").
+                        // Claim it by attaching their email instead of erroring.
+                        const { error: upErr } = await supabase.from('group_members')
+                          .update({ user_email: myEmail, is_pending: false })
+                          .eq('id', clash.id);
+                        if (upErr) throw upErr;
+                        claimedPlaceholderName = String(clash.name).replace(/\s*\(Left\)$/i, '');
+                      } else if (clash) {
+                        // Name taken by an ALREADY-CLAIMED member (a different
+                        // person) — genuinely needs disambiguation.
                         alert(`"${typed}" is already in this group. Add a surname or pick a different name.`);
                         setSubmittingLinkRequest(false);
                         return;
+                      } else {
+                        // Brand-new member identified by email.
+                        const { error: insErr } = await supabase.from('group_members').insert({
+                          group_id: linkRequestGroup.id,
+                          name: typed,
+                          user_email: myEmail,
+                          is_pending: false,
+                          person_id: null,
+                        });
+                        if (insErr) throw insErr;
                       }
-                      // New member identified by email (person_id null, like the
-                      // group creator). is_pending false — they've actively joined.
-                      const { error: insErr } = await supabase.from('group_members').insert({
-                        group_id: linkRequestGroup.id,
-                        name: typed,
-                        user_email: myEmail,
-                        is_pending: false,
-                        person_id: null,
-                      });
-                      if (insErr) throw insErr;
                     }
-                    const myName = mine ? String(mine.name).replace(/\s*\(Left\)$/i, '') : typed;
+                    const myName = mine ? String(mine.name).replace(/\s*\(Left\)$/i, '') : (claimedPlaceholderName || typed);
                     {
                       const existing = localStorage.getItem('divido_username');
                       const hasRealName = !!existing && !['You', 'Guest', 'undefined', ''].includes(existing.trim());
