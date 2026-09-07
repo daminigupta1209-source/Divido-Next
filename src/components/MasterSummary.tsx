@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { BalanceDisplay } from './BalanceDisplay';
 import { getEmoji, GROUP_COLORS, formatExactAmount, parseExpenseId } from '../lib/utils';
 import { StyledDropdown } from './StyledDropdown';
@@ -91,6 +91,32 @@ export const MasterSummary: React.FC<MasterSummaryProps> = ({
   const [balanceFilter, setBalanceFilter] = useState<'all' | 'owe' | 'owed' | 'settled'>('all');
   const [showFilters, setShowFilters] = useState(false);
   const [homeTab, setHomeTab] = useState<'groups' | 'activity'>('groups');
+  // Make the phone Back gesture return from the Activities tab to Groups instead
+  // of leaving the home screen: push a history entry when opening Activities, and
+  // on Back (popstate) drop back to the Groups tab.
+  const homeTabHistRef = useRef(false);
+  useEffect(() => {
+    if (homeTab === 'activity' && !homeTabHistRef.current) {
+      homeTabHistRef.current = true;
+      try { history.pushState({ dvHomeTab: 'activity' }, ''); } catch { /* ignore */ }
+    }
+  }, [homeTab]);
+  useEffect(() => {
+    const onPop = () => {
+      if (homeTabHistRef.current) {
+        homeTabHistRef.current = false;
+        setHomeTab('groups');
+      }
+    };
+    window.addEventListener('popstate', onPop);
+    return () => window.removeEventListener('popstate', onPop);
+  }, []);
+  // Switching tabs manually: going back to Groups consumes the pushed entry so
+  // the history stack stays clean.
+  const selectHomeTab = (id: 'groups' | 'activity') => {
+    if (id === 'groups' && homeTabHistRef.current) { try { history.back(); } catch { setHomeTab('groups'); } return; }
+    setHomeTab(id);
+  };
   const budgetDismissKey = `budgetBannerDismissed_${new Date().getFullYear()}_${new Date().getMonth()}`;
   const [budgetBannerDismissed, setBudgetBannerDismissed] = useState(() => localStorage.getItem(budgetDismissKey) === '1');
   const [upiBannerDismissed, setUpiBannerDismissed] = useState(() => localStorage.getItem('divido_upi_banner_dismissed') === '1');
@@ -116,9 +142,9 @@ export const MasterSummary: React.FC<MasterSummaryProps> = ({
     swipeStart.current = null;
     if (Math.abs(dx) > 60 && Math.abs(dx) > Math.abs(dy) * 1.5) {
       if (dx < 0) {
-        if (homeTab === 'groups') setHomeTab('activity');
+        if (homeTab === 'groups') selectHomeTab('activity');
       } else {
-        if (homeTab === 'activity') setHomeTab('groups');
+        if (homeTab === 'activity') selectHomeTab('groups');
       }
     }
   };
@@ -618,7 +644,7 @@ export const MasterSummary: React.FC<MasterSummaryProps> = ({
             return (
               <button
                 key={tab.id}
-                onClick={() => setHomeTab(tab.id)}
+                onClick={() => selectHomeTab(tab.id)}
                 style={{
                   flex: 1,
                   position: 'relative',
