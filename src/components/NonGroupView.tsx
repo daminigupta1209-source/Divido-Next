@@ -507,7 +507,7 @@ export const NonGroupView: React.FC<NonGroupViewProps> = ({
                             if (key !== lastKey) {
                               lastKey = key;
                               rows.push(
-                                <div key={`mh-${key}`} style={{ fontSize: '10px', fontWeight: 700, letterSpacing: '0.5px', color: '#94A3B8', margin: '6px 0 2px' }}>{label}</div>
+                                <div key={`mh-${key}`} style={{ fontSize: '11px', fontWeight: 700, letterSpacing: '0.5px', color: '#94A3B8', margin: '8px 2px 0' }}>{label}</div>
                               );
                             }
                             const curr = e.currency || defaultCurrency;

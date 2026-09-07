@@ -340,28 +340,8 @@ export const ActivityStudio: React.FC<ActivityStudioProps> = ({
             return (
               <React.Fragment key={e.id}>
                 {showHeader && (
-                  <div
-                    style={{
-                      padding: '12px 8px 8px 8px',
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '12px',
-                    }}
-                  >
-                    <span
-                      style={{
-                        background: '#EEF2FF',
-                        padding: '4px 10px',
-                        borderRadius: '8px',
-                        fontSize: '11px',
-                        fontWeight: 600,
-                        color: '#4F46E5',
-                        letterSpacing: '0.5px',
-                      }}
-                    >
-                      {myLabel}
-                    </span>
-                    <div style={{ flex: 1, height: '1.5px', background: '#F1F5F9' }}></div>
+                  <div style={{ fontSize: '11px', fontWeight: 700, letterSpacing: '0.5px', color: '#94A3B8', margin: '8px 2px 0' }}>
+                    {myLabel}
                   </div>
                 )}
 
