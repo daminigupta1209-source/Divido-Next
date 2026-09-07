@@ -387,29 +387,31 @@ export const ActivityStudio: React.FC<ActivityStudioProps> = ({
                       display: 'flex',
                       justifyContent: 'space-between',
                       alignItems: 'center',
-                      padding: '16px 28px',
+                      padding: '14px 16px',
                       borderRadius: '16px',
                       background: 'var(--w)',
                       border: '1.5px solid #F1F5F9',
                       transition: 'all 0.2s ease',
                       cursor: 'pointer',
                       boxShadow: '0 4px 6px -1px rgba(0,0,0,0.01)',
+                      minHeight: '70px',
+                      boxSizing: 'border-box',
                     }}
                   >
                     <div
                       onClick={() => setShowConvertModalId(e.gId)}
-                      style={{ display: 'flex', alignItems: 'center', gap: '16px', flex: 1, minWidth: 0, cursor: 'pointer' }}
+                      style={{ display: 'flex', alignItems: 'center', gap: '12px', flex: 1, minWidth: 0, cursor: 'pointer' }}
                     >
                       <div
                         style={{
-                          width: '44px',
-                          height: '44px',
+                          width: '38px',
+                          height: '38px',
                           borderRadius: '12px',
                           background: '#F5F3FF',
                           display: 'flex',
                           alignItems: 'center',
                           justifyContent: 'center',
-                          fontSize: '17px',
+                          fontSize: '13px',
                           fontWeight: 700,
                           color: '#6D28D9',
                           border: '1px solid #DDD6FE',
