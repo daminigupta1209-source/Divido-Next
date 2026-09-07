@@ -153,8 +153,8 @@ export const FullScreenAddFriend: React.FC<FullScreenAddFriendProps> = ({
         style={{
           display: 'flex',
           alignItems: 'center',
-          height: '36px',
-          borderRadius: '10px',
+          height: '46px',
+          borderRadius: '12px',
           border: '1.5px solid #E2E8F0',
           background: 'var(--w)',
           padding: '0 12px 0 16px',
@@ -226,8 +226,8 @@ export const FullScreenAddFriend: React.FC<FullScreenAddFriendProps> = ({
           style={{
             display: 'flex',
             alignItems: 'center',
-            height: '36px',
-            borderRadius: '10px',
+            height: '46px',
+            borderRadius: '12px',
             border: '1.5px solid #E2E8F0',
             background: 'var(--w)',
             padding: '0 16px',
