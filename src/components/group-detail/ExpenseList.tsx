@@ -206,7 +206,7 @@ export const ExpenseList: React.FC<ExpenseListProps> = ({
                 if (key !== lastKey) {
                   lastKey = key;
                   rows.push(
-                    <div key={`mh-${key}`} style={{ fontSize: '11px', fontWeight: 700, letterSpacing: '0.5px', color: '#94A3B8', textTransform: 'uppercase', margin: '8px 2px 0' }}>
+                    <div key={`mh-${key}`} style={{ fontSize: '11px', fontWeight: 700, letterSpacing: '0.5px', color: '#94A3B8', margin: '8px 2px 0' }}>
                       {label}
                     </div>
                   );

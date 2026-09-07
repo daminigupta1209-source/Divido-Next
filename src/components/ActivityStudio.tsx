@@ -356,7 +356,6 @@ export const ActivityStudio: React.FC<ActivityStudioProps> = ({
                         fontSize: '11px',
                         fontWeight: 600,
                         color: '#4F46E5',
-                        textTransform: 'uppercase',
                         letterSpacing: '0.5px',
                       }}
                     >

@@ -1,6 +1,6 @@
 import React from 'react';
 import type { Expense } from '../lib/types';
-import { formatDate, getEmoji, formatExactAmount } from '../lib/utils';
+import { formatDate, getEmoji, formatExactAmount, getMonthYearKey } from '../lib/utils';
 
 interface NonGroupViewProps {
   expenses: Expense[];
@@ -499,26 +499,38 @@ export const NonGroupView: React.FC<NonGroupViewProps> = ({
                             {theirExps.length} {theirExps.length === 1 ? 'expense' : 'expenses'}
                           </div>
                         )}
-                        {theirExps.map((e) => {
-                          const curr = e.currency || defaultCurrency;
-                          const iPaid = cleanName(e.paid).toLowerCase() === meLower;
-                          return (
-                            <div
-                              key={e.id}
-                              onClick={() => onOpenExpense(e)}
-                              style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '9px 0', borderBottom: '0.5px solid #EFE7DC', cursor: 'pointer' }}
-                            >
-                              <div style={{ width: '30px', height: '30px', borderRadius: '50%', background: '#F1EFE8', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '14px', flexShrink: 0 }}>
-                                {getEmoji(e.title) || '⚡'}
+                        {(() => {
+                          let lastKey = '';
+                          const rows: React.ReactNode[] = [];
+                          theirExps.forEach((e) => {
+                            const { key, label } = getMonthYearKey(e.date, e.id);
+                            if (key !== lastKey) {
+                              lastKey = key;
+                              rows.push(
+                                <div key={`mh-${key}`} style={{ fontSize: '10px', fontWeight: 700, letterSpacing: '0.5px', color: '#94A3B8', margin: '6px 0 2px' }}>{label}</div>
+                              );
+                            }
+                            const curr = e.currency || defaultCurrency;
+                            const iPaid = cleanName(e.paid).toLowerCase() === meLower;
+                            rows.push(
+                              <div
+                                key={e.id}
+                                onClick={() => onOpenExpense(e)}
+                                style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '9px 0', borderBottom: '0.5px solid #EFE7DC', cursor: 'pointer' }}
+                              >
+                                <div style={{ width: '30px', height: '30px', borderRadius: '50%', background: '#F1EFE8', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '14px', flexShrink: 0 }}>
+                                  {getEmoji(e.title) || '⚡'}
+                                </div>
+                                <div style={{ flex: 1, minWidth: 0 }}>
+                                  <div style={{ fontSize: '13px', fontWeight: 600, color: '#0F172A', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{(e.title || '').replace(/\s*💎\s*$/, '').trim()}</div>
+                                  <div style={{ fontSize: '11px', color: '#94A3B8' }}>{iPaid ? 'You paid' : `${cleanName(e.paid)} paid`} · {formatDate(e.date)}</div>
+                                </div>
+                                <span style={{ fontSize: '13px', fontWeight: 600, color: '#0F172A' }}>{curr} {formatExactAmount(Number(e.amt) || 0)}</span>
                               </div>
-                              <div style={{ flex: 1, minWidth: 0 }}>
-                                <div style={{ fontSize: '13px', fontWeight: 600, color: '#0F172A', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{(e.title || '').replace(/\s*💎\s*$/, '').trim()}</div>
-                                <div style={{ fontSize: '11px', color: '#94A3B8' }}>{iPaid ? 'You paid' : `${cleanName(e.paid)} paid`} · {formatDate(e.date)}</div>
-                              </div>
-                              <span style={{ fontSize: '13px', fontWeight: 600, color: '#0F172A' }}>{curr} {formatExactAmount(Number(e.amt) || 0)}</span>
-                            </div>
-                          );
-                        })}
+                            );
+                          });
+                          return rows;
+                        })()}
                         {/* Delete the whole thread — only once settled up. */}
                         {onDeletePerson && (
                           hasBal ? (
