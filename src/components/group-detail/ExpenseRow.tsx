@@ -220,15 +220,6 @@ export const ExpenseRow: React.FC<ExpenseRowProps> = ({
                 style={{ display: 'block', position: 'absolute', right: 0, top: '100%', minWidth: '160px', zIndex: 100, background: '#FFFFFF', padding: '6px', borderRadius: '12px', border: '1.5px solid #F1F5F9' }}
               >
               <div
-                onClick={(ev) => {
-                  ev.stopPropagation();
-                  setShowConvertModalId(selectedId);
-                  setOpenExpId(null);
-                }}
-              >
-                Adjust Conversion
-              </div>
-              <div
                 style={{ color: '#DB2777' }}
                 onClick={(ev) => {
                   ev.stopPropagation();

@@ -397,7 +397,10 @@ export const ActivityStudio: React.FC<ActivityStudioProps> = ({
                       boxShadow: '0 4px 6px -1px rgba(0,0,0,0.01)',
                     }}
                   >
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '16px', flex: 1, minWidth: 0 }}>
+                    <div
+                      onClick={() => setShowConvertModalId(e.gId)}
+                      style={{ display: 'flex', alignItems: 'center', gap: '16px', flex: 1, minWidth: 0, cursor: 'pointer' }}
+                    >
                       <div
                         style={{
                           width: '44px',
@@ -417,18 +420,18 @@ export const ActivityStudio: React.FC<ActivityStudioProps> = ({
                         {e.toCurr || '💱'}
                       </div>
                       <div style={{ minWidth: 0, flex: 1 }}>
-                        <div
-                          style={{
-                            fontSize: '14px',
-                            fontWeight: 600,
-                            color: '#5B21B6',
-                            whiteSpace: 'nowrap',
-                            textOverflow: 'ellipsis',
-                            overflow: 'hidden',
-                          }}
-                        >
-                          Normalized Ledger
-                        </div>
+                        {(() => {
+                          const cg = groups.find((g) => String(g.id) === String(e.gId));
+                          const gLabel = cg ? ((cg as any).isDirect ? 'Non-Group' : cg.name) : '';
+                          return (
+                            <div style={{ display: 'flex', alignItems: 'baseline', gap: '6px', minWidth: 0 }}>
+                              <div style={{ fontSize: '14px', fontWeight: 600, color: '#5B21B6', whiteSpace: 'nowrap', textOverflow: 'ellipsis', overflow: 'hidden', flexShrink: 1 }}>
+                                Currency Conversion
+                              </div>
+                              {gLabel && <span style={{ fontSize: '11px', fontWeight: 600, color: '#94A3B8', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', flexShrink: 1 }}>· {gLabel}</span>}
+                            </div>
+                          );
+                        })()}
                         <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px', marginTop: '4px' }}>
                           {(() => {
                             const rateMap = e.ratesUsed ? JSON.parse(e.ratesUsed) : { [e.fromCurr || '']: e.ratesUsed };
@@ -473,17 +476,6 @@ export const ActivityStudio: React.FC<ActivityStudioProps> = ({
                               border: '1.5px solid #F1F5F9',
                             }}
                           >
-                            <div
-                              onClick={(ev) => {
-                                ev.stopPropagation();
-                                setShowConvertModalId(e.gId);
-                                setOpenExpId(null);
-                              }}
-                              style={{ padding: '8px 10px', fontSize: '12px', fontWeight: 600, cursor: 'pointer', borderRadius: '8px' }}
-                              className="hover-bg"
-                            >
-                              Adjust Conversion
-                            </div>
                             <div
                               onClick={(ev) => {
                                 ev.stopPropagation();
