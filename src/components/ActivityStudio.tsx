@@ -373,7 +373,7 @@ export const ActivityStudio: React.FC<ActivityStudioProps> = ({
                       ev.preventDefault();
                       handleLongPress(e);
                     }}
-                    onTouchStart={() => {
+                    onTouchStart={(ev) => { if (ev.touches.length > 1) { if (longPressTimerRef.current) clearTimeout(longPressTimerRef.current); return; }
                       longPressTimerRef.current = setTimeout(() => {
                         handleLongPress(e);
                       }, 500);
@@ -532,7 +532,7 @@ export const ActivityStudio: React.FC<ActivityStudioProps> = ({
                       ev.preventDefault();
                       handleLongPress(e);
                     }}
-                    onTouchStart={() => {
+                    onTouchStart={(ev) => { if (ev.touches.length > 1) { if (longPressTimerRef.current) clearTimeout(longPressTimerRef.current); return; }
                       longPressTimerRef.current = setTimeout(() => {
                         handleLongPress(e);
                       }, 500);
