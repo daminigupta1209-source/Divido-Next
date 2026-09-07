@@ -1586,6 +1586,26 @@ function App() {
   // they collapse to a single person in balances/suggestions everywhere.
   // Writes a shared key onto each row (invite_email when the canonical is an
   // email, else the hidden person_id) and mirrors it into local memberIdentities.
+  // Attach an email to a pending invite so the joiner auto-claims by email (no
+  // "pick your name" step, and no same-name mix-up). Sets invite_email in the
+  // cloud + the member's local identity.
+  const setMemberInviteEmail = async (memberName: string, email: string) => {
+    const em = (email || '').trim().toLowerCase();
+    if (!selectedId || selectedId === 'STANDALONE' || !em.includes('@')) return;
+    setGroups((prev) => prev.map((g) =>
+      String(g.id) === String(selectedId)
+        ? { ...g, memberIdentities: { ...((g as any).memberIdentities || {}), [memberName]: em } } as typeof g
+        : g
+    ));
+    if (!checkIfDemoMode() && isAuthenticated) {
+      try {
+        await supabase.from('group_members').update({ invite_email: em }).eq('group_id', selectedId).ilike('name', memberName);
+      } catch (err) {
+        console.error('setMemberInviteEmail failed:', err);
+      }
+    }
+  };
+
   const mergePeople = async (entries: DuplicateEntry[], canonicalOverride?: string) => {
     if (!entries || entries.length < 2) return;
     // The user can choose the primary email to merge everyone into; otherwise
@@ -4321,6 +4341,7 @@ function App() {
               }
             }}
             onCreateGroup={createGroupSecure}
+            onSetMemberEmail={setMemberInviteEmail}
           />
         )}
         </React.Suspense>
