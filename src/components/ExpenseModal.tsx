@@ -1007,7 +1007,7 @@ export const ExpenseModal: React.FC<ExpenseModalProps> = ({
                     onClick={startListening}
                     title="Use voice to fill"
                     aria-label="Use voice to fill"
-                    style={{ width: '30px', height: '30px', borderRadius: '8px', background: '#2563EB', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                    style={{ width: '30px', height: '30px', borderRadius: '8px', background: '#94A3B8', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
                   >
                     <svg viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ width: '16px', height: '16px' }}>
                       <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z" /><path d="M19 10v2a7 7 0 0 1-14 0v-2" /><line x1="12" y1="19" x2="12" y2="23" /><line x1="8" y1="23" x2="16" y2="23" />
@@ -1020,7 +1020,7 @@ export const ExpenseModal: React.FC<ExpenseModalProps> = ({
                   onClick={openScanner}
                   title="Scan receipt"
                   aria-label="Scan receipt"
-                  style={{ width: '30px', height: '30px', borderRadius: '8px', background: '#2563EB', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                  style={{ width: '30px', height: '30px', borderRadius: '8px', background: '#34D399', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
                 >
                   <svg viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ width: '16px', height: '16px' }}>
                     <path d="M4 8V6a2 2 0 0 1 2-2h2" /><path d="M16 4h2a2 2 0 0 1 2 2v2" /><path d="M20 16v2a2 2 0 0 1-2 2h-2" /><path d="M8 20H6a2 2 0 0 1-2-2v-2" /><path d="M4 12h16" />
