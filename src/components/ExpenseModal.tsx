@@ -1247,7 +1247,7 @@ export const ExpenseModal: React.FC<ExpenseModalProps> = ({
                   style={{
                     width: '100%',
                     height: '100%',
-                    padding: '0 90px 0 4px',
+                    padding: '0 66px 0 4px',
                     border: 'none',
                     background: 'transparent',
                     fontSize: '18px',
@@ -1302,15 +1302,6 @@ export const ExpenseModal: React.FC<ExpenseModalProps> = ({
                         <path d="M4 8V6a2 2 0 0 1 2-2h2" /><path d="M16 4h2a2 2 0 0 1 2 2v2" /><path d="M20 16v2a2 2 0 0 1-2 2h-2" /><path d="M8 20H6a2 2 0 0 1-2-2v-2" /><path d="M4 12h16" />
                       </svg>
                     )}
-                  </span>
-                  {/* Notes icon */}
-                  <span
-                    onClick={() => { setTempNotes(notes); setShowNotesPopup(true); }}
-                    style={{ opacity: notes ? 1 : 0.7, cursor: 'pointer', width: '24px', height: '24px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
-                  >
-                    <svg viewBox="0 0 24 24" fill="none" stroke="#64748B" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" style={{ width: '17px', height: '17px', display: 'block' }}>
-                      <path d="M12 20h9" /><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z" />
-                    </svg>
                   </span>
                 </div>
 
@@ -1926,6 +1917,33 @@ export const ExpenseModal: React.FC<ExpenseModalProps> = ({
                 })}
               </div>
             )}
+          </div>
+
+          {/* NOTES PILL (above the date) — matches the date pill styling */}
+          <div style={{ display: 'flex', justifyContent: 'flex-start', marginTop: '8px', padding: '0 4px' }}>
+            <div
+              id="expense-notes-btn"
+              onClick={() => { setTempNotes(notes); setShowNotesPopup(true); }}
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '8px',
+                borderRadius: '12px',
+                background: '#FFFFFF',
+                border: '1.5px solid var(--border)',
+                padding: '10px 14px',
+                boxShadow: '0 2px 6px rgba(0,0,0,0.02)',
+                cursor: 'pointer',
+                maxWidth: '100%',
+              }}
+            >
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="var(--t)" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M12 20h9" /><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z" />
+              </svg>
+              <span style={{ fontSize: '13px', fontWeight: 600, color: 'var(--t)', whiteSpace: 'nowrap' }}>
+                Add note
+              </span>
+            </div>
           </div>
 
           {/* DATE PILL (bottom-left) — mirrors the New Group card */}
