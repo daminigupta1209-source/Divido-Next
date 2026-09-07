@@ -106,8 +106,6 @@ export const ExpenseModal: React.FC<ExpenseModalProps> = ({
     setNotes,
     showNotesPopup,
     setShowNotesPopup,
-    showDatePopup,
-    setShowDatePopup,
     tempNotes,
     setTempNotes,
     recurrence,
@@ -219,6 +217,17 @@ export const ExpenseModal: React.FC<ExpenseModalProps> = ({
   }, [isListening, transcript, activeGroup, me, setAmt, setTitle, setPayer, setSplitMode]);
 
   const [shakingFriend, setShakingFriend] = React.useState<string | null>(null);
+
+  // Bottom-right date pill (mirrors the New Group card): native date input opened
+  // via showPicker(), label formatted like "7 Sep 26'".
+  const dateInputRef = React.useRef<HTMLInputElement>(null);
+  const formatDateLabel = (dateStr: string) => {
+    if (!dateStr) return '';
+    const d = new Date(dateStr);
+    if (isNaN(d.getTime())) return dateStr;
+    const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    return `${d.getDate()} ${months[d.getMonth()]} ${String(d.getFullYear()).slice(-2)}'`;
+  };
 
   // Header attachment button: save a photo/file as a receipt attachment (no OCR).
   const uploadInputRef = React.useRef<HTMLInputElement>(null);
@@ -1454,7 +1463,7 @@ export const ExpenseModal: React.FC<ExpenseModalProps> = ({
                     width: '100%',
                     height: '100%',
                     paddingLeft: '6px',
-                    paddingRight: '64px',
+                    paddingRight: '40px',
                     fontSize: amt.length > 12 ? '14px' : amt.length > 8 ? '16px' : '18px',
                     fontWeight: '700',
                     textAlign: 'left',
@@ -1468,15 +1477,6 @@ export const ExpenseModal: React.FC<ExpenseModalProps> = ({
                   }}
                 />
                 <div style={{ position: 'absolute', right: '6px', top: '50%', transform: 'translateY(-50%)', display: 'flex', alignItems: 'center', gap: '4px' }}>
-                  <span
-                    onClick={() => setShowDatePopup(true)}
-                    style={{ opacity: 0.85, cursor: 'pointer', width: '24px', height: '24px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
-                    title="Set Date"
-                  >
-                    <svg viewBox="0 0 24 24" fill="none" stroke="#64748B" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" style={{ width: '17px', height: '17px', display: 'block' }}>
-                      <rect x="3" y="4.5" width="18" height="17" rx="2.5" /><path d="M8 2.5v4M16 2.5v4M3 9.5h18" />
-                    </svg>
-                  </span>
                 <div ref={recurrenceContainerRef} style={{ display: 'flex', alignItems: 'center' }}>
                   <button
                     id="expense-recurrence-btn"
@@ -1928,6 +1928,62 @@ export const ExpenseModal: React.FC<ExpenseModalProps> = ({
             )}
           </div>
 
+          {/* DATE PILL (bottom-right) — mirrors the New Group card */}
+          <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '8px', padding: '0 4px' }}>
+            <div
+              id="expense-date-btn"
+              onClick={() => {
+                if (dateInputRef.current) {
+                  try {
+                    dateInputRef.current.showPicker();
+                  } catch (e) {
+                    dateInputRef.current.focus();
+                    dateInputRef.current.click();
+                  }
+                }
+              }}
+              style={{
+                position: 'relative',
+                display: 'inline-flex',
+                alignItems: 'center',
+                borderRadius: '12px',
+                background: '#FFFFFF',
+                border: '1.5px solid var(--border)',
+                padding: '10px 14px',
+                boxShadow: '0 2px 6px rgba(0,0,0,0.02)',
+                cursor: 'pointer',
+              }}
+            >
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', zIndex: 1 }}>
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="var(--t)" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                  <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
+                  <line x1="16" y1="2" x2="16" y2="6" />
+                  <line x1="8" y1="2" x2="8" y2="6" />
+                  <line x1="3" y1="10" x2="21" y2="10" />
+                </svg>
+                <span style={{ fontSize: '13px', fontWeight: 600, color: 'var(--t)' }}>
+                  {formatDateLabel(date)}
+                </span>
+              </div>
+              <input
+                ref={dateInputRef}
+                type="date"
+                value={date}
+                onChange={(e) => setDate(e.target.value)}
+                max={new Date().toISOString().split('T')[0]}
+                style={{
+                  position: 'absolute',
+                  top: 0,
+                  left: 0,
+                  width: '100%',
+                  height: '100%',
+                  opacity: 0.01,
+                  cursor: 'pointer',
+                  zIndex: 2,
+                }}
+              />
+            </div>
+          </div>
 
         </div>
 
@@ -2050,49 +2106,6 @@ export const ExpenseModal: React.FC<ExpenseModalProps> = ({
       />
 
 
-
-      {/* Notes Textarea Popup */}
-      {showDatePopup && (
-        <div
-          onClick={() => setShowDatePopup(false)}
-          style={{
-            position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
-            background: 'rgba(0,0,0,0.4)', zIndex: 9999,
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-          }}
-        >
-          <div
-            onClick={(e) => e.stopPropagation()}
-            style={{
-              background: '#fff', borderRadius: '20px', padding: '28px 24px',
-              boxShadow: '0 20px 40px rgba(0,0,0,0.15)',
-              display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '16px',
-              minWidth: '260px', position: 'relative',
-            }}
-          >
-            <button onClick={() => setShowDatePopup(false)} style={{ position: 'absolute', top: '12px', right: '14px', background: 'none', border: 'none', fontSize: '18px', cursor: 'pointer', color: '#94A3B8', lineHeight: 1 }}>✕</button>
-            <p style={{ margin: 0, fontWeight: 600, fontSize: '15px', color: '#1E293B' }}>📅 Pick a Date</p>
-            <input
-              type="date"
-              value={date}
-              onChange={(e) => { setDate(e.target.value); setShowDatePopup(false); }}
-              style={{
-                fontSize: '16px', padding: '10px 16px', borderRadius: '12px',
-                border: '1.5px solid #CBD5E1', outline: 'none', cursor: 'pointer',
-                fontWeight: 700, color: '#1E293B',
-              }}
-            />
-            <button
-              onClick={() => setShowDatePopup(false)}
-              style={{
-                background: '#16A34A', color: '#fff', border: 'none',
-                borderRadius: '10px', padding: '8px 24px', fontWeight: 600,
-                fontSize: '13px', cursor: 'pointer',
-              }}
-            >Done</button>
-          </div>
-        </div>
-      )}
 
       {showNotesPopup && (
         <div
