@@ -2,7 +2,7 @@ import { GoogleGenerativeAI, Schema, SchemaType } from '@google/generative-ai';
 import { Group } from './types';
 
 // Initialize the API using the key from environment variables
-const apiKey = import.meta.env.VITE_GEMINI_API_KEY || '';
+const apiKey = import.meta.env.VITE_GEMINI_API_KEY || process.env.GEMINI_API_KEY || '';
 const genAI = new GoogleGenerativeAI(apiKey);
 
 // We define a strict schema to force Gemini to return JSON in our exact format.
@@ -36,7 +36,7 @@ const expenseSchema: Schema = {
 
 export async function parseExpenseWithAI(transcript: string, activeGroup: Group, me: string) {
   if (!apiKey) {
-    throw new Error('VITE_GEMINI_API_KEY is missing in .env.local');
+    throw new Error('GEMINI_API_KEY is missing');
   }
 
   // Use the standard pro model
