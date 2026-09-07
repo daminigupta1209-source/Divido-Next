@@ -17,6 +17,7 @@ import { useVoiceRecognition } from '../hooks/useVoiceRecognition';
 import { StyledDropdown } from './StyledDropdown';
 import { CameraCaptureModal } from './CameraCaptureModal';
 import { FullScreenAddFriend } from './FullScreenAddFriend';
+import { buildPeopleSuggestions } from '../lib/identity';
 
 // Borderless trigger — the wrapping div already provides the pill/border/shadow.
 const emInlineBtnStyle: React.CSSProperties = { border: '1.5px solid #EAEFF4', background: 'var(--w, #fff)', boxShadow: '0 1px 3px rgba(0,0,0,0.03)', borderRadius: '19px', height: '38px', width: '100%', fontSize: '12px', fontWeight: 600, color: '#1E293B', padding: '0 16px' };
@@ -1187,10 +1188,7 @@ export const ExpenseModal: React.FC<ExpenseModalProps> = ({
                     singleSelect
                     onClose={() => setShowFriendPickerPopup(false)}
                     existingMembers={[me]}
-                    suggestions={allKnownFriends
-                      .map((f) => f.replace(' (Left)', ''))
-                      .filter((f, i, arr) => f && f.toLowerCase() !== (me || '').toLowerCase() && arr.indexOf(f) === i)
-                      .map((f) => ({ name: f, email: '' }))}
+                    suggestions={buildPeopleSuggestions(groups, null, [me], me, myEmail)}
                     onAddFriends={(friends) => {
                       const picked = friends[0];
                       if (picked) {
