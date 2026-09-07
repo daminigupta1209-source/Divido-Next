@@ -1928,8 +1928,8 @@ export const ExpenseModal: React.FC<ExpenseModalProps> = ({
             )}
           </div>
 
-          {/* DATE PILL (bottom-right) — mirrors the New Group card */}
-          <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '8px', padding: '0 4px' }}>
+          {/* DATE PILL (bottom-left) — mirrors the New Group card */}
+          <div style={{ display: 'flex', justifyContent: 'flex-start', marginTop: '8px', padding: '0 4px' }}>
             <div
               id="expense-date-btn"
               onClick={() => {
