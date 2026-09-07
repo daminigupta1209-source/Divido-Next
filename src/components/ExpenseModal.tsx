@@ -147,6 +147,7 @@ export const ExpenseModal: React.FC<ExpenseModalProps> = ({
     friendsToSelect,
     payerOptions,
     filteredSuggs,
+    dismissSuggestion,
     currentEmoji,
     handleShareChange,
     getShareAmt,
@@ -1270,40 +1271,75 @@ export const ExpenseModal: React.FC<ExpenseModalProps> = ({
                     {filteredSuggs.map((s, idx) => (
                       <div
                         key={s}
-                        onMouseDown={(ev) => {
-                          ev.preventDefault();
-                          ev.stopPropagation();
-                          const parts = s.split(' ');
-                          const lastPart = parts[parts.length - 1];
-                          const hasEmoji = /\p{Emoji}/u.test(lastPart) && parts.length > 1;
-                          if (hasEmoji) {
-                            setTitle(parts.slice(0, -1).join(' '));
-                            setOverrideEmoji(lastPart);
-                          } else {
-                            setTitle(s);
-                            setOverrideEmoji(null);
-                          }
-                          setShowSuggestions(false);
-                          setSelIdx(-1);
-                          setTimeout(() => {
-                            document.getElementById('val-entry')?.focus();
-                          }, 50);
-                        }}
                         onMouseEnter={() => setSelIdx(idx)}
                         style={{
-                          padding: '8px 12px',
-                          fontSize: '12px',
-                          fontWeight: '800',
-                          color: '#1E293B',
-                          cursor: 'pointer',
+                          display: 'flex',
+                          alignItems: 'center',
                           borderBottom: '1px solid #F8FAFC',
                           transition: 'background-color 0.1s',
                           background: idx === selIdx ? '#F1F5F9' : 'transparent',
                         }}
                       >
-                        {s}
+                        <div
+                          onMouseDown={(ev) => {
+                            ev.preventDefault();
+                            ev.stopPropagation();
+                            const parts = s.split(' ');
+                            const lastPart = parts[parts.length - 1];
+                            const hasEmoji = /\p{Emoji}/u.test(lastPart) && parts.length > 1;
+                            if (hasEmoji) {
+                              setTitle(parts.slice(0, -1).join(' '));
+                              setOverrideEmoji(lastPart);
+                            } else {
+                              setTitle(s);
+                              setOverrideEmoji(null);
+                            }
+                            setShowSuggestions(false);
+                            setSelIdx(-1);
+                            setTimeout(() => {
+                              document.getElementById('val-entry')?.focus();
+                            }, 50);
+                          }}
+                          style={{
+                            flex: 1,
+                            padding: '8px 6px 8px 12px',
+                            fontSize: '12px',
+                            fontWeight: '800',
+                            color: '#1E293B',
+                            cursor: 'pointer',
+                          }}
+                        >
+                          {s}
+                        </div>
+                        <button
+                          type="button"
+                          title="Remove this suggestion"
+                          onMouseDown={(ev) => {
+                            ev.preventDefault();
+                            ev.stopPropagation();
+                            dismissSuggestion(s);
+                          }}
+                          style={{
+                            border: 'none',
+                            background: 'transparent',
+                            color: '#94A3B8',
+                            cursor: 'pointer',
+                            padding: '8px 10px',
+                            fontSize: '13px',
+                            lineHeight: 1,
+                            display: 'flex',
+                            alignItems: 'center',
+                          }}
+                        >
+                          ✕
+                        </button>
                       </div>
                     ))}
+                    {filteredSuggs.length === 0 && (
+                      <div style={{ padding: '10px 12px', fontSize: '11px', fontWeight: 600, color: '#94A3B8' }}>
+                        No suggestions
+                      </div>
+                    )}
                   </div>
                 )}
               </div>

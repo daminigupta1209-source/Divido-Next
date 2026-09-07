@@ -178,6 +178,26 @@ export function useExpenseForm({
     'Coffee ☕',
   ];
 
+  // Suggestions the user has dismissed (they no longer want them offered).
+  // Persisted so the choice sticks across sessions.
+  const DISMISSED_SUGGS_KEY = 'dividoDismissedSuggestions';
+  const [dismissedSuggs, setDismissedSuggs] = useState<string[]>(() => {
+    try {
+      const raw = localStorage.getItem(DISMISSED_SUGGS_KEY);
+      return raw ? (JSON.parse(raw) as string[]) : [];
+    } catch {
+      return [];
+    }
+  });
+  const dismissSuggestion = (s: string) => {
+    setDismissedSuggs((prev) => {
+      if (prev.includes(s)) return prev;
+      const next = [...prev, s];
+      try { localStorage.setItem(DISMISSED_SUGGS_KEY, JSON.stringify(next)); } catch { /* ignore */ }
+      return next;
+    });
+  };
+
   const [date, setDate] = useState<string>(
     editingExpense ? editingExpense.date : new Date().toISOString().split('T')[0]
   );
@@ -320,7 +340,7 @@ export function useExpenseForm({
     return friendsToSelect;
   }, [localGId, activeGroup, friendsToSelect, payer, me, selectedSplitters]);
 
-  const filteredSuggs = suggs;
+  const filteredSuggs = suggs.filter((s) => !dismissedSuggs.includes(s));
 
   const currentEmoji = useMemo(() => overrideEmoji || getEmoji(title) || '📄', [title, overrideEmoji]);
 
@@ -947,6 +967,7 @@ export function useExpenseForm({
     friendsToSelect,
     payerOptions,
     filteredSuggs,
+    dismissSuggestion,
     currentEmoji,
     triggerShake,
     handleShareChange,
