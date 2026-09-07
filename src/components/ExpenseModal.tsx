@@ -449,7 +449,7 @@ export const ExpenseModal: React.FC<ExpenseModalProps> = ({
             justifyContent: 'space-between',
             alignItems: 'center',
             background: '#F8FAFC',
-            padding: '18px 16px 18px 16px',
+            padding: '18px 20px 18px 16px',
             margin: '-16px -20px 12px -20px',
             borderBottom: 'none',
           }}
@@ -861,15 +861,14 @@ export const ExpenseModal: React.FC<ExpenseModalProps> = ({
                 display: 'inline-flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                padding: '4px 0px',
-                marginRight: '-6px',
+                padding: '6px',
                 lineHeight: 1,
-                color: '#10B981',
+                color: '#15803D',
                 opacity: !isValid || !title ? 0.6 : 1,
                 transition: 'all 0.2s',
               }}
             >
-              <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3.5" strokeLinecap="round" strokeLinejoin="round">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3.5" strokeLinecap="round" strokeLinejoin="round">
                 <polyline points="20 6 9 17 4 12" />
               </svg>
             </button>
