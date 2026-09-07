@@ -13,6 +13,7 @@ const BillScanner = React.lazy(() =>
 
 import { RecurrenceSelector } from './expense-modal/RecurrenceSelector';
 import { useExpenseForm } from '../hooks/useExpenseForm';
+import { useVoiceRecognition } from '../hooks/useVoiceRecognition';
 import { StyledDropdown } from './StyledDropdown';
 import { CameraCaptureModal } from './CameraCaptureModal';
 
@@ -188,6 +189,34 @@ export const ExpenseModal: React.FC<ExpenseModalProps> = ({
     setAutoOpenScanner,
     onExpenseSaved,
   });
+
+  const { isListening, transcript, error: voiceError, startListening, stopListening, hasSupport } = useVoiceRecognition();
+  const [isParsingVoice, setIsParsingVoice] = React.useState(false);
+
+  // When speech stops and we have a transcript, send to Gemini
+  React.useEffect(() => {
+    if (!isListening && transcript && !isParsingVoice) {
+      const parseVoice = async () => {
+        setIsParsingVoice(true);
+        try {
+          const { parseExpenseWithAI } = await import('../lib/gemini');
+          const fallbackGroup = { id: 'STANDALONE', name: 'Non-Group', members: [me], currency: '₹' };
+          // activeGroup might be a Group object, so we pass it safely
+          const result = await parseExpenseWithAI(transcript, (activeGroup as any) || fallbackGroup, me);
+          if (result.amount) setAmt(String(result.amount));
+          if (result.title) setTitle(result.title);
+          if (result.payer) setPayer(result.payer);
+          if (result.splitMode) setSplitMode(result.splitMode as any);
+        } catch (err) {
+          console.error(err);
+          alert('Failed to parse voice command. Try again.');
+        } finally {
+          setIsParsingVoice(false);
+        }
+      };
+      parseVoice();
+    }
+  }, [isListening, transcript, activeGroup, me, setAmt, setTitle, setPayer, setSplitMode]);
 
   const [shakingFriend, setShakingFriend] = React.useState<string | null>(null);
 
@@ -1224,6 +1253,32 @@ export const ExpenseModal: React.FC<ExpenseModalProps> = ({
 
                 {/* Icons row — right side of description input */}
                 <div style={{ position: 'absolute', right: '8px', top: '50%', transform: 'translateY(-50%)', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                  {/* Mic icon */}
+                  {hasSupport && (
+                    <span
+                      onClick={isListening ? stopListening : startListening}
+                      title={isListening ? 'Listening...' : 'Use Voice to fill'}
+                      style={{ fontSize: '18px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', width: '24px', height: '24px' }}
+                    >
+                      {isParsingVoice ? (
+                        <span className="spin" style={{ fontSize: '15px' }}>✨</span>
+                      ) : isListening ? (
+                        <svg viewBox="0 0 24 24" fill="none" stroke="#EF4444" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ width: '18px', height: '18px', display: 'block', animation: 'pulse 1.5s infinite' }}>
+                          <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"></path>
+                          <path d="M19 10v2a7 7 0 0 1-14 0v-2"></path>
+                          <line x1="12" y1="19" x2="12" y2="23"></line>
+                          <line x1="8" y1="23" x2="16" y2="23"></line>
+                        </svg>
+                      ) : (
+                        <svg viewBox="0 0 24 24" fill="none" stroke="#64748B" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" style={{ width: '18px', height: '18px', display: 'block' }}>
+                          <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"></path>
+                          <path d="M19 10v2a7 7 0 0 1-14 0v-2"></path>
+                          <line x1="12" y1="19" x2="12" y2="23"></line>
+                          <line x1="8" y1="23" x2="16" y2="23"></line>
+                        </svg>
+                      )}
+                    </span>
+                  )}
                   {/* Scan icon */}
                   <span
                     id="expense-scan-btn"
