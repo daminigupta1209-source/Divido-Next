@@ -302,10 +302,9 @@ export const formatDate = (dateStr: string): string => {
   const d = new Date(dateStr);
   if (isNaN(d.getTime())) return dateStr;
   const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-  // Short 2-digit year with a trailing apostrophe (e.g. "13 Aug 26'") for a
-  // cleaner, more compact look in activity rows and cards.
-  const yy = d.getFullYear().toString().slice(-2);
-  return `${d.getDate().toString().padStart(2, '0')} ${months[d.getMonth()]} ${yy}'`;
+  // Day + short month only (e.g. "6 Sep"); the YEAR is shown once per month
+  // section heading (see getMonthYearKey) instead of on every row.
+  return `${d.getDate()} ${months[d.getMonth()]}`;
 };
 
 /**
@@ -367,10 +366,7 @@ export const getMonthYearKey = (dateStr: string, id: string | number): { key: st
       d = new Date();
     }
   }
-  const months = [
-    'January', 'February', 'March', 'April', 'May', 'June',
-    'July', 'August', 'September', 'October', 'November', 'December'
-  ];
+  const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
   return {
     key: `${d.getFullYear()}-${d.getMonth()}`,
     label: `${months[d.getMonth()]} ${d.getFullYear()}`

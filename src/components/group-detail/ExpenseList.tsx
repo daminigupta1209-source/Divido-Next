@@ -3,7 +3,7 @@ import { Group, Expense } from '../../lib/types';
 import { ExpenseRow } from './ExpenseRow';
 import { StyledDropdown } from '../StyledDropdown';
 
-import { parseExpenseId } from '../../lib/utils';
+import { parseExpenseId, getMonthYearKey } from '../../lib/utils';
 
 const elFilterBtnStyle: React.CSSProperties = { padding: '6px 12px', borderRadius: '20px', border: '1.5px solid #E2E8F0', fontSize: '12px', fontWeight: 600, background: 'var(--w, #fff)', color: '#475569', boxShadow: '0 1px 4px rgba(0,0,0,0.04)' };
 
@@ -198,26 +198,42 @@ export const ExpenseList: React.FC<ExpenseListProps> = ({
           </p>
         ) : (
           <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-            {sorted.map((e) => (
-              <ExpenseRow
-                key={e.id}
-                e={e}
-                me={me}
-                selectedGroup={selectedGroup}
-                selectedId={selectedId}
-                openExpId={openExpId}
-                setOpenExpId={setOpenExpId}
-                setEditingExpense={setEditingExpense}
-                setShowExpModal={setShowExpModal}
-                setEditingSettle={setEditingSettle}
-                setShowSettleModal={setShowSettleModal}
-                setShowConvertModalId={setShowConvertModalId}
-                setExpenses={setExpenses}
-                setGroups={setGroups}
-                groups={groups}
-                deleteExpense={deleteExpense}
-              />
-            ))}
+            {(() => {
+              let lastKey = '';
+              const rows: React.ReactNode[] = [];
+              sorted.forEach((e) => {
+                const { key, label } = getMonthYearKey(e.date, e.id);
+                if (key !== lastKey) {
+                  lastKey = key;
+                  rows.push(
+                    <div key={`mh-${key}`} style={{ fontSize: '11px', fontWeight: 700, letterSpacing: '0.5px', color: '#94A3B8', textTransform: 'uppercase', margin: '8px 2px 0' }}>
+                      {label}
+                    </div>
+                  );
+                }
+                rows.push(
+                  <ExpenseRow
+                    key={e.id}
+                    e={e}
+                    me={me}
+                    selectedGroup={selectedGroup}
+                    selectedId={selectedId}
+                    openExpId={openExpId}
+                    setOpenExpId={setOpenExpId}
+                    setEditingExpense={setEditingExpense}
+                    setShowExpModal={setShowExpModal}
+                    setEditingSettle={setEditingSettle}
+                    setShowSettleModal={setShowSettleModal}
+                    setShowConvertModalId={setShowConvertModalId}
+                    setExpenses={setExpenses}
+                    setGroups={setGroups}
+                    groups={groups}
+                    deleteExpense={deleteExpense}
+                  />
+                );
+              });
+              return rows;
+            })()}
             <div style={{ height: '80px' }} />
           </div>
         )}
