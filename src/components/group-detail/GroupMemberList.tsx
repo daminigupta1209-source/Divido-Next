@@ -57,7 +57,6 @@ export const GroupMemberList: React.FC<GroupMemberListProps> = ({
   // stable hook order across renders (toggling showFriendsList otherwise crashes).
   const [editingMemberName, setEditingMemberName] = React.useState<string | null>(null);
   const [inlineRenameVal, setInlineRenameVal] = React.useState<string>('');
-  const [emailEditFor, setEmailEditFor] = React.useState<string | null>(null);
   const [emailEditVal, setEmailEditVal] = React.useState<string>('');
   const [isAddingInline, setIsAddingInline] = React.useState(false);
   const touchStartX = React.useRef<number | null>(null);
@@ -749,28 +748,46 @@ export const GroupMemberList: React.FC<GroupMemberListProps> = ({
                   <Avatar name={m} status="pending" />
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '1px', minWidth: 0, flex: 1 }}>
                     {editingMemberName === m ? (
-                      <input
-                        autoFocus
-                        value={inlineRenameVal}
-                        onChange={(e) => setInlineRenameVal(e.target.value)}
-                        onBlur={() => handleInlineSave(m)}
-                        onKeyDown={(e) => {
-                          if (e.key === 'Enter') handleInlineSave(m);
-                          if (e.key === 'Escape') setEditingMemberName(null);
-                        }}
-                        style={{
-                          fontSize: '13px',
-                          fontWeight: 'bold',
-                          padding: '2px 6px',
-                          border: '1.5px solid #6366F1',
-                          borderRadius: '6px',
-                          background: 'var(--bg)',
-                          color: 'var(--t)',
-                          outline: 'none',
-                          width: '100%',
-                          boxSizing: 'border-box',
-                        }}
-                      />
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', width: '100%' }} onClick={(e) => e.stopPropagation()}>
+                        <input
+                          autoFocus
+                          value={inlineRenameVal}
+                          onChange={(e) => setInlineRenameVal(e.target.value)}
+                          onKeyDown={(e) => { if (e.key === 'Escape') setEditingMemberName(null); }}
+                          placeholder="Name"
+                          style={{ fontSize: '13px', fontWeight: 'bold', padding: '5px 8px', border: '1.5px solid #6366F1', borderRadius: '8px', background: 'var(--bg)', color: 'var(--t)', outline: 'none', width: '100%', boxSizing: 'border-box' }}
+                        />
+                        {onSetMemberEmail && (
+                          <input
+                            type="search"
+                            inputMode="email"
+                            autoComplete="off"
+                            value={emailEditVal}
+                            onChange={(e) => setEmailEditVal(e.target.value)}
+                            onKeyDown={(e) => { if (e.key === 'Escape') setEditingMemberName(null); }}
+                            placeholder="Email (optional) — lets them join instantly"
+                            style={{ fontSize: '12px', fontWeight: 500, padding: '5px 8px', border: '1.5px solid #E2E8F0', borderRadius: '8px', background: 'var(--bg)', color: 'var(--t)', outline: 'none', width: '100%', boxSizing: 'border-box' }}
+                          />
+                        )}
+                        <div style={{ display: 'flex', gap: '8px' }}>
+                          <button
+                            onClick={() => {
+                              const v = emailEditVal.trim();
+                              if (onSetMemberEmail && v && isValidEmail(v)) onSetMemberEmail(m, v.toLowerCase());
+                              handleInlineSave(m);
+                            }}
+                            style={{ flex: 1, padding: '7px', borderRadius: '8px', border: 'none', background: '#10B981', color: '#fff', fontWeight: 700, fontSize: '12px', cursor: 'pointer' }}
+                          >
+                            Save
+                          </button>
+                          <button
+                            onClick={() => setEditingMemberName(null)}
+                            style={{ padding: '7px 12px', borderRadius: '8px', border: '1.5px solid #E2E8F0', background: 'var(--w)', color: '#64748B', fontWeight: 700, fontSize: '12px', cursor: 'pointer' }}
+                          >
+                            Cancel
+                          </button>
+                        </div>
+                      </div>
                     ) : (
                       <>
                       <span
@@ -784,37 +801,23 @@ export const GroupMemberList: React.FC<GroupMemberListProps> = ({
                         }}
                         onClick={(e) => {
                           e.stopPropagation();
+                          setInlineRenameVal(m.replace(/\s*\(me\)$/i, ''));
+                          setEmailEditVal(emailFor(m));
                           setEditingMemberName(m);
-                          setInlineRenameVal(m);
                         }}
                       >
                         {checkIsMe(m) ? 'You' : m.replace(/\s*\(me\)$/i, '')} {checkIsAdmin(m) && <span style={{ fontSize: '10px', fontWeight: 600, color: '#7C3AED', background: '#F5F3FF', padding: '1px 6px', borderRadius: '4px', marginLeft: '6px' }}>Admin</span>}
                       </span>
-                      {/* Email line: shows the invite email, or a tappable "Add
-                          email" so an admin can make this invite auto-claim on join. */}
-                      {emailEditFor === m ? (
-                        <input
-                          autoFocus
-                          type="search"
-                          inputMode="email"
-                          placeholder="their@email.com"
-                          value={emailEditVal}
-                          onChange={(e) => setEmailEditVal(e.target.value)}
-                          onBlur={() => { const v = emailEditVal.trim(); if (v && isValidEmail(v) && onSetMemberEmail) onSetMemberEmail(m, v.toLowerCase()); setEmailEditFor(null); }}
-                          onKeyDown={(e) => {
-                            if (e.key === 'Enter') { const v = emailEditVal.trim(); if (v && isValidEmail(v) && onSetMemberEmail) onSetMemberEmail(m, v.toLowerCase()); setEmailEditFor(null); }
-                            if (e.key === 'Escape') setEmailEditFor(null);
-                          }}
-                          style={{ fontSize: '12px', fontWeight: 500, padding: '2px 6px', border: '1.5px solid #6366F1', borderRadius: '6px', background: 'var(--bg)', color: 'var(--t)', outline: 'none', width: '100%', maxWidth: '220px', boxSizing: 'border-box', marginTop: '2px' }}
-                        />
-                      ) : emailFor(m) ? (
+                      {/* Email line: the invite email if set, else a tappable "Add
+                          email" that opens the same name+email editor. */}
+                      {emailFor(m) ? (
                         <span style={{ fontSize: '11px', color: '#94A3B8', fontWeight: 500, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{emailFor(m)}</span>
                       ) : (
                         <span style={{ fontSize: '11px', color: isJustAdded ? '#059669' : '#94A3B8', fontWeight: isJustAdded ? 700 : 500, display: 'inline-flex', alignItems: 'center', gap: '8px' }}>
                           {isJustAdded ? '✓ Just added' : 'Invite sent'}
                           {onSetMemberEmail && (
                             <span
-                              onClick={(e) => { e.stopPropagation(); setEmailEditVal(''); setEmailEditFor(m); }}
+                              onClick={(e) => { e.stopPropagation(); setInlineRenameVal(m.replace(/\s*\(me\)$/i, '')); setEmailEditVal(''); setEditingMemberName(m); }}
                               style={{ color: '#6366F1', fontWeight: 700, cursor: 'pointer' }}
                             >
                               + Add email
