@@ -153,11 +153,12 @@ export const FullScreenAddFriend: React.FC<FullScreenAddFriendProps> = ({
         style={{
           display: 'flex',
           alignItems: 'center',
-          height: '46px',
+          height: '50px',
           borderRadius: '12px',
           border: '1.5px solid #E2E8F0',
           background: 'var(--w)',
           padding: '0 12px 0 16px',
+          flexShrink: 0,
           boxSizing: 'border-box',
           width: '100%',
           cursor: 'text',
@@ -184,7 +185,9 @@ export const FullScreenAddFriend: React.FC<FullScreenAddFriendProps> = ({
           }}
           style={{
             flex: 1,
+            height: '100%',
             border: 'none',
+            borderRadius: 0,
             background: 'transparent',
             fontSize: '14px',
             fontWeight: 600,
@@ -194,6 +197,9 @@ export const FullScreenAddFriend: React.FC<FullScreenAddFriendProps> = ({
             outline: 'none',
             minWidth: 0,
             lineHeight: 'normal',
+            WebkitAppearance: 'none',
+            appearance: 'none',
+            boxSizing: 'border-box',
           }}
         />
         {canAddNew && (
@@ -226,7 +232,7 @@ export const FullScreenAddFriend: React.FC<FullScreenAddFriendProps> = ({
           style={{
             display: 'flex',
             alignItems: 'center',
-            height: '46px',
+            height: '50px',
             borderRadius: '12px',
             border: '1.5px solid #E2E8F0',
             background: 'var(--w)',
