@@ -204,10 +204,28 @@ export const ExpenseModal: React.FC<ExpenseModalProps> = ({
           const fallbackGroup = { id: 'STANDALONE', name: 'Non-Group', members: [me], currency: '₹' };
           // activeGroup might be a Group object, so we pass it safely
           const result = await parseExpenseWithAI(transcript, (activeGroup as any) || fallbackGroup, me);
+          
           if (result.amount) setAmt(String(result.amount));
           if (result.title) setTitle(result.title);
           if (result.payer) setPayer(result.payer);
-          if (result.splitMode) setSplitMode(result.splitMode as any);
+          
+          if (result.splitMode) {
+            const modeMap: Record<string, 'Equally' | 'Unequally' | 'Percentages' | 'Shares'> = {
+              'EQUAL': 'Equally',
+              'EXACT': 'Unequally',
+              'PERCENTAGE': 'Percentages',
+              'SHARES': 'Shares'
+            };
+            setSplitMode(modeMap[result.splitMode] || 'Equally');
+          }
+
+          if (result.splitters && result.splitters.length > 0) {
+            setSelectedSplitters(result.splitters);
+          } else {
+            // Default to all members if empty
+            setSelectedSplitters((activeGroup as any)?.members || [me]);
+          }
+
           if (result.amount || result.title) setAiFilledFrom('voice');
         } catch (err) {
           console.error(err);
@@ -218,7 +236,7 @@ export const ExpenseModal: React.FC<ExpenseModalProps> = ({
       };
       parseVoice();
     }
-  }, [isListening, transcript, activeGroup, me, setAmt, setTitle, setPayer, setSplitMode]);
+  }, [isListening, transcript, activeGroup, me, setAmt, setTitle, setPayer, setSplitMode, setSelectedSplitters]);
 
   const [shakingFriend, setShakingFriend] = React.useState<string | null>(null);
 
