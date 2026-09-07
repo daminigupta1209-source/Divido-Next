@@ -472,12 +472,6 @@ export const GroupMemberList: React.FC<GroupMemberListProps> = ({
             >
               Save
             </button>
-            <button
-              onClick={() => setPendingEditName(null)}
-              style={{ width: '100%', padding: '10px', borderRadius: '10px', border: '1.5px solid #E2E8F0', background: 'var(--w)', color: '#64748B', fontWeight: 700, fontSize: '13px', cursor: 'pointer' }}
-            >
-              Cancel
-            </button>
           </div>
         </div>
       )}
