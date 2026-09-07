@@ -58,6 +58,14 @@ export const GroupMemberList: React.FC<GroupMemberListProps> = ({
   const [editingMemberName, setEditingMemberName] = React.useState<string | null>(null);
   const [inlineRenameVal, setInlineRenameVal] = React.useState<string>('');
   const [emailEditVal, setEmailEditVal] = React.useState<string>('');
+  // Pending-invite editor popup: the member being edited (name+email), or null.
+  const [pendingEditName, setPendingEditName] = React.useState<string | null>(null);
+  const [pendingEditNameVal, setPendingEditNameVal] = React.useState<string>('');
+  const openPendingEditor = (m: string) => {
+    setPendingEditNameVal(m.replace(/\s*\(me\)$/i, ''));
+    setEmailEditVal(emailFor(m));
+    setPendingEditName(m);
+  };
   const [isAddingInline, setIsAddingInline] = React.useState(false);
   const touchStartX = React.useRef<number | null>(null);
   const touchStartY = React.useRef<number | null>(null);
@@ -409,6 +417,70 @@ export const GroupMemberList: React.FC<GroupMemberListProps> = ({
         gap: '20px',
       }}
     >
+      {pendingEditName && (
+        <div
+          onClick={() => setPendingEditName(null)}
+          style={{ position: 'fixed', inset: 0, background: 'rgba(15,23,42,0.45)', zIndex: 10002, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px' }}
+        >
+          <div
+            onClick={(e) => e.stopPropagation()}
+            style={{ width: '100%', maxWidth: '340px', background: '#FFFFFF', borderRadius: '16px', padding: '18px', boxShadow: '0 12px 40px rgba(0,0,0,0.25)' }}
+          >
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '14px' }}>
+              <h3 style={{ margin: 0, fontSize: '16px', fontWeight: 700, color: '#1E293B' }}>Edit invite</h3>
+              <span onClick={() => setPendingEditName(null)} style={{ cursor: 'pointer', fontSize: '16px', color: '#94A3B8', fontWeight: 'bold', padding: '0 4px' }}>✕</span>
+            </div>
+            <div style={{ fontSize: '11px', color: '#64748B', fontWeight: 600, marginBottom: '4px' }}>Name</div>
+            <input
+              autoFocus
+              value={pendingEditNameVal}
+              onChange={(e) => setPendingEditNameVal(e.target.value)}
+              placeholder="Name"
+              style={{ width: '100%', boxSizing: 'border-box', fontSize: '14px', fontWeight: 600, padding: '9px 12px', border: '1.5px solid #E2E8F0', borderRadius: '10px', background: 'var(--bg)', color: 'var(--t)', outline: 'none', marginBottom: '12px' }}
+            />
+            {onSetMemberEmail && (
+              <>
+                <div style={{ fontSize: '11px', color: '#64748B', fontWeight: 600, marginBottom: '4px' }}>Email (optional)</div>
+                <input
+                  type="search"
+                  inputMode="email"
+                  autoComplete="off"
+                  value={emailEditVal}
+                  onChange={(e) => setEmailEditVal(e.target.value)}
+                  placeholder="their@email.com"
+                  style={{ width: '100%', boxSizing: 'border-box', fontSize: '13px', fontWeight: 500, padding: '9px 12px', border: '1.5px solid #E2E8F0', borderRadius: '10px', background: 'var(--bg)', color: 'var(--t)', outline: 'none', marginBottom: '4px' }}
+                />
+                <div style={{ fontSize: '11px', color: '#94A3B8', marginBottom: '14px' }}>Adding an email lets them join instantly — no “pick your name” step.</div>
+              </>
+            )}
+            <button
+              onClick={() => {
+                const original = pendingEditName;
+                const newName = pendingEditNameVal.trim();
+                const v = emailEditVal.trim();
+                if (onSetMemberEmail && v && isValidEmail(v)) onSetMemberEmail(original, v.toLowerCase());
+                if (newName && newName.toLowerCase() !== original.replace(/\s*\(me\)$/i, '').toLowerCase()) {
+                  if (selectedGroup.members.some((x) => x.replace(/\s*\(Left\)$/i, '').trim().toLowerCase() === newName.toLowerCase())) {
+                    alert(`"${newName}" is already taken in this group! 🛑`);
+                    return;
+                  }
+                  if (onRenameMember) onRenameMember(original, newName);
+                }
+                setPendingEditName(null);
+              }}
+              style={{ width: '100%', padding: '11px', borderRadius: '10px', border: 'none', background: '#10B981', color: '#FFFFFF', fontWeight: 700, fontSize: '14px', cursor: 'pointer', marginBottom: '8px' }}
+            >
+              Save
+            </button>
+            <button
+              onClick={() => setPendingEditName(null)}
+              style={{ width: '100%', padding: '10px', borderRadius: '10px', border: '1.5px solid #E2E8F0', background: 'var(--w)', color: '#64748B', fontWeight: 700, fontSize: '13px', cursor: 'pointer' }}
+            >
+              Cancel
+            </button>
+          </div>
+        </div>
+      )}
       {actionCard && (
         <BalanceActionCard
           title={actionCard.title}
@@ -747,85 +819,33 @@ export const GroupMemberList: React.FC<GroupMemberListProps> = ({
                 >
                   <Avatar name={m} status="pending" />
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '1px', minWidth: 0, flex: 1 }}>
-                    {editingMemberName === m ? (
-                      <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', width: '100%' }} onClick={(e) => e.stopPropagation()}>
-                        <input
-                          autoFocus
-                          value={inlineRenameVal}
-                          onChange={(e) => setInlineRenameVal(e.target.value)}
-                          onKeyDown={(e) => { if (e.key === 'Escape') setEditingMemberName(null); }}
-                          placeholder="Name"
-                          style={{ fontSize: '13px', fontWeight: 'bold', padding: '5px 8px', border: '1.5px solid #6366F1', borderRadius: '8px', background: 'var(--bg)', color: 'var(--t)', outline: 'none', width: '100%', boxSizing: 'border-box' }}
-                        />
-                        {onSetMemberEmail && (
-                          <input
-                            type="search"
-                            inputMode="email"
-                            autoComplete="off"
-                            value={emailEditVal}
-                            onChange={(e) => setEmailEditVal(e.target.value)}
-                            onKeyDown={(e) => { if (e.key === 'Escape') setEditingMemberName(null); }}
-                            placeholder="Email (optional) — lets them join instantly"
-                            style={{ fontSize: '12px', fontWeight: 500, padding: '5px 8px', border: '1.5px solid #E2E8F0', borderRadius: '8px', background: 'var(--bg)', color: 'var(--t)', outline: 'none', width: '100%', boxSizing: 'border-box' }}
-                          />
-                        )}
-                        <div style={{ display: 'flex', gap: '8px' }}>
-                          <button
-                            onClick={() => {
-                              const v = emailEditVal.trim();
-                              if (onSetMemberEmail && v && isValidEmail(v)) onSetMemberEmail(m, v.toLowerCase());
-                              handleInlineSave(m);
-                            }}
-                            style={{ flex: 1, padding: '7px', borderRadius: '8px', border: 'none', background: '#10B981', color: '#fff', fontWeight: 700, fontSize: '12px', cursor: 'pointer' }}
-                          >
-                            Save
-                          </button>
-                          <button
-                            onClick={() => setEditingMemberName(null)}
-                            style={{ padding: '7px 12px', borderRadius: '8px', border: '1.5px solid #E2E8F0', background: 'var(--w)', color: '#64748B', fontWeight: 700, fontSize: '12px', cursor: 'pointer' }}
-                          >
-                            Cancel
-                          </button>
-                        </div>
-                      </div>
+                    <span
+                      title="Click to edit"
+                      style={{
+                        fontWeight: 'bold',
+                        fontSize: '14px',
+                        color: '#334155',
+                        cursor: 'pointer',
+                        textDecoration: 'underline dotted rgba(0,0,0,0.1)',
+                      }}
+                      onClick={(e) => { e.stopPropagation(); openPendingEditor(m); }}
+                    >
+                      {checkIsMe(m) ? 'You' : m.replace(/\s*\(me\)$/i, '')} {checkIsAdmin(m) && <span style={{ fontSize: '10px', fontWeight: 600, color: '#7C3AED', background: '#F5F3FF', padding: '1px 6px', borderRadius: '4px', marginLeft: '6px' }}>Admin</span>}
+                    </span>
+                    {emailFor(m) ? (
+                      <span style={{ fontSize: '11px', color: '#94A3B8', fontWeight: 500, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{emailFor(m)}</span>
                     ) : (
-                      <>
-                      <span
-                        title="Click to edit name"
-                        style={{
-                          fontWeight: 'bold',
-                          fontSize: '14px',
-                          color: '#334155',
-                          cursor: 'pointer',
-                          textDecoration: 'underline dotted rgba(0,0,0,0.1)',
-                        }}
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          setInlineRenameVal(m.replace(/\s*\(me\)$/i, ''));
-                          setEmailEditVal(emailFor(m));
-                          setEditingMemberName(m);
-                        }}
-                      >
-                        {checkIsMe(m) ? 'You' : m.replace(/\s*\(me\)$/i, '')} {checkIsAdmin(m) && <span style={{ fontSize: '10px', fontWeight: 600, color: '#7C3AED', background: '#F5F3FF', padding: '1px 6px', borderRadius: '4px', marginLeft: '6px' }}>Admin</span>}
+                      <span style={{ fontSize: '11px', color: isJustAdded ? '#059669' : '#94A3B8', fontWeight: isJustAdded ? 700 : 500, display: 'inline-flex', alignItems: 'center', gap: '8px' }}>
+                        {isJustAdded ? '✓ Just added' : 'Invite sent'}
+                        {onSetMemberEmail && (
+                          <span
+                            onClick={(e) => { e.stopPropagation(); openPendingEditor(m); }}
+                            style={{ color: '#6366F1', fontWeight: 700, cursor: 'pointer' }}
+                          >
+                            + Add email
+                          </span>
+                        )}
                       </span>
-                      {/* Email line: the invite email if set, else a tappable "Add
-                          email" that opens the same name+email editor. */}
-                      {emailFor(m) ? (
-                        <span style={{ fontSize: '11px', color: '#94A3B8', fontWeight: 500, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{emailFor(m)}</span>
-                      ) : (
-                        <span style={{ fontSize: '11px', color: isJustAdded ? '#059669' : '#94A3B8', fontWeight: isJustAdded ? 700 : 500, display: 'inline-flex', alignItems: 'center', gap: '8px' }}>
-                          {isJustAdded ? '✓ Just added' : 'Invite sent'}
-                          {onSetMemberEmail && (
-                            <span
-                              onClick={(e) => { e.stopPropagation(); setInlineRenameVal(m.replace(/\s*\(me\)$/i, '')); setEmailEditVal(''); setEditingMemberName(m); }}
-                              style={{ color: '#6366F1', fontWeight: 700, cursor: 'pointer' }}
-                            >
-                              + Add email
-                            </span>
-                          )}
-                        </span>
-                      )}
-                      </>
                     )}
                   </div>
 
