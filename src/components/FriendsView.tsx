@@ -18,8 +18,10 @@ const pillChipStyle: React.CSSProperties = { background: 'rgba(255,255,255,0.28)
 // person, choose the primary email to merge them into, then merge.
 const MergeRow: React.FC<{
   d: DuplicatePerson;
+  emailSuggestions?: string[];
   onMerge: (entries: DuplicateEntry[], canonicalEmail?: string) => Promise<void>;
-}> = ({ d, onMerge }) => {
+}> = ({ d, emailSuggestions = [], onMerge }) => {
+  const listId = `merge-emails-${d.name.replace(/\s+/g, '-')}`;
   const [busy, setBusy] = useState(false);
   // All entries ticked by default (the common case is they ARE the same person).
   const [checked, setChecked] = useState<boolean[]>(() => d.entries.map(() => true));
@@ -78,11 +80,17 @@ const MergeRow: React.FC<{
           type="search"
           inputMode="email"
           autoComplete="off"
+          list={emailSuggestions.length > 0 ? listId : undefined}
           placeholder="name@example.com"
           value={email}
           onChange={(ev) => setEmail(ev.target.value)}
           style={{ width: '100%', boxSizing: 'border-box', padding: '9px 12px', borderRadius: '10px', border: `1.5px solid ${emailOk ? '#E2E8F0' : '#FCA5A5'}`, fontSize: '13px', fontWeight: 500, color: '#334155', outline: 'none', background: '#FFFFFF' }}
         />
+        {emailSuggestions.length > 0 && (
+          <datalist id={listId}>
+            {emailSuggestions.map((em) => <option key={em} value={em} />)}
+          </datalist>
+        )}
         {!emailOk && <div style={{ fontSize: '10.5px', color: '#DC2626', marginTop: '3px' }}>That doesn't look like a valid email.</div>}
       </div>
 
@@ -106,7 +114,8 @@ const MergeDuplicatesModal: React.FC<{
   duplicates: DuplicatePerson[];
   onClose: () => void;
   onMerge: (entries: DuplicateEntry[], canonicalEmail?: string) => Promise<void>;
-}> = ({ duplicates, onClose, onMerge }) => {
+  suggestEmails?: (name: string) => string[];
+}> = ({ duplicates, onClose, onMerge, suggestEmails }) => {
   return (
     <div
       onClick={onClose}
@@ -133,7 +142,7 @@ const MergeDuplicatesModal: React.FC<{
 
         <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
           {duplicates.map((d) => (
-            <MergeRow key={d.name + d.entries.map((e) => e.groupId).join(',')} d={d} onMerge={onMerge} />
+            <MergeRow key={d.name + d.entries.map((e) => e.groupId).join(',')} d={d} emailSuggestions={suggestEmails ? suggestEmails(d.name) : []} onMerge={onMerge} />
           ))}
         </div>
       </div>
@@ -222,6 +231,38 @@ export const FriendsView: React.FC<FriendsViewProps> = ({
   // People who appear under one name but with 2+ identities (usually fragmented
   // after an account deletion) — offered for review/merge. Recompute on data.
   const duplicatePeople: DuplicatePerson[] = useMemo(() => findDuplicatePeople(groups, me), [groups, me]);
+
+  // Emails the app already knows (from any group's member identities), for the
+  // merge sheet's "Merge into this email" autocomplete. Ranked so ones tied to a
+  // matching name (exact, then same first name) come first, then all the rest.
+  const knownEmails = useMemo(() => {
+    const byName: Record<string, Set<string>> = {};
+    const all = new Set<string>();
+    for (const g of groups || []) {
+      const mi = (g as any).memberIdentities || {};
+      for (const [nm, id] of Object.entries(mi)) {
+        if (typeof id === 'string' && id.includes('@')) {
+          const em = id.toLowerCase();
+          all.add(em);
+          const k = nm.replace(/\s*\(Left\)$/i, '').trim().toLowerCase();
+          (byName[k] = byName[k] || new Set()).add(em);
+        }
+      }
+    }
+    return { byName, all: Array.from(all) };
+  }, [groups]);
+
+  const suggestEmails = useMemo(() => (name: string): string[] => {
+    const key = name.trim().toLowerCase();
+    const first = key.split(' ')[0];
+    const exact = knownEmails.byName[key] ? Array.from(knownEmails.byName[key]) : [];
+    const firstMatches = Object.entries(knownEmails.byName)
+      .filter(([k]) => k.split(' ')[0] === first)
+      .flatMap(([, s]) => Array.from(s));
+    const ranked = Array.from(new Set([...exact, ...firstMatches]));
+    const rest = knownEmails.all.filter((e) => !ranked.includes(e));
+    return [...ranked, ...rest];
+  }, [knownEmails]);
 
   // Heavy balance derivation depends only on groups/expenses/me, so memoize it
   // to avoid recomputing every friend's balance on unrelated re-renders (typing
@@ -515,6 +556,7 @@ export const FriendsView: React.FC<FriendsViewProps> = ({
           duplicates={duplicatePeople}
           onClose={() => setShowMergeModal(false)}
           onMerge={async (entries, canonicalEmail) => { if (onMergePeople) await onMergePeople(entries, canonicalEmail); }}
+          suggestEmails={suggestEmails}
         />
       )}
       {/* Universal Net Balance Card — kept above the search bar */}
