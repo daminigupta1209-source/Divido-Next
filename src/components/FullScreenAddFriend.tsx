@@ -13,6 +13,11 @@ interface FullScreenAddFriendProps {
   onAddFriends: (friends: FriendSelection[]) => void;
   existingMembers: string[];
   suggestions: { name: string; email: string; identity?: string; pastMember?: boolean }[];
+  // Non-group mode: split is always between exactly two people (you + one
+  // other), so picking a person commits immediately and closes — no ticking
+  // several friends, no separate "Add N friends" confirm step.
+  singleSelect?: boolean;
+  title?: string;
 }
 
 export const FullScreenAddFriend: React.FC<FullScreenAddFriendProps> = ({
@@ -20,7 +25,9 @@ export const FullScreenAddFriend: React.FC<FullScreenAddFriendProps> = ({
   onClose,
   onAddFriends,
   existingMembers,
-  suggestions
+  suggestions,
+  singleSelect = false,
+  title = 'Add friend'
 }) => {
   const [addVal, setAddVal] = useState('');
   const [emailVal, setEmailVal] = useState('');
@@ -55,20 +62,29 @@ export const FullScreenAddFriend: React.FC<FullScreenAddFriendProps> = ({
   const selKey = (s: { name: string; identity?: string }) => (s.identity || s.name).toLowerCase();
   const isSelected = (s: { name: string; identity?: string }) => selectedFriends.some((f) => selKey(f) === selKey(s));
   
+  const commitOne = (s: { name: string; email: string; identity?: string }) => {
+    onAddFriends([{ name: s.name, email: s.email, identity: s.identity || '' }]);
+    setSelectedFriends([]);
+    setAddVal('');
+    setEmailVal('');
+  };
+
   const toggleSelect = (s: { name: string; email: string; identity?: string }) => {
-    setSelectedFriends((prev) => 
-      prev.some((f) => selKey(f) === selKey(s)) 
-        ? prev.filter((f) => selKey(f) !== selKey(s)) 
+    if (singleSelect) { commitOne(s); return; }
+    setSelectedFriends((prev) =>
+      prev.some((f) => selKey(f) === selKey(s))
+        ? prev.filter((f) => selKey(f) !== selKey(s))
         : [...prev, { name: s.name, email: s.email, identity: s.identity || '' }]
     );
   };
 
   const handleAddNew = () => {
     const em = emailVal.trim();
-    if (em && !isValidEmail(em)) { 
-      alert("That doesn't look like a valid email. Leave it blank or fix it."); 
-      return; 
+    if (em && !isValidEmail(em)) {
+      alert("That doesn't look like a valid email. Leave it blank or fix it.");
+      return;
     }
+    if (singleSelect) { commitOne({ name: qRaw, email: em, identity: '' }); return; }
     toggleSelect({ name: qRaw, email: em, identity: '' });
     setAddVal('');
     setEmailVal('');
@@ -95,8 +111,9 @@ export const FullScreenAddFriend: React.FC<FullScreenAddFriendProps> = ({
               <polyline points="15 18 9 12 15 6" />
             </svg>
           </button>
-          <h1 style={{ fontSize: '20px', fontWeight: 600, color: 'var(--t)', margin: 0 }}>Add friend</h1>
+          <h1 style={{ fontSize: '20px', fontWeight: 600, color: 'var(--t)', margin: 0 }}>{title}</h1>
         </div>
+        {!singleSelect && (
         <button
           type="button"
           onClick={commitSelected}
@@ -127,6 +144,7 @@ export const FullScreenAddFriend: React.FC<FullScreenAddFriendProps> = ({
             <polyline points="20 6 9 17 4 12" />
           </svg>
         </button>
+        )}
       </div>
 
       {/* Search / type a name */}

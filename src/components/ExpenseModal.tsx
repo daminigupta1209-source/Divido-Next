@@ -16,6 +16,7 @@ import { useExpenseForm } from '../hooks/useExpenseForm';
 import { useVoiceRecognition } from '../hooks/useVoiceRecognition';
 import { StyledDropdown } from './StyledDropdown';
 import { CameraCaptureModal } from './CameraCaptureModal';
+import { FullScreenAddFriend } from './FullScreenAddFriend';
 
 // Borderless trigger — the wrapping div already provides the pill/border/shadow.
 const emInlineBtnStyle: React.CSSProperties = { border: '1.5px solid #EAEFF4', background: 'var(--w, #fff)', boxShadow: '0 1px 3px rgba(0,0,0,0.03)', borderRadius: '19px', height: '38px', width: '100%', fontSize: '12px', fontWeight: 600, color: '#1E293B', padding: '0 16px' };
@@ -1177,137 +1178,29 @@ export const ExpenseModal: React.FC<ExpenseModalProps> = ({
                   );
                 })()}
 
-                {/* Friends popup — centered overlay */}
+                {/* Friends picker — full screen, same as the group "Add friend"
+                    flow, but single-select since non-group splits are always
+                    between exactly two people (you + one other). */}
                 {showFriendPickerPopup && (
-                  <>
-                    {/* Backdrop */}
-                    <div
-                      onMouseDown={() => setShowFriendPickerPopup(false)}
-                      style={{
-                        position: 'fixed',
-                        inset: 0,
-                        background: 'rgba(0,0,0,0.35)',
-                        zIndex: 200,
-                      }}
-                    />
-                    {/* Card */}
-                    <div
-                      style={{
-                        position: 'fixed',
-                        top: '50%',
-                        left: '50%',
-                        transform: 'translate(-50%, -50%)',
-                        width: '300px',
-                        background: 'var(--w)',
-                        borderRadius: '20px',
-                        boxShadow: '0 24px 48px -8px rgba(0,0,0,0.22), 0 8px 24px rgba(0,0,0,0.08)',
-                        zIndex: 201,
-                        overflow: 'hidden',
-                        animation: 'friendsPopupIn 0.18s ease-out',
-                      }}
-                    >
-                      {/* Header */}
-                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '16px 16px 10px 16px' }}>
-                        <span style={{ fontSize: '14px', fontWeight: 600, color: 'var(--t)' }}>
-                          Split with (just you two)
-                        </span>
-                        <button
-                          type="button"
-                          onClick={() => setShowFriendPickerPopup(false)}
-                          style={{
-                            width: '28px',
-                            height: '28px',
-                            borderRadius: '50%',
-                            border: '1.5px solid #E2E8F0',
-                            background: '#F8FAFC',
-                            fontSize: '14px',
-                            color: '#64748B',
-                            cursor: 'pointer',
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            padding: 0,
-                            lineHeight: 1,
-                          }}
-                        >
-                          ✕
-                        </button>
-                      </div>
-
-                      {/* Search / type the ONE person you're splitting with */}
-                      <div style={{ padding: '0 12px 8px' }}>
-                        <input
-                          autoFocus
-                          type="search"
-                          value={friendPickerSearch}
-                          onChange={(e) => setFriendPickerSearch(e.target.value)}
-                          placeholder="Search or type a name"
-                          style={{ width: '100%', height: '40px', borderRadius: '12px', border: '1.5px solid #E2E8F0', background: '#FFFFFF', fontSize: '13px', fontWeight: 600, color: 'var(--t)', padding: '0 12px', outline: 'none', boxSizing: 'border-box' }}
-                        />
-                      </div>
-
-                      {(() => {
-                        const q = friendPickerSearch.trim();
-                        const ql = q.toLowerCase();
-                        const other = selectedSplitters.find((s) => s !== me) || '';
-                        const recents = allKnownFriends
-                          .map((f) => f.replace(' (Left)', ''))
-                          .filter((f, i, arr) => f && f.toLowerCase() !== (me || '').toLowerCase() && arr.indexOf(f) === i && (!ql || f.toLowerCase().includes(ql)));
-                        const exact = recents.some((f) => f.toLowerCase() === ql) || ql === (me || '').toLowerCase();
-                        const pick = (name: string, email?: string) => {
-                          setSelectedSplitters([me, name]);
-                          setFriendPickerEmail(email && email.trim().includes('@') ? email.trim() : '');
-                          setFriendPickerSearch('');
-                          setShowFriendPickerPopup(false);
-                        };
-                        return (
-                          <div style={{ maxHeight: '300px', overflowY: 'auto', padding: '0 8px 12px 8px' }}>
-                            {q && !exact && (
-                              <>
-                                {/* Optional email — pins their identity so the card
-                                    can later be shared / settled. Skippable. */}
-                                <input
-                                  type="search"
-                                  value={friendPickerEmail}
-                                  onChange={(e) => setFriendPickerEmail(e.target.value)}
-                                  placeholder="Email (optional)"
-                                  style={{ width: '100%', height: '38px', borderRadius: '12px', border: '1.5px solid #E2E8F0', background: '#FFFFFF', fontSize: '13px', fontWeight: 600, color: 'var(--t)', padding: '0 12px', outline: 'none', boxSizing: 'border-box', margin: '0 0 8px' }}
-                                />
-                                <div
-                                  onClick={() => pick(q, friendPickerEmail)}
-                                  style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', padding: '12px', borderRadius: '12px', cursor: 'pointer', color: '#059669', fontWeight: 700, fontSize: '13px', border: '1.5px dashed #10B981', marginBottom: '8px' }}
-                                >
-                                  <span style={{ fontSize: '15px', lineHeight: 1 }}>+</span>
-                                  Add “{q}” as new
-                                </div>
-                              </>
-                            )}
-                            {recents.map((friend) => {
-                              const isCurrent = friend.toLowerCase() === other.toLowerCase();
-                              return (
-                                <div
-                                  key={friend}
-                                  onClick={() => pick(friend)}
-                                  style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '10px', borderRadius: '12px', cursor: 'pointer', background: isCurrent ? 'rgba(16, 185, 129, 0.08)' : 'transparent' }}
-                                >
-                                  <div style={{ width: '30px', height: '30px', borderRadius: '50%', background: 'linear-gradient(135deg, #E0F2FE, #DBEAFE)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '12px', fontWeight: 600, color: '#3B82F6', flexShrink: 0 }}>
-                                    {friend.charAt(0).toUpperCase()}
-                                  </div>
-                                  <span style={{ fontSize: '13px', fontWeight: 700, color: 'var(--t)', flex: 1 }}>{friend}</span>
-                                  {isCurrent && <span style={{ color: '#10B981', fontSize: '14px', fontWeight: 700 }}>✓</span>}
-                                </div>
-                              );
-                            })}
-                            {recents.length === 0 && !q && (
-                              <p style={{ padding: '14px 10px', margin: 0, fontSize: '12px', color: '#94A3B8', textAlign: 'center' }}>
-                                Type a name to add the person you split with.
-                              </p>
-                            )}
-                          </div>
-                        );
-                      })()}
-                    </div>
-                  </>
+                  <FullScreenAddFriend
+                    isOpen={showFriendPickerPopup}
+                    singleSelect
+                    onClose={() => setShowFriendPickerPopup(false)}
+                    existingMembers={[me]}
+                    suggestions={allKnownFriends
+                      .map((f) => f.replace(' (Left)', ''))
+                      .filter((f, i, arr) => f && f.toLowerCase() !== (me || '').toLowerCase() && arr.indexOf(f) === i)
+                      .map((f) => ({ name: f, email: '' }))}
+                    onAddFriends={(friends) => {
+                      const picked = friends[0];
+                      if (picked) {
+                        setSelectedSplitters([me, picked.name]);
+                        setFriendPickerEmail(picked.email && picked.email.trim().includes('@') ? picked.email.trim() : '');
+                      }
+                      setFriendPickerSearch('');
+                      setShowFriendPickerPopup(false);
+                    }}
+                  />
                 )}
               </div>
             </div>
