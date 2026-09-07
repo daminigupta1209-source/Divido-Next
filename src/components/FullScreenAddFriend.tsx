@@ -245,6 +245,11 @@ export const FullScreenAddFriend: React.FC<FullScreenAddFriendProps> = ({
           />
         </div>
       )}
+      {canAddNew && (
+        <p style={{ margin: '-8px 4px 0', fontSize: '11px', color: '#94A3B8', lineHeight: 1.35 }}>
+          💡 Add their email and they join instantly when they sign in — no “pick your name” step, and it avoids mix-ups if two friends share a name.
+        </p>
+      )}
 
       {/* Ticked friends, shown as removable pills */}
       {selectedFriends.length > 0 && (
