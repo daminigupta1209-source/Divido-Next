@@ -845,6 +845,7 @@ export const ExpenseModal: React.FC<ExpenseModalProps> = ({
                 hidden behind the on-screen keyboard, so this header button lets you
                 save without dismissing the keypad. Mirrors the bottom button. */}
             <button
+              id="save-expense-btn"
               title="Save"
               onClick={() => {
                 if (isValid && title) {
@@ -1940,33 +1941,6 @@ export const ExpenseModal: React.FC<ExpenseModalProps> = ({
           </div>
         )}
 
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginTop: '10px', position: 'relative' }}>
-          {/* Floating Add Attachment button — sits at the bottom-right, above the submit button */}
-
-          {/* Modal Footer Submit Button */}
-          <button
-            id="save-expense-btn"
-            className="btn-green animate-all"
-            style={{
-              width: '100%',
-              padding: '12px',
-              fontSize: '14px',
-              opacity: !isValid || !title ? 0.6 : 1,
-              cursor: !isValid || !title ? 'not-allowed' : 'pointer',
-              borderRadius: '14px',
-            }}
-            onClick={() => {
-              if (isValid && title) {
-                handleSave();
-              } else {
-                setShowValidationErrorPopup(true);
-                triggerShake();
-              }
-            }}
-          >
-            {editingExpense && editingExpense.id && !String(editingExpense.id).startsWith('temp-') ? 'Save Changes' : 'Record Expense'}
-          </button>
-        </div>
       </div>
 
       {/* Currency Picker Modal */}
