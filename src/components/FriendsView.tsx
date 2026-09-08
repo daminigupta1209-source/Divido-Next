@@ -35,6 +35,9 @@ const MergeRow: React.FC<{
 
   const toggle = (i: number) => setChecked((prev) => prev.map((v, idx) => (idx === i ? !v : v)));
 
+  const claimedEmails = Array.from(new Set(d.entries.map((e) => e.email).filter(Boolean))) as string[];
+  const combinedSuggestions = Array.from(new Set([...claimedEmails, ...emailSuggestions]));
+
   return (
     <div style={{ border: '1px solid #F1F5F9', borderRadius: '16px', padding: '12px 14px' }}>
       <div style={{ fontSize: '15px', fontWeight: 700, color: '#334155', marginBottom: '8px' }}>{d.name}</div>
@@ -50,45 +53,22 @@ const MergeRow: React.FC<{
         ))}
       </div>
 
-      {/* Primary email everyone gets merged into (optional but recommended). */}
+      {/* Primary email everyone gets merged into. */}
       <div style={{ marginBottom: '10px' }}>
-        <div style={{ fontSize: '11px', fontWeight: 600, color: '#64748B', marginBottom: '4px' }}>Merge into this email (optional)</div>
-        {/* One-tap: if an appearance already has a claimed account email, offer it
-            as a chip so the user can merge everyone into that identity directly. */}
-        {(() => {
-          const claimed = Array.from(new Set(d.entries.map((e) => e.email).filter(Boolean))) as string[];
-          if (claimed.length === 0) return null;
-          return (
-            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px', marginBottom: '6px' }}>
-              {claimed.map((em) => {
-                const on = emailTrim.toLowerCase() === em.toLowerCase();
-                return (
-                  <button
-                    key={em}
-                    type="button"
-                    onClick={() => setEmail(em)}
-                    style={{ fontSize: '11.5px', fontWeight: 600, padding: '5px 10px', borderRadius: '999px', cursor: 'pointer', border: `1.5px solid ${on ? '#10B981' : '#E2E8F0'}`, background: on ? '#ECFDF5' : '#FFFFFF', color: on ? '#047857' : '#475569', maxWidth: '100%', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}
-                  >
-                    {on ? '✓ ' : ''}Use {em}
-                  </button>
-                );
-              })}
-            </div>
-          );
-        })()}
+        <div style={{ fontSize: '11px', fontWeight: 600, color: '#64748B', marginBottom: '4px' }}>Merge into this email</div>
         <input
           type="search"
           inputMode="email"
           autoComplete="off"
-          list={emailSuggestions.length > 0 ? listId : undefined}
+          list={combinedSuggestions.length > 0 ? listId : undefined}
           placeholder="name@example.com"
           value={email}
           onChange={(ev) => setEmail(ev.target.value)}
           style={{ width: '100%', boxSizing: 'border-box', padding: '9px 12px', borderRadius: '10px', border: `1.5px solid ${emailOk ? '#E2E8F0' : '#FCA5A5'}`, fontSize: '13px', fontWeight: 500, color: '#334155', outline: 'none', background: '#FFFFFF' }}
         />
-        {emailSuggestions.length > 0 && (
+        {combinedSuggestions.length > 0 && (
           <datalist id={listId}>
-            {emailSuggestions.map((em) => <option key={em} value={em} />)}
+            {combinedSuggestions.map((em) => <option key={em} value={em} />)}
           </datalist>
         )}
         {!emailOk && <div style={{ fontSize: '10.5px', color: '#DC2626', marginTop: '3px' }}>That doesn't look like a valid email.</div>}
