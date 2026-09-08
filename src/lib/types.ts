@@ -94,5 +94,10 @@ export interface GlobalSettleData {
 
 export interface UserMetadata {
   upiId?: string;
+  preferences?: {
+    dismissedSuggestions?: string[];
+    dismissedPeople?: string[];
+    [key: string]: any;
+  };
   [key: string]: any;
 }

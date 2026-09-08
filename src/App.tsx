@@ -58,7 +58,7 @@ import { CurrencySetupModal } from './components/CurrencySetupModal';
 import { GroupGallery } from './components/GroupGallery';
 import { checkIfDemoMode } from './lib/demoMode';
 import { ensureArray, ensureObject, isLegacyRenameLog, formatCompactAmount, genGroupId, genExpenseId, titleCaseName } from './lib/utils';
-import { getPersonKey, toIdentitySpace, pickCanonicalIdentity, findDuplicateGroups, type DuplicateEntry } from './lib/identity';
+import { getPersonKey, toIdentitySpace, pickCanonicalIdentity, findDuplicateGroups, type DuplicateEntry, setSyncedDismissedPeople } from './lib/identity';
 import { useSupabaseSync, getGidRemap } from './hooks/useSupabaseSync';
 import { BalanceActionCard } from './components/BalanceActionCard';
 import { useAppHotkeys } from './hooks/useAppHotkeys';
@@ -461,6 +461,36 @@ function App() {
     }
     setShowInfo(false);
   }, [view, selectedId]);
+
+  // Keep identity.ts in sync with cloud preferences for dismissed people
+  useEffect(() => {
+    const key = me ? me.split(' ')[0] : 'me';
+    const prefs = userMetadata[key]?.preferences || {};
+    setSyncedDismissedPeople(prefs.dismissedPeople || []);
+  }, [userMetadata, me]);
+
+  // Listen for dismissals from UI components (via identity.ts) to persist them to the cloud
+  useEffect(() => {
+    const handler = (e: any) => {
+      const key = me ? me.split(' ')[0] : 'me';
+      setUserMetadata((prev) => {
+        const p = prev[key] || {};
+        const prefs = p.preferences || {};
+        return {
+          ...prev,
+          [key]: {
+            ...p,
+            preferences: { 
+              ...prefs, 
+              dismissedPeople: Array.from(new Set([...(prefs.dismissedPeople || []), e.detail])) 
+            }
+          }
+        };
+      });
+    };
+    window.addEventListener('divido-dismiss-person', handler);
+    return () => window.removeEventListener('divido-dismiss-person', handler);
+  }, [me]);
 
   // Entering a group always defaults to the Activities tab. Keyed on selectedId
   // only (not view), so tapping "Settle" — which changes the tab but not the
@@ -1278,7 +1308,7 @@ function App() {
     try {
       const { data, error } = await supabase
         .from('profiles')
-        .select('full_name, upi_id, default_currency, profile_photo, budgets')
+        .select('full_name, upi_id, default_currency, profile_photo, budgets, preferences')
         .eq('id', uid)
         .maybeSingle();
       if (!error && data) {
@@ -1296,6 +1326,7 @@ function App() {
             ...(data.default_currency ? { defaultCurrency: data.default_currency } : {}),
             ...(data.profile_photo ? { profilePhoto: data.profile_photo } : {}),
             ...(data.budgets ? { budgets: data.budgets } : {}),
+            ...(data.preferences ? { preferences: data.preferences } : {}),
           },
         }));
       }
@@ -2160,6 +2191,7 @@ function App() {
       default_currency: md.defaultCurrency || null,
       profile_photo: md.profilePhoto || null,
       budgets: md.budgets || null,
+      preferences: md.preferences || null,
       updated_at: new Date().toISOString(),
     };
     const t = window.setTimeout(() => {

@@ -48,6 +48,8 @@ interface ExpenseModalProps {
   setAutoOpenScanner?: (val: boolean) => void;
   onRequireSignIn?: () => boolean;
   deleteExpense?: (id: string | number) => void;
+  userMetadata?: Record<string, any>;
+  setUserMetadata?: React.Dispatch<React.SetStateAction<Record<string, any>>>;
   onExpenseSaved?: (savedExpense: Expense, activeGroup?: Group) => void;
   onCreateNewGroup?: () => void;
 }
@@ -78,6 +80,8 @@ export const ExpenseModal: React.FC<ExpenseModalProps> = ({
   setAutoOpenScanner,
   onRequireSignIn,
   deleteExpense,
+  userMetadata,
+  setUserMetadata,
   onExpenseSaved,
   onCreateNewGroup,
 }) => {
@@ -187,6 +191,8 @@ export const ExpenseModal: React.FC<ExpenseModalProps> = ({
     defaultCurrency,
     autoOpenScanner,
     setAutoOpenScanner,
+    userMetadata,
+    setUserMetadata,
     onExpenseSaved,
   });
 

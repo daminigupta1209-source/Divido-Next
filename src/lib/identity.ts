@@ -87,16 +87,16 @@ export const dismissedPersonKey = (s: { name: string; identity?: string; email?:
   return (s.name || '').toLowerCase().replace(/\s+/g, ' ').trim();
 };
 
-export const getDismissedPeople = (): string[] => {
-  try { return JSON.parse(localStorage.getItem(DISMISSED_PEOPLE_KEY) || '[]'); } catch { return []; }
-};
+let syncedDismissedPeople: string[] = [];
+export const setSyncedDismissedPeople = (ppl: string[]) => { syncedDismissedPeople = ppl; };
+export const getDismissedPeople = (): string[] => syncedDismissedPeople;
 
 export const dismissPerson = (s: { name: string; identity?: string; email?: string }): void => {
-  try {
-    const set = new Set(getDismissedPeople());
-    set.add(dismissedPersonKey(s));
-    localStorage.setItem(DISMISSED_PEOPLE_KEY, JSON.stringify([...set]));
-  } catch { /* localStorage unavailable — nothing to persist */ }
+  const key = dismissedPersonKey(s);
+  if (!syncedDismissedPeople.includes(key)) {
+    syncedDismissedPeople = [...syncedDismissedPeople, key];
+    window.dispatchEvent(new CustomEvent('divido-dismiss-person', { detail: key }));
+  }
 };
 
 export const buildPeopleSuggestions = (
@@ -105,6 +105,7 @@ export const buildPeopleSuggestions = (
   currentMembers: string[],
   me: string,
   myEmail?: string,
+  dismissedPeople: string[] = [],
 ): { name: string; email: string; identity: string; pastMember?: boolean }[] => {
   const meLower = (me || '').replace(/\s*\((me|you|left)\)$/i, '').trim().toLowerCase();
   // Also exclude MYSELF by identity/email, not just by name: across other groups
@@ -169,7 +170,7 @@ export const buildPeopleSuggestions = (
       out.push({ name: e.name, email: '', identity: e.nameOnlyId, pastMember });
     }
   }
-  const dismissed = new Set(getDismissedPeople());
+  const dismissed = new Set(dismissedPeople);
   return out
     .filter((s) => !dismissed.has(dismissedPersonKey(s)))
     .sort((a, b) => a.name.localeCompare(b.name));

@@ -30,6 +30,8 @@ export interface UseExpenseFormProps {
   autoOpenScanner?: boolean;
   setAutoOpenScanner?: (val: boolean) => void;
   onExpenseSaved?: (savedExpense: Expense, activeGroup?: Group) => void;
+  userMetadata?: Record<string, any>;
+  setUserMetadata?: React.Dispatch<React.SetStateAction<Record<string, any>>>;
 }
 
 export function useExpenseForm({
@@ -57,6 +59,8 @@ export function useExpenseForm({
   autoOpenScanner = false,
   setAutoOpenScanner,
   onExpenseSaved,
+  userMetadata,
+  setUserMetadata,
 }: UseExpenseFormProps) {
   const [localGId, setLocalGId] = useState<string | number>(() => {
     if (editingExpense) return editingExpense.gId;
@@ -179,22 +183,23 @@ export function useExpenseForm({
   ];
 
   // Suggestions the user has dismissed (they no longer want them offered).
-  // Persisted so the choice sticks across sessions.
-  const DISMISSED_SUGGS_KEY = 'dividoDismissedSuggestions';
-  const [dismissedSuggs, setDismissedSuggs] = useState<string[]>(() => {
-    try {
-      const raw = localStorage.getItem(DISMISSED_SUGGS_KEY);
-      return raw ? (JSON.parse(raw) as string[]) : [];
-    } catch {
-      return [];
-    }
-  });
+  // Persisted to the cloud so the choice sticks across sessions.
+  const myKey = me ? me.split(' ')[0] : 'me';
+  const dismissedSuggs: string[] = userMetadata?.[myKey]?.preferences?.dismissedSuggestions || [];
+  
   const dismissSuggestion = (s: string) => {
-    setDismissedSuggs((prev) => {
-      if (prev.includes(s)) return prev;
-      const next = [...prev, s];
-      try { localStorage.setItem(DISMISSED_SUGGS_KEY, JSON.stringify(next)); } catch { /* ignore */ }
-      return next;
+    if (dismissedSuggs.includes(s) || !setUserMetadata) return;
+    setUserMetadata((prev) => {
+      const p = prev[myKey] || {};
+      const prefs = p.preferences || {};
+      const nextSuggs = [...(prefs.dismissedSuggestions || []), s];
+      return {
+        ...prev,
+        [myKey]: {
+          ...p,
+          preferences: { ...prefs, dismissedSuggestions: nextSuggs }
+        }
+      };
     });
   };
 
