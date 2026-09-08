@@ -1241,3 +1241,5 @@ input[type="search"]::-webkit-search-results-decoration {
     -webkit-appearance: none;
     appearance: none;
 }
+
+.hide-dl-arrow::-webkit-calendar-picker-indicator { display: none !important; }
