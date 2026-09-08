@@ -385,14 +385,20 @@ export const GroupMemberList: React.FC<GroupMemberListProps> = ({
   return (
     <div
       onClick={(e) => e.stopPropagation()}
-      onTouchStart={(e) => { touchStartX.current = e.touches[0].clientX; touchStartY.current = e.touches[0].clientY; }}
+      onTouchStart={(e) => { 
+        e.stopPropagation();
+        touchStartX.current = e.touches[0].clientX; 
+        touchStartY.current = e.touches[0].clientY; 
+      }}
+      onTouchMove={(e) => e.stopPropagation()}
       onTouchEnd={(e) => {
+        e.stopPropagation();
         if (touchStartX.current == null || touchStartY.current == null) return;
         const dx = e.changedTouches[0].clientX - touchStartX.current;
         const dy = e.changedTouches[0].clientY - touchStartY.current;
         touchStartX.current = null; touchStartY.current = null;
-        // Horizontal swipe only (ignore vertical scrolls), min 45px.
-        if (Math.abs(dx) < 45 || Math.abs(dx) < Math.abs(dy)) return;
+        // Horizontal swipe only (ignore vertical scrolls), min 40px.
+        if (Math.abs(dx) < 40 || Math.abs(dx) < Math.abs(dy)) return;
         const order: (typeof activeTab)[] = ['joined', 'pending', 'left'];
         const i = order.indexOf(activeTab);
         const ni = Math.min(order.length - 1, Math.max(0, i + (dx < 0 ? 1 : -1)));
