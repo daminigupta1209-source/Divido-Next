@@ -61,6 +61,7 @@ import { ensureArray, ensureObject, isLegacyRenameLog, formatCompactAmount, genG
 import { getPersonKey, toIdentitySpace, pickCanonicalIdentity, findDuplicateGroups, type DuplicateEntry, setSyncedDismissedPeople } from './lib/identity';
 import { useSupabaseSync, getGidRemap } from './hooks/useSupabaseSync';
 import { BalanceActionCard } from './components/BalanceActionCard';
+import { asyncBatchNetBalances } from './lib/workerHelper';
 import { useAppHotkeys } from './hooks/useAppHotkeys';
 import { useUndoStack } from './hooks/useUndoStack';
 import { MobileHeader } from './components/MobileHeader';
@@ -3024,35 +3025,42 @@ function App() {
     }
   };
 
-  const allGroupBalances = React.useMemo(() => {
-    const map: Record<string, Record<string, Record<string, number>>> = {};
+  const [allGroupBalances, setAllGroupBalances] = React.useState<Record<string, Record<string, Record<string, number>>>>({});
+  const [isCalculatingBalances, setIsCalculatingBalances] = React.useState(false);
 
+  React.useEffect(() => {
     // Pre-group expenses by their gId to avoid filtering inside inner loops
     const expensesByGroup: Record<string, Expense[]> = {};
     expenses.forEach((e) => {
-      // Skip soft-deleted (struck) expenses — a deleted payment/write-off/expense
-      // must drop out of balances, matching FriendsView/GroupDetail. Without this
-      // the home cards and Non-Group net balance kept counting deleted entries.
       if (!e || e.isDeleted) return;
       const gId = String(e.gId);
       if (!expensesByGroup[gId]) expensesByGroup[gId] = [];
       expensesByGroup[gId].push(e);
     });
 
-    // Populate balances for all groups (including groups with no expenses yet)
-    // via the ONE canonical net-balance engine, so the home cards / Non-Group /
-    // getMemberBalance can never diverge from FriendsView / GroupDetail.
-    groups.forEach((g) => {
-      if (!g) return;
-      const gId = String(g.id);
-      map[gId] = memberNetBalances(g.members || [], expensesByGroup[gId] || [], g.currency || '₹');
+    const batchData = groups.map(g => ({
+      members: g.members || [],
+      expenses: expensesByGroup[String(g.id)] || [],
+      defaultCurrency: g.currency || '₹',
+      gId: String(g.id)
+    }));
+
+    // Add standalone
+    batchData.push({
+      members: [],
+      expenses: expensesByGroup['STANDALONE'] || [],
+      defaultCurrency: '₹',
+      gId: 'STANDALONE'
     });
 
-    // STANDALONE (Non-Group) has no roster — seed from expense participants only
-    // (pass [] members), matching the previous behaviour.
-    map['STANDALONE'] = memberNetBalances([], expensesByGroup['STANDALONE'] || [], '₹');
-
-    return map;
+    setIsCalculatingBalances(true);
+    asyncBatchNetBalances(batchData).then((map) => {
+      setAllGroupBalances(map);
+      setIsCalculatingBalances(false);
+    }).catch(err => {
+      console.error('Failed to compute balances in worker', err);
+      setIsCalculatingBalances(false);
+    });
   }, [groups, expenses]);
 
   const getMemberBalance = React.useCallback((groupId: string | number | null, memberName: string) => {

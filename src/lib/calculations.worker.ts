@@ -1,15 +1,21 @@
-import { simplifyMultiCurrencyDebts, computeRawPairwiseTransactions, SimplifiedTransaction } from './calculations';
+import { simplifyMultiCurrencyDebts, computeRawPairwiseTransactions, SimplifiedTransaction, memberNetBalances } from './calculations';
 import { Expense } from './types';
 
 // Message types
 export type WorkerRequest = {
   id: string;
-  type: 'simplify' | 'raw' | 'batch';
+  type: 'simplify' | 'raw' | 'batch' | 'batchNetBalances';
   members?: string[];
   expenses?: Expense[];
   defaultCurrency?: string;
   groupsData?: {
     type: 'simplify' | 'raw';
+    members: string[];
+    expenses: Expense[];
+    defaultCurrency: string;
+    gId: string | number;
+  }[];
+  batchBalancesData?: {
     members: string[];
     expenses: Expense[];
     defaultCurrency: string;
@@ -21,6 +27,7 @@ export type WorkerResponse = {
   id: string;
   transactions?: SimplifiedTransaction[];
   batchTransactions?: Record<string, SimplifiedTransaction[]>;
+  batchBalances?: Record<string, Record<string, Record<string, number>>>;
   error?: string;
 };
 
@@ -38,6 +45,15 @@ self.onmessage = (e: MessageEvent<WorkerRequest>) => {
         }
       }
       self.postMessage({ id, batchTransactions } as WorkerResponse);
+      return;
+    }
+    
+    if (type === 'batchNetBalances' && e.data.batchBalancesData) {
+      const batchBalances: Record<string, Record<string, Record<string, number>>> = {};
+      for (const g of e.data.batchBalancesData) {
+        batchBalances[g.gId] = memberNetBalances(g.members, g.expenses as any, g.defaultCurrency);
+      }
+      self.postMessage({ id, batchBalances } as WorkerResponse);
       return;
     }
 
