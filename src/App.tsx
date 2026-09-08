@@ -66,7 +66,7 @@ import { useUndoStack } from './hooks/useUndoStack';
 import { MobileHeader } from './components/MobileHeader';
 import { InstallPrompt } from './components/InstallPrompt';
 import { useExportCSV } from './hooks/useExportCSV';
-import { AppNotification, fetchNotifications, markAllNotificationsRead, subscribeNotifications, clearAllNotifications } from './lib/notifications';
+import { AppNotification, fetchNotifications, markAllNotificationsRead, subscribeNotifications, clearAllNotifications, pushNotification } from './lib/notifications';
 import { calculateNextOccurrenceDate, simplifyMultiCurrencyDebts, computeRawPairwiseTransactions, memberNetBalances } from './lib/calculations';
 
 const pageDescriptions: Record<string, string> = {
@@ -801,7 +801,6 @@ function App() {
   ) => {
     if (checkIfDemoMode() || !friendName) return;
     try {
-      const { pushNotification } = await import('./lib/notifications');
       const { data } = await supabase
         .from('group_members')
         .select('user_email')
@@ -884,7 +883,6 @@ function App() {
       // 5. Let the other joined members know (via notification only — a name
       // change should not clutter the group's expense/activity feed).
       try {
-        const { pushNotification } = await import('./lib/notifications');
         const grp = groups.find((g) => String(g.id) === String(groupId));
         const { data: mems } = await supabase
           .from('group_members')
@@ -2829,7 +2827,6 @@ function App() {
                     .limit(1);
                   const adminEmail = adminRows?.[0]?.user_email;
                   if (adminEmail) {
-                    const { pushNotification } = await import('./lib/notifications');
                     await pushNotification({
                       recipientEmail: adminEmail,
                       type: 'admin_transfer',
@@ -2855,7 +2852,6 @@ function App() {
                       .limit(1);
                     const newAdminEmail = rows?.[0]?.user_email;
                     if (newAdminEmail) {
-                      const { pushNotification } = await import('./lib/notifications');
                       await pushNotification({
                         recipientEmail: newAdminEmail,
                         type: 'admin_transfer',
@@ -3912,7 +3908,6 @@ function App() {
                   
                   // Notify the newly-approved member that they were added
                   try {
-                    const { pushNotification } = await import('./lib/notifications');
                     const grp = groups.find((g) => String(g.id) === String(mem.group_id));
                     await pushNotification({
                       recipientEmail: mem.link_request_email,
@@ -4001,7 +3996,6 @@ function App() {
                   // Don't change another person's identity unilaterally — propose it.
                   await supabase.from('group_members').update({ pending_name: newName }).eq('id', target.id);
                   const grp = groups.find((g) => String(g.id) === String(selectedId));
-                  const { pushNotification } = await import('./lib/notifications');
                   await pushNotification({
                     recipientEmail: target.user_email,
                     type: 'rename_request',
@@ -4267,7 +4261,6 @@ function App() {
                       if (removedEmail && removedEmail !== userEmail) {
                         try {
                           const grpName = groups.find((g) => String(g.id) === String(selectedId))?.name || 'the group';
-                          const { pushNotification } = await import('./lib/notifications');
                           await pushNotification({
                             recipientEmail: removedEmail,
                             type: 'removed',
@@ -4783,7 +4776,6 @@ function App() {
                             .not('user_email', 'is', null);
                           
                           if (activeMems && activeMems.length > 0) {
-                            const { pushNotification } = await import('./lib/notifications');
                             for (const mem of activeMems) {
                               if (mem.user_email && mem.user_email !== activeEmail) {
                                 await pushNotification({
@@ -6319,7 +6311,6 @@ function App() {
                             .limit(1);
                           const adminEmail = adminRows?.[0]?.user_email;
                           if (adminEmail) {
-                            const { pushNotification } = await import('./lib/notifications');
                             await pushNotification({
                               recipientEmail: adminEmail,
                               type: 'link_request',

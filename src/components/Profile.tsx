@@ -85,20 +85,18 @@ export const Profile: React.FC<ProfileProps> = ({
     }
   };
 
-  const handlePhotoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handlePhotoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setUserMetadata({
-          ...userMetadata,
-          [me]: {
-            ...userMetadata[me],
-            profilePhoto: reader.result as string,
-          },
-        });
-      };
-      reader.readAsDataURL(file);
+      const { downscaleImageFile } = await import('../lib/imageUtils');
+      const dataUrl = await downscaleImageFile(file, 400, 0.8);
+      setUserMetadata({
+        ...userMetadata,
+        [me]: {
+          ...userMetadata[me],
+          profilePhoto: dataUrl,
+        },
+      });
     }
   };
 
