@@ -72,6 +72,33 @@ export const getPersonKey = (group: Group | undefined | null, name: string): str
 // all name-only entries that share a name into ONE, and drop a name-only entry
 // entirely when an email-bearing entry for that same name exists (same person,
 // now identified).
+// ── Dismissed recents ──────────────────────────────────────────────────────
+// The "Recently split with" quick-pick list can get cluttered with people you
+// no longer split with. Users can remove a row (trash icon); we remember those
+// dismissals per-device in localStorage so they don't come back. A dismissal is
+// keyed by the person's stable identity (email / person_id) when known, else by
+// their normalized name. Dismissing only hides them from suggestions — it never
+// touches groups, expenses or balances, and they can still be re-added by name.
+const DISMISSED_PEOPLE_KEY = 'dividoDismissedPeople';
+
+export const dismissedPersonKey = (s: { name: string; identity?: string; email?: string }): string => {
+  const id = (s.identity || s.email || '').trim().toLowerCase();
+  if (id) return id;
+  return (s.name || '').toLowerCase().replace(/\s+/g, ' ').trim();
+};
+
+export const getDismissedPeople = (): string[] => {
+  try { return JSON.parse(localStorage.getItem(DISMISSED_PEOPLE_KEY) || '[]'); } catch { return []; }
+};
+
+export const dismissPerson = (s: { name: string; identity?: string; email?: string }): void => {
+  try {
+    const set = new Set(getDismissedPeople());
+    set.add(dismissedPersonKey(s));
+    localStorage.setItem(DISMISSED_PEOPLE_KEY, JSON.stringify([...set]));
+  } catch { /* localStorage unavailable — nothing to persist */ }
+};
+
 export const buildPeopleSuggestions = (
   groups: Group[],
   currentGroupId: string | number | null,
@@ -142,7 +169,10 @@ export const buildPeopleSuggestions = (
       out.push({ name: e.name, email: '', identity: e.nameOnlyId, pastMember });
     }
   }
-  return out.sort((a, b) => a.name.localeCompare(b.name));
+  const dismissed = new Set(getDismissedPeople());
+  return out
+    .filter((s) => !dismissed.has(dismissedPersonKey(s)))
+    .sort((a, b) => a.name.localeCompare(b.name));
 };
 
 // ─────────────────────────────────────────────────────────────────────────
