@@ -37,6 +37,7 @@ const MergeRow: React.FC<{
 
   const claimedEmails = Array.from(new Set(d.entries.map((e) => e.email).filter(Boolean))) as string[];
   const combinedSuggestions = Array.from(new Set([...claimedEmails, ...emailSuggestions]));
+  const hasAlternativeOptions = combinedSuggestions.some(em => em.toLowerCase() !== emailTrim.toLowerCase());
 
   return (
     <div style={{ border: '1px solid #F1F5F9', borderRadius: '16px', padding: '12px 14px' }}>
@@ -60,7 +61,7 @@ const MergeRow: React.FC<{
           type="search"
           inputMode="email"
           autoComplete="off"
-          list={combinedSuggestions.length > 0 ? listId : undefined}
+          list={hasAlternativeOptions ? listId : undefined}
           placeholder="name@example.com"
           value={email}
           onChange={(ev) => setEmail(ev.target.value)}
