@@ -1,4 +1,5 @@
 import React from 'react';
+import { Virtuoso } from 'react-virtuoso';
 import { BalanceDisplay } from './BalanceDisplay';
 import { getEmoji, formatDate, getExactTime, getMonthYearKey, formatExactAmount } from '../lib/utils';
 import { Group, Expense } from '../lib/types';
@@ -326,7 +327,10 @@ export const ActivityStudio: React.FC<ActivityStudioProps> = ({
             </p>
           </div>
         ) : (
-          sorted.map((e, i) => {
+          <Virtuoso
+            useWindowScroll
+            data={sorted}
+            itemContent={(i, e) => {
             const g = groups.find((x) => String(x.id) === String(e.gId));
             const { key: myKey, label: myLabel } = getMonthYearKey(e.date, e.id);
             const showHeader = i === 0 || getMonthYearKey(sorted[i - 1].date, sorted[i - 1].id).key !== myKey;
@@ -678,7 +682,8 @@ export const ActivityStudio: React.FC<ActivityStudioProps> = ({
                 )}
               </React.Fragment>
             );
-          })
+          }}
+          />
         )}
       </div>
     </div>

@@ -1,3 +1,4 @@
+import { Virtuoso } from 'react-virtuoso';
 import React, { useState, useRef, useEffect, useMemo } from 'react';
 import { BalanceDisplay } from './BalanceDisplay';
 
@@ -756,7 +757,10 @@ export const FriendsView: React.FC<FriendsViewProps> = ({
       )}
 
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(min(100%, 340px), 1fr))', gap: '20px' }}>
-        {filteredFriends.map((f) => {
+        <Virtuoso
+          useWindowScroll
+          data={filteredFriends}
+          itemContent={(_, f) => {
           const activeBals = getConvertedBals(f.bals);
           const isOwed = Object.values(activeBals).some((v) => v > 0.01);
           const isOwe = Object.values(activeBals).some((v) => v < -0.01);
@@ -886,7 +890,8 @@ export const FriendsView: React.FC<FriendsViewProps> = ({
               <span style={{ fontSize: '18px', color: '#B8ADA0', fontWeight: 600, lineHeight: 1, flexShrink: 0 }}>›</span>
             </div>
           );
-        })}
+        }}
+        />
         {filteredFriends.length === 0 && (
           <div className="card" style={{ gridColumn: '1/-1', padding: '60px', textAlign: 'center', background: 'var(--bg)', border: '2px dashed #E2E8F0' }}>
             <p style={{ color: '#94A3B8', fontWeight: 600, opacity: 0.7 }}>
