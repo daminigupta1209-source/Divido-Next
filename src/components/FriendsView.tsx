@@ -56,8 +56,14 @@ const MergeRow: React.FC<{
 
       {/* Primary email everyone gets merged into. */}
       <div style={{ marginBottom: '10px' }}>
+        <style>{`
+          .hide-dl-arrow::-webkit-calendar-picker-indicator {
+            display: none !important;
+          }
+        `}</style>
         <div style={{ fontSize: '11px', fontWeight: 600, color: '#64748B', marginBottom: '4px' }}>Merge into this email</div>
         <input
+          className="hide-dl-arrow"
           type="search"
           inputMode="email"
           autoComplete="off"
