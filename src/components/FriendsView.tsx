@@ -4,6 +4,7 @@ import { BalanceDisplay } from './BalanceDisplay';
 
 import { Group, Expense, UserMetadata, GlobalSettleData } from '../lib/types';
 import { simplifyMultiCurrencyDebts, computeRawPairwiseTransactions } from '../lib/calculations';
+import { asyncBatchComputeGroups } from '../lib/workerHelper';
 import { getPersonKey, findDuplicatePeople, isValidEmail, type DuplicateEntry, type DuplicatePerson } from '../lib/identity';
 import { worldCurrencies, formatExactAmount, formatCompactAmount } from '../lib/utils';
 import { SearchableCurrencyPicker } from './SearchableCurrencyPicker';
@@ -250,142 +251,161 @@ export const FriendsView: React.FC<FriendsViewProps> = ({
   // Heavy balance derivation depends only on groups/expenses/me, so memoize it
   // to avoid recomputing every friend's balance on unrelated re-renders (typing
   // in the search box, opening a dropdown, etc.).
-  const { friends, isDupName, distinctCurrencies, allSharedMembers } = useMemo(() => {
-  // Balances are bucketed by a hidden IDENTITY (person_id / email / name) rather
-  // than the raw name, so two different people who share a name don't merge.
-  const masterBal: Record<string, Record<string, number>> = {};
-  const idMeta: Record<string, { name: string; groups: Set<string> }> = {};
-  // Resolve a member NAME within a group to its identity (falls back to the name
-  // itself for legacy/unlinked members — preserving old merge-by-name behaviour).
-  const resolveId = (g: Group, nm: string) => getPersonKey(g, nm);
-  const bumpBal = (id: string, name: string, groupName: string | null, curr: string, delta: number) => {
-    if (!masterBal[id]) masterBal[id] = {};
-    masterBal[id][curr] = (masterBal[id][curr] || 0) + delta;
-    if (!idMeta[id]) idMeta[id] = { name, groups: new Set() };
-    if (groupName) idMeta[id].groups.add(groupName);
-  };
-  // Everyone you share expenses with, regardless of whether a balance is outstanding.
-  // Lets us tell "all settled up" apart from "genuinely no friends".
-  const allSharedMembers = new Set<string>();
-
-  // Calculate friends' net balances by using the simplified transaction plans from each group.
-  // This ensures that FriendsView perfectly syncs with simplified group balances.
-  groups.forEach((g) => {
-    const groupExps = expenses.filter((e) => !e.isDeleted && String(e.gId) === String(g.id));
-    // The user's OWN name within this group (per-group claimed identity), not
-    // the flat global first name — otherwise, on a device where they differ,
-    // the user's own transactions get mis-attributed (they can even show up as
-    // their own "friend") and balances go wrong.
-    let myG = me;
-    try { const claim = localStorage.getItem(`divido_identity_${g.id}`); if (claim) myG = claim; } catch { /* ignore */ }
-    const myKey = getPersonKey(g, myG);
-    const effectiveMembers = Array.from(new Set([
-      myG,
-      ...groupExps.reduce((acc, e) => {
-        if (e.paid) acc.add(e.paid);
-        if (Array.isArray(e.splitters)) {
-          e.splitters.forEach((s) => acc.add(s));
-        }
-        return acc;
-      }, new Set<string>())
-    ]));
-
-    effectiveMembers.forEach((m) => { if (getPersonKey(g, m) !== myKey) allSharedMembers.add(m); });
-    // Group roster members count as friends too, even with no expenses yet.
-    (g.members || []).forEach((m) => {
-      const name = m.replace(' (Left)', '');
-      if (name && getPersonKey(g, name) !== myKey) allSharedMembers.add(name);
-    });
-
-    // A shared "direct" thread is presented as Non-Group everywhere, so its
-    // disambiguation tag should read "Non-Group", not its hidden internal name.
-    const gLabel = g.isDirect ? 'Non-Group' : g.name;
-
-    // Determine if we should simplify debts for this group (standalone is never simplified)
-    const useSimplify = g.id !== 'STANDALONE' && !!g.simplifyDebts;
-    
-    // We get raw transaction directions or simplified outcomes matching standard ledger engines
-    let groupTransactions: { from: string; to: string; balances: Record<string, number> }[] = [];
-    if (useSimplify) {
-      groupTransactions = simplifyMultiCurrencyDebts(effectiveMembers, groupExps, g.currency || '₹');
-    } else {
-      // Manual non-simplified calculation path matching GroupDetail.tsx
-      groupTransactions = computeRawPairwiseTransactions(effectiveMembers, groupExps, g.currency || '₹');
-    }
-
-    // Accumulate transactions involving me (compared by identity key, so a
-    // per-group name or a case variant still matches "me").
-    groupTransactions.forEach((t) => {
-      if (getPersonKey(g, t.from) === myKey) {
-        const friend = t.to;
-        const id = resolveId(g, friend);
-        Object.entries(t.balances).forEach(([curr, val]) => {
-          bumpBal(id, friend, gLabel, curr, -val);
-        });
-      } else if (getPersonKey(g, t.to) === myKey) {
-        const friend = t.from;
-        const id = resolveId(g, friend);
-        Object.entries(t.balances).forEach(([curr, val]) => {
-          bumpBal(id, friend, gLabel, curr, val);
-        });
-      }
-    });
+  const [friendsData, setFriendsData] = useState<{
+    friends: { id: string; name: string; groups: string[]; bals: Record<string, number> }[];
+    isDupName: (name: string) => boolean;
+    distinctCurrencies: string[];
+    allSharedMembers: Set<string>;
+  }>({
+    friends: [],
+    isDupName: () => false,
+    distinctCurrencies: [],
+    allSharedMembers: new Set<string>()
   });
+  const [isCalculatingFriends, setIsCalculatingFriends] = useState(true);
 
-  // Include non-group standalone expenses too
-  const standaloneExps = expenses.filter((e) => !e.isDeleted && e.gId === 'STANDALONE');
-  const standaloneMembers = Array.from(new Set([
-    me,
-    ...standaloneExps.flatMap((e) => [e.paid, ...(e.splitters || [])])
-  ]));
-  standaloneMembers.forEach((m) => { if (m && m !== me) allSharedMembers.add(m); });
+  useEffect(() => {
+    let active = true;
+    const compute = async () => {
+      setIsCalculatingFriends(true);
+      const masterBal: Record<string, Record<string, number>> = {};
+      const idMeta: Record<string, { name: string; groups: Set<string> }> = {};
+      const resolveId = (g: Group, nm: string) => getPersonKey(g, nm);
+      const bumpBal = (id: string, name: string, groupName: string | null, curr: string, delta: number) => {
+        if (!masterBal[id]) masterBal[id] = {};
+        masterBal[id][curr] = (masterBal[id][curr] || 0) + delta;
+        if (!idMeta[id]) idMeta[id] = { name, groups: new Set() };
+        if (groupName) idMeta[id].groups.add(groupName);
+      };
+      const allSharedMembers = new Set<string>();
 
-  standaloneExps.forEach((e) => {
-    const c = e.currency || '₹';
-    const splitters = e.splitters || [e.paid];
-    const amount = e.amt || 0;
-
-    if (e.paid === me) {
-      splitters.forEach((m) => {
-        if (m === me) return;
-        const otherShare =
-          !e.mode || e.mode === 'Equally'
-            ? amount / splitters.length
-            : e.mode === 'Unequally'
-            ? parseFloat(e.shares?.[m]?.toString() || '0')
-            : (amount * parseFloat(e.shares?.[m]?.toString() || '0')) / 100;
-        bumpBal(m, m, 'Non-Group', c, otherShare);
+      // Prepare batch request
+      const groupsData = groups.map((g) => {
+        const groupExps = expenses.filter((e) => !e.isDeleted && String(e.gId) === String(g.id));
+        let myG = me;
+        try { const claim = localStorage.getItem(`divido_identity_${g.id}`); if (claim) myG = claim; } catch { /* ignore */ }
+        const effectiveMembers = Array.from(new Set([
+          myG,
+          ...groupExps.reduce((acc, e) => {
+            if (e.paid) acc.add(e.paid);
+            if (Array.isArray(e.splitters)) e.splitters.forEach((s) => acc.add(s));
+            return acc;
+          }, new Set<string>())
+        ]));
+        return {
+          type: (g.id !== 'STANDALONE' && !!g.simplifyDebts) ? 'simplify' as const : 'raw' as const,
+          members: effectiveMembers,
+          expenses: groupExps,
+          defaultCurrency: g.currency || '₹',
+          gId: String(g.id)
+        };
       });
-    } else if (splitters.includes(me)) {
-      const payer = e.paid;
-      const myShare =
-        !e.mode || e.mode === 'Equally'
-          ? amount / splitters.length
-          : e.mode === 'Unequally'
-          ? parseFloat(e.shares?.[me]?.toString() || '0')
-          : (amount * parseFloat(e.shares?.[me]?.toString() || '0')) / 100;
-      bumpBal(payer, payer, 'Non-Group', c, -myShare);
-    }
-  });
 
-  const friends = Object.entries(masterBal).map(([id, bals]) => ({
-    id,
-    name: idMeta[id]?.name || id,
-    groups: idMeta[id] ? Array.from(idMeta[id].groups) : [],
-    bals,
-  }));
-  // Only show the group label to disambiguate people who share a display name.
-  const dupNameCount: Record<string, number> = {};
-  friends.forEach((f) => { const n = f.name.toLowerCase(); dupNameCount[n] = (dupNameCount[n] || 0) + 1; });
-  const isDupName = (name: string) => (dupNameCount[name.toLowerCase()] || 0) > 1;
+      const batchResults = await asyncBatchComputeGroups(groupsData);
 
-  // Distinct currencies present across all friend balances
-  const distinctCurrencies = Array.from(
-    new Set(friends.flatMap((f) => Object.entries(f.bals).filter(([_, v]) => Math.abs(v) > 0.01).map(([c]) => c)))
-  );
+      groups.forEach((g) => {
+        const groupExps = expenses.filter((e) => !e.isDeleted && String(e.gId) === String(g.id));
+        let myG = me;
+        try { const claim = localStorage.getItem(`divido_identity_${g.id}`); if (claim) myG = claim; } catch { /* ignore */ }
+        const myKey = getPersonKey(g, myG);
 
-    return { friends, isDupName, distinctCurrencies, allSharedMembers };
+        const effectiveMembers = Array.from(new Set([
+          myG,
+          ...groupExps.reduce((acc, e) => {
+            if (e.paid) acc.add(e.paid);
+            if (Array.isArray(e.splitters)) {
+              e.splitters.forEach((s) => acc.add(s));
+            }
+            return acc;
+          }, new Set<string>())
+        ]));
+
+        effectiveMembers.forEach((m) => { if (getPersonKey(g, m) !== myKey) allSharedMembers.add(m); });
+        (g.members || []).forEach((m) => {
+          const name = m.replace(' (Left)', '');
+          if (name && getPersonKey(g, name) !== myKey) allSharedMembers.add(name);
+        });
+
+        const gLabel = g.isDirect ? 'Non-Group' : g.name;
+        
+        const groupTransactions = batchResults[String(g.id)] || [];
+
+        groupTransactions.forEach((t) => {
+          if (getPersonKey(g, t.from) === myKey) {
+            const friend = t.to;
+            const id = resolveId(g, friend);
+            Object.entries(t.balances).forEach(([curr, val]) => {
+              bumpBal(id, friend, gLabel, curr, -val);
+            });
+          } else if (getPersonKey(g, t.to) === myKey) {
+            const friend = t.from;
+            const id = resolveId(g, friend);
+            Object.entries(t.balances).forEach(([curr, val]) => {
+              bumpBal(id, friend, gLabel, curr, val);
+            });
+          }
+        });
+      });
+
+      const standaloneExps = expenses.filter((e) => !e.isDeleted && e.gId === 'STANDALONE');
+      const standaloneMembers = Array.from(new Set([
+        me,
+        ...standaloneExps.flatMap((e) => [e.paid, ...(e.splitters || [])])
+      ]));
+      standaloneMembers.forEach((m) => { if (m && m !== me) allSharedMembers.add(m); });
+
+      standaloneExps.forEach((e) => {
+        const c = e.currency || '₹';
+        const splitters = e.splitters || [e.paid];
+        const amount = e.amt || 0;
+
+        if (e.paid === me) {
+          splitters.forEach((m) => {
+            if (m === me) return;
+            const otherShare =
+              !e.mode || e.mode === 'Equally'
+                ? amount / splitters.length
+                : e.mode === 'Unequally'
+                ? parseFloat(e.shares?.[m]?.toString() || '0')
+                : (amount * parseFloat(e.shares?.[m]?.toString() || '0')) / 100;
+            bumpBal(m, m, 'Non-Group', c, otherShare);
+          });
+        } else if (splitters.includes(me)) {
+          const payer = e.paid;
+          const myShare =
+            !e.mode || e.mode === 'Equally'
+              ? amount / splitters.length
+              : e.mode === 'Unequally'
+              ? parseFloat(e.shares?.[me]?.toString() || '0')
+              : (amount * parseFloat(e.shares?.[me]?.toString() || '0')) / 100;
+          bumpBal(payer, payer, 'Non-Group', c, -myShare);
+        }
+      });
+
+      const friends = Object.entries(masterBal).map(([id, bals]) => ({
+        id,
+        name: idMeta[id]?.name || id,
+        groups: idMeta[id] ? Array.from(idMeta[id].groups) : [],
+        bals,
+      }));
+      const dupNameCount: Record<string, number> = {};
+      friends.forEach((f) => { const n = f.name.toLowerCase(); dupNameCount[n] = (dupNameCount[n] || 0) + 1; });
+      const isDupName = (name: string) => (dupNameCount[name.toLowerCase()] || 0) > 1;
+
+      const distinctCurrencies = Array.from(
+        new Set(friends.flatMap((f) => Object.entries(f.bals).filter(([_, v]) => Math.abs(v) > 0.01).map(([c]) => c)))
+      );
+
+      if (active) {
+        setFriendsData({ friends, isDupName, distinctCurrencies, allSharedMembers });
+        setIsCalculatingFriends(false);
+      }
+    };
+    compute();
+    return () => { active = false; };
   }, [groups, expenses, me]);
+
+  const { friends, isDupName, distinctCurrencies, allSharedMembers } = friendsData;
 
   // Fetch live rates (er-api, same source as the group converter) for every currency → target
   const fetchRatesTo = async (target: string) => {
