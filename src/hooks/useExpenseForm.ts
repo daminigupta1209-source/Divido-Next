@@ -237,11 +237,10 @@ export function useExpenseForm({
     [expenses, localGId]
   );
 
-  const lastUsedGroupCurrency = localGId ? localStorage.getItem(`divido_last_used_currency_${localGId}`) : null;
-
-  const defaultCurr = lastUsedGroupCurrency || (latestExpInGroup
-    ? latestExpInGroup.currency || localStorage.getItem('divido_last_used_currency') || defaultCurrency
-    : activeGroup?.currency || localStorage.getItem('divido_last_used_currency') || defaultCurrency);
+  // The user requested: "whichever currency is selected last, that should continue"
+  // This means the absolute top priority for a NEW expense is the globally last-selected currency.
+  const globalLastCurr = localStorage.getItem('divido_last_used_currency');
+  const defaultCurr = globalLastCurr || activeGroup?.currency || defaultCurrency;
 
   const [curr, setCurr] = useState<string>(editingExpense?.currency || defaultCurr);
   const [manualEdits, setManualEdits] = useState<Set<string>>(new Set());
@@ -423,7 +422,8 @@ export function useExpenseForm({
       setShares(editingExpense.shares || {});
       setManualEdits(new Set());
       setPayer(canonName(editingExpense.paid) || me);
-      setCurr(editingExpense.currency || activeGroup.currency || defaultCurrency);
+      const globalLastCurr = localStorage.getItem('divido_last_used_currency');
+      setCurr(editingExpense.currency || globalLastCurr || activeGroup.currency || defaultCurrency);
       return;
     }
 
@@ -440,8 +440,9 @@ export function useExpenseForm({
       setShares({});
       setManualEdits(new Set());
     }
-    const lastUsedGroupCurrency = localGId ? localStorage.getItem(`divido_last_used_currency_${localGId}`) : null;
-    setCurr(lastUsedGroupCurrency || activeGroup.currency || defaultCurrency);
+    // When changing groups, respect the global last used currency first for new expenses.
+    const globalLastCurr = localStorage.getItem('divido_last_used_currency');
+    setCurr(globalLastCurr || activeGroup.currency || defaultCurrency);
     setPayer(me);
   }, [localGId]);
 
