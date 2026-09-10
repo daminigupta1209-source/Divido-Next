@@ -309,17 +309,29 @@ export const FriendsView: React.FC<FriendsViewProps> = ({
         const groupExps = expenses.filter((e) => !e.isDeleted && String(e.gId) === String(g.id));
         let myG = me;
         try { const claim = localStorage.getItem(`divido_identity_${g.id}`); if (claim) myG = claim; } catch { /* ignore */ }
-        // Anchor "me" to the signed-in email whenever THIS group knows it. Your
-        // display name can differ per group ("Damini" vs "Damini Gupta"), so the
-        // name-based key can miss and silently drop EVERY transaction in that
-        // group (that was the "person missing from All balances" bug). The email
-        // is stable across groups; fall back to the name only for groups that
-        // don't carry it (name-only members), preserving prior behaviour there.
+        // Identify "me" in THIS group robustly. The global `me` is only your FIRST
+        // name (App does userName.split(' ')[0]), but you may be enrolled under
+        // your FULL name ("Damini Gupta") in some groups. If we match by the wrong
+        // spelling, myKey misses and EVERY transaction in that group is silently
+        // dropped — the "person missing from All balances" bug. So resolve myKey
+        // by trying, in order: signed-in email (stable across groups) → per-group
+        // claim → full username → first name, picking the first that is actually a
+        // member of this group. Falls back to the old behaviour if none match.
         let signedInEmail = userEmail || '';
         if (!signedInEmail) { try { signedInEmail = localStorage.getItem('divido_email') || ''; } catch { /* ignore */ } }
         const myEmail = signedInEmail.toLowerCase();
-        const emailIsInGroup = !!myEmail && Object.values(g.memberIdentities || {}).some((v) => String(v).toLowerCase() === myEmail);
-        const myKey = emailIsInGroup ? myEmail : getPersonKey(g, myG);
+        let fullName = ''; try { fullName = localStorage.getItem('divido_username') || ''; } catch { /* ignore */ }
+        let claimName = ''; try { claimName = localStorage.getItem(`divido_identity_${g.id}`) || ''; } catch { /* ignore */ }
+        const groupKeyVals = new Set(Object.values(g.memberIdentities || {}).map((v) => String(v).toLowerCase()));
+        const norm = (s: string) => s.replace(/\s*\(Left\)$/i, '').trim().toLowerCase();
+        const isMyMemberName = (nm: string) => !!nm && (g.members || []).some((m) => norm(m) === norm(nm));
+        let myKey: string;
+        if (myEmail && groupKeyVals.has(myEmail)) {
+          myKey = myEmail;
+        } else {
+          const nm = [claimName, fullName, me].find((n) => isMyMemberName(n));
+          myKey = getPersonKey(g, nm || myG);
+        }
 
         const effectiveMembers = Array.from(new Set([
           myG,
@@ -555,7 +567,8 @@ export const FriendsView: React.FC<FriendsViewProps> = ({
     <div className="content-width-limit">
       {/* TEMP DEBUG — remove after diagnosing the missing-Abhishek issue */}
       <pre style={{ background: '#FEF2F2', border: '1px solid #FCA5A5', borderRadius: '8px', padding: '10px', fontSize: '10px', lineHeight: 1.4, overflowX: 'auto', marginBottom: '12px', whiteSpace: 'pre-wrap', wordBreak: 'break-all' }}>
-        {'DEBUG v3 me=' + JSON.stringify(me) +
+        {'DEBUG v4 me=' + JSON.stringify(me) +
+          ' username=' + JSON.stringify((() => { try { return localStorage.getItem('divido_username') || ''; } catch { return '?'; } })()) +
           ' email=' + JSON.stringify((() => { try { return localStorage.getItem('divido_email') || ''; } catch { return '?'; } })()) + '\n' +
           'tunTunProbe=' + JSON.stringify((() => {
             const g: any = groups.find((x) => (x.name || '').toLowerCase().includes('tun'));
