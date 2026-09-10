@@ -167,6 +167,7 @@ interface FriendsViewProps {
   groups: Group[];
   expenses: Expense[];
   me: string;
+  userEmail?: string;
   setView: (view: string) => void;
   setSelectedId: (id: string | number | null) => void;
   setGlobalSettleData: (data: GlobalSettleData | null) => void;
@@ -184,6 +185,7 @@ export const FriendsView: React.FC<FriendsViewProps> = ({
   groups,
   expenses,
   me,
+  userEmail,
   setView,
   setSelectedId,
   setGlobalSettleData,
@@ -307,7 +309,17 @@ export const FriendsView: React.FC<FriendsViewProps> = ({
         const groupExps = expenses.filter((e) => !e.isDeleted && String(e.gId) === String(g.id));
         let myG = me;
         try { const claim = localStorage.getItem(`divido_identity_${g.id}`); if (claim) myG = claim; } catch { /* ignore */ }
-        const myKey = getPersonKey(g, myG);
+        // Anchor "me" to the signed-in email whenever THIS group knows it. Your
+        // display name can differ per group ("Damini" vs "Damini Gupta"), so the
+        // name-based key can miss and silently drop EVERY transaction in that
+        // group (that was the "person missing from All balances" bug). The email
+        // is stable across groups; fall back to the name only for groups that
+        // don't carry it (name-only members), preserving prior behaviour there.
+        let signedInEmail = userEmail || '';
+        if (!signedInEmail) { try { signedInEmail = localStorage.getItem('divido_email') || ''; } catch { /* ignore */ } }
+        const myEmail = signedInEmail.toLowerCase();
+        const emailIsInGroup = !!myEmail && Object.values(g.memberIdentities || {}).some((v) => String(v).toLowerCase() === myEmail);
+        const myKey = emailIsInGroup ? myEmail : getPersonKey(g, myG);
 
         const effectiveMembers = Array.from(new Set([
           myG,
@@ -403,7 +415,7 @@ export const FriendsView: React.FC<FriendsViewProps> = ({
     };
     compute();
     return () => { active = false; };
-  }, [groups, expenses, me]);
+  }, [groups, expenses, me, userEmail]);
 
   const { friends, isDupName, distinctCurrencies, allSharedMembers } = friendsData;
 
