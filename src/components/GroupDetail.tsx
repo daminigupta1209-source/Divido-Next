@@ -935,6 +935,32 @@ export const GroupDetail: React.FC<GroupDetailProps> = ({
                 const myTransList = filtered.filter(t => t.isMyTrans);
                 const otherTransList = filtered.filter(t => !t.isMyTrans);
 
+                // Group my transactions by person so opposite-direction debts (in different currencies)
+                // render inside a single person card, rather than two identical cards.
+                const groupedMyTrans: Record<string, Record<string, number>> = {};
+                myTransList.forEach(t => {
+                  const m = t.from === me ? t.to : t.from;
+                  const isOwed = t.to === me;
+                  if (!groupedMyTrans[m]) groupedMyTrans[m] = {};
+                  Object.entries(t.balances).forEach(([c, v]) => {
+                    groupedMyTrans[m][c] = (groupedMyTrans[m][c] || 0) + (isOwed ? v : -v);
+                  });
+                });
+                const myGroupedList = Object.keys(groupedMyTrans).sort();
+
+                // Group other transactions by pair
+                const groupedOtherTrans: Record<string, { p1: string, p2: string, balances: Record<string, number> }> = {};
+                otherTransList.forEach(t => {
+                  const [p1, p2] = [t.from, t.to].sort();
+                  const pair = `${p1}::${p2}`;
+                  if (!groupedOtherTrans[pair]) groupedOtherTrans[pair] = { p1, p2, balances: {} };
+                  const isForward = t.to === p1; // if p2 owes p1, balance is positive for p1
+                  Object.entries(t.balances).forEach(([c, v]) => {
+                    groupedOtherTrans[pair].balances[c] = (groupedOtherTrans[pair].balances[c] || 0) + (isForward ? v : -v);
+                  });
+                });
+                const otherGroupedPairs = Object.values(groupedOtherTrans);
+
                 const AV_COLORS = ['#B39DDB', '#F48FB1', '#80CBC4', '#FFB74D', '#9FA8DA', '#A5D6A7', '#EF9A9A', '#7FC8CE'];
                 const balPillBase: React.CSSProperties = { padding: '2px 4px', borderRadius: '999px', fontSize: '13px', fontWeight: 600, whiteSpace: 'nowrap', display: 'inline-flex', alignItems: 'center', justifyContent: 'flex-end', gap: '5px' };
                 const balCardChip: React.CSSProperties = { background: '#F1EFE8', borderRadius: '999px', padding: '0 6px', fontSize: '10px', fontWeight: 600, lineHeight: '16px' };
@@ -942,20 +968,11 @@ export const GroupDetail: React.FC<GroupDetailProps> = ({
 
                 return (
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                    {myTransList.map((t) => {
-                      const m = t.from === me ? t.to : t.from;
-                      const isOwed = t.to === me;
-
-                      let displayBalances: Record<string, number> = {};
-                      if (isOwed) {
-                        displayBalances = t.balances;
-                      } else {
-                        Object.entries(t.balances).forEach(([c, v]) => {
-                          displayBalances[c] = -v;
-                        });
-                      }
-
+                    {myGroupedList.map((m) => {
+                      const displayBalances = groupedMyTrans[m];
                       const balEntries = Object.entries(displayBalances).filter(([_, v]) => Math.abs(v) > 0.01);
+                      if (balEntries.length === 0) return null;
+
                       const collectList = balEntries.filter(([_, v]) => v > 0.01);
                       const payList = balEntries.filter(([_, v]) => v < -0.01);
                       const avBg = AV_COLORS[(m.charCodeAt(0) || 0) % AV_COLORS.length];
@@ -1083,53 +1100,66 @@ export const GroupDetail: React.FC<GroupDetailProps> = ({
                       </h4>
                     )}
 
-                    {otherTransList.map((t, idx) => {
+                    {otherGroupedPairs.map((pair, idx) => {
+                      const balEntries = Object.entries(pair.balances).filter(([_, v]) => Math.abs(v) > 0.01);
+                      if (balEntries.length === 0) return null;
+                      
                       return (
-                        <div
-                          key={`other-${idx}`}
-                          style={{
-                            padding: '16px',
-                            background: '#F8FAFC',
-                            border: '0.5px solid #EFE7DC',
-                            opacity: 0.9,
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'space-between',
-                            gap: '12px',
-                            borderRadius: '20px',
-                            boxShadow: '0 2px 10px rgba(0,0,0,0.04)',
-                            boxSizing: 'border-box',
-                            cursor: 'default',
-                          }}
-                        >
-                          <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flex: 1, minWidth: 0 }}>
-                            <div
-                              style={{
-                                width: '34px',
-                                height: '34px',
-                                borderRadius: '8px',
-                                background: '#E2E8F0',
-                                display: 'flex',
-                                alignItems: 'center',
-                                justifyContent: 'center',
-                                fontSize: '14px',
-                                flexShrink: 0,
-                              }}
-                            >
-                              ✅
-                            </div>
-                            <div style={{ minWidth: 0, fontSize: '13px', color: '#64748B', fontWeight: 700, textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap' }}>
-                              <span style={{ color: '#475569', fontWeight: 600 }}>{t.from}</span>
-                              <span style={{ margin: '0 6px', fontWeight: 500, opacity: 0.7 }}>➔</span>
-                              <span style={{ color: '#475569', fontWeight: 600 }}>{t.to}</span>
-                            </div>
-                          </div>
+                        <div key={`other-${idx}`} style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                          {balEntries.map(([c, v], subIdx) => {
+                            const from = v < 0 ? pair.p1 : pair.p2;
+                            const to = v < 0 ? pair.p2 : pair.p1;
+                            const amt = Math.abs(v);
+                            
+                            return (
+                              <div
+                                key={`other-${idx}-${subIdx}`}
+                                style={{
+                                  padding: '16px',
+                                  background: '#F8FAFC',
+                                  border: '0.5px solid #EFE7DC',
+                                  opacity: 0.9,
+                                  display: 'flex',
+                                  alignItems: 'center',
+                                  justifyContent: 'space-between',
+                                  gap: '12px',
+                                  borderRadius: '20px',
+                                  boxShadow: '0 2px 10px rgba(0,0,0,0.04)',
+                                  boxSizing: 'border-box',
+                                  cursor: 'default',
+                                }}
+                              >
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flex: 1, minWidth: 0 }}>
+                                  <div
+                                    style={{
+                                      width: '34px',
+                                      height: '34px',
+                                      borderRadius: '8px',
+                                      background: '#E2E8F0',
+                                      display: 'flex',
+                                      alignItems: 'center',
+                                      justifyContent: 'center',
+                                      fontSize: '14px',
+                                      flexShrink: 0,
+                                    }}
+                                  >
+                                    ✅
+                                  </div>
+                                  <div style={{ minWidth: 0, fontSize: '13px', color: '#64748B', fontWeight: 700, textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap' }}>
+                                    <span style={{ color: '#475569', fontWeight: 600 }}>{from}</span>
+                                    <span style={{ margin: '0 6px', fontWeight: 500, opacity: 0.7 }}>➔</span>
+                                    <span style={{ color: '#475569', fontWeight: 600 }}>{to}</span>
+                                  </div>
+                                </div>
 
-                          <div style={{ display: 'flex', alignItems: 'center', gap: '16px', flexShrink: 0 }}>
-                            <div style={{ width: '80px', flexShrink: 0, display: 'flex', justifyContent: 'flex-end' }}>
-                              <BalanceDisplay balances={t.balances} align="right" style={{ fontSize: '14px', fontWeight: 600, color: '#64748B' }} />
-                            </div>
-                          </div>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '16px', flexShrink: 0 }}>
+                                  <div style={{ flexShrink: 0, display: 'flex', justifyContent: 'flex-end' }}>
+                                    <span style={{ fontSize: '14px', fontWeight: 600, color: '#64748B' }}>{c}{formatExactAmount(amt)}</span>
+                                  </div>
+                                </div>
+                              </div>
+                            );
+                          })}
                         </div>
                       );
                     })}
