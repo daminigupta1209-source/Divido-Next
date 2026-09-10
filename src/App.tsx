@@ -14,6 +14,7 @@ import { RejoinRequestModal, type AdminRejoinRequest } from './components/Rejoin
 import { RejoinSelfModal } from './components/RejoinSelfModal';
 import { useThemeStore } from './store/themeStore';
 import { useLedgerStore } from './store/ledgerStore';
+import { useBalanceStore } from './store/balanceStore';
 function safeLazy<T extends React.ComponentType<any>>(
   factory: () => Promise<{ default: T }>
 ) {
@@ -2876,7 +2877,8 @@ function App() {
     }
   };
 
-  const [allGroupBalances, setAllGroupBalances] = React.useState<Record<string, Record<string, Record<string, number>>>>({});
+  const allGroupBalances = useBalanceStore((s) => s.allGroupBalances);
+  const setAllGroupBalances = useBalanceStore((s) => s.setAllGroupBalances);
   const [isCalculatingBalances, setIsCalculatingBalances] = React.useState(false);
 
   React.useEffect(() => {
