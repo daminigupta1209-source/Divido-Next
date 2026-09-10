@@ -555,7 +555,15 @@ export const FriendsView: React.FC<FriendsViewProps> = ({
     <div className="content-width-limit">
       {/* TEMP DEBUG — remove after diagnosing the missing-Abhishek issue */}
       <pre style={{ background: '#FEF2F2', border: '1px solid #FCA5A5', borderRadius: '8px', padding: '10px', fontSize: '10px', lineHeight: 1.4, overflowX: 'auto', marginBottom: '12px', whiteSpace: 'pre-wrap', wordBreak: 'break-all' }}>
-        {'DEBUG me=' + JSON.stringify(me) + '\n' +
+        {'DEBUG v3 me=' + JSON.stringify(me) +
+          ' email=' + JSON.stringify((() => { try { return localStorage.getItem('divido_email') || ''; } catch { return '?'; } })()) + '\n' +
+          'tunTunProbe=' + JSON.stringify((() => {
+            const g: any = groups.find((x) => (x.name || '').toLowerCase().includes('tun'));
+            if (!g) return 'no-tun-group';
+            let em = ''; try { em = (localStorage.getItem('divido_email') || '').toLowerCase(); } catch { /* ignore */ }
+            const vals = Object.values(g.memberIdentities || {}).map((v) => String(v).toLowerCase());
+            return { memberIdentities: g.memberIdentities || null, emailIsInGroup: !!em && vals.includes(em) };
+          })(), null, 1) + '\n' +
           'friends (' + friends.length + '):\n' +
           JSON.stringify(
             friends.map((f) => ({ name: f.name, id: f.id, groups: f.groups, bals: f.bals })),
