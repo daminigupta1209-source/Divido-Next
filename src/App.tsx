@@ -13,7 +13,6 @@ import { BootSplash } from './pages/BootSplash';
 import { RejoinRequestModal, type AdminRejoinRequest } from './components/RejoinRequestModal';
 import { RejoinSelfModal } from './components/RejoinSelfModal';
 import { useThemeStore } from './store/themeStore';
-import { useLedgerStore } from './store/ledgerStore';
 function safeLazy<T extends React.ComponentType<any>>(
   factory: () => Promise<{ default: T }>
 ) {
@@ -108,8 +107,7 @@ function App() {
   const theme = useThemeStore((s) => s.theme);
   const setTheme = useThemeStore((s) => s.setTheme);
   const [view, setView] = useState<string>(() => initialSavedState?.view || 'summary');
-  const selectedId = useLedgerStore((s) => s.selectedId);
-  const setSelectedId = useLedgerStore((s) => s.setSelectedId);
+  const [selectedId, setSelectedId] = useState<string | number | null>(() => initialSavedState?.selectedId ?? null);
   const [editingGroupId, setEditingGroupId] = useState<string | number | null>(null);
   const [groupDetailTab, setGroupDetailTab] = useState<'expenses' | 'balances' | 'photos'>(() => initialSavedState?.groupDetailTab || 'expenses');
   const [isPhotoViewerOpen, setIsPhotoViewerOpen] = useState<boolean>(false);
@@ -961,11 +959,48 @@ function App() {
     }
   };
 
-  const groups = useLedgerStore((s) => s.groups);
-  const setGroups = useLedgerStore((s) => s.setGroups);
+  const [groups, setGroups] = useState<Group[]>(() => {
+    try {
+      const saved = localStorage.getItem('divido_groups');
+      const savedName = localStorage.getItem('divido_username');
+      const dName = savedName && savedName !== 'undefined' ? savedName : 'You';
+      const myFirstName = dName.split(' ')[0];
+      const parsed = saved && saved !== 'undefined' ? JSON.parse(saved) : [];
+      const seenIds = new Set<any>();
+      const uniqueParsed = parsed.filter((g: any) => {
+        if (!g.id) return false;
+        // Group ids are permanent and unique — dedupe by id regardless of type.
+        if (seenIds.has(String(g.id))) return false;
+        seenIds.add(String(g.id));
+        return true;
+      });
+      return uniqueParsed.map((g: any) => {
+        const members = Array.isArray(g.members) ? Array.from(new Set(g.members)) : [myFirstName || 'You'];
+        return { 
+          ...g, 
+          members, 
+          currency: g.currency || '₹',
+          simplifyDebts: g.simplifyDebts !== undefined ? g.simplifyDebts : false
+        };
+      });
+    } catch (e) {
+      return [];
+    }
+  });
 
-  const expenses = useLedgerStore((s) => s.expenses);
-  const setExpenses = useLedgerStore((s) => s.setExpenses);
+  const [expenses, setExpenses] = useState<Expense[]>(() => {
+    try {
+      const saved = localStorage.getItem('divido_expenses');
+      const parsed = saved && saved !== 'undefined' ? JSON.parse(saved) : [];
+      return parsed.filter((e: any) => !isLegacyRenameLog(e)).map((e: any) => {
+        const splitters = ensureArray(e.splitters);
+        const shares = ensureObject(e.shares);
+        return { ...e, splitters, shares, amt: parseFloat(e.amt) || 0 };
+      });
+    } catch (e) {
+      return [];
+    }
+  });
   
   // A "direct" group is a shared non-group card (isDirect). Its expenses are
   // presented as Non-Group Expenses, and the group itself is hidden from the

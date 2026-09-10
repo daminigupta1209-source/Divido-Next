@@ -167,7 +167,6 @@ interface FriendsViewProps {
   groups: Group[];
   expenses: Expense[];
   me: string;
-  userEmail?: string;
   setView: (view: string) => void;
   setSelectedId: (id: string | number | null) => void;
   setGlobalSettleData: (data: GlobalSettleData | null) => void;
@@ -185,7 +184,6 @@ export const FriendsView: React.FC<FriendsViewProps> = ({
   groups,
   expenses,
   me,
-  userEmail,
   setView,
   setSelectedId,
   setGlobalSettleData,
@@ -265,7 +263,6 @@ export const FriendsView: React.FC<FriendsViewProps> = ({
     allSharedMembers: new Set<string>()
   });
   const [isCalculatingFriends, setIsCalculatingFriends] = useState(true);
-  const [dbg, setDbg] = useState<any>(null);
 
   useEffect(() => {
     let active = true;
@@ -273,7 +270,6 @@ export const FriendsView: React.FC<FriendsViewProps> = ({
       setIsCalculatingFriends(true);
       const masterBal: Record<string, Record<string, number>> = {};
       const idMeta: Record<string, { name: string; groups: Set<string> }> = {};
-      let tunDbg: any = null; // TEMP DEBUG
       const resolveId = (g: Group, nm: string) => getPersonKey(g, nm);
       const bumpBal = (id: string, name: string, groupName: string | null, curr: string, delta: number) => {
         if (!masterBal[id]) masterBal[id] = {};
@@ -311,34 +307,7 @@ export const FriendsView: React.FC<FriendsViewProps> = ({
         const groupExps = expenses.filter((e) => !e.isDeleted && String(e.gId) === String(g.id));
         let myG = me;
         try { const claim = localStorage.getItem(`divido_identity_${g.id}`); if (claim) myG = claim; } catch { /* ignore */ }
-        // Identify "me" in THIS group robustly. The global `me` is only your FIRST
-        // name (App does userName.split(' ')[0]), but you may be enrolled under
-        // your FULL name ("Damini Gupta") in some groups. If we match by the wrong
-        // spelling, myKey misses and EVERY transaction in that group is silently
-        // dropped — the "person missing from All balances" bug. So resolve myKey
-        // by trying, in order: signed-in email (stable across groups) → per-group
-        // claim → full username → first name, picking the first that is actually a
-        // member of this group. Falls back to the old behaviour if none match.
-        let signedInEmail = userEmail || '';
-        if (!signedInEmail) { try { signedInEmail = localStorage.getItem('divido_email') || ''; } catch { /* ignore */ } }
-        const myEmail = signedInEmail.toLowerCase();
-        let fullName = ''; try { fullName = localStorage.getItem('divido_username') || ''; } catch { /* ignore */ }
-        let claimName = ''; try { claimName = localStorage.getItem(`divido_identity_${g.id}`) || ''; } catch { /* ignore */ }
-        const groupKeyVals = new Set(Object.values(g.memberIdentities || {}).map((v) => String(v).toLowerCase()));
-        // Try each identifier and keep the first whose resolved key is a REAL
-        // identity in this group. This works even when g.members stores a
-        // different spelling than memberIdentities (e.g. "Damini" vs the mapped
-        // "Damini Gupta"), because getPersonKey resolves via memberIdentities.
-        let myKey: string;
-        if (myEmail && groupKeyVals.has(myEmail)) {
-          myKey = myEmail;
-        } else {
-          const resolved = [claimName, fullName, me]
-            .filter(Boolean)
-            .map((n) => getPersonKey(g, n))
-            .find((k) => groupKeyVals.has(String(k).toLowerCase()));
-          myKey = resolved || getPersonKey(g, myG);
-        }
+        const myKey = getPersonKey(g, myG);
 
         const effectiveMembers = Array.from(new Set([
           myG,
@@ -358,21 +327,8 @@ export const FriendsView: React.FC<FriendsViewProps> = ({
         });
 
         const gLabel = g.isDirect ? 'Non-Group' : g.name;
-
+        
         const groupTransactions = batchResults[String(g.id)] || [];
-
-        // TEMP DEBUG — capture Tun tun's attribution details for THIS run
-        if ((g.name || '').toLowerCase().includes('tun')) {
-          tunDbg = {
-            gId: String(g.id),
-            myKey,
-            groupExpsCount: groupExps.length,
-            txns: groupTransactions.map((t: any) => ({
-              from: t.from, to: t.to,
-              matched: getPersonKey(g, t.from) === myKey || getPersonKey(g, t.to) === myKey,
-            })),
-          };
-        }
 
         groupTransactions.forEach((t) => {
           if (getPersonKey(g, t.from) === myKey) {
@@ -443,16 +399,11 @@ export const FriendsView: React.FC<FriendsViewProps> = ({
       if (active) {
         setFriendsData({ friends, isDupName, distinctCurrencies, allSharedMembers });
         setIsCalculatingFriends(false);
-        setDbg({ // TEMP DEBUG — tied to the run that actually set the list
-          ...tunDbg,
-          finalFriendsCount: friends.length,
-          abhishekInFriends: friends.filter((f) => f.name.toLowerCase().includes('abhishek')).map((f) => ({ id: f.id, groups: f.groups, bals: f.bals })),
-        });
       }
     };
     compute();
     return () => { active = false; };
-  }, [groups, expenses, me, userEmail]);
+  }, [groups, expenses, me]);
 
   const { friends, isDupName, distinctCurrencies, allSharedMembers } = friendsData;
 
@@ -590,28 +541,6 @@ export const FriendsView: React.FC<FriendsViewProps> = ({
 
   return (
     <div className="content-width-limit">
-      {/* TEMP DEBUG — remove after diagnosing the missing-Abhishek issue */}
-      <pre style={{ background: '#FEF2F2', border: '1px solid #FCA5A5', borderRadius: '8px', padding: '10px', fontSize: '10px', lineHeight: 1.4, overflowX: 'auto', marginBottom: '12px', whiteSpace: 'pre-wrap', wordBreak: 'break-all' }}>
-        {'DEBUG v7 (same-run) =' + JSON.stringify(dbg, null, 1) + '\n' +
-          'me=' + JSON.stringify(me) +
-          ' username=' + JSON.stringify((() => { try { return localStorage.getItem('divido_username') || ''; } catch { return '?'; } })()) +
-          ' email=' + JSON.stringify((() => { try { return localStorage.getItem('divido_email') || ''; } catch { return '?'; } })()) + '\n' +
-          'tunTunProbe=' + JSON.stringify((() => {
-            const g: any = groups.find((x) => (x.name || '').toLowerCase().includes('tun'));
-            if (!g) return 'no-tun-group';
-            let em = ''; try { em = (localStorage.getItem('divido_email') || '').toLowerCase(); } catch { /* ignore */ }
-            const vals = Object.values(g.memberIdentities || {}).map((v) => String(v).toLowerCase());
-            let fn = ''; try { fn = localStorage.getItem('divido_username') || ''; } catch { /* ignore */ }
-            const resolvedKey = [fn, me].filter(Boolean).map((n) => getPersonKey(g, n)).find((k) => vals.includes(String(k).toLowerCase())) || null;
-            return { emailIsInGroup: !!em && vals.includes(em), resolvedMyKey: resolvedKey };
-          })(), null, 1) + '\n' +
-          'friends (' + friends.length + '):\n' +
-          JSON.stringify(
-            friends.map((f) => ({ name: f.name, id: f.id, groups: f.groups, bals: f.bals })),
-            null,
-            1
-          )}
-      </pre>
       {/* Duplicate-person review banner */}
       {onMergePeople && duplicatePeople.length > 0 && (
         <div
