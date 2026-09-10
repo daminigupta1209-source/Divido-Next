@@ -273,6 +273,7 @@ export const FriendsView: React.FC<FriendsViewProps> = ({
       setIsCalculatingFriends(true);
       const masterBal: Record<string, Record<string, number>> = {};
       const idMeta: Record<string, { name: string; groups: Set<string> }> = {};
+      let tunDbg: any = null; // TEMP DEBUG
       const resolveId = (g: Group, nm: string) => getPersonKey(g, nm);
       const bumpBal = (id: string, name: string, groupName: string | null, curr: string, delta: number) => {
         if (!masterBal[id]) masterBal[id] = {};
@@ -360,20 +361,17 @@ export const FriendsView: React.FC<FriendsViewProps> = ({
 
         const groupTransactions = batchResults[String(g.id)] || [];
 
-        // TEMP DEBUG — capture Tun tun's attribution details
+        // TEMP DEBUG — capture Tun tun's attribution details for THIS run
         if ((g.name || '').toLowerCase().includes('tun')) {
-          setDbg({
+          tunDbg = {
             gId: String(g.id),
             myKey,
             groupExpsCount: groupExps.length,
-            txnKeys: String(g.id) in batchResults ? 'has-key' : 'MISSING-KEY',
-            batchKeysSample: Object.keys(batchResults).slice(0, 5),
             txns: groupTransactions.map((t: any) => ({
               from: t.from, to: t.to,
-              fromKey: getPersonKey(g, t.from), toKey: getPersonKey(g, t.to),
               matched: getPersonKey(g, t.from) === myKey || getPersonKey(g, t.to) === myKey,
             })),
-          });
+          };
         }
 
         groupTransactions.forEach((t) => {
@@ -445,6 +443,11 @@ export const FriendsView: React.FC<FriendsViewProps> = ({
       if (active) {
         setFriendsData({ friends, isDupName, distinctCurrencies, allSharedMembers });
         setIsCalculatingFriends(false);
+        setDbg({ // TEMP DEBUG — tied to the run that actually set the list
+          ...tunDbg,
+          finalFriendsCount: friends.length,
+          abhishekInFriends: friends.filter((f) => f.name.toLowerCase().includes('abhishek')).map((f) => ({ id: f.id, groups: f.groups, bals: f.bals })),
+        });
       }
     };
     compute();
@@ -589,7 +592,7 @@ export const FriendsView: React.FC<FriendsViewProps> = ({
     <div className="content-width-limit">
       {/* TEMP DEBUG — remove after diagnosing the missing-Abhishek issue */}
       <pre style={{ background: '#FEF2F2', border: '1px solid #FCA5A5', borderRadius: '8px', padding: '10px', fontSize: '10px', lineHeight: 1.4, overflowX: 'auto', marginBottom: '12px', whiteSpace: 'pre-wrap', wordBreak: 'break-all' }}>
-        {'DEBUG v6 tunAttribution=' + JSON.stringify(dbg, null, 1) + '\n' +
+        {'DEBUG v7 (same-run) =' + JSON.stringify(dbg, null, 1) + '\n' +
           'me=' + JSON.stringify(me) +
           ' username=' + JSON.stringify((() => { try { return localStorage.getItem('divido_username') || ''; } catch { return '?'; } })()) +
           ' email=' + JSON.stringify((() => { try { return localStorage.getItem('divido_email') || ''; } catch { return '?'; } })()) + '\n' +
