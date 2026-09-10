@@ -12,6 +12,7 @@ import { InviteLoader } from './pages/InviteLoader';
 import { BootSplash } from './pages/BootSplash';
 import { RejoinRequestModal, type AdminRejoinRequest } from './components/RejoinRequestModal';
 import { RejoinSelfModal } from './components/RejoinSelfModal';
+import { useThemeStore } from './store/themeStore';
 function safeLazy<T extends React.ComponentType<any>>(
   factory: () => Promise<{ default: T }>
 ) {
@@ -103,10 +104,8 @@ const getSavedUiState = () => {
 function App() {
   const initialSavedState = React.useMemo(() => getSavedUiState(), []);
 
-  const [theme, setTheme] = useState<'lavender' | 'sunset'>(() => {
-    const saved = localStorage.getItem('divido_theme');
-    return saved === 'lavender' || saved === 'sunset' ? saved : 'lavender';
-  });
+  const theme = useThemeStore((s) => s.theme);
+  const setTheme = useThemeStore((s) => s.setTheme);
   const [view, setView] = useState<string>(() => initialSavedState?.view || 'summary');
   const [selectedId, setSelectedId] = useState<string | number | null>(() => initialSavedState?.selectedId ?? null);
   const [editingGroupId, setEditingGroupId] = useState<string | number | null>(null);
