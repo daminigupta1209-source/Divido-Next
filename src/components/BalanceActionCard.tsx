@@ -52,7 +52,7 @@ export const BalanceActionCard: React.FC<BalanceActionCardProps> = ({
         <h3  style={{ fontSize: '18px', fontWeight: 600, color: '#0F172A', margin: '0 0 8px', padding: '0 26px', overflowWrap: 'anywhere' }}>
           {title}
         </h3>
-        <p style={{ fontSize: '14px', fontWeight: 600, color: '#64748B', lineHeight: 1.4, margin: '0 0 20px' }}>
+        <p style={{ fontSize: '14px', fontWeight: 500, color: '#64748B', lineHeight: 1.4, margin: '0 0 20px' }}>
           {desc}
         </p>
 
@@ -68,7 +68,7 @@ export const BalanceActionCard: React.FC<BalanceActionCardProps> = ({
         {secondaryLabel && (
           <div
             onClick={onSecondary}
-            style={{ marginTop: '12px', fontSize: '13px', fontWeight: 600, color: '#94A3B8', cursor: 'pointer' }}
+            style={{ marginTop: '12px', fontSize: '13px', fontWeight: 500, color: '#94A3B8', cursor: 'pointer' }}
           >{secondaryLabel}</div>
         )}
       </div>
