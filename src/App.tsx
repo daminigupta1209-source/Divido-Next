@@ -8,6 +8,8 @@ import { GroupsView } from './components/GroupsView';
 import { CreateGroupView } from './components/CreateGroupView';
 import { SettleAmountInput } from './components/SettleAmountInput';
 import { MembersHealthModal } from './components/MembersHealthModal';
+import { InviteLoader } from './pages/InviteLoader';
+import { BootSplash } from './pages/BootSplash';
 function safeLazy<T extends React.ComponentType<any>>(
   factory: () => Promise<{ default: T }>
 ) {
@@ -3391,21 +3393,7 @@ function App() {
   // the home feed — otherwise the home screen flashes for a beat before the
   // claim card appears once the Supabase round-trip completes.
   if (isResolvingInvite) {
-    return (
-      <div style={{
-        position: 'fixed', inset: 0, display: 'flex', flexDirection: 'column',
-        alignItems: 'center', justifyContent: 'center', gap: '18px',
-        background: 'var(--bg)', color: 'var(--t)', zIndex: 10000,
-      }}>
-        <div style={{
-          width: '44px', height: '44px', borderRadius: '50%',
-          border: '4px solid rgba(99, 102, 241, 0.2)', borderTopColor: '#6366F1',
-          animation: 'spin 0.8s linear infinite',
-        }} />
-        <div style={{ fontSize: '14px', fontWeight: 700, opacity: 0.7 }}>Opening your invite…</div>
-        <style>{`@keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }`}</style>
-      </div>
-    );
+    return <InviteLoader />;
   }
 
   // Fresh sign-in with no cached data yet: show a friendly branded splash (the
@@ -3413,23 +3401,7 @@ function App() {
   // empty "Your Groups" and get scared. Returning users with cached groups skip
   // this entirely (groups.length > 0). 5s safety timeout so it can't hang.
   if (!isInitialLoadDone && !bootLoaderExpired && groups.length === 0 && isAuthenticated && !!userEmail) {
-    return (
-      <div style={{
-        position: 'fixed', inset: 0, display: 'flex', flexDirection: 'column',
-        alignItems: 'center', justifyContent: 'center', gap: '18px',
-        background: 'var(--bg)', zIndex: 10000,
-      }}>
-        <div style={{
-          width: '96px', height: '96px', borderRadius: '24px', overflow: 'hidden',
-          boxShadow: '0 12px 32px rgba(0,0,0,0.14)',
-          animation: 'divido-splash-pulse 1.4s ease-in-out infinite',
-        }}>
-          <img src="/divido_laughing_cat_mascot_1778063273427.png" alt="Divido" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-        </div>
-        <div style={{ fontSize: '19px', fontWeight: 900, color: 'var(--t)', letterSpacing: '-0.3px' }}>Divido</div>
-        <style>{`@keyframes divido-splash-pulse { 0%,100% { transform: scale(1); } 50% { transform: scale(1.06); } }`}</style>
-      </div>
-    );
+    return <BootSplash />;
   }
 
 
