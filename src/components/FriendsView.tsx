@@ -541,6 +541,16 @@ export const FriendsView: React.FC<FriendsViewProps> = ({
 
   return (
     <div className="content-width-limit">
+      {/* TEMP DEBUG — remove after diagnosing the missing-Abhishek issue */}
+      <pre style={{ background: '#FEF2F2', border: '1px solid #FCA5A5', borderRadius: '8px', padding: '10px', fontSize: '10px', lineHeight: 1.4, overflowX: 'auto', marginBottom: '12px', whiteSpace: 'pre-wrap', wordBreak: 'break-all' }}>
+        {'DEBUG me=' + JSON.stringify(me) + '\n' +
+          'friends (' + friends.length + '):\n' +
+          JSON.stringify(
+            friends.map((f) => ({ name: f.name, id: f.id, groups: f.groups, bals: f.bals })),
+            null,
+            1
+          )}
+      </pre>
       {/* Duplicate-person review banner */}
       {onMergePeople && duplicatePeople.length > 0 && (
         <div
