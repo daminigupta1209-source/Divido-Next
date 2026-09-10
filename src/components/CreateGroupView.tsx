@@ -253,6 +253,7 @@ export const CreateGroupView: React.FC<CreateGroupViewProps> = ({
           <button
             type="button"
             onClick={onCancel}
+            aria-label="Go back"
             style={{
               background: 'none',
               border: 'none',
@@ -280,6 +281,7 @@ export const CreateGroupView: React.FC<CreateGroupViewProps> = ({
             shakes the Group Name box instead of silently doing nothing. */}
         <button
           type="submit"
+          aria-label={editingGroup ? 'Save group' : 'Create group'}
           style={{
             background: 'none',
             border: 'none',
@@ -381,7 +383,8 @@ export const CreateGroupView: React.FC<CreateGroupViewProps> = ({
                   color: 'var(--t)',
                   outline: 'none',
                   boxSizing: 'border-box',
-                  
+                  WebkitAppearance: 'none',
+                  appearance: 'none',
                   marginTop: 0,
                 }}
               />

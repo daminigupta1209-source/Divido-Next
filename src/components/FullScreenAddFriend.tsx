@@ -127,6 +127,7 @@ export const FullScreenAddFriend: React.FC<FullScreenAddFriendProps> = ({
           <button
             type="button"
             onClick={onClose}
+            aria-label="Go back"
             style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--t)', padding: 0, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: '32px', height: '32px', marginLeft: '-6px' }}
           >
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.8" strokeLinecap="round" strokeLinejoin="round" style={{ width: '18px', height: '18px' }}>
@@ -139,6 +140,7 @@ export const FullScreenAddFriend: React.FC<FullScreenAddFriendProps> = ({
         <button
           type="button"
           onClick={commitSelected}
+          aria-label="Done"
           style={{
             background: 'transparent',
             border: 'none',

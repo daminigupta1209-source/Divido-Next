@@ -177,7 +177,7 @@ export function useSupabaseSync({
     const loadData = async () => {
       try {
         if (!navigator.onLine) {
-          console.log('Offline. Skipping cloud load.');
+          if (import.meta.env.DEV) console.log('Offline. Skipping cloud load.');
           // Resolve the gate so the app renders cached data instead of hanging
           // on the "Syncing ledger..." loader while offline.
           initialLoadDoneRef.current = true;
@@ -207,7 +207,7 @@ export function useSupabaseSync({
         const hasUnsyncedGroups = JSON.stringify(normalizeGroupsForDiff(localGroupsForDiff)) !== JSON.stringify(normalizeGroupsForDiff(nonDraftPrevGroups));
         const hasUnsyncedExpenses = JSON.stringify(expenses) !== JSON.stringify(prevExpensesRef.current);
         if (hasUnsyncedGroups || hasUnsyncedExpenses) {
-          console.log('Unsynced offline changes detected. Proceeding with pull-and-field-merge.', 'groups mismatch:', hasUnsyncedGroups, 'expenses mismatch:', hasUnsyncedExpenses);
+          if (import.meta.env.DEV) console.log('Unsynced offline changes detected. Proceeding with pull-and-field-merge.', 'groups mismatch:', hasUnsyncedGroups, 'expenses mismatch:', hasUnsyncedExpenses);
         }
         const { data: { session } } = await supabase.auth.getSession();
         
@@ -762,7 +762,7 @@ export function useSupabaseSync({
             // Sync Lock: skip if this temporary group is already uploading in another active task
             const lockKey = `divido_syncing_${g.id}`;
             if (sessionStorage.getItem(lockKey) === 'true') {
-              console.log(`Group ${g.name} (temp ID: ${g.id}) is already syncing. Skipping duplicate request.`);
+              if (import.meta.env.DEV) console.log(`Group ${g.name} (temp ID: ${g.id}) is already syncing. Skipping duplicate request.`);
               continue;
             }
 
@@ -1125,7 +1125,7 @@ export function useSupabaseSync({
   // Listen for online status to trigger automatic sync queue flush
   useEffect(() => {
     const handleOnline = () => {
-      console.log('Network connection restored. Replaying sync queue and pulling remote changes...');
+      if (import.meta.env.DEV) console.log('Network connection restored. Replaying sync queue and pulling remote changes...');
       // Force trigger state updates to re-run the sync effects (push local edits).
       setGroups((prev) => [...prev]);
       setExpenses((prev) => [...prev]);

@@ -6,7 +6,7 @@ import { ErrorBoundary } from './components/ErrorBoundary'
 
 // Build marker — check the console to confirm which version is actually loaded
 // (helps tell a fresh deploy apart from a stale service-worker cache).
-console.log('[Divido] build 2026-08-20-cache-v3');
+if (import.meta.env.DEV) console.log('[Divido] build 2026-08-20-cache-v3');
 
 // One-time local reset for the permanent-group-id migration. The old model
 // stored groups/expenses with temporary float ids that no longer fit the new
