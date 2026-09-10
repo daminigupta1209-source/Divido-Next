@@ -101,7 +101,20 @@ export const FullScreenAddFriend: React.FC<FullScreenAddFriendProps> = ({
   };
 
   const commitSelected = () => {
-    onAddFriends(selectedFriends);
+    let toCommit = selectedFriends;
+    const em = emailVal.trim();
+    
+    // If the user typed a valid new name but clicked the top-right tick directly
+    // instead of the inline '+' button, auto-commit what they typed.
+    if (canAddNew && qRaw) {
+      if (em && !isValidEmail(em)) {
+        alert("That doesn't look like a valid email. Leave it blank or fix it.");
+        return;
+      }
+      toCommit = [...toCommit, { name: qRaw, email: em, identity: '' }];
+    }
+    
+    onAddFriends(toCommit);
     setSelectedFriends([]);
     setAddVal('');
     setEmailVal('');
