@@ -800,6 +800,7 @@ export const MasterSummary: React.FC<MasterSummaryProps> = ({
           }}
           style={{
             padding: '14px 16px',
+            marginBottom: '12px',
             background: '#FFFFFF',
             borderRadius: '16px',
             border: '0.5px solid #EFE7DC',
@@ -991,6 +992,7 @@ export const MasterSummary: React.FC<MasterSummaryProps> = ({
               style={{
                 position: 'relative',
                 padding: '14px 16px',
+                marginBottom: '12px',
                 background: '#FFFFFF',
                 borderRadius: '20px',
                 border: '0.5px solid #EFE7DC',

@@ -820,6 +820,7 @@ export const FriendsView: React.FC<FriendsViewProps> = ({
               onClick={() => { if (active) setGlobalSettleData({ name: f.name, identity: f.id, groups: f.groups, balances: activeBals }); }}
               style={{
                 padding: '16px',
+                marginBottom: '12px',
                 background: '#FFFFFF',
                 border: '0.5px solid #EFE7DC',
                 display: 'flex',
