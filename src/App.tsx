@@ -7,6 +7,7 @@ import { NonGroupView } from './components/NonGroupView';
 import { GroupsView } from './components/GroupsView';
 import { CreateGroupView } from './components/CreateGroupView';
 import { SettleAmountInput } from './components/SettleAmountInput';
+import { MembersHealthModal } from './components/MembersHealthModal';
 function safeLazy<T extends React.ComponentType<any>>(
   factory: () => Promise<{ default: T }>
 ) {
@@ -5030,37 +5031,13 @@ function App() {
       )}
 
       {showMembersHealth && selectedGroup && (
-        <div className="modal-overlay" onClick={() => setShowMembersHealth(false)}>
-          <div className="modal-content" onClick={(e) => e.stopPropagation()} style={{ maxWidth: '600px' }}>
-            <h2 className="nunito" style={{ marginBottom: '32px' }}>
-              Members Health 👥
-            </h2>
-            {selectedGroup.members.map((m) => {
-              const mBalance = getMemberBalance(selectedId, m);
-              return (
-                <div
-                  key={m}
-                  style={{
-                    display: 'flex',
-                    justifyContent: 'space-between',
-                    padding: '16px',
-                    background: 'var(--bg)',
-                    borderRadius: '18px',
-                    marginBottom: '12px',
-                  }}
-                >
-                  <div style={{ fontWeight: 'bold' }}>
-                    {m} {m === me && '(You)'}
-                  </div>
-                  <BalanceDisplay
-                    balances={mBalance}
-                    style={{ fontWeight: 900, color: '#000000', textAlign: 'right' }}
-                  />
-                </div>
-              );
-            })}
-          </div>
-        </div>
+        <MembersHealthModal
+          members={selectedGroup.members}
+          selectedId={selectedId}
+          me={me}
+          getMemberBalance={getMemberBalance}
+          onClose={() => setShowMembersHealth(false)}
+        />
       )}
 
       <SearchableCurrencyPicker
