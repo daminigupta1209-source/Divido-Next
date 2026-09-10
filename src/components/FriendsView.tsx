@@ -323,14 +323,19 @@ export const FriendsView: React.FC<FriendsViewProps> = ({
         let fullName = ''; try { fullName = localStorage.getItem('divido_username') || ''; } catch { /* ignore */ }
         let claimName = ''; try { claimName = localStorage.getItem(`divido_identity_${g.id}`) || ''; } catch { /* ignore */ }
         const groupKeyVals = new Set(Object.values(g.memberIdentities || {}).map((v) => String(v).toLowerCase()));
-        const norm = (s: string) => s.replace(/\s*\(Left\)$/i, '').trim().toLowerCase();
-        const isMyMemberName = (nm: string) => !!nm && (g.members || []).some((m) => norm(m) === norm(nm));
+        // Try each identifier and keep the first whose resolved key is a REAL
+        // identity in this group. This works even when g.members stores a
+        // different spelling than memberIdentities (e.g. "Damini" vs the mapped
+        // "Damini Gupta"), because getPersonKey resolves via memberIdentities.
         let myKey: string;
         if (myEmail && groupKeyVals.has(myEmail)) {
           myKey = myEmail;
         } else {
-          const nm = [claimName, fullName, me].find((n) => isMyMemberName(n));
-          myKey = getPersonKey(g, nm || myG);
+          const resolved = [claimName, fullName, me]
+            .filter(Boolean)
+            .map((n) => getPersonKey(g, n))
+            .find((k) => groupKeyVals.has(String(k).toLowerCase()));
+          myKey = resolved || getPersonKey(g, myG);
         }
 
         const effectiveMembers = Array.from(new Set([
@@ -567,7 +572,7 @@ export const FriendsView: React.FC<FriendsViewProps> = ({
     <div className="content-width-limit">
       {/* TEMP DEBUG — remove after diagnosing the missing-Abhishek issue */}
       <pre style={{ background: '#FEF2F2', border: '1px solid #FCA5A5', borderRadius: '8px', padding: '10px', fontSize: '10px', lineHeight: 1.4, overflowX: 'auto', marginBottom: '12px', whiteSpace: 'pre-wrap', wordBreak: 'break-all' }}>
-        {'DEBUG v4 me=' + JSON.stringify(me) +
+        {'DEBUG v5 me=' + JSON.stringify(me) +
           ' username=' + JSON.stringify((() => { try { return localStorage.getItem('divido_username') || ''; } catch { return '?'; } })()) +
           ' email=' + JSON.stringify((() => { try { return localStorage.getItem('divido_email') || ''; } catch { return '?'; } })()) + '\n' +
           'tunTunProbe=' + JSON.stringify((() => {
@@ -575,7 +580,9 @@ export const FriendsView: React.FC<FriendsViewProps> = ({
             if (!g) return 'no-tun-group';
             let em = ''; try { em = (localStorage.getItem('divido_email') || '').toLowerCase(); } catch { /* ignore */ }
             const vals = Object.values(g.memberIdentities || {}).map((v) => String(v).toLowerCase());
-            return { memberIdentities: g.memberIdentities || null, emailIsInGroup: !!em && vals.includes(em) };
+            let fn = ''; try { fn = localStorage.getItem('divido_username') || ''; } catch { /* ignore */ }
+            const resolvedKey = [fn, me].filter(Boolean).map((n) => getPersonKey(g, n)).find((k) => vals.includes(String(k).toLowerCase())) || null;
+            return { emailIsInGroup: !!em && vals.includes(em), resolvedMyKey: resolvedKey };
           })(), null, 1) + '\n' +
           'friends (' + friends.length + '):\n' +
           JSON.stringify(
