@@ -307,7 +307,29 @@ export const FriendsView: React.FC<FriendsViewProps> = ({
         const groupExps = expenses.filter((e) => !e.isDeleted && String(e.gId) === String(g.id));
         let myG = me;
         try { const claim = localStorage.getItem(`divido_identity_${g.id}`); if (claim) myG = claim; } catch { /* ignore */ }
-        const myKey = getPersonKey(g, myG);
+        // Identify "me" in THIS group robustly. The global `me` is only the FIRST
+        // name (App does userName.split(' ')[0]), but you may be enrolled under
+        // your FULL name ("Damini Gupta") in some groups. Matching by the wrong
+        // spelling makes myKey miss and silently drops EVERY transaction in that
+        // group — people then vanish from All balances. So resolve myKey to the
+        // first identifier that maps to a REAL identity in this group, trying:
+        // signed-in email → full username → first name → per-group claim. The
+        // full name is checked before the claim because a stale/incorrect claim
+        // could otherwise win. Falls back to the old behaviour if none resolve.
+        let myEmail = ''; try { myEmail = (localStorage.getItem('divido_email') || '').toLowerCase(); } catch { /* ignore */ }
+        let fullName = ''; try { fullName = localStorage.getItem('divido_username') || ''; } catch { /* ignore */ }
+        let claimName = ''; try { claimName = localStorage.getItem(`divido_identity_${g.id}`) || ''; } catch { /* ignore */ }
+        const groupKeyVals = new Set(Object.values(g.memberIdentities || {}).map((v) => String(v).toLowerCase()));
+        let myKey: string;
+        if (myEmail && groupKeyVals.has(myEmail)) {
+          myKey = myEmail;
+        } else {
+          const resolved = [fullName, me, claimName]
+            .filter(Boolean)
+            .map((n) => getPersonKey(g, n))
+            .find((k) => groupKeyVals.has(String(k).toLowerCase()));
+          myKey = resolved || getPersonKey(g, myG);
+        }
 
         const effectiveMembers = Array.from(new Set([
           myG,
