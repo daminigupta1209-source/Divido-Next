@@ -10,6 +10,7 @@ import { SettleAmountInput } from './components/SettleAmountInput';
 import { MembersHealthModal } from './components/MembersHealthModal';
 import { InviteLoader } from './pages/InviteLoader';
 import { BootSplash } from './pages/BootSplash';
+import { RejoinRequestModal, type AdminRejoinRequest } from './components/RejoinRequestModal';
 function safeLazy<T extends React.ComponentType<any>>(
   factory: () => Promise<{ default: T }>
 ) {
@@ -179,14 +180,7 @@ function App() {
   const [isSidebarOpen, setIsSidebarOpen] = useState<boolean>(false);
 
   const [showRejoinRequestModal, setShowRejoinRequestModal] = useState(false);
-  const [adminRejoinRequest, setAdminRejoinRequest] = useState<{
-    id: string;
-    groupId: string | number;
-    groupName: string;
-    placeholderName: string;
-    requestName: string;
-    requestEmail: string;
-  } | null>(null);
+  const [adminRejoinRequest, setAdminRejoinRequest] = useState<AdminRejoinRequest | null>(null);
 
   const checkPastMemberAndShowRejoin = (showModal = true) => {
     if (view === 'detail' && selectedId && selectedId !== 'STANDALONE') {
@@ -6251,152 +6245,82 @@ function App() {
       })()}
 
       {adminRejoinRequest && (
-        <div className="modal-overlay" style={{ zIndex: 5000, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-          <div
-            className="card shadow-xl"
-            style={{
-              width: '90%',
-              maxWidth: '360px',
-              padding: '24px 20px',
-              borderRadius: '24px',
-              position: 'relative',
-              animation: 'slideUp 0.3s ease-out',
-              background: '#FFFFFF',
-              border: '1px solid rgba(0,0,0,0.05)',
-              textAlign: 'center',
-            }}
-          >
-            <button
-              onClick={() => setAdminRejoinRequest(null)}
-              style={{
-                position: 'absolute',
-                top: '16px',
-                right: '18px',
-                border: 'none',
-                background: 'none',
-                fontSize: '18px',
-                cursor: 'pointer',
-                color: '#64748B',
-                opacity: 0.6,
-              }}
-            >
-              ✕
-            </button>
-            <h3 className="nunito" style={{ fontSize: '18px', fontWeight: 900, color: '#0F172A', margin: '0 0 16px 0' }}>
-              Rejoin Request
-            </h3>
-            <p style={{ fontSize: '14px', color: '#64748B', fontWeight: 650, margin: '0 0 20px 0', lineHeight: 1.4 }}>
-              {adminRejoinRequest.requestName} wants to rejoin {adminRejoinRequest.groupName}
-            </p>
-            <div style={{ display: 'flex', gap: '12px', justifyContent: 'center' }}>
-              <button
-                onClick={async () => {
-                  if (!adminRejoinRequest) return;
-                  try {
-                    await supabase
-                      .from('group_members')
-                      .update({
-                        link_request_email: null,
-                        link_request_name: null,
-                      })
-                      .eq('id', adminRejoinRequest.id);
+        <RejoinRequestModal
+          request={adminRejoinRequest}
+          onClose={() => setAdminRejoinRequest(null)}
+          onDecline={async () => {
+            if (!adminRejoinRequest) return;
+            try {
+              await supabase
+                .from('group_members')
+                .update({
+                  link_request_email: null,
+                  link_request_name: null,
+                })
+                .eq('id', adminRejoinRequest.id);
 
-                    alert('Rejoin request declined.');
-                    // Remove the handled request from local state so the
-                    // auto-open effect (keyed on groups) doesn't immediately
-                    // re-open this modal — that was the "needs 2 clicks" bug.
-                    setGroups((prev) => prev.map((g) =>
-                      String(g.id) === String(adminRejoinRequest.groupId)
-                        ? { ...g, pendingLinkRequests: (g.pendingLinkRequests || []).filter((r) => String(r.id) !== String(adminRejoinRequest.id)) }
-                        : g
-                    ));
-                    setAdminRejoinRequest(null);
-                  } catch (err) {
-                    console.error('Failed to decline rejoin request:', err);
-                  }
-                }}
-                style={{
-                  flex: 1,
-                  padding: '12px',
-                  borderRadius: '12px',
-                  border: 'none',
-                  background: '#64748B',
-                  color: 'white',
-                  fontWeight: 800,
-                  fontSize: '13px',
-                  cursor: 'pointer',
-                  transition: '0.2s all',
-                }}
-              >
-                Decline
-              </button>
-              <button
-                onClick={async () => {
-                  if (!adminRejoinRequest) return;
-                  try {
-                    const cleanName = adminRejoinRequest.placeholderName.replace(/\s*\(Left\)$/i, '');
-                    await supabase
-                      .from('group_members')
-                      .update({
-                        name: cleanName,
-                        user_email: adminRejoinRequest.requestEmail,
-                        is_pending: false,
-                        link_request_email: null,
-                        link_request_name: null,
-                      })
-                      .eq('id', adminRejoinRequest.id);
+              alert('Rejoin request declined.');
+              // Remove the handled request from local state so the
+              // auto-open effect (keyed on groups) doesn't immediately
+              // re-open this modal — that was the "needs 2 clicks" bug.
+              setGroups((prev) => prev.map((g) =>
+                String(g.id) === String(adminRejoinRequest.groupId)
+                  ? { ...g, pendingLinkRequests: (g.pendingLinkRequests || []).filter((r) => String(r.id) !== String(adminRejoinRequest.id)) }
+                  : g
+              ));
+              setAdminRejoinRequest(null);
+            } catch (err) {
+              console.error('Failed to decline rejoin request:', err);
+            }
+          }}
+          onApprove={async () => {
+            if (!adminRejoinRequest) return;
+            try {
+              const cleanName = adminRejoinRequest.placeholderName.replace(/\s*\(Left\)$/i, '');
+              await supabase
+                .from('group_members')
+                .update({
+                  name: cleanName,
+                  user_email: adminRejoinRequest.requestEmail,
+                  is_pending: false,
+                  link_request_email: null,
+                  link_request_name: null,
+                })
+                .eq('id', adminRejoinRequest.id);
 
-                    try {
-                      await supabase
-                        .from('expenses')
-                        .insert({
-                          group_id: adminRejoinRequest.groupId,
-                          timestamp: Date.now(),
-                          title: `${cleanName} rejoined`,
-                          amt: 0,
-                          paid: 'SYSTEM',
-                          date: new Date().toISOString().split('T')[0],
-                          mode: 'Equally',
-                          splitters: []
-                        });
-                    } catch (e) {
-                      console.error('Rejoin activity log failed:', e);
-                    }
+              try {
+                await supabase
+                  .from('expenses')
+                  .insert({
+                    group_id: adminRejoinRequest.groupId,
+                    timestamp: Date.now(),
+                    title: `${cleanName} rejoined`,
+                    amt: 0,
+                    paid: 'SYSTEM',
+                    date: new Date().toISOString().split('T')[0],
+                    mode: 'Equally',
+                    splitters: []
+                  });
+              } catch (e) {
+                console.error('Rejoin activity log failed:', e);
+              }
 
-                    alert('Rejoin request approved! 🎉');
-                    // Remove the handled request from local state so the
-                    // auto-open effect (keyed on groups) doesn't immediately
-                    // re-open this modal — that was the "needs 2 clicks" bug.
-                    // The full member state is reconciled on the next cloud sync.
-                    setGroups((prev) => prev.map((g) =>
-                      String(g.id) === String(adminRejoinRequest.groupId)
-                        ? { ...g, pendingLinkRequests: (g.pendingLinkRequests || []).filter((r) => String(r.id) !== String(adminRejoinRequest.id)) }
-                        : g
-                    ));
-                    setAdminRejoinRequest(null);
-                  } catch (err) {
-                    console.error('Failed to approve rejoin request:', err);
-                  }
-                }}
-                style={{
-                  flex: 1,
-                  padding: '12px',
-                  borderRadius: '12px',
-                  border: 'none',
-                  background: '#059669',
-                  color: 'white',
-                  fontWeight: 800,
-                  fontSize: '13px',
-                  cursor: 'pointer',
-                  transition: '0.2s all',
-                  boxShadow: '0 4px 12px rgba(5, 150, 105, 0.2)',
-                }}
-              >
-                Approve
-              </button>
-            </div>
-          </div>
-        </div>
+              alert('Rejoin request approved! 🎉');
+              // Remove the handled request from local state so the
+              // auto-open effect (keyed on groups) doesn't immediately
+              // re-open this modal — that was the "needs 2 clicks" bug.
+              // The full member state is reconciled on the next cloud sync.
+              setGroups((prev) => prev.map((g) =>
+                String(g.id) === String(adminRejoinRequest.groupId)
+                  ? { ...g, pendingLinkRequests: (g.pendingLinkRequests || []).filter((r) => String(r.id) !== String(adminRejoinRequest.id)) }
+                  : g
+              ));
+              setAdminRejoinRequest(null);
+            } catch (err) {
+              console.error('Failed to approve rejoin request:', err);
+            }
+          }}
+        />
       )}
     </div>
   );
