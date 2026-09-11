@@ -563,15 +563,13 @@ export const FriendsView: React.FC<FriendsViewProps> = ({
 
   // TEMP DEBUG v8 — one-screenshot diagnosis: is Abhishek in the computed list,
   // in the displayed list, and which build is live? Remove once resolved.
-  const _abhiComputed = friends.filter((f) => f.name.toLowerCase().includes('abhishek')).map((f) => ({ id: f.id, groups: f.groups, bals: f.bals }));
-  const _abhiDisplayed = filteredFriends.filter((f) => f.name.toLowerCase().includes('abhishek')).length;
+  const _roster = friends.map((f) => f.name + ' [' + (f.groups || []).join(',') + '] ' + Object.entries(f.bals).map(([c, v]) => c + (v as number).toFixed(1)).join(' '));
   const _dbg =
-    'DEBUG v8\n' +
+    'DEBUG v9\n' +
     'me=' + JSON.stringify(me) + '\n' +
     'computedFriends=' + friends.length + '  displayedFriends=' + filteredFriends.length + '\n' +
     'filters: balanceFilter=' + balanceFilter + ' selectedFriends=' + selectedFriends.length + ' search=' + JSON.stringify((search || searchQuery || '')) + '\n' +
-    'abhishekInComputed=' + JSON.stringify(_abhiComputed, null, 1) + '\n' +
-    'abhishekInDisplayed=' + _abhiDisplayed;
+    'ALL computed friends:\n' + _roster.join('\n');
 
   return (
     <div className="content-width-limit">
