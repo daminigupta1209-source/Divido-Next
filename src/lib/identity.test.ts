@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { getPersonKey, cleanMemberName, balancesByIdentity, buildKeyToName, buildPeopleSuggestions, isValidEmail, canonicalRosterName, findDuplicateGroups } from './identity';
+import { getPersonKey, resolveSelfKey, cleanMemberName, balancesByIdentity, buildKeyToName, buildPeopleSuggestions, isValidEmail, canonicalRosterName, findDuplicateGroups } from './identity';
 import { Group, Expense } from './types';
 
 const mkGroup = (memberIdentities?: Record<string, string>, members: string[] = []): Group =>
@@ -335,5 +335,54 @@ describe('findDuplicateGroups', () => {
       g('b', 'Goa', ['Chirag', 'Ravi (Left)']),
     ]);
     expect(dups.length).toBe(1);
+  });
+});
+
+// Regression suite for the 2026-09-10 "people vanished from All balances" bug.
+// The user is enrolled under a full name ("Damini Gupta") in some groups while
+// the app knows them only by their first name ("Damini"); if the wrong spelling
+// is used the whole group's balances were silently dropped. resolveSelfKey must
+// identify the user robustly (email first, then name variants).
+describe('resolveSelfKey (self identity within a group)', () => {
+  it('matches by email even when the display name differs (the core bug)', () => {
+    const g = mkGroup({ 'Damini Gupta': 'damini@x.com', Abhishek: 'abhi-pid' });
+    expect(
+      resolveSelfKey(g, { email: 'damini@x.com', firstName: 'Damini', fullName: 'Damini Gupta' })
+    ).toBe('damini@x.com');
+  });
+
+  it('matches by email case-insensitively', () => {
+    const g = mkGroup({ 'Damini Gupta': 'damini@x.com' });
+    expect(resolveSelfKey(g, { email: 'DAMINI@X.com', firstName: 'Damini' })).toBe('damini@x.com');
+  });
+
+  it('falls back to the FULL name when no email is stored locally', () => {
+    const g = mkGroup({ 'Damini Gupta': 'damini@x.com', Abhishek: 'abhi-pid' });
+    expect(resolveSelfKey(g, { email: '', firstName: 'Damini', fullName: 'Damini Gupta' })).toBe('damini@x.com');
+  });
+
+  it('falls back to the first name for a name-only member (no email)', () => {
+    const g = mkGroup({ Damini: 'pid-damini', Abhishek: 'abhi-pid' });
+    expect(resolveSelfKey(g, { email: '', firstName: 'Damini', fullName: 'Damini Gupta' })).toBe('pid-damini');
+  });
+
+  it('prefers the full name over a stale/incorrect per-group claim', () => {
+    // claim points at a DIFFERENT person; full name is the real one → full name wins
+    const g = mkGroup({ 'Damini Gupta': 'me@x.com', 'Damini Investment': 'inv@x.com' });
+    expect(
+      resolveSelfKey(g, { email: '', firstName: 'Damini', fullName: 'Damini Gupta', claim: 'Damini Investment' })
+    ).toBe('me@x.com');
+  });
+
+  it('does not misidentify the user when nothing matches (graceful fallback)', () => {
+    const g = mkGroup({ Someone: 'pid-x' });
+    // returns the raw first name (old behaviour) rather than someone else's key
+    expect(resolveSelfKey(g, { email: '', firstName: 'Damini' })).toBe('Damini');
+  });
+
+  it('never returns another member\'s key by accident', () => {
+    const g = mkGroup({ 'Damini Gupta': 'damini@x.com', Abhishek: 'abhi-pid' });
+    const key = resolveSelfKey(g, { email: 'damini@x.com', firstName: 'Damini', fullName: 'Damini Gupta' });
+    expect(key).not.toBe('abhi-pid');
   });
 });

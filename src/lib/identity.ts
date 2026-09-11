@@ -62,6 +62,38 @@ export const getPersonKey = (group: Group | undefined | null, name: string): str
   return name;
 };
 
+// Resolve the CURRENT USER's stable identity key within a group.
+//
+// Why this exists: the app knows the user by a short display name (App derives
+// `me` as userName.split(' ')[0] → "Damini"), but the user can be enrolled under
+// a different spelling in a given group ("Damini Gupta"). Matching by a single
+// name is fragile — when it misses, every transaction in that group is dropped
+// and people vanish from All balances. This resolves the user robustly by trying,
+// in order:
+//   1. signed-in email — stable across ALL groups, so preferred whenever the
+//      group carries it as a member identity;
+//   2. per-group claim (divido_identity_<gid>), full username, then first name —
+//      whichever first resolves (via getPersonKey) to a REAL identity value that
+//      exists in this group's memberIdentities.
+// Falls back to getPersonKey(group, claim || firstName) so behaviour never
+// regresses for groups that carry none of these.
+export const resolveSelfKey = (
+  group: Group | undefined | null,
+  ids: { email?: string; fullName?: string; firstName?: string; claim?: string }
+): string => {
+  const email = (ids.email || '').toLowerCase();
+  const groupKeyVals = new Set(
+    Object.values(group?.memberIdentities || {}).map((v) => String(v).toLowerCase())
+  );
+  if (email && groupKeyVals.has(email)) return email;
+  for (const nm of [ids.fullName, ids.firstName, ids.claim]) {
+    if (!nm) continue;
+    const k = getPersonKey(group, nm);
+    if (groupKeyVals.has(String(k).toLowerCase())) return k;
+  }
+  return getPersonKey(group, ids.claim || ids.firstName || '');
+};
+
 // Build the "people you've split with before" suggestion list for the add-friend
 // UIs: everyone from your OTHER groups who isn't already in the current group.
 //

@@ -4,7 +4,7 @@ import { BalanceDisplay } from './BalanceDisplay';
 import { Group, Expense, UserMetadata, GlobalSettleData } from '../lib/types';
 import { simplifyMultiCurrencyDebts, computeRawPairwiseTransactions } from '../lib/calculations';
 import { asyncBatchComputeGroups } from '../lib/workerHelper';
-import { getPersonKey, findDuplicatePeople, isValidEmail, type DuplicateEntry, type DuplicatePerson } from '../lib/identity';
+import { getPersonKey, resolveSelfKey, findDuplicatePeople, isValidEmail, type DuplicateEntry, type DuplicatePerson } from '../lib/identity';
 import { worldCurrencies, formatExactAmount, formatCompactAmount } from '../lib/utils';
 import { SearchableCurrencyPicker } from './SearchableCurrencyPicker';
 import { StyledDropdown } from './StyledDropdown';
@@ -308,33 +308,16 @@ export const FriendsView: React.FC<FriendsViewProps> = ({
         const groupExps = expenses.filter((e) => !e.isDeleted && String(e.gId) === String(g.id));
         let myG = me;
         try { const claim = localStorage.getItem(`divido_identity_${g.id}`); if (claim) myG = claim; } catch { /* ignore */ }
-        // Identify "me" in THIS group robustly. The global `me` is only the FIRST
-        // name (App does userName.split(' ')[0]), but you may be enrolled under
-        // your FULL name ("Damini Gupta") in some groups. Matching by the wrong
-        // spelling makes myKey miss and silently drops EVERY transaction in that
-        // group — people then vanish from All balances. So resolve myKey to the
-        // first identifier that maps to a REAL identity in this group, trying:
-        // signed-in email → full username → first name → per-group claim. The
-        // full name is checked before the claim because a stale/incorrect claim
-        // could otherwise win. Falls back to the old behaviour if none resolve.
-        // Prefer the live signed-in email (prop) — for Google users it's the
-        // authoritative identity and is the same in every group. Fall back to
-        // localStorage only if the prop isn't available.
-        let myEmail = (userEmail || '').toLowerCase();
-        if (!myEmail) { try { myEmail = (localStorage.getItem('divido_email') || '').toLowerCase(); } catch { /* ignore */ } }
+        // Identify "me" in THIS group robustly (see resolveSelfKey): the global
+        // `me` is only the first name, but the user may be enrolled under their
+        // full name in some groups, so match by the stable email when available
+        // and fall back through full name / first name / per-group claim. Getting
+        // this wrong silently drops the whole group from All balances.
+        let myEmail = userEmail || '';
+        if (!myEmail) { try { myEmail = localStorage.getItem('divido_email') || ''; } catch { /* ignore */ } }
         let fullName = ''; try { fullName = localStorage.getItem('divido_username') || ''; } catch { /* ignore */ }
         let claimName = ''; try { claimName = localStorage.getItem(`divido_identity_${g.id}`) || ''; } catch { /* ignore */ }
-        const groupKeyVals = new Set(Object.values(g.memberIdentities || {}).map((v) => String(v).toLowerCase()));
-        let myKey: string;
-        if (myEmail && groupKeyVals.has(myEmail)) {
-          myKey = myEmail;
-        } else {
-          const resolved = [fullName, me, claimName]
-            .filter(Boolean)
-            .map((n) => getPersonKey(g, n))
-            .find((k) => groupKeyVals.has(String(k).toLowerCase()));
-          myKey = resolved || getPersonKey(g, myG);
-        }
+        const myKey = resolveSelfKey(g, { email: myEmail, fullName, firstName: me, claim: claimName });
 
         const effectiveMembers = Array.from(new Set([
           myG,
