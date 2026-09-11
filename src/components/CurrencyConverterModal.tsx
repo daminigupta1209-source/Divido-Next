@@ -114,8 +114,30 @@ export const CurrencyConverterModal: React.FC<CurrencyConverterModalProps> = ({
 
   const detectedCurrs = useMemo(() => {
     const groupExpenses = expenses.filter((e) => String(e.gId) === String(group.id) && !e.isConversion);
+    // Also include each expense's ORIGINAL currency. An already-converted group's
+    // expenses now read as the target currency, but a re-conversion reverts them
+    // to their originals FIRST — so the rate fetch must cover those originals too,
+    // otherwise the missing-rate guard blocks (e.g. can't get a € rate because the
+    // feed only shows ₹). Originals live in the conversion logs' snapshots.
+    const originalCurrById: Record<string, string> = {};
+    const convLogs = expenses
+      .filter((e) => String(e.gId) === String(group.id) && e.isConversion)
+      .sort((a, b) => (a.date || '').localeCompare(b.date || '') || ((a.timestamp || 0) - (b.timestamp || 0)));
+    for (const log of convLogs) {
+      let snap: any[] = [];
+      try { snap = log.snapshot ? JSON.parse(log.snapshot) : []; } catch { snap = []; }
+      for (const s of snap) {
+        if (s && s.id != null && s.currency && !(String(s.id) in originalCurrById)) {
+          originalCurrById[String(s.id)] = s.currency;
+        }
+      }
+    }
     const activeInFeed = groupExpenses
-      .map((e) => e.currency || group.currency)
+      .flatMap((e) => {
+        const cur = e.currency || group.currency;
+        const orig = originalCurrById[String(e.id)];
+        return orig && orig !== cur ? [cur, orig] : [cur];
+      })
       .filter((c) => c && c.trim() && c !== 'undefined');
     const unique = [...new Set(activeInFeed)];
     return unique.length > 0 ? unique : [group.currency];
