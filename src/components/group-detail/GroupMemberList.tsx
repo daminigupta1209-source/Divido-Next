@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Group, Expense, UserMetadata } from '../../lib/types';
 import { BalanceActionCard } from '../BalanceActionCard';
-import { buildPeopleSuggestions, balancesByIdentity, getPersonKey, isValidEmail } from '../../lib/identity';
+import { buildPeopleSuggestions, balancesByIdentity, getPersonKey, isValidEmail, buildNameEmailResolver } from '../../lib/identity';
 import { FullScreenAddFriend } from '../FullScreenAddFriend';
 
 interface GroupMemberListProps {
@@ -256,6 +256,12 @@ export const GroupMemberList: React.FC<GroupMemberListProps> = ({
     const names: string[] = [];
     const emails: Record<string, string> = {};
     const identities: Record<string, string> = {};
+    // If a person being added has no email here but the SAME name maps to exactly
+    // one email in another group, inherit it — so re-adding someone the app
+    // already knows by email keeps them ONE identity instead of re-fragmenting
+    // into a fresh name-only person. Ambiguous names (buildNameEmailResolver
+    // returns undefined) are left name-only, so distinct people aren't merged.
+    const knownEmail = buildNameEmailResolver(groups || []);
     for (const f of friends) {
       const nm = f.name.trim();
       if (!nm) continue;
@@ -271,7 +277,11 @@ export const GroupMemberList: React.FC<GroupMemberListProps> = ({
         continue;
       }
       names.push(nm);
-      const email = (f.email || '').trim().toLowerCase();
+      let email = (f.email || '').trim().toLowerCase();
+      if (!email.includes('@')) {
+        const inherited = knownEmail(nm);
+        if (inherited) email = inherited;
+      }
       if (email.includes('@')) emails[nm] = email;
       const identity = (email.includes('@') ? email : (f.identity || '')).trim();
       if (identity) identities[nm] = identity;
@@ -832,8 +842,8 @@ export const GroupMemberList: React.FC<GroupMemberListProps> = ({
                     >
                       {checkIsMe(m) ? 'You' : m.replace(/\s*\(me\)$/i, '')} {checkIsAdmin(m) && <span style={{ fontSize: '10px', fontWeight: 600, color: '#7C3AED', background: '#F5F3FF', padding: '1px 6px', borderRadius: '4px', marginLeft: '6px' }}>Admin</span>}
                     </span>
-                    {emailFor(m) ? (
-                      <span style={{ fontSize: '11px', color: '#94A3B8', fontWeight: 500, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{emailFor(m)}</span>
+                    {(emailFor(m) || emailAnywhere(m)) ? (
+                      <span style={{ fontSize: '11px', color: '#94A3B8', fontWeight: 500, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{emailFor(m) || emailAnywhere(m)}</span>
                     ) : (
                       <span style={{ fontSize: '11px', color: isJustAdded ? '#059669' : '#94A3B8', fontWeight: isJustAdded ? 700 : 500, display: 'inline-flex', alignItems: 'center', gap: '8px' }}>
                         {isJustAdded ? '✓ Just added' : 'Invite sent'}
