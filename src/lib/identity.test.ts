@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { getPersonKey, resolveSelfKey, cleanMemberName, balancesByIdentity, buildKeyToName, buildPeopleSuggestions, isValidEmail, canonicalRosterName, findDuplicateGroups } from './identity';
+import { getPersonKey, resolveSelfKey, buildNameEmailResolver, cleanMemberName, balancesByIdentity, buildKeyToName, buildPeopleSuggestions, isValidEmail, canonicalRosterName, findDuplicateGroups } from './identity';
 import { Group, Expense } from './types';
 
 const mkGroup = (memberIdentities?: Record<string, string>, members: string[] = []): Group =>
@@ -384,5 +384,38 @@ describe('resolveSelfKey (self identity within a group)', () => {
     const g = mkGroup({ 'Damini Gupta': 'damini@x.com', Abhishek: 'abhi-pid' });
     const key = resolveSelfKey(g, { email: 'damini@x.com', firstName: 'Damini', fullName: 'Damini Gupta' });
     expect(key).not.toBe('abhi-pid');
+  });
+});
+
+// Guards the "Non-Group duplicate flicker": a person keyed by email in a group
+// but by raw name in a Non-Group expense showed up twice. buildNameEmailResolver
+// lets the Non-Group entry resolve to the same email so they merge into one.
+describe('buildNameEmailResolver', () => {
+  it('resolves a name to its email when that name has one email across groups', () => {
+    const resolve = buildNameEmailResolver([
+      mkGroup({ 'Chirag Gupta': 'chirag@x.com', You: 'me@x.com' }),
+      mkGroup({ 'Chirag Gupta': 'chirag@x.com' }),
+    ]);
+    expect(resolve('Chirag Gupta')).toBe('chirag@x.com');
+    expect(resolve('chirag gupta')).toBe('chirag@x.com'); // case-insensitive
+    expect(resolve('Chirag Gupta (Left)')).toBe('chirag@x.com'); // strips (Left)
+  });
+
+  it('returns undefined for an ambiguous name (two people, two emails)', () => {
+    const resolve = buildNameEmailResolver([
+      mkGroup({ Chirag: 'chirag1@x.com' }),
+      mkGroup({ Chirag: 'chirag2@x.com' }),
+    ]);
+    expect(resolve('Chirag')).toBeUndefined();
+  });
+
+  it('returns undefined for a name-only person (no email anywhere)', () => {
+    const resolve = buildNameEmailResolver([mkGroup({ Chirag: 'pid-123' })]);
+    expect(resolve('Chirag')).toBeUndefined();
+  });
+
+  it('returns undefined for an unknown name', () => {
+    const resolve = buildNameEmailResolver([mkGroup({ Chirag: 'chirag@x.com' })]);
+    expect(resolve('Nobody')).toBeUndefined();
   });
 });

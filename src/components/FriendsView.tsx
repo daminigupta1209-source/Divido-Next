@@ -4,7 +4,7 @@ import { BalanceDisplay } from './BalanceDisplay';
 import { Group, Expense, UserMetadata, GlobalSettleData } from '../lib/types';
 import { simplifyMultiCurrencyDebts, computeRawPairwiseTransactions } from '../lib/calculations';
 import { asyncBatchComputeGroups } from '../lib/workerHelper';
-import { getPersonKey, resolveSelfKey, findDuplicatePeople, isValidEmail, type DuplicateEntry, type DuplicatePerson } from '../lib/identity';
+import { getPersonKey, resolveSelfKey, buildNameEmailResolver, findDuplicatePeople, isValidEmail, type DuplicateEntry, type DuplicatePerson } from '../lib/identity';
 import { worldCurrencies, formatExactAmount, formatCompactAmount } from '../lib/utils';
 import { SearchableCurrencyPicker } from './SearchableCurrencyPicker';
 import { StyledDropdown } from './StyledDropdown';
@@ -364,6 +364,19 @@ export const FriendsView: React.FC<FriendsViewProps> = ({
       ]));
       standaloneMembers.forEach((m) => { if (m && m !== me) allSharedMembers.add(m); });
 
+      // Resolve a Non-Group person to their EMAIL identity (from any group they're
+      // in) so they merge into their in-group self instead of showing as a
+      // separate name-keyed duplicate that flickers as standalone data syncs.
+      // Never resolve to MY OWN email (would list me as my own friend) — keep the
+      // name in that case; the `m === me` guards below still exclude me by name.
+      const nameEmail = buildNameEmailResolver(groups);
+      let selfEmail = (userEmail || '').toLowerCase();
+      if (!selfEmail) { try { selfEmail = (localStorage.getItem('divido_email') || '').toLowerCase(); } catch { /* ignore */ } }
+      const standaloneId = (nm: string) => {
+        const em = nameEmail(nm);
+        return em && em !== selfEmail ? em : nm;
+      };
+
       standaloneExps.forEach((e) => {
         const c = e.currency || '₹';
         const splitters = e.splitters || [e.paid];
@@ -378,7 +391,7 @@ export const FriendsView: React.FC<FriendsViewProps> = ({
                 : e.mode === 'Unequally'
                 ? parseFloat(e.shares?.[m]?.toString() || '0')
                 : (amount * parseFloat(e.shares?.[m]?.toString() || '0')) / 100;
-            bumpBal(m, m, 'Non-Group', c, otherShare);
+            bumpBal(standaloneId(m), m, 'Non-Group', c, otherShare);
           });
         } else if (splitters.includes(me)) {
           const payer = e.paid;
@@ -388,7 +401,7 @@ export const FriendsView: React.FC<FriendsViewProps> = ({
               : e.mode === 'Unequally'
               ? parseFloat(e.shares?.[me]?.toString() || '0')
               : (amount * parseFloat(e.shares?.[me]?.toString() || '0')) / 100;
-          bumpBal(payer, payer, 'Non-Group', c, -myShare);
+          bumpBal(standaloneId(payer), payer, 'Non-Group', c, -myShare);
         }
       });
 

@@ -94,6 +94,40 @@ export const resolveSelfKey = (
   return getPersonKey(group, ids.claim || ids.firstName || '');
 };
 
+// Build a resolver mapping a display name to that person's EMAIL identity, drawn
+// from every group's memberIdentities. Non-Group (standalone) expenses carry no
+// per-group identity map, so a person there is keyed by raw name and shows up as
+// a SEPARATE duplicate of their in-group (email-keyed) self — which then flickers
+// in/out as standalone data syncs. Resolving standalone names through this map
+// merges them into one person.
+//
+// Safety: only a name that maps to EXACTLY ONE email across all groups resolves;
+// a name seen with two different emails is ambiguous (two real people share it)
+// and returns undefined, so distinct people are never wrongly merged.
+export const buildNameEmailResolver = (
+  groups: Array<Group | undefined | null>
+): ((name: string) => string | undefined) => {
+  const map: Record<string, string> = {};
+  const ambiguous = new Set<string>();
+  const norm = (s: string) => s.replace(/\s*\(Left\)$/i, '').trim().toLowerCase();
+  for (const g of groups) {
+    const mi = g?.memberIdentities || {};
+    for (const [nm, id] of Object.entries(mi)) {
+      const email = String(id).toLowerCase();
+      if (!email.includes('@')) continue;
+      const key = norm(nm);
+      if (!key) continue;
+      if (map[key] && map[key] !== email) ambiguous.add(key);
+      else map[key] = email;
+    }
+  }
+  return (name: string) => {
+    const key = norm(name);
+    if (ambiguous.has(key)) return undefined;
+    return map[key];
+  };
+};
+
 // Build the "people you've split with before" suggestion list for the add-friend
 // UIs: everyone from your OTHER groups who isn't already in the current group.
 //
