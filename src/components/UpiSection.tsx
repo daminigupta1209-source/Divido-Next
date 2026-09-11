@@ -249,7 +249,7 @@ export const UpiSection: React.FC<UpiSectionProps> = ({
               onKeyDown={handleKeyDown}
               placeholder="username@bank"
               style={{
-                fontSize: '15px',
+                fontSize: (localUpi || '').length > 22 ? '11px' : (localUpi || '').length > 18 ? '13px' : '15px',
                 fontWeight: 600,
                 border: '1.5px solid #E2E8F0',
                 borderRadius: '12px',
