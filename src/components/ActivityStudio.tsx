@@ -419,12 +419,25 @@ export const ActivityStudio: React.FC<ActivityStudioProps> = ({
                         })()}
                         <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px', marginTop: '4px' }}>
                           {(() => {
-                            const rateMap = e.ratesUsed ? JSON.parse(e.ratesUsed) : { [e.fromCurr || '']: e.ratesUsed };
-                            return Object.entries(rateMap)
-                              .filter(([src]) => src !== e.toCurr)
-                              .map(([src, r]: any) => (
+                            let rateMap: Record<string, unknown> = {};
+                            try { rateMap = e.ratesUsed ? JSON.parse(e.ratesUsed) : {}; } catch { rateMap = {}; }
+                            const chips = Object.entries(rateMap)
+                              .filter(([src, r]) => src && src !== e.toCurr && r != null)
+                              .map(([src, r]) => `${src}➔${e.toCurr} @ ${r}`);
+                            // Rate-less conversions (e.g. an "ALL → ₹" that saved no
+                            // rates) have no chips — show a label instead of blank.
+                            const display = chips.length
+                              ? chips
+                              : [
+                                  e.fromCurr && e.fromCurr.toUpperCase() === 'ALL'
+                                    ? `All currencies ➔ ${e.toCurr || ''}`.trim()
+                                    : e.fromCurr && e.toCurr
+                                    ? `${e.fromCurr} ➔ ${e.toCurr}`
+                                    : `Converted to ${e.toCurr || ''}`.trim(),
+                                ];
+                            return display.map((rs) => (
                                 <span
-                                  key={src}
+                                  key={rs}
                                   style={{
                                     fontSize: '9px',
                                     fontWeight: 600,
@@ -434,7 +447,7 @@ export const ActivityStudio: React.FC<ActivityStudioProps> = ({
                                     borderRadius: '4px',
                                   }}
                                 >
-                                  {src}➔{e.toCurr} @ {r}
+                                  {rs}
                                 </span>
                               ));
                           })()}

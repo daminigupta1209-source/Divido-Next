@@ -112,10 +112,22 @@ export const ExpenseRow: React.FC<ExpenseRowProps> = ({
   const isConversion = e.isConversion;
 
   if (isConversion) {
-    const rateMap = e.ratesUsed ? JSON.parse(e.ratesUsed) : { [e.fromCurr || '']: 1 };
+    let rateMap: Record<string, unknown> = {};
+    try { rateMap = e.ratesUsed ? JSON.parse(e.ratesUsed) : { [e.fromCurr || '']: 1 }; } catch { rateMap = {}; }
     const rateStrings = Object.entries(rateMap)
-      .filter(([src]) => src !== e.toCurr)
+      .filter(([src, r]) => src && src !== e.toCurr && r != null)
       .map(([src, r]) => `${src}➔${e.toCurr} @ ${r}`);
+    // Older / rate-less conversions (e.g. a "convert ALL → ₹" that didn't record
+    // rates) have no chips — show a sensible label instead of a blank card.
+    const displayChips = rateStrings.length
+      ? rateStrings
+      : [
+          e.fromCurr && e.fromCurr.toUpperCase() === 'ALL'
+            ? `All currencies ➔ ${e.toCurr || ''}`.trim()
+            : e.fromCurr && e.toCurr
+            ? `${e.fromCurr} ➔ ${e.toCurr}`
+            : `Converted to ${e.toCurr || ''}`.trim(),
+        ];
 
     return (
       <div
@@ -192,7 +204,7 @@ export const ExpenseRow: React.FC<ExpenseRowProps> = ({
               </span>
             </div>
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: '3px', marginTop: '4px' }}>
-              {rateStrings.map((rs) => (
+              {displayChips.map((rs) => (
                 <span
                   key={rs}
                   style={{
