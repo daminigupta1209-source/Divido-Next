@@ -612,6 +612,19 @@ function App() {
         window.history.back();
         return;
       }
+
+      // An overlay SWAP: same screen, same number of overlays open, but a
+      // different set (e.g. the group options sheet closed AND the currency
+      // converter opened in one step). Pushing here would leave the old overlay's
+      // entry in the back-stack, so closing the NEW overlay would step back and
+      // reopen the OLD one (the "settings sheet reopens after converting" bug).
+      // Replace the current entry instead, so closing the new overlay returns to
+      // the clean screen.
+      if (sameScreen && overlayCount(currentUi) > 0 && overlayCount(currentUi) === overlayCount(prev)) {
+        window.history.replaceState({ _divido: true, uiState: currentUi }, '');
+        try { sessionStorage.setItem('divido_ui_state', JSON.stringify(currentUi)); } catch {}
+        return;
+      }
     }
 
     window.history.pushState({ _divido: true, uiState: currentUi }, '');
