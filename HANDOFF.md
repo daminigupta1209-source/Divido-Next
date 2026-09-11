@@ -39,6 +39,9 @@
   - `FriendsView.tsx`: Cards were overflowing on narrow mobile screens. Fixed by using a responsive `minmax(min(100%, 340px), 1fr)` grid layout.
   - `FriendsView.tsx`: Duplicate name resolution added. Email IDs and Group names only show up if the person has a duplicate name in the friends list. Group name appears to the right in parenthesis, email appears below.
   - `ActivityStudio.tsx`: Fixed asymmetrical padding (`24px` right vs `16px` left) and removed ghost flex gaps that were causing the amounts to float awkwardly far from the right edge.
+- **UPI ID Polish & Cloud Sync (Sep 2026)**: 
+  - *UI Adjustments*: Dynamically scaled the font size inside the UPI ID input (`UpiSection.tsx`) so that very long IDs remain fully visible without horizontal clipping. Adjusted the padding and nudged the "Verify" button to align perfectly with the text baseline.
+  - *Cloud Sync (Pending SQL)*: Implemented auto-syncing of UPI IDs to the cloud. `UpiSection.tsx` pushes the UPI ID to the `group_members` table on save, and `useSupabaseSync.ts` automatically downloads and merges friends' UPI IDs into local `userMetadata` so they appear instantly on the 'Pay' screen. **Requires user to run `ALTER TABLE public.group_members ADD COLUMN IF NOT EXISTS upi_id text;` in Supabase.**
 
 ## Outstanding Tasks (To Do)
 1. **Conceptual sharing model investigation**: Understand and refine how non-group (peer-to-peer) expenses function.
