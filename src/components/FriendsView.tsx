@@ -561,19 +561,8 @@ export const FriendsView: React.FC<FriendsViewProps> = ({
     background: active ? '#F0FDF4' : 'transparent',
   });
 
-  // TEMP DEBUG v8 — one-screenshot diagnosis: is Abhishek in the computed list,
-  // in the displayed list, and which build is live? Remove once resolved.
-  const _roster = friends.map((f) => f.name + ' [' + (f.groups || []).join(',') + '] ' + Object.entries(f.bals).map(([c, v]) => c + (v as number).toFixed(1)).join(' '));
-  const _dbg =
-    'DEBUG v9\n' +
-    'me=' + JSON.stringify(me) + '\n' +
-    'computedFriends=' + friends.length + '  displayedFriends=' + filteredFriends.length + '\n' +
-    'filters: balanceFilter=' + balanceFilter + ' selectedFriends=' + selectedFriends.length + ' search=' + JSON.stringify((search || searchQuery || '')) + '\n' +
-    'ALL computed friends:\n' + _roster.join('\n');
-
   return (
     <div className="content-width-limit">
-      <pre style={{ background: '#FEF2F2', border: '1px solid #FCA5A5', borderRadius: '8px', padding: '10px', fontSize: '10px', lineHeight: 1.4, overflowX: 'auto', marginBottom: '12px', whiteSpace: 'pre-wrap', wordBreak: 'break-all' }}>{_dbg}</pre>
       {/* Duplicate-person review banner */}
       {onMergePeople && duplicatePeople.length > 0 && (
         <div
