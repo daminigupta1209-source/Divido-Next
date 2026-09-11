@@ -221,6 +221,14 @@ export const CurrencyConverterModal: React.FC<CurrencyConverterModalProps> = ({
     // 4. Convert base -> target. Non-matching currencies stay at their original.
     const activeConversions = new Set<string>();
     let modificationOccurred = false;
+    // Record the ACTUAL rate applied per currency. Previously we saved
+    // rateMap[c] directly, which was `undefined` when a rate was missing —
+    // producing an empty rates_used ("{}") AND silently converting at 1:1
+    // (relabelling money to the target currency without changing its value).
+    // Now we capture the effective rate and refuse to save a conversion that has
+    // no valid rate for a currency it would change.
+    const usedRates: Record<string, string> = {};
+    const missingRates = new Set<string>();
     const finalById: Record<string, { amt: number; currency: string; shares?: Record<string, number> }> = {};
     baseExpenses.forEach((e) => {
       const currentCurr = e.currency || group.currency;
@@ -228,7 +236,11 @@ export const CurrencyConverterModal: React.FC<CurrencyConverterModalProps> = ({
       if (currentCurr !== targetCurr && matchesSource) {
         modificationOccurred = true;
         activeConversions.add(currentCurr);
-        const r = parseFloat(rateMap[currentCurr]) || 1;
+        const raw = parseFloat(rateMap[currentCurr]);
+        const valid = Number.isFinite(raw) && raw > 0;
+        if (!valid) missingRates.add(currentCurr);
+        const r = valid ? raw : 1;
+        usedRates[currentCurr] = String(r);
         const newAmt = Math.round(e.amt * r * 100) / 100;
         let ns = e.shares;
         if (e.mode === 'Unequally' && e.shares) {
@@ -247,8 +259,15 @@ export const CurrencyConverterModal: React.FC<CurrencyConverterModalProps> = ({
       return;
     }
 
-    const filteredRates: Record<string, string> = {};
-    activeConversions.forEach((c) => { filteredRates[c] = rateMap[c]; });
+    // Don't silently convert at 1:1 when a rate is missing — that corrupts the
+    // group's amounts. Ask the user to set a rate for each currency first.
+    if (missingRates.size > 0) {
+      alert(`⚠️ Missing exchange rate for: ${[...missingRates].join(', ')}. Set a rate for each before converting — I won't convert without it (that would change the amounts incorrectly).`);
+      setIsConverting(false);
+      return;
+    }
+
+    const filteredRates: Record<string, string> = usedRates;
 
     const newLog: any = {
       id: genExpenseId(),
