@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Group, Expense, UserMetadata } from '../../lib/types';
 import { BalanceActionCard } from '../BalanceActionCard';
-import { buildPeopleSuggestions, balancesByIdentity, getPersonKey, isValidEmail, buildNameEmailResolver } from '../../lib/identity';
+import { buildPeopleSuggestions, balancesByIdentity, getPersonKey, isValidEmail, buildNameEmailResolver, upiFor } from '../../lib/identity';
 import { FullScreenAddFriend } from '../FullScreenAddFriend';
 
 interface GroupMemberListProps {
@@ -720,7 +720,7 @@ export const GroupMemberList: React.FC<GroupMemberListProps> = ({
                   )}
 
                   <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexShrink: 0 }}>
-                    {userMetadata[m]?.upiId && (
+                    {upiFor(userMetadata, (n) => emailFor(n) || emailAnywhere(n) || undefined, m) && (
                       <span title="Payment Info Linked 安心" style={{ fontSize: '12px', color: '#1D4ED8', cursor: 'help' }}>
                         💳
                       </span>

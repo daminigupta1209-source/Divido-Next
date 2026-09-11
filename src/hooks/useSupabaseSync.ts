@@ -69,6 +69,8 @@ interface UseSupabaseSyncProps {
   me: string;
   setMatchPrompt: React.Dispatch<React.SetStateAction<any>>;
   userEmail: string;
+  userMetadata: Record<string, any>;
+  setUserMetadata: React.Dispatch<React.SetStateAction<Record<string, any>>>;
 }
 
 export function useSupabaseSync({
@@ -82,6 +84,8 @@ export function useSupabaseSync({
   me,
   setMatchPrompt,
   userEmail,
+  userMetadata,
+  setUserMetadata,
 }: UseSupabaseSyncProps) {
   // A guest (no real signed-in email) is fully local — the cloud-sync engine must
   // not run for them, or it corrupts their local group list.
@@ -481,6 +485,33 @@ export function useSupabaseSync({
           // Redundant auto-heal removed to prevent race conditions resetting is_pending for re-invited members.
         });
 
+        // Sync remote UPI IDs from group members into local userMetadata so they
+        // appear automatically. Keyed by the owner's EMAIL (never the display name:
+        // same-named people would clobber each other and the payer could autofill
+        // the WRONG person's UPI). Only members with a real email own a synced UPI;
+        // the pay screens resolve name -> email before reading this (see `upiFor`).
+        const upiUpdates: Record<string, string> = {};
+        allMembers.forEach((m: any) => {
+          const email = (m.user_email || '').trim().toLowerCase();
+          if (m.upi_id && email) {
+            upiUpdates[email] = m.upi_id;
+          }
+        });
+
+        if (Object.keys(upiUpdates).length > 0) {
+          setUserMetadata((prev) => {
+            let changed = false;
+            const next = { ...prev };
+            for (const [key, upi] of Object.entries(upiUpdates)) {
+              if (next[key]?.upiId !== upi) {
+                next[key] = { ...next[key], upiId: upi };
+                changed = true;
+              }
+            }
+            return changed ? next : prev;
+          });
+        }
+
         // 5. Map expenses — field mapping lives in ONE place (lib/expenseSchema)
         // shared by load/save/diff, so a new column can't be half-wired. id and
         // timestamp are handled here (timestamp derives from DB created_at).
@@ -844,6 +875,7 @@ export function useSupabaseSync({
                   user_email: isMe ? userEmail : null,
                   is_pending: !isMe,
                   invite_email: inviteEmail,
+                  upi_id: isMe ? (userMetadata[me]?.upiId || null) : null,
                   // Me is identified by email; other name-only members get their
                   // own hidden id so same-named people never merge across groups.
                   person_id: isMe || inviteEmail ? null : genPersonId(),

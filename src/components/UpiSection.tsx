@@ -111,7 +111,7 @@ export const UpiSection: React.FC<UpiSectionProps> = ({
 
   // Debounced auto-save for UPI ID (fixes the bug where closing Profile via Back button erases the ID)
   useEffect(() => {
-    const timer = setTimeout(() => {
+    const timer = setTimeout(async () => {
       const trimmed = (localUpi || '').trim();
       if (trimmed && !validateUpi(trimmed)) {
         setUpiError('Invalid UPI format');
@@ -126,6 +126,21 @@ export const UpiSection: React.FC<UpiSectionProps> = ({
             upiId: trimmed,
             upiVerified: trimmed === userMetadata[me]?.upiId ? userMetadata[me]?.upiVerified : false
           },
+        });
+        
+        // Auto-sync UPI ID to the cloud so friends can see it automatically
+        import('../lib/supabaseClient').then(({ supabase }) => {
+          supabase.auth.getSession().then(({ data: { session } }) => {
+            if (session?.user?.email) {
+              supabase
+                .from('group_members')
+                .update({ upi_id: trimmed })
+                .eq('user_email', session.user.email)
+                .then(({ error }) => {
+                  if (error) console.error('Failed to sync UPI ID to cloud:', error);
+                });
+            }
+          });
         });
       }
     }, 500); // 500ms debounce

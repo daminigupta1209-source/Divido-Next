@@ -128,6 +128,28 @@ export const buildNameEmailResolver = (
   };
 };
 
+// Look up a person's UPI ID, anchored on their EMAIL identity — NOT on their raw
+// display name. UPI is real money: two same-named people keyed by name would
+// clobber each other, and the payer could autofill the WRONG person's UPI. Synced
+// UPIs (from group_members) are stored in userMetadata under the owner's
+// lowercased email key; `nameToEmail` (buildNameEmailResolver, or a getPersonKey
+// wrapper) turns the display name into that email — and only when it's
+// unambiguous. Falls back to the name-keyed value (your own UPI, or a locally
+// linked one) when no email resolves, so nothing regresses.
+export const upiFor = (
+  userMetadata: Record<string, any> | undefined | null,
+  nameToEmail: (name: string) => string | undefined,
+  name: string
+): string | undefined => {
+  const md = userMetadata || {};
+  const email = nameToEmail(name);
+  if (email) {
+    const byEmail = md[email.toLowerCase()]?.upiId;
+    if (byEmail) return byEmail;
+  }
+  return md[name]?.upiId;
+};
+
 // Build the "people you've split with before" suggestion list for the add-friend
 // UIs: everyone from your OTHER groups who isn't already in the current group.
 //

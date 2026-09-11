@@ -1,4 +1,5 @@
-import React, { useState, useEffect, useRef, useCallback } from 'react';
+import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
+import { buildNameEmailResolver, upiFor } from '../lib/identity';
 import { SearchableCurrencyPicker } from './SearchableCurrencyPicker';
 
 import { Group, Expense, UserMetadata } from '../lib/types';
@@ -76,6 +77,10 @@ export const SettleModal: React.FC<SettleModalProps> = ({
   const [showSettleNotes, setShowSettleNotes] = useState(false);
   const [rates, setRates] = useState<Record<string, number>>({});
   const [loadingRates, setLoadingRates] = useState(false);
+
+  // Resolve a payee's display name to their email identity so we read the RIGHT
+  // person's synced UPI (money — never key UPI by raw name).
+  const nameToEmail = useMemo(() => buildNameEmailResolver(groups), [groups]);
 
   // Helper to detect user's primary currency based on Profile, then Browser Locale
   const getPrimaryCurrency = () => {
@@ -463,7 +468,7 @@ export const SettleModal: React.FC<SettleModalProps> = ({
                   );
 
                 return finalTransactions.map((t, idx) => {
-                  const upi = userMetadata[t.to]?.upiId;
+                  const upi = upiFor(userMetadata, nameToEmail, t.to);
                   return (
                     <div
                       key={idx}

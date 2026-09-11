@@ -1,11 +1,14 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { escManager } from '../lib/escManager';
 import { toCurrencyCode } from '../lib/utils';
+import { Group } from '../lib/types';
+import { buildNameEmailResolver, upiFor } from '../lib/identity';
 
 interface NetPayableModalProps {
   popupData: { friendName: string; amt: number; curr: string } | null;
   onClose: () => void;
   me: string;
+  groups: Group[];
   userMetadata: Record<string, any>;
   setUserMetadata: React.Dispatch<React.SetStateAction<Record<string, any>>>;
   onFinalSettle: () => void;
@@ -15,10 +18,14 @@ export const NetPayableModal: React.FC<NetPayableModalProps> = ({
   popupData,
   onClose,
   me,
+  groups,
   userMetadata,
   setUserMetadata,
   onFinalSettle,
 }) => {
+  // Resolve the friend's name to their email so we read the RIGHT person's synced
+  // UPI (money — never key UPI by raw name).
+  const nameToEmail = useMemo(() => buildNameEmailResolver(groups), [groups]);
   const [payPopupUpi, setPayPopupUpi] = useState('');
   const [payPopupEditing, setPayPopupEditing] = useState(false);
   const [rates, setRates] = useState<Record<string, number>>({});
@@ -62,12 +69,12 @@ export const NetPayableModal: React.FC<NetPayableModalProps> = ({
 
   useEffect(() => {
     if (popupData) {
-      const existingUpi = userMetadata[popupData.friendName]?.upiId || '';
+      const existingUpi = upiFor(userMetadata, nameToEmail, popupData.friendName) || '';
       setPayPopupUpi(existingUpi);
       setPayPopupEditing(!existingUpi);
       setAwaitingConfirm(false);
     }
-  }, [popupData, userMetadata]);
+  }, [popupData, userMetadata, nameToEmail]);
 
   // Fetch live INR-based rates whenever a non-INR debt popup opens.
   useEffect(() => {

@@ -65,7 +65,7 @@ import { CurrencySetupModal } from './components/CurrencySetupModal';
 import { GroupGallery } from './components/GroupGallery';
 import { checkIfDemoMode } from './lib/demoMode';
 import { ensureArray, ensureObject, isLegacyRenameLog, formatCompactAmount, genGroupId, genExpenseId, titleCaseName } from './lib/utils';
-import { getPersonKey, toIdentitySpace, pickCanonicalIdentity, findDuplicateGroups, type DuplicateEntry, setSyncedDismissedPeople } from './lib/identity';
+import { getPersonKey, toIdentitySpace, pickCanonicalIdentity, findDuplicateGroups, type DuplicateEntry, setSyncedDismissedPeople, buildNameEmailResolver, upiFor } from './lib/identity';
 import { useSupabaseSync, getGidRemap } from './hooks/useSupabaseSync';
 import { BalanceActionCard } from './components/BalanceActionCard';
 import { asyncBatchNetBalances } from './lib/workerHelper';
@@ -1440,6 +1440,9 @@ function App() {
   // Duplicate groups the user probably created twice (same name AND same member
   // set). Never auto-merged — surfaced as a prompt the user confirms.
   const duplicateGroups = React.useMemo(() => findDuplicateGroups(groups), [groups]);
+  // Name -> email resolver so pay/QR screens read the RIGHT person's synced UPI
+  // (money — never key UPI by raw display name).
+  const nameToEmailUpi = React.useMemo(() => buildNameEmailResolver(groups), [groups]);
 
   // Merge one accidental duplicate group into another: move the dropped group's
   // expenses onto the kept group, union members/identities, then delete the
@@ -2151,6 +2154,8 @@ function App() {
     me,
     setMatchPrompt,
     userEmail,
+    userMetadata,
+    setUserMetadata,
   });
 
   // One-time auto-repair for expenses left behind by the old hard-delete bug:
@@ -4925,7 +4930,11 @@ function App() {
                         // and the joiner's Google name is also "Chirag Gupta").
                         // Claim it by attaching their email instead of erroring.
                         const { error: upErr } = await supabase.from('group_members')
-                          .update({ user_email: myEmail, is_pending: false })
+                          .update({ 
+                            user_email: myEmail, 
+                            is_pending: false,
+                            upi_id: userMetadata[typed]?.upiId || null,
+                          })
                           .eq('id', clash.id);
                         if (upErr) throw upErr;
                         claimedPlaceholderName = String(clash.name).replace(/\s*\(Left\)$/i, '');
@@ -4943,6 +4952,7 @@ function App() {
                           user_email: myEmail,
                           is_pending: false,
                           person_id: null,
+                          upi_id: userMetadata[typed]?.upiId || null,
                         });
                         if (insErr) throw insErr;
                       }
@@ -5641,7 +5651,7 @@ function App() {
             show={!!qrModalData}
             onClose={() => setQrModalData(null)}
             payeeName={qrModalData.payee}
-            upiId={userMetadata[qrModalData.payee]?.upiId || ''}
+            upiId={upiFor(userMetadata, nameToEmailUpi, qrModalData.payee) || ''}
             amount={qrModalData.amt}
             currency={qrModalData.currency}
             requestFrom={qrModalData.requestFrom}
@@ -5679,6 +5689,7 @@ function App() {
         popupData={netPayablePopup}
         onClose={() => setNetPayablePopup(null)}
         me={me}
+        groups={groups}
         userMetadata={userMetadata}
         setUserMetadata={setUserMetadata}
         onFinalSettle={handleFinalGlobalSettle}

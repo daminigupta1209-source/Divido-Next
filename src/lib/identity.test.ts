@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { getPersonKey, resolveSelfKey, buildNameEmailResolver, cleanMemberName, balancesByIdentity, buildKeyToName, buildPeopleSuggestions, isValidEmail, canonicalRosterName, findDuplicateGroups } from './identity';
+import { getPersonKey, resolveSelfKey, buildNameEmailResolver, upiFor, cleanMemberName, balancesByIdentity, buildKeyToName, buildPeopleSuggestions, isValidEmail, canonicalRosterName, findDuplicateGroups } from './identity';
 import { Group, Expense } from './types';
 
 const mkGroup = (memberIdentities?: Record<string, string>, members: string[] = []): Group =>
@@ -417,5 +417,42 @@ describe('buildNameEmailResolver', () => {
   it('returns undefined for an unknown name', () => {
     const resolve = buildNameEmailResolver([mkGroup({ Chirag: 'chirag@x.com' })]);
     expect(resolve('Nobody')).toBeUndefined();
+  });
+});
+
+// upiFor reads a person's UPI anchored on EMAIL, never raw name — so two
+// same-named people can't clobber each other and the payer can't autofill the
+// WRONG person's UPI. Synced UPIs live in userMetadata under the email key.
+describe('upiFor (email-anchored UPI lookup)', () => {
+  const byName = (map: Record<string, string>) => (n: string) => map[n];
+
+  it('reads the UPI stored under the resolved email key', () => {
+    const md = { 'chirag@x.com': { upiId: 'chirag@upi' } };
+    expect(upiFor(md, byName({ Chirag: 'chirag@x.com' }), 'Chirag')).toBe('chirag@upi');
+  });
+
+  it('is case-insensitive on the email key', () => {
+    const md = { 'chirag@x.com': { upiId: 'chirag@upi' } };
+    expect(upiFor(md, byName({ Chirag: 'CHIRAG@X.COM' }), 'Chirag')).toBe('chirag@upi');
+  });
+
+  it('never returns another same-named person\'s UPI when the name is ambiguous', () => {
+    // ambiguous name -> resolver returns undefined -> must NOT leak an email UPI
+    const md = { 'chirag1@x.com': { upiId: 'wrong@upi' } };
+    expect(upiFor(md, () => undefined, 'Chirag')).toBeUndefined();
+  });
+
+  it('falls back to the name key (own / locally-linked UPI) when no email resolves', () => {
+    const md = { You: { upiId: 'me@upi' } };
+    expect(upiFor(md, () => undefined, 'You')).toBe('me@upi');
+  });
+
+  it('prefers the email-anchored UPI over a stale name-keyed one', () => {
+    const md = { 'chirag@x.com': { upiId: 'real@upi' }, Chirag: { upiId: 'stale@upi' } };
+    expect(upiFor(md, byName({ Chirag: 'chirag@x.com' }), 'Chirag')).toBe('real@upi');
+  });
+
+  it('tolerates empty metadata', () => {
+    expect(upiFor(undefined, () => 'a@x.com', 'Chirag')).toBeUndefined();
   });
 });
