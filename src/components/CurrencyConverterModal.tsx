@@ -388,7 +388,7 @@ export const CurrencyConverterModal: React.FC<CurrencyConverterModalProps> = ({
           }}
         >
           <span className={isFetching ? 'spin' : ''}>🌐</span>{' '}
-          {isFetching ? 'Fetching Live Rates...' : 'Open ER API'}
+          {isFetching ? 'Fetching Live Rates...' : 'Live Exchange Rates'}
         </div>
 
         <h3  style={{ fontSize: '20px', fontWeight: 600, color: '#1E293B', marginBottom: '4px' }}>
