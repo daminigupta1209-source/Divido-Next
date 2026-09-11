@@ -78,7 +78,12 @@ if ('serviceWorker' in navigator) {
 
   window.addEventListener('load', () => {
     navigator.serviceWorker
-      .register('/sw.js')
+      // updateViaCache:'none' forces the browser to fetch sw.js from the network
+      // (not its HTTP cache) on every update check. Without it, an installed
+      // mobile PWA re-reads a cached sw.js, never notices a new BUILD_ID, and the
+      // "New version available" banner never appears — so the phone stays on the
+      // old build until a hard reload. This is the fix for mobile update lag.
+      .register('/sw.js', { updateViaCache: 'none' })
       .then((reg) => {
         // Check for a new version on load AND repeatedly while the app stays
         // open — a PWA is rarely fully closed, so a once-per-load check would
