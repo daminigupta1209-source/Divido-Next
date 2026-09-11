@@ -166,6 +166,7 @@ interface FriendsViewProps {
   groups: Group[];
   expenses: Expense[];
   me: string;
+  userEmail?: string;
   setView: (view: string) => void;
   setSelectedId: (id: string | number | null) => void;
   setGlobalSettleData: (data: GlobalSettleData | null) => void;
@@ -183,6 +184,7 @@ export const FriendsView: React.FC<FriendsViewProps> = ({
   groups,
   expenses,
   me,
+  userEmail,
   setView,
   setSelectedId,
   setGlobalSettleData,
@@ -315,7 +317,11 @@ export const FriendsView: React.FC<FriendsViewProps> = ({
         // signed-in email → full username → first name → per-group claim. The
         // full name is checked before the claim because a stale/incorrect claim
         // could otherwise win. Falls back to the old behaviour if none resolve.
-        let myEmail = ''; try { myEmail = (localStorage.getItem('divido_email') || '').toLowerCase(); } catch { /* ignore */ }
+        // Prefer the live signed-in email (prop) — for Google users it's the
+        // authoritative identity and is the same in every group. Fall back to
+        // localStorage only if the prop isn't available.
+        let myEmail = (userEmail || '').toLowerCase();
+        if (!myEmail) { try { myEmail = (localStorage.getItem('divido_email') || '').toLowerCase(); } catch { /* ignore */ } }
         let fullName = ''; try { fullName = localStorage.getItem('divido_username') || ''; } catch { /* ignore */ }
         let claimName = ''; try { claimName = localStorage.getItem(`divido_identity_${g.id}`) || ''; } catch { /* ignore */ }
         const groupKeyVals = new Set(Object.values(g.memberIdentities || {}).map((v) => String(v).toLowerCase()));
@@ -424,7 +430,7 @@ export const FriendsView: React.FC<FriendsViewProps> = ({
     };
     compute();
     return () => { active = false; };
-  }, [groups, expenses, me]);
+  }, [groups, expenses, me, userEmail]);
 
   const { friends, isDupName, distinctCurrencies, allSharedMembers } = friendsData;
 

@@ -1578,6 +1578,12 @@ function App() {
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
       if (session) {
         setUserEmail(session.user?.email || '');
+        // Persist the signed-in email locally so identity matching (which keys
+        // people by email) works across the app and survives reloads. Without
+        // this, divido_email stayed empty for Google users, so a full-name member
+        // ("Damini Gupta") couldn't be matched and whole groups were dropped from
+        // All balances.
+        try { if (session.user?.email) localStorage.setItem('divido_email', session.user.email); } catch { /* ignore */ }
         const saved = localStorage.getItem('divido_username');
         if (!saved || saved === 'You' || saved === 'undefined' || saved === 'Guest') {
           const userFullName = session.user?.user_metadata?.full_name || session.user?.email?.split('@')[0] || session.user?.phone || 'User';
@@ -1618,6 +1624,12 @@ function App() {
     supabase.auth.getSession().then(async ({ data: { session } }) => {
       if (session) {
         setUserEmail(session.user?.email || '');
+        // Persist the signed-in email locally so identity matching (which keys
+        // people by email) works across the app and survives reloads. Without
+        // this, divido_email stayed empty for Google users, so a full-name member
+        // ("Damini Gupta") couldn't be matched and whole groups were dropped from
+        // All balances.
+        try { if (session.user?.email) localStorage.setItem('divido_email', session.user.email); } catch { /* ignore */ }
         const saved = localStorage.getItem('divido_username');
         if (!saved || saved === 'You' || saved === 'undefined' || saved === 'Guest') {
           const userFullName = session.user?.user_metadata?.full_name || session.user?.email?.split('@')[0] || session.user?.phone || 'User';
@@ -3557,6 +3569,7 @@ function App() {
             groups={groups}
             expenses={expenses}
             me={me}
+            userEmail={userEmail}
             setView={setView}
             setSelectedId={setSelectedId}
             setGlobalSettleData={setGlobalSettleData}
