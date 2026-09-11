@@ -425,7 +425,9 @@ export const CurrencyConverterModal: React.FC<CurrencyConverterModalProps> = ({
           {/* Connection arrow with live rate */}
           <div style={{ flex: 1.5, position: 'relative', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
             <span style={{ fontSize: '9.5px', fontWeight: 600, color: '#0D9488', background: '#E6F4EA', padding: '2px 8px', borderRadius: '100px', whiteSpace: 'nowrap', marginBottom: '6px' }}>
-              1 : {rateMap[sourceCurr === 'ALL' ? group.currency : sourceCurr] || '...'}
+              {sourceCurr === 'ALL' && detectedCurrs.length > 1 
+                ? 'Multiple rates' 
+                : `1 : ${rateMap[sourceCurr === 'ALL' ? detectedCurrs[0] : sourceCurr] || '...'}`}
             </span>
             {/* Visual Arrow Line */}
             <div style={{ width: '100%', height: '2px', background: '#CBD5E1', position: 'relative' }}>
