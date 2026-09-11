@@ -1,5 +1,26 @@
 # Divido-Next Handoff
 
+## Latest session — Balances, identity & currency reliability (Sep 11 2026)
+
+**Context:** People (Abhishek, Chirag, and others) were vanishing from the "All balances" screen. Root cause was an **identity mismatch**, not the parked state-migration. Diagnosed, fixed, and hardened with tests. All pushed to `main`.
+
+- **Root cause of missing people (fixed):** balances resolved a person via `getPersonKey`, but the current user's key was computed from the wrong name form (first-name vs full-name) while the locally-stored `divido_email` was empty — so real members failed to resolve and dropped off the list. Fixes:
+  - New tested helpers in `src/lib/identity.ts`: `resolveSelfKey(group, {email, fullName, firstName, claim})` (tries email → fullName → firstName → claim against `memberIdentities`) and `buildNameEmailResolver(groups)` (name → unambiguous email across groups).
+  - `App.tsx` now persists `divido_email` on sign-in (both `onAuthStateChange` and `getSession`) and passes `userEmail` to `FriendsView`.
+  - `FriendsView.tsx` computes `myKey` per group via `resolveSelfKey`; Non-Group section resolves people via `buildNameEmailResolver` (guarded against self-email); rendered friends via plain `.map()` (removed Virtuoso — it was truncating the list inside the grid on mobile).
+  - Regression tests: `src/lib/identity.test.ts` (70 tests total, green).
+- **Member email on re-add (fixed, ee6a0aa):** Pending list shows `emailFor(m) || emailAnywhere(m)`; `commitSelected` inherits a known email via `buildNameEmailResolver`, so re-adding a person no longer drops their email.
+- **Currency swap card no longer blank (112140e):** cards in `ExpenseRow.tsx` + `ActivityStudio.tsx` fall back to a label ("All currencies ➔ ₹" etc.) when a conversion has no rate chips.
+- **Silent 1:1 conversion bug (e12c718):** `CurrencyConverterModal` recorded actual rates used and now **aborts with a warning** if any converted currency lacks a valid rate (previously a missing rate silently converted money at 1:1).
+- **Re-conversion rate fetch (301a3a7):** `detectedCurrs` includes original currencies from conversion snapshots, so re-converting fetches the rates it needs.
+- **Options sheet reopening (c5e0c75):** overlay-swap `replaceState` branch in `App.tsx` history effect — opening the converter from the group options sheet no longer reopens the sheet on close. Fixes the whole "option → modal" class.
+
+**Open real-data item:** Jaipur's past "ALL → ₹" conversion ran at 1:1 (empty `rates_used`), so its ₹ amounts may equal the raw foreign numbers. Cleanup: **Undo conversion → convert again** (now converts at real rates). User to verify numbers after.
+
+**Parked:** Zustand state-migration (Phase 1 ledgerStore / Phase 2 balanceStore) on branch `wip-state-migration` — retry only after the async-race is understood; it was NOT the cause of the balance bug.
+
+**Rule adopted:** for any balance/identity/sync change, run `npm test` + `npm run build` + two-device check before pushing.
+
 ## Current State & Recent Fixes
 - **Non-group Add friend = full-screen picker + removable recents (Sep 2026)**: Non-group (STANDALONE) expenses now open the SAME full-screen `FullScreenAddFriend.tsx` as the group flow, instead of the old small centered popup. It runs in a new **single-select** mode (`singleSelect` prop): non-group splits are always you + one other, so tapping a person (or "Add … as new") commits immediately and closes — no green-check confirm, no multi-tick. Wired in `ExpenseModal.tsx` (`showFriendPickerPopup` branch, STANDALONE block) where picking sets `[me, name]`. Suggestions now come from the shared `buildPeopleSuggestions(groups, null, [me], me, myEmail)` (identity.ts), so recents show **emails/identities** exactly like the group screen (replaced the old name-only `allKnownFriends`). Each "Recently split with" row has a **trash icon** to remove that person from suggestions; it persists per-device in `localStorage` under `dividoDismissedPeople` and is filtered inside `buildPeopleSuggestions` (helpers `dismissPerson` / `getDismissedPeople` / `dismissedPersonKey`), so it applies to BOTH group and non-group. Removal never touches groups/expenses/balances. Search + email boxes are **50px** tall / 12px radius, with the input's border/radius/padding/appearance pinned inline so the global `input {}` rule (16px padding, 2px border) can't distort it. Icons: trash 20px grey `#CBD5E1`, `+` 26px, both with `marginRight:8px` off the edge.
 - **PWA meta (Sep 2026)**: Added `<meta name="mobile-web-app-capable" content="yes">` alongside the apple- variant in `index.html` to silence the console deprecation warning. (Note: the `[Divido] build 2026-08-20-cache-v3` console line is a stale hardcoded label — NOT the real build date; don't trust it when diagnosing stale versions.)
