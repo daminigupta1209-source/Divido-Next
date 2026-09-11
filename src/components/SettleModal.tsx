@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
-import { buildNameEmailResolver, upiFor } from '../lib/identity';
+import { buildNameEmailResolver, getPersonKey, upiFor } from '../lib/identity';
 import { SearchableCurrencyPicker } from './SearchableCurrencyPicker';
 
 import { Group, Expense, UserMetadata } from '../lib/types';
@@ -79,8 +79,18 @@ export const SettleModal: React.FC<SettleModalProps> = ({
   const [loadingRates, setLoadingRates] = useState(false);
 
   // Resolve a payee's display name to their email identity so we read the RIGHT
-  // person's synced UPI (money — never key UPI by raw name).
-  const nameToEmail = useMemo(() => buildNameEmailResolver(groups), [groups]);
+  // person's synced UPI (money — never key UPI by raw name). The settle card runs
+  // INSIDE one group, which already pins each member's exact email — so ask THIS
+  // group first (unambiguous by construction). Only fall back to the cross-group
+  // resolver for global/standalone settles where no single group is in scope.
+  const nameToEmail = useMemo(() => {
+    const cross = buildNameEmailResolver(groups);
+    return (name: string) => {
+      const k = getPersonKey(selectedGroup, name);
+      if (typeof k === 'string' && k.includes('@')) return k;
+      return cross(name);
+    };
+  }, [groups, selectedGroup]);
 
   // Helper to detect user's primary currency based on Profile, then Browser Locale
   const getPrimaryCurrency = () => {

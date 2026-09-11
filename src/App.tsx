@@ -5651,7 +5651,12 @@ function App() {
             show={!!qrModalData}
             onClose={() => setQrModalData(null)}
             payeeName={qrModalData.payee}
-            upiId={upiFor(userMetadata, nameToEmailUpi, qrModalData.payee) || ''}
+            upiId={upiFor(userMetadata, (n) => {
+              // QR opens from a group balance — that group pins the payee's exact
+              // email; fall back to the cross-group resolver only if it can't.
+              const k = getPersonKey(selectedGroup, n);
+              return typeof k === 'string' && k.includes('@') ? k : nameToEmailUpi(n);
+            }, qrModalData.payee) || ''}
             amount={qrModalData.amt}
             currency={qrModalData.currency}
             requestFrom={qrModalData.requestFrom}
