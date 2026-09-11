@@ -273,7 +273,7 @@ export const UpiSection: React.FC<UpiSectionProps> = ({
                   right: '14px',
                   top: '50%',
                   transform: 'translateY(-50%)',
-                  marginTop: '1px',
+                  marginTop: '3px',
                   background: 'transparent',
                   color: '#10B981',
                   border: 'none',
