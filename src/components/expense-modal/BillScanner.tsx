@@ -662,6 +662,7 @@ If a valid receipt: {"title": "Sunrise Foods", "amount": 5445.30, "notes": "Groc
           gap: '4px',
           boxSizing: 'border-box',
           position: 'relative',
+          transition: 'width 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275)',
         }}
         onClick={(e) => e.stopPropagation()}
       >

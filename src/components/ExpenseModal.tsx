@@ -2225,34 +2225,47 @@ export const ExpenseModal: React.FC<ExpenseModalProps> = ({
           <div style={{
             position: 'fixed',
             inset: 0,
-            background: '#F8FAFC',
+            background: 'rgba(15, 23, 42, 0.92)',
+            backdropFilter: 'blur(8px)',
             display: 'flex',
-            flexDirection: 'column',
             alignItems: 'center',
             justifyContent: 'center',
             zIndex: 3000,
             animation: 'fadeIn 0.2s ease-out',
           }}>
-            <div className="scanner-fallback-spinner" style={{
-              width: '50px',
-              height: '50px',
-              borderRadius: '50%',
-              border: '3px solid #E2E8F0',
-              borderTopColor: '#10B981',
-              animation: 'scannerSpin 0.7s linear infinite',
-              marginBottom: '16px',
-            }} />
-            <h3  style={{ fontSize: '15px', fontWeight: 600, color: '#0F172A', margin: '0 0 6px 0' }}>
-              Launching Smart Scanner...
-            </h3>
-            <p style={{ fontSize: '12px', fontWeight: 700, color: '#64748B', margin: 0 }}>
-              Preparing OCR engine & camera
-            </p>
-            <style>{`
-              @keyframes scannerSpin {
-                to { transform: rotate(360deg); }
-              }
-            `}</style>
+            <div style={{
+              background: 'rgba(255, 255, 255, 0.98)',
+              border: '1.5px solid rgba(226, 232, 240, 0.8)',
+              borderRadius: '20px',
+              width: '260px',
+              padding: '24px 10px',
+              boxShadow: '0 25px 50px -12px rgba(0,0,0,0.25)',
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              boxSizing: 'border-box',
+            }}>
+              <div className="scanner-fallback-spinner" style={{
+                width: '40px',
+                height: '40px',
+                borderRadius: '50%',
+                border: '3px solid #E2E8F0',
+                borderTopColor: '#10B981',
+                animation: 'scannerSpin 0.7s linear infinite',
+                marginBottom: '16px',
+              }} />
+              <h3 style={{ fontSize: '14px', fontWeight: 600, color: '#0F172A', margin: '0 0 4px 0' }}>
+                Smart Scanner
+              </h3>
+              <p style={{ fontSize: '11px', fontWeight: 600, color: '#64748B', margin: 0 }}>
+                Loading OCR engine...
+              </p>
+              <style>{`
+                @keyframes scannerSpin {
+                  to { transform: rotate(360deg); }
+                }
+              `}</style>
+            </div>
           </div>
         }>
           <BillScanner
