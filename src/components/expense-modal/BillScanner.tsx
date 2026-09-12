@@ -635,82 +635,51 @@ If a valid receipt: {"title": "Sunrise Foods", "amount": 5445.30, "notes": "Groc
         left: 0,
         right: 0,
         bottom: 0,
-        // Near-opaque so the expense card behind isn't visible through the
-        // scanner — otherwise it reads as a glitchy transparent form.
-        background: 'rgba(15, 23, 42, 0.92)',
-        backdropFilter: 'blur(8px)',
+        background: '#0F172A',
         display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
+        flexDirection: 'column',
         zIndex: 2500,
       }}
-      onClick={() => {
-        if ((scanProgress === 0 || scanProgress === 100) && !isCameraLive) {
-          setShowScannerModal(false);
-        }
-      }}
     >
-      <div
-        style={{
-          background: 'rgba(255, 255, 255, 0.98)',
-          border: '1.5px solid rgba(226, 232, 240, 0.8)',
-          borderRadius: '20px',
-          // Expand to a large, near-full-screen card while the live camera is on
-          // so the viewfinder is big and usable; stay compact otherwise.
-          width: isCameraLive ? 'min(94vw, 460px)' : '260px',
-          padding: '10px',
-          boxShadow: '0 25px 50px -12px rgba(0,0,0,0.25)',
-          display: 'flex',
-          flexDirection: 'column',
-          gap: '4px',
-          boxSizing: 'border-box',
-          position: 'relative',
-          transition: 'width 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275)',
-        }}
-        onClick={(e) => e.stopPropagation()}
-      >
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', margin: '6px 0 10px' }}>
-          <div style={{ flex: 1 }} />
-          <span style={{ fontSize: '11px', fontWeight: 600, color: 'var(--g)', textTransform: 'uppercase', letterSpacing: '1px', textAlign: 'center' }}>
-            Smart Scanner
-          </span>
-          <div style={{ flex: 1, display: 'flex', justifyContent: 'flex-end' }}>
-            <button
-              type="button"
-              onClick={() => {
-                setIsCameraLive(false);
-                setShowScannerModal(false);
-              }}
-              disabled={scanProgress > 0 && scanProgress < 100}
-              style={{
-                background: 'transparent',
-                border: 'none',
-                cursor: scanProgress > 0 && scanProgress < 100 ? 'not-allowed' : 'pointer',
-                fontSize: '16px',
-                color: 'var(--g)',
-                fontWeight: 'bold',
-                opacity: scanProgress > 0 && scanProgress < 100 ? 0.3 : 0.6,
-                padding: 0,
-                lineHeight: 1,
-                position: 'absolute',
-                top: '10px',
-                right: '12px'
-              }}
-            >
-              ✕
-            </button>
-          </div>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '16px 20px', background: 'rgba(15, 23, 42, 0.8)', backdropFilter: 'blur(8px)', zIndex: 10 }}>
+        <div style={{ flex: 1 }} />
+        <span style={{ fontSize: '13px', fontWeight: 600, color: '#F8FAFC', textTransform: 'uppercase', letterSpacing: '1px' }}>
+          Smart Scanner
+        </span>
+        <div style={{ flex: 1, display: 'flex', justifyContent: 'flex-end' }}>
+          <button
+            type="button"
+            onClick={() => {
+              setIsCameraLive(false);
+              setShowScannerModal(false);
+            }}
+            disabled={scanProgress > 0 && scanProgress < 100}
+            style={{
+              background: 'transparent',
+              border: 'none',
+              cursor: scanProgress > 0 && scanProgress < 100 ? 'not-allowed' : 'pointer',
+              fontSize: '20px',
+              color: '#F8FAFC',
+              fontWeight: 'bold',
+              opacity: scanProgress > 0 && scanProgress < 100 ? 0.3 : 0.8,
+              padding: 0,
+            }}
+          >
+            ✕
+          </button>
         </div>
+      </div>
 
+      <div style={{ flex: 1, position: 'relative', display: 'flex', flexDirection: 'column' }}>
         {scanFile ? (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-            <div className="scan-preview-container">
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '24px', flex: 1, padding: '40px 20px', justifyContent: 'center' }}>
+            <div className="scan-preview-container" style={{ background: '#1E293B', border: 'none', margin: '0 auto', maxWidth: '400px', width: '100%' }}>
               {scanPreview ? (
                 <img src={scanPreview} className="scan-preview-img" alt="Receipt preview" />
               ) : (
-                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px', color: '#94A3B8' }}>
-                  <span style={{ fontSize: '48px' }}>📄</span>
-                  <span style={{ fontSize: '11px', fontWeight: 600 }}>{scanFile.name}</span>
+                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '12px', color: '#94A3B8', padding: '40px 0' }}>
+                  <span style={{ fontSize: '64px' }}>📄</span>
+                  <span style={{ fontSize: '14px', fontWeight: 600 }}>{scanFile.name}</span>
                 </div>
               )}
               {scanProgress < 100 && (
@@ -720,257 +689,134 @@ If a valid receipt: {"title": "Sunrise Foods", "amount": 5445.30, "notes": "Groc
               )}
             </div>
 
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '12px', fontWeight: 600 }}>
-                <span style={{ color: '#1E293B', textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap', maxWidth: '240px' }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', padding: '0 20px', margin: '0 auto', maxWidth: '400px', width: '100%' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '14px', fontWeight: 600 }}>
+                <span style={{ color: '#F8FAFC', textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap', maxWidth: '240px' }}>
                   📄 {scanFile.name}
                 </span>
                 <span style={{ color: '#10B981' }}>{scanProgress}%</span>
               </div>
-              <div style={{ width: '100%', height: '8px', background: '#E2E8F0', borderRadius: '4px', overflow: 'hidden' }}>
+              <div style={{ width: '100%', height: '12px', background: '#334155', borderRadius: '6px', overflow: 'hidden' }}>
                 <div
                   style={{
                     width: `${scanProgress}%`,
                     height: '100%',
                     background: 'linear-gradient(90deg, #10B981, #34D399)',
                     transition: 'width 0.1s linear',
-                    boxShadow: '0 0 8px rgba(16, 185, 129, 0.5)',
+                    boxShadow: '0 0 12px rgba(16, 185, 129, 0.5)',
                   }}
                 />
               </div>
-              <span style={{ fontSize: '10px', fontWeight: 850, color: '#64748B', textAlign: 'center', marginTop: '4px' }}>
+              <span style={{ fontSize: '13px', fontWeight: 600, color: '#94A3B8', textAlign: 'center', marginTop: '8px' }}>
                 {scannerStatus}
               </span>
             </div>
           </div>
-        ) : isCameraLive ? (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '14px', alignItems: 'center' }}>
-            <div style={{ position: 'relative', width: '100%', height: '68vh', maxHeight: '560px', borderRadius: '16px', overflow: 'hidden', background: '#000', border: '2px solid #10B981' }}>
-              <video
-                ref={videoRef}
-                autoPlay
-                playsInline
-                muted
-                style={{ width: '100%', height: '100%', objectFit: 'cover' }}
-              />
-              <div
-                style={{
-                  position: 'absolute',
-                  top: '10px',
-                  left: '10px',
-                  background: 'rgba(16, 185, 129, 0.95)',
-                  color: '#fff',
-                  fontSize: '8px',
-                  fontWeight: 600,
-                  padding: '3px 6px',
-                  borderRadius: '4px',
-                  textTransform: 'uppercase',
-                  letterSpacing: '0.8px',
-                }}
-              >
-                🟢 Live Camera Feed
-              </div>
+        ) : (
+          <div style={{ display: 'flex', flexDirection: 'column', flex: 1, position: 'relative', overflow: 'hidden', background: '#000' }}>
+            <video
+              ref={videoRef}
+              autoPlay
+              playsInline
+              muted
+              style={{ width: '100%', height: '100%', objectFit: 'cover', position: 'absolute', inset: 0 }}
+            />
+            <div
+              style={{
+                position: 'absolute',
+                top: '16px',
+                left: '16px',
+                background: 'rgba(16, 185, 129, 0.95)',
+                color: '#fff',
+                fontSize: '10px',
+                fontWeight: 600,
+                padding: '4px 8px',
+                borderRadius: '6px',
+                textTransform: 'uppercase',
+                letterSpacing: '0.8px',
+              }}
+            >
+              🟢 Live Camera
             </div>
 
-            <div style={{ display: 'flex', width: '100%', justifyContent: 'center', alignItems: 'center' }}>
+            <div style={{ position: 'absolute', bottom: '40px', left: 0, right: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '24px' }}>
               <button
                 type="button"
                 onClick={capturePhoto}
                 style={{
-                  width: '54px',
-                  height: '54px',
+                  width: '72px',
+                  height: '72px',
                   borderRadius: '50%',
                   background: '#10B981',
                   border: '4px solid #fff',
-                  boxShadow: '0 0 0 2px #10B981, 0 6px 12px rgba(16, 185, 129, 0.25)',
+                  boxShadow: '0 0 0 4px rgba(16,185,129,0.3), 0 10px 20px rgba(0,0,0,0.5)',
                   cursor: 'pointer',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
-                  transition: 'transform 0.1s ease',
                   padding: 0,
                   outline: 'none',
                 }}
-                onMouseEnter={(e) => (e.currentTarget.style.transform = 'scale(1.05)')}
-                onMouseLeave={(e) => (e.currentTarget.style.transform = 'scale(1)')}
                 title="Capture Photo"
               >
                 <div style={{
-                  width: '28px',
-                  height: '28px',
+                  width: '40px',
+                  height: '40px',
                   borderRadius: '50%',
                   background: '#fff',
                 }} />
               </button>
-            </div>
-            
-            {/* Inline file upload option below camera controls */}
-            <div style={{ marginTop: '10px', textAlign: 'center' }}>
+              
               <span
                 onClick={() => document.getElementById('receipt-file-input')?.click()}
                 style={{
-                  fontSize: '11.5px',
+                  color: '#F8FAFC',
+                  fontSize: '14px',
                   fontWeight: 600,
-                  color: '#4F46E5',
                   cursor: 'pointer',
-                  background: '#EEF2FF',
-                  padding: '6px 12px',
+                  background: 'rgba(15, 23, 42, 0.6)',
+                  padding: '8px 16px',
                   borderRadius: '20px',
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  gap: '5px',
-                  boxShadow: '0 1px 3px rgba(0,0,0,0.03)',
-                  border: '1.5px solid #E0E7FF'
+                  backdropFilter: 'blur(4px)',
                 }}
               >
-                📂 Or upload from files
+                📂 Upload from gallery
               </span>
             </div>
           </div>
-        ) : (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', padding: '4px 0' }}>
-              {/* In-App Camera Option — uses WebRTC feed to avoid Android background-kill crashes. */}
-              <div
-                onClick={() => setIsCameraLive(true)}
-                className="hover-bg"
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '12px',
-                  padding: '12px',
-                  borderRadius: '12px',
-                  cursor: 'pointer',
-                  transition: 'all 0.2s'
-                }}
-              >
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#475569" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z" />
-                  <circle cx="12" cy="13" r="4" />
-                </svg>
-                <div style={{ display: 'flex', flexDirection: 'column' }}>
-                  <span style={{ fontSize: '15px', fontWeight: 600, color: '#1E293B' }}>In-App Camera</span>
-                  <span style={{ fontSize: '11px', color: '#64748B' }}>Fastest, prevents app from crashing</span>
-                </div>
-              </div>
+        )}
 
-              {/* Native System Camera Option */}
-              <div
-                onClick={() => document.getElementById('receipt-camera-input')?.click()}
-                className="hover-bg"
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '12px',
-                  padding: '12px',
-                  borderRadius: '12px',
-                  cursor: 'pointer',
-                  transition: 'all 0.2s'
-                }}
-              >
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#475569" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z" />
-                  <circle cx="12" cy="13" r="3" />
-                </svg>
-                <div style={{ display: 'flex', flexDirection: 'column' }}>
-                  <span style={{ fontSize: '15px', fontWeight: 600, color: '#1E293B' }}>System Camera</span>
-                  <span style={{ fontSize: '11px', color: '#F59E0B' }}>Best quality, but may crash low-memory phones</span>
-                </div>
-              </div>
-
-              {/* Upload Bill Option */}
-              <div
-                onClick={() => document.getElementById('receipt-file-input')?.click()}
-                className="hover-bg"
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '12px',
-                  padding: '12px',
-                  borderRadius: '12px',
-                  cursor: 'pointer',
-                  transition: 'all 0.2s'
-                }}
-              >
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#475569" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
-                  <polyline points="17 8 12 3 7 8" />
-                  <line x1="12" y1="3" x2="12" y2="15" />
-                </svg>
-                <span style={{ fontSize: '15px', fontWeight: 600, color: '#1E293B' }}>Upload Bill</span>
-              </div>
-            </div>
-
-
-
-            {(cameraError || scanError) && (
-              <div
-                style={{
-                  padding: '8px 12px',
-                  background: '#FEF2F2',
-                  border: '1.5px solid #FCA5A5',
-                  borderRadius: '12px',
-                  fontSize: '11px',
-                  color: '#991B1B',
-                  fontWeight: 600,
-                  textAlign: 'center',
-                  lineHeight: '1.4',
-                }}
-              >
-                ⚠️ {cameraError || scanError}
-              </div>
-            )}
+        {(cameraError || scanError) && (
+          <div
+            style={{
+              position: 'absolute',
+              bottom: '140px',
+              left: '50%',
+              transform: 'translateX(-50%)',
+              padding: '12px 16px',
+              background: 'rgba(239, 68, 68, 0.95)',
+              border: '1.5px solid #FCA5A5',
+              borderRadius: '12px',
+              fontSize: '13px',
+              color: '#fff',
+              fontWeight: 600,
+              textAlign: 'center',
+              lineHeight: '1.4',
+              zIndex: 100,
+              width: '90%',
+              maxWidth: '320px',
+              boxShadow: '0 10px 25px rgba(0,0,0,0.5)',
+            }}
+          >
+            ⚠️ {cameraError || scanError}
           </div>
         )}
 
-        {scanFile && scanProgress === 100 && (
-          <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end', marginTop: '4px' }}>
-            <button
-              type="button"
-              onClick={() => {
-                setShowScannerModal(false);
-                setScanFile(null);
-                setScanPreview(null);
-                setScanProgress(0);
-                setScannerStatus('');
-                setScanError('');
-              }}
-              style={{
-                padding: '8px 14px',
-                background: '#10B981',
-                color: 'white',
-                border: 'none',
-                borderRadius: '10px',
-                fontSize: '12px',
-                fontWeight: 600,
-                cursor: 'pointer',
-              }}
-              className="hover-up"
-            >
-              Apply Details
-            </button>
-          </div>
-        )}
-        
-        {/* File Input shared across scanner views (gallery / files, incl. PDF) */}
+        {/* File Input */}
         <input
           id="receipt-file-input"
           type="file"
           accept="image/*,application/pdf"
-          onChange={(e) => {
-            const filesList = e.target.files;
-            if (filesList && filesList.length > 0) {
-              handleScannerImageUpload(filesList[0]);
-            }
-          }}
-          style={{ display: 'none' }}
-        />
-        {/* Native camera input — opens the phone's real camera directly. */}
-        <input
-          id="receipt-camera-input"
-          type="file"
-          accept="image/*"
-          capture="environment"
           onChange={(e) => {
             const filesList = e.target.files;
             if (filesList && filesList.length > 0) {
