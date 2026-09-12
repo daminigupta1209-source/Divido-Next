@@ -260,7 +260,11 @@ export const NetPayableModal: React.FC<NetPayableModalProps> = ({
 
                   // A upi:// intent can't report success back to the web app, so we
                   // must NOT auto-settle. Ask the user to confirm after they return.
-                  setAwaitingConfirm(true);
+                  // Delay the state update so the OS has time to launch the UPI app 
+                  // without the button vanishing instantly (which looks like a glitch).
+                  setTimeout(() => {
+                    setAwaitingConfirm(true);
+                  }, 600);
                 }}
                 style={{ padding: '12px', fontSize: '13px', borderRadius: '14px', width: '100%', fontWeight: 600, opacity: canPayViaUpi ? 1 : 0.5, cursor: canPayViaUpi ? 'pointer' : 'not-allowed' }}
               >
