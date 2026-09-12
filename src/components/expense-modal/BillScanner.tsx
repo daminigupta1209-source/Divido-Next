@@ -830,7 +830,7 @@ If a valid receipt: {"title": "Sunrise Foods", "amount": 5445.30, "notes": "Groc
         ) : (
           <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', padding: '4px 0' }}>
-              {/* Camera Option — uses in-app WebRTC feed to avoid Android background-kill crashes on low-memory devices. */}
+              {/* In-App Camera Option — uses WebRTC feed to avoid Android background-kill crashes. */}
               <div
                 onClick={() => setIsCameraLive(true)}
                 className="hover-bg"
@@ -848,7 +848,34 @@ If a valid receipt: {"title": "Sunrise Foods", "amount": 5445.30, "notes": "Groc
                   <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z" />
                   <circle cx="12" cy="13" r="4" />
                 </svg>
-                <span style={{ fontSize: '15px', fontWeight: 600, color: '#1E293B' }}>Camera</span>
+                <div style={{ display: 'flex', flexDirection: 'column' }}>
+                  <span style={{ fontSize: '15px', fontWeight: 600, color: '#1E293B' }}>In-App Camera</span>
+                  <span style={{ fontSize: '11px', color: '#64748B' }}>Fastest, prevents app from crashing</span>
+                </div>
+              </div>
+
+              {/* Native System Camera Option */}
+              <div
+                onClick={() => document.getElementById('receipt-camera-input')?.click()}
+                className="hover-bg"
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '12px',
+                  padding: '12px',
+                  borderRadius: '12px',
+                  cursor: 'pointer',
+                  transition: 'all 0.2s'
+                }}
+              >
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#475569" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z" />
+                  <circle cx="12" cy="13" r="3" />
+                </svg>
+                <div style={{ display: 'flex', flexDirection: 'column' }}>
+                  <span style={{ fontSize: '15px', fontWeight: 600, color: '#1E293B' }}>System Camera</span>
+                  <span style={{ fontSize: '11px', color: '#F59E0B' }}>Best quality, but may crash low-memory phones</span>
+                </div>
               </div>
 
               {/* Upload Bill Option */}
