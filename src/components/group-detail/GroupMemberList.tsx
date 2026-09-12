@@ -630,20 +630,6 @@ export const GroupMemberList: React.FC<GroupMemberListProps> = ({
                 }}
               >
                 {label} · {count}
-                <span
-                  style={{
-                    position: 'absolute',
-                    bottom: '2px',
-                    left: '50%',
-                    transform: `translateX(-50%) scaleX(${on ? 1 : 0})`,
-                    transformOrigin: 'center',
-                    width: '60%',
-                    height: '2px',
-                    borderRadius: '2px',
-                    background: '#EA580C',
-                    transition: 'transform 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
-                  }}
-                />
               </button>
             );
           })}
