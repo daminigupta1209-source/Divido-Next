@@ -227,7 +227,7 @@ export const NetPayableModal: React.FC<NetPayableModalProps> = ({
 
           <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
             {/* UPI pay — only for INR payers with a resolvable INR amount. Does NOT settle on its own. */}
-            {primaryIsINR && (
+            {primaryIsINR && !awaitingConfirm && (
               <button
                 className="btn-green press-anim"
                 disabled={!canPayViaUpi}
@@ -264,7 +264,7 @@ export const NetPayableModal: React.FC<NetPayableModalProps> = ({
                 }}
                 style={{ padding: '12px', fontSize: '13px', borderRadius: '14px', width: '100%', fontWeight: 600, opacity: canPayViaUpi ? 1 : 0.5, cursor: canPayViaUpi ? 'pointer' : 'not-allowed' }}
               >
-                {debtIsINR ? 'Proceed to Pay ⚡' : `Pay ${inrDisplay || '…'} via UPI ⚡`}
+                {debtIsINR ? 'Proceed to Pay' : `Pay ${inrDisplay || '...'} via UPI`}
               </button>
             )}
 
@@ -278,7 +278,7 @@ export const NetPayableModal: React.FC<NetPayableModalProps> = ({
                 style={{ padding: '12px', background: '#0D9488', color: '#fff', border: 'none', borderRadius: '14px', fontSize: '12px', fontWeight: 600, cursor: 'pointer' }}
                 className="press-anim"
               >
-                I've paid — mark as settled ✔
+                I've paid - mark as settled
               </button>
             )}
 
@@ -304,7 +304,7 @@ export const NetPayableModal: React.FC<NetPayableModalProps> = ({
               }}
               className="press-anim"
             >
-              {awaitingConfirm ? 'Not yet — keep it open' : 'Just Record locally (Cash/Other) 💵'}
+              {awaitingConfirm ? 'Not yet - keep it open' : 'Just Record locally (Cash/Other)'}
             </button>
           </div>
         </div>
