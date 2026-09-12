@@ -596,8 +596,8 @@ export const GroupMemberList: React.FC<GroupMemberListProps> = ({
         <div
           style={{
             display: 'flex',
-            background: 'var(--bg)',
-            border: '1.5px solid #F1F5F9',
+            background: '#F1F5F9',
+            border: '1px solid #E2E8F0',
             borderRadius: '999px',
             padding: '4px',
             gap: '2px',
@@ -616,19 +616,34 @@ export const GroupMemberList: React.FC<GroupMemberListProps> = ({
                 onClick={() => setActiveTab(key)}
                 style={{
                   flex: 1,
+                  position: 'relative',
                   border: 'none',
-                  background: on ? 'var(--w)' : 'transparent',
-                  color: on ? '#334155' : '#94A3B8',
-                  fontWeight: on ? 700 : 500,
+                  background: on ? '#FFFFFF' : 'transparent',
+                  color: on ? '#0F172A' : '#64748B',
+                  fontWeight: on ? 700 : 600,
                   fontSize: '12.5px',
                   borderRadius: '999px',
                   padding: '8px 0',
                   cursor: 'pointer',
-                  boxShadow: on ? '0 1px 2px rgba(0,0,0,0.06)' : 'none',
+                  boxShadow: on ? '0 2px 6px rgba(0,0,0,0.08)' : 'none',
                   transition: '0.15s all ease',
                 }}
               >
                 {label} · {count}
+                <span
+                  style={{
+                    position: 'absolute',
+                    bottom: '3px',
+                    left: '50%',
+                    transform: `translateX(-50%) scaleX(${on ? 1 : 0})`,
+                    transformOrigin: 'center',
+                    width: '16px',
+                    height: '3px',
+                    borderRadius: '3px',
+                    background: '#EA580C',
+                    transition: 'transform 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
+                  }}
+                />
               </button>
             );
           })}

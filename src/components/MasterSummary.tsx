@@ -638,8 +638,8 @@ export const MasterSummary: React.FC<MasterSummaryProps> = ({
         <div
           style={{
             display: 'flex',
-            background: 'var(--bg)',
-            border: '1.5px solid #F1F5F9',
+            background: '#F1F5F9',
+            border: '1px solid #E2E8F0',
             borderRadius: '999px',
             padding: '4px',
             gap: '2px',
@@ -656,19 +656,34 @@ export const MasterSummary: React.FC<MasterSummaryProps> = ({
                 onClick={() => selectHomeTab(tab.id)}
                 style={{
                   flex: 1,
+                  position: 'relative',
                   border: 'none',
-                  background: isActive ? 'var(--w)' : 'transparent',
-                  color: isActive ? '#334155' : '#94A3B8',
-                  fontWeight: isActive ? 700 : 500,
+                  background: isActive ? '#FFFFFF' : 'transparent',
+                  color: isActive ? '#0F172A' : '#64748B',
+                  fontWeight: isActive ? 700 : 600,
                   fontSize: '14px',
                   borderRadius: '999px',
                   padding: '10px 0',
                   cursor: 'pointer',
-                  boxShadow: isActive ? '0 1px 2px rgba(0,0,0,0.06)' : 'none',
-                  transition: '0.15s all ease',
+                  boxShadow: isActive ? '0 2px 6px rgba(0,0,0,0.08)' : 'none',
+                  transition: '0.2s all ease',
                 }}
               >
                 {tab.label}
+                <span
+                  style={{
+                    position: 'absolute',
+                    bottom: '4px',
+                    left: '50%',
+                    transform: `translateX(-50%) scaleX(${isActive ? 1 : 0})`,
+                    transformOrigin: 'center',
+                    width: '16px',
+                    height: '3px',
+                    borderRadius: '3px',
+                    background: '#EA580C',
+                    transition: 'transform 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
+                  }}
+                />
               </button>
             );
           })}
