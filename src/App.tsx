@@ -150,6 +150,8 @@ function App() {
   // Row index whose amount box should shake (user tried to exceed the max).
   const [settleShakeIdx, setSettleShakeIdx] = useState<number | null>(null);
   const [qrModalData, setQrModalData] = useState<{ payee: string; amt: number; currency: string; requestFrom?: string } | null>(() => initialSavedState?.qrModalData || null);
+  const [netPayablePopup, setNetPayablePopup] = useState<{ friendName: string; amt: number; curr: string } | null>(() => initialSavedState?.netPayablePopup || null);
+  const [netReceivablePopup, setNetReceivablePopup] = useState<{ friendName: string; amt: number; curr: string } | null>(() => initialSavedState?.netReceivablePopup || null);
   const [isGroupsExpanded, setIsGroupsExpanded] = useState<boolean>(false);
   const [showConvertModalId, setShowConvertModalId] = useState<string | number | null>(() => initialSavedState?.showConvertModalId || null);
   const [analyticsGroupId, setAnalyticsGroupId] = useState<string | number | null>(() => initialSavedState?.analyticsGroupId ?? null);
@@ -448,6 +450,8 @@ function App() {
     showGroupSettleList,
     showMembersHealth,
     qrModalData,
+    netPayablePopup,
+    netReceivablePopup,
     showConvertModalId,
     showNotifPanel,
     mobileShowGroupOptionsMenu,
@@ -477,7 +481,7 @@ function App() {
       const anyOverlayOpen =
         showExpModal || showSettleModal || showAddFriendModal || showGroupSettleList ||
         showMembersHealth || showNotifPanel || mobileShowGroupOptionsMenu ||
-        !!qrModalData || !!showConvertModalId || !!editingSettle || !!globalSettleData ||
+        !!qrModalData || !!netPayablePopup || !!netReceivablePopup || !!showConvertModalId || !!editingSettle || !!globalSettleData ||
         !!(confirmState && confirmState.show) || !!samePersonPrompt;
       // A back-swipe from a top-level bottom-nav screen (All balances, All
       // Activities, Global Analytics, Profile) goes to the Home screen (groups),
@@ -509,6 +513,8 @@ function App() {
         setShowGroupSettleList(!!ui.showGroupSettleList);
         setShowMembersHealth(!!ui.showMembersHealth);
         setQrModalData(ui.qrModalData || null);
+        setNetPayablePopup(ui.netPayablePopup || null);
+        setNetReceivablePopup(ui.netReceivablePopup || null);
         setShowConvertModalId(ui.showConvertModalId || null);
         setShowNotifPanel(!!ui.showNotifPanel);
         setMobileShowGroupOptionsMenu(!!ui.mobileShowGroupOptionsMenu);
@@ -546,7 +552,7 @@ function App() {
     return () => window.removeEventListener('popstate', onPopState);
   }, [
     view, selectedId, groupDetailTab, showExpModal, showSettleModal, showAddFriendModal,
-    showGroupSettleList, showMembersHealth, qrModalData, showConvertModalId,
+    showGroupSettleList, showMembersHealth, qrModalData, netPayablePopup, netReceivablePopup, showConvertModalId,
     showNotifPanel, mobileShowGroupOptionsMenu, editingSettle, globalSettleData, showFriendsList, samePersonPrompt, analyticsGroupId, confirmState
   ]);
 
@@ -566,7 +572,7 @@ function App() {
     const overlayCount = (ui: any) => [
       ui.showExpModal, ui.showSettleModal, ui.showAddFriendModal, ui.showGroupSettleList,
       ui.showMembersHealth, ui.showNotifPanel, ui.mobileShowGroupOptionsMenu,
-      !!ui.qrModalData, !!ui.showConvertModalId, !!ui.editingSettle, !!ui.globalSettleData,
+      !!ui.qrModalData, !!ui.netPayablePopup, !!ui.netReceivablePopup, !!ui.showConvertModalId, !!ui.editingSettle, !!ui.globalSettleData,
       !!(ui.confirmState && ui.confirmState.show),
       ui.showFriendsList,
     ].filter(Boolean).length;
@@ -588,6 +594,8 @@ function App() {
         prev.showGroupSettleList !== currentUi.showGroupSettleList ||
         prev.showMembersHealth !== currentUi.showMembersHealth ||
         JSON.stringify(prev.qrModalData) !== JSON.stringify(currentUi.qrModalData) ||
+        JSON.stringify(prev.netPayablePopup) !== JSON.stringify(currentUi.netPayablePopup) ||
+        JSON.stringify(prev.netReceivablePopup) !== JSON.stringify(currentUi.netReceivablePopup) ||
         prev.showConvertModalId !== currentUi.showConvertModalId ||
         prev.showNotifPanel !== currentUi.showNotifPanel ||
         prev.mobileShowGroupOptionsMenu !== currentUi.mobileShowGroupOptionsMenu ||
@@ -909,8 +917,6 @@ function App() {
   })();
 
   // Popups for net settlements from global settle modal
-  const [netPayablePopup, setNetPayablePopup] = useState<{ friendName: string; amt: number; curr: string } | null>(null);
-  const [netReceivablePopup, setNetReceivablePopup] = useState<{ friendName: string; amt: number; curr: string } | null>(null);
 
   // First-run currency setup (Rec 1): ask once, then persist so we never guess.
   const [currencySetupDismissed, setCurrencySetupDismissed] = useState(false);
