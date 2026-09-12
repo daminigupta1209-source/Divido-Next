@@ -370,7 +370,7 @@ export const NonGroupView: React.FC<NonGroupViewProps> = ({
             background: '#F1F5F9',
             border: '1px solid #E2E8F0',
             borderRadius: '999px',
-            padding: '4px',
+            padding: '3px',
             gap: '2px',
           }}
         >
@@ -389,7 +389,7 @@ export const NonGroupView: React.FC<NonGroupViewProps> = ({
                   fontWeight: isActive ? 700 : 600,
                   fontSize: '14px',
                   borderRadius: '999px',
-                  padding: '10px 0',
+                  padding: '7px 0',
                   cursor: 'pointer',
                   boxShadow: isActive ? '0 2px 6px rgba(0,0,0,0.08)' : 'none',
                   transition: '0.2s all ease',
@@ -399,13 +399,13 @@ export const NonGroupView: React.FC<NonGroupViewProps> = ({
                 <span
                   style={{
                     position: 'absolute',
-                    bottom: '4px',
+                    bottom: '2px',
                     left: '50%',
                     transform: `translateX(-50%) scaleX(${isActive ? 1 : 0})`,
                     transformOrigin: 'center',
-                    width: '16px',
-                    height: '3px',
-                    borderRadius: '3px',
+                    width: '60%',
+                    height: '2px',
+                    borderRadius: '2px',
                     background: '#EA580C',
                     transition: 'transform 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
                   }}
