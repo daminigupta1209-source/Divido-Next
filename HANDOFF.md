@@ -1,5 +1,17 @@
 # Divido-Next Handoff
 
+## Latest session — Cloud UPI auto-sync, email-anchored (Sep 12 2026)
+
+**Goal:** a friend's UPI ID autofills when you tap Pay — no QR passing. Antigravity built the frontend (push own `upi_id` to `group_members`; download others' into local `userMetadata`; include `upi_id` on invite-join). This session **reviewed + corrected the identity keying** and hardened it.
+
+- **REQUIRED DB step (user runs in Supabase SQL editor):** `ALTER TABLE public.group_members ADD COLUMN IF NOT EXISTS upi_id text;` — safe/additive/idempotent. Until run, cloud writes fail silently (console: `Failed to sync UPI ID to cloud`); app still works.
+- **Writes are owner-only:** `UpiSection.tsx` pushes your UPI with `.eq('user_email', session.user.email)` (only your own rows); invite-join sets `upi_id` only for `isMe`. No one can write another person's UPI. (Kept as Antigravity wrote it.)
+- **Fix — anchor synced UPI on EMAIL, not display name (de46d7b):** Antigravity keyed downloaded UPIs by display name → two same-named people could clobber each other and a payer could autofill the WRONG person's UPI (real money). Now `useSupabaseSync.ts` stores each synced UPI under the owner's **lowercased email** (only members with a real email). New tested helper `upiFor(userMetadata, nameToEmail, name)` in `identity.ts` resolves name→email before reading; falls back to the name key (self / locally-linked) and **refuses to guess** when a name is ambiguous. All pay-facing reads updated: `SettleModal`, `NetPayableModal` (now takes a `groups` prop), QR payee in `App.tsx`, member 💳 badge in `GroupMemberList`. Self reads (`userMetadata[me]`) stay name-keyed/local.
+- **Fix — resolve email from the GROUP in settle/QR (555c55b):** a group settle card / QR is inside one group, which already pins the payee's exact email — so resolve via `getPersonKey(selectedGroup, name)` FIRST (unambiguous by construction); `buildNameEmailResolver(groups)` (cross-group) is only the fallback for the global "settle everyone" screen. Prevents a same-named person in another group from blanking a known member's UPI.
+- **Tests:** `identity.test.ts` +6 for `upiFor` (76 total, green). `npm run build` green.
+
+**User's two-phone test (after running the SQL + hard-refresh both):** A saves UPI in Profile → `SELECT name,user_email,upi_id FROM group_members WHERE upi_id IS NOT NULL;` shows it → B taps Pay on A → prefilled. If B stays blank AND the SELECT shows no `upi_id`, it's an RLS policy blocking the self-update → needs a policy written.
+
 ## Latest session — Balances, identity & currency reliability (Sep 11 2026)
 
 **Context:** People (Abhishek, Chirag, and others) were vanishing from the "All balances" screen. Root cause was an **identity mismatch**, not the parked state-migration. Diagnosed, fixed, and hardened with tests. All pushed to `main`.
