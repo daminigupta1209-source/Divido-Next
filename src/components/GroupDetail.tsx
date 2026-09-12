@@ -688,55 +688,48 @@ export const GroupDetail: React.FC<GroupDetailProps> = ({
 
 
 
-      <div style={{
-        display: 'flex',
-        borderBottom: '1.5px solid #F1F5F9',
-        marginBottom: '20px',
-        marginTop: '10px',
-      }}>
-        {([
-          { id: 'expenses', label: 'Activities' },
-          { id: 'balances', label: 'Settle' },
-          { id: 'photos', label: 'Photos' }
-        ] as const).map((tab) => {
-          const isActive = tab.id === activeTab;
-          return (
-            <button
-              key={tab.id}
-              onClick={() => {
-                if (setActiveTab) setActiveTab(tab.id as 'expenses' | 'balances' | 'photos');
-              }}
-              style={{
-                flex: 1,
-                position: 'relative',
-                background: 'transparent',
-                border: 'none',
-                padding: '10px 4px 12px',
-                fontSize: '14px',
-                fontWeight: isActive ? 800 : 600,
-                cursor: 'pointer',
-                color: isActive ? '#1E293B' : '#94A3B8',
-                transition: '0.2s all',
-              }}
-            >
-              {tab.label}
-              <span
-                style={{
-                  position: 'absolute',
-                  left: '50%',
-                  bottom: '-1.5px',
-                  transform: `translateX(-50%) scaleX(${isActive ? 1 : 0})`,
-                  transformOrigin: 'center',
-                  width: '60%',
-                  height: '3px',
-                  borderRadius: '3px 3px 0 0',
-                  background: '#F97316',
-                  transition: 'transform 0.25s cubic-bezier(0.4, 0, 0.2, 1)',
+      <div style={{ marginBottom: '20px', marginTop: '10px' }}>
+        <div
+          style={{
+            display: 'flex',
+            background: 'var(--bg)',
+            border: '1.5px solid #F1F5F9',
+            borderRadius: '999px',
+            padding: '4px',
+            gap: '2px',
+          }}
+        >
+          {([
+            { id: 'expenses', label: 'Activities' },
+            { id: 'balances', label: 'Settle' },
+            { id: 'photos', label: 'Photos' }
+          ] as const).map((tab) => {
+            const isActive = tab.id === activeTab;
+            return (
+              <button
+                key={tab.id}
+                onClick={() => {
+                  if (setActiveTab) setActiveTab(tab.id as 'expenses' | 'balances' | 'photos');
                 }}
-              />
-            </button>
-          );
-        })}
+                style={{
+                  flex: 1,
+                  border: 'none',
+                  background: isActive ? 'var(--w)' : 'transparent',
+                  color: isActive ? '#334155' : '#94A3B8',
+                  fontWeight: isActive ? 700 : 500,
+                  fontSize: '14px',
+                  borderRadius: '999px',
+                  padding: '10px 0',
+                  cursor: 'pointer',
+                  boxShadow: isActive ? '0 1px 2px rgba(0,0,0,0.06)' : 'none',
+                  transition: '0.15s all ease',
+                }}
+              >
+                {tab.label}
+              </button>
+            );
+          })}
+        </div>
       </div>
 
       {activeTab === 'balances' && (() => {
