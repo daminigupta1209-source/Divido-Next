@@ -229,7 +229,7 @@ export const NetPayableModal: React.FC<NetPayableModalProps> = ({
             {/* UPI pay — only for INR payers with a resolvable INR amount. Does NOT settle on its own. */}
             {primaryIsINR && (
               <button
-                className="btn-green hover-up"
+                className="btn-green press-anim"
                 disabled={!canPayViaUpi}
                 onClick={() => {
                   const finalUpi = payPopupUpi.trim();
@@ -276,7 +276,7 @@ export const NetPayableModal: React.FC<NetPayableModalProps> = ({
                   onClose();
                 }}
                 style={{ padding: '12px', background: '#0D9488', color: '#fff', border: 'none', borderRadius: '14px', fontSize: '12px', fontWeight: 600, cursor: 'pointer' }}
-                className="hover-up"
+                className="press-anim"
               >
                 I've paid — mark as settled ✔
               </button>
@@ -302,7 +302,7 @@ export const NetPayableModal: React.FC<NetPayableModalProps> = ({
                 fontWeight: 600,
                 cursor: 'pointer',
               }}
-              className="hover-up"
+              className="press-anim"
             >
               {awaitingConfirm ? 'Not yet — keep it open' : 'Just Record locally (Cash/Other) 💵'}
             </button>

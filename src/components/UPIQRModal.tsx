@@ -307,8 +307,7 @@ export const UPIQRModal: React.FC<UPIQRModalProps> = ({
                   boxShadow: '0 4px 12px rgba(124, 58, 237, 0.2)',
                   transition: '0.2s all ease',
                 }}
-                onMouseEnter={(e) => { e.currentTarget.style.transform = 'translateY(-1px)'; e.currentTarget.style.boxShadow = '0 6px 16px rgba(124, 58, 237, 0.3)'; }}
-                onMouseLeave={(e) => { e.currentTarget.style.transform = 'none'; e.currentTarget.style.boxShadow = '0 4px 12px rgba(124, 58, 237, 0.2)'; }}
+                className="hover-upi-app"
               >
                 <span>📱 Pay via UPI App</span>
               </a>
