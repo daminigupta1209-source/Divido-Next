@@ -352,7 +352,7 @@ export const BillScanner: React.FC<BillScannerProps> = ({
     if (isCameraLive) {
       navigator.mediaDevices
         .getUserMedia({
-          video: { facingMode: 'environment', width: { ideal: 640 }, height: { ideal: 480 } },
+          video: { facingMode: 'environment', width: { ideal: 1920 }, height: { ideal: 1080 } },
           audio: false,
         })
         .then((s) => {
@@ -384,8 +384,8 @@ export const BillScanner: React.FC<BillScannerProps> = ({
     if (videoRef.current) {
       const video = videoRef.current;
       const canvas = document.createElement('canvas');
-      canvas.width = video.videoWidth || 640;
-      canvas.height = video.videoHeight || 480;
+      canvas.width = video.videoWidth || 1920;
+      canvas.height = video.videoHeight || 1080;
       const ctx = canvas.getContext('2d');
       if (ctx) {
         ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
@@ -827,9 +827,9 @@ If a valid receipt: {"title": "Sunrise Foods", "amount": 5445.30, "notes": "Groc
         ) : (
           <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', padding: '4px 0' }}>
-              {/* Camera Option — phone's native camera (higher quality). */}
+              {/* Camera Option — uses in-app WebRTC feed to avoid Android background-kill crashes on low-memory devices. */}
               <div
-                onClick={() => document.getElementById('receipt-camera-input')?.click()}
+                onClick={() => setIsCameraLive(true)}
                 className="hover-bg"
                 style={{
                   display: 'flex',
