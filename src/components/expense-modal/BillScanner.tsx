@@ -201,6 +201,7 @@ const parseReceiptText = (rawText: string, fileName: string, curr: string) => {
 
   let totalAmount = 0;
   const filteredNumbers: number[] = [];
+  const priceNumbers: number[] = [];
   matches.forEach((m) => {
     const cleanNum = cleanOcrVal(m).replace(/,/g, '');
     const val = parseFloat(cleanNum);
@@ -214,6 +215,9 @@ const parseReceiptText = (rawText: string, fileName: string, curr: string) => {
       val !== 2028
     ) {
       filteredNumbers.push(val);
+      if (m.includes('.')) {
+        priceNumbers.push(val);
+      }
     }
   });
 
@@ -314,8 +318,12 @@ const parseReceiptText = (rawText: string, fileName: string, curr: string) => {
   };
 
   if (isValidReceiptLayout()) {
-    if (totalAmount === 0 && filteredNumbers.length > 0) {
-      totalAmount = Math.max(...filteredNumbers);
+    if (totalAmount === 0) {
+      if (priceNumbers.length > 0) {
+        totalAmount = Math.max(...priceNumbers);
+      } else if (filteredNumbers.length > 0) {
+        totalAmount = Math.max(...filteredNumbers);
+      }
     }
     if (totalAmount === 0) {
       totalAmount = curr === '₹' ? 1200 : 45;
@@ -520,30 +528,34 @@ If a valid receipt: {"title": "Sunrise Foods", "amount": 5445.30, "notes": "Groc
   const runLocalTesseractOCR = (file: File) => {
     setScanProgress(0);
     setScannerStatus('Reading receipt image...');
-    Tesseract.recognize(file, 'eng', {
-      logger: (m) => {
-        if (m.status === 'recognizing text') {
-          const pct = Math.round(m.progress * 100);
-          setScanProgress(pct);
-          setScannerStatus(`OCR Text Analysis: ${pct}%`);
-        } else {
-          setScannerStatus(
-            m.status.charAt(0).toUpperCase() + m.status.slice(1).replace(/_/g, ' ') + '...'
-          );
-        }
-      },
-    })
-      .then(({ data: { text } }) => {
-        setScanProgress(100);
-        setScannerStatus('Data matching & extraction completed! 🎉');
+    
+    // Pass the downscaled memory-safe image to Tesseract to improve accuracy
+    // and prevent browser memory crashes on huge native photos.
+    prepareScanImage(file).then((dataUrl) => {
+      Tesseract.recognize(dataUrl, 'eng', {
+        logger: (m) => {
+          if (m.status === 'recognizing text') {
+            const pct = Math.round(m.progress * 100);
+            setScanProgress(pct);
+            setScannerStatus(`OCR Text Analysis: ${pct}%`);
+          } else {
+            setScannerStatus(
+              m.status.charAt(0).toUpperCase() + m.status.slice(1).replace(/_/g, ' ') + '...'
+            );
+          }
+        },
+      })
+        .then(({ data: { text } }) => {
+          setScanProgress(100);
+          setScannerStatus('Data matching & extraction completed! 🎉');
 
-        const fileNameLower = file.name.toLowerCase();
-        if (
-          fileNameLower.includes('blur') ||
-          fileNameLower.includes('unclear') ||
-          fileNameLower.includes('bad') ||
-          text.trim().length === 0
-        ) {
+          const fileNameLower = file.name.toLowerCase();
+          if (
+            fileNameLower.includes('blur') ||
+            fileNameLower.includes('unclear') ||
+            fileNameLower.includes('bad') ||
+            text.trim().length === 0
+          ) {
           setTimeout(() => {
             setScanFile(null);
             setScanPreview(null);
@@ -568,24 +580,11 @@ If a valid receipt: {"title": "Sunrise Foods", "amount": 5445.30, "notes": "Groc
           return;
         }
 
-        const reader = new FileReader();
-        reader.onload = (e) => {
-          const result = e.target?.result as string;
-          onScanComplete({
-            title: parsed.title || 'Scanned Receipt 📄',
-            amt: parsed.amt || '',
-            attachments: [result],
-          });
-        };
-        if (file.type.startsWith('image/')) {
-          reader.readAsDataURL(file);
-        } else {
-          onScanComplete({
-            title: parsed.title || 'Scanned Receipt 📄',
-            amt: parsed.amt || '',
-            attachments: [file.name],
-          });
-        }
+        onScanComplete({
+          title: parsed.title || 'Scanned Receipt 📄',
+          amt: parsed.amt || '',
+          attachments: [dataUrl],
+        });
 
         setTimeout(() => {
           setShowScannerModal(false);
@@ -600,6 +599,10 @@ If a valid receipt: {"title": "Sunrise Foods", "amount": 5445.30, "notes": "Groc
         console.error('OCR recognition error:', err);
         setScanError('Failed to process image OCR. Please enter details manually.');
       });
+    }).catch(err => {
+      console.error('OCR Prep error:', err);
+      setScanError('Failed to prep image for OCR. Please enter details manually.');
+    });
   };
 
   const handleScannerImageUpload = (file: File) => {
