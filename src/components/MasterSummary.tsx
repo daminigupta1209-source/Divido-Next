@@ -48,6 +48,7 @@ interface MasterSummaryProps {
   setEditingSettle?: (s: any) => void;
   setShowSettleModal?: (b: boolean) => void;
   deleteExpense?: (id: string | number) => void;
+  homeTabResetNonce?: number;
   duplicateGroups?: { name: string; groups: Group[] }[];
   onMergeGroups?: (keepId: string | number, dropId: string | number) => void;
 }
@@ -83,6 +84,7 @@ export const MasterSummary: React.FC<MasterSummaryProps> = ({
   setEditingSettle,
   setShowSettleModal,
   deleteExpense,
+  homeTabResetNonce,
   duplicateGroups = [],
   onMergeGroups,
 }) => {
@@ -95,6 +97,17 @@ export const MasterSummary: React.FC<MasterSummaryProps> = ({
   // of leaving the home screen: push a history entry when opening Activities, and
   // on Back (popstate) drop back to the Groups tab.
   const homeTabHistRef = useRef(false);
+  
+  useEffect(() => {
+    if (homeTabResetNonce) {
+      if (homeTabHistRef.current) {
+        try { history.back(); } catch { setHomeTab('groups'); }
+      } else {
+        setHomeTab('groups');
+      }
+    }
+  }, [homeTabResetNonce]);
+
   useEffect(() => {
     if (homeTab === 'activity' && !homeTabHistRef.current) {
       homeTabHistRef.current = true;

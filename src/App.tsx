@@ -422,6 +422,7 @@ function App() {
   const isNavigatingHistory = React.useRef(false);
   const exitRequestedRef = React.useRef(false);
   const [showExitToast, setShowExitToast] = useState(false);
+  const [homeTabResetNonce, setHomeTabResetNonce] = useState(0);
 
   // When a name being added already exists elsewhere, ask whether it's the same
   // person. "Same" links to that person's identity (via divido_person_link, which
@@ -3596,6 +3597,7 @@ function App() {
             setShowSettleModal={setShowSettleModalSecure}
             deleteExpense={deleteExpenseSecure}
             setShowConvertModalId={setShowConvertModalId}
+            homeTabResetNonce={homeTabResetNonce}
             duplicateGroups={duplicateGroups}
             onMergeGroups={mergeGroups}
           />
@@ -5493,6 +5495,7 @@ function App() {
             onClick={() => {
               setSelectedId(null);
               setView('summary');
+              setHomeTabResetNonce((n) => n + 1);
             }}
           >
             <span className="b-nav-icon" style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: '24px', height: '24px' }}>
