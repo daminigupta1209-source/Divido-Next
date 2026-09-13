@@ -1843,7 +1843,7 @@ export const ExpenseModal: React.FC<ExpenseModalProps> = ({
           </div>
 
           {/* DATE AND NOTES PILLS */}
-          <div style={{ display: 'flex', gap: '8px', marginTop: '8px', padding: '0 4px', flexWrap: 'wrap' }}>
+          <div className="hide-scrollbar" style={{ display: 'flex', gap: '8px', marginTop: '8px', padding: '0 4px', flexWrap: 'nowrap', overflowX: 'auto' }}>
             {/* DATE PILL */}
             <div
               id="expense-date-btn"
@@ -1867,6 +1867,7 @@ export const ExpenseModal: React.FC<ExpenseModalProps> = ({
                 padding: '10px 14px',
                 boxShadow: '0 2px 6px rgba(0,0,0,0.02)',
                 cursor: 'pointer',
+                flexShrink: 0,
               }}
             >
               <div style={{ display: 'flex', alignItems: 'center', gap: '8px', zIndex: 1 }}>
@@ -1913,14 +1914,11 @@ export const ExpenseModal: React.FC<ExpenseModalProps> = ({
                 padding: '10px 14px',
                 boxShadow: '0 2px 6px rgba(0,0,0,0.02)',
                 cursor: 'pointer',
-                maxWidth: '100%',
+                flexShrink: 0,
               }}
             >
-              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="var(--t)" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M12 20h9" /><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z" />
-              </svg>
               <span style={{ fontSize: '13px', fontWeight: 600, color: 'var(--t)', whiteSpace: 'nowrap' }}>
-                Add note
+                Notes
               </span>
             </div>
 
@@ -1939,6 +1937,7 @@ export const ExpenseModal: React.FC<ExpenseModalProps> = ({
                 boxShadow: '0 2px 6px rgba(0,0,0,0.02)',
                 cursor: 'pointer',
                 position: 'relative',
+                flexShrink: 0,
               }}
               title={recurrence === 'none' ? 'Set Recurrence' : `Recurrence: ${recurrence}`}
             >
@@ -1966,6 +1965,7 @@ export const ExpenseModal: React.FC<ExpenseModalProps> = ({
                 padding: '10px 14px',
                 boxShadow: '0 2px 6px rgba(0,0,0,0.02)',
                 cursor: 'pointer',
+                flexShrink: 0,
               }}
               title="Add attachment"
             >
