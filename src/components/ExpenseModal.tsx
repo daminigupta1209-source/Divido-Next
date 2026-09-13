@@ -2247,26 +2247,28 @@ export const ExpenseModal: React.FC<ExpenseModalProps> = ({
             background: '#0F172A',
             display: 'flex',
             flexDirection: 'column',
-            alignItems: 'center',
-            justifyContent: 'center',
             zIndex: 3000,
-            animation: 'fadeIn 0.2s ease-out',
           }}>
-            <div className="scanner-fallback-spinner" style={{
-              width: '40px',
-              height: '40px',
-              borderRadius: '50%',
-              border: '3px solid #334155',
-              borderTopColor: '#10B981',
-              animation: 'scannerSpin 0.7s linear infinite',
-              marginBottom: '16px',
-            }} />
-            <h3 style={{ fontSize: '14px', fontWeight: 600, color: '#F8FAFC', margin: '0 0 4px 0' }}>
-              Smart Scanner
-            </h3>
-            <p style={{ fontSize: '11px', fontWeight: 600, color: '#94A3B8', margin: 0 }}>
-              Loading OCR engine...
-            </p>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '16px 20px', background: 'rgba(15, 23, 42, 0.8)', zIndex: 10 }}>
+              <div style={{ flex: 1 }} />
+              <span style={{ fontSize: '13px', fontWeight: 600, color: '#F8FAFC', textTransform: 'uppercase', letterSpacing: '1px' }}>
+                Smart Scanner
+              </span>
+              <div style={{ flex: 1, display: 'flex', justifyContent: 'flex-end' }}>
+                <button type="button" onClick={() => setShowScannerModal(false)} style={{ background: 'transparent', border: 'none', cursor: 'pointer', fontSize: '20px', color: '#F8FAFC', fontWeight: 'bold', opacity: 0.8, padding: 0 }}>✕</button>
+              </div>
+            </div>
+            
+            <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
+              <div className="scanner-fallback-spinner" style={{
+                width: '40px',
+                height: '40px',
+                borderRadius: '50%',
+                border: '3px solid #334155',
+                borderTopColor: '#10B981',
+                animation: 'scannerSpin 0.7s linear infinite',
+              }} />
+            </div>
             <style>{`
               @keyframes scannerSpin {
                 to { transform: rotate(360deg); }
