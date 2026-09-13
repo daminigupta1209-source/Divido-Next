@@ -245,7 +245,7 @@ export const CreateGroupView: React.FC<CreateGroupViewProps> = ({
         position: 'sticky',
         top: 0,
         background: 'var(--bg)',
-        zIndex: 10,
+        zIndex: 100,
         margin: '-20px -16px 0 -16px',
         padding: '20px 16px 14px 16px',
       }}>

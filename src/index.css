@@ -70,7 +70,7 @@ select {
 body { 
     background: var(--bg); 
     color: var(--t); 
-    overflow-x: hidden;
+    overflow-x: clip;
     user-select: none;
 }
 
