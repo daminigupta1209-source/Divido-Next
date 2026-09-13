@@ -127,7 +127,6 @@ export const ExpenseModal: React.FC<ExpenseModalProps> = ({
     shouldShake,
     showScannerModal,
     setShowScannerModal,
-    highlightAddFriend,
     setHighlightAddFriend,
     attachments,
     setAttachments,
@@ -1070,22 +1069,6 @@ export const ExpenseModal: React.FC<ExpenseModalProps> = ({
                 >
                   Split with
                 </label>
-                {highlightAddFriend && (
-                  <span
-                    style={{
-                      fontSize: '9px',
-                      fontWeight: 600,
-                      color: '#059669',
-                      background: '#ECFDF5',
-                      padding: '2px 8px',
-                      borderRadius: '8px',
-                      border: '1px solid #A7F3D0',
-                      animation: 'fadeSlideIn 0.3s ease-out',
-                    }}
-                  >
-                    👉 Scanned! Select friends to split with
-                  </span>
-                )}
               </div>
               <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginTop: '2px', position: 'relative' }}>
                 {(() => {
