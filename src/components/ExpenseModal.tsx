@@ -889,25 +889,7 @@ export const ExpenseModal: React.FC<ExpenseModalProps> = ({
               </button>
             )}
 
-            <button
-              style={{
-                border: 'none',
-                background: 'transparent',
-                cursor: 'pointer',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                padding: '4px',
-                color: 'var(--t)',
-                opacity: 0.7,
-              }}
-              onClick={() => setShowAttachMenu(true)}
-              title="Add attachment"
-            >
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48" />
-              </svg>
-            </button>
+
 
             {/* Always-visible save tick — the bottom "Save Changes" button can be
                 hidden behind the on-screen keyboard, so this header button lets you
@@ -1422,40 +1404,6 @@ export const ExpenseModal: React.FC<ExpenseModalProps> = ({
                     margin: 0,
                   }}
                 />
-                <div style={{ position: 'absolute', right: '6px', top: '50%', transform: 'translateY(-50%)', display: 'flex', alignItems: 'center', gap: '4px' }}>
-                <div ref={recurrenceContainerRef} style={{ display: 'flex', alignItems: 'center' }}>
-                  <button
-                    id="expense-recurrence-btn"
-                    tabIndex={0}
-                    type="button"
-                    onClick={() => setShowRecurrencePopup(!showRecurrencePopup)}
-                    style={{
-                      background: 'none',
-                      border: 'none',
-                      cursor: 'pointer',
-                      opacity: recurrence !== 'none' ? 1 : 0.85,
-                      width: '24px',
-                      height: '24px',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      padding: 0,
-                      margin: 0,
-                    }}
-                    title={recurrence === 'none' ? 'Set Recurrence' : `Recurrence: ${recurrence}`}
-                  >
-                    <svg viewBox="0 0 24 24" fill="none" stroke={recurrence !== 'none' ? '#059669' : '#64748B'} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" style={{ width: '17px', height: '17px', display: 'block' }}>
-                      <path d="m17 2 4 4-4 4" /><path d="M3 11V9a4 4 0 0 1 4-4h14" /><path d="m7 22-4-4 4-4" /><path d="M21 13v2a4 4 0 0 1-4 4H3" />
-                    </svg>
-                  </button>
-                  <RecurrenceSelector
-                    showRecurrencePopup={showRecurrencePopup}
-                    setShowRecurrencePopup={setShowRecurrencePopup}
-                    recurrence={recurrence}
-                    setRecurrence={setRecurrence}
-                  />
-                </div>
-                </div>
               </div>
             </div>
           </div>
@@ -1974,6 +1922,56 @@ export const ExpenseModal: React.FC<ExpenseModalProps> = ({
               <span style={{ fontSize: '13px', fontWeight: 600, color: 'var(--t)', whiteSpace: 'nowrap' }}>
                 Add note
               </span>
+            </div>
+
+            {/* RECURRENCE PILL */}
+            <div
+              ref={recurrenceContainerRef}
+              onClick={() => setShowRecurrencePopup(!showRecurrencePopup)}
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                borderRadius: '12px',
+                background: '#FFFFFF',
+                border: `1.5px solid ${recurrence !== 'none' ? '#10B981' : 'var(--border)'}`,
+                padding: '10px 14px',
+                boxShadow: '0 2px 6px rgba(0,0,0,0.02)',
+                cursor: 'pointer',
+                position: 'relative',
+              }}
+              title={recurrence === 'none' ? 'Set Recurrence' : `Recurrence: ${recurrence}`}
+            >
+              <svg viewBox="0 0 24 24" fill="none" stroke={recurrence !== 'none' ? '#059669' : 'var(--t)'} strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" style={{ width: '15px', height: '15px' }}>
+                <path d="m17 2 4 4-4 4" /><path d="M3 11V9a4 4 0 0 1 4-4h14" /><path d="m7 22-4-4 4-4" /><path d="M21 13v2a4 4 0 0 1-4 4H3" />
+              </svg>
+              <RecurrenceSelector
+                showRecurrencePopup={showRecurrencePopup}
+                setShowRecurrencePopup={setShowRecurrencePopup}
+                recurrence={recurrence}
+                setRecurrence={setRecurrence}
+              />
+            </div>
+
+            {/* ATTACHMENT PILL */}
+            <div
+              onClick={() => setShowAttachMenu(true)}
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                borderRadius: '12px',
+                background: '#FFFFFF',
+                border: '1.5px solid var(--border)',
+                padding: '10px 14px',
+                boxShadow: '0 2px 6px rgba(0,0,0,0.02)',
+                cursor: 'pointer',
+              }}
+              title="Add attachment"
+            >
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="var(--t)" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48" />
+              </svg>
             </div>
           </div>
 
