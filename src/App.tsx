@@ -479,16 +479,19 @@ function App() {
         if (!exitRequestedRef.current) {
           exitRequestedRef.current = true;
           setShowExitToast(true);
+          
           setTimeout(() => {
             exitRequestedRef.current = false;
             setShowExitToast(false);
+            // If they are still on the trap state after 2s (didn't exit and didn't open a modal),
+            // push the main state back so the trap is armed again.
+            if (window.history.state?._divido_trap) {
+              window.history.pushState({ _divido: true, uiState: getUiState() }, '');
+            }
           }, 2000);
           
-          // The user hit back on the root level and hit our trap. We push the trap and state back.
-          window.history.pushState({ _divido: true, uiState: getUiState() }, '');
-        } else {
-          // Second back press - actually exit by popping the trap.
-          window.history.back();
+          // DO NOT push state here. We stay on the trap state. 
+          // If the user swipes back now, there is no previous state, so the app will naturally exit!
         }
         return;
       }
@@ -560,8 +563,8 @@ function App() {
 
     window.addEventListener('popstate', onPopState);
 
-    // Seed initial state
-    if (!window.history.state?._divido) {
+    // Seed initial state or repair history if length is 1 (prevents immediate exit on restored sessions)
+    if (!window.history.state?._divido || window.history.length === 1) {
       const initialUi = getUiState();
       window.history.replaceState({ _divido_trap: true }, '');
       window.history.pushState({ _divido: true, uiState: initialUi }, '');
