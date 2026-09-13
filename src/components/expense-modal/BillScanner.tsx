@@ -381,7 +381,13 @@ export const BillScanner: React.FC<BillScannerProps> = ({
     if (isCameraLive) {
       navigator.mediaDevices
         .getUserMedia({
-          video: { facingMode: 'environment', width: { ideal: 1920 }, height: { ideal: 1080 } },
+          video: { 
+            facingMode: 'environment', 
+            width: { ideal: 3840 }, 
+            height: { ideal: 2160 },
+            // @ts-ignore
+            advanced: [{ focusMode: 'continuous' }]
+          },
           audio: false,
         })
         .then((s) => {
@@ -432,7 +438,7 @@ export const BillScanner: React.FC<BillScannerProps> = ({
   // Downscale via the memory-safe helper (createImageBitmap) — full-res camera
   // photos otherwise crash lower-RAM phones. 1000px @ 0.65 keeps receipt text
   // readable while staying small.
-  const prepareScanImage = (file: File): Promise<string> => downscaleImageFile(file, 1000, 0.65);
+  const prepareScanImage = (file: File): Promise<string> => downscaleImageFile(file, 1600, 0.85);
 
   const runGeminiScan = (file: File, apiKey: string) => {
     setScanProgress(10);
