@@ -1887,39 +1887,33 @@ export const ExpenseModal: React.FC<ExpenseModalProps> = ({
                     </div>
                   );
                 })}
+                <div
+                  onClick={() => uploadInputRef.current?.click()}
+                  style={{
+                    width: '60px',
+                    height: '60px',
+                    borderRadius: '10px',
+                    border: '1.5px dashed #94A3B8',
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    background: 'transparent',
+                    animation: 'fadeSlideIn 0.3s ease-out',
+                  }}
+                >
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#64748B" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <line x1="12" y1="5" x2="12" y2="19" />
+                    <line x1="5" y1="12" x2="19" y2="12" />
+                  </svg>
+                </div>
               </div>
             )}
           </div>
 
-          {/* NOTES PILL (above the date) — matches the date pill styling */}
-          <div style={{ display: 'flex', justifyContent: 'flex-start', marginTop: '8px', padding: '0 4px' }}>
-            <div
-              id="expense-notes-btn"
-              onClick={() => { setTempNotes(notes); setShowNotesPopup(true); }}
-              style={{
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: '8px',
-                borderRadius: '12px',
-                background: '#FFFFFF',
-                border: '1.5px solid var(--border)',
-                padding: '10px 14px',
-                boxShadow: '0 2px 6px rgba(0,0,0,0.02)',
-                cursor: 'pointer',
-                maxWidth: '100%',
-              }}
-            >
-              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="var(--t)" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M12 20h9" /><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z" />
-              </svg>
-              <span style={{ fontSize: '13px', fontWeight: 600, color: 'var(--t)', whiteSpace: 'nowrap' }}>
-                Add note
-              </span>
-            </div>
-          </div>
-
-          {/* DATE PILL (bottom-left) — mirrors the New Group card */}
-          <div style={{ display: 'flex', justifyContent: 'flex-start', marginTop: '8px', padding: '0 4px' }}>
+          {/* DATE AND NOTES PILLS */}
+          <div style={{ display: 'flex', gap: '8px', marginTop: '8px', padding: '0 4px', flexWrap: 'wrap' }}>
+            {/* DATE PILL */}
             <div
               id="expense-date-btn"
               onClick={() => {
@@ -1972,6 +1966,31 @@ export const ExpenseModal: React.FC<ExpenseModalProps> = ({
                   zIndex: 2,
                 }}
               />
+            </div>
+
+            {/* NOTES PILL */}
+            <div
+              id="expense-notes-btn"
+              onClick={() => { setTempNotes(notes); setShowNotesPopup(true); }}
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '8px',
+                borderRadius: '12px',
+                background: '#FFFFFF',
+                border: '1.5px solid var(--border)',
+                padding: '10px 14px',
+                boxShadow: '0 2px 6px rgba(0,0,0,0.02)',
+                cursor: 'pointer',
+                maxWidth: '100%',
+              }}
+            >
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="var(--t)" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M12 20h9" /><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z" />
+              </svg>
+              <span style={{ fontSize: '13px', fontWeight: 600, color: 'var(--t)', whiteSpace: 'nowrap' }}>
+                Add note
+              </span>
             </div>
           </div>
 
