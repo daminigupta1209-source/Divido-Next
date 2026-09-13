@@ -420,8 +420,6 @@ function App() {
   }, [view, selectedId]);
 
   const isNavigatingHistory = React.useRef(false);
-  const exitRequestedRef = React.useRef(false);
-  const [showExitToast, setShowExitToast] = useState(false);
   const [homeTabResetNonce, setHomeTabResetNonce] = useState(0);
 
   // When a name being added already exists elsewhere, ask whether it's the same
@@ -476,28 +474,6 @@ function App() {
   // 1. Listen for browser popstate and apply to React states
   useEffect(() => {
     const onPopState = (e: PopStateEvent) => {
-      if (e.state && e.state._divido_trap) {
-        const cur = getUiState();
-        // If we hit the trap but aren't on the home screen (e.g. Friends tab),
-        // we shouldn't exit. We should just go back to Home.
-        if (cur.view !== 'summary') {
-          isNavigatingHistory.current = true;
-          setView('summary');
-          setSelectedId(null);
-          // Push the home state so the trap is buried again
-          window.history.pushState({ _divido: true, uiState: { ...cur, view: 'summary', selectedId: null } }, '');
-          return;
-        }
-
-        if (!exitRequestedRef.current) {
-          exitRequestedRef.current = true;
-          setShowExitToast(true);
-          // DO NOT push state here. We stay on the trap state. 
-          // If the user swipes back now, there is no previous state, so the app will naturally exit!
-        }
-        return;
-      }
-      
       // If any overlay (modal / panel / sheet / prompt) is open, a back-swipe
       // must close THAT first — never take the top-level shortcut below, or the
       // back would skip past the open modal (the "needs 2 swipes" bug: from
@@ -565,11 +541,10 @@ function App() {
 
     window.addEventListener('popstate', onPopState);
 
-    // Seed initial state or repair history if length is 1 (prevents immediate exit on restored sessions)
-    if (!window.history.state?._divido || window.history.length === 1) {
+    // Seed initial state
+    if (!window.history.state?._divido) {
       const initialUi = getUiState();
-      window.history.replaceState({ _divido_trap: true }, '');
-      window.history.pushState({ _divido: true, uiState: initialUi }, '');
+      window.history.replaceState({ _divido: true, uiState: initialUi }, '');
       try {
         sessionStorage.setItem('divido_ui_state', JSON.stringify(initialUi));
       } catch {}
@@ -6291,79 +6266,6 @@ function App() {
             }
           }}
         />
-      )}
-
-      {/* Exit Popup for Double Back Swipe */}
-      {showExitToast && (
-        <div style={{
-          position: 'fixed',
-          top: 0, left: 0, right: 0, bottom: 0,
-          background: 'rgba(0, 0, 0, 0.4)',
-          zIndex: 9999,
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          animation: 'fadeIn 0.2s ease-out'
-        }}>
-          <div style={{
-            background: '#FFFFFF',
-            borderRadius: '16px',
-            padding: '24px',
-            width: '280px',
-            textAlign: 'center',
-            boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)',
-            animation: 'pop 0.2s cubic-bezier(0.16, 1, 0.3, 1)'
-          }}>
-            <h3 style={{ margin: '0 0 24px 0', fontSize: '18px', color: '#0F172A', fontWeight: 700 }}>
-              Exit App?
-            </h3>
-            <div style={{ display: 'flex', gap: '12px' }}>
-              <button
-                onClick={() => {
-                  exitRequestedRef.current = false;
-                  setShowExitToast(false);
-                  // Push state back so they don't exit if they swipe back later
-                  if (window.history.state?._divido_trap) {
-                    window.history.pushState({ _divido: true, uiState: getUiState() }, '');
-                  }
-                }}
-                style={{
-                  flex: 1,
-                  padding: '12px',
-                  borderRadius: '10px',
-                  border: 'none',
-                  background: '#F1F5F9',
-                  color: '#475569',
-                  fontWeight: 600,
-                  fontSize: '15px',
-                  cursor: 'pointer'
-                }}
-              >
-                No
-              </button>
-              <button
-                onClick={() => {
-                  // Attempt programmatic close, though mobile PWAs ignore this.
-                  // The user can swipe back since they are on the trap state.
-                  try { window.close(); } catch {}
-                }}
-                style={{
-                  flex: 1,
-                  padding: '12px',
-                  borderRadius: '10px',
-                  border: 'none',
-                  background: '#EF4444',
-                  color: '#FFFFFF',
-                  fontWeight: 600,
-                  fontSize: '15px',
-                  cursor: 'pointer'
-                }}
-              >
-                Yes
-              </button>
-            </div>
-          </div>
-        </div>
       )}
     </div>
   );
