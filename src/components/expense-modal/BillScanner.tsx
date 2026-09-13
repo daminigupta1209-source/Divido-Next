@@ -57,21 +57,6 @@ const parseReceiptText = (rawText: string, fileName: string, curr: string) => {
     }
   }
 
-  if (
-    nameLower.includes('lahori') ||
-    textLower.includes('lahori') ||
-    textLower.includes('tsf platter') ||
-    textLower.includes('tef platter') ||
-    textLower.includes('paneer aati') ||
-    textLower.includes('paneer pati') ||
-    textLower.includes('kadhai pane') ||
-    textLower.includes('murgh tandoori') ||
-    textLower.includes('burgh tandoori') ||
-    (textLower.includes('tandoori') && textLower.includes('papad') && textLower.includes('whisky'))
-  ) {
-    return { title: 'Dinner at Lahori Restaurant 🍛', amt: '2212.10' };
-  }
-
   const lines = rawText
     .split('\n')
     .map((l) => l.trim())
