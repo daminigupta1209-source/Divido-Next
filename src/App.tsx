@@ -6314,12 +6314,9 @@ function App() {
             boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)',
             animation: 'pop 0.2s cubic-bezier(0.16, 1, 0.3, 1)'
           }}>
-            <h3 style={{ margin: '0 0 8px 0', fontSize: '18px', color: '#0F172A', fontWeight: 700 }}>
+            <h3 style={{ margin: '0 0 24px 0', fontSize: '18px', color: '#0F172A', fontWeight: 700 }}>
               Exit App?
             </h3>
-            <p style={{ margin: '0 0 24px 0', fontSize: '14px', color: '#64748B', lineHeight: 1.5 }}>
-              Are you sure you want to exit Divido? You can also swipe back again to exit.
-            </p>
             <div style={{ display: 'flex', gap: '12px' }}>
               <button
                 onClick={() => {
