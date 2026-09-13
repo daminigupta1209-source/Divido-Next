@@ -313,7 +313,35 @@ const parseReceiptText = (rawText: string, fileName: string, curr: string) => {
     if (totalAmount === 0) {
       totalAmount = curr === '₹' ? 1200 : 45;
     }
-    return { title, amt: totalAmount.toFixed(2) };
+    
+    // Extract item names for notes
+    const itemLines: string[] = [];
+    const skipKeywords = ['total', 'tax', 'gst', 'cash', 'card', 'change', 'amount', 'due', 'balance', 'pay', 'net', 'subtotal', 'bill', 'qty', 'rate', 'price', 'discount', 'cgst', 'sgst', 'igst', 'tip', 'visa', 'mastercard', 'upi', 'phonepe', 'gpay'];
+    
+    lines.forEach((line) => {
+      const lower = line.toLowerCase();
+      if (skipKeywords.some(w => lower.includes(w))) return;
+      
+      const match = line.match(/^[^a-zA-Z]*([a-zA-Z\s]{4,40}).*?\b\d+(?:\.\d{2})?\b/);
+      if (match) {
+        const itemName = match[1].trim();
+        // Filter out single-word gibberish or non-item looking text
+        if (itemName.length >= 4 && !itemName.toLowerCase().includes('cashier') && !itemName.toLowerCase().includes('table') && !itemName.toLowerCase().includes('date') && !itemName.toLowerCase().includes('time')) {
+          itemLines.push(itemName);
+        }
+      }
+    });
+
+    let extractedNotes = '';
+    if (itemLines.length > 0) {
+      const uniqueItems = Array.from(new Set(itemLines));
+      extractedNotes = uniqueItems.slice(0, 5).join(', ');
+      if (uniqueItems.length > 5) {
+        extractedNotes += '...';
+      }
+    }
+    
+    return { title, amt: totalAmount.toFixed(2), notes: extractedNotes };
   } else {
     return {
       error:
@@ -568,6 +596,7 @@ If a valid receipt: {"title": "Sunrise Foods", "amount": 5445.30, "notes": "Groc
         onScanComplete({
           title: parsed.title || 'Scanned Receipt 📄',
           amt: parsed.amt || '',
+          notes: parsed.notes || '',
           attachments: [dataUrl],
         });
 
