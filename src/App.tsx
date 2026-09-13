@@ -420,6 +420,8 @@ function App() {
   }, [view, selectedId]);
 
   const isNavigatingHistory = React.useRef(false);
+  const exitRequestedRef = React.useRef(false);
+  const [showExitToast, setShowExitToast] = useState(false);
 
   // When a name being added already exists elsewhere, ask whether it's the same
   // person. "Same" links to that person's identity (via divido_person_link, which
@@ -473,6 +475,24 @@ function App() {
   // 1. Listen for browser popstate and apply to React states
   useEffect(() => {
     const onPopState = (e: PopStateEvent) => {
+      if (e.state && e.state._divido_trap) {
+        if (!exitRequestedRef.current) {
+          exitRequestedRef.current = true;
+          setShowExitToast(true);
+          setTimeout(() => {
+            exitRequestedRef.current = false;
+            setShowExitToast(false);
+          }, 2000);
+          
+          // The user hit back on the root level and hit our trap. We push the trap and state back.
+          window.history.pushState({ _divido: true, uiState: getUiState() }, '');
+        } else {
+          // Second back press - actually exit by popping the trap.
+          window.history.back();
+        }
+        return;
+      }
+      
       // If any overlay (modal / panel / sheet / prompt) is open, a back-swipe
       // must close THAT first — never take the top-level shortcut below, or the
       // back would skip past the open modal (the "needs 2 swipes" bug: from
@@ -543,7 +563,8 @@ function App() {
     // Seed initial state
     if (!window.history.state?._divido) {
       const initialUi = getUiState();
-      window.history.replaceState({ _divido: true, uiState: initialUi }, '');
+      window.history.replaceState({ _divido_trap: true }, '');
+      window.history.pushState({ _divido: true, uiState: initialUi }, '');
       try {
         sessionStorage.setItem('divido_ui_state', JSON.stringify(initialUi));
       } catch {}
@@ -6248,6 +6269,46 @@ function App() {
             }
           }}
         />
+      )}
+
+      {/* Exit Toast for Double Back Swipe */}
+      {showExitToast && (
+        <div style={{
+          position: 'fixed',
+          bottom: '80px',
+          left: '50%',
+          transform: 'translateX(-50%)',
+          background: 'rgba(15, 23, 42, 0.95)',
+          color: '#F8FAFC',
+          padding: '12px 16px',
+          borderRadius: '12px',
+          fontSize: '14px',
+          fontWeight: 600,
+          display: 'flex',
+          alignItems: 'center',
+          gap: '12px',
+          zIndex: 9999,
+          boxShadow: '0 10px 25px rgba(0,0,0,0.5)',
+          animation: 'fadeSlideIn 0.2s ease-out',
+        }}>
+          <span>Press back again to exit</span>
+          <button 
+            onClick={() => setShowExitToast(false)}
+            style={{ 
+              background: 'transparent', 
+              border: 'none', 
+              color: '#94A3B8', 
+              cursor: 'pointer', 
+              padding: 0, 
+              display: 'flex', 
+              alignItems: 'center' 
+            }}
+          >
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M18 6 6 18"/><path d="m6 6 12 12"/>
+            </svg>
+          </button>
+        </div>
       )}
     </div>
   );
