@@ -370,6 +370,14 @@ export const BillScanner: React.FC<BillScannerProps> = ({
   const streamRef = useRef<MediaStream | null>(null);
 
   useEffect(() => {
+    if (showScannerModal && !scanFile) {
+      setIsCameraLive(true);
+    } else {
+      setIsCameraLive(false);
+    }
+  }, [showScannerModal, scanFile]);
+
+  useEffect(() => {
     if (isCameraLive) {
       navigator.mediaDevices
         .getUserMedia({
