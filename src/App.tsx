@@ -477,20 +477,21 @@ function App() {
   useEffect(() => {
     const onPopState = (e: PopStateEvent) => {
       if (e.state && e.state._divido_trap) {
+        const cur = getUiState();
+        // If we hit the trap but aren't on the home screen (e.g. Friends tab),
+        // we shouldn't exit. We should just go back to Home.
+        if (cur.view !== 'summary') {
+          isNavigatingHistory.current = true;
+          setView('summary');
+          setSelectedId(null);
+          // Push the home state so the trap is buried again
+          window.history.pushState({ _divido: true, uiState: { ...cur, view: 'summary', selectedId: null } }, '');
+          return;
+        }
+
         if (!exitRequestedRef.current) {
           exitRequestedRef.current = true;
           setShowExitToast(true);
-          
-          setTimeout(() => {
-            exitRequestedRef.current = false;
-            setShowExitToast(false);
-            // If they are still on the trap state after 2s (didn't exit and didn't open a modal),
-            // push the main state back so the trap is armed again.
-            if (window.history.state?._divido_trap) {
-              window.history.pushState({ _divido: true, uiState: getUiState() }, '');
-            }
-          }, 2000);
-          
           // DO NOT push state here. We stay on the trap state. 
           // If the user swipes back now, there is no previous state, so the app will naturally exit!
         }
@@ -654,6 +655,21 @@ function App() {
       // Replace the current entry instead, so closing the new overlay returns to
       // the clean screen.
       if (sameScreen && overlayCount(currentUi) > 0 && overlayCount(currentUi) === overlayCount(prev)) {
+        window.history.replaceState({ _divido: true, uiState: currentUi }, '');
+        try { sessionStorage.setItem('divido_ui_state', JSON.stringify(currentUi)); } catch {}
+        return;
+      }
+
+      // Top level tab navigation (bottom nav): replace state instead of pushing!
+      // This prevents the history stack from growing endlessly.
+      const isTopLevel = (v: string, aId: any, selId: any) =>
+        selId == null && (v === 'summary' || v === 'friends' || v === 'activity' || v === 'profile' || (v === 'analytics' && (aId === null || aId === 'ALL')));
+
+      if (
+        isTopLevel(prev.view, prev.analyticsGroupId, prev.selectedId) &&
+        isTopLevel(currentUi.view, currentUi.analyticsGroupId, currentUi.selectedId) &&
+        overlayCount(currentUi) === 0 && overlayCount(prev) === 0
+      ) {
         window.history.replaceState({ _divido: true, uiState: currentUi }, '');
         try { sessionStorage.setItem('divido_ui_state', JSON.stringify(currentUi)); } catch {}
         return;
@@ -6277,43 +6293,79 @@ function App() {
         />
       )}
 
-      {/* Exit Toast for Double Back Swipe */}
+      {/* Exit Popup for Double Back Swipe */}
       {showExitToast && (
         <div style={{
           position: 'fixed',
-          bottom: '80px',
-          left: '50%',
-          transform: 'translateX(-50%)',
-          background: 'rgba(15, 23, 42, 0.95)',
-          color: '#F8FAFC',
-          padding: '12px 16px',
-          borderRadius: '12px',
-          fontSize: '14px',
-          fontWeight: 600,
+          top: 0, left: 0, right: 0, bottom: 0,
+          background: 'rgba(0, 0, 0, 0.4)',
+          zIndex: 9999,
           display: 'flex',
           alignItems: 'center',
-          gap: '12px',
-          zIndex: 9999,
-          boxShadow: '0 10px 25px rgba(0,0,0,0.5)',
-          animation: 'fadeSlideIn 0.2s ease-out',
+          justifyContent: 'center',
+          animation: 'fadeIn 0.2s ease-out'
         }}>
-          <span>Press back again to exit</span>
-          <button 
-            onClick={() => setShowExitToast(false)}
-            style={{ 
-              background: 'transparent', 
-              border: 'none', 
-              color: '#94A3B8', 
-              cursor: 'pointer', 
-              padding: 0, 
-              display: 'flex', 
-              alignItems: 'center' 
-            }}
-          >
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M18 6 6 18"/><path d="m6 6 12 12"/>
-            </svg>
-          </button>
+          <div style={{
+            background: '#FFFFFF',
+            borderRadius: '16px',
+            padding: '24px',
+            width: '280px',
+            textAlign: 'center',
+            boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)',
+            animation: 'pop 0.2s cubic-bezier(0.16, 1, 0.3, 1)'
+          }}>
+            <h3 style={{ margin: '0 0 8px 0', fontSize: '18px', color: '#0F172A', fontWeight: 700 }}>
+              Exit App?
+            </h3>
+            <p style={{ margin: '0 0 24px 0', fontSize: '14px', color: '#64748B', lineHeight: 1.5 }}>
+              Are you sure you want to exit Divido? You can also swipe back again to exit.
+            </p>
+            <div style={{ display: 'flex', gap: '12px' }}>
+              <button
+                onClick={() => {
+                  exitRequestedRef.current = false;
+                  setShowExitToast(false);
+                  // Push state back so they don't exit if they swipe back later
+                  if (window.history.state?._divido_trap) {
+                    window.history.pushState({ _divido: true, uiState: getUiState() }, '');
+                  }
+                }}
+                style={{
+                  flex: 1,
+                  padding: '12px',
+                  borderRadius: '10px',
+                  border: 'none',
+                  background: '#F1F5F9',
+                  color: '#475569',
+                  fontWeight: 600,
+                  fontSize: '15px',
+                  cursor: 'pointer'
+                }}
+              >
+                No
+              </button>
+              <button
+                onClick={() => {
+                  // Attempt programmatic close, though mobile PWAs ignore this.
+                  // The user can swipe back since they are on the trap state.
+                  try { window.close(); } catch {}
+                }}
+                style={{
+                  flex: 1,
+                  padding: '12px',
+                  borderRadius: '10px',
+                  border: 'none',
+                  background: '#EF4444',
+                  color: '#FFFFFF',
+                  fontWeight: 600,
+                  fontSize: '15px',
+                  cursor: 'pointer'
+                }}
+              >
+                Yes
+              </button>
+            </div>
+          </div>
         </div>
       )}
     </div>
