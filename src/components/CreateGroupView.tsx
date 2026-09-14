@@ -246,8 +246,8 @@ export const CreateGroupView: React.FC<CreateGroupViewProps> = ({
         top: 0,
         background: 'var(--bg)',
         zIndex: 100,
-        margin: '-20px -16px 0 -16px',
-        padding: '20px 16px 14px 16px',
+        margin: '-20px -16px 4px -16px',
+        padding: '12px 16px 8px 16px',
       }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
           <button
