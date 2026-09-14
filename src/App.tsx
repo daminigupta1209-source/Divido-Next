@@ -153,6 +153,32 @@ function App() {
   const [netPayablePopup, setNetPayablePopup] = useState<{ friendName: string; amt: number; curr: string } | null>(() => initialSavedState?.netPayablePopup || null);
   const [netReceivablePopup, setNetReceivablePopup] = useState<{ friendName: string; amt: number; curr: string } | null>(() => initialSavedState?.netReceivablePopup || null);
   const [isGroupsExpanded, setIsGroupsExpanded] = useState<boolean>(false);
+
+  // "Pending UPI payment" — when the user taps Proceed to Pay we launch the UPI
+  // app but can't know if the payment actually went through. If they never come
+  // back to answer the in-popup confirm (e.g. they close the app from the UPI
+  // screen), we surface a gentle prompt on the NEXT open so the settle isn't lost.
+  // Persisted so it survives an app kill; ignored if older than 24h.
+  const PENDING_PAY_KEY = 'divido_pending_pay';
+  type PendingPay = { name: string; gId: string | number | null; curr: string; amt: number; ts: number };
+  const clearPendingPay = () => {
+    try { localStorage.removeItem(PENDING_PAY_KEY); } catch { /* ignore */ }
+  };
+  const [pendingPayPrompt, setPendingPayPrompt] = useState<PendingPay | null>(() => {
+    try {
+      const raw = localStorage.getItem(PENDING_PAY_KEY);
+      if (!raw) return null;
+      const p = JSON.parse(raw) as PendingPay;
+      // Stale (older than 24h) → discard silently.
+      if (!p || typeof p.ts !== 'number' || Date.now() - p.ts > 24 * 60 * 60 * 1000) {
+        try { localStorage.removeItem(PENDING_PAY_KEY); } catch { /* ignore */ }
+        return null;
+      }
+      return p;
+    } catch {
+      return null;
+    }
+  });
   const [showConvertModalId, setShowConvertModalId] = useState<string | number | null>(() => initialSavedState?.showConvertModalId || null);
   const [analyticsGroupId, setAnalyticsGroupId] = useState<string | number | null>(() => initialSavedState?.analyticsGroupId ?? null);
   const [showGroupSettleList, setShowGroupSettleList] = useState<boolean>(() => !!initialSavedState?.showGroupSettleList);
@@ -1862,6 +1888,8 @@ function App() {
 
 
   const handleFinalGlobalSettle = () => {
+    // Any settle resolves an outstanding "pending UPI payment" prompt.
+    clearPendingPay();
     const today = new Date().toISOString().split('T')[0];
     const newSettlements = localSettleEdits
       .filter((it) => it.selected && it.amt > 0)
@@ -5665,7 +5693,69 @@ function App() {
         userMetadata={userMetadata}
         setUserMetadata={setUserMetadata}
         onFinalSettle={handleFinalGlobalSettle}
+        onPaymentInitiated={() => {
+          // User launched the UPI app. Remember it so we can nudge them to
+          // confirm on next open if they don't come back to answer.
+          if (!netPayablePopup) return;
+          const pending: PendingPay = {
+            name: globalSettleData?.name || netPayablePopup.friendName,
+            gId: globalSettleData?.gId ?? null,
+            curr: netPayablePopup.curr,
+            amt: netPayablePopup.amt,
+            ts: Date.now(),
+          };
+          try { localStorage.setItem(PENDING_PAY_KEY, JSON.stringify(pending)); } catch { /* ignore */ }
+        }}
+        onPaymentResolved={clearPendingPay}
       />
+
+      {/* Pending UPI payment nudge — shown on reopen when the user launched a UPI
+          payment but never confirmed whether it went through. */}
+      {pendingPayPrompt && (
+        <div
+          className="modal-overlay"
+          style={{ zIndex: 6500, display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+          onClick={() => { clearPendingPay(); setPendingPayPrompt(null); }}
+        >
+          <div
+            className="card shadow-xl"
+            style={{ width: '320px', padding: '22px 20px', background: 'var(--w)', textAlign: 'center', borderRadius: '20px', boxSizing: 'border-box' }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div style={{ fontSize: '30px', marginBottom: '6px' }}>💸</div>
+            <p style={{ fontSize: '15px', fontWeight: 800, color: 'var(--t)', margin: '0 0 6px' }}>
+              Did your payment go through?
+            </p>
+            <p style={{ fontSize: '13px', fontWeight: 600, color: 'var(--g)', margin: '0 0 18px', lineHeight: 1.5 }}>
+              You started a <strong style={{ color: 'var(--t)' }}>{pendingPayPrompt.curr}{pendingPayPrompt.amt.toFixed(2)}</strong> UPI payment to {pendingPayPrompt.name} but didn't confirm it.
+            </p>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+              <button
+                className="btn-green press-anim"
+                onClick={() => {
+                  const p = pendingPayPrompt;
+                  clearPendingPay();
+                  setPendingPayPrompt(null);
+                  // Reopen the settle card with fresh, canonical balances so they
+                  // complete the settle through the normal flow (never replay stale
+                  // money rows saved from a previous session).
+                  setGlobalSettleDataSecure({ name: p.name, gId: p.gId });
+                }}
+                style={{ padding: '12px', fontSize: '13px', borderRadius: '14px', width: '100%', fontWeight: 600 }}
+              >
+                Yes — open to settle
+              </button>
+              <button
+                onClick={() => { clearPendingPay(); setPendingPayPrompt(null); }}
+                style={{ padding: '12px', background: 'none', border: '1.5px solid #E2E8F0', color: 'var(--t)', borderRadius: '14px', fontSize: '13px', fontWeight: 600, cursor: 'pointer' }}
+                className="press-anim"
+              >
+                Not yet — keep it open
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {netReceivablePopup && (
         <React.Suspense fallback={null}>

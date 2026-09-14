@@ -12,6 +12,10 @@ interface NetPayableModalProps {
   userMetadata: Record<string, any>;
   setUserMetadata: React.Dispatch<React.SetStateAction<Record<string, any>>>;
   onFinalSettle: () => void;
+  // Called when the UPI app is launched (payment started, not yet confirmed).
+  onPaymentInitiated?: () => void;
+  // Called when the user answers the post-UPI confirm (either way).
+  onPaymentResolved?: () => void;
 }
 
 export const NetPayableModal: React.FC<NetPayableModalProps> = ({
@@ -22,6 +26,8 @@ export const NetPayableModal: React.FC<NetPayableModalProps> = ({
   userMetadata,
   setUserMetadata,
   onFinalSettle,
+  onPaymentInitiated,
+  onPaymentResolved,
 }) => {
   // Resolve the friend's name to their email so we read the RIGHT person's synced
   // UPI (money — never key UPI by raw name).
@@ -226,90 +232,112 @@ export const NetPayableModal: React.FC<NetPayableModalProps> = ({
           )}
 
           <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-            {/* UPI pay — only for INR payers with a resolvable INR amount. Does NOT settle on its own. */}
-            {primaryIsINR && !awaitingConfirm && (
-              <button
-                className="btn-green press-anim"
-                disabled={!canPayViaUpi}
-                onClick={() => {
-                  const finalUpi = payPopupUpi.trim();
-                  if (!finalUpi || !finalUpi.includes('@')) {
-                    alert('Please enter a valid UPI ID (e.g. friend@okaxis) to proceed!');
-                    return;
-                  }
-                  if (inrEquivalent === null) {
-                    alert('Could not fetch a live exchange rate. Please settle this one offline.');
-                    return;
-                  }
+            {/* ── Pay step (nothing is settled here) ── */}
+            {/* Pay Now is a PAY action. Settling lives on the settle card itself
+                ("Mark as Settled" sits right next to Pay Now), so we don't repeat
+                it here. The only exception is when there's no UPI rail at all —
+                then this popup would be an empty dead-end, so we show a single
+                fallback settle button. */}
+            {!awaitingConfirm && (
+              <>
+                {/* UPI pay — only for INR payers with a resolvable INR amount. Does NOT settle on its own. */}
+                {primaryIsINR && canPayViaUpi ? (
+                  <button
+                    className="btn-green press-anim"
+                    onClick={() => {
+                      const finalUpi = payPopupUpi.trim();
+                      if (!finalUpi || !finalUpi.includes('@')) {
+                        alert('Please enter a valid UPI ID (e.g. friend@okaxis) to proceed!');
+                        return;
+                      }
+                      if (inrEquivalent === null) {
+                        alert('Could not fetch a live exchange rate. Please settle this one offline.');
+                        return;
+                      }
 
-                  setUserMetadata((prev) => ({
-                    ...prev,
-                    [popupData.friendName]: {
-                      ...prev[popupData.friendName],
-                      upiId: finalUpi,
-                    },
-                  }));
+                      setUserMetadata((prev) => ({
+                        ...prev,
+                        [popupData.friendName]: {
+                          ...prev[popupData.friendName],
+                          upiId: finalUpi,
+                        },
+                      }));
 
-                  const inrAmt = inrEquivalent.toFixed(2);
-                  const note = debtIsINR
-                    ? 'Divido Settle'
-                    : `Divido Settle (${popupData.curr}${popupData.amt.toFixed(2)})`;
-                  window.location.href = `upi://pay?pa=${finalUpi}&pn=${encodeURIComponent(
-                    popupData.friendName
-                  )}&am=${inrAmt}&cu=INR&tn=${encodeURIComponent(note)}`;
+                      const inrAmt = inrEquivalent.toFixed(2);
+                      const note = debtIsINR
+                        ? 'Divido Settle'
+                        : `Divido Settle (${popupData.curr}${popupData.amt.toFixed(2)})`;
+                      window.location.href = `upi://pay?pa=${finalUpi}&pn=${encodeURIComponent(
+                        popupData.friendName
+                      )}&am=${inrAmt}&cu=INR&tn=${encodeURIComponent(note)}`;
 
-                  // A upi:// intent can't report success back to the web app, so we
-                  // must NOT auto-settle. Ask the user to confirm after they return.
-                  // Delay the state update so the OS has time to launch the UPI app 
-                  // without the button vanishing instantly (which looks like a glitch).
-                  setTimeout(() => {
-                    setAwaitingConfirm(true);
-                  }, 600);
-                }}
-                style={{ padding: '12px', fontSize: '13px', borderRadius: '14px', width: '100%', fontWeight: 600, opacity: canPayViaUpi ? 1 : 0.5, cursor: canPayViaUpi ? 'pointer' : 'not-allowed' }}
-              >
-                {debtIsINR ? 'Proceed to Pay' : `Pay ${inrDisplay || '...'} via UPI`}
-              </button>
+                      // Remember that a payment was started, so if the user leaves
+                      // without confirming they get nudged to finish on next open.
+                      onPaymentInitiated?.();
+
+                      // A upi:// intent can't report success back to the web app, so we
+                      // must NOT auto-settle. Ask the user to confirm after they return.
+                      // Delay the state update so the OS has time to launch the UPI app
+                      // without the button vanishing instantly (which looks like a glitch).
+                      setTimeout(() => {
+                        setAwaitingConfirm(true);
+                      }, 600);
+                    }}
+                    style={{ padding: '12px', fontSize: '13px', borderRadius: '14px', width: '100%', fontWeight: 600, cursor: 'pointer' }}
+                  >
+                    {debtIsINR ? 'Proceed to Pay' : `Pay ${inrDisplay || '...'} via UPI`}
+                  </button>
+                ) : (
+                  /* No UPI rail available — fallback so the popup isn't a dead-end. */
+                  <button
+                    onClick={() => {
+                      onFinalSettle();
+                      onClose();
+                    }}
+                    style={{ padding: '12px', background: '#0D9488', color: '#fff', border: 'none', borderRadius: '14px', fontSize: '13px', fontWeight: 600, cursor: 'pointer' }}
+                    className="press-anim"
+                  >
+                    Mark as Settled
+                  </button>
+                )}
+              </>
             )}
 
-            {/* Explicit confirmation shown after the UPI app was launched. */}
+            {/* ── Confirm step — the ONLY place a balance is marked settled. ── */}
             {awaitingConfirm && (
-              <button
-                onClick={() => {
-                  onFinalSettle();
-                  onClose();
-                }}
-                style={{ padding: '12px', background: '#0D9488', color: '#fff', border: 'none', borderRadius: '14px', fontSize: '12px', fontWeight: 600, cursor: 'pointer' }}
-                className="press-anim"
-              >
-                I've paid - mark as settled
-              </button>
+              <>
+                <button
+                  onClick={() => {
+                    onPaymentResolved?.();
+                    onFinalSettle();
+                    onClose();
+                  }}
+                  style={{ padding: '12px', background: '#0D9488', color: '#fff', border: 'none', borderRadius: '14px', fontSize: '12px', fontWeight: 600, cursor: 'pointer' }}
+                  className="press-anim"
+                >
+                  I've paid - mark as settled
+                </button>
+                <button
+                  onClick={() => {
+                    onPaymentResolved?.();
+                    onClose();
+                  }}
+                  style={{
+                    padding: '12px',
+                    background: 'none',
+                    border: '1.5px solid #E2E8F0',
+                    color: 'var(--t)',
+                    borderRadius: '14px',
+                    fontSize: '12px',
+                    fontWeight: 600,
+                    cursor: 'pointer',
+                  }}
+                  className="press-anim"
+                >
+                  Not yet - keep it open
+                </button>
+              </>
             )}
-
-            <button
-              onClick={() => {
-                if (awaitingConfirm) {
-                  // "Not yet" — don't settle; just close without recording.
-                  onClose();
-                } else {
-                  onFinalSettle();
-                  onClose();
-                }
-              }}
-              style={{
-                padding: '12px',
-                background: 'none',
-                border: '1.5px solid #E2E8F0',
-                color: 'var(--t)',
-                borderRadius: '14px',
-                fontSize: '12px',
-                fontWeight: 600,
-                cursor: 'pointer',
-              }}
-              className="press-anim"
-            >
-              {awaitingConfirm ? 'Not yet - keep it open' : 'Just Record locally (Cash/Other)'}
-            </button>
           </div>
         </div>
       </div>
