@@ -335,6 +335,10 @@ function App() {
   // account's real profile with its empty local defaults on first login).
   const [userId, setUserId] = useState<string | null>(null);
   const profileSyncReady = useRef(false);
+  // Last UPI we pushed onto our own group_members rows, so co-members can read it
+  // and autofill it when paying us. Guards against re-running the update on every
+  // profile-sync tick when nothing changed.
+  const lastMemberUpiPushed = useRef<string | null>(null);
   // Shared member display pictures, keyed by lowercased email → image URL.
   // Populated from the member_avatars table so group members can see each
   // other's Google (or uploaded) photo. See loadMemberAvatars / saveMyAvatar.
@@ -2166,6 +2170,21 @@ function App() {
         .then(({ error }) => {
           if (error) console.error('Failed to save profile to Supabase:', error);
         });
+      // Self-heal: mirror our UPI onto our group_members rows so co-members can
+      // read it and autofill when paying us. UpiSection does this on a manual
+      // edit, but a UPI that only ever lived in the profile (loaded, never
+      // re-typed) never reached the membership rows — so push it here too, once
+      // per changed value.
+      if (upi && userEmail && lastMemberUpiPushed.current !== upi) {
+        lastMemberUpiPushed.current = upi;
+        supabase
+          .from('group_members')
+          .update({ upi_id: upi })
+          .eq('user_email', userEmail.toLowerCase())
+          .then(({ error }) => {
+            if (error) console.error('Failed to propagate UPI to group members:', error);
+          });
+      }
       // A manually-uploaded photo should also be visible to co-members.
       if (md.profilePhoto && userEmail) saveMyAvatar(userEmail, md.profilePhoto);
     }, 800);
