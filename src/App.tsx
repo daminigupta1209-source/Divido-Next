@@ -5073,14 +5073,7 @@ function App() {
               <h3 className="nunito" style={{ flex: 1, minWidth: 0, textAlign: 'center', fontSize: '19px', fontWeight: 800, color: '#1E293B', margin: 0, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                 Settle with {globalSettleData.name}
               </h3>
-              <button
-                type="button"
-                onClick={() => setGlobalSettleData(null)}
-                aria-label="Close"
-                style={{ background: 'rgba(241,245,249,0.9)', border: 'none', cursor: 'pointer', fontSize: '16px', color: '#475569', width: '32px', height: '32px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}
-              >
-                ✕
-              </button>
+              <div style={{ width: '32px', flexShrink: 0 }} />
             </div>
             {globalSettleData.identity && String(globalSettleData.identity).includes('@') && (
               <p style={{ textAlign: 'center', color: '#94A3B8', fontSize: '12px', fontWeight: 500, marginBottom: '2px', wordBreak: 'break-all' }}>
