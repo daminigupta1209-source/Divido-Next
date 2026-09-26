@@ -1016,6 +1016,10 @@ export const GroupMemberList: React.FC<GroupMemberListProps> = ({
           existingMembers={selectedGroup.members}
           suggestions={buildSuggestions()}
           memberAvatars={memberAvatars}
+          existingEmails={{
+            ...Object.fromEntries(Object.entries(selectedGroup.memberIdentities || {}).filter(([, v]) => String(v).includes('@'))),
+            ...(myEmail ? { [me]: myEmail } : {}),
+          }}
         />
 
         {/* LEFT TAB */}

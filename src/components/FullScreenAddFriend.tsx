@@ -20,6 +20,9 @@ interface FullScreenAddFriendProps {
   title?: string;
   // Profile photos keyed by lowercase email (shared member_avatars table).
   memberAvatars?: Record<string, string>;
+  // Emails already used by people in this group (not in suggestions), so a
+  // new person can't reuse one.
+  existingEmails?: Record<string, string>;
 }
 
 const Avatar: React.FC<{ name: string; email?: string; avatars?: Record<string, string>; size: number; bg: string; color: string }> = ({ name, email, avatars, size, bg, color }) => {
@@ -45,6 +48,7 @@ export const FullScreenAddFriend: React.FC<FullScreenAddFriendProps> = ({
   singleSelect = false,
   title = 'Add friend',
   memberAvatars,
+  existingEmails,
 }) => {
   const [addVal, setAddVal] = useState('');
   const [emailVal, setEmailVal] = useState('');
@@ -81,21 +85,43 @@ export const FullScreenAddFriend: React.FC<FullScreenAddFriendProps> = ({
   const existsInGroup = existingMembers.some(
     (m) => m.replace(/\s*\(Left\)$/i, '').trim().toLowerCase() === q
   );
-  // A same-named person from another group is in recents. A DIFFERENT person
-  // with that name can still be added, but only with an email — that's what
-  // keeps the two apart everywhere. (Two same names inside ONE group stay
-  // blocked: expenses store people by name, so they'd merge in balances.)
+  // A different person may share a name with someone already known. They can
+  // be added, but only with their own (not-yet-used) email — email is what
+  // keeps the two apart.
   const sameNameSugs = suggestions.filter((s) => s.name.toLowerCase() === q);
-  const needsEmail = sameNameSugs.length > 0;
   const alreadyPicked = selectedFriends.some((f) => f.name.toLowerCase() === q);
-  const canAddNew = qRaw.length > 0 && !existsInGroup && !alreadyPicked;
+  // Same name inside THIS group: expenses store people by name text, so the
+  // new person gets a short email tag ("Damini Gupta (dg.work)") to keep the
+  // two separate in balances. Their profile name replaces it when they join.
+  const inGroupClash = existsInGroup || alreadyPicked;
+  const needsEmail = inGroupClash || sameNameSugs.length > 0;
+  const canAddNew = qRaw.length > 0;
+
+  const norm = (s: string) => s.trim().toLowerCase();
+  const takenNames = new Set([
+    ...existingMembers.map((m) => norm(m.replace(/\s*\(Left\)$/i, ''))),
+    ...selectedFriends.map((f) => norm(f.name)),
+  ]);
+  const newPersonName = (em: string): string => {
+    if (!inGroupClash) return qRaw;
+    const base = `${qRaw} (${em.split('@')[0]})`;
+    let name = base;
+    for (let i = 2; takenNames.has(norm(name)); i++) name = `${base} ${i}`;
+    return name;
+  };
 
   // Returns an error message, or '' if the typed new person can be added.
   const newPersonError = (em: string): string => {
     if (em && !isValidEmail(em)) return "That doesn't look like a valid email. Fix it or leave it blank.";
-    if (needsEmail && !em) return `You already have a ${qRaw} in your list. To add a different ${qRaw}, add their email.`;
-    if (needsEmail && sameNameSugs.some((s) => s.email && s.email.trim().toLowerCase() === em.toLowerCase())) {
-      return `That's the ${qRaw} already in your list — pick them below instead.`;
+    if (needsEmail && !em) return `You already have a ${qRaw}. To add a different ${qRaw}, enter their email.`;
+    if (em) {
+      const e = norm(em);
+      if (sameNameSugs.some((s) => s.email && norm(s.email) === e)) {
+        return `That's the ${qRaw} you already have — pick them below instead.`;
+      }
+      const groupPeople = Object.entries(existingEmails || {}).map(([name, email]) => ({ name, email }));
+      const owner = [...groupPeople, ...suggestions, ...selectedFriends].find((s) => s.email && norm(s.email) === e);
+      if (owner) return `That email already belongs to ${owner.name}. Enter a different one.`;
     }
     return '';
   };
@@ -123,8 +149,9 @@ export const FullScreenAddFriend: React.FC<FullScreenAddFriendProps> = ({
     const em = emailVal.trim();
     const err = newPersonError(em);
     if (err) { alert(err); return; }
-    if (singleSelect) { commitOne({ name: qRaw, email: em, identity: '' }); return; }
-    toggleSelect({ name: qRaw, email: em, identity: '' });
+    const name = newPersonName(em);
+    if (singleSelect) { commitOne({ name, email: em, identity: '' }); return; }
+    toggleSelect({ name, email: em, identity: '' });
     setAddVal('');
     setEmailVal('');
     setTimeout(() => inputRef.current?.focus(), 30);
@@ -139,7 +166,7 @@ export const FullScreenAddFriend: React.FC<FullScreenAddFriendProps> = ({
     if (canAddNew && qRaw) {
       const err = newPersonError(em);
       if (err) { alert(err); return; }
-      toCommit = [...toCommit, { name: qRaw, email: em, identity: '' }];
+      toCommit = [...toCommit, { name: newPersonName(em), email: em, identity: '' }];
     }
     
     onAddFriends(toCommit);
@@ -323,20 +350,19 @@ export const FullScreenAddFriend: React.FC<FullScreenAddFriendProps> = ({
         </div>
       )}
       {canAddNew && (
-        needsEmail ? (
+        inGroupClash ? (
           <p style={{ margin: '-8px 4px 0', fontSize: '11px', color: '#B45309', lineHeight: 1.35 }}>
-            You already have a {qRaw} below. Adding a different {qRaw}? Their email is needed to tell them apart.
+            {qRaw} is already in this group. To add a different {qRaw}, enter their email. They'll show as “{emailVal.includes('@') ? newPersonName(emailVal.trim()) : `${qRaw} (…)`}” until they join.
+          </p>
+        ) : needsEmail ? (
+          <p style={{ margin: '-8px 4px 0', fontSize: '11px', color: '#B45309', lineHeight: 1.35 }}>
+            You already have a {qRaw} below. Adding a different {qRaw}? Enter their email to tell them apart.
           </p>
         ) : (
           <p style={{ margin: '-8px 4px 0', fontSize: '11px', color: '#94A3B8', lineHeight: 1.35 }}>
             💡 Add their email and they join instantly when they sign in — no “pick your name” step, and it avoids mix-ups if two friends share a name.
           </p>
         )
-      )}
-      {qRaw.length > 0 && existsInGroup && (
-        <p style={{ margin: '-8px 4px 0', fontSize: '11px', color: '#B45309', lineHeight: 1.35 }}>
-          {qRaw} is already in this group. Adding someone else with this name? Add something to tell them apart, like “{qRaw} (Delhi)”.
-        </p>
       )}
 
       {/* Ticked friends, shown as removable pills */}

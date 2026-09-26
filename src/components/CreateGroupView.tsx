@@ -679,6 +679,7 @@ export const CreateGroupView: React.FC<CreateGroupViewProps> = ({
         existingMembers={participants}
         suggestions={buildPeopleSuggestions(groups, null, participants, me, myEmail)}
         memberAvatars={memberAvatars}
+        existingEmails={{ ...participantEmails, ...(myEmail ? { [me]: myEmail } : {}) }}
       />
     </form>
   );
