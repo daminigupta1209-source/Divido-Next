@@ -304,9 +304,12 @@ export const FullScreenAddFriend: React.FC<FullScreenAddFriendProps> = ({
       {selectedFriends.length > 0 && (
         <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
           {selectedFriends.map((f) => (
-            <span key={selKey(f)} style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', background: '#ECFDF5', border: '1px solid #A7F3D0', color: '#047857', borderRadius: '999px', padding: '5px 8px 5px 6px', fontSize: '13px', fontWeight: 600 }}>
-              <span style={{ width: '22px', height: '22px', borderRadius: '50%', background: '#10B981', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '11px', fontWeight: 700 }}>{f.name.charAt(0).toUpperCase()}</span>
-              {f.name}
+            <span key={selKey(f)} style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', background: '#ECFDF5', border: '1px solid #A7F3D0', color: '#047857', borderRadius: '999px', padding: '5px 8px 5px 6px', fontSize: '13px', fontWeight: 600, maxWidth: '100%', boxSizing: 'border-box' }}>
+              <span style={{ width: '22px', height: '22px', borderRadius: '50%', background: '#10B981', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '11px', fontWeight: 700, flexShrink: 0 }}>{f.name.charAt(0).toUpperCase()}</span>
+              <span style={{ minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                {f.name}
+                {f.email && <span style={{ color: '#059669', fontWeight: 400, fontSize: '11.5px' }}> · {f.email}</span>}
+              </span>
               <span onClick={() => toggleSelect(f)} style={{ cursor: 'pointer', color: '#059669', fontWeight: 700, marginLeft: '2px' }}>✕</span>
             </span>
           ))}
@@ -335,7 +338,14 @@ export const FullScreenAddFriend: React.FC<FullScreenAddFriendProps> = ({
                 <button
                   key={s.email || s.name}
                   type="button"
-                  onClick={() => toggleSelect({ name: s.name, email: s.email, identity: s.identity })}
+                  onClick={() => {
+                    const picking = !on;
+                    toggleSelect({ name: s.name, email: s.email, identity: s.identity });
+                    // Picking someone from the list finishes that search — clear it so
+                    // the "add as new" name + email fields (meant for a typed new
+                    // person) don't linger as if they belonged to the pick.
+                    if (picking) { setAddVal(''); setEmailVal(''); }
+                  }}
                   style={{ display: 'flex', alignItems: 'center', gap: '12px', width: '100%', textAlign: 'left', background: on ? '#ECFDF5' : 'var(--w)', border: `1.5px solid ${on ? '#A7F3D0' : '#F1F5F9'}`, borderRadius: '14px', padding: '12px 14px', cursor: 'pointer', transition: '0.15s all ease' }}
                 >
                   <span style={{ width: '38px', height: '38px', borderRadius: '50%', background: '#EEF2FF', color: '#4338CA', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '14px', fontWeight: 700, flexShrink: 0 }}>
