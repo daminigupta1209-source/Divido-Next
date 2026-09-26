@@ -65,7 +65,7 @@ import { CurrencySetupModal } from './components/CurrencySetupModal';
 import { GroupGallery } from './components/GroupGallery';
 import { checkIfDemoMode } from './lib/demoMode';
 import { ensureArray, ensureObject, isLegacyRenameLog, formatCompactAmount, genGroupId, genExpenseId, titleCaseName } from './lib/utils';
-import { getPersonKey, toIdentitySpace, pickCanonicalIdentity, findDuplicateGroups, type DuplicateEntry, setSyncedDismissedPeople, buildNameEmailResolver, upiFor } from './lib/identity';
+import { getPersonKey, toIdentitySpace, pickCanonicalIdentity, findDuplicateGroups, type DuplicateEntry, setSyncedDismissedPeople, buildNameEmailResolver, upiFor, fillPartyKeys } from './lib/identity';
 import { useSupabaseSync, getGidRemap } from './hooks/useSupabaseSync';
 import { BalanceActionCard } from './components/BalanceActionCard';
 import { asyncBatchNetBalances } from './lib/workerHelper';
@@ -2268,6 +2268,25 @@ function App() {
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isInitialLoadDone]);
+
+  // Record on each expense which member row (member_key) each name refers to.
+  // Idempotent: only fills names that have no key yet, so it also backfills
+  // older expenses the first time any device opens them. Balances don't read
+  // these keys yet.
+  useEffect(() => {
+    if (!isInitialLoadDone || !groups.some((g) => g.memberKeys)) return;
+    const byId = new Map(groups.map((g) => [String(g.id), g]));
+    setExpenses((prev) => {
+      let changed = false;
+      const next = prev.map((e) => {
+        const filled = fillPartyKeys(e, byId.get(String(e.gId)));
+        if (!filled) return e;
+        changed = true;
+        return filled;
+      });
+      return changed ? next : prev;
+    });
+  }, [isInitialLoadDone, groups, expenses]);
 
   const phantomRepairDoneRef = useRef(false);
   useEffect(() => {

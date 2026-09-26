@@ -430,6 +430,14 @@ export function useSupabaseSync({
             if (!memberIdentities[displayName]) memberIdentities[displayName] = identity;
           });
 
+          // Permanent per-row key (api/add_member_key.sql). Absent until that
+          // migration is run — then the group simply has no memberKeys.
+          const memberKeys: Record<string, string> = {};
+          activeMems.forEach((m: any) => {
+            const displayName = titleCaseName(m.name);
+            if (m.member_key && !memberKeys[displayName]) memberKeys[displayName] = String(m.member_key);
+          });
+
           // Hydrate this device's identity for this group from the account, so a
           // person's per-group name (e.g. "didi") resolves correctly on ANY device
           // — not only the one where they first claimed it.
@@ -478,6 +486,7 @@ export function useSupabaseSync({
               pendingMembers,
               pendingLinkRequests,
               memberIdentities,
+              ...(Object.keys(memberKeys).length > 0 ? { memberKeys } : {}),
               isDirect: !!group.is_direct,
             });
           }

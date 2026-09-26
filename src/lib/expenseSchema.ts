@@ -55,6 +55,9 @@ export const EXPENSE_FIELDS: FieldDef[] = [
   { app: 'origAmt', db: 'orig_amt' },
   { app: 'origShares', db: 'orig_shares', deep: true },
   { app: 'prevCurr', db: 'prev_curr' },
+  // Name → member_key map (api/add_member_key.sql). Left undefined until the
+  // group has member keys, so it's never sent before the column exists.
+  { app: 'partyKeys', db: 'party_keys', fromDb: (v) => (v ? ensureObject(v) : undefined), deep: true },
 ];
 
 // DB row -> the mapped fields of an Expense (caller adds id + timestamp).

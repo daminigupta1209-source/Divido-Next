@@ -24,6 +24,9 @@ export interface Group {
   // member's email (signed-in) OR the name itself (legacy, unlinked). Used only
   // for cross-group balance bucketing so two same-named people don't merge.
   memberIdentities?: Record<string, string>;
+  // Member display name (as in `members`) → that member row's permanent
+  // group_members.member_key. Never changes on claim/rename/(Left)/merge.
+  memberKeys?: Record<string, string>;
   // A "direct" 2-person thread created by SHARING a non-group card. It reuses
   // all the group machinery (invite link, sync, RLS, edit, settle) but is
   // presented under Non-Group Expenses, never in the Groups list, and is capped
@@ -72,6 +75,9 @@ export interface Expense {
   // Non-group (STANDALONE) only: the other person's email, captured optionally
   // when they're added, so the card can later be shared / settled with them.
   otherEmail?: string;
+  // Name (as written on this expense) → group_members.member_key it referred
+  // to when written. See fillPartyKeys in lib/identity.
+  partyKeys?: Record<string, string>;
 }
 
 export interface ConfirmState {

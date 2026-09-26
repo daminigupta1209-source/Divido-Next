@@ -439,3 +439,74 @@ export const balancesByIdentity = (
     to: keyToName[t.to] ?? t.to,
   }));
 };
+
+// ── Member keys (balances by person, not by name) ───────────────────────────
+// Each group_members row has a permanent member_key (api/add_member_key.sql)
+// that never changes on claim, rename, "(Left)", email change or merge. An
+// expense records, in `partyKeys`, which member_key each name on it referred to
+// AT THE TIME it was written. Later steps calculate from these keys, so
+// renames, same-name people and claims with a different email can't mix up
+// balances.
+
+const normMember = (s: string): string =>
+  String(s || '').replace(/\s*\(Left\)\s*$/i, '').trim().toLowerCase();
+
+// Which member row does `name` (as written on an expense) refer to in `group`?
+// Returns undefined unless the answer is unambiguous — never guesses.
+export const resolveMemberKey = (group: Group | undefined | null, name: string): string | undefined => {
+  const mk = group?.memberKeys;
+  if (!mk || !name || name === 'SYSTEM') return undefined;
+  if (mk[name]) return mk[name];
+  const target = normMember(name);
+  if (!target) return undefined;
+  // An email written in place of a name → the member whose identity is it.
+  if (target.includes('@')) {
+    const byEmail = Object.entries(group?.memberIdentities || {})
+      .filter(([, id]) => String(id).toLowerCase() === target)
+      .map(([disp]) => mk[disp])
+      .filter(Boolean);
+    const uniq = Array.from(new Set(byEmail));
+    return uniq.length === 1 ? uniq[0] : undefined;
+  }
+  const pick = (cands: [string, string][]): string | undefined => {
+    const keys = Array.from(new Set(cands.map(([, k]) => k)));
+    if (keys.length === 1) return keys[0];
+    // Same name on a live row and a "(Left)" row → the live one.
+    const live = Array.from(new Set(cands.filter(([d]) => !/\(Left\)\s*$/i.test(d)).map(([, k]) => k)));
+    return live.length === 1 ? live[0] : undefined;
+  };
+  const exact = Object.entries(mk).filter(([d]) => normMember(d) === target);
+  if (exact.length > 0) return pick(exact);
+  // Flat first name ("Damini") → the one member it can only mean.
+  const byFirst = Object.entries(mk).filter(([d]) => normMember(d).split(' ')[0] === target);
+  return byFirst.length > 0 ? pick(byFirst) : undefined;
+};
+
+// Every person-name an expense mentions (payer, splitters, share keys,
+// pre-conversion share keys).
+const namesOnExpense = (e: Expense): string[] => {
+  const out = new Set<string>();
+  if (e.paid) out.add(e.paid);
+  (e.splitters || []).forEach((n) => n && out.add(n));
+  Object.keys(e.shares || {}).forEach((n) => out.add(n));
+  Object.keys(e.origShares || {}).forEach((n) => out.add(n));
+  out.delete('SYSTEM');
+  return Array.from(out);
+};
+
+// Add a member_key for any name on the expense that doesn't have one yet.
+// Existing entries are never changed (a key records who the name meant when
+// written). Returns the updated expense, or null when nothing was added.
+export const fillPartyKeys = (e: Expense, group: Group | undefined | null): Expense | null => {
+  if (!group?.memberKeys) return null;
+  const current = e.partyKeys || {};
+  let added: Record<string, string> | null = null;
+  for (const nm of namesOnExpense(e)) {
+    if (current[nm]) continue;
+    const k = resolveMemberKey(group, nm);
+    if (!k) continue;
+    if (!added) added = { ...current };
+    added[nm] = k;
+  }
+  return added ? { ...e, partyKeys: added } : null;
+};
