@@ -393,10 +393,25 @@ export const toIdentitySpace = (
   expenses: Expense[],
 ): { memberKeys: string[]; expenses: Expense[]; keyToName: Record<string, string> } => {
   const keyToName = buildKeyToName(group);
-  const remap = (nm: string) => getPersonKey(group, nm);
-  const memberKeys = Array.from(new Set((group?.members || []).map(remap)));
+  const byName = (nm: string) => getPersonKey(group, nm);
+  const memberKeys = Array.from(new Set((group?.members || []).map(byName)));
+
+  // member_key → that row's CURRENT identity (email / person_id / name).
+  const identityOfKey: Record<string, string> = {};
+  Object.entries(group?.memberKeys || {}).forEach(([disp, mk]) => {
+    if (!(mk in identityOfKey)) identityOfKey[mk] = byName(disp);
+  });
 
   const rekeyed = expenses.map((e) => {
+    // Prefer the member row the expense recorded for this name (survives
+    // renames, claims with a different email, "(Left)"); fall back to
+    // matching the name against the roster, as before.
+    const pk: Record<string, string> = {};
+    Object.entries(e.partyKeys || {}).forEach(([n, k]) => { pk[n.trim().toLowerCase()] = k; });
+    const remap = (nm: string) => {
+      const mk = pk[String(nm).trim().toLowerCase()];
+      return (mk && identityOfKey[mk]) || byName(nm);
+    };
     const paid = e.paid ? remap(e.paid) : e.paid;
     const splitters = (e.splitters || []).map(remap);
     let shares = e.shares;

@@ -68,3 +68,49 @@ describe('fillPartyKeys', () => {
     expect({ ...out, partyKeys: undefined }).toEqual({ ...e, partyKeys: undefined });
   });
 });
+
+import { balancesByIdentity } from './identity';
+
+describe('balancesByIdentity with member keys', () => {
+  const mkG = (o: Partial<Group>): Group => ({ id: 'g1', name: 'T', currency: '₹', ...o } as unknown as Group);
+
+  it('is unchanged when expense names already match the roster', () => {
+    const base = { members: ['Ravi', 'Asha'], memberIdentities: { Ravi: 'r@x.com', Asha: 'pid-a' } };
+    const e = [exp({ paid: 'Ravi', splitters: ['Ravi', 'Asha'], amt: 100 })];
+    const without = balancesByIdentity(mkG(base), e, false);
+    const withKeys = balancesByIdentity(
+      mkG({ ...base, memberKeys: { Ravi: 'k-r', Asha: 'k-a' } }),
+      [{ ...e[0], partyKeys: { Ravi: 'k-r', Asha: 'k-a' } }],
+      false,
+    );
+    expect(withKeys).toEqual(without);
+  });
+
+  it('follows the member after a rename/claim instead of creating a phantom', () => {
+    // Expense was written when the placeholder was "Raha"; she then claimed
+    // with a different Google name, so the roster now says "Raha Sharma".
+    const g = mkG({
+      members: ['Ravi', 'Raha Sharma'],
+      memberIdentities: { Ravi: 'r@x.com', 'Raha Sharma': 'raha.s@gmail.com' },
+      memberKeys: { Ravi: 'k-r', 'Raha Sharma': 'k-raha' },
+    });
+    const e = exp({ paid: 'Ravi', splitters: ['Ravi', 'Raha'], amt: 100, partyKeys: { Ravi: 'k-r', Raha: 'k-raha' } });
+    const tx = balancesByIdentity(g, [e], false);
+    expect(tx).toHaveLength(1);
+    expect(tx[0].from).toBe('Raha Sharma');
+    expect(tx[0].to).toBe('Ravi');
+    expect(tx[0].balances['₹']).toBeCloseTo(50);
+  });
+
+  it('keeps two same-named members apart when their emails differ', () => {
+    const g = mkG({
+      members: ['Me', 'Damini Gupta', 'Damini Gupta (Ss)'],
+      memberIdentities: { Me: 'me@x.com', 'Damini Gupta': 'dg@gmail.com', 'Damini Gupta (Ss)': 'ss@gmail.com' },
+      memberKeys: { Me: 'k-me', 'Damini Gupta': 'k-1', 'Damini Gupta (Ss)': 'k-2' },
+    });
+    const e = exp({ paid: 'Me', splitters: ['Me', 'Damini Gupta (Ss)'], amt: 100, partyKeys: { Me: 'k-me', 'Damini Gupta (Ss)': 'k-2' } });
+    const tx = balancesByIdentity(g, [e], false);
+    expect(tx).toHaveLength(1);
+    expect(tx[0].from).toBe('Damini Gupta (Ss)');
+  });
+});
