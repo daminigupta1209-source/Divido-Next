@@ -4645,7 +4645,7 @@ function App() {
                     // wrong row silently hijacks someone else's identity. One confirm()
                     // on the claimer's own screen catches the common accidental case.
                     const claimTarget = titleCaseName(p.name.replace(' (Left)', ''));
-                    if (!confirm(`Join "${linkRequestGroup.name}" as "${claimTarget}"?\n\nThis is how the group will see you. Only continue if you are ${claimTarget}.`)) {
+                    if (!confirm(`Are you "${claimTarget}"?\n\nOnly continue if you are ${claimTarget} — this links their expense history in "${linkRequestGroup.name}" to your account.`)) {
                       return;
                     }
                     setSubmittingLinkRequest(true);
