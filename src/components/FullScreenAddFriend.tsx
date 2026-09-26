@@ -57,6 +57,9 @@ export const FullScreenAddFriend: React.FC<FullScreenAddFriendProps> = ({
   // for feedback; dismissPerson() also persists it so it stays gone next time.
   const [hidden, setHidden] = useState<Set<string>>(new Set());
   const inputRef = useRef<HTMLInputElement>(null);
+  const emailRef = useRef<HTMLInputElement>(null);
+  const [emailErr, setEmailErr] = useState('');
+  const emailBoxRef = useRef<HTMLDivElement>(null);
 
   // Focus the input when the modal opens
   useEffect(() => {
@@ -110,18 +113,27 @@ export const FullScreenAddFriend: React.FC<FullScreenAddFriendProps> = ({
     return name;
   };
 
+  const showEmailError = (msg: string) => {
+    setEmailErr(msg);
+    emailBoxRef.current?.animate(
+      [0, -6, 6, -6, 6, 0].map((x) => ({ transform: `translateX(${x}px)` })),
+      { duration: 400, easing: 'ease' }
+    );
+    emailRef.current?.focus();
+  };
+
   // Returns an error message, or '' if the typed new person can be added.
   const newPersonError = (em: string): string => {
-    if (em && !isValidEmail(em)) return "That doesn't look like a valid email. Fix it or leave it blank.";
-    if (needsEmail && !em) return `You already have a ${qRaw}. To add a different ${qRaw}, enter their email.`;
+    if (em && !isValidEmail(em)) return 'Enter a valid email';
+    if (needsEmail && !em) return 'Email is required';
     if (em) {
       const e = norm(em);
       if (sameNameSugs.some((s) => s.email && norm(s.email) === e)) {
-        return `That's the ${qRaw} you already have — pick them below instead.`;
+        return `Same email as the ${qRaw} you already have`;
       }
       const groupPeople = Object.entries(existingEmails || {}).map(([name, email]) => ({ name, email }));
       const owner = [...groupPeople, ...suggestions, ...selectedFriends].find((s) => s.email && norm(s.email) === e);
-      if (owner) return `That email already belongs to ${owner.name}. Enter a different one.`;
+      if (owner) return `Already used by ${owner.name}`;
     }
     return '';
   };
@@ -133,7 +145,7 @@ export const FullScreenAddFriend: React.FC<FullScreenAddFriendProps> = ({
     onAddFriends([{ name: s.name, email: s.email, identity: s.identity || '' }]);
     setSelectedFriends([]);
     setAddVal('');
-    setEmailVal('');
+    setEmailVal(''); setEmailErr('');
   };
 
   const toggleSelect = (s: { name: string; email: string; identity?: string }) => {
@@ -148,12 +160,12 @@ export const FullScreenAddFriend: React.FC<FullScreenAddFriendProps> = ({
   const handleAddNew = () => {
     const em = emailVal.trim();
     const err = newPersonError(em);
-    if (err) { alert(err); return; }
+    if (err) { showEmailError(err); return; }
     const name = newPersonName(em);
     if (singleSelect) { commitOne({ name, email: em, identity: '' }); return; }
     toggleSelect({ name, email: em, identity: '' });
     setAddVal('');
-    setEmailVal('');
+    setEmailVal(''); setEmailErr('');
     setTimeout(() => inputRef.current?.focus(), 30);
   };
 
@@ -165,14 +177,14 @@ export const FullScreenAddFriend: React.FC<FullScreenAddFriendProps> = ({
     // instead of the inline '+' button, auto-commit what they typed.
     if (canAddNew && qRaw) {
       const err = newPersonError(em);
-      if (err) { alert(err); return; }
+      if (err) { showEmailError(err); return; }
       toCommit = [...toCommit, { name: newPersonName(em), email: em, identity: '' }];
     }
     
     onAddFriends(toCommit);
     setSelectedFriends([]);
     setAddVal('');
-    setEmailVal('');
+    setEmailVal(''); setEmailErr('');
   };
 
   return (
@@ -257,7 +269,7 @@ export const FullScreenAddFriend: React.FC<FullScreenAddFriendProps> = ({
           data-lpignore="true"
           placeholder="Search or type a new name"
           value={addVal}
-          onChange={(e) => setAddVal(e.target.value)}
+          onChange={(e) => { setAddVal(e.target.value); setEmailErr(''); }}
           onKeyDown={(e) => { 
             if (e.key === 'Escape') { onClose(); }
             if (e.key === 'Enter' && canAddNew) { e.preventDefault(); handleAddNew(); }
@@ -308,13 +320,14 @@ export const FullScreenAddFriend: React.FC<FullScreenAddFriendProps> = ({
 
       {/* Email Box directly under name box if canAddNew */}
       {canAddNew && (
-        <div 
+        <div
+          ref={emailBoxRef}
           style={{
             display: 'flex',
             alignItems: 'center',
             height: '50px',
             borderRadius: '12px',
-            border: '1.5px solid #E2E8F0',
+            border: `1.5px solid ${emailErr ? '#EF4444' : '#E2E8F0'}`,
             background: 'var(--w)',
             padding: '0 16px',
             boxSizing: 'border-box',
@@ -331,7 +344,8 @@ export const FullScreenAddFriend: React.FC<FullScreenAddFriendProps> = ({
             data-lpignore="true"
             placeholder={needsEmail ? 'Email (required)' : 'Email (optional)'}
             value={emailVal}
-            onChange={(e) => setEmailVal(e.target.value)}
+            ref={emailRef}
+            onChange={(e) => { setEmailVal(e.target.value); if (emailErr) setEmailErr(''); }}
             onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); handleAddNew(); } }}
             style={{
               flex: 1,
@@ -350,13 +364,17 @@ export const FullScreenAddFriend: React.FC<FullScreenAddFriendProps> = ({
         </div>
       )}
       {canAddNew && (
-        inGroupClash ? (
+        emailErr ? (
+          <p style={{ margin: '-8px 4px 0', fontSize: '12px', color: '#DC2626', fontWeight: 600, lineHeight: 1.35 }}>
+            {emailErr}
+          </p>
+        ) : inGroupClash ? (
           <p style={{ margin: '-8px 4px 0', fontSize: '11px', color: '#B45309', lineHeight: 1.35 }}>
-            {qRaw} is already in this group. To add a different {qRaw}, enter their email. They'll show as “{emailVal.includes('@') ? newPersonName(emailVal.trim()) : `${qRaw} (…)`}” until they join.
+            Already in this group. Add their email to add another {qRaw}.
           </p>
         ) : needsEmail ? (
           <p style={{ margin: '-8px 4px 0', fontSize: '11px', color: '#B45309', lineHeight: 1.35 }}>
-            You already have a {qRaw} below. Adding a different {qRaw}? Enter their email to tell them apart.
+            Already in your list. Add their email to add another {qRaw}.
           </p>
         ) : (
           <p style={{ margin: '-8px 4px 0', fontSize: '11px', color: '#94A3B8', lineHeight: 1.35 }}>
@@ -409,7 +427,7 @@ export const FullScreenAddFriend: React.FC<FullScreenAddFriendProps> = ({
                     // Picking someone from the list finishes that search — clear it so
                     // the "add as new" name + email fields (meant for a typed new
                     // person) don't linger as if they belonged to the pick.
-                    if (picking) { setAddVal(''); setEmailVal(''); }
+                    if (picking) { setAddVal(''); setEmailVal(''); setEmailErr(''); }
                   }}
                   style={{ display: 'flex', alignItems: 'center', gap: '12px', width: '100%', textAlign: 'left', background: on ? '#ECFDF5' : 'var(--w)', border: `1.5px solid ${on ? '#A7F3D0' : '#F1F5F9'}`, borderRadius: '14px', padding: '12px 14px', cursor: 'pointer', transition: '0.15s all ease' }}
                 >
