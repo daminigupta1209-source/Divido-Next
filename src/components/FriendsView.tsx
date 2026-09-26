@@ -4,7 +4,7 @@ import { BalanceDisplay } from './BalanceDisplay';
 import { Group, Expense, UserMetadata, GlobalSettleData } from '../lib/types';
 import { simplifyMultiCurrencyDebts, computeRawPairwiseTransactions } from '../lib/calculations';
 import { asyncBatchComputeGroups } from '../lib/workerHelper';
-import { getPersonKey, resolveSelfKey, buildNameEmailResolver, findDuplicatePeople, isValidEmail, type DuplicateEntry, type DuplicatePerson } from '../lib/identity';
+import { getPersonKey, resolveSelfKey, toIdentitySpace, buildNameEmailResolver, findDuplicatePeople, isValidEmail, type DuplicateEntry, type DuplicatePerson } from '../lib/identity';
 import { worldCurrencies, formatExactAmount, formatCompactAmount } from '../lib/utils';
 import { SearchableCurrencyPicker } from './SearchableCurrencyPicker';
 import { StyledDropdown } from './StyledDropdown';
@@ -271,7 +271,6 @@ export const FriendsView: React.FC<FriendsViewProps> = ({
       setIsCalculatingFriends(true);
       const masterBal: Record<string, Record<string, number>> = {};
       const idMeta: Record<string, { name: string; groups: Set<string> }> = {};
-      const resolveId = (g: Group, nm: string) => getPersonKey(g, nm);
       const bumpBal = (id: string, name: string, groupName: string | null, curr: string, delta: number) => {
         if (!masterBal[id]) masterBal[id] = {};
         masterBal[id][curr] = (masterBal[id][curr] || 0) + delta;
@@ -280,78 +279,66 @@ export const FriendsView: React.FC<FriendsViewProps> = ({
       };
       const allSharedMembers = new Set<string>();
 
-      // Prepare batch request
-      const groupsData = groups.map((g) => {
+      // Prepare batch request. Each group runs in identity space: every name on
+      // an expense resolves through its recorded member_key (then the roster),
+      // so renamed / re-claimed people keep one ledger — the same path the
+      // settle sheet uses, so the two can't disagree.
+      let myEmail = userEmail || '';
+      if (!myEmail) { try { myEmail = localStorage.getItem('divido_email') || ''; } catch { /* ignore */ } }
+      let fullName = ''; try { fullName = localStorage.getItem('divido_username') || ''; } catch { /* ignore */ }
+      const prep = groups.map((g) => {
         const groupExps = expenses.filter((e) => !e.isDeleted && String(e.gId) === String(g.id));
         let myG = me;
-        try { const claim = localStorage.getItem(`divido_identity_${g.id}`); if (claim) myG = claim; } catch { /* ignore */ }
-        const effectiveMembers = Array.from(new Set([
-          myG,
-          ...groupExps.reduce((acc, e) => {
-            if (e.paid) acc.add(e.paid);
-            if (Array.isArray(e.splitters)) e.splitters.forEach((s) => acc.add(s));
-            return acc;
-          }, new Set<string>())
-        ]));
-        return {
-          type: (g.id !== 'STANDALONE' && !!g.simplifyDebts) ? 'simplify' as const : 'raw' as const,
-          members: effectiveMembers,
-          expenses: groupExps,
-          defaultCurrency: g.currency || '₹',
-          gId: String(g.id)
-        };
-      });
-
-      const batchResults = await asyncBatchComputeGroups(groupsData);
-
-      groups.forEach((g) => {
-        const groupExps = expenses.filter((e) => !e.isDeleted && String(e.gId) === String(g.id));
-        let myG = me;
-        try { const claim = localStorage.getItem(`divido_identity_${g.id}`); if (claim) myG = claim; } catch { /* ignore */ }
+        let claimName = ''; try { claimName = localStorage.getItem(`divido_identity_${g.id}`) || ''; } catch { /* ignore */ }
+        if (claimName) myG = claimName;
         // Identify "me" in THIS group robustly (see resolveSelfKey): the global
         // `me` is only the first name, but the user may be enrolled under their
         // full name in some groups, so match by the stable email when available
         // and fall back through full name / first name / per-group claim. Getting
         // this wrong silently drops the whole group from All balances.
-        let myEmail = userEmail || '';
-        if (!myEmail) { try { myEmail = localStorage.getItem('divido_email') || ''; } catch { /* ignore */ } }
-        let fullName = ''; try { fullName = localStorage.getItem('divido_username') || ''; } catch { /* ignore */ }
-        let claimName = ''; try { claimName = localStorage.getItem(`divido_identity_${g.id}`) || ''; } catch { /* ignore */ }
         const myKey = resolveSelfKey(g, { email: myEmail, fullName, firstName: me, claim: claimName });
-
+        const { expenses: keyedExps, keyToName } = toIdentitySpace(g, groupExps);
         const effectiveMembers = Array.from(new Set([
-          myG,
-          ...groupExps.reduce((acc, e) => {
+          myKey,
+          ...keyedExps.reduce((acc, e) => {
             if (e.paid) acc.add(e.paid);
-            if (Array.isArray(e.splitters)) {
-              e.splitters.forEach((s) => acc.add(s));
-            }
+            if (Array.isArray(e.splitters)) e.splitters.forEach((s) => acc.add(s));
             return acc;
-          }, new Set<string>())
+          }, new Set<string>()),
         ]));
+        return { g, myG, myKey, keyedExps, keyToName, effectiveMembers };
+      });
 
-        effectiveMembers.forEach((m) => { if (getPersonKey(g, m) !== myKey) allSharedMembers.add(m); });
+      const groupsData = prep.map(({ g, keyedExps, effectiveMembers }) => ({
+        type: (g.id !== 'STANDALONE' && !!g.simplifyDebts) ? 'simplify' as const : 'raw' as const,
+        members: effectiveMembers,
+        expenses: keyedExps,
+        defaultCurrency: g.currency || '₹',
+        gId: String(g.id)
+      }));
+
+      const batchResults = await asyncBatchComputeGroups(groupsData);
+
+      prep.forEach(({ g, myG, myKey, keyToName, effectiveMembers }) => {
+        const nameOf = (k: string) => keyToName[k] ?? (k === myKey ? myG : k);
+        effectiveMembers.forEach((k) => { if (k !== myKey) allSharedMembers.add(nameOf(k)); });
         (g.members || []).forEach((m) => {
           const name = m.replace(' (Left)', '');
           if (name && getPersonKey(g, name) !== myKey) allSharedMembers.add(name);
         });
 
         const gLabel = g.isDirect ? 'Non-Group' : g.name;
-        
+
         const groupTransactions = batchResults[String(g.id)] || [];
 
         groupTransactions.forEach((t) => {
-          if (getPersonKey(g, t.from) === myKey) {
-            const friend = t.to;
-            const id = resolveId(g, friend);
+          if (t.from === myKey) {
             Object.entries(t.balances).forEach(([curr, val]) => {
-              bumpBal(id, friend, gLabel, curr, -val);
+              bumpBal(t.to, nameOf(t.to), gLabel, curr, -val);
             });
-          } else if (getPersonKey(g, t.to) === myKey) {
-            const friend = t.from;
-            const id = resolveId(g, friend);
+          } else if (t.to === myKey) {
             Object.entries(t.balances).forEach(([curr, val]) => {
-              bumpBal(id, friend, gLabel, curr, val);
+              bumpBal(t.from, nameOf(t.from), gLabel, curr, val);
             });
           }
         });

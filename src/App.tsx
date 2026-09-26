@@ -1820,9 +1820,13 @@ function App() {
         // direction and totals). effectiveMembers mirrors FriendsView exactly: my
         // per-group name plus everyone who appears in an expense.
         void members;
+        // Run the engine in identity space: each name on an expense resolves
+        // through its recorded member_key (then the roster), so renamed or
+        // re-claimed people keep one ledger. Same path as balancesByIdentity.
+        const { expenses: keyedExps, keyToName } = toIdentitySpace(g, groupExps);
         const effectiveMembers = Array.from(new Set([
-          myG,
-          ...groupExps.reduce((acc, e) => {
+          myKey,
+          ...keyedExps.reduce((acc, e) => {
             if (e.paid) acc.add(e.paid);
             if (Array.isArray(e.splitters)) e.splitters.forEach((s) => acc.add(s));
             return acc;
@@ -1830,26 +1834,23 @@ function App() {
         ]));
         const useSimplify = g.id !== 'STANDALONE' && !!g.simplifyDebts;
         const groupPlan = useSimplify
-          ? simplifyMultiCurrencyDebts(effectiveMembers, groupExps, g.currency || '₹')
-          : computeRawPairwiseTransactions(effectiveMembers, groupExps, g.currency || '₹');
+          ? simplifyMultiCurrencyDebts(effectiveMembers, keyedExps, g.currency || '₹')
+          : computeRawPairwiseTransactions(effectiveMembers, keyedExps, g.currency || '₹');
+        const nameOf = (k: string) => keyToName[k] ?? (k === myKey ? myG : k);
 
         // 2. Find transactions involving me and m
-        const relevantExps = groupExps.filter((e) => {
-          const splitters =
-            e.splitters ||
-            (isStandalone ? Array.from(new Set(e.splitters || [])) : g.members) ||
-            [];
-          const paidKey = getPersonKey(g, e.paid);
-          const splitterKeys = splitters.map((s) => getPersonKey(g, s));
+        const relevantExps = groupExps.filter((_, i) => {
+          const ke = keyedExps[i];
+          const splitterKeys = ke.splitters || [];
           return (
-            (paidKey === myKey && splitterKeys.includes(mKey)) ||
-            (paidKey === mKey && splitterKeys.includes(myKey))
+            (ke.paid === myKey && splitterKeys.includes(mKey)) ||
+            (ke.paid === mKey && splitterKeys.includes(myKey))
           );
         });
 
         groupPlan.forEach((t) => {
-          const fromKey = getPersonKey(g, t.from);
-          const toKey = getPersonKey(g, t.to);
+          const fromKey = t.from;
+          const toKey = t.to;
           const involvesUs = (fromKey === myKey && toKey === mKey) || (fromKey === mKey && toKey === myKey);
 
           if (involvesUs) {
@@ -1857,12 +1858,12 @@ function App() {
               const absVal = Math.abs(val);
               if (absVal > 0.01) {
                 // val > 0: money flows t.from -> t.to; val < 0: the reverse direction for this currency
-                const payer = val > 0 ? t.from : t.to;
-                const receiver = val > 0 ? t.to : t.from;
+                const payer = nameOf(val > 0 ? t.from : t.to);
+                const receiver = nameOf(val > 0 ? t.to : t.from);
                 // Whether I'M the payer must be decided by IDENTITY, not a name
                 // match against the flat global `me` — my per-group name can
                 // differ from it, which silently flipped every line's direction.
-                const iAmPayer = getPersonKey(g, payer) === myKey;
+                const iAmPayer = (val > 0 ? t.from : t.to) === myKey;
 
                 const currencyExps = relevantExps.filter(
                   (e) => (e.currency || g.currency || '₹') === curr
@@ -3068,12 +3069,17 @@ function App() {
       expensesByGroup[gId].push(e);
     });
 
-    const batchData = groups.map(g => ({
-      members: g.members || [],
-      expenses: expensesByGroup[String(g.id)] || [],
-      defaultCurrency: g.currency || '₹',
-      gId: String(g.id)
-    }));
+    // Per-group net balances in identity space (names resolved through each
+    // expense's recorded member_key, then the roster), keyed by person key.
+    const batchData = groups.map(g => {
+      const { memberKeys, expenses: keyed } = toIdentitySpace(g, expensesByGroup[String(g.id)] || []);
+      return {
+        members: memberKeys,
+        expenses: keyed,
+        defaultCurrency: g.currency || '₹',
+        gId: String(g.id)
+      };
+    });
 
     // Add standalone
     batchData.push({
@@ -3102,23 +3108,10 @@ function App() {
     const g = gId === 'STANDALONE' ? null : groups.find((x) => String(x.id) === gId);
     if (!g) return groupBals[memberName] || {};
 
-    // Identity-aware read: a person can appear under more than one display name
-    // in the same group — most commonly their live name in expenses ("Ram") and
-    // a "(Left)" roster entry ("Ram (Left)"). Those are stored as separate
-    // name-buckets, but they are ONE person. Sum every bucket whose stable key
-    // matches the requested member's key. This is non-destructive (the numbers
-    // are computed exactly as before; we only merge at read time) and falls back
-    // to today's behaviour when no identity links the names — each expense
-    // attributes to exactly one name-bucket, so nothing is double-counted.
-    const targetKey = getPersonKey(g, memberName);
-    const out: Record<string, number> = {};
-    let matched = false;
-    Object.entries(groupBals).forEach(([nm, byCurr]) => {
-      if (getPersonKey(g, nm) !== targetKey) return;
-      matched = true;
-      Object.entries(byCurr).forEach(([c, v]) => { out[c] = (out[c] || 0) + v; });
-    });
-    return matched ? out : (groupBals[memberName] || {});
+    // Balances are computed per person KEY (see batchData above), so every
+    // display name of one person ("Ram", "Ram (Left)", a pre-rename name) is
+    // already one bucket. Resolve the requested name to its key and read it.
+    return groupBals[getPersonKey(g, memberName)] || groupBals[memberName] || {};
   }, [allGroupBalances, groups]);
 
   // ── "Same person?" prompt (Step 4b) ────────────────────────────────────────
