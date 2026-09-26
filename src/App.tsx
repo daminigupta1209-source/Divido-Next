@@ -321,6 +321,11 @@ function App() {
   // Serializes the invite-resolution effect so overlapping runs (it re-fires on
   // every groups update) don't race into a half-loaded/empty group screen.
   const joinInFlightRef = useRef(false);
+  // Set while a claim is being written / after it succeeds, so the invite
+  // resolver (which re-runs on every groups update) can't re-show the claim
+  // list over the group the user was just taken into.
+  const claimInProgressRef = useRef(false);
+  const lastClaimedGroupRef = useRef<string | null>(null);
   const [tempName, setTempName] = useState<string>(() => {
     const saved = localStorage.getItem('divido_username');
     return saved && saved !== 'You' && saved !== 'undefined' ? saved : '';
@@ -2396,7 +2401,7 @@ function App() {
       // so without a lock several async runs overlap and race — the joiner saw
       // "first click fails, second shows an empty group, third works". Serialize:
       // only one resolution runs at a time; later groups updates retry after it.
-      if (joinInFlightRef.current) return;
+      if (joinInFlightRef.current || claimInProgressRef.current) return;
       joinInFlightRef.current = true;
       try {
         const urlParams = new URLSearchParams(window.location.search);
@@ -2434,7 +2439,11 @@ function App() {
         // the direct-admit branches, and on claim/cancel.
         if (fromUrl) {
           try {
-            localStorage.setItem('divido_pending_join', JSON.stringify({ groupId: joinGroupId, ts: Date.now() }));
+            // Keep a name picked before the Google redirect (the redirect URL
+            // carries ?joinGroupId back, so this runs again on return).
+            const prevSaved = JSON.parse(localStorage.getItem('divido_pending_join') || 'null');
+            const keepName = prevSaved && String(prevSaved.groupId) === String(joinGroupId) ? prevSaved.placeholderName : undefined;
+            localStorage.setItem('divido_pending_join', JSON.stringify({ groupId: joinGroupId, ts: Date.now(), ...(keepName ? { placeholderName: keepName } : {}) }));
           } catch { /* storage full — non-fatal */ }
         }
 
@@ -2675,10 +2684,23 @@ function App() {
         // Google names often arrive ALL CAPS ("VANDANA GUPTA"); normalize to
         // Title Case so they don't look shouty next to normally-cased names.
         const googleName = rawGoogleName.toLowerCase().replace(/\b\w/g, (c: string) => c.toUpperCase());
+        // A claim finished (or started) while this run was awaiting — don't
+        // pop the name list back up over the group they were just taken into.
+        if (claimInProgressRef.current || lastClaimedGroupRef.current === String(joinGroupId)) return;
         if (googleName) setJoinNewName(googleName);
         setLinkRequestRejoinMode(false);
         setLinkRequestGroup(groupData);
         setLinkRequestPlaceholders(placeholders);
+        // Returning from the Google sign-in the claim triggered: they already
+        // picked a name before signing in, so reopen straight on that name's
+        // confirm step (now showing their real Gmail) instead of the list.
+        try {
+          const saved = JSON.parse(localStorage.getItem('divido_pending_join') || 'null');
+          const resumed = myEmail && saved?.placeholderName
+            ? placeholders.find((m: any) => m.name === saved.placeholderName)
+            : null;
+          if (resumed) setClaimConfirmTarget(resumed);
+        } catch { /* malformed saved intent — just show the list */ }
       } catch (err) {
         console.error('Landing error:', err);
       } finally {
@@ -3506,6 +3528,7 @@ function App() {
   // confirm() could be replaced with a styled in-app confirmation card.
   const runClaimPlaceholder = async (p: any) => {
     setSubmittingLinkRequest(true);
+    claimInProgressRef.current = true;
     try {
       const { data: { session } } = await supabase.auth.getSession();
       const myEmail = session?.user?.email || (localStorage.getItem('divido_e2e_testing') === 'true' ? localStorage.getItem('divido_mock_email') || 'e2e-test-guest@divido.app' : null);
@@ -3712,11 +3735,13 @@ function App() {
       setSelectedId((linkRequestGroup as any).is_direct || (linkRequestGroup as any).isDirect ? 'STANDALONE' : linkRequestGroup.id);
       setView('detail');
       setShowFriendsList(false); // Clear any lingering overlay state
+      lastClaimedGroupRef.current = String(linkRequestGroup.id);
       setLinkRequestGroup(null);
       localStorage.removeItem('divido_pending_join');
     } catch (err) {
       console.error(err);
     } finally {
+      claimInProgressRef.current = false;
       setSubmittingLinkRequest(false);
       const cleanUrl = window.location.protocol + '//' + window.location.host + window.location.pathname;
       // Seed a HOME base entry (not an empty one) so a back-swipe from the
