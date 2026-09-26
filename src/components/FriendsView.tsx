@@ -4,7 +4,7 @@ import { BalanceDisplay } from './BalanceDisplay';
 import { Group, Expense, UserMetadata, GlobalSettleData } from '../lib/types';
 import { simplifyMultiCurrencyDebts, computeRawPairwiseTransactions } from '../lib/calculations';
 import { asyncBatchComputeGroups } from '../lib/workerHelper';
-import { getPersonKey, resolveSelfKey, toIdentitySpace, buildNameEmailResolver, findDuplicatePeople, isValidEmail, type DuplicateEntry, type DuplicatePerson } from '../lib/identity';
+import { getPersonKey, resolveSelfKey, toIdentitySpace, withoutEmailTag, buildNameEmailResolver, findDuplicatePeople, isValidEmail, type DuplicateEntry, type DuplicatePerson } from '../lib/identity';
 import { worldCurrencies, formatExactAmount, formatCompactAmount } from '../lib/utils';
 import { SearchableCurrencyPicker } from './SearchableCurrencyPicker';
 import { StyledDropdown } from './StyledDropdown';
@@ -320,7 +320,7 @@ export const FriendsView: React.FC<FriendsViewProps> = ({
       const batchResults = await asyncBatchComputeGroups(groupsData);
 
       prep.forEach(({ g, myG, myKey, keyToName, effectiveMembers }) => {
-        const nameOf = (k: string) => keyToName[k] ?? (k === myKey ? myG : k);
+        const nameOf = (k: string) => withoutEmailTag(g, keyToName[k] ?? (k === myKey ? myG : k));
         effectiveMembers.forEach((k) => { if (k !== myKey) allSharedMembers.add(nameOf(k)); });
         (g.members || []).forEach((m) => {
           const name = m.replace(' (Left)', '');

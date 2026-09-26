@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Group, Expense, UserMetadata } from '../../lib/types';
 import { BalanceActionCard } from '../BalanceActionCard';
-import { buildPeopleSuggestions, balancesByIdentity, getPersonKey, isValidEmail, buildNameEmailResolver, upiFor } from '../../lib/identity';
+import { buildPeopleSuggestions, balancesByIdentity, getPersonKey, isValidEmail, buildNameEmailResolver, upiFor, withoutEmailTag } from '../../lib/identity';
 import { FullScreenAddFriend } from '../FullScreenAddFriend';
 
 interface GroupMemberListProps {
@@ -310,7 +310,7 @@ export const GroupMemberList: React.FC<GroupMemberListProps> = ({
   // Two-letter initials for a member's avatar (first + last word, else first two
   // letters of a single word).
   const initialsFor = (name: string): string => {
-    const clean = name.replace(/\s*\(me\)$/i, '').replace(/\s*\(Left\)$/i, '').trim();
+    const clean = withoutEmailTag(selectedGroup, name).replace(/\s*\(me\)$/i, '').replace(/\s*\(Left\)$/i, '').trim();
     const parts = clean.split(/\s+/).filter(Boolean);
     if (parts.length === 0) return '?';
     const a = parts[0][0] || '';
@@ -710,7 +710,7 @@ export const GroupMemberList: React.FC<GroupMemberListProps> = ({
                           setInlineRenameVal(m);
                         }}
                       >
-                        {checkIsMe(m) ? 'You' : m.replace(/\s*\(me\)$/i, '')} {checkIsAdmin(m) && <span style={{ fontSize: '10px', fontWeight: 600, color: '#7C3AED', background: '#F5F3FF', padding: '1px 6px', borderRadius: '4px', marginLeft: '6px' }}>Admin</span>}
+                        {checkIsMe(m) ? 'You' : withoutEmailTag(selectedGroup, m.replace(/\s*\(me\)$/i, ''))} {checkIsAdmin(m) && <span style={{ fontSize: '10px', fontWeight: 600, color: '#7C3AED', background: '#F5F3FF', padding: '1px 6px', borderRadius: '4px', marginLeft: '6px' }}>Admin</span>}
                       </span>
                       {emailFor(m) && (
                         <span style={{ fontSize: '11px', color: '#94A3B8', fontWeight: 500, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
@@ -841,7 +841,7 @@ export const GroupMemberList: React.FC<GroupMemberListProps> = ({
                       }}
                       onClick={(e) => { e.stopPropagation(); openPendingEditor(m); }}
                     >
-                      {checkIsMe(m) ? 'You' : m.replace(/\s*\(me\)$/i, '')} {checkIsAdmin(m) && <span style={{ fontSize: '10px', fontWeight: 600, color: '#7C3AED', background: '#F5F3FF', padding: '1px 6px', borderRadius: '4px', marginLeft: '6px' }}>Admin</span>}
+                      {checkIsMe(m) ? 'You' : withoutEmailTag(selectedGroup, m.replace(/\s*\(me\)$/i, ''))} {checkIsAdmin(m) && <span style={{ fontSize: '10px', fontWeight: 600, color: '#7C3AED', background: '#F5F3FF', padding: '1px 6px', borderRadius: '4px', marginLeft: '6px' }}>Admin</span>}
                     </span>
                     {(emailFor(m) || emailAnywhere(m)) ? (
                       <span style={{ fontSize: '11px', color: '#94A3B8', fontWeight: 500, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{emailFor(m) || emailAnywhere(m)}</span>
@@ -1060,7 +1060,7 @@ export const GroupMemberList: React.FC<GroupMemberListProps> = ({
                     <Avatar name={m} status="left" />
                     <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', gap: '2px' }}>
                       <span style={{ fontWeight: 'bold', fontSize: '14px', color: '#64748B', textDecoration: 'line-through' }}>
-                        {checkIsMe(cleanName) ? 'You' : cleanName} {checkIsAdmin(cleanName) && <span style={{ fontSize: '10px', fontWeight: 600, color: '#7C3AED', background: '#F5F3FF', padding: '1px 6px', borderRadius: '4px', marginLeft: '6px' }}>Admin</span>}
+                        {checkIsMe(cleanName) ? 'You' : withoutEmailTag(selectedGroup, m).replace(/\s*\(Left\)$/i, '')} {checkIsAdmin(cleanName) && <span style={{ fontSize: '10px', fontWeight: 600, color: '#7C3AED', background: '#F5F3FF', padding: '1px 6px', borderRadius: '4px', marginLeft: '6px' }}>Admin</span>}
                       </span>
                       {(emailFor(m) || emailAnywhere(cleanName)) && (
                         <span style={{ fontSize: '11px', color: '#94A3B8', fontWeight: 500, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>

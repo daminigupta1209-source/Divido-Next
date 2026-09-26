@@ -525,3 +525,33 @@ export const fillPartyKeys = (e: Expense, group: Group | undefined | null): Expe
   }
   return added ? { ...e, partyKeys: added } : null;
 };
+
+// A same-named person added with an email is stored as "Name (emailpart)" so
+// expenses (which still carry names) can't mix the two people up. That tag is
+// bookkeeping, not part of their name: return the name without it wherever the
+// email is shown alongside to tell them apart. Only strips a tag that matches
+// the member's own email, so a real name like "Ram (Delhi)" is left alone.
+export const withoutEmailTag = (group: Group | undefined | null, name: string): string => {
+  if (!name) return name;
+  const left = /\s*\(Left\)\s*$/i.test(name);
+  const core = name.replace(/\s*\(Left\)\s*$/i, '');
+  const m = /^(.*\S)\s+\(([^()]+)\)$/.exec(core);
+  if (!m) return name;
+  const email = String(getPersonKey(group, name) || '');
+  if (!email.includes('@')) return name;
+  if (email.split('@')[0].toLowerCase() !== m[2].trim().toLowerCase()) return name;
+  return left ? `${m[1]} (Left)` : m[1];
+};
+
+// Label for a person in a picker (paid by / split with). Hides the auto email
+// tag; when two members would then look identical, adds the email so they can
+// still be told apart ("Damini Gupta · ss@gmail.com").
+export const pickerLabel = (group: Group | undefined | null, name: string, roster: string[]): string => {
+  const shown = withoutEmailTag(group, name);
+  const base = (s: string) => withoutEmailTag(group, s).replace(/\s*\(Left\)\s*$/i, '').trim().toLowerCase();
+  const b = base(name);
+  const dup = (roster || []).some((o) => o !== name && o.replace(/\s*\(Left\)\s*$/i, '') !== name && base(o) === b);
+  if (!dup) return shown;
+  const id = String(getPersonKey(group, name) || '');
+  return id.includes('@') ? `${shown} · ${id}` : shown;
+};

@@ -114,3 +114,34 @@ describe('balancesByIdentity with member keys', () => {
     expect(tx[0].from).toBe('Damini Gupta (Ss)');
   });
 });
+
+import { withoutEmailTag } from './identity';
+
+describe('withoutEmailTag', () => {
+  const g = { id: 'g1', name: 'T', currency: '₹', members: [], memberIdentities: {
+    'Damini Gupta (Ss)': 'ss@gmail.com', 'Ram (Delhi)': 'ram@x.com', 'Asha (Dg.work) (Left)': 'dg.work@gmail.com',
+  } } as unknown as Group;
+  it('hides an auto tag that matches the member email (any case)', () => {
+    expect(withoutEmailTag(g, 'Damini Gupta (Ss)')).toBe('Damini Gupta');
+    expect(withoutEmailTag(g, 'Asha (Dg.work) (Left)')).toBe('Asha (Left)');
+  });
+  it('keeps real brackets and names without a matching email', () => {
+    expect(withoutEmailTag(g, 'Ram (Delhi)')).toBe('Ram (Delhi)');
+    expect(withoutEmailTag(g, 'Stranger (Ss)')).toBe('Stranger (Ss)');
+    expect(withoutEmailTag(g, 'Ravi')).toBe('Ravi');
+  });
+});
+
+import { pickerLabel } from './identity';
+
+describe('pickerLabel', () => {
+  const g = { id: 'g1', name: 'T', currency: '₹', members: [], memberIdentities: {
+    'Damini Gupta': 'dg@gmail.com', 'Damini Gupta (Ss)': 'ss@gmail.com', Ravi: 'pid-r',
+  } } as unknown as Group;
+  const roster = ['Damini Gupta', 'Damini Gupta (Ss)', 'Ravi'];
+  it('shows email for look-alike names, plain name otherwise', () => {
+    expect(pickerLabel(g, 'Damini Gupta (Ss)', roster)).toBe('Damini Gupta · ss@gmail.com');
+    expect(pickerLabel(g, 'Damini Gupta', roster)).toBe('Damini Gupta · dg@gmail.com');
+    expect(pickerLabel(g, 'Ravi', roster)).toBe('Ravi');
+  });
+});

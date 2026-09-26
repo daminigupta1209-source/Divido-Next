@@ -17,7 +17,7 @@ import { useVoiceRecognition } from '../hooks/useVoiceRecognition';
 import { StyledDropdown } from './StyledDropdown';
 import { CameraCaptureModal } from './CameraCaptureModal';
 import { FullScreenAddFriend } from './FullScreenAddFriend';
-import { buildPeopleSuggestions } from '../lib/identity';
+import { buildPeopleSuggestions, pickerLabel } from '../lib/identity';
 
 // Borderless trigger — the wrapping div already provides the pill/border/shadow.
 const emInlineBtnStyle: React.CSSProperties = { border: '1.5px solid #EAEFF4', background: 'var(--w, #fff)', boxShadow: '0 1px 3px rgba(0,0,0,0.03)', borderRadius: '19px', height: '38px', width: '100%', fontSize: '12px', fontWeight: 600, color: '#1E293B', padding: '0 16px' };
@@ -1481,7 +1481,7 @@ export const ExpenseModal: React.FC<ExpenseModalProps> = ({
                   buttonStyle={emInlineBtnStyle}
                   options={payerOptions.map((option) => ({
                     value: option.replace(' (Left)', ''),
-                    label: option === me ? (userName === 'You' ? 'You' : `You (${userName})`) : option,
+                    label: option === me ? (userName === 'You' ? 'You' : `You (${userName})`) : pickerLabel(selectedGroup, option, payerOptions),
                   }))}
                 />
               </div>
@@ -1605,7 +1605,7 @@ export const ExpenseModal: React.FC<ExpenseModalProps> = ({
                   : splitMode === 'Percentage'
                   ? ((parseFloat(amt) || 0) * (shares[cleanMember] || 0)) / 100
                   : shares[cleanMember] || 0;
-                const displayName = member === me ? (userName === 'You' ? 'You' : `You (${userName})`) : member;
+                const displayName = member === me ? (userName === 'You' ? 'You' : `You (${userName})`) : pickerLabel(selectedGroup, member, friendsToSelect);
                 return (
                   <div
                     key={member}
