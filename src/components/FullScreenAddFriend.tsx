@@ -18,7 +18,23 @@ interface FullScreenAddFriendProps {
   // several friends, no separate "Add N friends" confirm step.
   singleSelect?: boolean;
   title?: string;
+  // Profile photos keyed by lowercase email (shared member_avatars table).
+  memberAvatars?: Record<string, string>;
 }
+
+const Avatar: React.FC<{ name: string; email?: string; avatars?: Record<string, string>; size: number; bg: string; color: string }> = ({ name, email, avatars, size, bg, color }) => {
+  const url = (email && avatars?.[email.trim().toLowerCase()]) || '';
+  const [broken, setBroken] = useState(false);
+  const box: React.CSSProperties = { width: `${size}px`, height: `${size}px`, borderRadius: '50%', flexShrink: 0, overflow: 'hidden' };
+  if (url && !broken) {
+    return <img src={url} alt="" referrerPolicy="no-referrer" onError={() => setBroken(true)} style={{ ...box, objectFit: 'cover' }} />;
+  }
+  return (
+    <span style={{ ...box, background: bg, color, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: `${Math.round(size * 0.37)}px`, fontWeight: 700 }}>
+      {name.charAt(0).toUpperCase()}
+    </span>
+  );
+};
 
 export const FullScreenAddFriend: React.FC<FullScreenAddFriendProps> = ({
   isOpen,
@@ -27,7 +43,8 @@ export const FullScreenAddFriend: React.FC<FullScreenAddFriendProps> = ({
   existingMembers,
   suggestions,
   singleSelect = false,
-  title = 'Add friend'
+  title = 'Add friend',
+  memberAvatars,
 }) => {
   const [addVal, setAddVal] = useState('');
   const [emailVal, setEmailVal] = useState('');
@@ -64,9 +81,24 @@ export const FullScreenAddFriend: React.FC<FullScreenAddFriendProps> = ({
   const existsInGroup = existingMembers.some(
     (m) => m.replace(/\s*\(Left\)$/i, '').trim().toLowerCase() === q
   );
-  const exactSug = suggestions.some((s) => s.name.toLowerCase() === q);
+  // A same-named person from another group is in recents. A DIFFERENT person
+  // with that name can still be added, but only with an email — that's what
+  // keeps the two apart everywhere. (Two same names inside ONE group stay
+  // blocked: expenses store people by name, so they'd merge in balances.)
+  const sameNameSugs = suggestions.filter((s) => s.name.toLowerCase() === q);
+  const needsEmail = sameNameSugs.length > 0;
   const alreadyPicked = selectedFriends.some((f) => f.name.toLowerCase() === q);
-  const canAddNew = qRaw.length > 0 && !existsInGroup && !exactSug && !alreadyPicked;
+  const canAddNew = qRaw.length > 0 && !existsInGroup && !alreadyPicked;
+
+  // Returns an error message, or '' if the typed new person can be added.
+  const newPersonError = (em: string): string => {
+    if (em && !isValidEmail(em)) return "That doesn't look like a valid email. Fix it or leave it blank.";
+    if (needsEmail && !em) return `You already have a ${qRaw} in your list. To add a different ${qRaw}, add their email.`;
+    if (needsEmail && sameNameSugs.some((s) => s.email && s.email.trim().toLowerCase() === em.toLowerCase())) {
+      return `That's the ${qRaw} already in your list — pick them below instead.`;
+    }
+    return '';
+  };
 
   const selKey = (s: { name: string; identity?: string }) => (s.identity || s.name).toLowerCase();
   const isSelected = (s: { name: string; identity?: string }) => selectedFriends.some((f) => selKey(f) === selKey(s));
@@ -89,10 +121,8 @@ export const FullScreenAddFriend: React.FC<FullScreenAddFriendProps> = ({
 
   const handleAddNew = () => {
     const em = emailVal.trim();
-    if (em && !isValidEmail(em)) {
-      alert("That doesn't look like a valid email. Leave it blank or fix it.");
-      return;
-    }
+    const err = newPersonError(em);
+    if (err) { alert(err); return; }
     if (singleSelect) { commitOne({ name: qRaw, email: em, identity: '' }); return; }
     toggleSelect({ name: qRaw, email: em, identity: '' });
     setAddVal('');
@@ -107,10 +137,8 @@ export const FullScreenAddFriend: React.FC<FullScreenAddFriendProps> = ({
     // If the user typed a valid new name but clicked the top-right tick directly
     // instead of the inline '+' button, auto-commit what they typed.
     if (canAddNew && qRaw) {
-      if (em && !isValidEmail(em)) {
-        alert("That doesn't look like a valid email. Leave it blank or fix it.");
-        return;
-      }
+      const err = newPersonError(em);
+      if (err) { alert(err); return; }
       toCommit = [...toCommit, { name: qRaw, email: em, identity: '' }];
     }
     
@@ -274,7 +302,7 @@ export const FullScreenAddFriend: React.FC<FullScreenAddFriendProps> = ({
             spellCheck="false"
             data-1p-ignore
             data-lpignore="true"
-            placeholder="Email (optional)"
+            placeholder={needsEmail ? 'Email (required)' : 'Email (optional)'}
             value={emailVal}
             onChange={(e) => setEmailVal(e.target.value)}
             onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); handleAddNew(); } }}
@@ -295,8 +323,19 @@ export const FullScreenAddFriend: React.FC<FullScreenAddFriendProps> = ({
         </div>
       )}
       {canAddNew && (
-        <p style={{ margin: '-8px 4px 0', fontSize: '11px', color: '#94A3B8', lineHeight: 1.35 }}>
-          💡 Add their email and they join instantly when they sign in — no “pick your name” step, and it avoids mix-ups if two friends share a name.
+        needsEmail ? (
+          <p style={{ margin: '-8px 4px 0', fontSize: '11px', color: '#B45309', lineHeight: 1.35 }}>
+            You already have a {qRaw} below. Adding a different {qRaw}? Their email is needed to tell them apart.
+          </p>
+        ) : (
+          <p style={{ margin: '-8px 4px 0', fontSize: '11px', color: '#94A3B8', lineHeight: 1.35 }}>
+            💡 Add their email and they join instantly when they sign in — no “pick your name” step, and it avoids mix-ups if two friends share a name.
+          </p>
+        )
+      )}
+      {qRaw.length > 0 && existsInGroup && (
+        <p style={{ margin: '-8px 4px 0', fontSize: '11px', color: '#B45309', lineHeight: 1.35 }}>
+          {qRaw} is already in this group. Adding someone else with this name? Add something to tell them apart, like “{qRaw} (Delhi)”.
         </p>
       )}
 
@@ -305,7 +344,7 @@ export const FullScreenAddFriend: React.FC<FullScreenAddFriendProps> = ({
         <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
           {selectedFriends.map((f) => (
             <span key={selKey(f)} style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', background: '#ECFDF5', border: '1px solid #A7F3D0', color: '#047857', borderRadius: '999px', padding: '5px 8px 5px 6px', fontSize: '13px', fontWeight: 600, maxWidth: '100%', boxSizing: 'border-box' }}>
-              <span style={{ width: '22px', height: '22px', borderRadius: '50%', background: '#10B981', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '11px', fontWeight: 700, flexShrink: 0 }}>{f.name.charAt(0).toUpperCase()}</span>
+              <Avatar name={f.name} email={f.email} avatars={memberAvatars} size={22} bg="#10B981" color="#fff" />
               <span style={{ minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                 {f.name}
                 {f.email && <span style={{ color: '#059669', fontWeight: 400, fontSize: '11.5px' }}> · {f.email}</span>}
@@ -348,9 +387,7 @@ export const FullScreenAddFriend: React.FC<FullScreenAddFriendProps> = ({
                   }}
                   style={{ display: 'flex', alignItems: 'center', gap: '12px', width: '100%', textAlign: 'left', background: on ? '#ECFDF5' : 'var(--w)', border: `1.5px solid ${on ? '#A7F3D0' : '#F1F5F9'}`, borderRadius: '14px', padding: '12px 14px', cursor: 'pointer', transition: '0.15s all ease' }}
                 >
-                  <span style={{ width: '38px', height: '38px', borderRadius: '50%', background: '#EEF2FF', color: '#4338CA', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '14px', fontWeight: 700, flexShrink: 0 }}>
-                    {s.name.charAt(0).toUpperCase()}
-                  </span>
+                  <Avatar name={s.name} email={s.email} avatars={memberAvatars} size={38} bg="#EEF2FF" color="#4338CA" />
                   <span style={{ minWidth: 0, flex: 1 }}>
                     <span style={{ display: 'block', fontSize: '14px', fontWeight: 600, color: s.pastMember ? '#94A3B8' : '#334155', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', textDecoration: s.pastMember ? 'line-through' : 'none' }}>{s.name}</span>
                     {s.email && <span style={{ display: 'block', fontSize: '11px', color: '#94A3B8', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{s.email}</span>}

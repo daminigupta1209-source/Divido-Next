@@ -15,6 +15,7 @@ interface CreateGroupViewProps {
   userName: string;
   editingGroup?: Group;
   onManageMembers?: () => void;
+  memberAvatars?: Record<string, string>;
 }
 
 export const CreateGroupView: React.FC<CreateGroupViewProps> = ({
@@ -27,6 +28,7 @@ export const CreateGroupView: React.FC<CreateGroupViewProps> = ({
   userName,
   editingGroup,
   onManageMembers,
+  memberAvatars,
 }) => {
   const [title, setTitle] = useState(editingGroup ? editingGroup.name : '');
   const [selectedEmoji, setSelectedEmoji] = useState((editingGroup && editingGroup.emoji) ? editingGroup.emoji : ''); // Stores base64 group DP URL only; empty means show name initials
@@ -676,6 +678,7 @@ export const CreateGroupView: React.FC<CreateGroupViewProps> = ({
         onAddFriends={handleAddFriendsFromModal}
         existingMembers={participants}
         suggestions={buildPeopleSuggestions(groups, null, participants, me, myEmail)}
+        memberAvatars={memberAvatars}
       />
     </form>
   );

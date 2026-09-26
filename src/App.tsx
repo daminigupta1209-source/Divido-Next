@@ -3990,6 +3990,7 @@ function App() {
         ) : view === 'create_group' ? (
           <CreateGroupView
             me={me}
+            memberAvatars={memberAvatars}
             myEmail={userEmail}
             myDefaultCurrency={myDefaultCurrency}
             onCancel={() => {
@@ -4639,6 +4640,7 @@ function App() {
       {showExpModal && (
         <React.Suspense fallback={null}>
         <ExpenseModal
+          memberAvatars={memberAvatars}
           setShowExpModal={setShowExpModal}
           setEditingExpense={setEditingExpense}
           editingExpense={editingExpense}

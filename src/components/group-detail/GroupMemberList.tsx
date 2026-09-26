@@ -1015,6 +1015,7 @@ export const GroupMemberList: React.FC<GroupMemberListProps> = ({
           }}
           existingMembers={selectedGroup.members}
           suggestions={buildSuggestions()}
+          memberAvatars={memberAvatars}
         />
 
         {/* LEFT TAB */}
