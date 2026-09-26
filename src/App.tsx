@@ -296,6 +296,10 @@ function App() {
   // Name the invitee types when they aren't in the invite list and want to join
   // as a brand-new member (the claim card would otherwise dead-end on Cancel).
   const [joinNewName, setJoinNewName] = useState<string>('');
+  // The placeholder row a user tapped on the claim card, pending an in-app
+  // "are you sure" confirmation (replaces a native browser confirm() with a
+  // styled step so the safety check doesn't look like an OS alert).
+  const [claimConfirmTarget, setClaimConfirmTarget] = useState<any | null>(null);
   // True while we resolve an invite link (fetch the group + members + session)
   // before deciding whether to show the claim card, admit the user, etc. Seeded
   // synchronously so the home feed never flashes behind the pending claim card.
@@ -3497,6 +3501,230 @@ function App() {
     return <BootSplash />;
   }
 
+  // Runs the actual claim/rejoin after the in-app confirm step (claimConfirmTarget)
+  // is accepted. Extracted from the claim button's onClick so the native
+  // confirm() could be replaced with a styled in-app confirmation card.
+  const runClaimPlaceholder = async (p: any) => {
+    setSubmittingLinkRequest(true);
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      const myEmail = session?.user?.email || (localStorage.getItem('divido_e2e_testing') === 'true' ? localStorage.getItem('divido_mock_email') || 'e2e-test-guest@divido.app' : null);
+
+      const activeEmail = myEmail;
+      if (!activeEmail) {
+        // Google-first: no guest accounts (guests can't sync under
+        // the group's row-level-security rules). Persist the pending
+        // claim so it survives the OAuth round-trip, then send them to
+        // Google sign-in. Restored by joinGroupFromQuery on return.
+        try {
+          localStorage.setItem('divido_pending_join', JSON.stringify({
+            groupId: linkRequestGroup.id,
+            placeholderName: p.name,
+            ts: Date.now(),
+          }));
+        } catch { /* storage full — non-fatal */ }
+        const _join = new URL(window.location.href).searchParams.get('joinGroupId');
+        const cleanRedirect = window.location.origin + window.location.pathname + (_join ? `?joinGroupId=${_join}` : '');
+        await supabase.auth.signInWithOAuth({
+          provider: 'google',
+          options: {
+            redirectTo: cleanRedirect,
+            queryParams: { prompt: 'select_account' },
+          },
+        });
+        setSubmittingLinkRequest(false);
+        return;
+      }
+
+      // A row is a "rejoin" ONLY when it reflects real past-member
+      // state: the name carries the " (Left)" suffix, or the invite
+      // link explicitly targets THIS name via ?rejoinName=. Never
+      // classify a fresh pending member as a rejoin just because its
+      // name happens to match this device's stale saved identity.
+      const rejoinParam = new URLSearchParams(window.location.search).get('rejoinName');
+      const isRejoin = p.name.endsWith(' (Left)') ||
+        (!!rejoinParam && rejoinParam.toLowerCase() === p.name.replace(' (Left)', '').toLowerCase());
+      const cleanName = isRejoin ? p.name.replace(' (Left)', '') : p.name;
+
+      if (isRejoin) {
+        // 1. Reactivate the left member row
+        await supabase
+          .from('group_members')
+          .update({
+            name: cleanName,
+            user_email: activeEmail,
+            is_pending: false
+          })
+          .eq('id', p.id);
+
+        // 2. Local identity setup — per-group name only; don't clobber
+        // an existing account profile name (Option-3 rule).
+        {
+          const existing = localStorage.getItem('divido_username');
+          const hasRealName = !!existing && !['You', 'Guest', 'undefined', ''].includes(existing.trim());
+          if (!hasRealName) { localStorage.setItem('divido_username', cleanName); setUserName(cleanName); }
+        }
+        localStorage.setItem('divido_authenticated', 'true');
+        localStorage.setItem(`divido_identity_${linkRequestGroup.id}`, cleanName);
+        setIsAuthenticated(true);
+        if (activeEmail.startsWith('guest-')) {
+          setUserEmail(activeEmail);
+        }
+
+        // Notify other members
+        try {
+          const { data: activeMems } = await supabase
+            .from('group_members')
+            .select('user_email')
+            .eq('group_id', linkRequestGroup.id)
+            .not('user_email', 'is', null);
+
+          if (activeMems && activeMems.length > 0) {
+            for (const mem of activeMems) {
+              if (mem.user_email && mem.user_email !== activeEmail) {
+                await pushNotification({
+                  recipientEmail: mem.user_email,
+                  type: 'join',
+                  title: `${cleanName} rejoined ${linkRequestGroup.name}`,
+                  body: `${cleanName} is back in the group.`,
+                  fromName: cleanName,
+                  groupId: linkRequestGroup.id,
+                });
+              }
+            }
+          }
+        } catch (e) {
+          console.error('Rejoin notification push failed:', e);
+        }
+
+        // 3. Insert system notification of rejoin
+        await supabase
+          .from('expenses')
+          .insert({
+            group_id: linkRequestGroup.id,
+            timestamp: Date.now(),
+            title: `${cleanName} rejoined`,
+            amt: 0,
+            paid: 'SYSTEM',
+            date: new Date().toISOString().split('T')[0],
+            mode: 'Equally',
+            splitters: []
+          });
+
+        alert(`Welcome back to "${linkRequestGroup.name}"! You have successfully rejoined as "${cleanName}". 🎉`);
+      } else {
+        // Normal claim flow — adopt the joiner's own PROFILE name
+        // (once joined, your name = your profile name, not the
+        // placeholder the inviter typed), unless it collides with
+        // another member here.
+        const rawProfile = (session?.user?.user_metadata?.full_name || session?.user?.user_metadata?.name || '').trim();
+        let profileName = rawProfile ? titleCaseName(rawProfile) : '';
+        if (!profileName) {
+          const un = localStorage.getItem('divido_username');
+          if (un && !['You', 'Guest', 'undefined', ''].includes(un.trim())) profileName = un.trim();
+        }
+        let claimName = p.name;
+        if (profileName && profileName.toLowerCase() !== p.name.toLowerCase()) {
+          const { data: mems } = await supabase.from('group_members').select('id, name').eq('group_id', linkRequestGroup.id);
+          const clash = (mems || []).some((m: any) => m.id !== p.id && String(m.name).replace(/\s*\(Left\)$/i, '').trim().toLowerCase() === profileName.toLowerCase());
+          if (!clash) claimName = profileName;
+        }
+        await supabase
+          .from('group_members')
+          .update({
+            name: claimName,
+            user_email: activeEmail,
+            is_pending: false,
+          })
+          .eq('id', p.id);
+        // If the name changed from the placeholder, rewrite this
+        // group's expenses so balances follow the new name.
+        if (claimName !== p.name) {
+          try {
+            const { data: exps } = await supabase.from('expenses').select('*').eq('group_id', linkRequestGroup.id);
+            for (const e of exps || []) {
+              const paidNew = e.paid === p.name ? claimName : e.paid;
+              const splittersNew = Array.isArray(e.splitters) ? e.splitters.map((s: string) => (s === p.name ? claimName : s)) : e.splitters;
+              let sharesNew = e.shares;
+              if (e.shares && Object.prototype.hasOwnProperty.call(e.shares, p.name)) {
+                sharesNew = {}; for (const k of Object.keys(e.shares)) sharesNew[k === p.name ? claimName : k] = e.shares[k];
+              }
+              if (paidNew !== e.paid || JSON.stringify(splittersNew) !== JSON.stringify(e.splitters) || JSON.stringify(sharesNew) !== JSON.stringify(e.shares)) {
+                await supabase.from('expenses').update({ paid: paidNew, splitters: splittersNew, shares: sharesNew }).eq('id', e.id);
+              }
+            }
+          } catch (rwErr) { console.error('claim rename rewrite failed:', rwErr); }
+        }
+        {
+          const existing = localStorage.getItem('divido_username');
+          const hasRealName = !!existing && !['You', 'Guest', 'undefined', ''].includes(existing.trim());
+          if (!hasRealName) { localStorage.setItem('divido_username', claimName); setUserName(claimName); }
+        }
+        localStorage.setItem('divido_authenticated', 'true');
+        localStorage.setItem(`divido_identity_${linkRequestGroup.id}`, claimName);
+        setIsAuthenticated(true);
+        if (activeEmail.startsWith('guest-')) {
+          setUserEmail(activeEmail);
+        }
+
+        // No blocking alert — landing in the group is the confirmation.
+      }
+
+      // Fetch the real member roster right now so the joiner sees
+      // everyone immediately. linkRequestGroup comes from the `groups`
+      // table and has no members array, so without this the group
+      // renders empty until the background cloud-load catches up
+      // (the 5-20s delay a new joiner would otherwise see).
+      let freshMembers: string[] = [];
+      let freshPending: string[] = [];
+      try {
+        const { data: gm } = await supabase
+          .from('group_members')
+          .select('*')
+          .eq('group_id', linkRequestGroup.id)
+          .order('id', { ascending: true });
+        if (gm) {
+          const activeMems = gm.filter((m: any) => !m.link_request_email || !m.is_pending || m.name.endsWith(' (Left)'));
+          freshMembers = Array.from(new Set(activeMems.map((m: any) => m.name)));
+          freshPending = Array.from(new Set(activeMems
+            .filter((m: any) => m.is_pending && !m.user_email && !m.name.endsWith(' (Left)'))
+            .map((m: any) => m.name)));
+        }
+      } catch { /* fall back to background cloud-load below */ }
+
+      const updatedGroup = {
+        ...linkRequestGroup,
+        members: freshMembers.length
+          ? freshMembers
+          : (linkRequestGroup.members || []).map((m: string) =>
+              m.toLowerCase() === (cleanName + ' (Left)').toLowerCase() ? cleanName : m
+            ),
+        pendingMembers: freshPending,
+      };
+      setGroups(prev => {
+        const exists = prev.some(g => g.id === updatedGroup.id);
+        if (exists) {
+          return prev.map(g => g.id === updatedGroup.id ? updatedGroup : g);
+        }
+        return [...prev, updatedGroup];
+      });
+
+      setSelectedId((linkRequestGroup as any).is_direct || (linkRequestGroup as any).isDirect ? 'STANDALONE' : linkRequestGroup.id);
+      setView('detail');
+      setShowFriendsList(false); // Clear any lingering overlay state
+      setLinkRequestGroup(null);
+      localStorage.removeItem('divido_pending_join');
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setSubmittingLinkRequest(false);
+      const cleanUrl = window.location.protocol + '//' + window.location.host + window.location.pathname;
+      // Seed a HOME base entry (not an empty one) so a back-swipe from the
+      // group you just entered/claimed goes to the home screen instead of
+      // exiting the app. The detail entry is pushed on top by the history sync.
+      window.history.replaceState({ _divido: true, uiState: { view: 'summary', selectedId: null } }, '', cleanUrl);
+    }
+  };
 
   return (
     <div className="app-container">
@@ -4591,6 +4819,12 @@ function App() {
             <button
               aria-label="Close"
               onClick={() => {
+                // Mid-confirm, the × just backs out to the name list — the
+                // whole invite is only declined from the list screen itself.
+                if (claimConfirmTarget) {
+                  setClaimConfirmTarget(null);
+                  return;
+                }
                 const declinedId = linkRequestGroup?.id;
                 setLinkRequestGroup(null);
                 setJoinNewName('');
@@ -4628,6 +4862,65 @@ function App() {
             <h3 className="nunito" style={{ fontSize: '18px', fontWeight: 900, color: '#0F172A', margin: '0 0 6px 0' }}>
               Join Group "{linkRequestGroup.name}"
             </h3>
+
+            {claimConfirmTarget ? (() => {
+              const confirmName = titleCaseName(claimConfirmTarget.name.replace(' (Left)', ''));
+              // Show the actual signed-in Gmail address when we already know it
+              // (returning users, or after the Google sign-in round-trip); a
+              // brand-new visitor who hasn't signed in yet gets the generic
+              // fallback since we don't know their email until they do.
+              const isRealEmail = !!userEmail && !userEmail.startsWith('guest-') && !userEmail.startsWith('e2e-test');
+              const emailLabel = isRealEmail ? userEmail : 'your Google account';
+              return (
+                <div style={{ padding: '6px 0 2px' }}>
+                  <div
+                    style={{
+                      width: '56px',
+                      height: '56px',
+                      borderRadius: '50%',
+                      background: '#FCE7F3',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      margin: '4px auto 16px',
+                      fontSize: '22px',
+                      fontWeight: 700,
+                      color: '#DB2777',
+                    }}
+                  >
+                    {confirmName.charAt(0)}
+                  </div>
+                  <p style={{ fontSize: '16px', fontWeight: 700, color: '#0F172A', margin: '0 0 8px 0' }}>
+                    Are you "{confirmName}"?
+                  </p>
+                  <p style={{ fontSize: '13px', color: '#64748B', fontWeight: 400, lineHeight: 1.5, margin: '0 0 22px 0' }}>
+                    This links {emailLabel} to {confirmName}.
+                  </p>
+                  <button
+                    disabled={submittingLinkRequest}
+                    onClick={() => {
+                      const target = claimConfirmTarget;
+                      setClaimConfirmTarget(null);
+                      runClaimPlaceholder(target);
+                    }}
+                    style={{
+                      width: '100%',
+                      padding: '13px',
+                      borderRadius: '14px',
+                      border: 'none',
+                      background: '#16A34A',
+                      color: '#FFFFFF',
+                      fontWeight: 600,
+                      fontSize: '13px',
+                      cursor: 'pointer',
+                      boxShadow: '0 4px 12px rgba(22, 163, 74, 0.3)',
+                    }}
+                  >
+                    Yes, that's me
+                  </button>
+                </div>
+              );
+            })() : (<>
             {linkRequestPlaceholders.length > 0 && (
               <p style={{ fontSize: '13px', color: '#64748B', fontWeight: 600, margin: '0 0 16px 0', lineHeight: 1.4 }}>
                 Select your name to join.
@@ -4639,235 +4932,7 @@ function App() {
                 <button
                   key={p.id}
                   disabled={submittingLinkRequest}
-                  onClick={async () => {
-                    // Guard against claiming the wrong name. This binds the claimer's
-                    // email to this member row permanently, so a fat-finger tap on the
-                    // wrong row silently hijacks someone else's identity. One confirm()
-                    // on the claimer's own screen catches the common accidental case.
-                    const claimTarget = titleCaseName(p.name.replace(' (Left)', ''));
-                    if (!confirm(`Are you "${claimTarget}"?\n\nOnly continue if you are ${claimTarget} — this links their expense history in "${linkRequestGroup.name}" to your account.`)) {
-                      return;
-                    }
-                    setSubmittingLinkRequest(true);
-                    try {
-                      const { data: { session } } = await supabase.auth.getSession();
-                      const myEmail = session?.user?.email || (localStorage.getItem('divido_e2e_testing') === 'true' ? localStorage.getItem('divido_mock_email') || 'e2e-test-guest@divido.app' : null);
-
-                      const activeEmail = myEmail;
-                      if (!activeEmail) {
-                        // Google-first: no guest accounts (guests can't sync under
-                        // the group's row-level-security rules). Persist the pending
-                        // claim so it survives the OAuth round-trip, then send them to
-                        // Google sign-in. Restored by joinGroupFromQuery on return.
-                        try {
-                          localStorage.setItem('divido_pending_join', JSON.stringify({
-                            groupId: linkRequestGroup.id,
-                            placeholderName: p.name,
-                            ts: Date.now(),
-                          }));
-                        } catch { /* storage full — non-fatal */ }
-                        const _join = new URL(window.location.href).searchParams.get('joinGroupId');
-                        const cleanRedirect = window.location.origin + window.location.pathname + (_join ? `?joinGroupId=${_join}` : '');
-                        await supabase.auth.signInWithOAuth({
-                          provider: 'google',
-                          options: {
-                            redirectTo: cleanRedirect,
-                            queryParams: { prompt: 'select_account' },
-                          },
-                        });
-                        setSubmittingLinkRequest(false);
-                        return;
-                      }
-
-                      // A row is a "rejoin" ONLY when it reflects real past-member
-                      // state: the name carries the " (Left)" suffix, or the invite
-                      // link explicitly targets THIS name via ?rejoinName=. Never
-                      // classify a fresh pending member as a rejoin just because its
-                      // name happens to match this device's stale saved identity.
-                      const rejoinParam = new URLSearchParams(window.location.search).get('rejoinName');
-                      const isRejoin = p.name.endsWith(' (Left)') ||
-                        (!!rejoinParam && rejoinParam.toLowerCase() === p.name.replace(' (Left)', '').toLowerCase());
-                      const cleanName = isRejoin ? p.name.replace(' (Left)', '') : p.name;
-
-                      if (isRejoin) {
-                        // 1. Reactivate the left member row
-                        await supabase
-                          .from('group_members')
-                          .update({
-                            name: cleanName,
-                            user_email: activeEmail,
-                            is_pending: false
-                          })
-                          .eq('id', p.id);
-
-                        // 2. Local identity setup — per-group name only; don't clobber
-                        // an existing account profile name (Option-3 rule).
-                        {
-                          const existing = localStorage.getItem('divido_username');
-                          const hasRealName = !!existing && !['You', 'Guest', 'undefined', ''].includes(existing.trim());
-                          if (!hasRealName) { localStorage.setItem('divido_username', cleanName); setUserName(cleanName); }
-                        }
-                        localStorage.setItem('divido_authenticated', 'true');
-                        localStorage.setItem(`divido_identity_${linkRequestGroup.id}`, cleanName);
-                        setIsAuthenticated(true);
-                        if (activeEmail.startsWith('guest-')) {
-                          setUserEmail(activeEmail);
-                        }
-
-                        // Notify other members
-                        try {
-                          const { data: activeMems } = await supabase
-                            .from('group_members')
-                            .select('user_email')
-                            .eq('group_id', linkRequestGroup.id)
-                            .not('user_email', 'is', null);
-                          
-                          if (activeMems && activeMems.length > 0) {
-                            for (const mem of activeMems) {
-                              if (mem.user_email && mem.user_email !== activeEmail) {
-                                await pushNotification({
-                                  recipientEmail: mem.user_email,
-                                  type: 'join',
-                                  title: `${cleanName} rejoined ${linkRequestGroup.name}`,
-                                  body: `${cleanName} is back in the group.`,
-                                  fromName: cleanName,
-                                  groupId: linkRequestGroup.id,
-                                });
-                              }
-                            }
-                          }
-                        } catch (e) {
-                          console.error('Rejoin notification push failed:', e);
-                        }
-
-                        // 3. Insert system notification of rejoin
-                        await supabase
-                          .from('expenses')
-                          .insert({
-                            group_id: linkRequestGroup.id,
-                            timestamp: Date.now(),
-                            title: `${cleanName} rejoined`,
-                            amt: 0,
-                            paid: 'SYSTEM',
-                            date: new Date().toISOString().split('T')[0],
-                            mode: 'Equally',
-                            splitters: []
-                          });
-
-                        alert(`Welcome back to "${linkRequestGroup.name}"! You have successfully rejoined as "${cleanName}". 🎉`);
-                      } else {
-                        // Normal claim flow — adopt the joiner's own PROFILE name
-                        // (once joined, your name = your profile name, not the
-                        // placeholder the inviter typed), unless it collides with
-                        // another member here.
-                        const rawProfile = (session?.user?.user_metadata?.full_name || session?.user?.user_metadata?.name || '').trim();
-                        let profileName = rawProfile ? titleCaseName(rawProfile) : '';
-                        if (!profileName) {
-                          const un = localStorage.getItem('divido_username');
-                          if (un && !['You', 'Guest', 'undefined', ''].includes(un.trim())) profileName = un.trim();
-                        }
-                        let claimName = p.name;
-                        if (profileName && profileName.toLowerCase() !== p.name.toLowerCase()) {
-                          const { data: mems } = await supabase.from('group_members').select('id, name').eq('group_id', linkRequestGroup.id);
-                          const clash = (mems || []).some((m: any) => m.id !== p.id && String(m.name).replace(/\s*\(Left\)$/i, '').trim().toLowerCase() === profileName.toLowerCase());
-                          if (!clash) claimName = profileName;
-                        }
-                        await supabase
-                          .from('group_members')
-                          .update({
-                            name: claimName,
-                            user_email: activeEmail,
-                            is_pending: false,
-                          })
-                          .eq('id', p.id);
-                        // If the name changed from the placeholder, rewrite this
-                        // group's expenses so balances follow the new name.
-                        if (claimName !== p.name) {
-                          try {
-                            const { data: exps } = await supabase.from('expenses').select('*').eq('group_id', linkRequestGroup.id);
-                            for (const e of exps || []) {
-                              const paidNew = e.paid === p.name ? claimName : e.paid;
-                              const splittersNew = Array.isArray(e.splitters) ? e.splitters.map((s: string) => (s === p.name ? claimName : s)) : e.splitters;
-                              let sharesNew = e.shares;
-                              if (e.shares && Object.prototype.hasOwnProperty.call(e.shares, p.name)) {
-                                sharesNew = {}; for (const k of Object.keys(e.shares)) sharesNew[k === p.name ? claimName : k] = e.shares[k];
-                              }
-                              if (paidNew !== e.paid || JSON.stringify(splittersNew) !== JSON.stringify(e.splitters) || JSON.stringify(sharesNew) !== JSON.stringify(e.shares)) {
-                                await supabase.from('expenses').update({ paid: paidNew, splitters: splittersNew, shares: sharesNew }).eq('id', e.id);
-                              }
-                            }
-                          } catch (rwErr) { console.error('claim rename rewrite failed:', rwErr); }
-                        }
-                        {
-                          const existing = localStorage.getItem('divido_username');
-                          const hasRealName = !!existing && !['You', 'Guest', 'undefined', ''].includes(existing.trim());
-                          if (!hasRealName) { localStorage.setItem('divido_username', claimName); setUserName(claimName); }
-                        }
-                        localStorage.setItem('divido_authenticated', 'true');
-                        localStorage.setItem(`divido_identity_${linkRequestGroup.id}`, claimName);
-                        setIsAuthenticated(true);
-                        if (activeEmail.startsWith('guest-')) {
-                          setUserEmail(activeEmail);
-                        }
-
-                        // No blocking alert — landing in the group is the confirmation.
-                      }
-                      
-                      // Fetch the real member roster right now so the joiner sees
-                      // everyone immediately. linkRequestGroup comes from the `groups`
-                      // table and has no members array, so without this the group
-                      // renders empty until the background cloud-load catches up
-                      // (the 5-20s delay a new joiner would otherwise see).
-                      let freshMembers: string[] = [];
-                      let freshPending: string[] = [];
-                      try {
-                        const { data: gm } = await supabase
-                          .from('group_members')
-                          .select('*')
-                          .eq('group_id', linkRequestGroup.id)
-                          .order('id', { ascending: true });
-                        if (gm) {
-                          const activeMems = gm.filter((m: any) => !m.link_request_email || !m.is_pending || m.name.endsWith(' (Left)'));
-                          freshMembers = Array.from(new Set(activeMems.map((m: any) => m.name)));
-                          freshPending = Array.from(new Set(activeMems
-                            .filter((m: any) => m.is_pending && !m.user_email && !m.name.endsWith(' (Left)'))
-                            .map((m: any) => m.name)));
-                        }
-                      } catch { /* fall back to background cloud-load below */ }
-
-                       const updatedGroup = {
-                        ...linkRequestGroup,
-                        members: freshMembers.length
-                          ? freshMembers
-                          : (linkRequestGroup.members || []).map((m: string) =>
-                              m.toLowerCase() === (cleanName + ' (Left)').toLowerCase() ? cleanName : m
-                            ),
-                        pendingMembers: freshPending,
-                      };
-                      setGroups(prev => {
-                        const exists = prev.some(g => g.id === updatedGroup.id);
-                        if (exists) {
-                          return prev.map(g => g.id === updatedGroup.id ? updatedGroup : g);
-                        }
-                        return [...prev, updatedGroup];
-                      });
-
-                      setSelectedId((linkRequestGroup as any).is_direct || (linkRequestGroup as any).isDirect ? 'STANDALONE' : linkRequestGroup.id);
-                      setView('detail');
-                      setShowFriendsList(false); // Clear any lingering overlay state
-                      setLinkRequestGroup(null);
-                      localStorage.removeItem('divido_pending_join');
-                    } catch (err) {
-                      console.error(err);
-                    } finally {
-                      setSubmittingLinkRequest(false);
-                      const cleanUrl = window.location.protocol + '//' + window.location.host + window.location.pathname;
-                      // Seed a HOME base entry (not an empty one) so a back-swipe from the
-            // group you just entered/claimed goes to the home screen instead of
-            // exiting the app. The detail entry is pushed on top by the history sync.
-            window.history.replaceState({ _divido: true, uiState: { view: 'summary', selectedId: null } }, '', cleanUrl);
-                    }
-                  }}
+                  onClick={() => setClaimConfirmTarget(p)}
                   style={{
                     width: '100%',
                     padding: '12px',
@@ -5048,6 +5113,7 @@ function App() {
               </button>
             </div>
             )}
+            </>)}
           </div>
         </div>
       )}
