@@ -294,7 +294,7 @@ export const NetPayableModal: React.FC<NetPayableModalProps> = ({
                       onFinalSettle();
                       onClose();
                     }}
-                    style={{ padding: '12px', background: '#0D9488', color: '#fff', border: 'none', borderRadius: '14px', fontSize: '13px', fontWeight: 600, cursor: 'pointer' }}
+                    style={{ padding: '12px', background: '#FACC15', color: '#3F2E00', border: 'none', borderRadius: '14px', fontSize: '13px', fontWeight: 600, cursor: 'pointer' }}
                     className="press-anim"
                   >
                     Mark as Settled

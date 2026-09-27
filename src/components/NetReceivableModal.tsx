@@ -270,12 +270,12 @@ export const NetReceivableModal: React.FC<NetReceivableModalProps> = ({
         {/* Actions */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', marginTop: '10px' }}>
           <button
-            className="btn-green hover-up"
+            className="hover-up"
             onClick={() => {
               onFinalSettle();
               onClose();
             }}
-            style={{ padding: '12px', fontSize: '13px', borderRadius: '14px', width: '100%', fontWeight: 600 }}
+            style={{ padding: '12px', fontSize: '13px', borderRadius: '14px', width: '100%', fontWeight: 600, background: '#FACC15', color: '#3F2E00', border: 'none', cursor: 'pointer' }}
           >
             Mark as Settled & Record
           </button>

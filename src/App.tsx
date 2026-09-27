@@ -5605,7 +5605,7 @@ function App() {
                 return (
                   <div style={{ marginTop: '8px' }}>
                     <button
-                      className="btn-green hover-up"
+                      className="hover-up"
                       style={{
                         width: '100%',
                         padding: '10px 14px',
@@ -5613,6 +5613,9 @@ function App() {
                         fontWeight: 700,
                         borderRadius: '14px',
                         border: 'none',
+                        background: '#FACC15',
+                        color: '#3F2E00',
+                        cursor: 'pointer',
                       }}
                       onClick={handleFinalGlobalSettle}
                     >
@@ -5632,9 +5635,9 @@ function App() {
                       fontSize: '12px',
                       fontWeight: 700,
                       borderRadius: '14px',
-                      background: '#F8FAFC',
-                      color: '#475569',
-                      border: '1.5px solid #E2E8F0',
+                      background: '#FACC15',
+                      color: '#3F2E00',
+                      border: 'none',
                       cursor: 'pointer',
                     }}
                     onClick={handleFinalGlobalSettle}
