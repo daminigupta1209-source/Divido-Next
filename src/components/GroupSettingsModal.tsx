@@ -15,6 +15,7 @@ interface GroupSettingsModalProps {
   onEditUserProfile: () => void;
   onOpenAnalytics?: () => void;
   onShareLink?: () => void;
+  onNewGroup?: () => void;
   userMetadata?: Record<string, any>;
 }
 
@@ -30,6 +31,7 @@ export const GroupSettingsModal: React.FC<GroupSettingsModalProps> = ({
   onEditUserProfile,
   onOpenAnalytics,
   onShareLink,
+  onNewGroup,
   userMetadata = {},
 }) => {
   const [isVisible, setIsVisible] = useState(false);
@@ -223,6 +225,35 @@ export const GroupSettingsModal: React.FC<GroupSettingsModalProps> = ({
             </svg>
             Share Link
           </button>
+
+          {onNewGroup && (
+            <button
+              onClick={() => { handleClose(); onNewGroup(); }}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'flex-start',
+                gap: '12px',
+                padding: '12px 8px',
+                background: 'transparent',
+                border: 'none',
+                borderBottom: '1px solid #F1F5F9',
+                cursor: 'pointer',
+                fontSize: '13px',
+                fontWeight: 500,
+                color: '#000000',
+                transition: 'background-color 0.15s',
+              }}
+              onMouseEnter={(e) => (e.currentTarget.style.background = '#F8FAFC')}
+              onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}
+            >
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ width: '18px', height: '18px', color: '#64748B' }}>
+                <line x1="12" y1="5" x2="12" y2="19" />
+                <line x1="5" y1="12" x2="19" y2="12" />
+              </svg>
+              New Group
+            </button>
+          )}
 
           {(isActiveMember || isPastMember) && (
             <button

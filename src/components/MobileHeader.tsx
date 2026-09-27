@@ -739,6 +739,7 @@ export const MobileHeader: React.FC<MobileHeaderProps> = ({
                     onSimplifyToggle={() => {
                       setGroups(groups.map((g) => String(g.id) === String(selectedId) ? { ...g, simplifyDebts: !g.simplifyDebts } : g));
                     }}
+                    onNewGroup={onCreateGroup ? () => { setMobileShowGroupOptionsMenu(false); onCreateGroup(); } : undefined}
                     onConvertCurrency={() => {
                       setMobileShowGroupOptionsMenu(false);
                       setShowConvertModalId(selectedId);
