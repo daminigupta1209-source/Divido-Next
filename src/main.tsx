@@ -38,8 +38,6 @@ window.addEventListener('vite:preloadError', () => {
   } catch { /* ignore */ }
   window.location.reload();
 });
-// The app drew fine: re-arm the blank-screen rescue in index.html.
-setTimeout(() => { try { sessionStorage.removeItem('dv_blank_fix'); } catch { /* ignore */ } }, 10000);
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>

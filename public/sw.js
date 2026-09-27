@@ -81,8 +81,12 @@ self.addEventListener('fetch', (event) => {
       // build". Falls back to the SW-cached index only when offline.
       fetch(req.url, { cache: 'no-store', credentials: 'same-origin' })
         .then((res) => {
-          const clone = res.clone();
-          caches.open(CACHE).then((c) => c.put('/index.html', clone));
+          // Only keep a real page — never a host error / challenge page (403),
+          // which would then be served as the app offline.
+          if (res && res.ok) {
+            const clone = res.clone();
+            caches.open(CACHE).then((c) => c.put('/index.html', clone));
+          }
           return res;
         })
         .catch(() => caches.match('/index.html'))
