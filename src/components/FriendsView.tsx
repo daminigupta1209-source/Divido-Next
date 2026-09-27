@@ -589,7 +589,7 @@ export const FriendsView: React.FC<FriendsViewProps> = ({
               const entries = Object.entries(totalPayable);
               if (entries.length === 0) return 'Nothing to pay';
               const [c, v] = entries[0];
-              const { text: txt, fontSize } = pickAmount(v, c, 'You pay ', '', 13);
+              const { text: txt } = pickAmount(v, c, 'You pay ', '', 13); const fontSize = 13;
               return (<>
                 <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', fontSize: `${fontSize}px` }}>{txt}</span>
                 {entries.length > 1 && <span style={pillChipStyle}>+{entries.length - 1}</span>}
@@ -626,7 +626,7 @@ export const FriendsView: React.FC<FriendsViewProps> = ({
               const entries = Object.entries(totalReceivable);
               if (entries.length === 0) return 'Nothing to collect';
               const [c, v] = entries[0];
-              const { text: txt, fontSize } = pickAmount(v, c, 'You collect ', '', 13);
+              const { text: txt } = pickAmount(v, c, 'You collect ', '', 13); const fontSize = 13;
               return (<>
                 <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', fontSize: `${fontSize}px` }}>{txt}</span>
                 {entries.length > 1 && <span style={pillChipStyle}>+{entries.length - 1}</span>}
