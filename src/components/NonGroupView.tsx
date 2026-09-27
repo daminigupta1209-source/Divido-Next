@@ -66,8 +66,6 @@ export const NonGroupView: React.FC<NonGroupViewProps> = ({
 }) => {
   // Bottom toggle on the front page: Settle | Photos (swipe left/right).
   const [activeTab, setActiveTab] = React.useState<'settle' | 'photos'>('settle');
-  // Which person's row is expanded inline (accordion) on the Settle tab.
-  const [expandedPerson, setExpandedPerson] = React.useState<string | null>(null);
   // Which person's full profile page is open (tapping their DP/avatar).
   const [profilePerson, setProfilePerson] = React.useState<string | null>(null);
   const touchStartX = React.useRef<number | null>(null);
@@ -214,7 +212,9 @@ export const NonGroupView: React.FC<NonGroupViewProps> = ({
       if (e.paid) names.add(cleanName(e.paid).toLowerCase());
       (e.splitters || []).forEach((s) => names.add(cleanName(s).toLowerCase()));
       return names.has(pLower);
-    });
+    })
+      // Newest date first so each month heading appears once.
+      .sort((a, b) => String(b.date || '').localeCompare(String(a.date || '')) || (b.timestamp || 0) - (a.timestamp || 0));
     return (
       <div className="content-width-limit" style={{ paddingTop: '4px' }}>
         <button type="button" onClick={() => setProfilePerson(null)} style={{ display: 'flex', alignItems: 'center', gap: '4px', background: 'none', border: 'none', cursor: 'pointer', color: '#94A3B8', fontSize: '13px', marginBottom: '12px', padding: 0 }}>
@@ -242,26 +242,63 @@ export const NonGroupView: React.FC<NonGroupViewProps> = ({
           {onSharePerson && <button type="button" onClick={() => onSharePerson(profilePerson, p?.directGroupId)} style={profileBtn}>Share</button>}
         </div>
 
-        <div style={{ fontSize: '10px', fontWeight: 600, letterSpacing: '1.2px', color: '#94A3B8', textTransform: 'uppercase', marginBottom: '8px' }}>
-          {p?.directGroupId ? 'Shared activities' : 'Activities'}
-        </div>
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-          {theirExps.map((e) => {
-            const curr = e.currency || defaultCurrency;
-            const iPaid = cleanName(e.paid).toLowerCase() === meLower;
-            return (
-              <div key={e.id} className="hover-up-mini" onClick={() => onOpenExpense(e)} style={{ display: 'flex', alignItems: 'center', gap: '12px', background: '#FFFFFF', border: '0.5px solid #EFE7DC', borderRadius: '14px', padding: '12px 14px', boxShadow: '0 2px 10px rgba(0,0,0,0.03)', cursor: 'pointer' }}>
-                <div style={{ width: '34px', height: '34px', borderRadius: '50%', background: '#F1EFE8', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '15px', flexShrink: 0 }}>{getEmoji(e.title) || '⚡'}</div>
-                <div style={{ flex: 1, minWidth: 0 }}>
-                  <div style={{ fontSize: '14px', fontWeight: 600, color: '#0F172A', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{e.title}</div>
-                  <div style={{ fontSize: '11px', color: '#94A3B8' }}>{iPaid ? 'You paid' : `${cleanName(e.paid)} paid`} · {formatDate(e.date)}</div>
+        {/* Full per-currency breakdown */}
+        {p && myPerspective(p.bal).length > 1 && (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '2px', marginBottom: '16px', alignItems: 'center' }}>
+            {myPerspective(p.bal).map((l) => (
+              <span key={l.curr} style={{ fontSize: '13px', fontWeight: 600, color: l.amount > 0 ? '#047857' : '#B91C1C' }}>
+                {l.amount > 0 ? 'You collect' : 'You pay'} {l.curr}{fmt(l.amount)}
+              </span>
+            ))}
+          </div>
+        )}
+
+        <div style={{ display: 'flex', flexDirection: 'column' }}>
+          {(() => {
+            let lastKey = '';
+            const rows: React.ReactNode[] = [];
+            theirExps.forEach((e) => {
+              const { key, label } = getMonthYearKey(e.date, e.id);
+              if (key !== lastKey) {
+                lastKey = key;
+                rows.push(
+                  <div key={`mh-${key}`} style={{ fontSize: '11px', fontWeight: 700, letterSpacing: '0.5px', color: '#94A3B8', margin: '8px 2px 8px' }}>{label}</div>
+                );
+              }
+              const curr = e.currency || defaultCurrency;
+              const iPaid = cleanName(e.paid).toLowerCase() === meLower;
+              rows.push(
+                <div key={e.id} className="hover-up-mini" onClick={() => onOpenExpense(e)} style={{ display: 'flex', alignItems: 'center', gap: '12px', background: '#FFFFFF', border: '0.5px solid #EFE7DC', borderRadius: '14px', padding: '12px 14px', boxShadow: '0 2px 10px rgba(0,0,0,0.03)', cursor: 'pointer', marginBottom: '10px' }}>
+                  <div style={{ width: '34px', height: '34px', borderRadius: '50%', background: '#F1EFE8', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '15px', flexShrink: 0 }}>{getEmoji(e.title) || '⚡'}</div>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ fontSize: '14px', fontWeight: 600, color: '#0F172A', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{(e.title || '').replace(/\s*💎\s*$/, '').trim()}</div>
+                    <div style={{ fontSize: '11px', color: '#94A3B8' }}>{iPaid ? 'You paid' : `${cleanName(e.paid)} paid`} · {formatDate(e.date)}</div>
+                  </div>
+                  <span style={{ fontSize: '14px', fontWeight: 600, color: '#0F172A' }}>{curr} {formatExactAmount(Number(e.amt) || 0)}</span>
                 </div>
-                <span style={{ fontSize: '14px', fontWeight: 600, color: '#0F172A' }}>{curr} {formatExactAmount(Number(e.amt) || 0)}</span>
-              </div>
-            );
-          })}
+              );
+            });
+            return rows;
+          })()}
           {theirExps.length === 0 && (
             <p style={{ fontSize: '13px', color: '#94A3B8', textAlign: 'center', padding: '20px 0' }}>No activities yet.</p>
+          )}
+          {onDeletePerson && theirExps.length > 0 && (
+            hasBal ? (
+              <div style={{ marginTop: '6px', fontSize: '11px', color: '#94A3B8', textAlign: 'center' }}>
+                Settle up to delete these expenses
+              </div>
+            ) : (
+              <button
+                type="button"
+                onClick={() => {
+                  if (window.confirm(`Delete all expenses with ${profilePerson}? This can't be undone.`)) { onDeletePerson(profilePerson, p?.directGroupId); setProfilePerson(null); }
+                }}
+                style={{ display: 'block', margin: '8px auto 2px', background: 'none', border: 'none', color: '#B91C1C', fontSize: '12px', fontWeight: 600, cursor: 'pointer', textDecoration: 'underline' }}
+              >
+                Delete all expenses with {profilePerson}
+              </button>
+            )
           )}
         </div>
       </div>
@@ -414,30 +451,18 @@ export const NonGroupView: React.FC<NonGroupViewProps> = ({
             <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
               {people.map((p) => {
                 const b = balanceText(p.bal);
-                const isOpen = expandedPerson === p.name;
-                const hasBal = myPerspective(p.bal).length > 0;
-                const pLower = p.name.toLowerCase();
-                const theirExps = isOpen
-                  ? nonGroupExps.filter((e) => {
-                      const names = new Set<string>();
-                      if (e.paid) names.add(cleanName(e.paid).toLowerCase());
-                      (e.splitters || []).forEach((s) => names.add(cleanName(s).toLowerCase()));
-                      return names.has(pLower);
-                    })
-                  : [];
-                const innerBtn: React.CSSProperties = { flex: 1, textAlign: 'center', padding: '9px', borderRadius: '10px', border: '0.5px solid #E2E8F0', background: '#FFFFFF', color: '#334155', fontSize: '12.5px', fontWeight: 600, cursor: 'pointer' };
                 return (
                   <div
                     key={p.name}
                     style={{ background: '#FFFFFF', border: '0.5px solid #EFE7DC', borderRadius: '20px', boxShadow: '0 2px 10px rgba(0,0,0,0.04)', overflow: 'hidden' }}
                   >
-                    {/* Row header — tap to expand/collapse */}
+                    {/* Tap the card to open this person's screen */}
                     <div
                       className="hover-up-mini"
-                      onClick={() => setExpandedPerson(isOpen ? null : p.name)}
+                      onClick={() => setProfilePerson(p.name)}
                       style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '16px', cursor: 'pointer' }}
                     >
-                      <div onClick={(ev) => { ev.stopPropagation(); setProfilePerson(p.name); }} style={{ cursor: 'pointer', flexShrink: 0 }} title={`View ${p.name}`}>
+                      <div style={{ flexShrink: 0 }}>
                         <Avatar name={p.name} size={40} />
                       </div>
                       <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', gap: '4px' }}>
@@ -461,96 +486,12 @@ export const NonGroupView: React.FC<NonGroupViewProps> = ({
                           </svg>
                         </button>
                       )}
-                      <span style={{ display: 'flex', alignItems: 'center', color: '#64748B', flexShrink: 0, transition: 'transform 0.2s', transform: isOpen ? 'rotate(180deg)' : 'rotate(0deg)' }}>
-                        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.6" strokeLinecap="round" strokeLinejoin="round">
-                          <polyline points="6 9 12 15 18 9" />
+                      <span style={{ display: 'flex', alignItems: 'center', color: '#94A3B8', flexShrink: 0 }}>
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
+                          <polyline points="9 6 15 12 9 18" />
                         </svg>
                       </span>
                     </div>
-
-                    {/* Expanded body — actions + this person's expenses */}
-                    {isOpen && (
-                      <div style={{ borderTop: '0.5px solid #EFE7DC', padding: '12px 16px', background: '#FBFAF8' }}>
-                        <div style={{ display: 'flex', gap: '8px', marginBottom: theirExps.length ? '12px' : '0' }}>
-                          {hasBal && <button type="button" onClick={() => onSettlePerson(p.name, p.directGroupId)} style={innerBtn}>Settle</button>}
-                          {onSharePerson && (
-                            <button
-                              type="button"
-                              onClick={() => onSharePerson(p.name, p.directGroupId)}
-                              title={p.directGroupId ? `Copy invite link for ${p.name}` : `Share with ${p.name}`}
-                              style={{ ...innerBtn, background: '#3B82F6', border: 'none', color: '#FFFFFF' }}
-                            >
-                              Share
-                            </button>
-                          )}
-                        </div>
-                        {/* Full per-currency breakdown (so "+N more" is readable). */}
-                        {myPerspective(p.bal).length > 0 && (
-                          <div style={{ display: 'flex', flexDirection: 'column', gap: '2px', marginBottom: '12px' }}>
-                            {myPerspective(p.bal).map((l) => (
-                              <span key={l.curr} style={{ fontSize: '13px', fontWeight: 600, color: l.amount > 0 ? '#047857' : '#B91C1C' }}>
-                                {l.amount > 0 ? 'You collect' : 'You pay'} {l.curr}{fmt(l.amount)}
-                              </span>
-                            ))}
-                          </div>
-                        )}
-                        {theirExps.length > 0 && (
-                          <div style={{ fontSize: '10px', fontWeight: 600, letterSpacing: '1px', color: '#94A3B8', textTransform: 'uppercase', marginBottom: '4px' }}>
-                            {theirExps.length} {theirExps.length === 1 ? 'expense' : 'expenses'}
-                          </div>
-                        )}
-                        {(() => {
-                          let lastKey = '';
-                          const rows: React.ReactNode[] = [];
-                          theirExps.forEach((e) => {
-                            const { key, label } = getMonthYearKey(e.date, e.id);
-                            if (key !== lastKey) {
-                              lastKey = key;
-                              rows.push(
-                                <div key={`mh-${key}`} style={{ fontSize: '11px', fontWeight: 700, letterSpacing: '0.5px', color: '#94A3B8', margin: '8px 2px 0' }}>{label}</div>
-                              );
-                            }
-                            const curr = e.currency || defaultCurrency;
-                            const iPaid = cleanName(e.paid).toLowerCase() === meLower;
-                            rows.push(
-                              <div
-                                key={e.id}
-                                onClick={() => onOpenExpense(e)}
-                                style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '9px 0', borderBottom: '0.5px solid #EFE7DC', cursor: 'pointer' }}
-                              >
-                                <div style={{ width: '30px', height: '30px', borderRadius: '50%', background: '#F1EFE8', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '14px', flexShrink: 0 }}>
-                                  {getEmoji(e.title) || '⚡'}
-                                </div>
-                                <div style={{ flex: 1, minWidth: 0 }}>
-                                  <div style={{ fontSize: '13px', fontWeight: 600, color: '#0F172A', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{(e.title || '').replace(/\s*💎\s*$/, '').trim()}</div>
-                                  <div style={{ fontSize: '11px', color: '#94A3B8' }}>{iPaid ? 'You paid' : `${cleanName(e.paid)} paid`} · {formatDate(e.date)}</div>
-                                </div>
-                                <span style={{ fontSize: '13px', fontWeight: 600, color: '#0F172A' }}>{curr} {formatExactAmount(Number(e.amt) || 0)}</span>
-                              </div>
-                            );
-                          });
-                          return rows;
-                        })()}
-                        {/* Delete the whole thread — only once settled up. */}
-                        {onDeletePerson && (
-                          hasBal ? (
-                            <div style={{ marginTop: '10px', fontSize: '11px', color: '#94A3B8', textAlign: 'center' }}>
-                              Settle up to delete these expenses
-                            </div>
-                          ) : (
-                            <button
-                              type="button"
-                              onClick={() => {
-                                if (window.confirm(`Delete all expenses with ${p.name}? This can't be undone.`)) onDeletePerson(p.name, p.directGroupId);
-                              }}
-                              style={{ display: 'block', margin: '12px auto 2px', background: 'none', border: 'none', color: '#B91C1C', fontSize: '12px', fontWeight: 600, cursor: 'pointer', textDecoration: 'underline' }}
-                            >
-                              Delete all expenses with {p.name}
-                            </button>
-                          )
-                        )}
-                      </div>
-                    )}
                   </div>
                 );
               })}
