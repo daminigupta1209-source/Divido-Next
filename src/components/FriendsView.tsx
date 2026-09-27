@@ -12,82 +12,54 @@ import { StyledDropdown } from './StyledDropdown';
 // Small translucent count chip for extra currencies in the Net Balance pill.
 const pillChipStyle: React.CSSProperties = { background: 'rgba(255,255,255,0.28)', borderRadius: '999px', padding: '1px 7px', fontSize: '11px', fontWeight: 700, flexShrink: 0 };
 
-// Review-and-merge sheet: lists each name that resolves to 2+ identities and
-// lets the user merge them into one person. Merging is only suggested (people
-// can share a name), so each group is confirmed individually.
-// One reviewable duplicate person: tick which appearances are really the same
-// person, choose the primary email to merge them into, then merge.
+// Review-and-merge screen: one card per name that shows up as 2+ people.
+// Tick the groups that are really the same person, then merge. The email to
+// keep is picked automatically (first one found among the ticked groups).
+const AV_BG = ['#B39DDB', '#F48FB1', '#80CBC4', '#FFB74D', '#9FA8DA', '#A5D6A7', '#EF9A9A', '#7FC8CE'];
+
 const MergeRow: React.FC<{
   d: DuplicatePerson;
-  emailSuggestions?: string[];
   onMerge: (entries: DuplicateEntry[], canonicalEmail?: string) => Promise<void>;
-}> = ({ d, emailSuggestions = [], onMerge }) => {
-  const listId = `merge-emails-${d.name.replace(/\s+/g, '-')}`;
+}> = ({ d, onMerge }) => {
   const [busy, setBusy] = useState(false);
-  // All entries ticked by default (the common case is they ARE the same person).
+  // All ticked by default (the common case is they ARE the same person).
   const [checked, setChecked] = useState<boolean[]>(() => d.entries.map(() => true));
-  // Prefill the "merge into" email with the first existing email among entries.
-  const [email, setEmail] = useState<string>(() => d.entries.find((e) => e.email)?.email || '');
-
   const selectedCount = checked.filter(Boolean).length;
-  const emailTrim = email.trim();
-  const emailOk = emailTrim === '' || isValidEmail(emailTrim);
-  const canMerge = selectedCount >= 2 && emailOk && !busy;
-
+  const canMerge = selectedCount >= 2 && !busy;
   const toggle = (i: number) => setChecked((prev) => prev.map((v, idx) => (idx === i ? !v : v)));
-
-  const claimedEmails = Array.from(new Set(d.entries.map((e) => e.email).filter(Boolean))) as string[];
-  const combinedSuggestions = Array.from(new Set([...claimedEmails, ...emailSuggestions]));
-  const hasAlternativeOptions = combinedSuggestions.some(em => em.toLowerCase() !== emailTrim.toLowerCase());
+  const bg = AV_BG[(d.name.charCodeAt(0) || 0) % AV_BG.length];
 
   return (
-    <div style={{ border: '1px solid #F1F5F9', borderRadius: '16px', padding: '12px 14px' }}>
-      <div style={{ fontSize: '15px', fontWeight: 700, color: '#334155', marginBottom: '8px' }}>{d.name}</div>
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '2px', marginBottom: '10px' }}>
-        {d.entries.map((e, i) => (
-          <label key={i} style={{ display: 'flex', alignItems: 'center', gap: '10px', fontSize: '12px', color: '#64748B', padding: '6px 4px', cursor: 'pointer' }}>
-            <input type="checkbox" checked={checked[i]} onChange={() => toggle(i)} style={{ width: '17px', height: '17px', accentColor: '#10B981', flexShrink: 0 }} />
-            <span style={{ fontWeight: 600, color: '#475569' }}>{e.groupName}</span>
-            <span style={{ color: '#94A3B8', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-              {e.email ? e.email : (e.memberName.endsWith(' (Left)') ? 'past member · no email' : 'no email')}
-            </span>
-          </label>
-        ))}
+    <div style={{ background: '#FFFFFF', border: '1px solid #F1F5F9', borderRadius: '16px', padding: '14px', boxShadow: '0 2px 10px rgba(0,0,0,0.03)' }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '8px' }}>
+        <div style={{ width: '36px', height: '36px', borderRadius: '50%', background: bg, color: '#FFFFFF', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '15px', fontWeight: 600, flexShrink: 0 }}>
+          {d.name.charAt(0).toUpperCase()}
+        </div>
+        <div style={{ fontSize: '15px', fontWeight: 600, color: '#1E293B', minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{d.name}</div>
       </div>
-
-      {/* Primary email everyone gets merged into. */}
-      <div style={{ marginBottom: '10px' }}>
-        <div style={{ fontSize: '11px', fontWeight: 600, color: '#64748B', marginBottom: '4px' }}>Merge into this email</div>
-        <input
-          className="hide-dl-arrow"
-          type="search"
-          inputMode="email"
-          autoComplete="off"
-          list={hasAlternativeOptions ? listId : undefined}
-          placeholder="name@example.com"
-          value={email}
-          onChange={(ev) => setEmail(ev.target.value)}
-          style={{ width: '100%', boxSizing: 'border-box', padding: '9px 12px', borderRadius: '10px', border: `1.5px solid ${emailOk ? '#E2E8F0' : '#FCA5A5'}`, fontSize: '13px', fontWeight: 500, color: '#334155', outline: 'none', background: '#FFFFFF' }}
-        />
-        {combinedSuggestions.length > 0 && (
-          <datalist id={listId}>
-            {combinedSuggestions.map((em) => <option key={em} value={em} />)}
-          </datalist>
-        )}
-        {!emailOk && <div style={{ fontSize: '10.5px', color: '#DC2626', marginTop: '3px' }}>That doesn't look like a valid email.</div>}
-      </div>
-
+      {d.entries.map((e, i) => (
+        <label key={i} onClick={() => toggle(i)} style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '9px 0', borderTop: '1px solid #F1F5F9', cursor: 'pointer' }}>
+          <span style={{ width: '20px', height: '20px', borderRadius: '6px', flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', background: checked[i] ? '#10B981' : '#FFFFFF', border: checked[i] ? 'none' : '2px solid #CBD5E1', boxSizing: 'border-box', color: '#FFFFFF', fontSize: '12px', fontWeight: 700 }}>
+            {checked[i] ? '✓' : ''}
+          </span>
+          <span style={{ fontSize: '14px', color: checked[i] ? '#1E293B' : '#94A3B8', flexShrink: 0 }}>{e.groupName}</span>
+          {e.email && (
+            <span style={{ marginLeft: 'auto', fontSize: '11.5px', color: '#94A3B8', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', minWidth: 0 }}>{e.email}</span>
+          )}
+        </label>
+      ))}
       <button
         disabled={!canMerge}
         onClick={async () => {
           const entries = d.entries.filter((_, i) => checked[i]);
           if (entries.length < 2) return;
+          const email = entries.find((x) => x.email)?.email;
           setBusy(true);
-          try { await onMerge(entries, emailTrim || undefined); } finally { setBusy(false); }
+          try { await onMerge(entries, email || undefined); } finally { setBusy(false); }
         }}
-        style={{ width: '100%', padding: '11px', borderRadius: '12px', border: 'none', background: canMerge ? '#10B981' : '#CBD5E1', color: '#FFFFFF', fontWeight: 700, fontSize: '13px', cursor: canMerge ? 'pointer' : 'default' }}
+        style={{ width: '100%', marginTop: '10px', padding: '11px', borderRadius: '12px', border: 'none', background: canMerge ? '#10B981' : '#CBD5E1', color: '#FFFFFF', fontWeight: 600, fontSize: '13.5px', cursor: canMerge ? 'pointer' : 'default' }}
       >
-        {busy ? 'Merging…' : selectedCount < 2 ? 'Tick at least 2 to merge' : `Merge ${selectedCount} into one`}
+        {busy ? 'Merging…' : selectedCount < 2 ? 'Tick at least 2 to merge' : `Merge ${selectedCount} as one`}
       </button>
     </div>
   );
@@ -98,34 +70,35 @@ const MergeDuplicatesModal: React.FC<{
   onClose: () => void;
   onMerge: (entries: DuplicateEntry[], canonicalEmail?: string) => Promise<void>;
   suggestEmails?: (name: string) => string[];
-}> = ({ duplicates, onClose, onMerge, suggestEmails }) => {
+}> = ({ duplicates, onClose, onMerge }) => {
+  // Full screen; phone back closes it.
+  React.useEffect(() => {
+    window.history.pushState({ dividoMergeScreen: true }, '');
+    const onPop = () => onClose();
+    window.addEventListener('popstate', onPop);
+    return () => window.removeEventListener('popstate', onPop);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
   return (
-    <div
-      onClick={onClose}
-      style={{ position: 'fixed', inset: 0, background: 'rgba(15,23,42,0.45)', zIndex: 10001, display: 'flex', alignItems: 'flex-end', justifyContent: 'center' }}
-    >
-      <div
-        onClick={(e) => e.stopPropagation()}
-        style={{ width: '100%', maxWidth: '480px', background: '#FFFFFF', borderRadius: '24px 24px 0 0', padding: '14px 16px calc(20px + env(safe-area-inset-bottom))', maxHeight: '85vh', overflowY: 'auto', boxSizing: 'border-box', boxShadow: '0 -8px 30px rgba(0,0,0,0.18)' }}
-      >
-        <div style={{ width: '40px', height: '4px', borderRadius: '999px', background: '#E2E8F0', margin: '0 auto 14px' }} />
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '4px' }}>
-          <h3 style={{ margin: 0, fontSize: '17px', fontWeight: 700, color: '#1E293B' }}>Merge duplicates</h3>
-          <span onClick={onClose} style={{ cursor: 'pointer', fontSize: '16px', color: '#94A3B8', fontWeight: 'bold', padding: '0 4px' }}>✕</span>
+    <div style={{ position: 'fixed', inset: 0, background: '#F8FAFC', zIndex: 10001, overflowY: 'auto', padding: '16px 16px calc(24px + env(safe-area-inset-bottom))', boxSizing: 'border-box' }}>
+      <div style={{ maxWidth: '480px', margin: '0 auto' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '4px' }}>
+          <button type="button" onClick={() => window.history.back()} aria-label="Back" style={{ background: 'none', border: 'none', padding: '4px', margin: '0 0 0 -6px', cursor: 'pointer', color: '#475569', display: 'flex' }}>
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="15 18 9 12 15 6" /></svg>
+          </button>
+          <h3 style={{ margin: 0, fontSize: '19px', fontWeight: 600, color: '#1E293B' }}>Same person?</h3>
         </div>
-        <p style={{ margin: '0 0 14px', fontSize: '12px', color: '#64748B' }}>
-          These names show up more than once. Merge the ones that are the same person — their balances and history will combine. Leave separate anyone who just shares a name.
-        </p>
+        <p style={{ margin: '0 0 16px 30px', fontSize: '13px', color: '#64748B' }}>Tick the ones that are the same person.</p>
 
         {duplicates.length === 0 && (
           <p style={{ textAlign: 'center', color: '#16A34A', fontWeight: 600, fontSize: '14px', padding: '20px 0' }}>
-            All merged — no duplicates left. 🎉
+            All done — no duplicates left.
           </p>
         )}
 
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
           {duplicates.map((d) => (
-            <MergeRow key={d.name + d.entries.map((e) => e.groupId).join(',')} d={d} emailSuggestions={suggestEmails ? suggestEmails(d.name) : []} onMerge={onMerge} />
+            <MergeRow key={d.name + d.entries.map((e) => e.groupId).join(',')} d={d} onMerge={onMerge} />
           ))}
         </div>
       </div>

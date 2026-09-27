@@ -301,7 +301,8 @@ export const findDuplicatePeople = (groups: Group[], me: string): DuplicatePerso
       if (!byName.has(lower)) byName.set(lower, []);
       byName.get(lower)!.push({
         groupId: g.id,
-        groupName: g.name,
+        // Shared 2-person threads are shown as Non-Group everywhere.
+        groupName: (g as any).isDirect ? 'Non-Group' : g.name,
         memberName: m,
         identity,
         email: identity.includes('@') ? identity : '',
