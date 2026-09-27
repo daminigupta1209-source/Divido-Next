@@ -306,7 +306,9 @@ export const NonGroupView: React.FC<NonGroupViewProps> = ({
   };
 
   return (
-    <div className="content-width-limit">
+    // Swipe anywhere on the screen (like the group page), not only on the
+    // list — an empty Photos tab left almost nothing to swipe on.
+    <div className="content-width-limit" onTouchStart={onTouchStart} onTouchEnd={onTouchEnd} style={{ minHeight: '70vh' }}>
       {/* Cloud-backup restore banner — only when this device has NO non-group
           expenses at all (the real "new device / after a wipe" case). Once you
           already have data, a stale backup entry shouldn't nag you. */}
@@ -402,7 +404,7 @@ export const NonGroupView: React.FC<NonGroupViewProps> = ({
         </div>
       </div>
 
-      <div onTouchStart={onTouchStart} onTouchEnd={onTouchEnd} style={{ minHeight: '80px' }}>
+      <div style={{ minHeight: '80px' }}>
         {activeTab === 'settle' ? (
           people.length === 0 ? (
             <p style={{ fontSize: '13px', color: '#94A3B8', textAlign: 'center', padding: '24px 0' }}>
