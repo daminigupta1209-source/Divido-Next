@@ -440,8 +440,8 @@ export const GroupDetail: React.FC<GroupDetailProps> = ({
                 style={{ display: 'flex', alignItems: 'center', gap: '6px', cursor: 'pointer', flex: 1, minWidth: 0 }}
               >
                 {/* Overlapping Avatars */}
-                <div style={{ display: 'flex', alignItems: 'center', position: 'relative', height: '32px', width: `${Math.min(selectedGroup.members?.length || 0, 4) * 20 + 8}px`, flexShrink: 0 }}>
-                  {(selectedGroup.members || []).slice(0, 4).map((member, idx) => {
+                <div style={{ display: 'flex', alignItems: 'center', position: 'relative', height: '32px', width: `${Math.min(activeMembers.length, 4) * 20 + 8}px`, flexShrink: 0 }}>
+                  {activeMembers.slice(0, 4).map((member, idx) => {
                     const initials = (() => {
                       if (!member) return '?';
                       const p = member.trim().split(/\s+/);
@@ -498,7 +498,7 @@ export const GroupDetail: React.FC<GroupDetailProps> = ({
 
                 {/* Members Count text */}
                 <span style={{ fontSize: '11.5px', fontWeight: 700, color: '#94A3B8', letterSpacing: '0.1px' }}>
-                  {selectedGroup.members?.length || 0} Members
+                  {activeMembers.length} Members
                 </span>
               </div>
 
