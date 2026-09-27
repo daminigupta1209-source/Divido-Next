@@ -343,7 +343,7 @@ export const ActivityStudio: React.FC<ActivityStudioProps> = ({
             const timeStr = isSettlement ? getExactTime(e.id) : null;
 
             return (
-              <React.Fragment key={e.id}>
+              <div key={e.id} style={{ paddingBottom: '10px' }}>
                 {showHeader && (
                   <div style={{ fontSize: '11px', fontWeight: 700, letterSpacing: '0.5px', color: '#94A3B8', margin: '8px 2px 0' }}>
                     {myLabel}
@@ -694,7 +694,7 @@ export const ActivityStudio: React.FC<ActivityStudioProps> = ({
                     </div>
                   </div>
                 )}
-              </React.Fragment>
+              </div>
             );
           }}
           />

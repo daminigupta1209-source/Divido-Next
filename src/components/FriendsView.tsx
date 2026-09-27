@@ -801,7 +801,9 @@ export const FriendsView: React.FC<FriendsViewProps> = ({
             // label makes clear WHO acts ("You pay" / "You collect"); ≈ marks a
             // converted estimate.
             const prefix = `${label}${convertTo ? '≈ ' : ''}`;
-            return pickAmount(val, curr, prefix, '', 13);
+            // Fixed size on every card (long text truncates with …) so rows
+            // never differ in size between people.
+            return { ...pickAmount(val, curr, prefix, '', 13), fontSize: 13 };
           };
 
           const AV_COLORS = ['#B39DDB', '#F48FB1', '#80CBC4', '#FFB74D', '#9FA8DA', '#A5D6A7', '#EF9A9A', '#7FC8CE'];
