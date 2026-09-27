@@ -520,7 +520,7 @@ export const ExpenseModal: React.FC<ExpenseModalProps> = ({
             alignItems: 'center',
             background: '#F8FAFC',
             padding: '12px 20px 8px 16px',
-            margin: '-16px -20px 4px -20px',
+            margin: '-16px -20px 18px -20px',
             borderBottom: 'none',
           }}
         >
