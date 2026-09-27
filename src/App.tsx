@@ -1171,7 +1171,6 @@ function App() {
     // own name. (Reverses the old account-only "Option 3": names now flow from
     // the profile, per the agreed profile-name-is-identity design.)
     const myEmail = (userEmail || '').toLowerCase();
-    const clashedGroups: string[] = [];
     for (const g of groups) {
       if (!g || g.id === 'STANDALONE') continue;
       // This device's current name in the group: the per-group claimed identity,
@@ -1184,26 +1183,15 @@ function App() {
         if (match) oldName = match.replace(/\s*\(Left\)$/i, '');
       }
       if (!oldName) continue;
-      if (oldName.toLowerCase() === cleanNew.toLowerCase()) continue; // no real change
-      // Never collide with a DIFFERENT existing member in this group.
-      const clash = (g.members || []).some((m) => {
-        const cm = m.replace(/\s*\(Left\)$/i, '');
-        return cm.toLowerCase() === cleanNew.toLowerCase() && cm.toLowerCase() !== oldName.toLowerCase();
-      });
-      if (clash) {
-        clashedGroups.push(g.name);
-        continue;
-      }
-      await applyRename(g.id, oldName, cleanNew);
-    }
-    // Tell the user if the name couldn't be applied in some groups because
-    // someone there already uses it — otherwise the skip is silently confusing.
-    if (clashedGroups.length > 0) {
-      alert(
-        `Your name was updated, but not in ${clashedGroups.length === 1 ? 'this group' : 'these groups'} because "${cleanNew}" is already a member there:\n\n` +
-        clashedGroups.join(', ') +
-        `\n\nUse a slightly different name, or ask that member to rename.`
-      );
+      // If a DIFFERENT member already has this name, people are told apart by
+      // email: store it with a short email tag (hidden on screen) instead of
+      // refusing the rename.
+      const taken = new Set((g.members || [])
+        .map((m) => m.replace(/\s*\(Left\)$/i, '').trim().toLowerCase())
+        .filter((n) => n !== oldName.toLowerCase()));
+      const target = uniqueProfileName(cleanNew, myEmail, taken);
+      if (oldName.toLowerCase() === target.toLowerCase()) continue; // no real change
+      await applyRename(g.id, oldName, target);
     }
   };
 
@@ -2346,8 +2334,15 @@ function App() {
     profileNameHealDoneRef.current = true;
     (async () => {
       try {
+        // Heal toward the ACCOUNT profile name (the one set on the Profile
+        // screen, loaded from the profiles table), not the Google name —
+        // otherwise every refresh undid a name the user chose. Google's name
+        // is only the fallback for an account that never set one.
+        let accountName = '';
+        try { accountName = (localStorage.getItem('divido_username') || '').trim(); } catch { /* ignore */ }
+        if (['You', 'Guest', 'undefined', 'User'].includes(accountName)) accountName = '';
         const { data: { session } } = await supabase.auth.getSession();
-        const raw = (session?.user?.user_metadata?.full_name || session?.user?.user_metadata?.name || '').trim();
+        const raw = accountName || (session?.user?.user_metadata?.full_name || session?.user?.user_metadata?.name || '').trim();
         const profileName = raw ? titleCaseName(raw) : '';
         if (!profileName) return;
         const myEmail = userEmail.toLowerCase();
@@ -2362,14 +2357,15 @@ function App() {
             const match = (g.members || []).find((m) => (mi[m] || '').toLowerCase() === myEmail);
             if (match) myName = match.replace(/\s*\(Left\)$/i, '');
           }
-          if (!myName || myName.toLowerCase() === profileName.toLowerCase()) continue;
-          // Don't collide with a different existing member.
-          const clash = (g.members || []).some((m) => {
-            const cm = m.replace(/\s*\(Left\)$/i, '');
-            return cm.toLowerCase() === profileName.toLowerCase() && cm.toLowerCase() !== myName.toLowerCase();
-          });
-          if (clash) continue;
-          await applyRename(g.id, myName, profileName);
+          if (!myName) continue;
+          // Same name as a different member → keep the name, add a short email
+          // tag (hidden on screen) so stored names stay unique.
+          const taken = new Set((g.members || [])
+            .map((m) => m.replace(/\s*\(Left\)$/i, '').trim().toLowerCase())
+            .filter((n) => n !== myName.toLowerCase()));
+          const target = uniqueProfileName(profileName, myEmail, taken);
+          if (myName.toLowerCase() === target.toLowerCase()) continue;
+          await applyRename(g.id, myName, target);
         }
       } catch (e) {
         console.error('profile-name heal failed:', e);
