@@ -27,6 +27,9 @@ export interface Group {
   // Member display name (as in `members`) → that member row's permanent
   // group_members.member_key. Never changes on claim/rename/(Left)/merge.
   memberKeys?: Record<string, string>;
+  // Past members an admin removed from the list (group_members.is_removed).
+  // Still in `members` so their expenses keep resolving; only hidden in UI.
+  removedMembers?: string[];
   // A "direct" 2-person thread created by SHARING a non-group card. It reuses
   // all the group machinery (invite link, sync, RLS, edit, settle) but is
   // presented under Non-Group Expenses, never in the Groups list, and is capped

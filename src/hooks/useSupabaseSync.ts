@@ -487,6 +487,7 @@ export function useSupabaseSync({
               pendingLinkRequests,
               memberIdentities,
               ...(Object.keys(memberKeys).length > 0 ? { memberKeys } : {}),
+              removedMembers: activeMems.filter((m: any) => m.is_removed).map((m: any) => titleCaseName(m.name)),
               isDirect: !!group.is_direct,
             });
           }

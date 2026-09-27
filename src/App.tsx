@@ -4416,6 +4416,27 @@ function App() {
               setShowAddFriendModal(true);
             }}
             onWriteOff={(memberName: string) => { if (selectedId && selectedId !== 'STANDALONE') performWriteOff(selectedId, memberName); }}
+            onRemovePastMember={async (memberName: string) => {
+              // Hide a past member from the list. Their row (and expenses) stay,
+              // so balances are unchanged and the self-heal can't re-add them.
+              if (!selectedId || selectedId === 'STANDALONE') return;
+              const gid = selectedId;
+              setGroups((prev) => prev.map((g) => String(g.id) === String(gid)
+                ? { ...g, removedMembers: Array.from(new Set([...(g.removedMembers || []), memberName])) }
+                : g));
+              if (checkIfDemoMode() || !isAuthenticated) return;
+              const { error } = await supabase.from('group_members')
+                .update({ is_removed: true })
+                .eq('group_id', gid)
+                .ilike('name', memberName);
+              if (error) {
+                console.error('Remove past member failed:', error);
+                alert('Could not remove right now. Please try again.');
+                setGroups((prev) => prev.map((g) => String(g.id) === String(gid)
+                  ? { ...g, removedMembers: (g.removedMembers || []).filter((n) => n !== memberName) }
+                  : g));
+              }
+            }}
             onSettleMember={(memberName: string) => { if (selectedId && selectedId !== 'STANDALONE') setGlobalSettleDataSecure({ name: memberName.replace(/\s*\(Left\)$/i, '').trim(), gId: selectedId }); }}
             onLeaveGroup={() => { if (selectedId && selectedId !== 'STANDALONE') handleDeleteGroup(selectedId); }}
             onRemoveMember={async (memberName) => {

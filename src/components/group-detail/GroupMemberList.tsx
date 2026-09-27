@@ -21,6 +21,7 @@ interface GroupMemberListProps {
   onRemindMember?: (memberName: string) => void;
   onRemoveMember?: (memberName: string) => void;
   onWriteOff?: (memberName: string) => void;
+  onRemovePastMember?: (memberName: string) => void;
   onSettleMember?: (memberName: string) => void;
   onLeaveGroup?: () => void;
   onReinviteMember?: (memberName: string, inviteUrl: string, silent?: boolean) => void;
@@ -46,6 +47,7 @@ export const GroupMemberList: React.FC<GroupMemberListProps> = ({
   onRemindMember,
   onRemoveMember,
   onWriteOff,
+  onRemovePastMember,
   onSettleMember,
   onLeaveGroup,
   onReinviteMember,
@@ -305,7 +307,8 @@ export const GroupMemberList: React.FC<GroupMemberListProps> = ({
       .filter((m): m is string => !!m),
     ...rawPendingList.filter((m) => !sessionAddedNames.some((n) => n.toLowerCase() === m.replace(/\s*\(me\)$/i, '').trim().toLowerCase())),
   ];
-  const leftMembersList = selectedGroup.members.filter((m) => m.endsWith(' (Left)'));
+  const removedSet = new Set((selectedGroup.removedMembers || []).map((n) => n.toLowerCase()));
+  const leftMembersList = selectedGroup.members.filter((m) => m.endsWith(' (Left)') && !removedSet.has(m.toLowerCase()));
 
   // Two-letter initials for a member's avatar (first + last word, else first two
   // letters of a single word).
@@ -1098,8 +1101,33 @@ export const GroupMemberList: React.FC<GroupMemberListProps> = ({
                         >
                           🔗 Invite again
                         </button>
-                        {/* Past members are never removable: their expenses keep the
-                            group's balances correct, so they stay in history. */}
+                        {onRemovePastMember && (
+                          <span
+                            title="Remove from list"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              const shown = withoutEmailTag(selectedGroup, m).replace(/\s*\(Left\)$/i, '');
+                              const bt = memberBalanceText(cleanName);
+                              // Their expenses stay (balances need them); removing
+                              // only hides them here. A live balance is written off
+                              // first so nothing is left owing.
+                              setActionCard(bt ? {
+                                title: `Remove "${shown}"?`,
+                                desc: `Balance remaining: ${bt}. It will be written off, then they're removed from this list. Past expenses stay.`,
+                                primaryLabel: 'Write off & remove',
+                                primaryColor: '#E11D48',
+                                onPrimary: () => { setActionCard(null); onWriteOff && onWriteOff(cleanName); onRemovePastMember(m); },
+                              } : {
+                                title: `Remove "${shown}"?`,
+                                desc: 'They\'ll be removed from this list. Past expenses stay.',
+                                primaryLabel: 'Remove',
+                                primaryColor: '#E11D48',
+                                onPrimary: () => { setActionCard(null); onRemovePastMember(m); },
+                              });
+                            }}
+                            style={{ cursor: 'pointer', color: '#EF4444', fontSize: '14px', fontWeight: 'bold', padding: '0 4px' }}
+                          >✕</span>
+                        )}
                       </div>
                     )}
                   </div>
