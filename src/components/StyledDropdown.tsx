@@ -3,6 +3,8 @@ import React, { useState } from 'react';
 export interface DropdownOption {
   value: string;
   label: string;
+  /** Optional smaller grey second line in the menu (e.g. an email). */
+  sublabel?: string;
 }
 
 interface StyledDropdownProps {
@@ -87,7 +89,9 @@ export const StyledDropdown: React.FC<StyledDropdownProps> = ({
               boxShadow: '0 8px 20px rgba(0,0,0,0.1)',
               zIndex: 200,
               width: fullWidth ? '100%' : 'max-content',
-              minWidth: '140px',
+              // Wider when options carry an email line, so it isn't cut short.
+              minWidth: options.some((o) => o.sublabel) ? 'min(260px, 82vw)' : '140px',
+              maxWidth: 'min(300px, 86vw)',
               padding: '6px',
               boxSizing: 'border-box',
             }}
@@ -110,11 +114,18 @@ export const StyledDropdown: React.FC<StyledDropdownProps> = ({
                     background: active ? '#F1F5F9' : 'transparent',
                     textAlign: 'left',
                     whiteSpace: 'nowrap',
+                    overflow: 'hidden',
+                    textOverflow: 'ellipsis',
                   }}
                   onMouseEnter={(e) => { if (!active) e.currentTarget.style.background = '#F8FAFC'; }}
                   onMouseLeave={(e) => { if (!active) e.currentTarget.style.background = 'transparent'; }}
                 >
                   {opt.label}
+                  {opt.sublabel && (
+                    <div style={{ fontSize: '10.5px', fontWeight: 400, color: '#94A3B8', marginTop: '1px', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                      {opt.sublabel}
+                    </div>
+                  )}
                 </div>
               );
             })}

@@ -3,6 +3,7 @@ import { SettleModal } from './SettleModal';
 import { BalanceDisplay } from './BalanceDisplay';
 import { Group, Expense, UserMetadata } from '../lib/types';
 import { GROUP_COLORS, formatExactAmount } from '../lib/utils';
+import { withoutEmailTag } from '../lib/identity';
 import { useGroupDetailForm } from '../hooks/useGroupDetailForm';
 
 // Subcomponents
@@ -444,7 +445,7 @@ export const GroupDetail: React.FC<GroupDetailProps> = ({
                   {activeMembers.slice(0, 4).map((member, idx) => {
                     const initials = (() => {
                       if (!member) return '?';
-                      const p = member.trim().split(/\s+/);
+                      const p = withoutEmailTag(selectedGroup, member).trim().split(/\s+/);
                       if (p.length === 1) return p[0].substring(0, 2).toUpperCase();
                       return (p[0].charAt(0) + p[p.length - 1].charAt(0)).toUpperCase();
                     })();

@@ -606,3 +606,11 @@ export const currentMemberName = (group: Group | undefined | null, e: Expense | 
   }
   return canonicalRosterName(name, group.members || []);
 };
+
+// Picker label split into a name and an optional email line, for UIs that
+// show the email smaller underneath instead of inline.
+export const pickerParts = (group: Group | undefined | null, name: string, roster: string[]): { label: string; sub?: string } => {
+  const full = pickerLabel(group, name, roster);
+  const i = full.indexOf(' · ');
+  return i < 0 ? { label: full } : { label: full.slice(0, i), sub: full.slice(i + 3) };
+};

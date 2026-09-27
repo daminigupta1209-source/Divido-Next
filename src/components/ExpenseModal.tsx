@@ -17,7 +17,7 @@ import { useVoiceRecognition } from '../hooks/useVoiceRecognition';
 import { StyledDropdown } from './StyledDropdown';
 import { CameraCaptureModal } from './CameraCaptureModal';
 import { FullScreenAddFriend } from './FullScreenAddFriend';
-import { buildPeopleSuggestions, pickerLabel } from '../lib/identity';
+import { buildPeopleSuggestions, pickerParts } from '../lib/identity';
 
 // Borderless trigger — the wrapping div already provides the pill/border/shadow.
 const emInlineBtnStyle: React.CSSProperties = { border: '1.5px solid #EAEFF4', background: 'var(--w, #fff)', boxShadow: '0 1px 3px rgba(0,0,0,0.03)', borderRadius: '19px', height: '38px', width: '100%', fontSize: '12px', fontWeight: 600, color: '#1E293B', padding: '0 16px' };
@@ -1479,10 +1479,11 @@ export const ExpenseModal: React.FC<ExpenseModalProps> = ({
                   value={payer}
                   onChange={(v) => setPayer(v)}
                   buttonStyle={emInlineBtnStyle}
-                  options={payerOptions.map((option) => ({
-                    value: option.replace(' (Left)', ''),
-                    label: option === me ? (userName === 'You' ? 'You' : `You (${userName})`) : pickerLabel(selectedGroup, option, payerOptions),
-                  }))}
+                  options={payerOptions.map((option) => {
+                    if (option === me) return { value: option.replace(' (Left)', ''), label: userName === 'You' ? 'You' : `You (${userName})` };
+                    const p = pickerParts(selectedGroup, option, payerOptions);
+                    return { value: option.replace(' (Left)', ''), label: p.label, sublabel: p.sub };
+                  })}
                 />
               </div>
             </div>
@@ -1605,7 +1606,9 @@ export const ExpenseModal: React.FC<ExpenseModalProps> = ({
                   : splitMode === 'Percentage'
                   ? ((parseFloat(amt) || 0) * (shares[cleanMember] || 0)) / 100
                   : shares[cleanMember] || 0;
-                const displayName = member === me ? (userName === 'You' ? 'You' : `You (${userName})`) : pickerLabel(selectedGroup, member, friendsToSelect);
+                const parts = member === me
+                  ? { label: userName === 'You' ? 'You' : `You (${userName})`, sub: undefined as string | undefined }
+                  : pickerParts(selectedGroup, member, friendsToSelect);
                 return (
                   <div
                     key={member}
@@ -1628,7 +1631,7 @@ export const ExpenseModal: React.FC<ExpenseModalProps> = ({
                       transition: 'all 0.15s',
                     }}
                   >
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px', minWidth: 0, flex: 1 }}>
                       <div style={{
                         width: '20px', height: '20px', borderRadius: '6px',
                         background: isSelected ? '#16A34A' : '#fff',
@@ -1638,7 +1641,12 @@ export const ExpenseModal: React.FC<ExpenseModalProps> = ({
                       }}>
                         {isSelected && <span style={{ color: '#fff', fontSize: '12px', fontWeight: 600 }}>✓</span>}
                       </div>
-                      <span style={{ fontSize: '13px', fontWeight: 700, color: '#1E293B' }}>{displayName}</span>
+                      <span style={{ display: 'flex', flexDirection: 'column', minWidth: 0 }}>
+                        <span style={{ fontSize: '13px', fontWeight: 700, color: '#1E293B', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{parts.label}</span>
+                        {parts.sub && (
+                          <span style={{ fontSize: '11px', fontWeight: 400, color: '#94A3B8', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{parts.sub}</span>
+                        )}
+                      </span>
                     </div>
                     {isSelected && amt && (
                       splitMode === 'Equally' ? (
