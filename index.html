@@ -22,6 +22,22 @@
   </head>
   <body>
     <div id="root"></div>
+    <script>
+      // Blank-screen rescue: if the app still hasn't drawn anything after 8s
+      // (a JS file failed to load — usually an old cached copy after a
+      // deploy), clear the offline cache once and reload, instead of leaving
+      // the user stuck on a white screen.
+      setTimeout(function () {
+        var r = document.getElementById('root');
+        if (r && r.children.length) return;
+        try { if (sessionStorage.getItem('dv_blank_fix')) return; sessionStorage.setItem('dv_blank_fix', '1'); } catch (e) {}
+        var reload = function () { location.reload(); };
+        Promise.all([
+          navigator.serviceWorker ? navigator.serviceWorker.getRegistrations().then(function (rs) { return Promise.all(rs.map(function (x) { return x.unregister(); })); }) : null,
+          window.caches ? caches.keys().then(function (ks) { return Promise.all(ks.map(function (k) { return caches.delete(k); })); }) : null
+        ]).then(reload, reload);
+      }, 8000);
+    </script>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>

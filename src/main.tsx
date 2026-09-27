@@ -29,6 +29,18 @@ try {
   }
 } catch { /* localStorage unavailable — nothing to reset */ }
 
+// A lazily-loaded screen whose file vanished in a new deploy → reload once to
+// pick up the current files instead of failing.
+window.addEventListener('vite:preloadError', () => {
+  try {
+    if (sessionStorage.getItem('divido_chunk_reloaded')) return;
+    sessionStorage.setItem('divido_chunk_reloaded', '1');
+  } catch { /* ignore */ }
+  window.location.reload();
+});
+// The app drew fine: re-arm the blank-screen rescue in index.html.
+setTimeout(() => { try { sessionStorage.removeItem('dv_blank_fix'); } catch { /* ignore */ } }, 10000);
+
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
     <ErrorBoundary>

@@ -96,7 +96,10 @@ self.addEventListener('fetch', (event) => {
       if (cached) return cached;
       return fetch(req)
         .then((res) => {
-          if (res && res.status === 200 && res.type === 'basic') {
+          // Never cache an HTML page under a JS/CSS URL (a host fallback page
+          // for a missing file) — it would be served as code forever → blank.
+          const isHtml = (res && res.headers.get('content-type') || '').includes('text/html');
+          if (res && res.status === 200 && res.type === 'basic' && !isHtml) {
             const clone = res.clone();
             caches.open(CACHE).then((c) => c.put(req, clone));
           }
