@@ -50,6 +50,32 @@ const ExpenseModal = safeLazy(() => import('./components/ExpenseModal').then((m)
 // loading these only when a user actually opens a payment/QR popup.
 const UPIQRModal = safeLazy(() => import('./components/UPIQRModal').then((m) => ({ default: m.UPIQRModal })));
 const NetReceivableModal = safeLazy(() => import('./components/NetReceivableModal').then((m) => ({ default: m.NetReceivableModal })));
+
+// Warm every lazy screen into memory shortly after start-up. A deploy removes
+// the old build's files, so an app left open would otherwise fail ("New
+// version available" / reload) the first time it opened a not-yet-loaded
+// screen. Once imported, a module stays in the page's memory for good.
+if (typeof window !== 'undefined') {
+  const warm = () => {
+    [
+      () => import('./components/MasterSummary'),
+      () => import('./components/FriendsView'),
+      () => import('./components/Analytics'),
+      () => import('./components/ActivityStudio'),
+      () => import('./components/Profile'),
+      () => import('./components/ExpenseModal'),
+      () => import('./components/UPIQRModal'),
+      () => import('./components/NetReceivableModal'),
+      () => import('./components/expense-modal/BillScanner'),
+      () => import('./lib/gemini'),
+      () => import('./lib/imageUtils'),
+    ].forEach((load) => { load().catch(() => { /* offline / blocked — load on demand later */ }); });
+  };
+  window.setTimeout(() => {
+    const ric = (window as any).requestIdleCallback as ((cb: () => void) => void) | undefined;
+    if (ric) ric(warm); else warm();
+  }, 4000);
+}
 import { Group, Expense, PendingMatchPrompt, GlobalSettleData, ConfirmState } from './lib/types';
 import { CurrencyConverterModal } from './components/CurrencyConverterModal';
 import { AddFriendModal } from './components/AddFriendModal';

@@ -101,7 +101,9 @@ if ('serviceWorker' in navigator) {
         // regains focus, so the "New version available" banner actually appears.
         const checkForUpdate = () => { try { reg.update?.(); } catch { /* ignore */ } };
         checkForUpdate();
-        setInterval(checkForUpdate, 60 * 1000);
+        // Every 5 min (plus on focus/visibility): gentle on the host even with
+        // many phones open.
+        setInterval(checkForUpdate, 5 * 60 * 1000);
         document.addEventListener('visibilitychange', () => {
           if (document.visibilityState === 'visible') checkForUpdate();
         });
