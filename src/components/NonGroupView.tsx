@@ -241,7 +241,7 @@ export const NonGroupView: React.FC<NonGroupViewProps> = ({
         {/* Actions */}
         <div style={{ display: 'flex', gap: '8px', marginBottom: '20px' }}>
           {hasBal && <button type="button" onClick={() => onSettlePerson(profilePerson, p?.directGroupId)} style={profileBtn}>Settle</button>}
-          {onSharePerson && <button type="button" onClick={() => onSharePerson(profilePerson, p?.directGroupId)} style={profileBtn}>Share</button>}
+          {onSharePerson && <button type="button" onClick={() => onSharePerson(profilePerson, p?.directGroupId)} style={{ ...profileBtn, background: '#1A73E8', border: 'none', color: '#FFFFFF' }}>Invite</button>}
         </div>
 
         {/* Full per-currency breakdown */}
