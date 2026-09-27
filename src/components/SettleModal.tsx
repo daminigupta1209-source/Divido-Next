@@ -48,7 +48,7 @@ export const SettleModal: React.FC<SettleModalProps> = ({
     ? (editingSettle.gId === 'STANDALONE'
         ? {
             id: 'STANDALONE',
-            name: 'Non-Group Expenses',
+            name: 'Non-Group',
             members: Array.from(new Set([
               me,
               ...expenses

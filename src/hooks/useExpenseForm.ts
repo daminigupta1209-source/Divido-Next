@@ -102,7 +102,7 @@ export function useExpenseForm({
 
       return {
         id: 'STANDALONE',
-        name: 'Non-Group Expenses',
+        name: 'Non-Group',
         // Include the current expense's own splitters so a quick "add expense
         // with a friend" (prefilled with someone new to Non-Group) shows them
         // as a selectable chip, not just an invisible selection.

@@ -29,7 +29,7 @@ export function useGroupDetailForm({
     return selectedId === 'STANDALONE'
       ? {
           id: 'STANDALONE',
-          name: 'Non-Group Expenses',
+          name: 'Non-Group',
           members: Array.from(new Set([
             me,
             ...expenses

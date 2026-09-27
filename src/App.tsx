@@ -1749,7 +1749,7 @@ function App() {
           : null;
 
       const allVirtualGroups = [
-        { id: 'STANDALONE', name: 'Non-Group Expenses', members: [] as string[], currency: '₹' },
+        { id: 'STANDALONE', name: 'Non-Group', members: [] as string[], currency: '₹' },
         ...groups,
       ].filter((g) => {
         if (globalSettleData.gId !== undefined && globalSettleData.gId !== null) {
@@ -1760,7 +1760,7 @@ function App() {
           // by their internal name — so match the display label, else the settle
           // sheet finds no groups and renders blank. STANDALONE is "Non-Group" too.
           if (String(g.id) === 'STANDALONE') {
-            return targetGroupNames.includes('Non-Group') || targetGroupNames.includes('Non-Group Expenses');
+            return targetGroupNames.includes('Non-Group') || targetGroupNames.includes('Non-Group');
           }
           const gLabel = (g as any).isDirect ? 'Non-Group' : String(g.name);
           return targetGroupNames.includes(gLabel) || targetGroupNames.includes(String(g.name));
@@ -2812,7 +2812,7 @@ function App() {
     if (String(id) === 'STANDALONE') return;
     const isStandalone = String(id) === 'STANDALONE';
     const g = isStandalone
-      ? { name: 'Non-Group Expenses', members: [] as string[] }
+      ? { name: 'Non-Group', members: [] as string[] }
       : groups.find((x) => String(x.id) === String(id));
     if (!g) return;
 
@@ -3054,7 +3054,7 @@ function App() {
     if (checkPastMemberAndShowRejoin(true)) return;
     if (id === 'STANDALONE') {
       alert(
-        'Non-Group Expenses is a permanent category and cannot be renamed, but you can clear its history using the delete icon! ⚡'
+        'Non-Group is a permanent category and cannot be renamed, but you can clear its history using the delete icon! ⚡'
       );
       return;
     }
@@ -3231,7 +3231,7 @@ function App() {
   const selectedGroup = selectedId === 'STANDALONE'
     ? {
         id: 'STANDALONE',
-        name: 'Non-Group Expenses',
+        name: 'Non-Group',
         members: Array.from(new Set([
           me,
           ...expenses
@@ -4729,7 +4729,7 @@ function App() {
           onExpenseSaved={(savedExp, activeGrp) => {
             const targetGroup = activeGrp || groups.find(g => String(g.id) === String(savedExp.gId)) || {
               id: savedExp.gId || 'STANDALONE',
-              name: 'Non-Group Expenses',
+              name: 'Non-Group',
               members: savedExp.splitters || [],
               currency: savedExp.currency || myDefaultCurrency || '₹',
             };
@@ -5291,7 +5291,7 @@ function App() {
             }}>
               {globalSettleData.gId ? `Breakdown for ${
                 globalSettleData.gId === 'STANDALONE'
-                  ? 'Non-Group Expenses'
+                  ? 'Non-Group'
                   : groups.find((g) => String(g.id) === String(globalSettleData.gId))?.name || 'group'
               }` : 'Breakdown across all shared groups'}
             </p>

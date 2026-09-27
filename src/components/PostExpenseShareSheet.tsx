@@ -102,7 +102,7 @@ export const PostExpenseShareSheet: React.FC<PostExpenseShareSheetProps> = ({
       ? `${currencySymbol}${firstGuest.shareAmount.toFixed(2)} your share`
       : `${currencySymbol}${totalOwedByGuests.toFixed(2)} total share`;
 
-    const groupNameStr = group?.name && group.name !== 'Non-Group Expenses' ? ` to ${group.name}` : '';
+    const groupNameStr = group?.name && group.name !== 'Non-Group' ? ` to ${group.name}` : '';
     return `Hey ${guestNames}! Added "${expense.title}" (${amountText}) on Divido 💸\nJoin our group${groupNameStr} to track & settle:\n${inviteLink}`;
   };
 

@@ -164,7 +164,7 @@ export function useAnalytics({
 
   const mostActiveGroup = useMemo(() => {
     const activeGroups = [
-      { id: 'STANDALONE', name: 'Non-Group Expenses' },
+      { id: 'STANDALONE', name: 'Non-Group' },
       ...groups.filter(
         (g) =>
           g.name.trim() !== '' ||
@@ -176,7 +176,7 @@ export function useAnalytics({
       const prevCount = expenses.filter((e) => String(e.gId) === String(prev.id)).length;
       const currCount = expenses.filter((e) => String(e.gId) === String(current.id)).length;
       return currCount > prevCount ? current : prev;
-    }, { id: 'STANDALONE', name: 'Non-Group Expenses' });
+    }, { id: 'STANDALONE', name: 'Non-Group' });
   }, [groups, expenses]);
 
   // Donut slices calculations
@@ -203,7 +203,7 @@ export function useAnalytics({
       (acc, e) => {
         const gId = e.gId || 'STANDALONE';
         const group = groups.find(g => String(g.id) === String(gId));
-        const name = group?.name || 'Non-Group Expenses';
+        const name = group?.name || 'Non-Group';
         if (!acc[gId]) acc[gId] = { id: String(gId), name, amount: 0, items: [] };
         acc[gId].amount += (Number(e.amt) || 0);
         acc[gId].items.push(e);
@@ -270,7 +270,7 @@ export function useAnalytics({
        }
     }
 
-    if (!initialGroupId && mostActiveGroup && mostActiveGroup.name !== 'Non-Group Expenses' && mostActiveGroup.name !== 'Untitled Group') {
+    if (!initialGroupId && mostActiveGroup && mostActiveGroup.name !== 'Non-Group' && mostActiveGroup.name !== 'Untitled Group') {
        insights.push(`You are most active in ${mostActiveGroup.name}.`);
     }
 

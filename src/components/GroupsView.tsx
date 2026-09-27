@@ -360,7 +360,7 @@ export const GroupsView: React.FC<GroupsViewProps> = ({
         >
           <div style={{ display: 'flex', alignItems: 'center', gap: '6px', minWidth: 0, flex: 1 }}>
             <h3  style={{ fontSize: '15px', color: '#334155', fontWeight: 600, margin: 0, lineHeight: 1.2 }}>
-              Non-Group Expenses
+              Non-Group
             </h3>
             <button
               type="button"

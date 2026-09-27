@@ -858,7 +858,7 @@ export const MasterSummary: React.FC<MasterSummaryProps> = ({
 
               <div style={{ minWidth: 0, flex: 1, display: 'flex', flexDirection: 'column', gap: '3px' }}>
                 <h3 style={{ fontSize: '17px', color: '#2E2A25', fontWeight: 600, margin: 0, lineHeight: 1.2, textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap' }}>
-                  Non-Group Expenses
+                  Non-Group
                 </h3>
                 {ngEntries.length === 0 ? (
                   <span style={{ fontSize: '13px', fontWeight: 500, color: '#94A3B8' }}>Settled up</span>

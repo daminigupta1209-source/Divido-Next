@@ -364,7 +364,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
                 }}
               >
                 {[
-                  { id: 'STANDALONE', name: 'Non-Group Expenses', emoji: '👤' },
+                  { id: 'STANDALONE', name: 'Non-Group', emoji: '👤' },
                   ...groups.filter(
                     (g) =>
                       g.name.trim() !== '' ||
