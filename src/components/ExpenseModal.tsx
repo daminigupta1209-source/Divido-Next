@@ -551,14 +551,14 @@ export const ExpenseModal: React.FC<ExpenseModalProps> = ({
               <button
                 onMouseDown={(e) => { e.preventDefault(); setShowGroupDropdown((p) => !p); }}
                 style={{
-                  display: 'flex', alignItems: 'center', gap: '8px',
-                  padding: '8px 18px 8px 8px',
-                  minWidth: '170px',
-                  borderRadius: '30px',
+                  // Same look as the group screen header: avatar + big name,
+                  // no pill background, plus a ▾ to switch group.
+                  display: 'flex', alignItems: 'center', gap: '12px',
+                  padding: '2px 4px 2px 0',
                   border: 'none',
-                  background: '#F1F5F9',
+                  background: 'transparent',
                   cursor: 'pointer',
-                  fontSize: '16px', fontWeight: 600, color: '#475569',
+                  fontSize: '20px', fontWeight: 600, color: 'var(--t)',
                   boxShadow: 'none',
                   whiteSpace: 'nowrap',
                   maxWidth: '100%',
@@ -567,46 +567,27 @@ export const ExpenseModal: React.FC<ExpenseModalProps> = ({
                 }}
               >
                 {(() => {
-                  if (localGId === 'STANDALONE') {
-                    return (
-                      <div style={{ width: '30px', height: '30px', borderRadius: '50%', background: '#E2E8F0', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '11px', fontWeight: 600, color: '#475569', flexShrink: 0 }}>NG</div>
-                    );
-                  }
+                  const avatar: React.CSSProperties = {
+                    width: '38px', height: '38px', borderRadius: '50%',
+                    background: 'var(--nav-bg)', color: 'var(--purple-text)',
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    fontSize: '16px', fontWeight: 600, flexShrink: 0, overflow: 'hidden',
+                  };
+                  if (localGId === 'STANDALONE') return <div style={avatar}>NG</div>;
                   if (activeGroup) {
-                    const index = groups.findIndex((x) => String(x.id) === String(activeGroup.id));
-                    const c = GROUP_COLORS[index !== -1 ? index % GROUP_COLORS.length : 0];
-                    const initials = (activeGroup.emoji && (activeGroup.emoji.startsWith('data:image/') || activeGroup.emoji.startsWith('http'))) ? activeGroup.emoji : (activeGroup.name.charAt(0).toUpperCase() || '🏡');
+                    const pic = activeGroup.emoji && (activeGroup.emoji.startsWith('data:image/') || activeGroup.emoji.startsWith('http')) ? activeGroup.emoji : '';
                     return (
-                      <div style={{
-                        width: '30px',
-                        height: '30px',
-                        borderRadius: '50%',
-                        background: c.bg,
-                        color: c.text,
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        fontSize: '11px',
-                        fontWeight: 600,
-                        flexShrink: 0,
-                        overflow: 'hidden',
-                      }}>
-                        {initials && (initials.startsWith('data:image/') || initials.startsWith('http')) ? (
-                          <img src={initials} style={{ width: '100%', height: '100%', objectFit: 'cover' }} alt="" />
-                        ) : (
-                          initials
-                        )}
+                      <div style={avatar}>
+                        {pic ? <img src={pic} style={{ width: '100%', height: '100%', objectFit: 'cover' }} alt="" /> : (activeGroup.name.charAt(0).toUpperCase() || '🏡')}
                       </div>
                     );
                   }
-                  return (
-                    <div style={{ width: '30px', height: '30px', borderRadius: '50%', background: '#E2E8F0', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '12px', flexShrink: 0 }}>🏡</div>
-                  );
+                  return <div style={avatar}>🏡</div>;
                 })()}
                 <span style={{ overflow: 'hidden', textOverflow: 'ellipsis' }}>
                   {localGId === 'STANDALONE' ? 'Non-Group Split' : (activeGroup?.name || 'Select Group')}
                 </span>
-                <span style={{ fontSize: '11px', color: '#94A3B8', marginLeft: '2px', transition: 'transform 0.2s', display: 'inline-block', transform: showGroupDropdown ? 'rotate(180deg)' : 'rotate(0deg)' }}>▼</span>
+                <span style={{ fontSize: '12px', color: '#94A3B8', marginLeft: '2px', transition: 'transform 0.2s', display: 'inline-block', transform: showGroupDropdown ? 'rotate(180deg)' : 'rotate(0deg)' }}>▼</span>
               </button>
 
               {/* Custom dropdown panel */}
