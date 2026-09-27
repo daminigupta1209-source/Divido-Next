@@ -183,3 +183,16 @@ describe('currentMemberName', () => {
     expect(currentMemberName(g, e, 'Stranger')).toBe('Stranger');
   });
 });
+
+import { buildNameIdentityResolver } from './identity';
+
+describe('buildNameIdentityResolver', () => {
+  const g1 = { id: 'a', name: 'Raipur', currency: '₹', members: ['Chhutki', 'Didi'], memberIdentities: { Chhutki: 'pid-c', Didi: 'pid-d1' } } as unknown as Group;
+  const g2 = { id: 'b', name: 'Kota', currency: '₹', members: ['Didi'], memberIdentities: { Didi: 'pid-d2' } } as unknown as Group;
+  it('resolves a name that means exactly one person, not an ambiguous one', () => {
+    const r = buildNameIdentityResolver([g1, g2]);
+    expect(r('chhutki')).toBe('pid-c');
+    expect(r('Didi')).toBeUndefined();
+    expect(r('Stranger')).toBeUndefined();
+  });
+});

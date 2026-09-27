@@ -614,3 +614,29 @@ export const pickerParts = (group: Group | undefined | null, name: string, roste
   const i = full.indexOf(' · ');
   return i < 0 ? { label: full } : { label: full.slice(0, i), sub: full.slice(i + 3) };
 };
+
+// Like buildNameEmailResolver, but for ANY recorded identity (email or hidden
+// person_id). Lets a Non-Group person with no email ("Chhutki") join their
+// in-group self when the name means exactly ONE person across all groups.
+// Ambiguous names (two different identities) return undefined — never merged.
+export const buildNameIdentityResolver = (
+  groups: Array<Group | undefined | null>
+): ((name: string) => string | undefined) => {
+  const map: Record<string, string> = {};
+  const ambiguous = new Set<string>();
+  const norm = (s: string) => s.replace(/\s*\(Left\)$/i, '').trim().toLowerCase();
+  for (const g of groups) {
+    if (!g || (g as any).isDirect) continue;
+    for (const [nm, raw] of Object.entries(g.memberIdentities || {})) {
+      const key = norm(nm);
+      const id = String(raw);
+      if (!key || !id) continue;
+      if (map[key] && map[key] !== id) ambiguous.add(key);
+      else map[key] = id;
+    }
+  }
+  return (name: string) => {
+    const key = norm(name);
+    return ambiguous.has(key) ? undefined : map[key];
+  };
+};

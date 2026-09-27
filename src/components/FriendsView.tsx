@@ -4,7 +4,7 @@ import { BalanceDisplay } from './BalanceDisplay';
 import { Group, Expense, UserMetadata, GlobalSettleData } from '../lib/types';
 import { simplifyMultiCurrencyDebts, computeRawPairwiseTransactions } from '../lib/calculations';
 import { asyncBatchComputeGroups } from '../lib/workerHelper';
-import { getPersonKey, resolveSelfKey, toIdentitySpace, withoutEmailTag, buildNameEmailResolver, findDuplicatePeople, isValidEmail, type DuplicateEntry, type DuplicatePerson } from '../lib/identity';
+import { getPersonKey, resolveSelfKey, toIdentitySpace, withoutEmailTag, buildNameEmailResolver, buildNameIdentityResolver, findDuplicatePeople, isValidEmail, type DuplicateEntry, type DuplicatePerson } from '../lib/identity';
 import { worldCurrencies, formatExactAmount, formatCompactAmount } from '../lib/utils';
 import { SearchableCurrencyPicker } from './SearchableCurrencyPicker';
 import { StyledDropdown } from './StyledDropdown';
@@ -359,9 +359,14 @@ export const FriendsView: React.FC<FriendsViewProps> = ({
       const nameEmail = buildNameEmailResolver(groups);
       let selfEmail = (userEmail || '').toLowerCase();
       if (!selfEmail) { try { selfEmail = (localStorage.getItem('divido_email') || '').toLowerCase(); } catch { /* ignore */ } }
+      // No email? Fall back to the one identity this name has across groups
+      // (e.g. a person_id), so a Non-Group "Chhutki" joins her Raipur self.
+      // Ambiguous names stay separate; never resolve to myself.
+      const nameIdentity = buildNameIdentityResolver(groups);
+      const myKeys = new Set(prep.map((x) => String(x.myKey).toLowerCase()));
       const standaloneId = (nm: string) => {
-        const em = nameEmail(nm);
-        return em && em !== selfEmail ? em : nm;
+        const em = nameEmail(nm) || nameIdentity(nm);
+        return em && em.toLowerCase() !== selfEmail && !myKeys.has(em.toLowerCase()) ? em : nm;
       };
 
       standaloneExps.forEach((e) => {
