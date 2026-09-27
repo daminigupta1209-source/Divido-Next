@@ -68,6 +68,8 @@ export const NonGroupView: React.FC<NonGroupViewProps> = ({
   const [activeTab, setActiveTab] = React.useState<'settle' | 'photos'>('settle');
   // Which person's full profile page is open (tapping their DP/avatar).
   const [profilePerson, setProfilePerson] = React.useState<string | null>(null);
+  // Shared-thread id of the open person (set while rendering their screen).
+  const profilePersonThread = React.useRef<string | undefined>(undefined);
   const touchStartX = React.useRef<number | null>(null);
   const touchStartY = React.useRef<number | null>(null);
 
@@ -82,11 +84,20 @@ export const NonGroupView: React.FC<NonGroupViewProps> = ({
     // The top-bar back arrow asks first; while a person is open it closes
     // them (pops the entry pushed above) instead of leaving Non-Group.
     const onHeaderBack = (ev: Event) => { ev.preventDefault(); window.history.back(); };
+    // Bottom "+ Expense" while a person is open → prefill them.
+    const onAddExpense = (ev: Event) => {
+      if (!onAddWithPerson) return;
+      ev.preventDefault();
+      const t = profilePersonThread.current;
+      onAddWithPerson(profilePerson, t);
+    };
     window.addEventListener('popstate', onPop);
     window.addEventListener('divido:header-back', onHeaderBack);
+    window.addEventListener('divido:add-expense', onAddExpense);
     return () => {
       window.removeEventListener('popstate', onPop);
       window.removeEventListener('divido:header-back', onHeaderBack);
+      window.removeEventListener('divido:add-expense', onAddExpense);
     };
   }, [profilePerson]);
 
@@ -211,6 +222,7 @@ export const NonGroupView: React.FC<NonGroupViewProps> = ({
   // ── Person profile (tap the DP) ──────────────────────────────────────────────
   if (profilePerson) {
     const p = people.find((x) => x.name.toLowerCase() === profilePerson.toLowerCase());
+    profilePersonThread.current = p?.directGroupId;
     const b = p ? balanceText(p.bal) : { text: 'Settled up', color: '#94A3B8' };
     const hasBal = p ? myPerspective(p.bal).length > 0 : false;
     const pLower = profilePerson.toLowerCase();

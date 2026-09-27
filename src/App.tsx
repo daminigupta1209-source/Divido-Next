@@ -3309,6 +3309,9 @@ function App() {
   // a group. Scanner stays off — it lives as a small icon inside the expense screen.
   const addExpenseFromNav = (scan: boolean = false) => {
     if (!requireSignInToCreate()) return;
+    // An open sub-screen (a Non-Group person) can take over, so the new
+    // expense is prefilled with that friend instead of starting empty.
+    if (!scan && !window.dispatchEvent(new Event('divido:add-expense', { cancelable: true }))) return;
     const insideGroup = (view === 'detail' || view === 'gallery' || view === 'analytics') && selectedId;
     const gId = insideGroup ? selectedId : 'STANDALONE';
     setAutoOpenScanner(scan);
