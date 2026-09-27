@@ -562,11 +562,10 @@ export const FriendsView: React.FC<FriendsViewProps> = ({
           onClick={() => setShowMergeModal(true)}
           style={{ display: 'flex', alignItems: 'center', gap: '10px', background: '#FFF7ED', border: '1px solid #FED7AA', borderRadius: '14px', padding: '10px 14px', marginBottom: '14px', cursor: 'pointer' }}
         >
-          <span style={{ fontSize: '18px' }}>🔗</span>
-          <span style={{ flex: 1, minWidth: 0, fontSize: '13px', fontWeight: 600, color: '#9A3412' }}>
-            {duplicatePeople.length} {duplicatePeople.length === 1 ? 'person appears' : 'people appear'} more than once — review &amp; merge
+          <span style={{ flex: 1, minWidth: 0, fontSize: '13.5px', fontWeight: 600, color: '#9A3412', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+            {duplicatePeople.length} {duplicatePeople.length === 1 ? 'friend appears' : 'friends appear'} twice
           </span>
-          <span style={{ color: '#EA580C', fontSize: '18px', fontWeight: 700 }}>›</span>
+          <span style={{ color: '#C2410C', fontSize: '13px', fontWeight: 700, whiteSpace: 'nowrap' }}>Review ›</span>
         </div>
       )}
       {showMergeModal && (
