@@ -4,6 +4,7 @@ import { BalanceDisplay } from './BalanceDisplay';
 import { getEmoji, formatDate, getExactTime, getMonthYearKey, formatExactAmount } from '../lib/utils';
 import { Group, Expense } from '../lib/types';
 import { revertGroupConversions } from '../lib/conversions';
+import { activityName } from '../lib/identity';
 import { useActivityStudio } from '../hooks/useActivityStudio';
 import { StyledDropdown } from './StyledDropdown';
 
@@ -603,14 +604,14 @@ export const ActivityStudio: React.FC<ActivityStudioProps> = ({
                         <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '11px', color: '#64748B', marginTop: '6px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                           {isSettlement ? (
                             <span style={{ color: '#16A34A', fontWeight: 700 }}>
-                              {e.paid === me ? 'You' : e.paid} paid {e.splitters?.[0] === me ? 'you' : e.splitters?.[0]}
+                              {e.paid === me ? 'You' : activityName(g, e.paid)} paid {e.splitters?.[0] === me ? 'you' : activityName(g, e.splitters?.[0] || '')}
                             </span>
                           ) : e.title === 'Written off' && e.splitters?.[0] ? (
                             <span style={{ color: '#64748B' }}>
-                              {e.paid === me ? 'You' : e.paid} paid {e.splitters[0] === me ? 'you' : e.splitters[0]}
+                              {e.paid === me ? 'You' : activityName(g, e.paid)} paid {e.splitters[0] === me ? 'you' : activityName(g, e.splitters[0])}
                             </span>
                           ) : (
-                            <span style={{ color: e.paid === me ? '#16A34A' : '#DC2626' }}>{e.paid === me ? 'You paid' : `${e.paid} paid`}</span>
+                            <span style={{ color: e.paid === me ? '#16A34A' : '#DC2626' }}>{e.paid === me ? 'You paid' : `${activityName(g, e.paid)} paid`}</span>
                           )}
                           <span>•</span>
                           <span>{formatDate(e.date)}{timeStr ? ` at ${timeStr}` : ''}</span>

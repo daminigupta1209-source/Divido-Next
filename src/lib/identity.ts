@@ -569,3 +569,20 @@ export const uniqueProfileName = (name: string, email: string, taken: Set<string
   for (let i = 2; taken.has(out.toLowerCase()); i++) out = `${base} ${i}`;
   return out;
 };
+
+// Short name for activity text ("X paid"). Hides the auto email tag; when
+// another member shares the same name, adds a short email hint instead
+// ("Vandana Investment (vandanagupt…)") so the two are still distinguishable.
+export const activityName = (group: Group | undefined | null, name: string): string => {
+  if (!name) return name;
+  const shown = withoutEmailTag(group, name);
+  const base = (s: string) => withoutEmailTag(group, s).replace(/\s*\(Left\)\s*$/i, '').trim().toLowerCase();
+  const b = base(name);
+  const dup = (group?.members || []).some((o) =>
+    o.replace(/\s*\(Left\)\s*$/i, '').trim().toLowerCase() !== name.replace(/\s*\(Left\)\s*$/i, '').trim().toLowerCase() && base(o) === b);
+  if (!dup) return shown;
+  const email = String(getPersonKey(group, name) || '');
+  if (!email.includes('@')) return shown;
+  const local = email.split('@')[0];
+  return `${shown} (${local.length > 11 ? local.slice(0, 11) + '…' : local})`;
+};

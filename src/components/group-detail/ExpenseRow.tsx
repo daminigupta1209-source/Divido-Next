@@ -2,6 +2,7 @@ import React from 'react';
 import { Group, Expense } from '../../lib/types';
 import { formatDate, getEmoji, getExactTime, formatExactAmount } from '../../lib/utils';
 import { revertGroupConversions } from '../../lib/conversions';
+import { activityName } from '../../lib/identity';
 
 interface ExpenseRowProps {
   e: Expense;
@@ -335,7 +336,7 @@ export const ExpenseRow: React.FC<ExpenseRowProps> = ({
             {e.isDeleted && <span style={{fontSize: '10px', background: '#FEE2E2', color: '#EF4444', padding: '2px 6px', borderRadius: '4px', fontWeight: 600, marginLeft: '6px'}}>Deleted</span>}
             <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '11px', color: '#94A3B8', marginTop: '6px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
               <span style={{ color: '#16A34A', fontWeight: 500 }}>
-                {e.paid === me ? 'You' : e.paid} paid {e.splitters?.[0] === me ? 'you' : e.splitters?.[0]}
+                {e.paid === me ? 'You' : activityName(selectedGroup, e.paid)} paid {e.splitters?.[0] === me ? 'you' : activityName(selectedGroup, e.splitters?.[0] || '')}
               </span>
               <span>•</span>
               <span>{formatDate(e.date)}{timeStr ? ` at ${timeStr}` : ''}</span>
@@ -469,11 +470,11 @@ export const ExpenseRow: React.FC<ExpenseRowProps> = ({
               // Write-offs show "who paid whom" for a clearer picture.
               const receiver = Array.isArray(e.splitters) ? e.splitters[0] : undefined;
               if (e.title === 'Written off' && receiver) {
-                const payerLabel = e.paid === me ? 'You' : e.paid;
-                const receiverLabel = receiver === me ? 'you' : receiver;
+                const payerLabel = e.paid === me ? 'You' : activityName(selectedGroup, e.paid);
+                const receiverLabel = receiver === me ? 'you' : activityName(selectedGroup, receiver);
                 return `${payerLabel} paid ${receiverLabel}`;
               }
-              return e.paid === me ? 'You paid' : `${e.paid} paid`;
+              return e.paid === me ? 'You paid' : `${activityName(selectedGroup, e.paid)} paid`;
             })()}</span>
             <span>•</span>
             <span>{formatDate(e.date)}</span>
