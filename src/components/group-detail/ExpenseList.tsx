@@ -197,7 +197,7 @@ export const ExpenseList: React.FC<ExpenseListProps> = ({
             No activity yet 🍕
           </p>
         ) : (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
             {(() => {
               let lastKey = '';
               const rows: React.ReactNode[] = [];

@@ -282,7 +282,7 @@ export const NonGroupView: React.FC<NonGroupViewProps> = ({
               const curr = e.currency || defaultCurrency;
               const iPaid = cleanName(e.paid).toLowerCase() === meLower;
               rows.push(
-                <div key={e.id} className="hover-up-mini" onClick={() => onOpenExpense(e)} style={{ display: 'flex', alignItems: 'center', gap: '12px', background: '#FFFFFF', border: '0.5px solid #EFE7DC', borderRadius: '14px', padding: '12px 14px', boxShadow: '0 2px 10px rgba(0,0,0,0.03)', cursor: 'pointer', marginBottom: '10px' }}>
+                <div key={e.id} className="hover-up-mini" onClick={() => onOpenExpense(e)} style={{ display: 'flex', alignItems: 'center', gap: '12px', background: '#FFFFFF', border: '0.5px solid #EFE7DC', borderRadius: '14px', padding: '12px 14px', boxShadow: '0 2px 10px rgba(0,0,0,0.03)', cursor: 'pointer', marginBottom: '12px' }}>
                   <div style={{ width: '34px', height: '34px', borderRadius: '50%', background: '#F1EFE8', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '15px', flexShrink: 0 }}>{getEmoji(e.title) || '⚡'}</div>
                   <div style={{ flex: 1, minWidth: 0 }}>
                     <div style={{ fontSize: '14px', fontWeight: 600, color: '#0F172A', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{(e.title || '').replace(/\s*💎\s*$/, '').trim()}</div>
@@ -464,7 +464,7 @@ export const NonGroupView: React.FC<NonGroupViewProps> = ({
               No non-group expenses yet. Add a quick expense with someone and it'll show up here.
             </p>
           ) : (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
               {people.map((p) => {
                 const b = balanceText(p.bal);
                 return (
