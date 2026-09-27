@@ -3,7 +3,7 @@ import { escManager } from '../lib/escManager';
 import { Group, Expense } from '../lib/types';
 import { calculateNextOccurrenceDate } from '../lib/calculations';
 import { getEmoji, parseExpenseId, genExpenseId } from '../lib/utils';
-import { canonicalRosterName } from '../lib/identity';
+import { canonicalRosterName, currentMemberName } from '../lib/identity';
 
 export interface UseExpenseFormProps {
   setShowExpModal: (show: boolean) => void;
@@ -123,7 +123,7 @@ export function useExpenseForm({
     // Only reuse a saved selection when it actually has members. A new expense
     // is created with splitters: [], which should default to "everyone selected".
     if (editingExpense && Array.isArray(editingExpense.splitters) && editingExpense.splitters.length > 0) {
-      return editingExpense.splitters;
+      return editingExpense.splitters.map((n) => currentMemberName(activeGroup, editingExpense, n));
     }
     if (activeGroup && Array.isArray(activeGroup.members)) {
       return localGId === 'STANDALONE' ? [me] : Array.from(new Set(activeGroup.members)).filter((m) => !m.endsWith(' (Left)'));
@@ -138,7 +138,7 @@ export function useExpenseForm({
     return String(editingExpense.amt);
   });
   const [payer, setPayer] = useState<string>(
-    editingExpense && editingExpense.paid ? editingExpense.paid : me
+    editingExpense && editingExpense.paid ? currentMemberName(activeGroup, editingExpense, editingExpense.paid) : me
   );
 
   useEffect(() => {
@@ -214,7 +214,8 @@ export function useExpenseForm({
       ? editingExpense.mode
       : 'Equally'
   );
-  const [shares, setShares] = useState<Record<string, number>>(editingExpense?.shares || {});
+  const [shares, setShares] = useState<Record<string, number>>(() =>
+    Object.fromEntries(Object.entries(editingExpense?.shares || {}).map(([n, v]) => [currentMemberName(activeGroup, editingExpense, n), v])));
   const [notes, setNotes] = useState<string>(editingExpense && editingExpense.notes ? editingExpense.notes : '');
 
   const [showNotesPopup, setShowNotesPopup] = useState<boolean>(false);

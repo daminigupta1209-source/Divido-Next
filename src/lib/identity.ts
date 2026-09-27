@@ -586,3 +586,23 @@ export const activityName = (group: Group | undefined | null, name: string): str
   const local = email.split('@')[0];
   return `${shown} (${local.length > 11 ? local.slice(0, 11) + '…' : local})`;
 };
+
+// The member's CURRENT roster name for a name written on an expense. Uses the
+// member_key the expense recorded, so an expense saved before a rename/claim
+// still points at the right person (e.g. "Chirag Gupta" → "Vandana Investment
+// (chiraggupta1990)"). Falls back to roster matching, then the name itself.
+export const currentMemberName = (group: Group | undefined | null, e: Expense | null | undefined, name: string): string => {
+  if (!name || !group) return name;
+  const roster = (group.members || []).map((m) => m.replace(/\s*\(Left\)\s*$/i, ''));
+  const exact = roster.find((m) => m.toLowerCase() === name.trim().toLowerCase());
+  if (exact) return exact;
+  const pk = Object.entries(e?.partyKeys || {}).find(([n]) => n.trim().toLowerCase() === name.trim().toLowerCase())?.[1];
+  if (pk) {
+    const disp = Object.entries(group.memberKeys || {})
+      .filter(([, k]) => k === pk)
+      .map(([d]) => d)
+      .sort((a, b) => Number(/\(Left\)\s*$/i.test(a)) - Number(/\(Left\)\s*$/i.test(b)))[0];
+    if (disp) return disp.replace(/\s*\(Left\)\s*$/i, '');
+  }
+  return canonicalRosterName(name, group.members || []);
+};

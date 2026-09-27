@@ -170,3 +170,16 @@ describe('activityName', () => {
     expect(activityName(g, 'Ravi')).toBe('Ravi');
   });
 });
+
+import { currentMemberName } from './identity';
+
+describe('currentMemberName', () => {
+  const g = { id: 'g', name: 'T', currency: '₹', members: ['Vandana Investment (Chiraggupta1990)', 'Damini Gupta'],
+    memberKeys: { 'Vandana Investment (Chiraggupta1990)': 'k-c', 'Damini Gupta': 'k-d' } } as unknown as Group;
+  it('maps a pre-rename name to the current roster name via the recorded key', () => {
+    const e = exp({ paid: 'Chirag Gupta', partyKeys: { 'Chirag Gupta': 'k-c' } });
+    expect(currentMemberName(g, e, 'Chirag Gupta')).toBe('Vandana Investment (Chiraggupta1990)');
+    expect(currentMemberName(g, e, 'damini gupta')).toBe('Damini Gupta');
+    expect(currentMemberName(g, e, 'Stranger')).toBe('Stranger');
+  });
+});
