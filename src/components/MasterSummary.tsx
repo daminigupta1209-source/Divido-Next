@@ -800,102 +800,104 @@ export const MasterSummary: React.FC<MasterSummaryProps> = ({
           </div>
         )}
 
-        {/* Non-Group Expenses Card — Rendered as the first card in the Your Groups list */}
-        <div
-          key="STANDALONE"
-          className="hover-up-mini"
-          onClick={() => {
+        {/* Non-Group Expenses Card — first in the list, same look as a group card */}
+        {(() => {
+          // Net across all non-group people (STANDALONE + shared threads).
+          const netByCurr: Record<string, number> = {};
+          nonGroupRels.forEach((r) => Object.entries(r.balances).forEach(([c, v]) => { netByCurr[c] = (netByCurr[c] || 0) + v; }));
+          const ngEntries = Object.entries(netByCurr).filter(([_, v]) => Math.abs(v) > 0.01);
+          const ngPay = ngEntries.filter(([_, v]) => v < -0.01);
+          const ngCollect = ngEntries.filter(([_, v]) => v > 0.01);
+          const ngMore = ngEntries.length - (ngPay.length > 0 ? 1 : 0) - (ngCollect.length > 0 ? 1 : 0);
+          const openNonGroup = () => {
             if (setShowFriendsList) setShowFriendsList(false);
             setSelectedId('STANDALONE');
             setView('detail');
-          }}
-          style={{
-            padding: '14px 16px',
-            marginBottom: '12px',
-            background: '#FFFFFF',
-            borderRadius: '16px',
-            border: '0.5px solid #EFE7DC',
-            boxShadow: '0 2px 10px rgba(0,0,0,0.03)',
-            transition: '0.2s all ease',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            gap: '12px',
-            cursor: 'pointer',
-          }}
-        >
-          {/* Avatar + Title Block */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: '12px', minWidth: 0, flex: 1 }}>
+          };
+          return (
             <div
+              key="STANDALONE"
+              className="hover-up-mini"
+              onClick={openNonGroup}
               style={{
-                width: '38px',
-                height: '38px',
-                borderRadius: '50%',
-                background: '#F1F5F9',
-                border: 'none',
-                color: '#64748B',
+                position: 'relative',
+                padding: '14px 16px',
+                marginBottom: '12px',
+                background: '#FFFFFF',
+                borderRadius: '20px',
+                border: '0.5px solid #EFE7DC',
+                boxShadow: '0 2px 10px rgba(0,0,0,0.04)',
+                transition: '0.2s all ease',
                 display: 'flex',
                 alignItems: 'center',
-                justifyContent: 'center',
-                fontSize: '14px',
-                fontWeight: 600,
-                flexShrink: 0,
+                gap: '12px',
+                cursor: 'pointer',
               }}
             >
-              NG
-            </div>
-            <div style={{ minWidth: 0 }}>
-              <h3
-                
+              <div
                 style={{
-                  fontSize: '15px',
-                  color: '#2E2A25',
+                  width: '46px',
+                  height: '46px',
+                  borderRadius: '50%',
+                  background: '#F1F5F9',
+                  color: '#475569',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  fontSize: '16px',
                   fontWeight: 600,
-                  margin: 0,
-                  lineHeight: 1.2,
-                  textOverflow: 'ellipsis',
-                  overflow: 'hidden',
-                  whiteSpace: 'nowrap',
+                  flexShrink: 0,
                 }}
               >
-                Non-Group Expenses
-              </h3>
-            </div>
-          </div>
+                NG
+              </div>
 
-          {/* Balance / Status block */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexShrink: 0 }}>
-            {nonGroupRels.length === 0 ? (
-              <span style={{ fontSize: '13px', fontWeight: 600, color: '#16A34A' }}>
-                Settled Up
-              </span>
-            ) : (
-              (() => {
-                // Net across all non-group people (STANDALONE + shared threads),
-                // from the same per-person balances that drive the Settled check.
-                const netByCurr: Record<string, number> = {};
-                nonGroupRels.forEach((r) => Object.entries(r.balances).forEach(([c, v]) => { netByCurr[c] = (netByCurr[c] || 0) + v; }));
-                const nonGroupEntries = Object.entries(netByCurr).filter(([_, v]) => Math.abs(v) > 0.01);
-                return (
-                  <span style={{ fontSize: '13px', fontWeight: 600, whiteSpace: 'nowrap' }}>
-                    {nonGroupEntries.slice(0, 2).map(([curr, val], idx, shown) => {
-                      const isOwed = val > 0.01;
-                      const isLast = idx === shown.length - 1;
-                      return (
-                        <span key={curr} style={{ color: isOwed ? '#16A34A' : '#EF4444' }}>
-                          {isOwed ? '+' : '-'}{curr}{Math.abs(val).toFixed(0)}
-                          {!isLast && <span style={{ color: '#94A3B8' }}>, </span>}
-                        </span>
-                      );
-                    })}
-                    {nonGroupEntries.length > 2 && <span style={{ color: '#94A3B8' }}>…</span>}
-                  </span>
-                );
-              })()
-            )}
-            <span style={{ fontSize: '18px', color: '#CFC6BB', fontWeight: 600, lineHeight: 1, userSelect: 'none', flexShrink: 0 }}>›</span>
-          </div>
-        </div>
+              <div style={{ minWidth: 0, flex: 1, display: 'flex', flexDirection: 'column', gap: '3px' }}>
+                <h3 style={{ fontSize: '17px', color: '#2E2A25', fontWeight: 600, margin: 0, lineHeight: 1.2, textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap' }}>
+                  Non-Group Expenses
+                </h3>
+                {ngEntries.length === 0 ? (
+                  <span style={{ fontSize: '13px', fontWeight: 500, color: '#94A3B8' }}>Settled up</span>
+                ) : (
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '1px', minWidth: 0 }}>
+                    {ngPay.length > 0 && (
+                      <span style={{ fontSize: '13px', fontWeight: 500, color: '#E11D48', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                        You pay {ngPay[0][0]}{formatExactAmount(Math.abs(ngPay[0][1]))}
+                      </span>
+                    )}
+                    {ngCollect.length > 0 && (
+                      <span style={{ fontSize: '13px', fontWeight: 500, color: '#3FA97C', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                        You collect {ngCollect[0][0]}{formatExactAmount(ngCollect[0][1])}
+                      </span>
+                    )}
+                    {ngMore > 0 && (
+                      <span style={{ fontSize: '11px', fontWeight: 500, color: '#94A3B8', whiteSpace: 'nowrap' }}>+{ngMore} more</span>
+                    )}
+                  </div>
+                )}
+              </div>
+
+              <button
+                type="button"
+                className="hover-up-mini"
+                onClick={(ev) => {
+                  ev.stopPropagation();
+                  openNonGroup();
+                  setEditingExpense(null);
+                  setShowExpModal(true);
+                }}
+                title="Add a non-group expense"
+                style={{ flexShrink: 0, width: '30px', height: '30px', borderRadius: '50%', background: '#059669', color: '#FFFFFF', border: 'none', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', padding: 0, boxShadow: '0 2px 6px rgba(5,150,105,0.25)' }}
+              >
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.6" strokeLinecap="round" style={{ width: '15px', height: '15px' }}>
+                  <line x1="12" y1="5" x2="12" y2="19" /><line x1="5" y1="12" x2="19" y2="12" />
+                </svg>
+              </button>
+
+              <span style={{ fontSize: '18px', color: '#C9BEB2', fontWeight: 600, lineHeight: 1, flexShrink: 0 }}>›</span>
+            </div>
+          );
+        })()}
 
         {/* Loading skeletons — while the first cloud load runs and there are no
             groups yet, show shimmer placeholders instead of an empty list, so a
