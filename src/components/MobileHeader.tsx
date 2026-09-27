@@ -306,6 +306,9 @@ export const MobileHeader: React.FC<MobileHeaderProps> = ({
           <div style={{ display: 'flex', alignItems: 'center', width: '100%', height: '100%', gap: '10px' }}>
             <button
               onClick={() => {
+                // Let an open sub-screen (e.g. a Non-Group person) close first.
+                const ev = new Event('divido:header-back', { cancelable: true });
+                if (!window.dispatchEvent(ev)) return;
                 if (groupDetailTab === 'balances' || groupDetailTab === 'photos') {
                   if (setGroupDetailTab) setGroupDetailTab('expenses');
                 } else {

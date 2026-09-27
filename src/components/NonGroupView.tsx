@@ -79,8 +79,15 @@ export const NonGroupView: React.FC<NonGroupViewProps> = ({
     if (!profilePerson) return;
     window.history.pushState({ dividoNonGroupProfile: true }, '');
     const onPop = () => setProfilePerson(null);
+    // The top-bar back arrow asks first; while a person is open it closes
+    // them (pops the entry pushed above) instead of leaving Non-Group.
+    const onHeaderBack = (ev: Event) => { ev.preventDefault(); window.history.back(); };
     window.addEventListener('popstate', onPop);
-    return () => window.removeEventListener('popstate', onPop);
+    window.addEventListener('divido:header-back', onHeaderBack);
+    return () => {
+      window.removeEventListener('popstate', onPop);
+      window.removeEventListener('divido:header-back', onHeaderBack);
+    };
   }, [profilePerson]);
 
   const directGroupIds = React.useMemo(() => new Set(directThreads.map((t) => String(t.groupId))), [directThreads]);
@@ -217,10 +224,6 @@ export const NonGroupView: React.FC<NonGroupViewProps> = ({
       .sort((a, b) => String(b.date || '').localeCompare(String(a.date || '')) || (b.timestamp || 0) - (a.timestamp || 0));
     return (
       <div className="content-width-limit" style={{ paddingTop: '4px' }}>
-        <button type="button" onClick={() => setProfilePerson(null)} style={{ display: 'flex', alignItems: 'center', gap: '4px', background: 'none', border: 'none', cursor: 'pointer', color: '#94A3B8', fontSize: '13px', marginBottom: '12px', padding: 0 }}>
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#475569" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="15 18 9 12 15 6" /></svg>
-          Non-Group
-        </button>
 
         {/* Pair header — you & them */}
         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center', marginBottom: '14px' }}>
@@ -238,7 +241,6 @@ export const NonGroupView: React.FC<NonGroupViewProps> = ({
         {/* Actions */}
         <div style={{ display: 'flex', gap: '8px', marginBottom: '20px' }}>
           {hasBal && <button type="button" onClick={() => onSettlePerson(profilePerson, p?.directGroupId)} style={profileBtn}>Settle</button>}
-          {onAddWithPerson && <button type="button" onClick={() => onAddWithPerson(profilePerson, p?.directGroupId)} style={profileBtn}>+ Expense</button>}
           {onSharePerson && <button type="button" onClick={() => onSharePerson(profilePerson, p?.directGroupId)} style={profileBtn}>Share</button>}
         </div>
 
@@ -385,7 +387,9 @@ export const NonGroupView: React.FC<NonGroupViewProps> = ({
               overflow: 'hidden',
               textOverflow: 'ellipsis',
               padding: '0 18px',
-              background: !netHasBalance ? '#10B981' : netAllCollect ? '#10B981' : '#E11D48',
+              // Colour follows the line the text leads with, so "You collect …"
+              // is never shown in red.
+              background: !netHasBalance ? '#10B981' : netLines[0].amount > 0 ? '#10B981' : '#E11D48',
             }}
           >
             {!netHasBalance
