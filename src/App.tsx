@@ -65,7 +65,7 @@ import { CurrencySetupModal } from './components/CurrencySetupModal';
 import { GroupGallery } from './components/GroupGallery';
 import { checkIfDemoMode } from './lib/demoMode';
 import { ensureArray, ensureObject, isLegacyRenameLog, formatCompactAmount, genGroupId, genExpenseId, titleCaseName } from './lib/utils';
-import { getPersonKey, toIdentitySpace, pickCanonicalIdentity, findDuplicateGroups, type DuplicateEntry, setSyncedDismissedPeople, buildNameEmailResolver, upiFor, fillPartyKeys } from './lib/identity';
+import { getPersonKey, toIdentitySpace, pickCanonicalIdentity, findDuplicateGroups, type DuplicateEntry, setSyncedDismissedPeople, buildNameEmailResolver, upiFor, fillPartyKeys, uniqueProfileName } from './lib/identity';
 import { useSupabaseSync, getGidRemap } from './hooks/useSupabaseSync';
 import { BalanceActionCard } from './components/BalanceActionCard';
 import { asyncBatchNetBalances } from './lib/workerHelper';
@@ -2580,10 +2580,9 @@ function App() {
             // The joiner's own earlier "(Left)" spot isn't a clash — it's them.
             const isOwnLeft = (m: any) => /\(Left\)\s*$/i.test(String(m.name)) &&
               (String(m.user_email || '').toLowerCase() === myEmailNorm || String(m.invite_email || '').toLowerCase() === myEmailNorm);
-            const profileClash = !!profileName && existingMembers.some((m: any) =>
-              m.id !== inviteMatch.id && !isOwnLeft(m) &&
-              String(m.name).replace(/\s*\(Left\)$/i, '').trim().toLowerCase() === profileName.toLowerCase()
-            );
+            const takenNames = new Set(existingMembers
+              .filter((m: any) => m.id !== inviteMatch.id && !isOwnLeft(m))
+              .map((m: any) => String(m.name).replace(/\s*\(Left\)$/i, '').trim().toLowerCase()));
             const ownLeftIds = existingMembers.filter((m: any) => m.id !== inviteMatch.id && isOwnLeft(m)).map((m: any) => m.id);
             if (ownLeftIds.length > 0) {
               supabase.from('group_members').update({ is_removed: true }).in('id', ownLeftIds)
@@ -2595,7 +2594,7 @@ function App() {
             // the email + clear pending; identity is by email, not the label.
             const claimedName = groupData.is_direct
               ? placeholderName
-              : ((profileName && !profileClash) ? profileName : placeholderName);
+              : (profileName ? uniqueProfileName(profileName, myEmail, takenNames) : placeholderName);
             await supabase.from('group_members')
               .update({ name: claimedName, user_email: myEmail, is_pending: false })
               .eq('id', inviteMatch.id);
@@ -3682,9 +3681,10 @@ function App() {
             (String(m.user_email || '').toLowerCase() === myEm || String(m.invite_email || '').toLowerCase() === myEm))
           .map((m: any) => m.id);
         if (profileName && profileName.toLowerCase() !== p.name.toLowerCase()) {
-          const clash = (mems || []).some((m: any) => m.id !== p.id && !ownLeftIds.includes(m.id) &&
-            String(m.name).replace(/\s*\(Left\)$/i, '').trim().toLowerCase() === profileName.toLowerCase());
-          if (!clash) claimName = profileName;
+          const taken = new Set((mems || [])
+            .filter((m: any) => m.id !== p.id && !ownLeftIds.includes(m.id))
+            .map((m: any) => String(m.name).replace(/\s*\(Left\)$/i, '').trim().toLowerCase()));
+          claimName = uniqueProfileName(profileName, activeEmail, taken);
         }
         await supabase
           .from('group_members')

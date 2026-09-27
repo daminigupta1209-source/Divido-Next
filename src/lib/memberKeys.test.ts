@@ -145,3 +145,15 @@ describe('pickerLabel', () => {
     expect(pickerLabel(g, 'Ravi', roster)).toBe('Ravi');
   });
 });
+
+import { uniqueProfileName } from './identity';
+
+describe('uniqueProfileName', () => {
+  it('keeps the profile name when free, tags it with the email when taken', () => {
+    expect(uniqueProfileName('Vandana Investment', 'v@x.com', new Set(['ravi']))).toBe('Vandana Investment');
+    const tagged = uniqueProfileName('Vandana Investment', 'vandana.g@gmail.com', new Set(['vandana investment']));
+    expect(tagged).toBe('Vandana Investment (vandana.g)');
+    const g = { id: 'g', name: 'T', currency: '₹', members: [], memberIdentities: { [tagged]: 'vandana.g@gmail.com' } } as unknown as Group;
+    expect(withoutEmailTag(g, tagged)).toBe('Vandana Investment');
+  });
+});

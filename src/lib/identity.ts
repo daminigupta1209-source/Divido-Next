@@ -555,3 +555,17 @@ export const pickerLabel = (group: Group | undefined | null, name: string, roste
   const id = String(getPersonKey(group, name) || '');
   return id.includes('@') ? `${shown} · ${id}` : shown;
 };
+
+// Name to save for someone joining with profile name `name`. If a different
+// member already uses it, add a short tag from their email ("Vandana
+// Investment (vandana.g)") so the stored name stays unique — expenses still
+// record people by name. withoutEmailTag hides the tag on screen.
+export const uniqueProfileName = (name: string, email: string, taken: Set<string>): string => {
+  if (!taken.has(name.trim().toLowerCase())) return name;
+  const local = String(email || '').split('@')[0];
+  if (!local) return name;
+  const base = `${name} (${local})`;
+  let out = base;
+  for (let i = 2; taken.has(out.toLowerCase()); i++) out = `${base} ${i}`;
+  return out;
+};
