@@ -881,23 +881,6 @@ export const MasterSummary: React.FC<MasterSummaryProps> = ({
                 )}
               </div>
 
-              <button
-                type="button"
-                className="hover-up-mini"
-                onClick={(ev) => {
-                  ev.stopPropagation();
-                  openNonGroup();
-                  setEditingExpense(null);
-                  setShowExpModal(true);
-                }}
-                title="Add a non-group expense"
-                style={{ flexShrink: 0, width: '30px', height: '30px', borderRadius: '50%', background: '#059669', color: '#FFFFFF', border: 'none', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', padding: 0, boxShadow: '0 2px 6px rgba(5,150,105,0.25)' }}
-              >
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.6" strokeLinecap="round" style={{ width: '15px', height: '15px' }}>
-                  <line x1="12" y1="5" x2="12" y2="19" /><line x1="5" y1="12" x2="19" y2="12" />
-                </svg>
-              </button>
-
               <span style={{ fontSize: '18px', color: '#C9BEB2', fontWeight: 600, lineHeight: 1, flexShrink: 0 }}>›</span>
             </div>
           );
