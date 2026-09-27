@@ -1863,7 +1863,9 @@ function App() {
 
                 initial.push({
                   gId: g.id,
-                  gName: g.name,
+                  // A shared 2-person thread's group name ("Damini & Vani") is internal;
+                  // it's shown as Non-Group everywhere else too.
+                  gName: (g as any).isDirect || String(g.id) === 'STANDALONE' ? 'Non-Group' : g.name,
                   curr: curr,
                   amt: Math.round(absVal * 100) / 100,
                   maxAmt: Math.round(absVal * 100) / 100,
