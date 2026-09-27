@@ -2511,8 +2511,13 @@ function App() {
 
         // Check if this logged-in user is a past member of this group (rejoin fallback)
         if (myEmail) {
-          const leftMemberRow = existingMembers.find((m: any) => 
-            m.user_email === myEmail && m.name.toLowerCase().endsWith(' (left)')
+          // Match the old row by EITHER email field: some leave paths move the
+          // address from user_email to invite_email, and missing it sent a
+          // returning member to the placeholder list instead of "Rejoin".
+          const myEm = String(myEmail).toLowerCase();
+          const leftMemberRow = existingMembers.find((m: any) =>
+            m.name.toLowerCase().endsWith(' (left)') && !m.is_removed &&
+            (String(m.user_email || '').toLowerCase() === myEm || String(m.invite_email || '').toLowerCase() === myEm)
           );
           if (leftMemberRow) {
             setLinkRequestRejoinMode(true);
@@ -2572,10 +2577,18 @@ function App() {
               const un = localStorage.getItem('divido_username');
               if (un && !['You', 'Guest', 'undefined', ''].includes(un.trim())) profileName = un.trim();
             }
+            // The joiner's own earlier "(Left)" spot isn't a clash — it's them.
+            const isOwnLeft = (m: any) => /\(Left\)\s*$/i.test(String(m.name)) &&
+              (String(m.user_email || '').toLowerCase() === myEmailNorm || String(m.invite_email || '').toLowerCase() === myEmailNorm);
             const profileClash = !!profileName && existingMembers.some((m: any) =>
-              m.id !== inviteMatch.id &&
+              m.id !== inviteMatch.id && !isOwnLeft(m) &&
               String(m.name).replace(/\s*\(Left\)$/i, '').trim().toLowerCase() === profileName.toLowerCase()
             );
+            const ownLeftIds = existingMembers.filter((m: any) => m.id !== inviteMatch.id && isOwnLeft(m)).map((m: any) => m.id);
+            if (ownLeftIds.length > 0) {
+              supabase.from('group_members').update({ is_removed: true }).in('id', ownLeftIds)
+                .then(({ error }) => { if (error) console.error('Hiding own past spot failed:', error); });
+            }
             // For a shared 2-person "direct" thread, KEEP the inviter's chosen
             // name (don't rename to the joiner's Google name). Renaming there
             // desynced the expense splitter strings → wrong balances. Just link
@@ -3659,9 +3672,18 @@ function App() {
           if (un && !['You', 'Guest', 'undefined', ''].includes(un.trim())) profileName = un.trim();
         }
         let claimName = p.name;
+        const { data: mems } = await supabase.from('group_members').select('id, name, user_email, invite_email').eq('group_id', linkRequestGroup.id);
+        // The joiner's OWN earlier spot (a "(Left)" row with their email) isn't
+        // a name clash — it's them. Ignore it for the clash check and hide it
+        // from Past Members once they're back.
+        const myEm = activeEmail.toLowerCase();
+        const ownLeftIds = (mems || [])
+          .filter((m: any) => m.id !== p.id && /\(Left\)\s*$/i.test(String(m.name)) &&
+            (String(m.user_email || '').toLowerCase() === myEm || String(m.invite_email || '').toLowerCase() === myEm))
+          .map((m: any) => m.id);
         if (profileName && profileName.toLowerCase() !== p.name.toLowerCase()) {
-          const { data: mems } = await supabase.from('group_members').select('id, name').eq('group_id', linkRequestGroup.id);
-          const clash = (mems || []).some((m: any) => m.id !== p.id && String(m.name).replace(/\s*\(Left\)$/i, '').trim().toLowerCase() === profileName.toLowerCase());
+          const clash = (mems || []).some((m: any) => m.id !== p.id && !ownLeftIds.includes(m.id) &&
+            String(m.name).replace(/\s*\(Left\)$/i, '').trim().toLowerCase() === profileName.toLowerCase());
           if (!clash) claimName = profileName;
         }
         await supabase
@@ -3672,6 +3694,10 @@ function App() {
             is_pending: false,
           })
           .eq('id', p.id);
+        if (ownLeftIds.length > 0) {
+          const { error: hideErr } = await supabase.from('group_members').update({ is_removed: true }).in('id', ownLeftIds);
+          if (hideErr) console.error('Hiding own past spot failed:', hideErr);
+        }
         // If the name changed from the placeholder, rewrite this
         // group's expenses so balances follow the new name.
         if (claimName !== p.name) {
