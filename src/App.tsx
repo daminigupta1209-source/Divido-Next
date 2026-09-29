@@ -105,7 +105,6 @@ import { useExportCSV } from './hooks/useExportCSV';
 import { AppNotification, fetchNotifications, markAllNotificationsRead, subscribeNotifications, clearAllNotifications, pushNotification } from './lib/notifications';
 import { calculateNextOccurrenceDate, simplifyMultiCurrencyDebts, computeRawPairwiseTransactions, memberNetBalances } from './lib/calculations';
 import {
-  isSplitwiseConfigured,
   consumeOAuthState,
   parseCallback,
   isNativeBounce,
@@ -4153,7 +4152,7 @@ function App() {
             homeTabResetNonce={homeTabResetNonce}
             duplicateGroups={duplicateGroups}
             onMergeGroups={mergeGroups}
-            onImportSplitwise={isSplitwiseConfigured() ? onImportSplitwise : undefined}
+            onImportSplitwise={onImportSplitwise}
           />
         ) : view === 'groups' ? (
           <GroupsView
@@ -4233,7 +4232,7 @@ function App() {
             setUserMetadata={setUserMetadata}
             handleLogout={handleLogout}
             userEmail={userEmail}
-            onImportSplitwise={isSplitwiseConfigured() ? onImportSplitwise : undefined}
+            onImportSplitwise={onImportSplitwise}
           />
         ) : view === 'gallery' ? (
           <GroupGallery
@@ -4286,7 +4285,7 @@ function App() {
               setView('detail');
               setShowFriendsList(true);
             }}
-            onImportSplitwise={isSplitwiseConfigured() ? onImportSplitwise : undefined}
+            onImportSplitwise={onImportSplitwise}
           />
         ) : selectedId === 'STANDALONE' ? (
           <NonGroupView

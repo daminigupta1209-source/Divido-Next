@@ -5,6 +5,7 @@ import { escManager } from '../lib/escManager';
 import { formatExactAmount } from '../lib/utils';
 import {
   startSplitwiseAuth,
+  SplitwiseConfigError,
   exchangeCode,
   fetchGroupExpenses,
   fetchFriendExpenses,
@@ -288,7 +289,11 @@ export const SplitwiseImportModal: React.FC<SplitwiseImportModalProps> = ({
     try {
       await startSplitwiseAuth();
     } catch (err) {
-      setConnectError(err instanceof Error ? err.message : 'Could not start Splitwise sign-in.');
+      setConnectError(
+        err instanceof SplitwiseConfigError
+          ? 'Splitwise import isn’t available yet — check back soon.'
+          : err instanceof Error ? err.message : 'Could not start Splitwise sign-in.',
+      );
       return;
     }
     clearConnectTimeout();
