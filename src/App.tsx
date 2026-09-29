@@ -3443,7 +3443,11 @@ function App() {
     // this array — omitting it made fresh invitees (e.g. Ram) show as Joined
     // immediately, before they ever claimed their name via the join link.
     const meClean = me.replace(/\s*\(me\)$/i, '').replace(/\s*\(Left\)$/i, '').toLowerCase();
-    const pendingMembers = groupData.members.filter((m) => m.toLowerCase() !== meClean);
+    // Row 0 is always the creator (CreateGroupView seeds it with `me`, and the
+    // server insert in useSupabaseSync treats idx 0 as me too) — match that, and
+    // compare suffix-stripped names, so the creator never lands in Pending.
+    const cleanName = (n: string) => n.replace(/\s*\((me|you|left)\)$/i, '').trim().toLowerCase();
+    const pendingMembers = groupData.members.filter((m, idx) => idx !== 0 && cleanName(m) !== meClean);
     const newGroup = {
       id,
       name: groupData.name,
