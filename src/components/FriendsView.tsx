@@ -644,17 +644,28 @@ export const FriendsView: React.FC<FriendsViewProps> = ({
       {showNetSheet && (() => {
         const payList = Object.entries(totalPayable);
         const collectList = Object.entries(totalReceivable);
-        const filterBtn = (key: 'all' | 'owe' | 'owed', label: string) => (
-          <button
-            key={key}
-            type="button"
-            onClick={() => { setBalanceFilter(key); setShowNetSheet(false); }}
-            style={{ width: '100%', textAlign: 'left', padding: '12px 14px', borderRadius: '12px', border: `1.5px solid ${balanceFilter === key ? '#10B981' : '#E2E8F0'}`, background: balanceFilter === key ? '#ECFDF5' : '#FFFFFF', color: '#1E293B', fontSize: '14px', fontWeight: balanceFilter === key ? 600 : 500, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}
-          >
-            {label}
-            {balanceFilter === key && <span style={{ color: '#10B981', fontWeight: 700 }}>✓</span>}
-          </button>
-        );
+        // Segmented 3-state filter; stays open so the list updates behind it.
+        const counts = { all: 0, owe: 0, owed: 0 };
+        friends.forEach((f) => {
+          counts.all++;
+          if (Object.values(f.bals).some((v) => v < -0.01)) counts.owe++;
+          if (Object.values(f.bals).some((v) => v > 0.01)) counts.owed++;
+        });
+        const segColor = { all: '#1E293B', owe: '#E11D48', owed: '#10B981' };
+        const filterBtn = (key: 'all' | 'owe' | 'owed', label: string) => {
+          const active = balanceFilter === key;
+          return (
+            <button
+              key={key}
+              type="button"
+              onClick={() => setBalanceFilter(key)}
+              style={{ flex: 1, minWidth: 0, padding: '9px 4px', borderRadius: '999px', border: 'none', background: active ? segColor[key] : 'transparent', color: active ? '#FFFFFF' : '#475569', fontSize: '13px', fontWeight: active ? 700 : 600, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '5px', whiteSpace: 'nowrap', transition: 'background 0.2s, color 0.2s', boxShadow: active ? '0 2px 6px rgba(0,0,0,0.12)' : 'none' }}
+            >
+              {label}
+              <span style={{ fontSize: '11px', fontWeight: 700, padding: '1px 6px', borderRadius: '999px', background: active ? 'rgba(255,255,255,0.25)' : '#E2E8F0', color: active ? '#FFFFFF' : '#64748B' }}>{counts[key]}</span>
+            </button>
+          );
+        };
         return (
           <div onClick={() => setShowNetSheet(false)} style={{ position: 'fixed', inset: 0, background: 'rgba(15,23,42,0.45)', zIndex: 10001, display: 'flex', alignItems: 'flex-end', justifyContent: 'center' }}>
             <div onClick={(e) => e.stopPropagation()} style={{ width: '100%', maxWidth: '480px', background: '#FFFFFF', borderRadius: '24px 24px 0 0', padding: '14px 18px calc(20px + env(safe-area-inset-bottom))', boxSizing: 'border-box', maxHeight: '85vh', overflowY: 'auto' }}>
@@ -684,10 +695,10 @@ export const FriendsView: React.FC<FriendsViewProps> = ({
               )}
 
               <div style={{ fontSize: '11px', fontWeight: 700, letterSpacing: '1px', textTransform: 'uppercase', color: '#94A3B8', marginBottom: '8px' }}>Show</div>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                {filterBtn('all', 'Everyone')}
-                {filterBtn('owe', 'Only people I pay')}
-                {filterBtn('owed', 'Only people who pay me')}
+              <div role="radiogroup" style={{ display: 'flex', gap: '4px', padding: '4px', borderRadius: '999px', background: '#F1F5F9' }}>
+                {filterBtn('all', 'All')}
+                {filterBtn('owe', 'To pay')}
+                {filterBtn('owed', 'To collect')}
               </div>
             </div>
           </div>
@@ -721,8 +732,25 @@ export const FriendsView: React.FC<FriendsViewProps> = ({
           <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" style={{ width: '18px', height: '18px' }}>
             <path d="M22 3H2L10 12.46V19L14 21V12.46L22 3Z" stroke="currentColor" strokeWidth="2" strokeLinejoin="round" strokeLinecap="round" />
           </svg>
+          {balanceFilter !== 'all' && (
+            <span style={{ position: 'absolute', marginLeft: '16px', marginTop: '-14px', width: '8px', height: '8px', borderRadius: '50%', background: balanceFilter === 'owe' ? '#E11D48' : '#10B981', border: '1.5px solid #FFFFFF' }} />
+          )}
         </button>
       </div>
+
+      {balanceFilter !== 'all' && (
+        <div style={{ display: 'flex', marginTop: '-8px', marginBottom: '14px' }}>
+          <button
+            type="button"
+            onClick={() => setBalanceFilter('all')}
+            title="Clear filter"
+            style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', padding: '5px 10px 5px 12px', borderRadius: '999px', border: 'none', cursor: 'pointer', fontSize: '12px', fontWeight: 700, background: balanceFilter === 'owe' ? '#FFE4E6' : '#D1FAE5', color: balanceFilter === 'owe' ? '#BE123C' : '#047857' }}
+          >
+            {balanceFilter === 'owe' ? 'To pay' : 'To collect'}
+            <span style={{ fontSize: '13px', lineHeight: 1 }}>✕</span>
+          </button>
+        </div>
+      )}
 
       {/* Filter dropdowns — revealed by the funnel */}
       {showFilters && (
