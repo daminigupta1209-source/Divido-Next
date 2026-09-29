@@ -73,7 +73,7 @@ export async function parseExpenseWithAI(transcript: string, activeGroup: Group,
     return JSON.parse(text);
   } catch (error) {
     console.error("Gemini AI Parsing Error:", error);
-    throw new Error("Failed to understand the expense details. Please try again or fill manually.");
+    throw new Error("Failed to understand the expense details. Please try again or fill manually.", { cause: error });
   }
 }
 // Trigger fresh build  

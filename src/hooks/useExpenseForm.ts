@@ -358,6 +358,7 @@ export function useExpenseForm({
       return;
     }
 
+    const controller = new AbortController();
     const handler = setTimeout(async () => {
       try {
         const apiKey = import.meta.env.VITE_GEMINI_API_KEY;
@@ -365,6 +366,7 @@ export function useExpenseForm({
 
         const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-lite:generateContent?key=${apiKey}`, {
           method: 'POST',
+          signal: controller.signal,
           headers: {
             'Content-Type': 'application/json'
           },
@@ -383,11 +385,11 @@ export function useExpenseForm({
           setOverrideEmoji(emoji);
         }
       } catch (err) {
-        console.error('Gemini emoji generation failed:', err);
+        if ((err as Error)?.name !== 'AbortError') console.error('Gemini emoji generation failed:', err);
       }
     }, 450);
 
-    return () => clearTimeout(handler);
+    return () => { clearTimeout(handler); controller.abort(); };
   }, [title]);
 
   const triggerShake = () => {

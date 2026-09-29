@@ -2,7 +2,7 @@ import { useEffect, useRef, useState, useMemo } from 'react';
 import { supabase, uploadAttachment } from '../lib/supabaseClient';
 import { Group, Expense } from '../lib/types';
 import { checkIfDemoMode } from '../lib/demoMode';
-import { ensureArray, ensureObject, isLegacyRenameLog, titleCaseName } from '../lib/utils';
+import { isLegacyRenameLog, titleCaseName } from '../lib/utils';
 import { rowToExpenseFields, expenseToRow, diffExpenseRow } from '../lib/expenseSchema';
 
 // Fresh hidden person id for a new name-only member, so two people who share a
@@ -38,6 +38,31 @@ const pickPersonId = (groupId: string | number, name: string): string => {
 // longer matches its group, breaking balances and getting dropped on reload. We
 // persist temp->DB id remaps here so stranded expenses can always be re-linked,
 // even across sessions/reloads.
+// PostgREST caps a single response (default 1000 rows), so a bare select silently
+// truncates big ledgers. Page through with .range() until a short page comes back.
+const PAGE_SIZE = 1000;
+async function fetchAllRows(
+  page: (from: number, to: number) => PromiseLike<{ data: any[] | null; error: any }>
+): Promise<{ data: any[] | null; error: any }> {
+  const all: any[] = [];
+  for (let from = 0; ; from += PAGE_SIZE) {
+    const { data, error } = await page(from, from + PAGE_SIZE - 1);
+    if (error || !data) return { data: null, error: error || new Error('empty page') };
+    all.push(...data);
+    if (data.length < PAGE_SIZE) return { data: all, error: null };
+  }
+}
+
+// A sync lock older than this is treated as abandoned (tab crashed/reloaded
+// mid-upload) so a group can never be stuck un-syncable for the whole tab session.
+const SYNC_LOCK_TTL_MS = 60_000;
+const isSyncLockActive = (key: string): boolean => {
+  const v = sessionStorage.getItem(key);
+  if (!v) return false;
+  const t = Number(v);
+  return Number.isFinite(t) ? Date.now() - t < SYNC_LOCK_TTL_MS : false;
+};
+
 const GID_MAP_KEY = 'divido_gid_map';
 const isTempGroupId = (id: any): boolean => Number(id) > 2147483647;
 
@@ -97,6 +122,13 @@ export function useSupabaseSync({
   const initialLoadDoneRef = useRef(false);
   const [loadTrigger, setLoadTrigger] = useState(0);
   const initializedRef = useRef(false);
+  // Monotonic id of the latest cloud load; older in-flight loads discard their result.
+  const loadSeqRef = useRef(0);
+  // Re-entrancy guards: sync passes must not overlap (they share the baseline refs).
+  const groupSyncRunningRef = useRef(false);
+  const groupSyncDirtyRef = useRef(false);
+  const expenseSyncRunningRef = useRef(false);
+  const expenseSyncDirtyRef = useRef(false);
 
   const [isOnline, setIsOnline] = useState(navigator.onLine);
   const [isInitialLoadDone, setIsInitialLoadDone] = useState(false);
@@ -178,6 +210,7 @@ export function useSupabaseSync({
       return;
     }
 
+    const loadSeq = ++loadSeqRef.current;
     const loadData = async () => {
       try {
         if (!navigator.onLine) {
@@ -285,16 +318,27 @@ export function useSupabaseSync({
 
         // 2 & 3. Fetch all members and expenses of these groups in parallel
         const [membersRes, expensesRes] = await Promise.all([
-          supabase
-            .from('group_members')
-            .select('*')
-            .in('group_id', groupIds)
-            .order('id', { ascending: true }),
-          supabase
-            .from('expenses')
-            .select('*')
-            .in('group_id', groupIds)
+          fetchAllRows((from, to) =>
+            supabase
+              .from('group_members')
+              .select('*')
+              .in('group_id', groupIds)
+              .order('id', { ascending: true })
+              .range(from, to)
+          ),
+          fetchAllRows((from, to) =>
+            supabase
+              .from('expenses')
+              .select('*')
+              .in('group_id', groupIds)
+              .order('id', { ascending: true })
+              .range(from, to)
+          ),
         ]);
+
+        // A newer load started while we awaited — our result is stale; applying it
+        // could overwrite fresher state, so drop it (the newer run owns the gate).
+        if (loadSeq !== loadSeqRef.current) return;
 
         const allMembers = membersRes.data;
         const membersErr = membersRes.error;
@@ -329,15 +373,15 @@ export function useSupabaseSync({
             if (!nameMap.has(cleanName)) nameMap.set(cleanName, []);
             nameMap.get(cleanName)!.push(m);
           });
+          // Only ever delete a stale "(Left)" row that is shadowed by an ACTIVE row
+          // of the same name. Two live rows sharing a name are never deleted here —
+          // they may be two real people, and the display layer already collapses
+          // same-named members.
           nameMap.forEach((rows) => {
-            if (rows.length > 1) {
-              const leftRow = rows.find(r => r.name.toLowerCase().endsWith(' (left)') || r.is_pending);
-              if (leftRow) {
-                duplicateMemsToDelete.push(leftRow.id);
-              } else {
-                rows.slice(1).forEach(r => duplicateMemsToDelete.push(r.id));
-              }
-            }
+            if (rows.length < 2) return;
+            const isLeft = (r: any) => r.name.toLowerCase().endsWith(' (left)');
+            if (!rows.some((r) => !isLeft(r))) return;
+            rows.filter(isLeft).forEach((r) => duplicateMemsToDelete.push(r.id));
           });
         });
 
@@ -371,9 +415,17 @@ export function useSupabaseSync({
           groupsByCleanName.get(key)!.push(group);
         });
         const duplicateGroupsToDelete: number[] = [];
+        // Only groups that contain nobody but me can be auto-removed: a same-named
+        // empty group that another person owns/was added to (e.g. a friend just
+        // created "Trip" and added me) must never be deleted out from under them.
+        const memberCountByGroup = new Map<any, number>();
+        allMembers.forEach((m: any) => {
+          memberCountByGroup.set(m.group_id, (memberCountByGroup.get(m.group_id) || 0) + 1);
+        });
+        const isMyOnlyGroup = (gr: any) => (memberCountByGroup.get(gr.id) || 0) <= 1;
         groupsByCleanName.forEach((grps) => {
           if (grps.length < 2) return;
-          const empty = grps.filter((gr) => (expenseCountByGroup.get(gr.id) || 0) === 0);
+          const empty = grps.filter((gr) => (expenseCountByGroup.get(gr.id) || 0) === 0 && isMyOnlyGroup(gr));
           const withExpenses = grps.filter((gr) => (expenseCountByGroup.get(gr.id) || 0) > 0);
           if (withExpenses.length > 0) {
             // A real copy with data exists — drop every empty twin.
@@ -634,7 +686,17 @@ export function useSupabaseSync({
         prevExpensesRef.current = loadedExpenses;
         localStorage.setItem('divido_last_synced_expenses', JSON.stringify(loadedExpenses));
 
-        setGroups(mergedGroups);
+        // Functional update: keep any group created locally while this load was in
+        // flight (not yet in the reconciled list) instead of overwriting it.
+        setGroups((latest) => {
+          const mergedGroupIds = new Set(mergedGroups.map((g) => String(g.id)));
+          // "Known" = present when the load began; those were already reconciled
+          // (including being dropped as duplicates of a synced group).
+          const knownIds = new Set(groups.map((g) => String(g.id)));
+          const concurrentGroups = latest.filter((g) =>
+            g.pendingSync && !knownIds.has(String(g.id)) && !mergedGroupIds.has(String(g.id)));
+          return concurrentGroups.length ? [...mergedGroups, ...concurrentGroups] : mergedGroups;
+        });
         // Preserve any brand-new local expense added DURING this async load
         // (after the effect captured `expenses`): it's in the latest state but
         // not in the reconciled array, and was never synced (not in cloud, not
@@ -802,13 +864,13 @@ export function useSupabaseSync({
 
             // Sync Lock: skip if this temporary group is already uploading in another active task
             const lockKey = `divido_syncing_${g.id}`;
-            if (sessionStorage.getItem(lockKey) === 'true') {
+            if (isSyncLockActive(lockKey)) {
               if (import.meta.env.DEV) console.log(`Group ${g.name} (temp ID: ${g.id}) is already syncing. Skipping duplicate request.`);
               continue;
             }
 
             // Set the sync lock
-            sessionStorage.setItem(lockKey, 'true');
+            sessionStorage.setItem(lockKey, String(Date.now()));
 
             try {
               // Save-time duplicate guard. A freshly-created group can reach
@@ -848,7 +910,7 @@ export function useSupabaseSync({
               // Insert new group with its PERMANENT client-generated id (no
               // temp->DB swap anymore — the id we send is the id forever).
               const insertId = g.id;
-              const { data, error } = await supabase
+              let { data, error } = await supabase
                 .from('groups')
                 .insert({
                   id: insertId,
@@ -860,6 +922,16 @@ export function useSupabaseSync({
                   is_direct: g.isDirect || false,
                 })
                 .select();
+
+              // Duplicate key: a previous pass already inserted this group row but
+              // failed before its members landed. Treat the row as present and fall
+              // through to (re)create members, otherwise the group is stuck forever.
+              let groupAlreadyExisted = false;
+              if (error && (error as any).code === '23505') {
+                groupAlreadyExisted = true;
+                data = [{ id: insertId }] as any;
+                error = null;
+              }
 
               if (error) {
                 sessionStorage.removeItem(lockKey); // release lock on failure
@@ -891,8 +963,19 @@ export function useSupabaseSync({
                   person_id: isMe || inviteEmail ? null : genPersonId(),
                 };
               });
-              const { error: memErr } = await supabase.from('group_members').insert(memberInserts);
-              if (memErr) throw memErr;
+              // On a retry, members may already exist — don't insert them twice.
+              let skipMembers = false;
+              if (groupAlreadyExisted) {
+                const { count } = await supabase
+                  .from('group_members')
+                  .select('id', { count: 'exact', head: true })
+                  .eq('group_id', newGroupId);
+                skipMembers = (count || 0) > 0;
+              }
+              if (!skipMembers) {
+                const { error: memErr } = await supabase.from('group_members').insert(memberInserts);
+                if (memErr) throw memErr;
+              }
 
               // Update in local state variables. The id is unchanged (we sent it),
               // so clearing pendingSync is the meaningful change — it marks the
@@ -983,9 +1066,39 @@ export function useSupabaseSync({
           prevExpensesRef.current = nextExpenses;
           localStorage.setItem('divido_last_synced_expenses', JSON.stringify(nextExpenses));
 
-          setGroups(uniqueNextGroups);
-          setExpenses(nextExpenses);
-          setSelectedId(nextSelectedId);
+          // Apply as functional updates against the LATEST state: this pass awaited
+          // network calls, so `curr`/`expenses` may be stale and a plain set would
+          // silently discard edits made while it ran.
+          const idRemap = new Map<string, any>();
+          const patched = new Map<string, any>();
+          nextGroups.forEach((ng, i) => {
+            const og = curr[i];
+            if (og && ng !== og) {
+              patched.set(String(og.id), ng.id);
+              if (String(og.id) !== String(ng.id)) idRemap.set(String(og.id), ng.id);
+            }
+          });
+          setGroups((latest) => {
+            const seen = new Set<string>();
+            const out: Group[] = [];
+            for (const lg of latest) {
+              const g = patched.has(String(lg.id))
+                ? { ...lg, id: patched.get(String(lg.id)), pendingSync: false }
+                : lg;
+              if (g.id) {
+                if (seen.has(String(g.id))) continue;
+                seen.add(String(g.id));
+              }
+              out.push(g);
+            }
+            return out;
+          });
+          if (idRemap.size > 0) {
+            setExpenses((latest) =>
+              latest.map((e) => (idRemap.has(String(e.gId)) ? { ...e, gId: idRemap.get(String(e.gId)) } : e))
+            );
+            setSelectedId((cur) => (cur != null && idRemap.has(String(cur)) ? idRemap.get(String(cur)) : cur));
+          }
         } else {
           const syncedGroups = groups.filter(g => g.name.trim() !== '' && !g.pendingSync);
           prevGroupsRef.current = syncedGroups;
@@ -999,7 +1112,20 @@ export function useSupabaseSync({
       }
     };
 
-    syncGroups();
+    // Never run two passes at once (they share the baseline refs). If state
+    // changed mid-run, queue exactly one follow-up pass with the latest state.
+    if (groupSyncRunningRef.current) {
+      groupSyncDirtyRef.current = true;
+      return;
+    }
+    groupSyncRunningRef.current = true;
+    syncGroups().finally(() => {
+      groupSyncRunningRef.current = false;
+      if (groupSyncDirtyRef.current) {
+        groupSyncDirtyRef.current = false;
+        setGroups((prev) => [...prev]);
+      }
+    });
   }, [groups, expenses, selectedId, isAuthenticated, hasCloudSession, me, setGroups, setExpenses, setSelectedId]);
 
   // Sync expenses to Supabase in real-time
@@ -1020,7 +1146,10 @@ export function useSupabaseSync({
         }
 
         // 1. Find deleted expenses
-        const deleted = prev.filter(p => !curr.some(c => c.id === p.id));
+        // Index once: the per-row lookups below were O(n^2) over the whole ledger.
+        const currIds = new Set(curr.map(c => String(c.id)));
+        const prevById = new Map(prev.map(p => [String(p.id), p]));
+        const deleted = prev.filter(p => !currIds.has(String(p.id)));
 
         // Safety: refuse to mass-delete only when it looks like a catastrophic
         // state reset — almost everything vanishing at once. The old threshold
@@ -1053,6 +1182,7 @@ export function useSupabaseSync({
         // 2. Find inserted or updated expenses
         let localStateUpdated = false;
         const nextExpenses = [...curr];
+        const uploadedAttachments = new Map<string, string[]>();
 
         for (let i = 0; i < nextExpenses.length; i++) {
           const e = nextExpenses[i];
@@ -1061,7 +1191,7 @@ export function useSupabaseSync({
           try {
             if (e.gId === 'STANDALONE') {
               // Moved from a group to Non-Group: remove the cloud row so it doesn't reappear in the old group
-              const old = prev.find(p => p.id === e.id);
+              const old = prevById.get(String(e.id));
               if (old && old.gId !== 'STANDALONE') {
                 const { error } = await supabase.from('expenses').delete().eq('id', String(e.id));
                 if (error) throw error;
@@ -1086,10 +1216,11 @@ export function useSupabaseSync({
             if (attachmentsUpdated) {
               updatedExpense = { ...e, attachments: updatedAttachments };
               nextExpenses[i] = updatedExpense;
+              uploadedAttachments.set(String(e.id), updatedAttachments);
               localStateUpdated = true;
             }
 
-            const old = prev.find(p => p.id === updatedExpense.id);
+            const old = prevById.get(String(updatedExpense.id));
             if (!old || old.gId === 'STANDALONE') {
               // Insert new expense (also covers a Non-Group expense moved into a group — it has no cloud row yet)
               // If this expense's group hasn't been inserted into the cloud yet, skip
@@ -1145,12 +1276,21 @@ export function useSupabaseSync({
         // Keep failed DELETES pending too: they're in prev but gone from curr, so
         // re-add their old value so next pass re-attempts the delete.
         const pendingFailedDeletes = prev.filter((p: any) =>
-          failedExpenseIds.has(String(p.id)) && !curr.some((c: any) => String(c.id) === String(p.id))
+          failedExpenseIds.has(String(p.id)) && !currIds.has(String(p.id))
         );
         const newBaseline = [...syncedRows, ...pendingFailedDeletes];
         prevExpensesRef.current = newBaseline;
         localStorage.setItem('divido_last_synced_expenses', JSON.stringify(newBaseline));
-        if (localStateUpdated) setExpenses(nextExpenses);
+        // Functional update: only patch the uploaded attachment URLs onto the LATEST
+        // state, so edits made while this (slow, network-bound) pass ran survive.
+        if (localStateUpdated && uploadedAttachments.size > 0) {
+          setExpenses((latest) =>
+            latest.map((e) => {
+              const a = uploadedAttachments.get(String(e.id));
+              return a ? { ...e, attachments: a } : e;
+            })
+          );
+        }
 
         // Trigger load data once queue is fully caught up
         if (!initialLoadDoneRef.current) {
@@ -1161,7 +1301,18 @@ export function useSupabaseSync({
       }
     };
 
-    syncExpenses();
+    if (expenseSyncRunningRef.current) {
+      expenseSyncDirtyRef.current = true;
+      return;
+    }
+    expenseSyncRunningRef.current = true;
+    syncExpenses().finally(() => {
+      expenseSyncRunningRef.current = false;
+      if (expenseSyncDirtyRef.current) {
+        expenseSyncDirtyRef.current = false;
+        setExpenses((prev) => [...prev]);
+      }
+    });
   }, [expenses, isAuthenticated, hasCloudSession, setExpenses]);
 
   // Listen for online status to trigger automatic sync queue flush

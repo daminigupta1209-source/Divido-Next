@@ -457,7 +457,11 @@ export function useGroupDetailForm({
     if (dateRange !== 'all') {
       const days = dateRange === '7d' ? 7 : 30;
       const cutoff = Date.now() - days * 24 * 60 * 60 * 1000;
-      if (Number(e.id || Date.now()) < cutoff) return false;
+      // Expense ids are UUID strings now, so age must come from the expense's own
+      // date (falling back to its creation timestamp), never from the id.
+      const t = e.date ? new Date(e.date).getTime() : NaN;
+      const when = Number.isFinite(t) ? t : (e.timestamp ?? NaN);
+      if (Number.isFinite(when) && when < cutoff) return false;
     }
     if (searchQuery && !e.title.toLowerCase().includes(searchQuery.toLowerCase())) return false;
     if (selectedTag !== 'all') {

@@ -13,6 +13,15 @@ const pendingRequests = new Map<string, { resolve: (val: any) => void; reject: (
 const getWorker = () => {
   if (!workerInstance) {
     workerInstance = new CalculationWorker();
+    // A worker crash would otherwise leave every pending promise hanging forever
+    // (and callers' "calculating" flags stuck). Reject them and start fresh.
+    workerInstance.onerror = (ev) => {
+      const err = new Error(ev.message || 'Calculation worker crashed');
+      pendingRequests.forEach((h) => h.reject(err));
+      pendingRequests.clear();
+      workerInstance?.terminate();
+      workerInstance = null;
+    };
     workerInstance.onmessage = (e: MessageEvent<WorkerResponse>) => {
       const { id, transactions, batchTransactions, batchBalances, error } = e.data;
       const handlers = pendingRequests.get(id);

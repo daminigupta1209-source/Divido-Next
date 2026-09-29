@@ -2231,11 +2231,32 @@ function App() {
       localStorage.setItem('divido_currency_setup_seen_' + me, '1');
     }
   }, [isAuthenticated, me, userMetadata[me]?.defaultCurrency, myDefaultCurrency]);
+  // Persist the whole ledger debounced (it is re-serialised on every edit, which
+  // is costly for big ledgers), and flush immediately if the page is hidden/closed
+  // so a pending write is never lost. Quota errors must not crash the effect.
   useEffect(() => {
-    localStorage.setItem('divido_groups', JSON.stringify(groups));
+    const write = () => { try { localStorage.setItem('divido_groups', JSON.stringify(groups)); } catch { /* quota */ } };
+    const t = window.setTimeout(write, 300);
+    const onHide = () => { if (document.visibilityState !== 'visible') write(); };
+    window.addEventListener('pagehide', write);
+    document.addEventListener('visibilitychange', onHide);
+    return () => {
+      window.clearTimeout(t);
+      window.removeEventListener('pagehide', write);
+      document.removeEventListener('visibilitychange', onHide);
+    };
   }, [groups]);
   useEffect(() => {
-    localStorage.setItem('divido_expenses', JSON.stringify(expenses));
+    const write = () => { try { localStorage.setItem('divido_expenses', JSON.stringify(expenses)); } catch { /* quota */ } };
+    const t = window.setTimeout(write, 300);
+    const onHide = () => { if (document.visibilityState !== 'visible') write(); };
+    window.addEventListener('pagehide', write);
+    document.addEventListener('visibilitychange', onHide);
+    return () => {
+      window.clearTimeout(t);
+      window.removeEventListener('pagehide', write);
+      document.removeEventListener('visibilitychange', onHide);
+    };
   }, [expenses]);
 
   const { syncStatus, isInitialLoadDone } = useSupabaseSync({
