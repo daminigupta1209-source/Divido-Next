@@ -178,6 +178,8 @@ export const FriendsView: React.FC<FriendsViewProps> = ({
   const [showBalanceDropdown, setShowBalanceDropdown] = useState(false);
   const [selectedFriends, setSelectedFriends] = useState<string[]>([]);
   const [balanceFilter, setBalanceFilter] = useState<'all' | 'owed' | 'owe'>('all');
+  // Tap the Net Balance bar → sheet with every currency + filter choices.
+  const [showNetSheet, setShowNetSheet] = useState(false);
   const [convertTo, setConvertTo] = useState<string | null>(null);
   const [rateMap, setRateMap] = useState<Record<string, number>>({});
   const [isConverting, setIsConverting] = useState(false);
@@ -554,10 +556,9 @@ export const FriendsView: React.FC<FriendsViewProps> = ({
         <span style={{ fontSize: '11px', fontWeight: 700, letterSpacing: '1.5px', textTransform: 'uppercase', color: '#B0A79C', marginBottom: '10px', marginLeft: '2px', display: 'block' }}>
           {balanceFilter === 'owe' ? 'Net Payable' : balanceFilter === 'owed' ? 'Net Receivable' : 'Net Balance'}
         </span>
-        {/* Each tap cycles: All → Pay only → Collect only → All (tapping a
-            side used to re-select the same filter, so it looked stuck). */}
+        {/* Tap → sheet with the full per-currency breakdown and filters. */}
         <div
-          onClick={() => setBalanceFilter((f: any) => (f === 'all' ? 'owe' : f === 'owe' ? 'owed' : 'all'))}
+          onClick={() => setShowNetSheet(true)}
           style={{ position: 'relative', display: 'flex', borderRadius: '999px', overflow: 'hidden', height: '38px', width: '100%', boxShadow: '0 6px 16px rgba(0,0,0,0.06)', cursor: 'pointer' }}
         >
           {/* Left section: to pay */}
@@ -592,7 +593,7 @@ export const FriendsView: React.FC<FriendsViewProps> = ({
               const { text: txt } = pickAmount(v, c, 'You pay ', '', 13); const fontSize = 13;
               return (<>
                 <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', fontSize: `${fontSize}px` }}>{txt}</span>
-                {entries.length > 1 && <span style={pillChipStyle}>+{entries.length - 1}</span>}
+                {entries.length > 1 && <span style={pillChipStyle}>+{entries.length - 1} more</span>}
               </>);
             })()}
           </div>
@@ -629,7 +630,7 @@ export const FriendsView: React.FC<FriendsViewProps> = ({
               const { text: txt } = pickAmount(v, c, 'You collect ', '', 13); const fontSize = 13;
               return (<>
                 <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', fontSize: `${fontSize}px` }}>{txt}</span>
-                {entries.length > 1 && <span style={pillChipStyle}>+{entries.length - 1}</span>}
+                {entries.length > 1 && <span style={pillChipStyle}>+{entries.length - 1} more</span>}
               </>);
             })()}
           </div>
@@ -639,6 +640,59 @@ export const FriendsView: React.FC<FriendsViewProps> = ({
           )}
         </div>
       </div>
+
+      {showNetSheet && (() => {
+        const payList = Object.entries(totalPayable);
+        const collectList = Object.entries(totalReceivable);
+        const filterBtn = (key: 'all' | 'owe' | 'owed', label: string) => (
+          <button
+            key={key}
+            type="button"
+            onClick={() => { setBalanceFilter(key); setShowNetSheet(false); }}
+            style={{ width: '100%', textAlign: 'left', padding: '12px 14px', borderRadius: '12px', border: `1.5px solid ${balanceFilter === key ? '#10B981' : '#E2E8F0'}`, background: balanceFilter === key ? '#ECFDF5' : '#FFFFFF', color: '#1E293B', fontSize: '14px', fontWeight: balanceFilter === key ? 600 : 500, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}
+          >
+            {label}
+            {balanceFilter === key && <span style={{ color: '#10B981', fontWeight: 700 }}>✓</span>}
+          </button>
+        );
+        return (
+          <div onClick={() => setShowNetSheet(false)} style={{ position: 'fixed', inset: 0, background: 'rgba(15,23,42,0.45)', zIndex: 10001, display: 'flex', alignItems: 'flex-end', justifyContent: 'center' }}>
+            <div onClick={(e) => e.stopPropagation()} style={{ width: '100%', maxWidth: '480px', background: '#FFFFFF', borderRadius: '24px 24px 0 0', padding: '14px 18px calc(20px + env(safe-area-inset-bottom))', boxSizing: 'border-box', maxHeight: '85vh', overflowY: 'auto' }}>
+              <div style={{ width: '40px', height: '4px', borderRadius: '999px', background: '#E2E8F0', margin: '0 auto 14px' }} />
+              <h3 style={{ margin: '0 0 14px', fontSize: '17px', fontWeight: 600, color: '#1E293B' }}>Your net balance</h3>
+
+              <div style={{ fontSize: '11px', fontWeight: 700, letterSpacing: '1px', textTransform: 'uppercase', color: '#94A3B8', marginBottom: '6px' }}>You pay</div>
+              {payList.length === 0 ? (
+                <div style={{ fontSize: '14px', color: '#94A3B8', marginBottom: '14px' }}>Nothing to pay</div>
+              ) : (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', marginBottom: '14px' }}>
+                  {payList.map(([c, v]) => (
+                    <span key={c} style={{ fontSize: '15px', fontWeight: 600, color: '#B91C1C' }}>{c}{formatExactAmount(Math.abs(v))}</span>
+                  ))}
+                </div>
+              )}
+
+              <div style={{ fontSize: '11px', fontWeight: 700, letterSpacing: '1px', textTransform: 'uppercase', color: '#94A3B8', marginBottom: '6px' }}>You collect</div>
+              {collectList.length === 0 ? (
+                <div style={{ fontSize: '14px', color: '#94A3B8', marginBottom: '18px' }}>Nothing to collect</div>
+              ) : (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', marginBottom: '18px' }}>
+                  {collectList.map(([c, v]) => (
+                    <span key={c} style={{ fontSize: '15px', fontWeight: 600, color: '#047857' }}>{c}{formatExactAmount(Math.abs(v))}</span>
+                  ))}
+                </div>
+              )}
+
+              <div style={{ fontSize: '11px', fontWeight: 700, letterSpacing: '1px', textTransform: 'uppercase', color: '#94A3B8', marginBottom: '8px' }}>Show</div>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                {filterBtn('all', 'Everyone')}
+                {filterBtn('owe', 'Only people I pay')}
+                {filterBtn('owed', 'Only people who pay me')}
+              </div>
+            </div>
+          </div>
+        );
+      })()}
 
       {/* Search + funnel row */}
       <div style={{ display: 'flex', gap: '10px', alignItems: 'center', marginBottom: '16px', width: '100%' }}>
