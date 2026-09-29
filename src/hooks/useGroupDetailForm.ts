@@ -156,7 +156,7 @@ export function useGroupDetailForm({
 
     // Identity-space: collapses same-person name variants (e.g. a member who
     // left shows once, not split between "Ram" and "Ram (Left)") in the report.
-    const useSimplify = !!selectedGroup.simplifyDebts;
+    const useSimplify = selectedGroup.id !== 'STANDALONE'; // always simplified
     const finalTransactions = balancesByIdentity(selectedGroup, groupExpenses, useSimplify);
 
     const printWindow = window.open('', '_blank');
@@ -476,7 +476,7 @@ export function useGroupDetailForm({
     const rawTransactions = balancesByIdentity(selectedGroup, groupExpenses, false);
     const simplifiedTransactions = balancesByIdentity(selectedGroup, groupExpenses, true);
 
-    const finalTransactions = selectedGroup.id !== 'STANDALONE' && selectedGroup.simplifyDebts
+    const finalTransactions = selectedGroup.id !== 'STANDALONE'
       ? simplifiedTransactions
       : rawTransactions;
     const rawTransCount = rawTransactions.length;

@@ -285,7 +285,7 @@ export const FriendsView: React.FC<FriendsViewProps> = ({
       });
 
       const groupsData = prep.map(({ g, keyedExps, effectiveMembers }) => ({
-        type: (g.id !== 'STANDALONE' && !!g.simplifyDebts) ? 'simplify' as const : 'raw' as const,
+        type: (g.id !== 'STANDALONE') ? 'simplify' as const : 'raw' as const,
         members: effectiveMembers,
         expenses: keyedExps,
         defaultCurrency: g.currency || '₹',

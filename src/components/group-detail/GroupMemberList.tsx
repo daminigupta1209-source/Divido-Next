@@ -146,7 +146,7 @@ export const GroupMemberList: React.FC<GroupMemberListProps> = ({
   // negative = they pay me.
   const getMemberBalanceByCurrency = (name: string): Record<string, number> => {
     const groupExps = expenses.filter((e) => String(e.gId) === String(selectedId));
-    const txns = balancesByIdentity(selectedGroup, groupExps, !!selectedGroup.simplifyDebts);
+    const txns = balancesByIdentity(selectedGroup, groupExps, selectedGroup.id !== 'STANDALONE');
     const memberKey = getPersonKey(selectedGroup, name);
     // My per-group identity may differ from the flat `me` after a claim/rename.
     let myG = me;
@@ -183,7 +183,7 @@ export const GroupMemberList: React.FC<GroupMemberListProps> = ({
 
   const memberHasThirdPartyBalance = (name: string): boolean => {
     const groupExps = expenses.filter((e) => String(e.gId) === String(selectedId));
-    const txns = balancesByIdentity(selectedGroup, groupExps, !!selectedGroup.simplifyDebts);
+    const txns = balancesByIdentity(selectedGroup, groupExps, selectedGroup.id !== 'STANDALONE');
     const memberKey = getPersonKey(selectedGroup, name);
     let myG = me;
     try { const c = localStorage.getItem(`divido_identity_${selectedId}`); if (c) myG = c; } catch { /* ignore */ }

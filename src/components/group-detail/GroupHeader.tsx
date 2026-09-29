@@ -506,53 +506,6 @@ export const GroupHeader: React.FC<GroupHeaderProps> = ({
                       animation: 'slideUp 0.15s cubic-bezier(0.175, 0.885, 0.32, 1.1)',
                     }}
                   >
-                    {/* Simplify Debts Toggle */}
-                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '12px', padding: '10px 12px', borderBottom: '1px solid #F1F5F9', marginBottom: '4px' }}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
-                        <span style={{ fontSize: '13px', fontWeight: 600, color: '#111827', whiteSpace: 'nowrap' }}>Simplify Debts</span>
-                        <span
-                          style={{ fontSize: '12px', color: '#94A3B8', cursor: 'pointer', userSelect: 'none', padding: '0 4px' }}
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            alert("Simplify Debts automatically reduces the total number of transactions needed to settle up. Net balances remain unchanged.");
-                          }}
-                          title="What is this?"
-                        >ⓘ</span>
-                      </div>
-                      <div
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          if (amIPastMember) return;
-                          setGroups(groups.map((g) => String(g.id) === String(selectedId) ? { ...g, simplifyDebts: !g.simplifyDebts } : g));
-                        }}
-                        style={{
-                          width: '36px',
-                          height: '20px',
-                          borderRadius: '20px',
-                          background: selectedGroup.simplifyDebts ? '#10B981' : '#CBD5E1',
-                          position: 'relative',
-                          cursor: amIPastMember ? 'not-allowed' : 'pointer',
-                          opacity: amIPastMember ? 0.5 : 1,
-                          transition: 'background-color 0.2s',
-                          flexShrink: 0,
-                        }}
-                      >
-                        <div
-                          style={{
-                            width: '16px',
-                            height: '16px',
-                            borderRadius: '50%',
-                            background: '#FFFFFF',
-                            position: 'absolute',
-                            top: '2px',
-                            left: selectedGroup.simplifyDebts ? '18px' : '2px',
-                            transition: 'left 0.2s',
-                            boxShadow: '0 1px 3px rgba(0,0,0,0.2)',
-                          }}
-                        />
-                      </div>
-                    </div>
-
                     {(() => {
                       const cleanMe = me.replace(/\s*\(me\)$/i, '').replace(/\s*\(Left\)$/i, '').toLowerCase();
                       const isActiveMember = selectedGroup?.members?.some(m => {

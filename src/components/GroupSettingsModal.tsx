@@ -100,46 +100,6 @@ export const GroupSettingsModal: React.FC<GroupSettingsModalProps> = ({
         </div>
         <div style={{ display: 'flex', flexDirection: 'column' }}>
           
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 8px', borderBottom: '1px solid #F1F5F9' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ width: '18px', height: '18px', color: '#64748B' }}>
-                <path d="M8 3v3a2 2 0 0 1-2 2H3m18 0h-3a2 2 0 0 1-2-2V3m0 18v-3a2 2 0 0 1 2-2h3M3 14h3a2 2 0 0 1 2 2v3" />
-              </svg>
-              <div style={{ display: 'flex', flexDirection: 'column' }}>
-                <span style={{ fontSize: '13px', fontWeight: 600, color: '#000000' }}>Simplify Debts</span>
-                <span style={{ fontSize: '11px', fontWeight: 400, color: '#64748B', marginTop: '2px' }}>Minimizes total transactions</span>
-              </div>
-            </div>
-            <div
-              onClick={onSimplifyToggle}
-              style={{
-                width: '36px',
-                height: '20px',
-                borderRadius: '20px',
-                background: group.simplifyDebts ? '#000000' : '#E2E8F0',
-                position: 'relative',
-                cursor: 'pointer',
-                transition: 'background-color 0.2s',
-                flexShrink: 0,
-              }}
-            >
-              <div
-                style={{
-                  width: '16px',
-                  height: '16px',
-                  borderRadius: '50%',
-                  background: '#FFFFFF',
-                  position: 'absolute',
-                  top: '2px',
-                  left: group.simplifyDebts ? '18px' : '2px',
-                  transition: 'left 0.2s',
-                  boxShadow: '0 1px 2px rgba(0,0,0,0.1)',
-                }}
-              />
-            </div>
-          </div>
-
-
           {!isPastMember && (
             <button
               onClick={() => { handleClose(); onConvertCurrency(); }}

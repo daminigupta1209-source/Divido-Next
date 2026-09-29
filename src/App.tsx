@@ -1846,7 +1846,7 @@ function App() {
             return acc;
           }, new Set<string>()),
         ]));
-        const useSimplify = g.id !== 'STANDALONE' && !!g.simplifyDebts;
+        const useSimplify = g.id !== 'STANDALONE'; // debts are always simplified in groups
         const groupPlan = useSimplify
           ? simplifyMultiCurrencyDebts(effectiveMembers, keyedExps, g.currency || '₹')
           : computeRawPairwiseTransactions(effectiveMembers, keyedExps, g.currency || '₹');
