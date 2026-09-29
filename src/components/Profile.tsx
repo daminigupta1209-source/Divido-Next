@@ -18,6 +18,7 @@ interface ProfileProps {
   setUserMetadata: (m: UserMetadata) => void;
   handleLogout: () => void;
   userEmail: string;
+  onImportSplitwise?: () => void;
 }
 
 export const Profile: React.FC<ProfileProps> = ({
@@ -33,6 +34,7 @@ export const Profile: React.FC<ProfileProps> = ({
   setUserMetadata,
   handleLogout,
   userEmail,
+  onImportSplitwise,
 }) => {
   const [localName, setLocalName] = useState(userName);
   const [localUpi, setLocalUpi] = useState(() => {
@@ -417,6 +419,27 @@ export const Profile: React.FC<ProfileProps> = ({
               gap: '10px',
             }}
           >
+            {onImportSplitwise && (
+              <button
+                type="button"
+                onClick={onImportSplitwise}
+                className="hover-up-mini"
+                style={{
+                  width: '100%',
+                  minHeight: '44px',
+                  background: '#FFFFFF',
+                  color: 'var(--t)',
+                  border: '1.5px solid #E2E8F0',
+                  padding: '10px',
+                  borderRadius: '12px',
+                  fontWeight: 600,
+                  fontSize: '13px',
+                  cursor: 'pointer',
+                }}
+              >
+                Import from Splitwise
+              </button>
+            )}
             <button
               onClick={handleLogout}
               className="hover-up-mini"

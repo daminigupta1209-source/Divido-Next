@@ -50,6 +50,7 @@ const ExpenseModal = safeLazy(() => import('./components/ExpenseModal').then((m)
 // loading these only when a user actually opens a payment/QR popup.
 const UPIQRModal = safeLazy(() => import('./components/UPIQRModal').then((m) => ({ default: m.UPIQRModal })));
 const NetReceivableModal = safeLazy(() => import('./components/NetReceivableModal').then((m) => ({ default: m.NetReceivableModal })));
+const SplitwiseImportModal = safeLazy(() => import('./components/SplitwiseImportModal').then((m) => ({ default: m.SplitwiseImportModal })));
 
 // Warm every lazy screen into memory shortly after start-up. A deploy removes
 // the old build's files, so an app left open would otherwise fail ("New
@@ -66,6 +67,7 @@ if (typeof window !== 'undefined') {
       () => import('./components/ExpenseModal'),
       () => import('./components/UPIQRModal'),
       () => import('./components/NetReceivableModal'),
+      () => import('./components/SplitwiseImportModal'),
       () => import('./components/expense-modal/BillScanner'),
       () => import('./lib/gemini'),
       () => import('./lib/imageUtils'),
@@ -102,6 +104,14 @@ import { InstallPrompt } from './components/InstallPrompt';
 import { useExportCSV } from './hooks/useExportCSV';
 import { AppNotification, fetchNotifications, markAllNotificationsRead, subscribeNotifications, clearAllNotifications, pushNotification } from './lib/notifications';
 import { calculateNextOccurrenceDate, simplifyMultiCurrencyDebts, computeRawPairwiseTransactions, memberNetBalances } from './lib/calculations';
+import {
+  isSplitwiseConfigured,
+  consumeOAuthState,
+  parseCallback,
+  isNativeBounce,
+  buildNativeBounceUrl,
+  subscribeNativeCallback,
+} from './lib/splitwiseAuth';
 
 const pageDescriptions: Record<string, string> = {
   summary: "Track net balances, scan bills, and quickly settle with friends.",
@@ -208,6 +218,12 @@ function App() {
   const [showConvertModalId, setShowConvertModalId] = useState<string | number | null>(() => initialSavedState?.showConvertModalId || null);
   const [analyticsGroupId, setAnalyticsGroupId] = useState<string | number | null>(() => initialSavedState?.analyticsGroupId ?? null);
   const [showGroupSettleList, setShowGroupSettleList] = useState<boolean>(() => !!initialSavedState?.showGroupSettleList);
+  const [showSplitwiseImport, setShowSplitwiseImport] = useState<boolean>(() => !!initialSavedState?.showSplitwiseImport);
+  // OAuth code/error for the in-progress Splitwise connect flow. Not tracked in
+  // browser history (like samePersonPrompt below): they're single-use artifacts
+  // of one OAuth round-trip, not something a back-swipe should ever restore.
+  const [swOauthCode, setSwOauthCode] = useState<string | null>(null);
+  const [swOauthError, setSwOauthError] = useState<string | null>(null);
   const [confirmState, setConfirmState] = useState<ConfirmState>({
     show: false,
     title: '',
@@ -383,6 +399,11 @@ function App() {
   // or after an accidental wipe. Never merged live into group sync.
   const [nonGroupBackup, setNonGroupBackup] = useState<Expense[]>([]);
   const everHadLocalStandaloneRef = useRef(false);
+  // The expenses from the most recently committed Splitwise import, so tapping
+  // a "needs review" row (which fires in the same tick as the commit, before
+  // the setExpenses state update above has flushed) can still look the exact
+  // expense object up to open it in the editor.
+  const lastSplitwiseImportExpensesRef = useRef<Expense[]>([]);
 
   // Dynamically resolve active identity (me) for the selected group (Tricount cookie fallback)
   const me = (() => {
@@ -524,6 +545,7 @@ function App() {
     editingSettle,
     globalSettleData,
     showFriendsList,
+    showSplitwiseImport,
     // samePersonPrompt is intentionally NOT tracked in history: it's a transient
     // prompt, and tracking it made dismissing it push a state so a back-swipe
     // reopened it (an endless popup on every swipe). Back always just closes it.
@@ -546,7 +568,7 @@ function App() {
       // of closing the modal).
       const anyOverlayOpen =
         showExpModal || showSettleModal || showAddFriendModal || showGroupSettleList ||
-        showMembersHealth || showNotifPanel || mobileShowGroupOptionsMenu ||
+        showMembersHealth || showNotifPanel || mobileShowGroupOptionsMenu || showSplitwiseImport ||
         !!qrModalData || !!netPayablePopup || !!netReceivablePopup || !!showConvertModalId || !!editingSettle || !!globalSettleData ||
         !!(confirmState && confirmState.show) || !!samePersonPrompt;
       // A back-swipe from a top-level bottom-nav screen (All balances, All
@@ -587,6 +609,7 @@ function App() {
         setEditingSettle(ui.editingSettle || null);
         setGlobalSettleData(ui.globalSettleData || null);
         setShowFriendsList(!!ui.showFriendsList);
+        setShowSplitwiseImport(!!ui.showSplitwiseImport);
         // Back always dismisses the transient same-person prompt (never restores it).
         setSamePersonPrompt(null);
         if (ui.analyticsGroupId !== undefined) setAnalyticsGroupId(ui.analyticsGroupId);
@@ -619,7 +642,7 @@ function App() {
   }, [
     view, selectedId, groupDetailTab, showExpModal, showSettleModal, showAddFriendModal,
     showGroupSettleList, showMembersHealth, qrModalData, netPayablePopup, netReceivablePopup, showConvertModalId,
-    showNotifPanel, mobileShowGroupOptionsMenu, editingSettle, globalSettleData, showFriendsList, samePersonPrompt, analyticsGroupId, confirmState
+    showNotifPanel, mobileShowGroupOptionsMenu, editingSettle, globalSettleData, showFriendsList, showSplitwiseImport, samePersonPrompt, analyticsGroupId, confirmState
   ]);
 
   // 2. Watch for user changes and push states
@@ -640,7 +663,7 @@ function App() {
       ui.showMembersHealth, ui.showNotifPanel, ui.mobileShowGroupOptionsMenu,
       !!ui.qrModalData, !!ui.netPayablePopup, !!ui.netReceivablePopup, !!ui.showConvertModalId, !!ui.editingSettle, !!ui.globalSettleData,
       !!(ui.confirmState && ui.confirmState.show),
-      ui.showFriendsList,
+      ui.showFriendsList, ui.showSplitwiseImport,
     ].filter(Boolean).length;
 
     if (cur?._divido && cur.uiState) {
@@ -666,6 +689,7 @@ function App() {
         prev.showNotifPanel !== currentUi.showNotifPanel ||
         prev.mobileShowGroupOptionsMenu !== currentUi.mobileShowGroupOptionsMenu ||
         prev.showFriendsList !== currentUi.showFriendsList ||
+        prev.showSplitwiseImport !== currentUi.showSplitwiseImport ||
         !isSameId(prev.analyticsGroupId, currentUi.analyticsGroupId) ||
         JSON.stringify(prev.editingSettle) !== JSON.stringify(currentUi.editingSettle) ||
         JSON.stringify(prev.globalSettleData) !== JSON.stringify(currentUi.globalSettleData) ||
@@ -723,7 +747,7 @@ function App() {
   }, [
     view, selectedId, groupDetailTab, showExpModal, showSettleModal, showAddFriendModal,
     showGroupSettleList, showMembersHealth, qrModalData, showConvertModalId,
-    showNotifPanel, mobileShowGroupOptionsMenu, editingSettle, globalSettleData, showFriendsList, samePersonPrompt, analyticsGroupId, confirmState
+    showNotifPanel, mobileShowGroupOptionsMenu, editingSettle, globalSettleData, showFriendsList, showSplitwiseImport, samePersonPrompt, analyticsGroupId, confirmState
   ]);
 
   // Keep the focused input visible above the on-screen keyboard. On mobile the
@@ -2799,6 +2823,46 @@ function App() {
     const t = setTimeout(() => setIsResolvingInvite(false), 5000);
     return () => clearTimeout(t);
   }, [isResolvingInvite]);
+
+  // Splitwise OAuth web callback landing. The native in-app-browser bounce case
+  // is handled earlier (before this component's hooks even run its render body)
+  // by the early-return check near the top of the render — by the time this
+  // effect could run on native, the page has already been replaced. This only
+  // ever resolves the WEB flow: verify the CSRF state, then hand the code (or
+  // error) to the import sheet.
+  useEffect(() => {
+    if (window.location.pathname !== '/splitwise-callback') return;
+    const cb = parseCallback(window.location.href);
+    if (isNativeBounce(cb.state)) return; // native bounce already redirected away
+    const check = consumeOAuthState(cb.state);
+    if (cb.error) {
+      setSwOauthError('denied');
+    } else if (check.ok) {
+      setSwOauthCode(cb.code);
+    } else {
+      setSwOauthError(check.reason);
+    }
+    setShowSplitwiseImport(true);
+    window.history.replaceState({ _divido: true, uiState: { view: 'summary', selectedId: null } }, '', '/');
+  }, []);
+
+  // Splitwise OAuth native callback: Splitwise's in-app-browser bounces to our
+  // custom URL scheme, which @capacitor/app's `appUrlOpen` delivers here.
+  useEffect(() => {
+    const unsubscribe = subscribeNativeCallback((cb) => {
+      const check = consumeOAuthState(cb.state);
+      if (cb.error) {
+        setSwOauthError('denied');
+      } else if (check.ok) {
+        setSwOauthCode(cb.code);
+      } else {
+        setSwOauthError(check.reason);
+      }
+      setShowSplitwiseImport(true);
+    });
+    return unsubscribe;
+  }, []);
+
   // Write off a past member's outstanding balance: record settlement-style
   // entries that cancel every pairwise amount they still have to pay/collect, so
   // their balance closes to zero (recorded as "written off", not silently
@@ -3346,6 +3410,74 @@ function App() {
     return false;
   };
 
+  // Opens the Splitwise import sheet fresh: sign-in gated like group creation,
+  // and always starts a new connect attempt (clearing any OAuth result left
+  // over from a previous open).
+  const onImportSplitwise = () => {
+    if (!requireSignInToCreate()) return;
+    setSwOauthCode(null);
+    setSwOauthError(null);
+    setShowSplitwiseImport(true);
+  };
+
+  // Merges one Splitwise import batch (a "friends" row and/or one or more
+  // group rows) into local state. Persistence then flows through the normal
+  // useSupabaseSync path: new groups carry pendingSync: true (see
+  // mapSplitwiseImport), which is what makes it insert them to the cloud; new
+  // STANDALONE expenses are picked up by the non-group cloud-backup effect.
+  const handleSplitwiseCommit = ({ groups: importedGroups, expenses: importedExpenses }: { groups: Group[]; expenses: Expense[] }) => {
+    lastSplitwiseImportExpensesRef.current = importedExpenses;
+
+    setGroups((prev) => {
+      const merged = prev.map((g) => {
+        const incoming = importedGroups.find((ig) => String(ig.id) === String(g.id));
+        if (!incoming) return g;
+        // A merge/re-import target: keep the existing group's identity (name,
+        // currency, memberIdentities, …) and just add any roster members from
+        // Splitwise it doesn't already have.
+        const existingMembers = g.members || [];
+        const missingMembers = (incoming.members || []).filter(
+          (m) => !existingMembers.some((em) => em.toLowerCase() === m.toLowerCase())
+        );
+        if (missingMembers.length === 0) return g;
+        return {
+          ...g,
+          members: [...existingMembers, ...missingMembers],
+          pendingMembers: [...(g.pendingMembers || []), ...missingMembers],
+        };
+      });
+      const newGroups = importedGroups.filter((ig) => !prev.some((g) => String(g.id) === String(ig.id)));
+      return [...merged, ...newGroups];
+    });
+
+    setExpenses((prev) => {
+      const incomingIds = new Set(importedExpenses.map((e) => String(e.id)));
+      const replaced = prev.map((e) => {
+        if (!incomingIds.has(String(e.id))) return e;
+        return importedExpenses.find((ie) => String(ie.id) === String(e.id))!;
+      });
+      const newExpenses = importedExpenses.filter((ie) => !prev.some((e) => String(e.id) === String(ie.id)));
+      return [...newExpenses, ...replaced];
+    });
+
+    setToastMsg(`Imported ${importedExpenses.length} expense${importedExpenses.length === 1 ? '' : 's'} from Splitwise`);
+    setTimeout(() => setToastMsg(null), 4000);
+  };
+
+  // Tapping a "needs review" row in the import summary: jump straight to that
+  // expense's group (or Non-Group Expenses) and open it in the editor, the
+  // same navigation sequence as the quick-add '+' (MasterSummary.tsx:1083-1091).
+  const handleSplitwiseReviewTap = (expenseId: string, gId: string | number) => {
+    const exp =
+      lastSplitwiseImportExpensesRef.current.find((e) => String(e.id) === String(expenseId)) ||
+      expenses.find((e) => String(e.id) === String(expenseId));
+    if (!exp) return;
+    setSelectedId(gId);
+    setView('detail');
+    setEditingExpenseSecure(exp);
+    setShowExpModalSecure(true);
+  };
+
   const createGroupSecure = () => {
     if (!requireSignInToCreate()) return;
     setView('create_group');
@@ -3568,6 +3700,46 @@ function App() {
 
   const urlParams = new URLSearchParams(window.location.search);
   const joinGroupIdParam = urlParams.get('joinGroupId');
+
+  // Splitwise OAuth native bounce: on native, the https callback page is only
+  // ever loaded briefly inside the in-app browser (Splitwise doesn't support
+  // custom-scheme redirect URIs), so it must hand off to our custom URL scheme
+  // immediately — before any of the app's normal screens, sign-in gates, or
+  // data loading render. Placed after all hooks above (so hook order stays
+  // valid across renders) but before every other conditional return.
+  if (window.location.pathname === '/splitwise-callback') {
+    const swCallback = parseCallback(window.location.href);
+    if (isNativeBounce(swCallback.state)) {
+      let bounceUrl = buildNativeBounceUrl(swCallback.code || '', swCallback.state!);
+      if (swCallback.error) bounceUrl += `&error=${encodeURIComponent(swCallback.error)}`;
+      window.location.replace(bounceUrl);
+      return (
+        <div style={{
+          position: 'fixed', inset: 0, display: 'flex', flexDirection: 'column',
+          alignItems: 'center', justifyContent: 'center', gap: '18px',
+          background: 'var(--bg)', color: 'var(--t)', zIndex: 10000,
+        }}>
+          <div style={{
+            width: '44px', height: '44px', borderRadius: '50%',
+            border: '4px solid rgba(99, 102, 241, 0.2)', borderTopColor: '#6366F1',
+            animation: 'spin 0.8s linear infinite',
+          }} />
+          <div style={{ fontSize: '14px', fontWeight: 700, opacity: 0.7 }}>Returning to Divido…</div>
+          <a
+            href={bounceUrl}
+            style={{
+              marginTop: '4px', padding: '12px 22px', borderRadius: '14px',
+              background: '#F97316', color: '#FFFFFF', fontSize: '14px', fontWeight: 700,
+              textDecoration: 'none',
+            }}
+          >
+            Open Divido
+          </a>
+          <style>{`@keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }`}</style>
+        </div>
+      );
+    }
+  }
 
   if (!isAuthenticated) {
     return (
@@ -3981,6 +4153,7 @@ function App() {
             homeTabResetNonce={homeTabResetNonce}
             duplicateGroups={duplicateGroups}
             onMergeGroups={mergeGroups}
+            onImportSplitwise={isSplitwiseConfigured() ? onImportSplitwise : undefined}
           />
         ) : view === 'groups' ? (
           <GroupsView
@@ -4060,6 +4233,7 @@ function App() {
             setUserMetadata={setUserMetadata}
             handleLogout={handleLogout}
             userEmail={userEmail}
+            onImportSplitwise={isSplitwiseConfigured() ? onImportSplitwise : undefined}
           />
         ) : view === 'gallery' ? (
           <GroupGallery
@@ -4112,6 +4286,7 @@ function App() {
               setView('detail');
               setShowFriendsList(true);
             }}
+            onImportSplitwise={isSplitwiseConfigured() ? onImportSplitwise : undefined}
           />
         ) : selectedId === 'STANDALONE' ? (
           <NonGroupView
@@ -5992,6 +6167,23 @@ function App() {
             userMetadata={userMetadata}
             setUserMetadata={setUserMetadata}
             onFinalSettle={handleFinalGlobalSettle}
+          />
+        </React.Suspense>
+      )}
+
+      {showSplitwiseImport && (
+        <React.Suspense fallback={null}>
+          <SplitwiseImportModal
+            open={showSplitwiseImport}
+            onClose={() => setShowSplitwiseImport(false)}
+            oauthCode={swOauthCode}
+            oauthError={swOauthError}
+            groups={groups}
+            expenses={expenses}
+            me={me}
+            myEmail={userEmail}
+            onCommit={handleSplitwiseCommit}
+            onReviewItemTap={handleSplitwiseReviewTap}
           />
         </React.Suspense>
       )}

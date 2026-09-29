@@ -16,6 +16,7 @@ interface CreateGroupViewProps {
   editingGroup?: Group;
   onManageMembers?: () => void;
   memberAvatars?: Record<string, string>;
+  onImportSplitwise?: () => void;
 }
 
 export const CreateGroupView: React.FC<CreateGroupViewProps> = ({
@@ -29,6 +30,7 @@ export const CreateGroupView: React.FC<CreateGroupViewProps> = ({
   editingGroup,
   onManageMembers,
   memberAvatars,
+  onImportSplitwise,
 }) => {
   const [title, setTitle] = useState(editingGroup ? editingGroup.name : '');
   const [selectedEmoji, setSelectedEmoji] = useState((editingGroup && editingGroup.emoji) ? editingGroup.emoji : ''); // Stores base64 group DP URL only; empty means show name initials
@@ -313,7 +315,30 @@ export const CreateGroupView: React.FC<CreateGroupViewProps> = ({
           </svg>
         </button>
       </div>
-        
+
+      {!editingGroup && onImportSplitwise && (
+        <div style={{ display: 'flex', justifyContent: 'center', marginTop: '-8px' }}>
+          <button
+            type="button"
+            onClick={onImportSplitwise}
+            style={{
+              background: 'none',
+              border: 'none',
+              padding: '12px',
+              minHeight: '44px',
+              color: '#2563EB',
+              fontSize: '13px',
+              fontWeight: 600,
+              textDecoration: 'underline',
+              cursor: 'pointer',
+              fontFamily: 'inherit',
+            }}
+          >
+            or import your groups from Splitwise
+          </button>
+        </div>
+      )}
+
         {/* GROUP NAME SECTION */}
         <div>
           <label style={{ display: 'block', fontSize: '12px', fontWeight: 850, color: 'var(--g)', marginBottom: '8px', textTransform: 'uppercase', letterSpacing: '0.8px' }}>
