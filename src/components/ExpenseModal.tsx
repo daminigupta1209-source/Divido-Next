@@ -320,6 +320,7 @@ export const ExpenseModal: React.FC<ExpenseModalProps> = ({
           display: 'flex',
           flexDirection: 'column',
           overflow: 'hidden',
+          minHeight: 0,
         }}
       >
         {/* Invisible decoy input to trick browser autofill heuristics.
@@ -333,7 +334,10 @@ export const ExpenseModal: React.FC<ExpenseModalProps> = ({
           display: 'flex',
           flexDirection: 'column',
           flex: 1,
-          overflow: 'hidden'
+          overflow: 'hidden',
+          minHeight: 0,
+          boxSizing: 'border-box',
+          height: '100%',
         }}>
         <style>{`
           .modal-body-scroll::-webkit-scrollbar { width: 6px; }
@@ -341,6 +345,8 @@ export const ExpenseModal: React.FC<ExpenseModalProps> = ({
           .modal-body-scroll::-webkit-scrollbar-track { background: transparent; }
           .splitter-scroll::-webkit-scrollbar { width: 0; }
           .splitter-scroll { -ms-overflow-style: none; scrollbar-width: none; }
+          .hide-scrollbar::-webkit-scrollbar { display: none; }
+          .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
           
           .step-container {
             position: relative;
@@ -354,6 +360,7 @@ export const ExpenseModal: React.FC<ExpenseModalProps> = ({
             flex-direction: column;
             gap: 4px;
             box-shadow: none;
+            flex-shrink: 0;
           }
           .step-container::after {
             display: none;
@@ -917,11 +924,14 @@ export const ExpenseModal: React.FC<ExpenseModalProps> = ({
             overflowY: 'auto',
             overflowX: 'hidden',
             flex: 1,
+            minHeight: 0,
+            WebkitOverflowScrolling: 'touch',
+            touchAction: 'pan-y',
             display: 'flex',
             flexDirection: 'column',
             gap: '10px',
             paddingRight: '6px',
-            paddingBottom: '80px',
+            paddingBottom: 'calc(40px + env(safe-area-inset-bottom))',
             margin: '4px 0',
           }}
         >
@@ -931,7 +941,7 @@ export const ExpenseModal: React.FC<ExpenseModalProps> = ({
             @keyframes qa-bar { 0%,100%{height:6px} 50%{height:18px} }
           `}</style>
           {aiFilledFrom ? (
-            <div style={{ background: '#ECFDF5', border: '1px solid #A7F3D0', borderRadius: '12px', padding: '8px 12px', display: 'flex', alignItems: 'center', gap: '9px' }}>
+            <div style={{ background: '#ECFDF5', border: '1px solid #A7F3D0', borderRadius: '12px', padding: '8px 12px', display: 'flex', alignItems: 'center', gap: '9px', flexShrink: 0 }}>
               <svg viewBox="0 0 24 24" fill="none" stroke="#059669" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ width: '16px', height: '16px', flexShrink: 0 }}>
                 <path d="M12 3l1.9 4.6L19 8l-3.5 3.4.8 5-4.3-2.4L7.7 16.4l.8-5L5 8l5.1-.4z" />
               </svg>
@@ -955,7 +965,7 @@ export const ExpenseModal: React.FC<ExpenseModalProps> = ({
               </button>
             </div>
           ) : (isListening || isParsingVoice || isScanning) ? (
-            <div style={{ background: '#E0E7FF', border: '1px solid #C7D2FE', borderRadius: '12px', padding: '8px 12px', display: 'flex', alignItems: 'center', gap: '9px' }}>
+            <div style={{ background: '#E0E7FF', border: '1px solid #C7D2FE', borderRadius: '12px', padding: '8px 12px', display: 'flex', alignItems: 'center', gap: '9px', flexShrink: 0 }}>
               <span style={{ position: 'relative', width: '18px', height: '18px', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
                 {isScanning || isParsingVoice ? (
                   <span className="spin" style={{ fontSize: '14px' }}>✨</span>
@@ -986,7 +996,7 @@ export const ExpenseModal: React.FC<ExpenseModalProps> = ({
               )}
             </div>
           ) : (
-            <div style={{ background: '#EEF2FF', border: '1px solid #C7D2FE', borderRadius: '12px', padding: '8px 12px', display: 'flex', alignItems: 'center', gap: '9px' }}>
+            <div style={{ background: '#EEF2FF', border: '1px solid #C7D2FE', borderRadius: '12px', padding: '8px 12px', display: 'flex', alignItems: 'center', gap: '9px', flexShrink: 0 }}>
               <svg viewBox="0 0 24 24" fill="none" stroke="#4F46E5" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ width: '17px', height: '17px', flexShrink: 0 }}>
                 <path d="M12 3l1.9 4.6L19 8l-3.5 3.4.8 5-4.3-2.4L7.7 16.4l.8-5L5 8l5.1-.4z" />
               </svg>
@@ -1788,7 +1798,7 @@ export const ExpenseModal: React.FC<ExpenseModalProps> = ({
           )}
 
           {/* Scanner floating button + attachments */}
-          <div style={{ position: 'relative' }}>
+          <div style={{ position: 'relative', flexShrink: 0 }}>
 
 
             {attachments.length > 0 && (
@@ -1881,7 +1891,7 @@ export const ExpenseModal: React.FC<ExpenseModalProps> = ({
           </div>
 
           {/* DATE AND NOTES PILLS */}
-          <div className="hide-scrollbar" style={{ display: 'flex', gap: '8px', marginTop: '8px', padding: '0 4px', flexWrap: 'nowrap', overflowX: 'auto' }}>
+          <div className="hide-scrollbar" style={{ display: 'flex', gap: '8px', marginTop: '8px', padding: '0 4px', flexWrap: 'nowrap', overflowX: 'auto', flexShrink: 0 }}>
             {/* DATE PILL */}
             <div
               id="expense-date-btn"
