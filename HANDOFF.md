@@ -1,5 +1,20 @@
 # Divido-Next Handoff
 
+## Latest session — Vercel DDoS incident, Non-Group redesign, balances polish (Sep 27–29 2026)
+
+**Incident: whole app froze for everyone (~8 PM Sep 27).** An app left open during a deploy failed to load a lazy chunk; ErrorBoundary + reload-on-preloadError + a blank-screen watchdog that re-armed every 10s → reload storm (~1k req) → Vercel's **automatic DDoS Mitigation** (system rule; Hobby can't turn it off; Firewall showed Custom Rules 0, Bot Protection Inactive) challenged every request with 403 `X-Vercel-Mitigated: challenge`. Auto-lifted at 8:32 PM. Fixes: watchdog runs once per session; SW never caches a non-ok page / HTML under an asset URL; **all lazy modules preloaded ~4s after start** (App.tsx) so an open tab never needs an old file; SW update poll 60s → 5 min. Diagnose next time: `curl -sD - https://divido-next.vercel.app/ | grep -i mitigated`. Proper fix = Vercel Pro Skew Protection (user declined for now). **Local preview gotcha:** the dev server stops between sessions and the SW then serves a stale cached app — `preview_start`, then unregister SW + clear caches before trusting what you see.
+
+- **Money / identity**
+  - Debts are now **always simplified** in groups (all engines ignore the old `simplifyDebts` flag; Non-Group stays pairwise). Toggle removed from both group menus.
+  - Non-Group name with no email now joins the same person's group identity when the name maps to exactly ONE identity across groups (`buildNameIdentityResolver`, FriendsView). Ambiguous → kept separate. Real case: Pannu had 3 person_ids (Tento/Dam/Lion) → user unified via SQL to `76726070-…`.
+  - Settle sheet labels shared 2-person threads "Non-Group" (was "Damini & Vani").
+- **Non-Group screen** (NonGroupView): person cards open a full person screen (no accordion); header back arrow closes it via cancelable `divido:header-back` event; bottom + prefills that friend via `divido:add-expense`; buttons Settle (coral `#FB7185`) + Invite (blue `#1A73E8`); month headings sorted by date; swipe Settle/Photos anywhere; "Non-Group Expenses" → "Non-Group" app-wide.
+- **Home:** Non-Group card matches group cards (lavender `#F5F3FF`, friend-with-heart icon, no +); card gaps 12px everywhere (watch out: some lists add a container gap on top of card margins).
+- **All balances:** merge banner one-line blush pink "N friends appear twice · Review ›" → full "Same person?" screen with ticks + "Merge N as one" (no email box); net bar tap opens "Your net balance" sheet (every currency + Everyone / Only people I pay / Only people who pay me); chips "+N more"; fixed text sizes (no shrink-to-fit).
+- **Buttons:** "Mark as Settled" sunshine gold `#FACC15` everywhere; expense-screen group selector matches group header; 💳 removed.
+
+**Open / ideas:** app "glitching somewhere" reported but not reproduced (heavy synthetic data had no long tasks) — needs a screen recording. Suggested but not done: colour group cards by balance (option 3), same icon for NG elsewhere.
+
 ## Latest session — Balances by person (member_key), duplicate names, join/rejoin fixes (Sep 26–27 2026)
 
 **Big change: balances no longer key people by name strings.** Every `group_members` row has a permanent `member_key`; every group expense records `party_keys` (`{nameAsWritten: member_key}`). All money screens calculate through that key, so renames, claims with a different email/Google name, "(Left)", and same-named people can't mix up or orphan balances. Design + step log in memory `divido-member-key-switch`.
