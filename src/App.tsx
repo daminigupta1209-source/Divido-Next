@@ -8,7 +8,6 @@ import { GroupsView } from './components/GroupsView';
 import { CreateGroupView } from './components/CreateGroupView';
 import { SettleAmountInput } from './components/SettleAmountInput';
 import { MembersHealthModal } from './components/MembersHealthModal';
-import { InviteLoader } from './pages/InviteLoader';
 import { BootSplash } from './pages/BootSplash';
 import { RejoinRequestModal, type AdminRejoinRequest } from './components/RejoinRequestModal';
 import { RejoinSelfModal } from './components/RejoinSelfModal';
@@ -124,6 +123,23 @@ const pageDescriptions: Record<string, string> = {
 
 const getSavedUiState = () => {
   try {
+    const param = new URLSearchParams(window.location.search).get('joinGroupId');
+    if (param && param !== 'STANDALONE') {
+      const storedGroups = localStorage.getItem('divido_groups');
+      const myEmail = localStorage.getItem('divido_email')?.toLowerCase() || null;
+      let me = localStorage.getItem('divido_me') || 'Me';
+      if (storedGroups) {
+        const parsed = JSON.parse(storedGroups);
+        const localMatch = parsed.find((g: any) => String(g.id) === String(param));
+        const amActive = localMatch && localMatch.members.some((m: string) => 
+          m.toLowerCase() === myEmail || m.toLowerCase() === me.toLowerCase()
+        );
+        if (localMatch && amActive) {
+          // Instantly land in the group if we are already a known member!
+          return { view: 'detail', selectedId: param };
+        }
+      }
+    }
     const st = window.history.state;
     if (st && st._divido && st.uiState) {
       return st.uiState;
@@ -3755,12 +3771,9 @@ function App() {
     );
   }
 
-  // While an invite link is being resolved, show a lightweight loader instead of
-  // the home feed — otherwise the home screen flashes for a beat before the
-  // claim card appears once the Supabase round-trip completes.
-  if (isResolvingInvite) {
-    return <InviteLoader />;
-  }
+  // InviteLoader removed as requested — the app will instantly render the group
+  // if locally cached, or otherwise load the Home view while the claim card
+  // resolves in the background.
 
   // Fresh sign-in with no cached data yet: show a friendly branded splash (the
   // Divido cat) until the first cloud load finishes — so users never see an
