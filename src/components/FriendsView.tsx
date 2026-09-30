@@ -659,14 +659,13 @@ export const FriendsView: React.FC<FriendsViewProps> = ({
         return (
           <div onClick={() => setShowNetSheet(false)} style={{ position: 'fixed', inset: 0, background: 'rgba(15,23,42,0.45)', zIndex: 10001, display: 'flex', alignItems: 'flex-end', justifyContent: 'center' }}>
             <div onClick={(e) => e.stopPropagation()} style={{ width: '100%', maxWidth: '480px', background: '#FFFFFF', borderRadius: '24px 24px 0 0', padding: '14px 18px calc(20px + env(safe-area-inset-bottom))', boxSizing: 'border-box', maxHeight: '85vh', overflowY: 'auto' }}>
-              <div style={{ width: '40px', height: '4px', borderRadius: '999px', background: '#E2E8F0', margin: '0 auto 14px' }} />
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '14px' }}>
-                <h3 style={{ margin: 0, fontSize: '17px', fontWeight: 600, color: '#1E293B' }}>Your net balance</h3>
+              <div style={{ position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'flex-end', minHeight: '24px', marginBottom: '14px' }}>
+                <div style={{ width: '40px', height: '4px', borderRadius: '999px', background: '#E2E8F0', position: 'absolute', left: '50%', transform: 'translateX(-50%)', top: '2px' }} />
                 <button
                   type="button"
                   onClick={() => setShowNetSheet(false)}
                   aria-label="Close"
-                  style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '4px', margin: '-4px -4px 0 0', color: '#94A3B8', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}
+                  style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '4px', margin: '-4px -4px 0 0', color: '#94A3B8', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, zIndex: 1 }}
                 >
                   <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" /></svg>
                 </button>

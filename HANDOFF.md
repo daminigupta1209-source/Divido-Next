@@ -15,7 +15,7 @@
 - **Net Balance Sheet Filter Sync & UI Polish:**
   - In `FriendsView.tsx`, the "Your net balance" sheet respects the active filter (`balanceFilter`): "To pay" exclusively displays the "You pay" breakdown, "To collect" exclusively displays the "You collect" breakdown, and "All" displays both.
   - Added a top-right cross (✕) button to easily dismiss the sheet.
-  - Removed confusing badge count numbers (`9`, `3`, `8`) from the filter buttons and removed the redundant "Show" section label.
+  - Removed confusing badge count numbers (`9`, `3`, `8`) from the filter buttons, removed the redundant "Show" section label, and removed the "Your net balance" heading for a clean, minimal sheet with a centered drag handle and top-right cross button.
 - **Non-Group Cards & Header Polish:**
   - Pinned non-group header title to "Non-Group" without overflow.
   - Unified non-group person view styling to match the reference design.
