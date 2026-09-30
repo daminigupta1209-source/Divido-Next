@@ -5180,11 +5180,12 @@ function App() {
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
+                zIndex: 2,
               }}
             >
               ×
             </button>
-            <h3 className="nunito" style={{ fontSize: '18px', fontWeight: 900, color: '#0F172A', margin: '0 0 6px 0' }}>
+            <h3 className="nunito" style={{ fontSize: '18px', fontWeight: 900, color: '#0F172A', margin: '0 0 6px 0', padding: '0 36px', boxSizing: 'border-box', lineHeight: 1.35, wordBreak: 'break-word' }}>
               Join Group "{linkRequestGroup.name}"
             </h3>
 
