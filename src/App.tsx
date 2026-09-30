@@ -4304,6 +4304,7 @@ function App() {
           <NonGroupView
             expenses={expenses}
             me={me}
+            userName={userName}
             myEmail={userEmail}
             defaultCurrency={myDefaultCurrency}
             memberAvatars={memberAvatars}

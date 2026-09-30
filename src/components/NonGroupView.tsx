@@ -5,6 +5,7 @@ import { formatDate, getEmoji, formatExactAmount, getMonthYearKey } from '../lib
 interface NonGroupViewProps {
   expenses: Expense[];
   me: string;
+  userName?: string;
   myEmail?: string;
   defaultCurrency: string;
   memberAvatars?: Record<string, string>;
@@ -50,6 +51,7 @@ const myPerspective = (bal: Record<string, number>): { curr: string; amount: num
 export const NonGroupView: React.FC<NonGroupViewProps> = ({
   expenses,
   me,
+  userName,
   defaultCurrency,
   memberAvatars,
   getMemberBalance,
@@ -74,6 +76,18 @@ export const NonGroupView: React.FC<NonGroupViewProps> = ({
   const touchStartY = React.useRef<number | null>(null);
 
   const meLower = cleanName(me).toLowerCase();
+
+  const isMe = React.useCallback(
+    (name: string) => {
+      const c = cleanName(name).toLowerCase();
+      if (!c) return false;
+      if (c === 'you' || c === meLower) return true;
+      if (userName && c === cleanName(userName).toLowerCase()) return true;
+      if (c.startsWith(meLower + ' ') || c.endsWith(' ' + meLower)) return true;
+      return false;
+    },
+    [meLower, userName]
+  );
 
   // Phone/browser back closes the open profile (returns to the list) instead of
   // leaving the non-group screen entirely.
@@ -128,7 +142,7 @@ export const NonGroupView: React.FC<NonGroupViewProps> = ({
     // Seed shared (direct) threads first so pending/email are captured.
     directThreads.forEach((t) => {
       const c = cleanName(t.otherName);
-      if (!c || c.toLowerCase() === meLower) return;
+      if (!c || isMe(c)) return;
       const key = c.toLowerCase();
       const ex = byName.get(key);
       if (ex) {
@@ -150,7 +164,7 @@ export const NonGroupView: React.FC<NonGroupViewProps> = ({
         const otherEmail = (e.otherEmail || '').trim().toLowerCase();
         names.forEach((raw) => {
           const c = cleanName(raw);
-          if (!c || c.toLowerCase() === meLower) return;
+          if (!c || isMe(c)) return;
           const key = c.toLowerCase();
           const ex = byName.get(key);
           if (ex) { ex.standalone = true; if (!ex.email && otherEmail.includes('@')) ex.email = otherEmail; }
@@ -170,7 +184,7 @@ export const NonGroupView: React.FC<NonGroupViewProps> = ({
       // stray/abandoned direct thread) shouldn't clutter the list.
       .filter((p) => p.count > 0 || Object.values(p.bal).some((v) => Math.abs(v) > 0.01))
       .sort((a, b) => a.name.localeCompare(b.name));
-  }, [expenses, directThreads, nonGroupExps, meLower, getMemberBalance, expenseInvolves]);
+  }, [expenses, directThreads, nonGroupExps, isMe, getMemberBalance, expenseInvolves]);
 
   const Avatar: React.FC<{ name: string; size?: number }> = ({ name, size = 38 }) => {
     const url = memberAvatars?.[name] || memberAvatars?.[cleanName(name)];
@@ -250,9 +264,9 @@ export const NonGroupView: React.FC<NonGroupViewProps> = ({
           <div style={{ fontSize: '14px', fontWeight: 600, color: b.color, marginTop: '6px' }}>{hasBal ? b.text : 'All settled up'}</div>
         </div>
 
-        {/* Actions */}
+        {/* Actions — always show Settle + Invite side by side */}
         <div style={{ display: 'flex', gap: '8px', marginBottom: '20px' }}>
-          {hasBal && <button type="button" onClick={() => onSettlePerson(profilePerson, p?.directGroupId)} style={{ ...profileBtn, background: '#FB7185', border: 'none', color: '#FFFFFF' }}>Settle</button>}
+          <button type="button" onClick={() => onSettlePerson(profilePerson, p?.directGroupId)} style={{ ...profileBtn, background: '#FB7185', border: 'none', color: '#FFFFFF' }}>Settle</button>
           {onSharePerson && <button type="button" onClick={() => onSharePerson(profilePerson, p?.directGroupId)} style={{ ...profileBtn, background: '#1A73E8', border: 'none', color: '#FFFFFF' }}>Invite</button>}
         </div>
 
@@ -280,12 +294,28 @@ export const NonGroupView: React.FC<NonGroupViewProps> = ({
                 );
               }
               const curr = e.currency || defaultCurrency;
-              const iPaid = cleanName(e.paid).toLowerCase() === meLower;
+              const iPaid = isMe(e.paid);
+              const isSettlement =
+                (e.title || '').includes('Settlement') ||
+                (e.title || '').includes('Payment Recorded') ||
+                e.category === '💸' ||
+                e.category === '✅' ||
+                e.category === '🤝' ||
+                e.title === 'Payment Recorded';
+
+              const cleanTitle = isSettlement
+                ? (e.title === 'Payment Recorded' ? 'Payment Recorded' : 'Settlement')
+                : (e.title || '').replace(/\s*💎\s*$/, '').trim();
+
+              const emoji = isSettlement
+                ? (e.title === 'Payment Recorded' ? '⚡' : (getEmoji(e.title) || '💸'))
+                : (getEmoji(e.title) || '⚡');
+
               rows.push(
                 <div key={e.id} className="hover-up-mini" onClick={() => onOpenExpense(e)} style={{ display: 'flex', alignItems: 'center', gap: '12px', background: '#FFFFFF', border: '0.5px solid #EFE7DC', borderRadius: '14px', padding: '12px 14px', boxShadow: '0 2px 10px rgba(0,0,0,0.03)', cursor: 'pointer', marginBottom: '12px' }}>
-                  <div style={{ width: '34px', height: '34px', borderRadius: '50%', background: '#F1EFE8', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '15px', flexShrink: 0 }}>{getEmoji(e.title) || '⚡'}</div>
+                  <div style={{ width: '34px', height: '34px', borderRadius: '50%', background: '#F1EFE8', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '15px', flexShrink: 0 }}>{emoji}</div>
                   <div style={{ flex: 1, minWidth: 0 }}>
-                    <div style={{ fontSize: '14px', fontWeight: 600, color: '#0F172A', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{(e.title || '').replace(/\s*💎\s*$/, '').trim()}</div>
+                    <div style={{ fontSize: '14px', fontWeight: 600, color: '#0F172A', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{cleanTitle}</div>
                     <div style={{ fontSize: '11px', color: '#94A3B8' }}>{iPaid ? 'You paid' : `${cleanName(e.paid)} paid`} · {formatDate(e.date)}</div>
                   </div>
                   <span style={{ fontSize: '14px', fontWeight: 600, color: '#0F172A' }}>{curr} {formatExactAmount(Number(e.amt) || 0)}</span>
@@ -308,7 +338,9 @@ export const NonGroupView: React.FC<NonGroupViewProps> = ({
                 onClick={() => {
                   if (window.confirm(`Delete all expenses with ${profilePerson}? This can't be undone.`)) { onDeletePerson(profilePerson, p?.directGroupId); setProfilePerson(null); }
                 }}
-                style={{ display: 'block', margin: '8px auto 2px', background: 'none', border: 'none', color: '#B91C1C', fontSize: '12px', fontWeight: 600, cursor: 'pointer', textDecoration: 'underline' }}
+                style={{ display: 'block', margin: '8px auto 2px', background: 'none', border: 'none', color: '#94A3B8', fontSize: '11.5px', fontWeight: 500, cursor: 'pointer', textAlign: 'center' }}
+                onMouseEnter={(ev) => (ev.currentTarget.style.color = '#EF4444')}
+                onMouseLeave={(ev) => (ev.currentTarget.style.color = '#94A3B8')}
               >
                 Delete all expenses with {profilePerson}
               </button>
