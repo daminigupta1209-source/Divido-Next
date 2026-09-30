@@ -175,7 +175,6 @@ export const FriendsView: React.FC<FriendsViewProps> = ({
   const [showFilters, setShowFilters] = useState(false);
   const [search, setSearch] = useState('');
   const [showFriendsDropdown, setShowFriendsDropdown] = useState(false);
-  const [showBalanceDropdown, setShowBalanceDropdown] = useState(false);
   const [selectedFriends, setSelectedFriends] = useState<string[]>([]);
   const [balanceFilter, setBalanceFilter] = useState<'all' | 'owed' | 'owe'>('all');
   // Tap the Net Balance bar → sheet with every currency + filter choices.
@@ -491,7 +490,6 @@ export const FriendsView: React.FC<FriendsViewProps> = ({
     );
   };
 
-  const balanceLabel = balanceFilter === 'all' ? 'All Balances' : balanceFilter === 'owed' ? 'To Collect' : 'To Pay';
   const friendsLabel = selectedFriends.length === 0
     ? 'All Friends'
     : selectedFriends.length === 1
@@ -757,7 +755,7 @@ export const FriendsView: React.FC<FriendsViewProps> = ({
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '24px', animation: 'fadeSlideIn 0.5s ease-out', flexWrap: 'nowrap' }}>
           {/* Friends filter */}
           <div style={dropdownStyle}>
-            <button style={btnStyle} onClick={(e) => { e.stopPropagation(); setShowFriendsDropdown(!showFriendsDropdown); setShowBalanceDropdown(false); }}>
+            <button style={btnStyle} onClick={(e) => { e.stopPropagation(); setShowFriendsDropdown(!showFriendsDropdown); }}>
               <span>{friendsLabel}</span><span style={{ fontSize: '9px', marginLeft: '2px' }}>▼</span>
             </button>
             {showFriendsDropdown && (
@@ -781,41 +779,6 @@ export const FriendsView: React.FC<FriendsViewProps> = ({
                           <span style={{ fontSize: '10px', color: '#94A3B8', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{f.groups.join(', ')}</span>
                         )}
                       </span>
-                    </div>
-                  ))}
-                </div>
-              </>
-            )}
-          </div>
-
-          {/* Balance filter */}
-          <div style={dropdownStyle}>
-            <button style={btnStyle} onClick={(e) => { e.stopPropagation(); setShowBalanceDropdown(!showBalanceDropdown); setShowFriendsDropdown(false); }}>
-              <span>{balanceLabel}</span><span style={{ fontSize: '9px', marginLeft: '2px' }}>▼</span>
-            </button>
-            {showBalanceDropdown && (
-              <>
-                <div onClick={() => setShowBalanceDropdown(false)} style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, zIndex: 199 }} />
-                <div style={popupStyle}>
-                  {(['all', 'owed', 'owe'] as const).map((opt) => (
-                    <div
-                      key={opt}
-                      onClick={() => {
-                        setBalanceFilter(opt);
-                        setShowBalanceDropdown(false);
-                      }}
-                      style={{
-                        padding: '8px 12px',
-                        borderRadius: '8px',
-                        fontSize: '12px',
-                        fontWeight: balanceFilter === opt ? 800 : 600,
-                        cursor: 'pointer',
-                        color: '#1E293B',
-                        background: balanceFilter === opt ? '#F1F5F9' : 'transparent',
-                        textAlign: 'left',
-                      }}
-                    >
-                      {opt === 'all' ? 'All Balances' : opt === 'owed' ? 'To Collect' : 'To Pay'}
                     </div>
                   ))}
                 </div>

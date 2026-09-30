@@ -1,5 +1,24 @@
 # Divido-Next Handoff
 
+## Latest session — Splitwise Import, Sync Fixes, Net Balance Polish (Sep 30 2026)
+
+**Overview:** 5 commits integrated successfully with Claude's rebase. All features verified against the new `member_key` / `party_keys` identity system and consolidated with the latest UI.
+
+- **Splitwise Import (web + native):** 
+  - Added a one-tap "Import from Splitwise" feature for groups and friends.
+  - The import is a pure mapper (`src/lib/splitwiseImport.ts`) that delegates to standard Divido group/expense creation.
+  - **Identity verification:** Imported groups correctly receive `member_key` values from the DB default on push, and the existing `App.tsx` effect automatically fills `party_keys` for imported expenses. No direct Supabase inserts bypass the identity system.
+- **Sync Engine Fixes:**
+  - Fixed data-loss/race bugs by serializing group/expense sync passes.
+  - Added pagination for syncing >1000 rows.
+  - Fixed date filter (ids are UUIDs) and improved sync performance with O(1) lookups.
+  - Verified `useSupabaseSync.ts` correctly handles `Group.memberKeys` and `Group.removedMembers` via `is_removed`, and `lib/expenseSchema.ts` correctly maps `party_keys`.
+- **Net Balance UI Consolidation:**
+  - Added a 3-state segmented Show filter ("All" / "To pay" / "To collect") which now lives exclusively inside the "Your net balance" sheet.
+  - Removed the redundant "Balance filter" dropdown under the search funnel to keep a single, unified filter UI.
+- **Group Creator Fix:**
+  - The group creator is no longer erroneously listed as "Pending" in a newly created group.
+
 ## Latest session — Vercel DDoS incident, Non-Group redesign, balances polish (Sep 27–29 2026)
 
 **Incident: whole app froze for everyone (~8 PM Sep 27).** An app left open during a deploy failed to load a lazy chunk; ErrorBoundary + reload-on-preloadError + a blank-screen watchdog that re-armed every 10s → reload storm (~1k req) → Vercel's **automatic DDoS Mitigation** (system rule; Hobby can't turn it off; Firewall showed Custom Rules 0, Bot Protection Inactive) challenged every request with 403 `X-Vercel-Mitigated: challenge`. Auto-lifted at 8:32 PM. Fixes: watchdog runs once per session; SW never caches a non-ok page / HTML under an asset URL; **all lazy modules preloaded ~4s after start** (App.tsx) so an open tab never needs an old file; SW update poll 60s → 5 min. Diagnose next time: `curl -sD - https://divido-next.vercel.app/ | grep -i mitigated`. Proper fix = Vercel Pro Skew Protection (user declined for now). **Local preview gotcha:** the dev server stops between sessions and the SW then serves a stale cached app — `preview_start`, then unregister SW + clear caches before trusting what you see.
