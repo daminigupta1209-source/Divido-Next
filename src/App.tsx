@@ -2604,9 +2604,78 @@ function App() {
             (String(m.user_email || '').toLowerCase() === myEm || String(m.invite_email || '').toLowerCase() === myEm)
           );
           if (leftMemberRow) {
-            setLinkRequestRejoinMode(true);
-            setLinkRequestGroup(groupData);
-            setLinkRequestPlaceholders([leftMemberRow]);
+            const cleanName = leftMemberRow.name.replace(/\s*\(Left\)$/i, '');
+            // Auto-rejoin: their email matches their past-member row unambiguously.
+            // Reactivate their row, log rejoin, and take them straight in without any modal or popup.
+            await supabase
+              .from('group_members')
+              .update({
+                name: cleanName,
+                user_email: myEmail,
+                is_pending: false,
+                link_request_email: null,
+                link_request_name: null,
+              })
+              .eq('id', leftMemberRow.id);
+
+            try {
+              await supabase
+                .from('expenses')
+                .insert({
+                  group_id: joinGroupId,
+                  timestamp: Date.now(),
+                  title: `${cleanName} rejoined`,
+                  amt: 0,
+                  paid: 'SYSTEM',
+                  date: new Date().toISOString().split('T')[0],
+                  mode: 'Equally',
+                  splitters: []
+                });
+            } catch (e) {
+              console.error('Rejoin activity log failed:', e);
+            }
+
+            // Local identity setup
+            const existing = localStorage.getItem('divido_username');
+            const hasRealName = !!existing && !['You', 'Guest', 'undefined', ''].includes(existing.trim());
+            if (!hasRealName) { localStorage.setItem('divido_username', cleanName); setUserName(cleanName); }
+            localStorage.setItem('divido_authenticated', 'true');
+            localStorage.setItem(`divido_identity_${joinGroupId}`, cleanName);
+            setIsAuthenticated(true);
+            localStorage.removeItem('divido_pending_join');
+
+            // Fetch fresh members so roster renders immediately
+            let freshMembers: string[] = [];
+            let freshPending: string[] = [];
+            try {
+              const { data: gm } = await supabase
+                .from('group_members')
+                .select('*')
+                .eq('group_id', joinGroupId)
+                .order('id', { ascending: true });
+              if (gm) {
+                const activeMems = gm.filter((m: any) => !m.link_request_email || !m.is_pending || m.name.endsWith(' (Left)'));
+                freshMembers = Array.from(new Set(activeMems.map((m: any) => m.name)));
+                freshPending = Array.from(new Set(activeMems
+                  .filter((m: any) => m.is_pending && !m.user_email && !m.name.endsWith(' (Left)'))
+                  .map((m: any) => m.name)));
+              }
+            } catch { /* background cloud-load will catch up */ }
+
+            const updatedGroup = {
+              ...groupData,
+              members: freshMembers.length ? freshMembers : [...(groupData.members || []).filter((m: string) => m !== leftMemberRow.name), cleanName],
+              pendingMembers: freshPending,
+            };
+            setGroups(prev => prev.some(g => g.id === updatedGroup.id)
+              ? prev.map(g => g.id === updatedGroup.id ? updatedGroup : g)
+              : [...prev, updatedGroup]);
+
+            setSelectedId(groupData.is_direct ? 'STANDALONE' : joinGroupId);
+            setView('detail');
+            setShowFriendsList(false);
+            const cleanUrl = window.location.protocol + '//' + window.location.host + window.location.pathname;
+            window.history.replaceState({ _divido: true, uiState: { view: 'summary', selectedId: null } }, '', cleanUrl);
             return;
           }
 
@@ -3900,7 +3969,7 @@ function App() {
             splitters: []
           });
 
-        alert(`Welcome back to "${linkRequestGroup.name}"! You have successfully rejoined as "${cleanName}". 🎉`);
+        // No blocking alert — landing in the group is the confirmation.
       } else {
         // Normal claim flow — adopt the joiner's own PROFILE name
         // (once joined, your name = your profile name, not the
@@ -4457,7 +4526,8 @@ function App() {
                     console.error('group_add notify failed:', e);
                   }
 
-                  alert('Member successfully approved and linked! 🎉');
+                  setToastMsg('Member successfully approved and linked! 🎉');
+                  setTimeout(() => setToastMsg(null), 3000);
                   // Drop the handled request from local state immediately so the
                   // approve control can't be re-triggered before the cloud sync
                   // reconciles (same double-action cause as the rejoin modal).
@@ -4500,7 +4570,8 @@ function App() {
                       .eq('id', memberRecordId);
                   }
                   
-                  alert('Link request declined.');
+                  setToastMsg('Link request declined.');
+                  setTimeout(() => setToastMsg(null), 3000);
                   setGroups((prev) => prev.map((g) =>
                     String(g.id) === String(mem.group_id)
                       ? { ...g, pendingLinkRequests: (g.pendingLinkRequests || []).filter((r) => String(r.id) !== String(memberRecordId)) }
@@ -5265,7 +5336,7 @@ function App() {
                 <button
                   key={p.id}
                   disabled={submittingLinkRequest}
-                  onClick={() => setClaimConfirmTarget(p)}
+                  onClick={() => runClaimPlaceholder(p)}
                   style={{
                     width: '100%',
                     padding: '12px',
@@ -6743,7 +6814,8 @@ function App() {
                 })
                 .eq('id', adminRejoinRequest.id);
 
-              alert('Rejoin request declined.');
+              setToastMsg('Rejoin request declined.');
+              setTimeout(() => setToastMsg(null), 3000);
               // Remove the handled request from local state so the
               // auto-open effect (keyed on groups) doesn't immediately
               // re-open this modal — that was the "needs 2 clicks" bug.
@@ -6789,7 +6861,8 @@ function App() {
                 console.error('Rejoin activity log failed:', e);
               }
 
-              alert('Rejoin request approved! 🎉');
+              setToastMsg('Rejoin request approved! 🎉');
+              setTimeout(() => setToastMsg(null), 3000);
               // Remove the handled request from local state so the
               // auto-open effect (keyed on groups) doesn't immediately
               // re-open this modal — that was the "needs 2 clicks" bug.

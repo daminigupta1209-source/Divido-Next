@@ -1,6 +1,22 @@
 # Divido-Next Handoff
 
-## Latest session — Splitwise Import, Sync Fixes, Net Balance Polish (Sep 30 2026)
+## Latest session — Join/Rejoin Streamlining, Analytics Gestures, Settle & UI Polish (Sep 30 2026)
+
+- **Direct Join & Rejoin (No Extra Popups / Modals):**
+  - Removed the blocking browser `alert()` dialog on rejoin (`Welcome back to ... You have successfully rejoined as ... 🎉`). Landing directly in the group is now the confirmation.
+  - When a returning member opens an invite link and their authenticated email matches their past `(Left)` row, `joinGroupFromQuery` immediately reactivates their row, logs the rejoin activity, establishes their local identity, updates group state, and navigates straight into the group detail page without showing any claim modal or confirmation dialog.
+  - Tapping a placeholder button on the claim card now claims/rejoins immediately in one tap without an extra confirmation popup step.
+  - Replaced admin approve/decline browser alerts for link requests with gentle non-blocking toast notifications (`setToastMsg`).
+- **Global Analytics Swiping:**
+  - Added horizontal finger swipe gestures (`touchstart` / `touchend` with horizontal threshold and angle detection) to toggle smoothly between "This month", "Last 30 days", and "Overall" timeframes.
+- **Settle Modal & Navigation Polish:**
+  - Fixed layout overlap in the Settle card when there are many settlements by adding padding-bottom to the scrollable list container.
+  - Fixed "Settle up" button inside the "Leave Group" screen to close the members overlay and route directly to the group's settle tab.
+- **Non-Group Cards & Header Polish:**
+  - Pinned non-group header title to "Non-Group" without overflow.
+  - Unified non-group person view styling to match the reference design.
+
+## Splitwise Import, Sync Fixes, Net Balance Polish (Sep 30 2026)
 
 **Overview:** 5 commits integrated successfully with Claude's rebase. All features verified against the new `member_key` / `party_keys` identity system and consolidated with the latest UI.
 
