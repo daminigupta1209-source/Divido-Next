@@ -670,25 +670,33 @@ export const FriendsView: React.FC<FriendsViewProps> = ({
               <div style={{ width: '40px', height: '4px', borderRadius: '999px', background: '#E2E8F0', margin: '0 auto 14px' }} />
               <h3 style={{ margin: '0 0 14px', fontSize: '17px', fontWeight: 600, color: '#1E293B' }}>Your net balance</h3>
 
-              <div style={{ fontSize: '11px', fontWeight: 700, letterSpacing: '1px', textTransform: 'uppercase', color: '#94A3B8', marginBottom: '6px' }}>You pay</div>
-              {payList.length === 0 ? (
-                <div style={{ fontSize: '14px', color: '#94A3B8', marginBottom: '14px' }}>Nothing to pay</div>
-              ) : (
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', marginBottom: '14px' }}>
-                  {payList.map(([c, v]) => (
-                    <span key={c} style={{ fontSize: '15px', fontWeight: 600, color: '#B91C1C' }}>{c}{formatExactAmount(Math.abs(v))}</span>
-                  ))}
+              {balanceFilter !== 'owed' && (
+                <div>
+                  <div style={{ fontSize: '11px', fontWeight: 700, letterSpacing: '1px', textTransform: 'uppercase', color: '#94A3B8', marginBottom: '6px' }}>You pay</div>
+                  {payList.length === 0 ? (
+                    <div style={{ fontSize: '14px', color: '#94A3B8', marginBottom: balanceFilter === 'owe' ? '18px' : '14px' }}>Nothing to pay</div>
+                  ) : (
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', marginBottom: balanceFilter === 'owe' ? '18px' : '14px' }}>
+                      {payList.map(([c, v]) => (
+                        <span key={c} style={{ fontSize: '15px', fontWeight: 600, color: '#B91C1C' }}>{c}{formatExactAmount(Math.abs(v))}</span>
+                      ))}
+                    </div>
+                  )}
                 </div>
               )}
 
-              <div style={{ fontSize: '11px', fontWeight: 700, letterSpacing: '1px', textTransform: 'uppercase', color: '#94A3B8', marginBottom: '6px' }}>You collect</div>
-              {collectList.length === 0 ? (
-                <div style={{ fontSize: '14px', color: '#94A3B8', marginBottom: '18px' }}>Nothing to collect</div>
-              ) : (
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', marginBottom: '18px' }}>
-                  {collectList.map(([c, v]) => (
-                    <span key={c} style={{ fontSize: '15px', fontWeight: 600, color: '#047857' }}>{c}{formatExactAmount(Math.abs(v))}</span>
-                  ))}
+              {balanceFilter !== 'owe' && (
+                <div>
+                  <div style={{ fontSize: '11px', fontWeight: 700, letterSpacing: '1px', textTransform: 'uppercase', color: '#94A3B8', marginBottom: '6px' }}>You collect</div>
+                  {collectList.length === 0 ? (
+                    <div style={{ fontSize: '14px', color: '#94A3B8', marginBottom: '18px' }}>Nothing to collect</div>
+                  ) : (
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', marginBottom: '18px' }}>
+                      {collectList.map(([c, v]) => (
+                        <span key={c} style={{ fontSize: '15px', fontWeight: 600, color: '#047857' }}>{c}{formatExactAmount(Math.abs(v))}</span>
+                      ))}
+                    </div>
+                  )}
                 </div>
               )}
 
