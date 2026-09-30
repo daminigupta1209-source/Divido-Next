@@ -12,8 +12,10 @@
 - **Settle Modal & Navigation Polish:**
   - Fixed layout overlap in the Settle card when there are many settlements by adding padding-bottom to the scrollable list container.
   - Fixed "Settle up" button inside the "Leave Group" screen to close the members overlay and route directly to the group's settle tab.
-- **Net Balance Sheet Filter Sync:**
-  - In `FriendsView.tsx`, the "Your net balance" sheet now respects the active "Show" filter (`balanceFilter`): selecting "To pay" exclusively displays the "You pay" breakdown, selecting "To collect" exclusively displays the "You collect" breakdown, and "All" displays both.
+- **Net Balance Sheet Filter Sync & UI Polish:**
+  - In `FriendsView.tsx`, the "Your net balance" sheet respects the active filter (`balanceFilter`): "To pay" exclusively displays the "You pay" breakdown, "To collect" exclusively displays the "You collect" breakdown, and "All" displays both.
+  - Added a top-right cross (✕) button to easily dismiss the sheet.
+  - Removed confusing badge count numbers (`9`, `3`, `8`) from the filter buttons and removed the redundant "Show" section label.
 - **Non-Group Cards & Header Polish:**
   - Pinned non-group header title to "Non-Group" without overflow.
   - Unified non-group person view styling to match the reference design.

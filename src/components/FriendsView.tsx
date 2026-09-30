@@ -642,13 +642,6 @@ export const FriendsView: React.FC<FriendsViewProps> = ({
       {showNetSheet && (() => {
         const payList = Object.entries(totalPayable);
         const collectList = Object.entries(totalReceivable);
-        // Segmented 3-state filter; stays open so the list updates behind it.
-        const counts = { all: 0, owe: 0, owed: 0 };
-        friends.forEach((f) => {
-          counts.all++;
-          if (Object.values(f.bals).some((v) => v < -0.01)) counts.owe++;
-          if (Object.values(f.bals).some((v) => v > 0.01)) counts.owed++;
-        });
         const segColor = { all: '#1E293B', owe: '#E11D48', owed: '#10B981' };
         const filterBtn = (key: 'all' | 'owe' | 'owed', label: string) => {
           const active = balanceFilter === key;
@@ -657,10 +650,9 @@ export const FriendsView: React.FC<FriendsViewProps> = ({
               key={key}
               type="button"
               onClick={() => setBalanceFilter(key)}
-              style={{ flex: 1, minWidth: 0, padding: '9px 4px', borderRadius: '999px', border: 'none', background: active ? segColor[key] : 'transparent', color: active ? '#FFFFFF' : '#475569', fontSize: '13px', fontWeight: active ? 700 : 600, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '5px', whiteSpace: 'nowrap', transition: 'background 0.2s, color 0.2s', boxShadow: active ? '0 2px 6px rgba(0,0,0,0.12)' : 'none' }}
+              style={{ flex: 1, minWidth: 0, padding: '9px 4px', borderRadius: '999px', border: 'none', background: active ? segColor[key] : 'transparent', color: active ? '#FFFFFF' : '#475569', fontSize: '13px', fontWeight: active ? 700 : 600, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', whiteSpace: 'nowrap', transition: 'background 0.2s, color 0.2s', boxShadow: active ? '0 2px 6px rgba(0,0,0,0.12)' : 'none' }}
             >
               {label}
-              <span style={{ fontSize: '11px', fontWeight: 700, padding: '1px 6px', borderRadius: '999px', background: active ? 'rgba(255,255,255,0.25)' : '#E2E8F0', color: active ? '#FFFFFF' : '#64748B' }}>{counts[key]}</span>
             </button>
           );
         };
@@ -668,7 +660,17 @@ export const FriendsView: React.FC<FriendsViewProps> = ({
           <div onClick={() => setShowNetSheet(false)} style={{ position: 'fixed', inset: 0, background: 'rgba(15,23,42,0.45)', zIndex: 10001, display: 'flex', alignItems: 'flex-end', justifyContent: 'center' }}>
             <div onClick={(e) => e.stopPropagation()} style={{ width: '100%', maxWidth: '480px', background: '#FFFFFF', borderRadius: '24px 24px 0 0', padding: '14px 18px calc(20px + env(safe-area-inset-bottom))', boxSizing: 'border-box', maxHeight: '85vh', overflowY: 'auto' }}>
               <div style={{ width: '40px', height: '4px', borderRadius: '999px', background: '#E2E8F0', margin: '0 auto 14px' }} />
-              <h3 style={{ margin: '0 0 14px', fontSize: '17px', fontWeight: 600, color: '#1E293B' }}>Your net balance</h3>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '14px' }}>
+                <h3 style={{ margin: 0, fontSize: '17px', fontWeight: 600, color: '#1E293B' }}>Your net balance</h3>
+                <button
+                  type="button"
+                  onClick={() => setShowNetSheet(false)}
+                  aria-label="Close"
+                  style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '4px', margin: '-4px -4px 0 0', color: '#94A3B8', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}
+                >
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" /></svg>
+                </button>
+              </div>
 
               {balanceFilter !== 'owed' && (
                 <div>
@@ -700,7 +702,6 @@ export const FriendsView: React.FC<FriendsViewProps> = ({
                 </div>
               )}
 
-              <div style={{ fontSize: '11px', fontWeight: 700, letterSpacing: '1px', textTransform: 'uppercase', color: '#94A3B8', marginBottom: '8px' }}>Show</div>
               <div role="radiogroup" style={{ display: 'flex', gap: '4px', padding: '4px', borderRadius: '999px', background: '#F1F5F9' }}>
                 {filterBtn('all', 'All')}
                 {filterBtn('owe', 'To pay')}
