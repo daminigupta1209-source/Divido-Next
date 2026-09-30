@@ -4,9 +4,14 @@ import { getEmoji, GROUP_COLORS, formatExactAmount, parseExpenseId } from '../li
 import { StyledDropdown } from './StyledDropdown';
 
 // Pill-style trigger for the compact filter dropdowns (matches the old selects).
+const JOIN_SNAPSHOT_KEY = 'divido_join_progress_v1';
+const JOIN_SNOOZE_KEY = 'divido_join_banner_snooze';
+
 const filterBtnStyle: React.CSSProperties = { padding: '6px 12px', borderRadius: '20px', border: '1px solid #E2E8F0', fontSize: '12px', fontWeight: 600, background: '#F1F5F9', color: '#475569', boxShadow: 'none' };
 import { simplifyMultiCurrencyDebts, computeRawPairwiseTransactions } from '../lib/calculations';
 import { ActivityStudio } from './ActivityStudio';
+import { computeJoinProgress, pendingNamesFor, detectCelebration, toSnapshot, joinNames, type JoinCelebration, type JoinSnapshot } from '../lib/joinProgress';
+import { escManager } from '../lib/escManager';
 
 import { Group, Expense, UserMetadata, GlobalSettleData } from '../lib/types';
 
@@ -52,6 +57,8 @@ interface MasterSummaryProps {
   homeTabResetNonce?: number;
   duplicateGroups?: { name: string; groups: Group[] }[];
   onMergeGroups?: (keepId: string | number, dropId: string | number) => void;
+  // Share a group's invite link with its not-yet-joined members.
+  onInviteToGroup?: (group: Group, pendingNames: string[]) => void;
 }
 
 export const MasterSummary: React.FC<MasterSummaryProps> = ({
@@ -89,6 +96,7 @@ export const MasterSummary: React.FC<MasterSummaryProps> = ({
   homeTabResetNonce,
   duplicateGroups = [],
   onMergeGroups,
+  onInviteToGroup,
 }) => {
   const [openDropdownId, setOpenDropdownId] = useState<string | number | null>(null);
   const [timeFilter, setTimeFilter] = useState<'all' | '30days' | '7days'>('all');
@@ -135,6 +143,14 @@ export const MasterSummary: React.FC<MasterSummaryProps> = ({
   const budgetDismissKey = `budgetBannerDismissed_${new Date().getFullYear()}_${new Date().getMonth()}`;
   const [budgetBannerDismissed, setBudgetBannerDismissed] = useState(() => localStorage.getItem(budgetDismissKey) === '1');
   const [upiBannerDismissed, setUpiBannerDismissed] = useState(() => localStorage.getItem('divido_upi_banner_dismissed') === '1');
+  // "Yet to join" banner: × snoozes it for 7 days, unless more people become
+  // pending than when it was dismissed.
+  const [joinSnooze, setJoinSnooze] = useState<{ until: number; count: number } | null>(() => {
+    try { return JSON.parse(localStorage.getItem(JOIN_SNOOZE_KEY) || 'null'); } catch { return null; }
+  });
+  const [joinCelebration, setJoinCelebration] = useState<JoinCelebration | null>(null);
+  const [showJoinSheet, setShowJoinSheet] = useState(false);
+  const [renderedAt] = useState(() => Date.now());
 
   useEffect(() => {
     const closeDrop = () => {
@@ -220,6 +236,58 @@ export const MasterSummary: React.FC<MasterSummaryProps> = ({
       if (claim) return claim;
     } catch { /* localStorage unavailable */ }
     return me;
+  };
+
+  // Who's yet to join, across active groups (see lib/joinProgress).
+  const joinProgress = useMemo(
+    () => computeJoinProgress(groups, expenses, myNameInGroup),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [groups, expenses, me],
+  );
+  const joinSig = `${joinProgress.pending.map((p) => p.key).sort().join('|')}#${joinProgress.joinedKeys.slice().sort().join('|')}`;
+
+  // Compare with the last-seen snapshot to celebrate people who joined since.
+  // Waits for the roster to settle so a half-synced load doesn't look like a
+  // wave of joins.
+  useEffect(() => {
+    if (loading || groups.length === 0) return;
+    const t = setTimeout(() => {
+      let prev: JoinSnapshot | null = null;
+      try { prev = JSON.parse(localStorage.getItem(JOIN_SNAPSHOT_KEY) || 'null'); } catch { /* ignore */ }
+      const c = detectCelebration(prev, joinProgress);
+      if (c) setJoinCelebration(c);
+      try { localStorage.setItem(JOIN_SNAPSHOT_KEY, JSON.stringify(toSnapshot(joinProgress))); } catch { /* ignore */ }
+    }, 1500);
+    return () => clearTimeout(t);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [joinSig, loading]);
+
+  useEffect(() => {
+    if (!showJoinSheet) return;
+    return escManager.register(() => setShowJoinSheet(false));
+  }, [showJoinSheet]);
+
+  const joinPendingCount = joinProgress.pending.length;
+  const joinSnoozed = !!joinSnooze && renderedAt < joinSnooze.until && joinPendingCount <= joinSnooze.count;
+  const showJoinBanner = !loading && (!!joinCelebration || (joinPendingCount > 0 && !joinSnoozed));
+
+  const dismissJoinBanner = () => {
+    const snooze = { until: Date.now() + 7 * 86400000, count: joinPendingCount };
+    setJoinSnooze(snooze);
+    setJoinCelebration(null);
+    try { localStorage.setItem(JOIN_SNOOZE_KEY, JSON.stringify(snooze)); } catch { /* ignore */ }
+  };
+
+  const openJoinInvite = () => {
+    if (!onInviteToGroup || joinProgress.perGroup.length === 0) return;
+    // One group: straight to the share sheet. Several: pick a group first
+    // (one share can carry only one group's link).
+    if (joinProgress.perGroup.length === 1) {
+      const { group, names } = joinProgress.perGroup[0];
+      onInviteToGroup(group, names);
+    } else {
+      setShowJoinSheet(true);
+    }
   };
 
   // A "direct" group (created by sharing a non-group card) is presented as a
@@ -390,9 +458,106 @@ export const MasterSummary: React.FC<MasterSummaryProps> = ({
 
   const hasNoUpi = !userMetadata[me]?.upiId;
 
+  // One top banner at a time, by priority: Budget exceeded > Yet to join > UPI.
+  const showBudgetBanner = exceededBudgets.length > 0 && !budgetBannerDismissed;
+  const showJoinTopBanner = showJoinBanner && !showBudgetBanner;
+  const showUpiBanner = hasNoUpi && !upiBannerDismissed && !showBudgetBanner && !showJoinTopBanner;
+
   return (
     <div className="content-width-limit" onTouchStart={onSwipeStart} onTouchEnd={onSwipeEnd}>
-      {hasNoUpi && !upiBannerDismissed && (
+      {showJoinTopBanner && (() => {
+        const pendingN = joinPendingCount;
+        const joinedN = joinProgress.joinedKeys.length;
+        const totalN = Math.max(joinProgress.total, 1);
+        const allDone = joinCelebration?.kind === 'allDone';
+        const pct = allDone ? 100 : Math.round((joinedN / totalN) * 100);
+        const canInvite = !allDone && pendingN > 0 && !!onInviteToGroup;
+
+        let title: string;
+        let sub: string;
+        if (allDone) {
+          title = "Everyone's in! 🎉";
+          sub = joinedN === 1 ? '1 friend joined' : `All ${joinedN} friends joined`;
+        } else if (joinCelebration?.kind === 'joined') {
+          const [first, ...rest] = joinCelebration.people;
+          title = `${first.name} joined${rest.length ? ` + ${rest.length} more` : ` ${first.groupName}`} 🎉`;
+          sub = `${pendingN} to go`;
+        } else {
+          title = `${pendingN} friend${pendingN === 1 ? '' : 's'} yet to join`;
+          sub = pendingN <= 2 && joinedN > 0 ? `Almost there — ${pendingN} to go!` : `${joinedN} of ${joinProgress.total} joined`;
+        }
+
+        return (
+          <div
+            className="card shadow-sm hover-up-mini"
+            onClick={() => { if (canInvite) openJoinInvite(); }}
+            style={{
+              background: 'var(--w)',
+              border: '1.5px solid var(--bg)',
+              borderRadius: '18px',
+              padding: '10px 12px 10px 10px',
+              marginBottom: '16px',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '12px',
+              boxShadow: '0 4px 14px rgba(0, 0, 0, 0.02)',
+              animation: 'fadeIn 0.4s ease-out',
+              cursor: canInvite ? 'pointer' : 'default',
+            }}
+          >
+            <div
+              style={{
+                width: '36px',
+                height: '36px',
+                borderRadius: '50%',
+                background: joinCelebration ? 'linear-gradient(135deg, #34D399 0%, #059669 100%)' : 'linear-gradient(135deg, #A78BFA 0%, #7C3AED 100%)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                flexShrink: 0,
+                fontSize: '17px',
+              }}
+            >
+              {joinCelebration ? '🎉' : '🎯'}
+            </div>
+
+            <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', gap: '6px' }}>
+              <span style={{ fontSize: '13px', fontWeight: 600, color: 'var(--t)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', letterSpacing: '-0.1px' }}>
+                {title}
+              </span>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <div
+                  role="progressbar"
+                  aria-valuenow={pct}
+                  aria-valuemin={0}
+                  aria-valuemax={100}
+                  aria-label="Friends joined"
+                  style={{ flex: 1, height: '6px', borderRadius: '999px', background: '#EDE9FE', overflow: 'hidden' }}
+                >
+                  <div style={{ width: `${pct}%`, height: '100%', borderRadius: '999px', background: 'linear-gradient(90deg, #34D399, #059669)', transition: 'width 0.6s ease' }} />
+                </div>
+                <span style={{ fontSize: '11px', fontWeight: 500, color: 'var(--g)', whiteSpace: 'nowrap', flexShrink: 0 }}>{sub}</span>
+              </div>
+            </div>
+
+            {canInvite && (
+              <span style={{ color: '#7C3AED', fontSize: '12.5px', fontWeight: 700, whiteSpace: 'nowrap', flexShrink: 0 }}>
+                Invite →
+              </span>
+            )}
+
+            <span
+              onClick={(e) => { e.stopPropagation(); dismissJoinBanner(); }}
+              style={{ color: '#94A3B8', fontSize: '18px', fontWeight: 600, cursor: 'pointer', lineHeight: 1, padding: '2px 4px', flexShrink: 0 }}
+              title="Dismiss"
+            >
+              ×
+            </span>
+          </div>
+        );
+      })()}
+
+      {showUpiBanner && (
         <div
           className="card shadow-sm hover-up-mini"
           onClick={() => {
@@ -486,7 +651,7 @@ export const MasterSummary: React.FC<MasterSummaryProps> = ({
         </div>
       )}
 
-      {exceededBudgets.length > 0 && !budgetBannerDismissed && (
+      {showBudgetBanner && (
         <div
           className="shadow-sm hover-up-mini"
           onClick={(e) => {
@@ -1074,6 +1239,55 @@ export const MasterSummary: React.FC<MasterSummaryProps> = ({
                     );
                   })()
                 )}
+                {(() => {
+                  // Subtle "yet to join" nudge: dashed initials read as "not here yet".
+                  const pendingNames = pendingNamesFor(g, myNameInGroup(g.id));
+                  if (pendingNames.length === 0) return null;
+                  return (
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginTop: '2px', minWidth: 0 }}>
+                      <div style={{ display: 'flex', flexShrink: 0 }}>
+                        {pendingNames.slice(0, 3).map((n, idx) => (
+                          <span
+                            key={n}
+                            style={{
+                              width: '16px',
+                              height: '16px',
+                              borderRadius: '50%',
+                              border: '1px dashed #B8AEA2',
+                              background: '#FFFFFF',
+                              color: '#8A8076',
+                              fontSize: '8.5px',
+                              fontWeight: 700,
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              marginLeft: idx === 0 ? 0 : '-5px',
+                              boxSizing: 'border-box',
+                            }}
+                          >
+                            {n.charAt(0).toUpperCase()}
+                          </span>
+                        ))}
+                      </div>
+                      <span style={{ fontSize: '11.5px', fontWeight: 500, color: '#94A3B8', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                        {pendingNames.length} yet to join
+                      </span>
+                      {onInviteToGroup && (
+                        <>
+                          <span style={{ fontSize: '11.5px', color: '#CBD5E1' }}>·</span>
+                          <button
+                            type="button"
+                            onClick={(ev) => { ev.stopPropagation(); onInviteToGroup(g, pendingNames); }}
+                            title={`Invite ${joinNames(pendingNames)}`}
+                            style={{ background: 'none', border: 'none', padding: 0, margin: 0, cursor: 'pointer', fontSize: '11.5px', fontWeight: 700, color: '#7C3AED', flexShrink: 0 }}
+                          >
+                            Invite
+                          </button>
+                        </>
+                      )}
+                    </div>
+                  );
+                })()}
               </div>
 
               {/* Quick-add expense — same style as the All-balances '+' */}
@@ -1186,6 +1400,67 @@ export const MasterSummary: React.FC<MasterSummaryProps> = ({
             setView={setView}
             hideBackButton={true}
           />
+        </div>
+      )}
+
+      {/* Yet-to-join sheet — pick which group's invite to share. */}
+      {showJoinSheet && (
+        <div
+          onClick={() => setShowJoinSheet(false)}
+          style={{ position: 'fixed', inset: 0, background: 'rgba(15,23,42,0.45)', zIndex: 10001, display: 'flex', alignItems: 'flex-end', justifyContent: 'center' }}
+        >
+          <div
+            onClick={(e) => e.stopPropagation()}
+            style={{ width: '100%', maxWidth: '480px', background: '#FFFFFF', borderRadius: '24px 24px 0 0', padding: '14px 18px calc(20px + env(safe-area-inset-bottom))', boxSizing: 'border-box', maxHeight: '85vh', overflowY: 'auto' }}
+          >
+            <div style={{ position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'flex-end', minHeight: '24px', marginBottom: '6px' }}>
+              <div style={{ width: '40px', height: '4px', borderRadius: '999px', background: '#E2E8F0', position: 'absolute', left: '50%', transform: 'translateX(-50%)', top: '2px' }} />
+              <button
+                type="button"
+                onClick={() => setShowJoinSheet(false)}
+                aria-label="Close"
+                style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '4px', margin: '-4px -4px 0 0', color: '#94A3B8', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, zIndex: 1 }}
+              >
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" /></svg>
+              </button>
+            </div>
+
+            <div style={{ fontSize: '17px', fontWeight: 700, color: '#0F172A', marginBottom: '2px' }}>Get everyone in</div>
+            <div style={{ fontSize: '13px', fontWeight: 500, color: '#64748B', marginBottom: '14px' }}>
+              {joinPendingCount} friend{joinPendingCount === 1 ? '' : 's'} yet to join across {joinProgress.perGroup.length} groups
+            </div>
+
+            <div style={{ display: 'flex', flexDirection: 'column' }}>
+              {joinProgress.perGroup.map(({ group, names }, idx) => {
+                const c = GROUP_COLORS[idx % GROUP_COLORS.length];
+                return (
+                  <div
+                    key={group.id}
+                    style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '12px 0', borderBottom: idx < joinProgress.perGroup.length - 1 ? '1px solid #F1F5F9' : 'none' }}
+                  >
+                    <div style={{ width: '38px', height: '38px', borderRadius: '50%', background: c.bg, color: c.text, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '15px', fontWeight: 600, flexShrink: 0, overflow: 'hidden' }}>
+                      {group.emoji && (group.emoji.startsWith('data:image/') || group.emoji.startsWith('http')) ? (
+                        <img src={group.emoji} style={{ width: '100%', height: '100%', objectFit: 'cover' }} alt="" />
+                      ) : (
+                        group.name.charAt(0).toUpperCase() || '👤'
+                      )}
+                    </div>
+                    <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', gap: '2px' }}>
+                      <span style={{ fontSize: '15px', fontWeight: 600, color: '#0F172A', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{group.name || 'Untitled Group'}</span>
+                      <span style={{ fontSize: '12px', fontWeight: 500, color: '#94A3B8', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{joinNames(names)}</span>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => onInviteToGroup && onInviteToGroup(group, names)}
+                      style={{ flexShrink: 0, background: '#7C3AED', color: '#FFFFFF', border: 'none', borderRadius: '999px', padding: '7px 14px', fontSize: '13px', fontWeight: 600, cursor: 'pointer' }}
+                    >
+                      Invite
+                    </button>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
         </div>
       )}
     </div>

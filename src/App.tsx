@@ -93,6 +93,7 @@ import { GroupGallery } from './components/GroupGallery';
 import { checkIfDemoMode } from './lib/demoMode';
 import { ensureArray, ensureObject, isLegacyRenameLog, formatCompactAmount, genGroupId, genExpenseId, titleCaseName } from './lib/utils';
 import { getPersonKey, toIdentitySpace, pickCanonicalIdentity, findDuplicateGroups, type DuplicateEntry, setSyncedDismissedPeople, buildNameEmailResolver, upiFor, fillPartyKeys, uniqueProfileName } from './lib/identity';
+import { joinNames } from './lib/joinProgress';
 import { useSupabaseSync, getGidRemap } from './hooks/useSupabaseSync';
 import { BalanceActionCard } from './components/BalanceActionCard';
 import { asyncBatchNetBalances } from './lib/workerHelper';
@@ -4241,6 +4242,33 @@ function App() {
             duplicateGroups={duplicateGroups}
             onMergeGroups={mergeGroups}
             onImportSplitwise={onImportSplitwise}
+            onInviteToGroup={async (g, names) => {
+              // Home-screen "Invite" for a group's not-yet-joined members. Same
+              // link + native share sheet as the in-group Remind action.
+              const inviteLink = `${window.location.origin}/?joinGroupId=${g.id}`;
+              const who = joinNames(names);
+              const shareText = `Hey${who ? ` ${who}` : ''}! Join ${g.name ? `"${g.name}"` : 'my group'} on Divido to split expenses 💸`;
+              if (typeof navigator !== 'undefined' && (navigator as any).share) {
+                try {
+                  await (navigator as any).share({
+                    title: g.name ? `Join "${g.name}" on Divido` : 'Join my group on Divido',
+                    text: shareText,
+                    url: inviteLink,
+                  });
+                } catch {
+                  /* user dismissed the share sheet */
+                }
+                return;
+              }
+              // Desktop / no native share: copy the message + link.
+              try {
+                await navigator.clipboard.writeText(`${shareText}\n${inviteLink}`);
+                setToastMsg('Invite link copied — send it to them 📋');
+              } catch {
+                setToastMsg(inviteLink);
+              }
+              setTimeout(() => setToastMsg(null), 3000);
+            }}
           />
         ) : view === 'groups' ? (
           <GroupsView
