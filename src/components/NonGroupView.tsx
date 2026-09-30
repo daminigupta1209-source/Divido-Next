@@ -48,6 +48,113 @@ const myPerspective = (bal: Record<string, number>): { curr: string; amount: num
     .map(([curr, val]) => ({ curr, amount: -val }))
     .filter((x) => Math.abs(x.amount) > 0.01);
 
+const segStyle: React.CSSProperties = {
+  flex: '1 1 auto',
+  minWidth: 0,
+  display: 'flex',
+  alignItems: 'center',
+  justifyContent: 'center',
+  gap: '6px',
+  color: '#FFFFFF',
+  fontSize: '13px',
+  fontWeight: 600,
+  whiteSpace: 'nowrap',
+  overflow: 'hidden',
+  textOverflow: 'ellipsis',
+  padding: '0 18px',
+  cursor: 'pointer',
+};
+
+const chipStyle: React.CSSProperties = {
+  background: 'rgba(255,255,255,0.28)',
+  borderRadius: '999px',
+  padding: '1px 7px',
+  fontSize: '11px',
+  fontWeight: 700,
+  flexShrink: 0,
+};
+
+const NetBalanceDetailsSheet: React.FC<{
+  isOpen: boolean;
+  onClose: () => void;
+  payLines: { curr: string; amount: number }[];
+  collectLines: { curr: string; amount: number }[];
+}> = ({ isOpen, onClose, payLines, collectLines }) => {
+  if (!isOpen) return null;
+  return (
+    <div
+      onClick={onClose}
+      style={{
+        position: 'fixed',
+        inset: 0,
+        background: 'rgba(15,23,42,0.45)',
+        zIndex: 10001,
+        display: 'flex',
+        alignItems: 'flex-end',
+        justifyContent: 'center',
+      }}
+    >
+      <div
+        onClick={(e) => e.stopPropagation()}
+        style={{
+          width: '100%',
+          maxWidth: '480px',
+          background: '#FFFFFF',
+          borderRadius: '24px 24px 0 0',
+          padding: '14px 18px calc(20px + env(safe-area-inset-bottom))',
+          boxSizing: 'border-box',
+          maxHeight: '85vh',
+          overflowY: 'auto',
+        }}
+      >
+        <div style={{ position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'flex-end', minHeight: '24px', marginBottom: '14px' }}>
+          <div style={{ width: '40px', height: '4px', borderRadius: '999px', background: '#E2E8F0', position: 'absolute', left: '50%', transform: 'translateX(-50%)', top: '2px' }} />
+          <button
+            type="button"
+            onClick={onClose}
+            aria-label="Close"
+            style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '4px', margin: '-4px -4px 0 0', color: '#94A3B8', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, zIndex: 1 }}
+          >
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" /></svg>
+          </button>
+        </div>
+
+        {payLines.length > 0 && (
+          <div>
+            <div style={{ fontSize: '11px', fontWeight: 700, letterSpacing: '1px', textTransform: 'uppercase', color: '#94A3B8', marginBottom: '6px' }}>You pay</div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', marginBottom: collectLines.length > 0 ? '14px' : '6px' }}>
+              {payLines.map((l) => (
+                <span key={l.curr} style={{ fontSize: '15px', fontWeight: 600, color: '#B91C1C' }}>
+                  {l.curr}{formatExactAmount(Math.abs(l.amount))}
+                </span>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {collectLines.length > 0 && (
+          <div>
+            <div style={{ fontSize: '11px', fontWeight: 700, letterSpacing: '1px', textTransform: 'uppercase', color: '#94A3B8', marginBottom: '6px' }}>You collect</div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', marginBottom: '6px' }}>
+              {collectLines.map((l) => (
+                <span key={l.curr} style={{ fontSize: '15px', fontWeight: 600, color: '#047857' }}>
+                  {l.curr}{formatExactAmount(Math.abs(l.amount))}
+                </span>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {payLines.length === 0 && collectLines.length === 0 && (
+          <div style={{ fontSize: '14px', color: '#94A3B8', textAlign: 'center', padding: '12px 0' }}>
+            All settled up
+          </div>
+        )}
+      </div>
+    </div>
+  );
+};
+
 export const NonGroupView: React.FC<NonGroupViewProps> = ({
   expenses,
   me,
@@ -70,6 +177,8 @@ export const NonGroupView: React.FC<NonGroupViewProps> = ({
   const [activeTab, setActiveTab] = React.useState<'settle' | 'photos'>('settle');
   // Which person's full profile page is open (tapping their DP/avatar).
   const [profilePerson, setProfilePerson] = React.useState<string | null>(null);
+  const [showPersonNetSheet, setShowPersonNetSheet] = React.useState(false);
+  const [showFrontNetSheet, setShowFrontNetSheet] = React.useState(false);
   // Shared-thread id of the open person (set while rendering their screen).
   const profilePersonThread = React.useRef<string | undefined>(undefined);
   const touchStartX = React.useRef<number | null>(null);
@@ -237,8 +346,10 @@ export const NonGroupView: React.FC<NonGroupViewProps> = ({
   if (profilePerson) {
     const p = people.find((x) => x.name.toLowerCase() === profilePerson.toLowerCase());
     profilePersonThread.current = p?.directGroupId;
-    const b = p ? balanceText(p.bal) : { text: 'Settled up', color: '#94A3B8' };
-    const hasBal = p ? myPerspective(p.bal).length > 0 : false;
+    const lines = p ? myPerspective(p.bal) : [];
+    const hasBal = lines.length > 0;
+    const personPayLines = lines.filter((l) => l.amount < 0);
+    const personCollectLines = lines.filter((l) => l.amount > 0);
     const pLower = profilePerson.toLowerCase();
     const theirExps = nonGroupExps.filter((e) => {
       const names = new Set<string>();
@@ -261,7 +372,52 @@ export const NonGroupView: React.FC<NonGroupViewProps> = ({
           <div style={{ fontSize: '12px', color: '#94A3B8', display: 'flex', alignItems: 'center', gap: '6px', justifyContent: 'center', flexWrap: 'wrap', marginTop: '2px' }}>
             {p?.email && <span>{p.email}</span>}
           </div>
-          <div style={{ fontSize: '14px', fontWeight: 600, color: b.color, marginTop: '6px' }}>{hasBal ? b.text : 'All settled up'}</div>
+        </div>
+
+        {/* Net balance card — above Settle / Invite, tappable */}
+        <div
+          onClick={() => hasBal && setShowPersonNetSheet(true)}
+          style={{
+            position: 'relative',
+            display: 'flex',
+            height: '38px',
+            borderRadius: '999px',
+            overflow: 'hidden',
+            boxShadow: '0 6px 16px rgba(0,0,0,0.06)',
+            cursor: hasBal ? 'pointer' : 'default',
+            width: '100%',
+            marginBottom: '14px',
+          }}
+        >
+          {!hasBal ? (
+            <div style={{ ...segStyle, background: '#10B981', cursor: 'default' }}>All settled up</div>
+          ) : (
+            <>
+              {personPayLines.length > 0 && (
+                <div
+                  style={{ ...segStyle, background: '#E11D48', paddingRight: personCollectLines.length > 0 ? '18px' : '34px' }}
+                >
+                  <span style={{ overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                    You pay {personPayLines[0].curr}{formatExactAmount(Math.abs(personPayLines[0].amount))}
+                  </span>
+                  {personPayLines.length > 1 && <span style={chipStyle}>+{personPayLines.length - 1}</span>}
+                </div>
+              )}
+              {personCollectLines.length > 0 && (
+                <div
+                  style={{ ...segStyle, background: '#10B981', paddingRight: '34px' }}
+                >
+                  <span style={{ overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                    You collect {personCollectLines[0].curr}{formatExactAmount(Math.abs(personCollectLines[0].amount))}
+                  </span>
+                  {personCollectLines.length > 1 && <span style={chipStyle}>+{personCollectLines.length - 1}</span>}
+                </div>
+              )}
+            </>
+          )}
+          {hasBal && (
+            <span style={{ position: 'absolute', right: '14px', top: '50%', transform: 'translateY(-50%)', color: '#FFFFFF', fontSize: '18px', fontWeight: 600, lineHeight: 1, pointerEvents: 'none', opacity: 0.9 }}>›</span>
+          )}
         </div>
 
         {/* Actions — always show Settle + Invite side by side */}
@@ -270,16 +426,12 @@ export const NonGroupView: React.FC<NonGroupViewProps> = ({
           {onSharePerson && <button type="button" onClick={() => onSharePerson(profilePerson, p?.directGroupId)} style={{ ...profileBtn, background: '#1A73E8', border: 'none', color: '#FFFFFF' }}>Invite</button>}
         </div>
 
-        {/* Full per-currency breakdown */}
-        {p && myPerspective(p.bal).length > 1 && (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '2px', marginBottom: '16px', alignItems: 'center' }}>
-            {myPerspective(p.bal).map((l) => (
-              <span key={l.curr} style={{ fontSize: '13px', fontWeight: 600, color: l.amount > 0 ? '#047857' : '#B91C1C' }}>
-                {l.amount > 0 ? 'You collect' : 'You pay'} {l.curr}{fmt(l.amount)}
-              </span>
-            ))}
-          </div>
-        )}
+        <NetBalanceDetailsSheet
+          isOpen={showPersonNetSheet}
+          onClose={() => setShowPersonNetSheet(false)}
+          payLines={personPayLines}
+          collectLines={personCollectLines}
+        />
 
         <div style={{ display: 'flex', flexDirection: 'column' }}>
           {(() => {
@@ -365,7 +517,8 @@ export const NonGroupView: React.FC<NonGroupViewProps> = ({
     .map(([curr, amount]) => ({ curr, amount }))
     .filter((x) => Math.abs(x.amount) > 0.01);
   const netHasBalance = netLines.length > 0;
-  const netAllCollect = netHasBalance && netLines.every((l) => l.amount > 0);
+  const frontPayLines = netLines.filter((l) => l.amount < 0);
+  const frontCollectLines = netLines.filter((l) => l.amount > 0);
 
   // Every receipt/photo attached to a non-group expense, newest first.
   const photos = nonGroupExps.flatMap((e) =>
@@ -417,37 +570,57 @@ export const NonGroupView: React.FC<NonGroupViewProps> = ({
         <div style={{ fontSize: '11px', fontWeight: 700, letterSpacing: '1.5px', textTransform: 'uppercase', color: '#B0A79C', marginBottom: '10px', marginLeft: '2px' }}>
           Net Balance
         </div>
-        <div style={{ position: 'relative', display: 'flex', height: '38px', borderRadius: '999px', overflow: 'hidden', boxShadow: '0 6px 16px rgba(0,0,0,0.06)' }}>
-          <div
-            style={{
-              flex: 1,
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              color: '#FFFFFF',
-              fontSize: '13px',
-              fontWeight: 600,
-              whiteSpace: 'nowrap',
-              overflow: 'hidden',
-              textOverflow: 'ellipsis',
-              padding: '0 18px',
-              // Colour follows the line the text leads with, so "You collect …"
-              // is never shown in red.
-              background: !netHasBalance ? '#10B981' : netLines[0].amount > 0 ? '#10B981' : '#E11D48',
-            }}
-          >
-            {!netHasBalance
-              ? 'All settled up'
-              : (() => {
-                  const parts = netLines.map((l) => `${l.amount > 0 ? 'You collect' : 'You pay'} ${l.curr}${fmt(l.amount)}`);
-                  return netLines.length > 1 ? `${parts[0]}  ·  +${netLines.length - 1} more` : parts[0];
-                })()}
-          </div>
+        <div
+          onClick={() => netHasBalance && setShowFrontNetSheet(true)}
+          style={{
+            position: 'relative',
+            display: 'flex',
+            height: '38px',
+            borderRadius: '999px',
+            overflow: 'hidden',
+            boxShadow: '0 6px 16px rgba(0,0,0,0.06)',
+            cursor: netHasBalance ? 'pointer' : 'default',
+            width: '100%',
+          }}
+        >
+          {!netHasBalance ? (
+            <div style={{ ...segStyle, background: '#10B981', cursor: 'default' }}>All settled up</div>
+          ) : (
+            <>
+              {frontPayLines.length > 0 && (
+                <div
+                  style={{ ...segStyle, background: '#E11D48', paddingRight: frontCollectLines.length > 0 ? '18px' : '34px' }}
+                >
+                  <span style={{ overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                    You pay {frontPayLines[0].curr}{formatExactAmount(Math.abs(frontPayLines[0].amount))}
+                  </span>
+                  {frontPayLines.length > 1 && <span style={chipStyle}>+{frontPayLines.length - 1}</span>}
+                </div>
+              )}
+              {frontCollectLines.length > 0 && (
+                <div
+                  style={{ ...segStyle, background: '#10B981', paddingRight: '34px' }}
+                >
+                  <span style={{ overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                    You collect {frontCollectLines[0].curr}{formatExactAmount(Math.abs(frontCollectLines[0].amount))}
+                  </span>
+                  {frontCollectLines.length > 1 && <span style={chipStyle}>+{frontCollectLines.length - 1}</span>}
+                </div>
+              )}
+            </>
+          )}
           {netHasBalance && (
             <span style={{ position: 'absolute', right: '14px', top: '50%', transform: 'translateY(-50%)', color: '#FFFFFF', fontSize: '18px', fontWeight: 600, lineHeight: 1, pointerEvents: 'none', opacity: 0.9 }}>›</span>
           )}
         </div>
       </div>
+
+      <NetBalanceDetailsSheet
+        isOpen={showFrontNetSheet}
+        onClose={() => setShowFrontNetSheet(false)}
+        payLines={frontPayLines}
+        collectLines={frontCollectLines}
+      />
 
       {/* Settle / Photos toggle (swipeable) — matches the home Groups/Activities tabs */}
       <div style={{ marginBottom: '14px', marginTop: '4px' }}>

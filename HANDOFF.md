@@ -19,6 +19,8 @@
 - **Non-Group Cards & Header Polish:**
   - Pinned non-group header title to "Non-Group" without overflow.
   - Unified non-group person view styling to match the reference design.
+  - Replaced the duplicate balance displays in Non-Group person profile with a single tappable net balance pill (matching GroupDetail / All balances) positioned above Settle / Invite buttons.
+  - Tapping the net balance pill (both on the Non-Group front page and in person threads) opens a clean bottom sheet with the per-currency breakdown and a top-right cross (✕) button.
 
 ## Splitwise Import, Sync Fixes, Net Balance Polish (Sep 30 2026)
 
