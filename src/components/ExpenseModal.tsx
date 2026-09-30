@@ -197,6 +197,8 @@ export const ExpenseModal: React.FC<ExpenseModalProps> = ({
     onExpenseSaved,
   });
 
+  const isNonGroup = localGId === 'STANDALONE' || !!activeGroup?.isDirect || !!(activeGroup as any)?.is_direct;
+
   const { isListening, transcript, error: voiceError, startListening, stopListening, hasSupport } = useVoiceRecognition();
   const [isParsingVoice, setIsParsingVoice] = React.useState(false);
   // When voice/scan fills the form, the Quick-add hero flips to a green
@@ -531,7 +533,7 @@ export const ExpenseModal: React.FC<ExpenseModalProps> = ({
             borderBottom: 'none',
           }}
         >
-          <div style={{ display: 'flex', alignItems: 'center' }}>
+          <div style={{ display: 'flex', alignItems: 'center', flex: 1, minWidth: 0, marginRight: '12px' }}>
             <button
               onClick={() => { setEditingExpense(null); setShowExpModal(false); }}
               style={{
@@ -542,6 +544,7 @@ export const ExpenseModal: React.FC<ExpenseModalProps> = ({
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
+                flexShrink: 0,
               }}
               title="Back"
             >
@@ -549,7 +552,7 @@ export const ExpenseModal: React.FC<ExpenseModalProps> = ({
                 <polyline points="15 18 9 12 15 6" />
               </svg>
             </button>
-            <div style={{ position: 'relative', marginLeft: '12px' }}>
+            <div style={{ position: 'relative', marginLeft: '12px', flex: 1, minWidth: 0 }}>
               {/* Invisible backdrop to close on outside click */}
               {showGroupDropdown && (
                 <div onClick={() => setShowGroupDropdown(false)} style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, zIndex: 299 }} />
@@ -569,7 +572,8 @@ export const ExpenseModal: React.FC<ExpenseModalProps> = ({
                   boxShadow: 'none',
                   whiteSpace: 'nowrap',
                   maxWidth: '100%',
-                  justifyContent: 'center',
+                  minWidth: 0,
+                  justifyContent: 'flex-start',
                   letterSpacing: '-0.3px',
                 }}
               >
@@ -580,7 +584,7 @@ export const ExpenseModal: React.FC<ExpenseModalProps> = ({
                     display: 'flex', alignItems: 'center', justifyContent: 'center',
                     fontSize: '16px', fontWeight: 600, flexShrink: 0, overflow: 'hidden',
                   };
-                  if (localGId === 'STANDALONE') return <div style={avatar}>NG</div>;
+                  if (isNonGroup) return <div style={avatar}>NG</div>;
                   if (activeGroup) {
                     const pic = activeGroup.emoji && (activeGroup.emoji.startsWith('data:image/') || activeGroup.emoji.startsWith('http')) ? activeGroup.emoji : '';
                     return (
@@ -591,10 +595,10 @@ export const ExpenseModal: React.FC<ExpenseModalProps> = ({
                   }
                   return <div style={avatar}>🏡</div>;
                 })()}
-                <span style={{ overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                  {localGId === 'STANDALONE' ? 'Non-Group Split' : (activeGroup?.name || 'Select Group')}
+                <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', minWidth: 0 }}>
+                  {isNonGroup ? 'Non-Group' : (activeGroup?.name || 'Select Group')}
                 </span>
-                <span style={{ fontSize: '12px', color: '#94A3B8', marginLeft: '2px', transition: 'transform 0.2s', display: 'inline-block', transform: showGroupDropdown ? 'rotate(180deg)' : 'rotate(0deg)' }}>▼</span>
+                <span style={{ fontSize: '12px', color: '#94A3B8', marginLeft: '2px', transition: 'transform 0.2s', display: 'inline-block', flexShrink: 0, transform: showGroupDropdown ? 'rotate(180deg)' : 'rotate(0deg)' }}>▼</span>
               </button>
 
               {/* Custom dropdown panel */}
@@ -619,12 +623,12 @@ export const ExpenseModal: React.FC<ExpenseModalProps> = ({
                     style={{
                       display: 'flex', alignItems: 'center', gap: '10px',
                       padding: '9px 12px', borderRadius: '10px', cursor: 'pointer',
-                      background: localGId === 'STANDALONE' ? '#F0FDF4' : 'transparent',
+                      background: isNonGroup ? '#F0FDF4' : 'transparent',
                       marginBottom: '4px',
                     }}
                   >
                     <div style={{ width: '30px', height: '30px', borderRadius: '50%', background: '#F1F5F9', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '12px', fontWeight: 600, color: '#475569', flexShrink: 0 }}>NG</div>
-                    <span style={{ fontSize: '12px', fontWeight: 600, color: 'var(--t)' }}>Non-Group Split</span>
+                    <span style={{ fontSize: '12px', fontWeight: 600, color: 'var(--t)' }}>Non-Group</span>
                   </div>
 
                   {/* Scrollable groups list wrapper */}
@@ -632,6 +636,7 @@ export const ExpenseModal: React.FC<ExpenseModalProps> = ({
                     {groups
                       .filter((g) => {
                         if (g.id === 'STANDALONE') return false;
+                        if (g.isDirect || (g as any).is_direct) return false;
                         const hasName = g.name && g.name.trim() !== '';
                         if (hasName) return true;
                         const hasExpenses = expenses.some((e) => String(e.gId) === String(g.id));
@@ -736,7 +741,7 @@ export const ExpenseModal: React.FC<ExpenseModalProps> = ({
               )}
             </div>
           </div>
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: '12px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: '12px', flexShrink: 0 }}>
             <input
               ref={uploadInputRef}
               type="file"
