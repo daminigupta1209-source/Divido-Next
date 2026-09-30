@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { Group, Expense } from '../lib/types';
 import { useAnalytics, CAT_COLORS } from '../hooks/useAnalytics';
 import { getEmoji } from '../lib/utils';
@@ -250,6 +250,57 @@ export const Analytics: React.FC<AnalyticsProps> = ({ expenses, groups, me, user
 
   const activeSlices = showByGroup ? groupDonutSlices : donutSlices;
   const activeList = showByGroup ? groupList : categoryList;
+
+  // Finger swipe gesture to toggle timeframe (This Month <-> Last 30 Days <-> Overall)
+  const swipeStart = useRef<{ x: number; y: number } | null>(null);
+  const justSwiped = useRef(false);
+
+  const onSwipeStart = (e: React.TouchEvent) => {
+    if (analyticsDetail) return;
+    const t = e.touches[0];
+    if (!t) return;
+    swipeStart.current = { x: t.clientX, y: t.clientY };
+  };
+
+  const onSwipeEnd = (e: React.TouchEvent) => {
+    if (!swipeStart.current || analyticsDetail) {
+      swipeStart.current = null;
+      return;
+    }
+    const t = e.changedTouches[0];
+    if (!t) {
+      swipeStart.current = null;
+      return;
+    }
+    const dx = t.clientX - swipeStart.current.x;
+    const dy = t.clientY - swipeStart.current.y;
+    swipeStart.current = null;
+
+    // Minimum horizontal movement of 40px and predominantly horizontal
+    if (Math.abs(dx) > 40 && Math.abs(dx) > Math.abs(dy) * 1.25) {
+      const order: Array<'month' | '30days' | 'overall'> = ['month', '30days', 'overall'];
+      const idx = order.indexOf(timeframe);
+      if (dx < 0) {
+        // Swipe Left (finger moves right to left) -> next timeframe tab
+        if (idx >= 0 && idx < order.length - 1) {
+          justSwiped.current = true;
+          setTimeout(() => { justSwiped.current = false; }, 150);
+          setTimeframe(order[idx + 1]);
+        }
+      } else {
+        // Swipe Right (finger moves left to right) -> previous timeframe tab
+        if (idx > 0) {
+          justSwiped.current = true;
+          setTimeout(() => { justSwiped.current = false; }, 150);
+          setTimeframe(order[idx - 1]);
+        }
+      }
+    }
+  };
+
+  const onTouchCancel = () => {
+    swipeStart.current = null;
+  };
 
   const SpendingTrend = () => {
     const [recentFilter, setRecentFilter] = useState<'1W' | '1M' | '6M' | 'YTD' | '1Y' | '5Y' | 'Max'>('1M');
@@ -540,7 +591,13 @@ export const Analytics: React.FC<AnalyticsProps> = ({ expenses, groups, me, user
   };
 
   return (
-    <div className="content-width-limit" style={{ paddingBottom: '80px' }}>
+    <div
+      className="content-width-limit"
+      style={{ paddingBottom: '80px', minHeight: '80vh', touchAction: 'pan-y' }}
+      onTouchStart={onSwipeStart}
+      onTouchEnd={onSwipeEnd}
+      onTouchCancel={onTouchCancel}
+    >
       {analyticsDetail && (
         <div
           className="modal-overlay"
@@ -628,7 +685,10 @@ export const Analytics: React.FC<AnalyticsProps> = ({ expenses, groups, me, user
             return (
               <button
                 key={tab.id}
-                onClick={() => setTimeframe(tab.id)}
+                onClick={() => {
+                  if (justSwiped.current) return;
+                  setTimeframe(tab.id);
+                }}
                 style={{
                   flex: 1,
                   border: 'none',
@@ -643,6 +703,8 @@ export const Analytics: React.FC<AnalyticsProps> = ({ expenses, groups, me, user
                   boxShadow: isActive ? '0 2px 8px rgba(0,0,0,0.06)' : 'none',
                   outline: 'none',
                   whiteSpace: 'nowrap',
+                  userSelect: 'none',
+                  WebkitUserSelect: 'none',
                 }}
               >
                 {tab.label}
