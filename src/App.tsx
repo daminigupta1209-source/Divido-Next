@@ -5485,14 +5485,16 @@ function App() {
               maxWidth: '520px',
               margin: '0 auto',
               height: '100%',
-              padding: 'calc(20px + env(safe-area-inset-top)) 18px calc(24px + env(safe-area-inset-bottom))',
+              maxHeight: '100dvh',
+              display: 'flex',
+              flexDirection: 'column',
+              padding: 'calc(16px + env(safe-area-inset-top)) 18px calc(16px + env(safe-area-inset-bottom))',
               borderRadius: 0,
               position: 'relative',
               animation: 'slideUp 0.28s ease-out',
               background: '#FFFFFF',
               border: 'none',
-              overflowY: 'auto',
-              WebkitOverflowScrolling: 'touch',
+              overflow: 'hidden',
               boxSizing: 'border-box',
             }}
             onClick={(e) => e.stopPropagation()}
@@ -5502,55 +5504,59 @@ function App() {
                 makes mobile Chrome treat the modal as a login form and pop the
                 password-manager bar over the real inputs. */}
             <input type="text" name="username" style={{ display: 'none' }} tabIndex={-1} autoComplete="off" />
-            {/* Inline header row — back arrow + close, same padding as the page
-                so the back arrow sits in the standard place with consistent
-                spacing around it (not floating in the corner). */}
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>
-              <button
-                type="button"
-                onClick={() => setGlobalSettleData(null)}
-                aria-label="Back"
-                style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0, marginLeft: '-4px', width: '30px', height: '40px', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}
-              >
-                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#475569" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                  <polyline points="15 18 9 12 15 6" />
-                </svg>
-              </button>
-              <h3 className="nunito" style={{ flex: 1, minWidth: 0, textAlign: 'center', fontSize: '19px', fontWeight: 800, color: '#1E293B', margin: 0, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                Settle with {globalSettleData.name}
-              </h3>
-              <div style={{ width: '32px', flexShrink: 0 }} />
-            </div>
-            {globalSettleData.identity && String(globalSettleData.identity).includes('@') && (
-              <p style={{ textAlign: 'center', color: '#94A3B8', fontSize: '12px', fontWeight: 500, marginBottom: '2px', wordBreak: 'break-all' }}>
-                {globalSettleData.identity}
-              </p>
-            )}
-            <p style={{
-              textAlign: 'center',
-              color: '#64748B',
-              fontSize: '9.5px',
-              fontWeight: 600,
-              textTransform: 'uppercase',
-              letterSpacing: '1px',
-              marginBottom: '16px'
-            }}>
-              {globalSettleData.gId ? `Breakdown for ${
-                globalSettleData.gId === 'STANDALONE'
-                  ? 'Non-Group'
-                  : groups.find((g) => String(g.id) === String(globalSettleData.gId))?.name || 'group'
-              }` : 'Breakdown across all shared groups'}
-            </p>
 
+            {/* Header section (fixed) */}
+            <div style={{ flexShrink: 0, marginBottom: '12px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>
+                <button
+                  type="button"
+                  onClick={() => setGlobalSettleData(null)}
+                  aria-label="Back"
+                  style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0, marginLeft: '-4px', width: '30px', height: '40px', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}
+                >
+                  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#475569" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                    <polyline points="15 18 9 12 15 6" />
+                  </svg>
+                </button>
+                <h3 className="nunito" style={{ flex: 1, minWidth: 0, textAlign: 'center', fontSize: '19px', fontWeight: 800, color: '#1E293B', margin: 0, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                  Settle with {globalSettleData.name}
+                </h3>
+                <div style={{ width: '32px', flexShrink: 0 }} />
+              </div>
+              {globalSettleData.identity && String(globalSettleData.identity).includes('@') && (
+                <p style={{ textAlign: 'center', color: '#94A3B8', fontSize: '12px', fontWeight: 500, marginBottom: '2px', wordBreak: 'break-all' }}>
+                  {globalSettleData.identity}
+                </p>
+              )}
+              <p style={{
+                textAlign: 'center',
+                color: '#64748B',
+                fontSize: '9.5px',
+                fontWeight: 600,
+                textTransform: 'uppercase',
+                letterSpacing: '1px',
+                margin: 0,
+              }}>
+                {globalSettleData.gId ? `Breakdown for ${
+                  globalSettleData.gId === 'STANDALONE'
+                    ? 'Non-Group'
+                    : groups.find((g) => String(g.id) === String(globalSettleData.gId))?.name || 'group'
+                }` : 'Breakdown across all shared groups'}
+              </p>
+            </div>
+
+            {/* Scrollable breakdown list */}
             <div
               style={{
+                flex: 1,
+                minHeight: 0,
+                overflowY: 'auto',
+                WebkitOverflowScrolling: 'touch',
                 display: 'flex',
                 flexDirection: 'column',
                 gap: '8px',
-                maxHeight: '300px',
-                overflowY: 'auto',
                 paddingRight: '4px',
-                marginBottom: '16px',
+                paddingBottom: '16px',
               }}
             >
               {localSettleEdits.map((item, idx) => {
@@ -5728,193 +5734,205 @@ function App() {
               })}
             </div>
 
-            {(() => {
-              const netBalances: Record<string, number> = {};
-              localSettleEdits.forEach((item) => {
-                if (!item.selected) return;
-                const amt = parseFloat(item.amt) || 0;
-                if (!netBalances[item.curr]) netBalances[item.curr] = 0;
-                if (item.iAmPayer) {
-                  netBalances[item.curr] -= amt;
-                } else {
-                  netBalances[item.curr] += amt;
-                }
-              });
+            {/* Pinned bottom footer: Net balances summary + Actions */}
+            <div
+              style={{
+                flexShrink: 0,
+                paddingTop: '12px',
+                borderTop: '1px solid #F1F5F9',
+                background: '#FFFFFF',
+              }}
+            >
+              {(() => {
+                const netBalances: Record<string, number> = {};
+                localSettleEdits.forEach((item) => {
+                  if (!item.selected) return;
+                  const amt = parseFloat(item.amt) || 0;
+                  if (!netBalances[item.curr]) netBalances[item.curr] = 0;
+                  if (item.iAmPayer) {
+                    netBalances[item.curr] -= amt;
+                  } else {
+                    netBalances[item.curr] += amt;
+                  }
+                });
 
-              const hasActiveBalances = Object.values(netBalances).some((b) => Math.abs(b) >= 0.01);
-              const friendName = globalSettleData.name;
+                const hasActiveBalances = Object.values(netBalances).some((b) => Math.abs(b) >= 0.01);
+                const friendName = globalSettleData.name;
 
-              return (
-                <div style={{ marginBottom: '16px' }}>
-                  {hasActiveBalances && Object.entries(netBalances).map(([curr, netVal]) => {
-                    if (Math.abs(netVal) < 0.01) return null;
-                    const isOwed = netVal < 0;
-                    const absoluteAmt = Math.abs(netVal);
+                if (!hasActiveBalances) return null;
 
-                    return (
-                      <div
-                        key={curr}
-                        style={{
-                          textAlign: 'center',
-                          padding: '4px 0px',
-                          fontSize: '12.5px',
-                          fontWeight: 500,
-                          color: '#475569',
-                          fontStyle: 'italic',
-                        }}
-                      >
-                        {isOwed ? (
-                          <span>
-                            You pay <strong>{friendName}</strong> a net of{' '}
-                            <strong style={{ color: '#E11D48', fontSize: '14.5px', fontWeight: 700, marginLeft: '2px' }}>
-                              {curr}{absoluteAmt >= 1000000 ? formatCompactAmount(absoluteAmt) : absoluteAmt.toFixed(2)}
-                            </strong>
-                          </span>
-                        ) : (
-                          <span>
-                            You get back a net of{' '}
-                            <strong style={{ color: '#10B981', fontSize: '14.5px', fontWeight: 700, marginRight: '2px' }}>
-                              {curr}{absoluteAmt >= 1000000 ? formatCompactAmount(absoluteAmt) : absoluteAmt.toFixed(2)}
-                            </strong>{' '}
-                            from <strong>{friendName}</strong>
-                          </span>
-                        )}
-                      </div>
-                    );
-                  })}
-                </div>
-              );
-            })()}
-
-            {(() => {
-              const netBalances: Record<string, number> = {};
-              localSettleEdits.forEach((item) => {
-                if (!item.selected) return;
-                const amt = parseFloat(item.amt) || 0;
-                if (!netBalances[item.curr]) netBalances[item.curr] = 0;
-                if (item.iAmPayer) {
-                  netBalances[item.curr] -= amt;
-                } else {
-                  netBalances[item.curr] += amt;
-                }
-              });
-
-              const selectedCount = localSettleEdits.filter((it) => it.selected).length;
-              const hasActiveBalances = Object.values(netBalances).some((b) => Math.abs(b) >= 0.01);
-              const hasWriteoff = localSettleEdits.some((it) => it.selected && it.mode === 'writeoff');
-              const confirmLabel = hasWriteoff ? 'Confirm' : 'Mark as Settled';
-              const friendName = globalSettleData.name;
-
-              let buttonText = `Settle ${selectedCount} Items`;
-              let clickHandler = handleFinalGlobalSettle;
-              let isOwed = false;
-
-              if (selectedCount === 0) {
-                buttonText = 'Select items to settle';
-              } else if (hasActiveBalances) {
-                const curr = Object.keys(netBalances)[0] || '₹';
-                const netVal = netBalances[curr] || 0;
-                const absoluteAmt = Math.abs(netVal);
-                const displayAmtStr = absoluteAmt >= 1000000 ? formatCompactAmount(absoluteAmt) : absoluteAmt.toFixed(2);
-                isOwed = netVal < 0;
-
-                if (isOwed) {
-                  buttonText = `Settle All Net (Pay ${curr}${displayAmtStr})`;
-                  clickHandler = () => handleOpenPayablePopup(friendName, absoluteAmt, curr);
-                } else {
-                  buttonText = `Settle All Net (Send Reminder)`;
-                  clickHandler = () => handleOpenReceivablePopup(friendName, absoluteAmt, curr);
-                }
-              }
-
-              if (selectedCount === 0) {
                 return (
-                  <div style={{ marginTop: '8px' }}>
-                    <button
-                      className="btn-green"
-                      style={{
-                        width: '100%',
-                        padding: '10px 14px',
-                        fontSize: '12px',
-                        fontWeight: 700,
-                        borderRadius: '14px',
-                        opacity: 0.5,
-                        border: 'none',
-                        cursor: 'not-allowed',
-                      }}
-                      disabled
-                    >
-                      Select items to settle
-                    </button>
+                  <div style={{ maxHeight: '100px', overflowY: 'auto', marginBottom: '10px' }}>
+                    {Object.entries(netBalances).map(([curr, netVal]) => {
+                      if (Math.abs(netVal) < 0.01) return null;
+                      const isOwed = netVal < 0;
+                      const absoluteAmt = Math.abs(netVal);
+
+                      return (
+                        <div
+                          key={curr}
+                          style={{
+                            textAlign: 'center',
+                            padding: '3px 0px',
+                            fontSize: '12.5px',
+                            fontWeight: 500,
+                            color: '#475569',
+                            fontStyle: 'italic',
+                          }}
+                        >
+                          {isOwed ? (
+                            <span>
+                              You pay <strong>{friendName}</strong> a net of{' '}
+                              <strong style={{ color: '#E11D48', fontSize: '14.5px', fontWeight: 700, marginLeft: '2px' }}>
+                                {curr}{absoluteAmt >= 1000000 ? formatCompactAmount(absoluteAmt) : absoluteAmt.toFixed(2)}
+                              </strong>
+                            </span>
+                          ) : (
+                            <span>
+                              You get back a net of{' '}
+                              <strong style={{ color: '#10B981', fontSize: '14.5px', fontWeight: 700, marginRight: '2px' }}>
+                                {curr}{absoluteAmt >= 1000000 ? formatCompactAmount(absoluteAmt) : absoluteAmt.toFixed(2)}
+                              </strong>{' '}
+                              from <strong>{friendName}</strong>
+                            </span>
+                          )}
+                        </div>
+                      );
+                    })}
                   </div>
                 );
-              }
+              })()}
 
-              if (!hasActiveBalances) {
+              {(() => {
+                const netBalances: Record<string, number> = {};
+                localSettleEdits.forEach((item) => {
+                  if (!item.selected) return;
+                  const amt = parseFloat(item.amt) || 0;
+                  if (!netBalances[item.curr]) netBalances[item.curr] = 0;
+                  if (item.iAmPayer) {
+                    netBalances[item.curr] -= amt;
+                  } else {
+                    netBalances[item.curr] += amt;
+                  }
+                });
+
+                const selectedCount = localSettleEdits.filter((it) => it.selected).length;
+                const hasActiveBalances = Object.values(netBalances).some((b) => Math.abs(b) >= 0.01);
+                const hasWriteoff = localSettleEdits.some((it) => it.selected && it.mode === 'writeoff');
+                const confirmLabel = hasWriteoff ? 'Confirm' : 'Mark as Settled';
+                const friendName = globalSettleData.name;
+
+                let buttonText = `Settle ${selectedCount} Items`;
+                let clickHandler = handleFinalGlobalSettle;
+                let isOwed = false;
+
+                if (selectedCount === 0) {
+                  buttonText = 'Select items to settle';
+                } else if (hasActiveBalances) {
+                  const curr = Object.keys(netBalances)[0] || '₹';
+                  const netVal = netBalances[curr] || 0;
+                  const absoluteAmt = Math.abs(netVal);
+                  const displayAmtStr = absoluteAmt >= 1000000 ? formatCompactAmount(absoluteAmt) : absoluteAmt.toFixed(2);
+                  isOwed = netVal < 0;
+
+                  if (isOwed) {
+                    buttonText = `Settle All Net (Pay ${curr}${displayAmtStr})`;
+                    clickHandler = () => handleOpenPayablePopup(friendName, absoluteAmt, curr);
+                  } else {
+                    buttonText = `Settle All Net (Send Reminder)`;
+                    clickHandler = () => handleOpenReceivablePopup(friendName, absoluteAmt, curr);
+                  }
+                }
+
+                if (selectedCount === 0) {
+                  return (
+                    <div>
+                      <button
+                        className="btn-green"
+                        style={{
+                          width: '100%',
+                          padding: '10px 14px',
+                          fontSize: '12px',
+                          fontWeight: 700,
+                          borderRadius: '14px',
+                          opacity: 0.5,
+                          border: 'none',
+                          cursor: 'not-allowed',
+                        }}
+                        disabled
+                      >
+                        Select items to settle
+                      </button>
+                    </div>
+                  );
+                }
+
+                if (!hasActiveBalances) {
+                  return (
+                    <div>
+                      <button
+                        className="hover-up"
+                        style={{
+                          width: '100%',
+                          padding: '10px 14px',
+                          fontSize: '12px',
+                          fontWeight: 700,
+                          borderRadius: '14px',
+                          border: 'none',
+                          background: '#FACC15',
+                          color: '#3F2E00',
+                          cursor: 'pointer',
+                        }}
+                        onClick={handleFinalGlobalSettle}
+                      >
+                        {confirmLabel}
+                      </button>
+                    </div>
+                  );
+                }
+
                 return (
-                  <div style={{ marginTop: '8px' }}>
+                  <div style={{ display: 'flex', gap: '12px' }}>
                     <button
-                      className="hover-up"
+                      type="button"
                       style={{
-                        width: '100%',
+                        flex: 1,
                         padding: '10px 14px',
                         fontSize: '12px',
                         fontWeight: 700,
                         borderRadius: '14px',
-                        border: 'none',
                         background: '#FACC15',
                         color: '#3F2E00',
+                        border: 'none',
                         cursor: 'pointer',
                       }}
                       onClick={handleFinalGlobalSettle}
                     >
                       {confirmLabel}
                     </button>
+                    <button
+                      type="button"
+                      id="global-settle-submit-btn"
+                      style={{
+                        flex: 1.2,
+                        padding: '10px 14px',
+                        fontSize: '12px',
+                        fontWeight: 700,
+                        borderRadius: '14px',
+                        background: '#0D9488',
+                        color: '#FFFFFF',
+                        border: 'none',
+                        cursor: 'pointer',
+                        boxShadow: '0 4px 14px rgba(13, 148, 136, 0.1)',
+                      }}
+                      onClick={clickHandler}
+                    >
+                      {isOwed ? 'Pay Now' : 'Send Reminder'}
+                    </button>
                   </div>
                 );
-              }
-
-              return (
-                <div style={{ display: 'flex', gap: '12px', marginTop: '8px' }}>
-                  <button
-                    type="button"
-                    style={{
-                      flex: 1,
-                      padding: '10px 14px',
-                      fontSize: '12px',
-                      fontWeight: 700,
-                      borderRadius: '14px',
-                      background: '#FACC15',
-                      color: '#3F2E00',
-                      border: 'none',
-                      cursor: 'pointer',
-                    }}
-                    onClick={handleFinalGlobalSettle}
-                  >
-                    {confirmLabel}
-                  </button>
-                  <button
-                    type="button"
-                    id="global-settle-submit-btn"
-                    style={{
-                      flex: 1.2,
-                      padding: '10px 14px',
-                      fontSize: '12px',
-                      fontWeight: 700,
-                      borderRadius: '14px',
-                      background: '#0D9488',
-                      color: '#FFFFFF',
-                      border: 'none',
-                      cursor: 'pointer',
-                      boxShadow: '0 4px 14px rgba(13, 148, 136, 0.1)',
-                    }}
-                    onClick={clickHandler}
-                  >
-                    {isOwed ? 'Pay Now' : 'Send Reminder'}
-                  </button>
-                </div>
-              );
-            })()}
+              })()}
+            </div>
           </div>
         </div>
       )}
