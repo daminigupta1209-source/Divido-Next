@@ -140,6 +140,52 @@ describe('detectCelebration', () => {
   });
 });
 
+describe('spot counting (banner)', () => {
+  // Rahul is the same person (same email) pending in two groups.
+  const goa = (pending: string[], members = ['Me', 'Rahul', 'Priya']) =>
+    grp({ id: 'goa', name: 'Goa', members, pendingMembers: pending, memberIdentities: { Rahul: 'r@x.com' }, memberKeys: { Rahul: 'k-goa-r', Priya: 'k-goa-p' } });
+  const flat = (pending: string[]) =>
+    grp({ id: 'flat', name: 'Flat', members: ['Me', 'Rahul'], pendingMembers: pending, memberIdentities: { Rahul: 'r@x.com' }, memberKeys: { Rahul: 'k-flat-r' } });
+
+  it('counts every pending seat, so one join lowers it even if the friend is pending elsewhere', () => {
+    const before = computeJoinProgress([goa(['Rahul', 'Priya']), flat(['Rahul'])], [], meFor, NOW);
+    expect(before.pendingSpotCount).toBe(3);
+    expect(before.totalSpots).toBe(3);
+    expect(before.pending).toHaveLength(2); // people are still deduped for the sheet
+
+    const after = computeJoinProgress([goa(['Priya']), flat(['Rahul'])], [], meFor, NOW);
+    expect(after.pendingSpotCount).toBe(2);
+    expect(after.pending).toHaveLength(2); // Rahul is still a pending person (Flat)
+    expect(detectCelebration(toSnapshot(before), after)).toEqual({ kind: 'joined', people: [{ name: 'Rahul', groupName: 'Goa' }] });
+  });
+
+  it('recognises a join that renamed the placeholder, via the member key', () => {
+    const before = computeJoinProgress([goa(['Rahul', 'Priya'])], [], meFor, NOW);
+    const renamed = grp({
+      id: 'goa', name: 'Goa', members: ['Me', 'Rahul Sharma', 'Priya'], pendingMembers: ['Priya'],
+      memberIdentities: { 'Rahul Sharma': 'r@x.com' }, memberKeys: { 'Rahul Sharma': 'k-goa-r', Priya: 'k-goa-p' },
+    });
+    const after = computeJoinProgress([renamed], [], meFor, NOW);
+    expect(after.pendingSpotCount).toBe(1);
+    expect(detectCelebration(toSnapshot(before), after)).toEqual({ kind: 'joined', people: [{ name: 'Rahul Sharma', groupName: 'Goa' }] });
+  });
+
+  it('does not celebrate a cancelled seat, and reports allDone when the last seat joins', () => {
+    const before = computeJoinProgress([goa(['Rahul', 'Priya'])], [], meFor, NOW);
+    const cancelled = computeJoinProgress([goa(['Priya'], ['Me', 'Priya'])], [], meFor, NOW);
+    expect(detectCelebration(toSnapshot(before), cancelled)).toBeNull();
+    const done = computeJoinProgress([goa([])], [], meFor, NOW);
+    expect(detectCelebration(toSnapshot(before), done)).toEqual({ kind: 'allDone' });
+  });
+
+  it('still reads a snapshot saved before spots existed', () => {
+    const before = computeJoinProgress([goa(['Rahul', 'Priya'])], [], meFor, NOW);
+    const legacy = { pending: toSnapshot(before).pending };
+    const after = computeJoinProgress([goa(['Rahul'])], [], meFor, NOW);
+    expect(detectCelebration(legacy, after)).toEqual({ kind: 'joined', people: [{ name: 'Priya', groupName: 'Goa' }] });
+  });
+});
+
 describe('joinNames', () => {
   it('formats short and long lists', () => {
     expect(joinNames(['A'])).toBe('A');

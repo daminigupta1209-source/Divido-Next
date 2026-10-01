@@ -9,6 +9,7 @@ import { CreateGroupView } from './components/CreateGroupView';
 import { SettleAmountInput } from './components/SettleAmountInput';
 import { MembersHealthModal } from './components/MembersHealthModal';
 import { BootSplash } from './pages/BootSplash';
+import { InviteLoader } from './pages/InviteLoader';
 import { RejoinRequestModal, type AdminRejoinRequest } from './components/RejoinRequestModal';
 import { RejoinSelfModal } from './components/RejoinSelfModal';
 import { useThemeStore } from './store/themeStore';
@@ -4156,9 +4157,14 @@ function App() {
     );
   }
 
-  // InviteLoader removed as requested — the app will instantly render the group
-  // if locally cached, or otherwise load the Home view while the claim card
-  // resolves in the background.
+  // While an invite link is being checked, cover the screen with a small loader
+  // so home doesn't flash before the group / join card. Only when needed: a
+  // known member already landed straight in the group (getSavedUiState), and
+  // once a join card is up it is the destination. Bounded by the 5 s safety
+  // timeout on isResolvingInvite.
+  if (isResolvingInvite && !(view === 'detail' && selectedId != null) && !inviteLandingRaw && !linkRequestGroup) {
+    return <InviteLoader />;
+  }
 
   // Fresh sign-in with no cached data yet: show a friendly branded splash (the
   // Divido cat) until the first cloud load finishes — so users never see an

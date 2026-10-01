@@ -247,7 +247,7 @@ export const MasterSummary: React.FC<MasterSummaryProps> = ({
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [groups, expenses, me],
   );
-  const joinSig = `${joinProgress.pending.map((p) => p.key).sort().join('|')}#${joinProgress.joinedKeys.slice().sort().join('|')}`;
+  const joinSig = `${joinProgress.pending.map((p) => p.key).sort().join('|')}#${joinProgress.joinedKeys.slice().sort().join('|')}#${Object.keys(joinProgress.spotIndex.pending).sort().join('|')}`;
 
   // Compare with the last-seen snapshot to celebrate people who joined since.
   // Waits for the roster to settle so a half-synced load doesn't look like a
@@ -295,7 +295,9 @@ export const MasterSummary: React.FC<MasterSummaryProps> = ({
     }, 2000);
   };
 
-  const joinPendingCount = joinProgress.pending.length;
+  // The banner counts member seats, not people: every single join lowers it,
+  // even when the same friend is still pending in another group.
+  const joinPendingCount = joinProgress.pendingSpotCount;
   const joinSnoozed = !!joinSnooze && renderedAt < joinSnooze.until && joinPendingCount <= joinSnooze.count;
   const showJoinBanner = !loading && (!!joinCelebration || (joinPendingCount > 0 && !joinSnoozed));
 
@@ -495,8 +497,8 @@ export const MasterSummary: React.FC<MasterSummaryProps> = ({
     <div className="content-width-limit" onTouchStart={onSwipeStart} onTouchEnd={onSwipeEnd}>
       {showJoinTopBanner && (() => {
         const pendingN = joinPendingCount;
-        const joinedN = joinProgress.joinedKeys.length;
-        const totalN = Math.max(joinProgress.total, 1);
+        const joinedN = joinProgress.totalSpots - joinProgress.pendingSpotCount;
+        const totalN = Math.max(joinProgress.totalSpots, 1);
         const allDone = joinCelebration?.kind === 'allDone';
         const pct = allDone ? 100 : Math.round((joinedN / totalN) * 100);
         const canInvite = !allDone && pendingN > 0 && !!onInvitePerson;
@@ -505,14 +507,14 @@ export const MasterSummary: React.FC<MasterSummaryProps> = ({
         let sub: string;
         if (allDone) {
           title = "Everyone's in! 🎉";
-          sub = joinedN === 1 ? '1 friend joined' : `All ${joinedN} friends joined`;
+          sub = joinedN === 1 ? '1 member joined' : `All ${joinedN} members joined`;
         } else if (joinCelebration?.kind === 'joined') {
           const [first, ...rest] = joinCelebration.people;
           title = `${first.name} joined${rest.length ? ` + ${rest.length} more` : ` ${first.groupName}`} 🎉`;
           sub = `${pendingN} to go`;
         } else {
-          title = `${pendingN} friend${pendingN === 1 ? '' : 's'} yet to join`;
-          sub = pendingN <= 2 && joinedN > 0 ? `Almost there — ${pendingN} to go!` : `${joinedN} of ${joinProgress.total} joined`;
+          title = `${pendingN} member${pendingN === 1 ? '' : 's'} yet to join`;
+          sub = pendingN <= 2 && joinedN > 0 ? `Almost there — ${pendingN} to go!` : `${joinedN} of ${joinProgress.totalSpots} joined`;
         }
 
         return (
@@ -1455,7 +1457,7 @@ export const MasterSummary: React.FC<MasterSummaryProps> = ({
 
             <div style={{ fontSize: '17px', fontWeight: 700, color: '#0F172A', marginBottom: '2px' }}>Get everyone in</div>
             <div style={{ fontSize: '13px', fontWeight: 500, color: '#64748B', marginBottom: '14px' }}>
-              {joinPendingCount} friend{joinPendingCount === 1 ? '' : 's'} yet to join
+              {joinProgress.pending.length} friend{joinProgress.pending.length === 1 ? '' : 's'} yet to join
             </div>
 
             <div style={{ display: 'flex', flexDirection: 'column' }}>

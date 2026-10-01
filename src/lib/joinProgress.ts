@@ -97,7 +97,27 @@ export interface JoinProgress {
   joinedKeys: string[]; // distinct people (other than me) who have joined
   total: number;
   perGroup: { group: Group; names: string[] }[]; // active groups with pending people
+  // Per-spot tally (one spot = one member seat in one active group, me
+  // excluded) — what the banner counts, so every single join lowers it even
+  // when the same friend is still pending in another group.
+  pendingSpotCount: number;
+  totalSpots: number;
+  spotIndex: {
+    pending: Record<string, { name: string; groupName: string }>;
+    joined: Record<string, string>; // spot key → current display name
+  };
 }
+
+// Stable key for one member seat. The permanent member_key survives the rename
+// a claim does (placeholder "Rahul" → Google name "Rahul Sharma"); the name key
+// is the fallback for groups without member keys.
+const spotKeysFor = (g: Group, name: string): string[] => {
+  const keys: string[] = [];
+  const mk = memberKeyFor(g, name);
+  if (mk) keys.push(`${g.id}|k:${mk}`);
+  keys.push(`${g.id}|n:${cleanMemberName(g, name).toLowerCase()}`);
+  return keys;
+};
 
 // Cross-group tally. A person is keyed by their identity (email / person_id,
 // else lower-cased name), so someone pending in three groups counts once. They
@@ -111,18 +131,34 @@ export const computeJoinProgress = (
   const pendingAcc = new Map<string, { key: string; groupName: string; spots: PendingSpot[] }>();
   const seenAll = new Set<string>();
   const perGroup: JoinProgress['perGroup'] = [];
+  const spotIndex: JoinProgress['spotIndex'] = { pending: {}, joined: {} };
+  let pendingSpotCount = 0;
+  let totalSpots = 0;
 
   for (const g of groups) {
     if (!g || g.isDirect || String(g.id) === 'STANDALONE') continue;
     if (!isActiveGroup(g, expenses, now)) continue;
     const myName = myNameFor(g.id);
     const keyOf = (m: string) => String(getPersonKey(g, m.replace(ME_RE, ''))).trim().toLowerCase();
+    const names = pendingNamesFor(g, myName);
+    const pendingSet = new Set(names.map((n) => n.toLowerCase()));
 
+    const seenSeats = new Set<string>();
     for (const m of activeRoster(g)) {
       if (isMe(g, m, myName)) continue;
       seenAll.add(keyOf(m));
+      const clean = cleanMemberName(g, m);
+      if (!clean || seenSeats.has(clean.toLowerCase())) continue;
+      seenSeats.add(clean.toLowerCase());
+      totalSpots++;
+      const keys = spotKeysFor(g, m);
+      if (pendingSet.has(clean.toLowerCase())) {
+        pendingSpotCount++;
+        spotIndex.pending[keys[0]] = { name: clean, groupName: g.name || 'your group' };
+      } else {
+        for (const k of keys) spotIndex.joined[k] = clean;
+      }
     }
-    const names = pendingNamesFor(g, myName);
     if (names.length === 0) continue;
     perGroup.push({ group: g, names });
     const pendingRaw = (g.pendingMembers || []).filter((m) => names.some((n) => n.toLowerCase() === cleanMemberName(g, m).toLowerCase()));
@@ -158,7 +194,7 @@ export const computeJoinProgress = (
   });
 
   const joinedKeys = Array.from(seenAll).filter((k) => !pendingAcc.has(k));
-  return { pending, joinedKeys, total: seenAll.size, perGroup };
+  return { pending, joinedKeys, total: seenAll.size, perGroup, pendingSpotCount, totalSpots, spotIndex };
 };
 
 // "Rahul", "Rahul & Priya", "Rahul, Priya & Amit", "Rahul, Priya & 3 others".
@@ -172,26 +208,38 @@ export const joinNames = (names: string[]): string => {
 // The last-seen pending set lives in localStorage, so a later visit can notice
 // "Priya was pending, now she's joined" and celebrate it.
 
-export interface JoinSnapshot { pending: Record<string, { name: string; groupName: string }> }
+// `spots` is the per-seat snapshot the celebration now uses; `pending` (per
+// person) is kept so snapshots saved by the previous version still work once.
+export interface JoinSnapshot {
+  pending: Record<string, { name: string; groupName: string }>;
+  spots?: Record<string, { name: string; groupName: string }>;
+}
 
 export type JoinCelebration =
   | { kind: 'joined'; people: { name: string; groupName: string }[] }
   | { kind: 'allDone' };
 
-// Compare the previous snapshot with current progress. Only people who are now
-// on the JOINED list count: a cancelled invite disappears from both lists and
-// isn't celebrated.
+// Compare the previous snapshot with current progress. A seat counts as joined
+// only if it's now on the JOINED side: a cancelled invite disappears from both
+// sides and isn't celebrated. Names shown are the current ones (after a claim
+// the placeholder is usually renamed to the friend's own name).
 export const detectCelebration = (prev: JoinSnapshot | null, progress: JoinProgress): JoinCelebration | null => {
   if (!prev) return null;
-  const joined = new Set(progress.joinedKeys);
-  const people = Object.entries(prev.pending)
-    .filter(([k]) => joined.has(k))
-    .map(([, v]) => v);
+  let people: { name: string; groupName: string }[];
+  if (prev.spots) {
+    people = Object.entries(prev.spots)
+      .filter(([k]) => k in progress.spotIndex.joined)
+      .map(([k, v]) => ({ name: progress.spotIndex.joined[k] || v.name, groupName: v.groupName }));
+  } else {
+    const joined = new Set(progress.joinedKeys);
+    people = Object.entries(prev.pending).filter(([k]) => joined.has(k)).map(([, v]) => v);
+  }
   if (people.length === 0) return null;
-  if (progress.pending.length === 0) return { kind: 'allDone' };
+  if (progress.pendingSpotCount === 0) return { kind: 'allDone' };
   return { kind: 'joined', people };
 };
 
 export const toSnapshot = (progress: JoinProgress): JoinSnapshot => ({
   pending: Object.fromEntries(progress.pending.map((p) => [p.key, { name: p.name, groupName: p.groupName }])),
+  spots: progress.spotIndex.pending,
 });
