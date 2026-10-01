@@ -98,7 +98,6 @@ import { parseInviteParam, buildPersonInviteLink, personInviteMessage, groupInvi
 import {
   buildInviteLandingModel,
   defaultSelectedGroupIds,
-  visibleEntryCount,
   claimInviteSpot,
   type InviteLandingEntry,
   type InviteGroupRow as InviteClaimGroupRow,
@@ -2648,15 +2647,27 @@ function App() {
           ]);
           const entries = buildInviteLandingModel(spots, groupRows || [], memberRows || [], myEmail);
 
-          if (visibleEntryCount(entries) === 0) {
+          // Nothing left to join (everything is already mine, taken or gone):
+          // skip the card. If exactly one group is already mine, open it — same
+          // landing as the old single-group link — otherwise stay on home.
+          if (!entries.some((e) => e.status === 'joinable')) {
             try { localStorage.removeItem('divido_pending_join'); } catch { /* ignore */ }
             cleanInviteUrl();
             setInviteLandingRaw(null);
+            const mine = entries.filter((e) => e.status === 'alreadyMine');
+            if (mine.length === 1) {
+              const row = (groupRows || []).find((g) => String(g.id) === mine[0].groupId);
+              setSelectedId(row?.is_direct ? 'STANDALONE' : mine[0].groupId);
+              setView('detail');
+              setShowFriendsList(false);
+            }
             return;
           }
 
+          // Groups I'm already in are left off the card — they're clutter, not
+          // a choice.
           const uiRows: InviteUiRow[] = entries
-            .filter((e) => e.status !== 'unavailable')
+            .filter((e) => e.status === 'joinable' || e.status === 'takenByOther')
             .map((e): InviteUiRow => ({
               groupId: e.groupId,
               name: e.groupName,
@@ -2717,6 +2728,17 @@ function App() {
             const keepName = prevSaved && String(prevSaved.groupId) === String(joinGroupId) ? prevSaved.placeholderName : undefined;
             localStorage.setItem('divido_pending_join', JSON.stringify({ groupId: joinGroupId, ts: Date.now(), ...(keepName ? { placeholderName: keepName } : {}) }));
           } catch { /* storage full — non-fatal */ }
+        }
+
+        // Signed out: the database lets only signed-in users read groups, so a
+        // lookup now comes back empty and would be mistaken for "group deleted"
+        // — wiping the saved intent and the ?joinGroupId= URL that the Google
+        // sign-in redirect is built from (the friend then lands with no join
+        // card on their first click). Keep both and resolve after sign-in; this
+        // effect re-runs when auth changes.
+        {
+          const { data: { session: preSession } } = await supabase.auth.getSession();
+          if (!(preSession?.user?.email || userEmail)) return;
         }
 
         // Fetch group
@@ -3009,7 +3031,10 @@ function App() {
     };
 
     joinGroupFromQuery();
-  }, [groups]);
+    // Re-run on sign-in too, not only on `groups` changes: a brand-new invitee
+    // may have no groups yet, so nothing else would retry the join after the
+    // Google round-trip.
+  }, [groups, isAuthenticated, userEmail]);
 
   // Safety net: never trap a friend on the invite loader if the round-trip
   // stalls (slow network, an early return). Fall through after a few seconds.
@@ -4093,12 +4118,12 @@ function App() {
       return;
     }
 
-    // Some spots failed — keep the card open showing the errors; drop the
-    // succeeded ones from the selection and show them as already joined.
+    // Some spots failed — keep the card open showing the errors; the ones that
+    // went through leave the card (groups I'm in aren't shown).
     const succeededIds = new Set(succeeded.map((s) => s.groupId));
     setInviteLandingSelectedIds((prev) => prev.filter((id) => !succeededIds.has(id)));
     setInviteLandingEntries((prev) => prev.map((e): InviteLandingEntry => (succeededIds.has(e.groupId) ? { ...e, status: 'alreadyMine' } : e)));
-    setInviteLandingRows((prev) => prev.map((r): InviteUiRow => (succeededIds.has(r.groupId) ? { ...r, status: 'alreadyMineOpen' } : r)));
+    setInviteLandingRows((prev) => prev.filter((r) => !succeededIds.has(r.groupId)));
     setInviteLandingRowErrors(nextRowErrors);
     setInviteLandingBusy(false);
   };
