@@ -131,6 +131,23 @@ import {
 // narrower interface, so this cast is a local, behaviour-neutral adaptation.
 const inviteSupabase = supabase as unknown as InviteSupabaseLike;
 
+// Who the invite resolver should treat as signed in: the real Supabase session
+// only. The `userEmail` state is seeded from localStorage `divido_email`, which
+// outlives an expired session — trusting it sent signed-out visitors into the
+// signed-in path, where RLS-denied reads looked like a deleted group and wiped
+// the invite before Google sign-in. The e2e mock login (no real session) is
+// the one deliberate exception.
+const sessionEmailForInvite = (session: { user?: { email?: string | null } | null } | null): string => {
+  const email = session?.user?.email || '';
+  if (email) return email;
+  try {
+    if (localStorage.getItem('divido_e2e_testing') === 'true' && localStorage.getItem('divido_force_logged_out') !== 'true') {
+      return localStorage.getItem('divido_mock_email') || 'e2e-test-guest@divido.app';
+    }
+  } catch { /* storage unavailable */ }
+  return '';
+};
+
 const pageDescriptions: Record<string, string> = {
   summary: "Track net balances, scan bills, and quickly settle with friends.",
   groups: "View, rename, and manage your group ledgers.",
@@ -2611,7 +2628,7 @@ function App() {
           }
 
           const { data: { session } } = await supabase.auth.getSession();
-          const myEmail = session?.user?.email || userEmail || '';
+          const myEmail = sessionEmailForInvite(session);
 
           if (!myEmail) {
             // Signed out: render from whatever's cached locally, no network
@@ -2739,7 +2756,7 @@ function App() {
         // effect re-runs when auth changes.
         {
           const { data: { session: preSession } } = await supabase.auth.getSession();
-          if (!(preSession?.user?.email || userEmail)) return;
+          if (!sessionEmailForInvite(preSession)) return;
         }
 
         // Fetch group
@@ -2767,6 +2784,8 @@ function App() {
           .eq('group_id', joinGroupId);
 
         if (!existingMembers) return;
+        // Spots found already claimed by someone else during this run.
+        const takenSpotIds = new Set<unknown>();
 
         const rejoinName = urlParams.get('rejoinName');
         const { data: { session } } = await supabase.auth.getSession();
@@ -2967,7 +2986,10 @@ function App() {
               console.error('Invite auto-claim failed:', claimResult.message);
             }
             // 'takenByOther' or 'error': fall through to the existing
-            // placeholder claim list below.
+            // placeholder claim list below. existingMembers was read before
+            // the claim, so a spot someone else just took still looks open
+            // there — leave it off the list.
+            if (claimResult.status === 'takenByOther') takenSpotIds.add(inviteMatch.id);
           }
         }
 
@@ -2996,7 +3018,7 @@ function App() {
         }
 
         // Show selection list of unlinked pending members (placeholders)
-        const placeholders = existingMembers.filter((m: any) => m.is_pending && !m.user_email && !m.link_request_email);
+        const placeholders = existingMembers.filter((m: any) => m.is_pending && !m.user_email && !m.link_request_email && !takenSpotIds.has(m.id));
         // Prefill the "join as new member" name with the Google profile name, so
         // a signed-in invitee doesn't have to type it (they can still edit it).
         const rawGoogleName = (session?.user?.user_metadata?.full_name || session?.user?.user_metadata?.name || '').trim();
@@ -4052,7 +4074,9 @@ function App() {
     const fallbackUsername = localStorage.getItem('divido_username') || undefined;
 
     const succeeded: { groupId: string; group: Group }[] = [];
+    // Only real errors are retryable; a spot someone else took is final.
     const nextRowErrors: Record<string, string> = {};
+    const takenIds = new Set<string>();
 
     for (const groupId of toJoin) {
       const entry = inviteLandingEntries.find((e) => e.groupId === groupId);
@@ -4080,7 +4104,7 @@ function App() {
         setIsAuthenticated(true);
         succeeded.push({ groupId, group: result.group });
       } else if (result.status === 'takenByOther') {
-        nextRowErrors[groupId] = 'Someone already took this spot';
+        takenIds.add(groupId);
       } else if (result.status === 'error') {
         console.error('Invite claim failed:', result.message);
         nextRowErrors[groupId] = "Couldn't join — try again";
@@ -4102,11 +4126,21 @@ function App() {
       });
     }
 
+    // Spots someone else took in the meantime can't be retried — say so once.
+    const announceTaken = () => {
+      if (takenIds.size === 0) return;
+      setToastMsg(takenIds.size === 1
+        ? 'One group was already taken by someone else'
+        : `${takenIds.size} groups were already taken by someone else`);
+      setTimeout(() => setToastMsg(null), 3500);
+    };
+
     if (Object.keys(nextRowErrors).length === 0) {
-      // Everything selected went through — dismiss and navigate like the
-      // legacy single-group flow: exactly one join opens that group directly,
-      // more than one stays on home.
+      // Nothing left to retry — dismiss and navigate like the legacy
+      // single-group flow: exactly one join opens that group directly,
+      // otherwise stay on home.
       dismissInviteLanding();
+      announceTaken();
       if (succeeded.length === 1) {
         const groupRow = inviteLandingGroupRows.find((g) => String(g.id) === succeeded[0].groupId);
         setSelectedId(groupRow?.is_direct ? 'STANDALONE' : succeeded[0].groupId);
@@ -4119,12 +4153,18 @@ function App() {
       return;
     }
 
-    // Some spots failed — keep the card open showing the errors; the ones that
-    // went through leave the card (groups I'm in aren't shown).
+    // Some spots hit a retryable error — keep the card open showing them. The
+    // ones that went through leave the card (groups I'm in aren't shown); the
+    // ones someone else took turn into disabled "Already joined" rows.
     const succeededIds = new Set(succeeded.map((s) => s.groupId));
-    setInviteLandingSelectedIds((prev) => prev.filter((id) => !succeededIds.has(id)));
-    setInviteLandingEntries((prev) => prev.map((e): InviteLandingEntry => (succeededIds.has(e.groupId) ? { ...e, status: 'alreadyMine' } : e)));
-    setInviteLandingRows((prev) => prev.filter((r) => !succeededIds.has(r.groupId)));
+    setInviteLandingSelectedIds((prev) => prev.filter((id) => !succeededIds.has(id) && !takenIds.has(id)));
+    setInviteLandingEntries((prev) => prev.map((e): InviteLandingEntry => (
+      succeededIds.has(e.groupId) ? { ...e, status: 'alreadyMine' }
+        : takenIds.has(e.groupId) ? { ...e, status: 'takenByOther' }
+          : e)));
+    setInviteLandingRows((prev) => prev
+      .filter((r) => !succeededIds.has(r.groupId))
+      .map((r): InviteUiRow => (takenIds.has(r.groupId) ? { ...r, status: 'takenByOther' } : r)));
     setInviteLandingRowErrors(nextRowErrors);
     setInviteLandingBusy(false);
   };
@@ -4312,14 +4352,26 @@ function App() {
             .map((m: any) => String(m.name).replace(/\s*\(Left\)$/i, '').trim().toLowerCase()));
           claimName = uniqueProfileName(profileName, activeEmail, taken);
         }
-        await supabase
+        // `.select()` returns the rows actually updated: the database silently
+        // blocks the write (0 rows) when someone else claimed this spot after
+        // the list was loaded. Stop here rather than proceed as if joined —
+        // nothing below (identity, expense rename, navigation) is valid then.
+        const { data: claimedRows, error: claimErr } = await supabase
           .from('group_members')
           .update({
             name: claimName,
             user_email: activeEmail,
             is_pending: false,
           })
-          .eq('id', p.id);
+          .eq('id', p.id)
+          .select('id');
+        if (claimErr || !claimedRows || claimedRows.length === 0) {
+          if (claimErr) console.error('Claim failed:', claimErr);
+          setLinkRequestPlaceholders((prev) => prev.filter((m: { id: unknown }) => m.id !== p.id));
+          setToastMsg(claimErr ? "Couldn't join — try again" : 'That spot was just taken — pick another');
+          setTimeout(() => setToastMsg(null), 3000);
+          return;
+        }
         if (ownLeftIds.length > 0) {
           const { error: hideErr } = await supabase.from('group_members').update({ is_removed: true }).in('id', ownLeftIds);
           if (hideErr) console.error('Hiding own past spot failed:', hideErr);
