@@ -402,7 +402,7 @@ export const InviteLandingCard: React.FC<InviteLandingCardProps> = ({
 
         <p style={{ fontSize: '13px', color: '#64748B', fontWeight: 600, margin: '0 0 16px 0', lineHeight: 1.4, flexShrink: 0 }}>
           {mode === 'signedOut'
-            ? "Sign in to see what you've been added to."
+            ? 'Sign in to see the groups and pick which ones to join.'
             : hasAvailable
               ? "Choose the groups you'd like to join."
               : "You're already part of everything in this invite."}
@@ -437,9 +437,6 @@ export const InviteLandingCard: React.FC<InviteLandingCardProps> = ({
 
         {mode === 'signedOut' && (
           <>
-            <p style={{ fontSize: '11.5px', color: '#94A3B8', margin: '12px 0 0 0', lineHeight: 1.4, flexShrink: 0 }}>
-              Sign in to see names, members, and pick which to join.
-            </p>
             <button
               type="button"
               onClick={onSignIn}
