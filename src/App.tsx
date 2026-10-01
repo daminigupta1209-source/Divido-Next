@@ -93,7 +93,20 @@ import { GroupGallery } from './components/GroupGallery';
 import { checkIfDemoMode } from './lib/demoMode';
 import { ensureArray, ensureObject, isLegacyRenameLog, formatCompactAmount, genGroupId, genExpenseId, titleCaseName } from './lib/utils';
 import { getPersonKey, toIdentitySpace, pickCanonicalIdentity, findDuplicateGroups, type DuplicateEntry, setSyncedDismissedPeople, buildNameEmailResolver, upiFor, fillPartyKeys, uniqueProfileName } from './lib/identity';
-import { joinNames } from './lib/joinProgress';
+import { groupActivityTimestamp } from './lib/joinProgress';
+import { parseInviteParam, buildPersonInviteLink, personInviteMessage, groupInviteMessage, type InviteSpot } from './lib/inviteLink';
+import {
+  buildInviteLandingModel,
+  defaultSelectedGroupIds,
+  visibleEntryCount,
+  claimInviteSpot,
+  type InviteLandingEntry,
+  type InviteGroupRow as InviteClaimGroupRow,
+  type InviteMemberRow as InviteClaimMemberRow,
+  type SupabaseLike as InviteSupabaseLike,
+} from './lib/inviteClaim';
+import { InviteLandingCard, type InviteGroupRow as InviteUiRow } from './components/InviteLandingCard';
+import { computeClaimRenamePatches } from './lib/claimRename';
 import { useSupabaseSync, getGidRemap } from './hooks/useSupabaseSync';
 import { BalanceActionCard } from './components/BalanceActionCard';
 import { asyncBatchNetBalances } from './lib/workerHelper';
@@ -112,6 +125,12 @@ import {
   subscribeNativeCallback,
 } from './lib/splitwiseAuth';
 
+// claimInviteSpot only calls the handful of PostgREST query-builder methods
+// declared on `SupabaseLike`; the real client's generic (untyped, no
+// `Database` schema) `from()` return type doesn't structurally match that
+// narrower interface, so this cast is a local, behaviour-neutral adaptation.
+const inviteSupabase = supabase as unknown as InviteSupabaseLike;
+
 const pageDescriptions: Record<string, string> = {
   summary: "Track net balances, scan bills, and quickly settle with friends.",
   groups: "View, rename, and manage your group ledgers.",
@@ -124,7 +143,8 @@ const pageDescriptions: Record<string, string> = {
 
 const getSavedUiState = () => {
   try {
-    const param = new URLSearchParams(window.location.search).get('joinGroupId');
+    const urlParams = new URLSearchParams(window.location.search);
+    const param = urlParams.get('joinGroupId');
     if (param && param !== 'STANDALONE') {
       const storedGroups = localStorage.getItem('divido_groups');
       const myEmail = localStorage.getItem('divido_email')?.toLowerCase() || null;
@@ -132,7 +152,7 @@ const getSavedUiState = () => {
       if (storedGroups) {
         const parsed = JSON.parse(storedGroups);
         const localMatch = parsed.find((g: any) => String(g.id) === String(param));
-        const amActive = localMatch && localMatch.members.some((m: string) => 
+        const amActive = localMatch && localMatch.members.some((m: string) =>
           m.toLowerCase() === myEmail || m.toLowerCase() === me.toLowerCase()
         );
         if (localMatch && amActive) {
@@ -141,6 +161,19 @@ const getSavedUiState = () => {
         }
       }
     }
+    // A pending multi-group `?invite=` link (or its saved intent surviving an
+    // OAuth round-trip) always lands on the home screen with the landing card
+    // on top — never resume a stale cached detail view underneath it.
+    if (urlParams.get('invite')) return { view: 'summary', selectedId: null };
+    try {
+      const savedRaw = localStorage.getItem('divido_pending_join');
+      if (savedRaw) {
+        const saved = JSON.parse(savedRaw);
+        if (saved?.invite && (!saved.ts || Date.now() - saved.ts < 15 * 60 * 1000)) {
+          return { view: 'summary', selectedId: null };
+        }
+      }
+    } catch { /* malformed saved intent — fall through */ }
     const st = window.history.state;
     if (st && st._divido && st.uiState) {
       return st.uiState;
@@ -364,14 +397,18 @@ function App() {
   const [isResolvingInvite, setIsResolvingInvite] = useState<boolean>(() => {
     try {
       if (checkIfDemoMode()) return false;
-      const param = new URLSearchParams(window.location.search).get('joinGroupId');
+      const urlParams = new URLSearchParams(window.location.search);
+      const param = urlParams.get('joinGroupId');
       // A group id is now a permanent UUID string; any non-empty, non-STANDALONE
       // value is a real invite target (no more numeric/temp-float validation).
       if (param && param !== 'STANDALONE') return true;
+      // A multi-group `?invite=` link is also a real invite target.
+      if (urlParams.get('invite')) return true;
       const savedRaw = localStorage.getItem('divido_pending_join');
       if (savedRaw) {
         const saved = JSON.parse(savedRaw);
         if (saved?.groupId && (!saved.ts || Date.now() - saved.ts < 15 * 60 * 1000)) return true;
+        if (saved?.invite && (!saved.ts || Date.now() - saved.ts < 15 * 60 * 1000)) return true;
       }
     } catch { /* fall through to no-gate */ }
     return false;
@@ -384,6 +421,25 @@ function App() {
   // list over the group the user was just taken into.
   const claimInProgressRef = useRef(false);
   const lastClaimedGroupRef = useRef<string | null>(null);
+  // ---- Multi-group `?invite=` landing (see src/lib/inviteLink.ts / inviteClaim.ts) ----
+  // Declared above the `!isAuthenticated` early return so the card (and the
+  // user's checkbox selection) survives the sign-out → OAuth → sign-in
+  // transition triggered by its own "Continue with Google" button.
+  // The raw `invite` param this state was built for; null hides the card.
+  const [inviteLandingRaw, setInviteLandingRaw] = useState<string | null>(null);
+  const [inviteLandingMode, setInviteLandingMode] = useState<'signedOut' | 'signedIn'>('signedOut');
+  const [inviteLandingSpots, setInviteLandingSpots] = useState<Required<InviteSpot>[]>([]);
+  const [inviteLandingRows, setInviteLandingRows] = useState<InviteUiRow[]>([]);
+  // Signed-in only: the raw entries (carrying each spot's target group_members
+  // row) driving onJoinSelected's per-spot claim, plus the group/member rows
+  // claimInviteSpot needs as `groupRow` / `existingMembers`.
+  const [inviteLandingEntries, setInviteLandingEntries] = useState<InviteLandingEntry[]>([]);
+  const [inviteLandingGroupRows, setInviteLandingGroupRows] = useState<InviteClaimGroupRow[]>([]);
+  const [inviteLandingMemberRows, setInviteLandingMemberRows] = useState<InviteClaimMemberRow[]>([]);
+  const [inviteLandingSelectedIds, setInviteLandingSelectedIds] = useState<string[]>([]);
+  const [inviteLandingBusy, setInviteLandingBusy] = useState<boolean>(false);
+  const [inviteLandingJoiningId, setInviteLandingJoiningId] = useState<string | null>(null);
+  const [inviteLandingRowErrors, setInviteLandingRowErrors] = useState<Record<string, string>>({});
   const [tempName, setTempName] = useState<string>(() => {
     const saved = localStorage.getItem('divido_username');
     return saved && saved !== 'You' && saved !== 'undefined' ? saved : '';
@@ -2510,6 +2566,117 @@ function App() {
       joinInFlightRef.current = true;
       try {
         const urlParams = new URLSearchParams(window.location.search);
+
+        // ---- Multi-group `?invite=` landing --------------------------------
+        // Handled entirely here, before the legacy single-group `?joinGroupId=`
+        // flow below — the two params are mutually exclusive (see
+        // divido_pending_join's shape), and an `invite` link never falls
+        // through to the joinGroupId flow.
+        const inviteFromUrl = urlParams.get('invite');
+        let inviteRaw: string | null = inviteFromUrl;
+        if (!inviteRaw) {
+          try {
+            const savedRaw = localStorage.getItem('divido_pending_join');
+            if (savedRaw) {
+              const saved = JSON.parse(savedRaw);
+              if (saved?.invite && (!saved.ts || Date.now() - saved.ts < 15 * 60 * 1000)) {
+                inviteRaw = String(saved.invite);
+              } else if (saved?.invite) {
+                localStorage.removeItem('divido_pending_join');
+              }
+            }
+          } catch { localStorage.removeItem('divido_pending_join'); }
+        }
+
+        if (inviteRaw) {
+          const spots = parseInviteParam(inviteRaw);
+          const cleanInviteUrl = () => {
+            const cleanUrl = window.location.protocol + '//' + window.location.host + window.location.pathname;
+            window.history.replaceState({ _divido: true, uiState: { view: 'summary', selectedId: null } }, '', cleanUrl);
+          };
+
+          if (spots.length === 0) {
+            try { localStorage.removeItem('divido_pending_join'); } catch { /* ignore */ }
+            cleanInviteUrl();
+            setInviteLandingRaw(null);
+            return;
+          }
+
+          // Persist the intent the moment the link is opened, before any
+          // sign-in, so it survives a Google round-trip.
+          if (inviteFromUrl) {
+            try {
+              localStorage.setItem('divido_pending_join', JSON.stringify({ invite: inviteFromUrl, ts: Date.now() }));
+            } catch { /* storage full — non-fatal */ }
+          }
+
+          const { data: { session } } = await supabase.auth.getSession();
+          const myEmail = session?.user?.email || userEmail || '';
+
+          if (!myEmail) {
+            // Signed out: render from whatever's cached locally, no network
+            // call. Harmless to rebuild on every `groups` update — there's no
+            // per-row user interaction to lose before sign-in.
+            const rows: InviteUiRow[] = spots.map((s): InviteUiRow => {
+              const g = groups.find((gr) => String(gr.id) === s.groupId);
+              return g
+                ? {
+                    groupId: s.groupId,
+                    name: g.name,
+                    emoji: g.emoji,
+                    memberCount: (g.members || []).filter((m) => !/\(Left\)\s*$/i.test(m)).length,
+                    status: 'available',
+                  }
+                : { groupId: s.groupId, status: 'available' };
+            });
+            setInviteLandingRaw(inviteRaw);
+            setInviteLandingMode('signedOut');
+            setInviteLandingSpots(spots);
+            setInviteLandingRows(rows);
+            return;
+          }
+
+          // Signed in: only (re)fetch/rebuild once per invite — this effect
+          // re-runs on every `groups` update, and redoing the fetch would wipe
+          // the user's checkbox selection and un-dismiss the card.
+          if (inviteLandingRaw === inviteRaw && inviteLandingMode === 'signedIn') return;
+
+          const ids = Array.from(new Set(spots.map((s) => s.groupId)));
+          const [{ data: groupRows }, { data: memberRows }] = await Promise.all([
+            supabase.from('groups').select('*').in('id', ids),
+            supabase.from('group_members').select('*').in('group_id', ids),
+          ]);
+          const entries = buildInviteLandingModel(spots, groupRows || [], memberRows || [], myEmail);
+
+          if (visibleEntryCount(entries) === 0) {
+            try { localStorage.removeItem('divido_pending_join'); } catch { /* ignore */ }
+            cleanInviteUrl();
+            setInviteLandingRaw(null);
+            return;
+          }
+
+          const uiRows: InviteUiRow[] = entries
+            .filter((e) => e.status !== 'unavailable')
+            .map((e): InviteUiRow => ({
+              groupId: e.groupId,
+              name: e.groupName,
+              emoji: e.emoji,
+              memberCount: e.activeMemberCount,
+              status: e.status === 'joinable' ? 'available' : e.status === 'alreadyMine' ? 'alreadyMineOpen' : 'takenByOther',
+            }));
+
+          setInviteLandingRaw(inviteRaw);
+          setInviteLandingMode('signedIn');
+          setInviteLandingSpots(spots);
+          setInviteLandingEntries(entries);
+          setInviteLandingGroupRows(groupRows || []);
+          setInviteLandingMemberRows(memberRows || []);
+          setInviteLandingRows(uiRows);
+          setInviteLandingSelectedIds(defaultSelectedGroupIds(entries));
+          setInviteLandingRowErrors({});
+          return;
+        }
+
         let joinGroupId = urlParams.get('joinGroupId');
         const fromUrl = !!joinGroupId;
 
@@ -2717,124 +2884,67 @@ function App() {
             if (openSpots.length === 1) inviteMatch = openSpots[0];
           }
           if (inviteMatch) {
-            const placeholderName = String(inviteMatch.name).replace(/\s*\(Left\)$/i, '');
             // No merge prompt here: an exact-email match or a private 1:1 link's
             // single open spot is unambiguously this person, so claim it silently
             // and take them straight in.
-            {
-            // Once you join, your name = your OWN profile name (not the placeholder
-            // the inviter typed). Adopt the Google profile name, unless it would
-            // collide with another member here (then keep the placeholder).
             const rawProfile = (session?.user?.user_metadata?.full_name || session?.user?.user_metadata?.name || '').trim();
-            let profileName = rawProfile ? titleCaseName(rawProfile) : '';
-            if (!profileName) {
-              const un = localStorage.getItem('divido_username');
-              if (un && !['You', 'Guest', 'undefined', ''].includes(un.trim())) profileName = un.trim();
-            }
-            // The joiner's own earlier "(Left)" spot isn't a clash — it's them.
-            const isOwnLeft = (m: any) => /\(Left\)\s*$/i.test(String(m.name)) &&
-              (String(m.user_email || '').toLowerCase() === myEmailNorm || String(m.invite_email || '').toLowerCase() === myEmailNorm);
-            const takenNames = new Set(existingMembers
-              .filter((m: any) => m.id !== inviteMatch.id && !isOwnLeft(m))
-              .map((m: any) => String(m.name).replace(/\s*\(Left\)$/i, '').trim().toLowerCase()));
-            const ownLeftIds = existingMembers.filter((m: any) => m.id !== inviteMatch.id && isOwnLeft(m)).map((m: any) => m.id);
-            if (ownLeftIds.length > 0) {
-              supabase.from('group_members').update({ is_removed: true }).in('id', ownLeftIds)
-                .then(({ error }) => { if (error) console.error('Hiding own past spot failed:', error); });
-            }
-            // For a shared 2-person "direct" thread, KEEP the inviter's chosen
-            // name (don't rename to the joiner's Google name). Renaming there
-            // desynced the expense splitter strings → wrong balances. Just link
-            // the email + clear pending; identity is by email, not the label.
-            const claimedName = groupData.is_direct
-              ? placeholderName
-              : (profileName ? uniqueProfileName(profileName, myEmail, takenNames) : placeholderName);
-            await supabase.from('group_members')
-              .update({ name: claimedName, user_email: myEmail, is_pending: false })
-              .eq('id', inviteMatch.id);
-            // If the name changed from the placeholder, rewrite this group's
-            // expenses so paid/splitters/shares follow the new name (balance-safe).
-            if (claimedName !== placeholderName) {
-              try {
-                const { data: exps } = await supabase.from('expenses').select('*').eq('group_id', joinGroupId);
-                for (const e of exps || []) {
-                  const paidNew = e.paid === placeholderName ? claimedName : e.paid;
-                  const splittersNew = Array.isArray(e.splitters) ? e.splitters.map((s: string) => (s === placeholderName ? claimedName : s)) : e.splitters;
-                  let sharesNew = e.shares;
-                  if (e.shares && Object.prototype.hasOwnProperty.call(e.shares, placeholderName)) {
-                    sharesNew = {}; for (const k of Object.keys(e.shares)) sharesNew[k === placeholderName ? claimedName : k] = e.shares[k];
-                  }
-                  if (paidNew !== e.paid || JSON.stringify(splittersNew) !== JSON.stringify(e.splitters) || JSON.stringify(sharesNew) !== JSON.stringify(e.shares)) {
-                    await supabase.from('expenses').update({ paid: paidNew, splitters: splittersNew, shares: sharesNew }).eq('id', e.id);
-                  }
-                }
-              } catch (rwErr) { console.error('claim rename rewrite failed:', rwErr); }
-            }
-            localStorage.setItem(`divido_identity_${joinGroupId}`, claimedName);
-            {
-              const existing = localStorage.getItem('divido_username');
-              const hasRealName = !!existing && !['You', 'Guest', 'undefined', ''].includes(existing.trim());
-              if (!hasRealName) { localStorage.setItem('divido_username', claimedName); setUserName(claimedName); }
-            }
-            localStorage.setItem('divido_authenticated', 'true');
-            setIsAuthenticated(true);
-            localStorage.removeItem('divido_pending_join');
+            const claimResult = await claimInviteSpot(inviteSupabase, {
+              groupRow: groupData,
+              targetRow: inviteMatch,
+              existingMembers,
+              myEmail,
+              profileName: rawProfile ? titleCaseName(rawProfile) : '',
+              fallbackUsername: localStorage.getItem('divido_username') || undefined,
+            });
 
-            // Put the group into local state WITH its roster BEFORE navigating,
-            // so the detail screen renders immediately instead of flashing a blank
-            // / stale-group screen until the background cloud-load catches up.
-            let freshMembers: string[] = [];
-            let freshPending: string[] = [];
-            const memberIdentities: Record<string, string> = {};
-            try {
-              const { data: gm } = await supabase
-                .from('group_members')
-                .select('*')
-                .eq('group_id', joinGroupId)
-                .order('id', { ascending: true });
-              if (gm) {
-                const activeMems = gm.filter((m: any) => !m.link_request_email || !m.is_pending || m.name.endsWith(' (Left)'));
-                freshMembers = Array.from(new Set(activeMems.map((m: any) => titleCaseName(m.name))));
-                freshPending = Array.from(new Set(activeMems
-                  .filter((m: any) => m.is_pending && !m.user_email && !m.name.endsWith(' (Left)'))
-                  .map((m: any) => titleCaseName(m.name))));
-                activeMems.forEach((m: any) => {
-                  const dn = titleCaseName(m.name);
-                  const identity = (m.user_email ? m.user_email.toLowerCase() : '')
-                    || (m.invite_email ? m.invite_email.toLowerCase() : '')
-                    || m.person_id
-                    || dn.replace(/\s*\(Left\)$/i, '');
-                  if (!memberIdentities[dn]) memberIdentities[dn] = identity;
-                });
+            if (claimResult.status === 'joined') {
+              localStorage.setItem(`divido_identity_${joinGroupId}`, claimResult.claimedName);
+              {
+                const existing = localStorage.getItem('divido_username');
+                const hasRealName = !!existing && !['You', 'Guest', 'undefined', ''].includes(existing.trim());
+                if (!hasRealName) { localStorage.setItem('divido_username', claimResult.claimedName); setUserName(claimResult.claimedName); }
               }
-            } catch { /* background cloud-load will fill it in */ }
-            const updatedGroup: any = {
-              id: groupData.id,
-              name: groupData.name,
-              currency: groupData.currency || '₹',
-              emoji: groupData.emoji || undefined,
-              simplifyDebts: groupData.simplify_debts || false,
-              createdDate: groupData.created_date || (groupData.created_at ? String(groupData.created_at).split('T')[0] : undefined),
-              members: freshMembers.length ? freshMembers : [claimedName],
-              pendingMembers: freshPending,
-              memberIdentities,
-            };
-            setGroups((prev) => prev.some((g) => String(g.id) === String(updatedGroup.id))
-              ? prev.map((g) => String(g.id) === String(updatedGroup.id) ? updatedGroup : g)
-              : [...prev, updatedGroup]);
+              localStorage.setItem('divido_authenticated', 'true');
+              setIsAuthenticated(true);
+              localStorage.removeItem('divido_pending_join');
 
-            // A shared (isDirect) thread presents under Non-Group, not as a raw
-            // group page — land the joiner on the Non-Group screen so they don't
-            // see the internal group-detail UI and have to swipe back.
-            setSelectedId(groupData.is_direct ? 'STANDALONE' : joinGroupId);
-            setView('detail');
-            const cleanUrl = window.location.protocol + '//' + window.location.host + window.location.pathname;
-            // Seed a HOME base entry (not an empty one) so a back-swipe from the
-            // group you just entered/claimed goes to the home screen instead of
-            // exiting the app. The detail entry is pushed on top by the history sync.
-            window.history.replaceState({ _divido: true, uiState: { view: 'summary', selectedId: null } }, '', cleanUrl);
-            return;
-            } // end if (wantsMerge) — declined falls through to the claim list
+              // Put the group into local state WITH its roster BEFORE
+              // navigating, so the detail screen renders immediately instead
+              // of flashing a blank / stale-group screen.
+              setGroups((prev) => prev.some((g) => String(g.id) === String(claimResult.group.id))
+                ? prev.map((g) => String(g.id) === String(claimResult.group.id) ? claimResult.group : g)
+                : [...prev, claimResult.group]);
+
+              // A shared (isDirect) thread presents under Non-Group, not as a
+              // raw group page — land the joiner on the Non-Group screen so
+              // they don't see the internal group-detail UI and have to swipe
+              // back.
+              setSelectedId(groupData.is_direct ? 'STANDALONE' : joinGroupId);
+              setView('detail');
+              const cleanUrl = window.location.protocol + '//' + window.location.host + window.location.pathname;
+              // Seed a HOME base entry (not an empty one) so a back-swipe from
+              // the group you just entered/claimed goes to the home screen
+              // instead of exiting the app. The detail entry is pushed on top
+              // by the history sync.
+              window.history.replaceState({ _divido: true, uiState: { view: 'summary', selectedId: null } }, '', cleanUrl);
+              return;
+            }
+
+            if (claimResult.status === 'alreadyMine') {
+              localStorage.removeItem('divido_pending_join');
+              setSelectedId(groupData.is_direct ? 'STANDALONE' : joinGroupId);
+              setView('detail');
+              setShowFriendsList(false);
+              const cleanUrl = window.location.protocol + '//' + window.location.host + window.location.pathname;
+              window.history.replaceState({ _divido: true, uiState: { view: 'summary', selectedId: null } }, '', cleanUrl);
+              return;
+            }
+
+            if (claimResult.status === 'error') {
+              console.error('Invite auto-claim failed:', claimResult.message);
+            }
+            // 'takenByOther' or 'error': fall through to the existing
+            // placeholder claim list below.
           }
         }
 
@@ -3832,6 +3942,167 @@ function App() {
     }
   }
 
+  // ---- Multi-group `?invite=` landing: shared handlers ---------------------
+  // Redirect target for a Google OAuth round-trip: preserves whichever invite
+  // context is on the current URL so joinGroupFromQuery can pick the flow back
+  // up after sign-in. `invite` (multi-group) and `joinGroupId` (legacy
+  // single-group) are mutually exclusive; `invite` wins if somehow both are
+  // present.
+  const buildOAuthRedirectUrl = () => {
+    const params = new URL(window.location.href).searchParams;
+    const invite = params.get('invite');
+    const join = params.get('joinGroupId');
+    const suffix = invite ? `?invite=${encodeURIComponent(invite)}` : join ? `?joinGroupId=${join}` : '';
+    return window.location.origin + window.location.pathname + suffix;
+  };
+
+  // InviteLandingCard's "Continue with Google" (signed-out mode): same OAuth
+  // call as Login.tsx, but the redirect carries `?invite=` so the resolver
+  // resumes the invite on return. localStorage's divido_pending_join (set the
+  // moment the invite link was opened, see joinGroupFromQuery) remains the
+  // authoritative carrier of the intent — this redirect param is a same-tab
+  // fast path only.
+  const inviteSignIn = async () => {
+    try {
+      await supabase.auth.signInWithOAuth({
+        provider: 'google',
+        options: {
+          redirectTo: buildOAuthRedirectUrl(),
+          queryParams: { prompt: 'select_account' },
+        },
+      });
+    } catch (err) {
+      console.error('Invite sign-in failed:', err);
+    }
+  };
+
+  // Clears the invite intent (so it never resurfaces), cleans the URL, and
+  // hides the card. Used by onDismiss and after a successful join.
+  const dismissInviteLanding = () => {
+    try { localStorage.removeItem('divido_pending_join'); } catch { /* ignore */ }
+    try {
+      const cleanUrl = window.location.protocol + '//' + window.location.host + window.location.pathname;
+      window.history.replaceState({ _divido: true, uiState: { view: 'summary', selectedId: null } }, '', cleanUrl);
+    } catch { /* ignore */ }
+    setInviteLandingRaw(null);
+    setInviteLandingRows([]);
+    setInviteLandingEntries([]);
+    setInviteLandingGroupRows([]);
+    setInviteLandingMemberRows([]);
+    setInviteLandingSelectedIds([]);
+    setInviteLandingRowErrors({});
+    setInviteLandingJoiningId(null);
+  };
+
+  const toggleInviteGroup = (groupId: string) => {
+    setInviteLandingSelectedIds((prev) => (prev.includes(groupId) ? prev.filter((id) => id !== groupId) : [...prev, groupId]));
+  };
+
+  // Tapping an "already yours" row: dismiss the card and open that group,
+  // same Non-Group-vs-raw-group-page rule used everywhere else in this file.
+  const openInviteGroup = (groupId: string) => {
+    const groupRow = inviteLandingGroupRows.find((g) => String(g.id) === groupId);
+    dismissInviteLanding();
+    setSelectedId(groupRow?.is_direct ? 'STANDALONE' : groupId);
+    setView('detail');
+    setShowFriendsList(false);
+  };
+
+  // Signed-in "Join N groups": claims each selected joinable spot sequentially
+  // (keeps `joiningGroupId` meaningful for the per-row spinner; claimInviteSpot's
+  // RLS-ordering contract is per-group so this is also the safest order).
+  const joinSelectedInviteGroups = async () => {
+    const joinableIds = new Set(inviteLandingEntries.filter((e) => e.status === 'joinable').map((e) => e.groupId));
+    const toJoin = inviteLandingSelectedIds.filter((id) => joinableIds.has(id));
+    if (toJoin.length === 0) return;
+
+    setInviteLandingBusy(true);
+    setInviteLandingRowErrors({});
+
+    const { data: { session } } = await supabase.auth.getSession();
+    const myEmail = session?.user?.email || userEmail;
+    const rawProfile = (session?.user?.user_metadata?.full_name || session?.user?.user_metadata?.name || '').trim();
+    const profileName = rawProfile ? titleCaseName(rawProfile) : '';
+    const fallbackUsername = localStorage.getItem('divido_username') || undefined;
+
+    const succeeded: { groupId: string; group: Group }[] = [];
+    const nextRowErrors: Record<string, string> = {};
+
+    for (const groupId of toJoin) {
+      const entry = inviteLandingEntries.find((e) => e.groupId === groupId);
+      const groupRow = inviteLandingGroupRows.find((g) => String(g.id) === groupId);
+      if (!entry?.targetRow || !groupRow) {
+        nextRowErrors[groupId] = "Couldn't join — try again";
+        continue;
+      }
+      setInviteLandingJoiningId(groupId);
+      const existingMembers = inviteLandingMemberRows.filter((m) => String(m.group_id) === groupId);
+      const result = await claimInviteSpot(inviteSupabase, {
+        groupRow,
+        targetRow: entry.targetRow,
+        existingMembers,
+        myEmail,
+        profileName,
+        fallbackUsername,
+      });
+      if (result.status === 'joined') {
+        localStorage.setItem(`divido_identity_${groupId}`, result.claimedName);
+        const existingUsername = localStorage.getItem('divido_username');
+        const hasRealName = !!existingUsername && !['You', 'Guest', 'undefined', ''].includes(existingUsername.trim());
+        if (!hasRealName) { localStorage.setItem('divido_username', result.claimedName); setUserName(result.claimedName); }
+        localStorage.setItem('divido_authenticated', 'true');
+        setIsAuthenticated(true);
+        succeeded.push({ groupId, group: result.group });
+      } else if (result.status === 'takenByOther') {
+        nextRowErrors[groupId] = 'Someone already took this spot';
+      } else if (result.status === 'error') {
+        console.error('Invite claim failed:', result.message);
+        nextRowErrors[groupId] = "Couldn't join — try again";
+      }
+      // 'alreadyMine' can't occur here — entries are pre-filtered to
+      // 'joinable' before the loop.
+    }
+    setInviteLandingJoiningId(null);
+
+    if (succeeded.length > 0) {
+      setGroups((prev) => {
+        let next = prev;
+        for (const { group } of succeeded) {
+          next = next.some((g) => String(g.id) === String(group.id))
+            ? next.map((g) => (String(g.id) === String(group.id) ? group : g))
+            : [...next, group];
+        }
+        return next;
+      });
+    }
+
+    if (Object.keys(nextRowErrors).length === 0) {
+      // Everything selected went through — dismiss and navigate like the
+      // legacy single-group flow: exactly one join opens that group directly,
+      // more than one stays on home.
+      dismissInviteLanding();
+      if (succeeded.length === 1) {
+        const groupRow = inviteLandingGroupRows.find((g) => String(g.id) === succeeded[0].groupId);
+        setSelectedId(groupRow?.is_direct ? 'STANDALONE' : succeeded[0].groupId);
+        setView('detail');
+        setShowFriendsList(false);
+      } else {
+        setView('summary');
+      }
+      setInviteLandingBusy(false);
+      return;
+    }
+
+    // Some spots failed — keep the card open showing the errors; drop the
+    // succeeded ones from the selection and show them as already joined.
+    const succeededIds = new Set(succeeded.map((s) => s.groupId));
+    setInviteLandingSelectedIds((prev) => prev.filter((id) => !succeededIds.has(id)));
+    setInviteLandingEntries((prev) => prev.map((e): InviteLandingEntry => (succeededIds.has(e.groupId) ? { ...e, status: 'alreadyMine' } : e)));
+    setInviteLandingRows((prev) => prev.map((r): InviteUiRow => (succeededIds.has(r.groupId) ? { ...r, status: 'alreadyMineOpen' } : r)));
+    setInviteLandingRowErrors(nextRowErrors);
+    setInviteLandingBusy(false);
+  };
+
   if (!isAuthenticated) {
     return (
       <>
@@ -3843,6 +4114,19 @@ function App() {
           currentTheme={theme}
         />
         <InstallPrompt />
+        {inviteLandingRaw && inviteLandingMode === 'signedOut' && (
+          <InviteLandingCard
+            mode="signedOut"
+            totalCount={inviteLandingSpots.length}
+            rows={inviteLandingRows}
+            selectedGroupIds={[]}
+            onToggleGroup={() => {}}
+            busy={false}
+            onJoinSelected={() => {}}
+            onSignIn={inviteSignIn}
+            onDismiss={dismissInviteLanding}
+          />
+        )}
       </>
     );
   }
@@ -3882,8 +4166,7 @@ function App() {
             ts: Date.now(),
           }));
         } catch { /* storage full — non-fatal */ }
-        const _join = new URL(window.location.href).searchParams.get('joinGroupId');
-        const cleanRedirect = window.location.origin + window.location.pathname + (_join ? `?joinGroupId=${_join}` : '');
+        const cleanRedirect = buildOAuthRedirectUrl();
         await supabase.auth.signInWithOAuth({
           provider: 'google',
           options: {
@@ -4015,16 +4298,13 @@ function App() {
         if (claimName !== p.name) {
           try {
             const { data: exps } = await supabase.from('expenses').select('*').eq('group_id', linkRequestGroup.id);
-            for (const e of exps || []) {
-              const paidNew = e.paid === p.name ? claimName : e.paid;
-              const splittersNew = Array.isArray(e.splitters) ? e.splitters.map((s: string) => (s === p.name ? claimName : s)) : e.splitters;
-              let sharesNew = e.shares;
-              if (e.shares && Object.prototype.hasOwnProperty.call(e.shares, p.name)) {
-                sharesNew = {}; for (const k of Object.keys(e.shares)) sharesNew[k === p.name ? claimName : k] = e.shares[k];
-              }
-              if (paidNew !== e.paid || JSON.stringify(splittersNew) !== JSON.stringify(e.splitters) || JSON.stringify(sharesNew) !== JSON.stringify(e.shares)) {
-                await supabase.from('expenses').update({ paid: paidNew, splitters: splittersNew, shares: sharesNew }).eq('id', e.id);
-              }
+            const patches = computeClaimRenamePatches(exps || [], p.name, claimName);
+            for (const patch of patches) {
+              const { error } = await supabase
+                .from('expenses')
+                .update({ paid: patch.paid, splitters: patch.splitters, shares: patch.shares })
+                .eq('id', patch.id);
+              if (error) console.error('claim rename rewrite failed:', error);
             }
           } catch (rwErr) { console.error('claim rename rewrite failed:', rwErr); }
         }
@@ -4246,8 +4526,7 @@ function App() {
               // Home-screen "Invite" for a group's not-yet-joined members. Same
               // link + native share sheet as the in-group Remind action.
               const inviteLink = `${window.location.origin}/?joinGroupId=${g.id}`;
-              const who = joinNames(names);
-              const shareText = `Hey${who ? ` ${who}` : ''}! Join ${g.name ? `"${g.name}"` : 'my group'} on Divido to split expenses 💸`;
+              const shareText = groupInviteMessage(names, g.name);
               if (typeof navigator !== 'undefined' && (navigator as any).share) {
                 try {
                   await (navigator as any).share({
@@ -4266,6 +4545,47 @@ function App() {
                 setToastMsg('Invite link copied — send it to them 📋');
               } catch {
                 setToastMsg(inviteLink);
+              }
+              setTimeout(() => setToastMsg(null), 3000);
+            }}
+            onInvitePerson={async (person) => {
+              // Home-screen "Invite" for one still-pending person, across every
+              // group they're pending in. Same native share sheet + fallback as
+              // onInviteToGroup above, just built from a multi-group link.
+              const spots = person.spots.map((s) => ({ groupId: String(s.group.id), memberKey: s.memberKey }));
+              // Prefer the most recently active of the person's pending groups
+              // as the single-group fallback (used only if no spot has a
+              // memberKey yet); default to the first spot when activity ties.
+              let fallbackGroupId = String(person.spots[0]?.group.id ?? '');
+              let latestActivity = -Infinity;
+              for (const s of person.spots) {
+                const t = groupActivityTimestamp(s.group, expenses) ?? Date.now();
+                if (t > latestActivity) {
+                  latestActivity = t;
+                  fallbackGroupId = String(s.group.id);
+                }
+              }
+              const { url, coveredGroupIds } = buildPersonInviteLink(window.location.origin, spots, fallbackGroupId);
+              const groupNameById = new Map(person.spots.map((s) => [String(s.group.id), s.group.name || '']));
+              const groupNames = coveredGroupIds.map((gid) => groupNameById.get(gid) || '');
+              const shareText = personInviteMessage(person.name, groupNames);
+              const shareTitle = coveredGroupIds.length > 1
+                ? 'Join my groups on Divido'
+                : `Join ${groupNames[0] || 'my group'} on Divido`;
+              if (typeof navigator !== 'undefined' && (navigator as any).share) {
+                try {
+                  await (navigator as any).share({ title: shareTitle, text: shareText, url });
+                } catch {
+                  /* user dismissed the share sheet */
+                }
+                return;
+              }
+              // Desktop / no native share: copy the message + link.
+              try {
+                await navigator.clipboard.writeText(`${shareText}\n${url}`);
+                setToastMsg('Invite link copied — send it to them 📋');
+              } catch {
+                setToastMsg(url);
               }
               setTimeout(() => setToastMsg(null), 3000);
             }}
@@ -5418,8 +5738,7 @@ function App() {
                       try {
                         localStorage.setItem('divido_pending_join', JSON.stringify({ groupId: linkRequestGroup.id, ts: Date.now() }));
                       } catch { /* storage full — non-fatal */ }
-                      const _join = new URL(window.location.href).searchParams.get('joinGroupId');
-                      const cleanRedirect = window.location.origin + window.location.pathname + (_join ? `?joinGroupId=${_join}` : '');
+                      const cleanRedirect = buildOAuthRedirectUrl();
                       await supabase.auth.signInWithOAuth({
                         provider: 'google',
                         options: { redirectTo: cleanRedirect, queryParams: { prompt: 'select_account' } },
@@ -5548,6 +5867,23 @@ function App() {
             </>)}
           </div>
         </div>
+      )}
+
+      {inviteLandingRaw && inviteLandingMode === 'signedIn' && (
+        <InviteLandingCard
+          mode="signedIn"
+          totalCount={inviteLandingRows.length}
+          rows={inviteLandingRows}
+          selectedGroupIds={inviteLandingSelectedIds}
+          onToggleGroup={toggleInviteGroup}
+          onOpenGroup={openInviteGroup}
+          busy={inviteLandingBusy}
+          joiningGroupId={inviteLandingJoiningId}
+          rowErrors={inviteLandingRowErrors}
+          onJoinSelected={joinSelectedInviteGroups}
+          onSignIn={inviteSignIn}
+          onDismiss={dismissInviteLanding}
+        />
       )}
 
       {showMembersHealth && selectedGroup && (

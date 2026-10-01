@@ -10,7 +10,7 @@ const JOIN_SNOOZE_KEY = 'divido_join_banner_snooze';
 const filterBtnStyle: React.CSSProperties = { padding: '6px 12px', borderRadius: '20px', border: '1px solid #E2E8F0', fontSize: '12px', fontWeight: 600, background: '#F1F5F9', color: '#475569', boxShadow: 'none' };
 import { simplifyMultiCurrencyDebts, computeRawPairwiseTransactions } from '../lib/calculations';
 import { ActivityStudio } from './ActivityStudio';
-import { computeJoinProgress, pendingNamesFor, detectCelebration, toSnapshot, joinNames, type JoinCelebration, type JoinSnapshot } from '../lib/joinProgress';
+import { computeJoinProgress, pendingNamesFor, detectCelebration, toSnapshot, joinNames, type JoinCelebration, type JoinSnapshot, type PendingPerson } from '../lib/joinProgress';
 import { escManager } from '../lib/escManager';
 
 import { Group, Expense, UserMetadata, GlobalSettleData } from '../lib/types';
@@ -59,6 +59,8 @@ interface MasterSummaryProps {
   onMergeGroups?: (keepId: string | number, dropId: string | number) => void;
   // Share a group's invite link with its not-yet-joined members.
   onInviteToGroup?: (group: Group, pendingNames: string[]) => void;
+  // Share an invite with a single pending person (used by the person-axis "yet to join" sheet).
+  onInvitePerson?: (person: PendingPerson) => void | Promise<void>;
 }
 
 export const MasterSummary: React.FC<MasterSummaryProps> = ({
@@ -97,6 +99,7 @@ export const MasterSummary: React.FC<MasterSummaryProps> = ({
   duplicateGroups = [],
   onMergeGroups,
   onInviteToGroup,
+  onInvitePerson,
 }) => {
   const [openDropdownId, setOpenDropdownId] = useState<string | number | null>(null);
   const [timeFilter, setTimeFilter] = useState<'all' | '30days' | '7days'>('all');
@@ -267,6 +270,31 @@ export const MasterSummary: React.FC<MasterSummaryProps> = ({
     return escManager.register(() => setShowJoinSheet(false));
   }, [showJoinSheet]);
 
+  // Per-person "Shared ✓" confirmation on the yet-to-join sheet: keyed by
+  // PendingPerson.key, cleared automatically after 2s.
+  const [invitedPersonKeys, setInvitedPersonKeys] = useState<Record<string, boolean>>({});
+  const inviteTimersRef = useRef<Record<string, ReturnType<typeof setTimeout>>>({});
+  useEffect(() => {
+    const timers = inviteTimersRef.current;
+    return () => { Object.values(timers).forEach(clearTimeout); };
+  }, []);
+  const handleInvitePerson = async (person: PendingPerson) => {
+    if (!onInvitePerson) return;
+    try {
+      await onInvitePerson(person);
+    } catch { /* share can fail/cancel — still confirm below */ }
+    setInvitedPersonKeys((prev) => ({ ...prev, [person.key]: true }));
+    if (inviteTimersRef.current[person.key]) clearTimeout(inviteTimersRef.current[person.key]);
+    inviteTimersRef.current[person.key] = setTimeout(() => {
+      setInvitedPersonKeys((prev) => {
+        const next = { ...prev };
+        delete next[person.key];
+        return next;
+      });
+      delete inviteTimersRef.current[person.key];
+    }, 2000);
+  };
+
   const joinPendingCount = joinProgress.pending.length;
   const joinSnoozed = !!joinSnooze && renderedAt < joinSnooze.until && joinPendingCount <= joinSnooze.count;
   const showJoinBanner = !loading && (!!joinCelebration || (joinPendingCount > 0 && !joinSnoozed));
@@ -279,12 +307,12 @@ export const MasterSummary: React.FC<MasterSummaryProps> = ({
   };
 
   const openJoinInvite = () => {
-    if (!onInviteToGroup || joinProgress.perGroup.length === 0) return;
-    // One group: straight to the share sheet. Several: pick a group first
-    // (one share can carry only one group's link).
-    if (joinProgress.perGroup.length === 1) {
-      const { group, names } = joinProgress.perGroup[0];
-      onInviteToGroup(group, names);
+    const pending = joinProgress.pending;
+    if (pending.length === 0) return;
+    // One person: straight to the share sheet. Several: pick a person first
+    // (one share can carry only one person's invite).
+    if (pending.length === 1) {
+      onInvitePerson?.(pending[0]);
     } else {
       setShowJoinSheet(true);
     }
@@ -471,7 +499,7 @@ export const MasterSummary: React.FC<MasterSummaryProps> = ({
         const totalN = Math.max(joinProgress.total, 1);
         const allDone = joinCelebration?.kind === 'allDone';
         const pct = allDone ? 100 : Math.round((joinedN / totalN) * 100);
-        const canInvite = !allDone && pendingN > 0 && !!onInviteToGroup;
+        const canInvite = !allDone && pendingN > 0 && !!onInvitePerson;
 
         let title: string;
         let sub: string;
@@ -1427,34 +1455,48 @@ export const MasterSummary: React.FC<MasterSummaryProps> = ({
 
             <div style={{ fontSize: '17px', fontWeight: 700, color: '#0F172A', marginBottom: '2px' }}>Get everyone in</div>
             <div style={{ fontSize: '13px', fontWeight: 500, color: '#64748B', marginBottom: '14px' }}>
-              {joinPendingCount} friend{joinPendingCount === 1 ? '' : 's'} yet to join across {joinProgress.perGroup.length} groups
+              {joinPendingCount} friend{joinPendingCount === 1 ? '' : 's'} yet to join
             </div>
 
             <div style={{ display: 'flex', flexDirection: 'column' }}>
-              {joinProgress.perGroup.map(({ group, names }, idx) => {
-                const c = GROUP_COLORS[idx % GROUP_COLORS.length];
+              {joinProgress.pending.map((person, idx) => {
+                const groupNames = person.spots.map((s) => s.group.name || 'Untitled Group').join(' · ');
+                const invited = !!invitedPersonKeys[person.key];
                 return (
                   <div
-                    key={group.id}
-                    style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '12px 0', borderBottom: idx < joinProgress.perGroup.length - 1 ? '1px solid #F1F5F9' : 'none' }}
+                    key={person.key}
+                    style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '12px 0', borderBottom: idx < joinProgress.pending.length - 1 ? '1px solid #F1F5F9' : 'none' }}
                   >
-                    <div style={{ width: '38px', height: '38px', borderRadius: '50%', background: c.bg, color: c.text, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '15px', fontWeight: 600, flexShrink: 0, overflow: 'hidden' }}>
-                      {group.emoji && (group.emoji.startsWith('data:image/') || group.emoji.startsWith('http')) ? (
-                        <img src={group.emoji} style={{ width: '100%', height: '100%', objectFit: 'cover' }} alt="" />
-                      ) : (
-                        group.name.charAt(0).toUpperCase() || '👤'
-                      )}
+                    <div style={{ width: '38px', height: '38px', borderRadius: '50%', border: '1.5px dashed #B8AEA2', background: '#FFFFFF', color: '#8A8076', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '15px', fontWeight: 700, flexShrink: 0 }}>
+                      {person.name.charAt(0).toUpperCase()}
                     </div>
                     <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', gap: '2px' }}>
-                      <span style={{ fontSize: '15px', fontWeight: 600, color: '#0F172A', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{group.name || 'Untitled Group'}</span>
-                      <span style={{ fontSize: '12px', fontWeight: 500, color: '#94A3B8', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{joinNames(names)}</span>
+                      <span style={{ fontSize: '15px', fontWeight: 600, color: '#0F172A', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{person.name}</span>
+                      <span
+                        title={groupNames}
+                        style={{ fontSize: '12px', fontWeight: 500, color: '#94A3B8', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}
+                      >
+                        {groupNames}
+                      </span>
                     </div>
                     <button
                       type="button"
-                      onClick={() => onInviteToGroup && onInviteToGroup(group, names)}
-                      style={{ flexShrink: 0, background: '#7C3AED', color: '#FFFFFF', border: 'none', borderRadius: '999px', padding: '7px 14px', fontSize: '13px', fontWeight: 600, cursor: 'pointer' }}
+                      aria-label={`Invite ${person.name}`}
+                      disabled={invited}
+                      onClick={() => handleInvitePerson(person)}
+                      style={{
+                        flexShrink: 0,
+                        background: invited ? '#D1FAE5' : '#7C3AED',
+                        color: invited ? '#047857' : '#FFFFFF',
+                        border: 'none',
+                        borderRadius: '999px',
+                        padding: '7px 14px',
+                        fontSize: '13px',
+                        fontWeight: 600,
+                        cursor: invited ? 'default' : 'pointer',
+                      }}
                     >
-                      Invite
+                      {invited ? 'Shared ✓' : 'Invite'}
                     </button>
                   </div>
                 );

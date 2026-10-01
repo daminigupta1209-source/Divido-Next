@@ -42,22 +42,55 @@ export const pendingNamesFor = (g: Group, myName: string): string[] => {
   return out;
 };
 
-// A group is active if its latest expense, or its creation date when it has no
-// expenses, falls inside the window. A group with no dates at all is brand new.
-export const isActiveGroup = (g: Group, expenses: Expense[], now: number, days = ACTIVE_GROUP_DAYS): boolean => {
+// A group's latest-activity timestamp: its latest non-deleted expense date, else
+// its creation date. Returns null when neither is available (a brand new group
+// with no dates at all), which callers treat as "active"/"recent" by default.
+export const groupActivityTimestamp = (g: Group, expenses: Expense[]): number | null => {
   const gid = String(g.id);
   let latest = '';
   for (const e of expenses) {
     if (String(e.gId) === gid && !e.isDeleted && e.date > latest) latest = e.date;
   }
   const ref = latest || g.createdDate || '';
-  if (!ref) return true;
+  if (!ref) return null;
   const t = new Date(ref).getTime();
-  if (isNaN(t)) return true;
+  return isNaN(t) ? null : t;
+};
+
+// A group is active if its latest expense, or its creation date when it has no
+// expenses, falls inside the window. A group with no dates at all is brand new.
+export const isActiveGroup = (g: Group, expenses: Expense[], now: number, days = ACTIVE_GROUP_DAYS): boolean => {
+  const t = groupActivityTimestamp(g, expenses);
+  if (t === null) return true;
   return now - t <= days * 86400000;
 };
 
-export interface PendingPerson { key: string; name: string; groupName: string }
+// Case/suffix-insensitive lookup of a pendingMembers roster name against a
+// group's permanent member_key map. group.memberKeys is keyed by title-cased
+// display names (useSupabaseSync), which may differ in case or a "(Left)"
+// suffix from the name as recorded in pendingMembers. Mirrors getPersonKey's
+// matching rule, but returns undefined instead of falling back to the name.
+const memberKeyFor = (g: Group, name: string): string | undefined => {
+  const mk = g.memberKeys;
+  if (!mk) return undefined;
+  if (mk[name]) return mk[name];
+  if (mk[name + ' (Left)']) return mk[name + ' (Left)'];
+  const target = name.replace(LEFT_RE, '').trim().toLowerCase();
+  for (const k of Object.keys(mk)) {
+    if (k.replace(LEFT_RE, '').trim().toLowerCase() === target) return mk[k];
+  }
+  return undefined;
+};
+
+// One group a person is pending in: the roster name exactly as stored in that
+// group's pendingMembers, and their permanent member_key there (when known).
+export interface PendingSpot {
+  group: Group;
+  memberName: string;
+  memberKey: string | undefined;
+}
+
+export interface PendingPerson { key: string; name: string; groupName: string; spots: PendingSpot[] }
 
 export interface JoinProgress {
   pending: PendingPerson[]; // distinct people yet to join, across active groups
@@ -75,7 +108,7 @@ export const computeJoinProgress = (
   myNameFor: (gId: string | number) => string,
   now: number = Date.now(),
 ): JoinProgress => {
-  const pending = new Map<string, PendingPerson>();
+  const pendingAcc = new Map<string, { key: string; groupName: string; spots: PendingSpot[] }>();
   const seenAll = new Set<string>();
   const perGroup: JoinProgress['perGroup'] = [];
 
@@ -95,12 +128,37 @@ export const computeJoinProgress = (
     const pendingRaw = (g.pendingMembers || []).filter((m) => names.some((n) => n.toLowerCase() === cleanMemberName(g, m).toLowerCase()));
     for (const m of pendingRaw) {
       const key = keyOf(m);
-      if (!pending.has(key)) pending.set(key, { key, name: cleanMemberName(g, m), groupName: g.name || 'your group' });
+      if (!pendingAcc.has(key)) pendingAcc.set(key, { key, groupName: g.name || 'your group', spots: [] });
+      pendingAcc.get(key)!.spots.push({ group: g, memberName: m, memberKey: memberKeyFor(g, m) });
     }
   }
 
-  const joinedKeys = Array.from(seenAll).filter((k) => !pending.has(k));
-  return { pending: Array.from(pending.values()), joinedKeys, total: seenAll.size, perGroup };
+  // Display name: the longest/most complete clean name seen across the
+  // person's groups ("Rahul Kumar" over "Rahul"). key/groupName stay exactly
+  // as first seen, since the celebration snapshot depends on them.
+  const pending: PendingPerson[] = Array.from(pendingAcc.values()).map((p) => {
+    let name = '';
+    for (const s of p.spots) {
+      const clean = cleanMemberName(s.group, s.memberName);
+      if (clean.length > name.length) name = clean;
+    }
+    return { key: p.key, name, groupName: p.groupName, spots: p.spots };
+  });
+
+  // Sort by how many groups they're pending in (desc), then by how recently
+  // their most recent group was active (desc), then by name (asc). A group
+  // with no date info at all (groupActivityTimestamp === null) counts as "now".
+  const latestActivityFor = (p: PendingPerson) =>
+    Math.max(...p.spots.map((s) => groupActivityTimestamp(s.group, expenses) ?? now));
+  pending.sort((a, b) => {
+    if (b.spots.length !== a.spots.length) return b.spots.length - a.spots.length;
+    const activityDiff = latestActivityFor(b) - latestActivityFor(a);
+    if (activityDiff !== 0) return activityDiff;
+    return a.name.localeCompare(b.name);
+  });
+
+  const joinedKeys = Array.from(seenAll).filter((k) => !pendingAcc.has(k));
+  return { pending, joinedKeys, total: seenAll.size, perGroup };
 };
 
 // "Rahul", "Rahul & Priya", "Rahul, Priya & Amit", "Rahul, Priya & 3 others".

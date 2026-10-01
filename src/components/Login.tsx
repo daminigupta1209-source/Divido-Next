@@ -44,8 +44,13 @@ export const Login: React.FC<LoginProps> = ({ onLoginSuccess, currentTheme }) =>
       // Using window.location.href re-fed leftover OAuth junk (?error=…#access_token=…)
       // from a failed attempt into the next one, causing "bad_oauth_state / state
       // has expired" loops.
-      const _join = new URL(window.location.href).searchParams.get('joinGroupId');
-      const cleanRedirect = window.location.origin + window.location.pathname + (_join ? `?joinGroupId=${_join}` : '');
+      // `invite` (multi-group) and `joinGroupId` (legacy single-group) are
+      // mutually exclusive; carry whichever is on the current URL through the
+      // OAuth round-trip so the resolver can pick the flow back up.
+      const _params = new URL(window.location.href).searchParams;
+      const _invite = _params.get('invite');
+      const _join = _params.get('joinGroupId');
+      const cleanRedirect = window.location.origin + window.location.pathname + (_invite ? `?invite=${encodeURIComponent(_invite)}` : _join ? `?joinGroupId=${_join}` : '');
       const { error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
