@@ -93,7 +93,7 @@ import { CurrencySetupModal } from './components/CurrencySetupModal';
 import { GroupGallery } from './components/GroupGallery';
 import { checkIfDemoMode } from './lib/demoMode';
 import { ensureArray, ensureObject, isLegacyRenameLog, formatCompactAmount, formatExactAmount, genGroupId, genExpenseId, titleCaseName } from './lib/utils';
-import { getPersonKey, toIdentitySpace, pickCanonicalIdentity, findDuplicateGroups, type DuplicateEntry, setSyncedDismissedPeople, buildNameEmailResolver, upiFor, fillPartyKeys, uniqueProfileName } from './lib/identity';
+import { getPersonKey, toIdentitySpace, pickCanonicalIdentity, findDuplicateGroups, type DuplicateEntry, setSyncedDismissedPeople, buildNameEmailResolver, upiFor, fillPartyKeys, uniqueProfileName, dropShadowedLeftRows } from './lib/identity';
 import { groupActivityTimestamp } from './lib/joinProgress';
 import { parseInviteParam, buildPersonInviteLink, personInviteMessage, groupInviteMessage, type InviteSpot } from './lib/inviteLink';
 import {
@@ -2759,6 +2759,11 @@ function App() {
 
         let joinGroupId = urlParams.get('joinGroupId');
         const fromUrl = !!joinGroupId;
+        // A freshly tapped link is a new intent. The "just claimed" guard only
+        // exists to stop a racing re-run of the claim that already cleaned the
+        // URL; left set, it hid the card for the rest of the session (join →
+        // leave → tap the link again showed nothing).
+        if (fromUrl && lastClaimedGroupRef.current === String(joinGroupId)) lastClaimedGroupRef.current = null;
 
         // Resume an invite that was interrupted by the Google sign-in redirect:
         // the ?joinGroupId= param is lost across OAuth, so we fall back to the
@@ -3332,6 +3337,8 @@ function App() {
               }
             }
           }
+          // I'm no longer seated here, so the invite link may offer a rejoin.
+          if (lastClaimedGroupRef.current === String(id)) lastClaimedGroupRef.current = null;
           // Update local groups state (case-insensitive: the roster is
           // title-cased, `me` / the stored row name may not be).
           const leaveNames = new Set([me, myRowName].filter(Boolean).map((n) => String(n).trim().toLowerCase()));
@@ -4564,7 +4571,7 @@ function App() {
           .eq('group_id', linkRequestGroup.id)
           .order('id', { ascending: true });
         if (gm) {
-          const activeMems = gm.filter((m: any) => !m.link_request_email || !m.is_pending || m.name.endsWith(' (Left)'));
+          const activeMems = dropShadowedLeftRows(gm.filter((m: any) => !m.link_request_email || !m.is_pending || m.name.endsWith(' (Left)')));
           freshMembers = Array.from(new Set(activeMems.map((m: any) => m.name)));
           freshPending = Array.from(new Set(activeMems
             .filter((m: any) => m.is_pending && !m.user_email && !m.name.endsWith(' (Left)'))
@@ -6062,7 +6069,7 @@ function App() {
                         .eq('group_id', linkRequestGroup.id)
                         .order('id', { ascending: true });
                       if (gm2) {
-                        const activeMems = gm2.filter((m: any) => !m.link_request_email || !m.is_pending || m.name.endsWith(' (Left)'));
+                        const activeMems = dropShadowedLeftRows(gm2.filter((m: any) => !m.link_request_email || !m.is_pending || m.name.endsWith(' (Left)')));
                         freshMembers = Array.from(new Set(activeMems.map((m: any) => m.name)));
                         freshPending = Array.from(new Set(activeMems
                           .filter((m: any) => m.is_pending && !m.user_email && !m.name.endsWith(' (Left)'))

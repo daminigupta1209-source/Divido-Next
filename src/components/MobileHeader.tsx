@@ -5,6 +5,7 @@ import { formatDate } from '../lib/utils';
 import { AppNotification } from '../lib/notifications';
 import { CameraCaptureModal } from './CameraCaptureModal';
 import { GroupSettingsModal } from './GroupSettingsModal';
+import { isPastMemberOf } from '../lib/identity';
 
 interface MobileHeaderProps {
   view: string;
@@ -124,13 +125,7 @@ export const MobileHeader: React.FC<MobileHeaderProps> = ({
   onOpenGlobalSearch,
 }) => {
   // View-only guard: a member who has left this group can browse but not edit it.
-  const amIPastMember = (() => {
-    const cleanMe = me.replace(/\s*\(me\)$/i, '').replace(/\s*\(Left\)$/i, '').toLowerCase();
-    return !!selectedGroup?.members?.some((m: string) => {
-      const cleanM = m.replace(/\s*\(me\)$/i, '').replace(/\s*\(Left\)$/i, '').toLowerCase();
-      return cleanM === cleanMe && m.toLowerCase().endsWith(' (left)');
-    });
-  })();
+  const amIPastMember = isPastMemberOf(selectedGroup, me);
   // A shared "direct" thread reads as "with <other person>" instead of its
   // internal "Me & Them" name.
   const directOther = (() => {

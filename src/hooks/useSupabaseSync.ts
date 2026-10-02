@@ -4,6 +4,7 @@ import { Group, Expense } from '../lib/types';
 import { checkIfDemoMode } from '../lib/demoMode';
 import { isLegacyRenameLog, titleCaseName } from '../lib/utils';
 import { rowToExpenseFields, expenseToRow, diffExpenseRow } from '../lib/expenseSchema';
+import { dropShadowedLeftRows } from '../lib/identity';
 
 // Fresh hidden person id for a new name-only member, so two people who share a
 // name in different groups stay separate. Signed-in members are left null and
@@ -456,7 +457,7 @@ export function useSupabaseSync({
           // the phantom group before the cleanup reload lands.
           if (duplicateGroupsToDelete.includes(group.id)) return;
           const groupMems = allMembers.filter((m: any) => m.group_id === group.id);
-          const activeMems = groupMems.filter((m: any) => !m.link_request_email || !m.is_pending || m.name.endsWith(' (Left)'));
+          const activeMems = dropShadowedLeftRows(groupMems.filter((m: any) => !m.link_request_email || !m.is_pending || m.name.endsWith(' (Left)')));
           
           // Normalize all-caps display names (e.g. a Google "VANDANA GUPTA") to
           // Title Case for display. Matching stays case-insensitive, so this is
@@ -494,7 +495,11 @@ export function useSupabaseSync({
           // person's per-group name (e.g. "didi") resolves correctly on ANY device
           // — not only the one where they first claimed it.
           if (currentEmail) {
-            const myRow = groupMems.find((m: any) => m.user_email?.toLowerCase() === currentEmail);
+            // Prefer my live row: after a rejoin through a new spot my old
+            // "(Left)" row still carries my email and, being older, sorts first.
+            const mine = groupMems.filter((m: any) => m.user_email?.toLowerCase() === currentEmail);
+            const myRow = mine.find((m: any) => !/\(Left\)\s*$/i.test(String(m.name || '')) && !m.is_removed)
+              || mine.find((m: any) => !m.is_removed) || mine[0];
             if (myRow?.name) {
               localStorage.setItem(`divido_identity_${group.id}`, myRow.name.replace(/\s*\(Left\)$/i, ''));
             }
@@ -504,8 +509,15 @@ export function useSupabaseSync({
           // 2. They have NOT been linked to any user_email (no one claimed them) AND
           // 3. They are NOT the currently logged-in user AND
           // 4. They are not a "(Left)" member
+          // The roster dedupes by display name, so a pending row sharing a name
+          // with a joined row (e.g. the admin added again by email) is the same
+          // roster entry — joined wins, or the admin shows up under Pending.
+          const joinedNames = new Set(activeMems
+            .filter((m: any) => m.user_email && !m.is_pending && !m.name.endsWith(' (Left)'))
+            .map((m: any) => titleCaseName(m.name).toLowerCase()));
           const pendingMembers = Array.from(new Set(activeMems.filter((m: any) => {
             if (!m.is_pending || m.name.endsWith(' (Left)')) return false;
+            if (joinedNames.has(titleCaseName(m.name).toLowerCase())) return false;
             // If this member has user_email set, they've been claimed — not pending
             if (m.user_email) return false;
             // If this member's name matches the current user (me), not pending
