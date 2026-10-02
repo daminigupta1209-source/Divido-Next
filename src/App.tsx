@@ -983,10 +983,16 @@ function App() {
       return next;
     };
     try {
-      // 1. Member row
+      // 1+2. Member row + every expense reference, in ONE database transaction
+      // (api/rename_member.sql) so a dropped connection can't leave a balance
+      // split between the old and new name. Until that SQL is run, fall back to
+      // the old step-by-step rename below.
+      const { error: rpcErr } = await supabase.rpc('rename_member', {
+        p_group_id: String(groupId), p_old: oldName, p_new: newName,
+      });
+      if (rpcErr) {
+        console.warn('rename_member RPC unavailable, using step-by-step rename:', rpcErr.message);
       await supabase.from('group_members').update({ name: newName, pending_name: null }).eq('group_id', groupId).ilike('name', oldName);
-
-      // 2. Historical expenses in this group (DB) — paid, splitters AND shares
       const { data: exps } = await supabase.from('expenses').select('*').eq('group_id', groupId);
       for (const e of exps || []) {
         const paidNew = e.paid === oldName ? newName : e.paid;
@@ -999,6 +1005,7 @@ function App() {
         ) {
           await supabase.from('expenses').update({ paid: paidNew, splitters: splittersNew, shares: sharesNew }).eq('id', e.id);
         }
+      }
       }
 
       // 3. Local state (paid, splitters, shares, origShares)
