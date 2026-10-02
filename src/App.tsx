@@ -1724,16 +1724,31 @@ function App() {
   const setMemberInviteEmail = async (memberName: string, email: string) => {
     const em = (email || '').trim().toLowerCase();
     if (!selectedId || selectedId === 'STANDALONE' || !em.includes('@')) return;
-    setGroups((prev) => prev.map((g) =>
-      String(g.id) === String(selectedId)
-        ? { ...g, memberIdentities: { ...((g as any).memberIdentities || {}), [memberName]: em } } as typeof g
-        : g
-    ));
+    const gid = selectedId;
+    const group = groups.find((g) => String(g.id) === String(gid));
+    const oldId = (group as any)?.memberIdentities?.[memberName];
+    const applyLocal = (val: string | undefined) => setGroups((prev) => prev.map((g) => {
+      if (String(g.id) !== String(gid)) return g;
+      const mi = { ...((g as any).memberIdentities || {}) };
+      if (val === undefined) delete mi[memberName]; else mi[memberName] = val;
+      return { ...g, memberIdentities: mi } as typeof g;
+    }));
+    applyLocal(em);
     if (!checkIfDemoMode() && isAuthenticated) {
-      try {
-        await supabase.from('group_members').update({ invite_email: em }).eq('group_id', selectedId).ilike('name', memberName);
-      } catch (err) {
-        console.error('setMemberInviteEmail failed:', err);
+      // Target the exact row: permanent member_key when known, else the name
+      // (case-insensitive, exact — not a wildcard pattern). Check the result:
+      // the update used to fail silently and the old email came back on reload.
+      const memberKey = (group as any)?.memberKeys?.[memberName];
+      const cleanName = memberName.replace(/\s*\(Left\)$/i, '').trim();
+      let q = supabase.from('group_members').update({ invite_email: em }).eq('group_id', gid);
+      q = memberKey ? q.eq('member_key', memberKey) : q.ilike('name', cleanName.replace(/[\\%_]/g, (c) => '\\' + c));
+      const { data, error } = await q.select('id');
+      if (error || !data || data.length === 0) {
+        console.error('setMemberInviteEmail failed:', error || 'no row updated');
+        applyLocal(oldId);
+        alert(error
+          ? `Couldn't save the email: ${error.message}`
+          : `Couldn't save the email: ${cleanName}'s spot wasn't found in the cloud. Pull down to refresh and try again.`);
       }
     }
   };
