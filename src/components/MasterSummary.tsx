@@ -380,34 +380,9 @@ export const MasterSummary: React.FC<MasterSummaryProps> = ({
     return true;
   });
 
-  const standaloneExps = expenses.filter((e) => isNonGroupExpense(e));
-  standaloneExps.forEach((e) => {
-    const c = e.currency || '₹';
-    const splitters = e.splitters || [e.paid];
-    const amount = e.amt || 0;
-
-    if (e.paid === me) {
-      splitters.forEach((m) => {
-        if (m === me) return;
-        const otherShare =
-          !e.mode || e.mode === 'Equally'
-            ? amount / splitters.length
-            : e.mode === 'Unequally'
-            ? parseFloat(e.shares?.[m]?.toString() || '0')
-            : (amount * parseFloat(e.shares?.[m]?.toString() || '0')) / 100;
-        netBalances[c] = (netBalances[c] || 0) + otherShare;
-      });
-    } else if (splitters.includes(me)) {
-      const payer = e.paid;
-      const myShare =
-        !e.mode || e.mode === 'Equally'
-          ? amount / splitters.length
-          : e.mode === 'Unequally'
-          ? parseFloat(e.shares?.[me]?.toString() || '0')
-          : (amount * parseFloat(e.shares?.[me]?.toString() || '0')) / 100;
-      netBalances[c] = (netBalances[c] || 0) - myShare;
-    }
-  });
+  // Non-group balances are already inside netBalances (STANDALONE + direct
+  // groups via getMemberBalance). Never add to it here: it's a memoized object,
+  // so mutating it during render made the total drift on every re-render.
 
   const totalOwed = Object.values(netBalances).filter(v => v > 0.01).reduce((sum, v) => sum + v, 0);
   const totalOwe = Object.values(netBalances).filter(v => v < -0.01).reduce((sum, v) => sum + Math.abs(v), 0);
