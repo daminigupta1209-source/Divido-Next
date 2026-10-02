@@ -2,9 +2,7 @@ import React, { useEffect, useRef } from 'react';
 import { GROUP_COLORS } from '../lib/utils';
 import { escManager } from '../lib/escManager';
 
-// 'rejoin': a group the opener left earlier — selectable like 'available',
-// but joining reactivates their old spot.
-export type InviteGroupStatus = 'available' | 'rejoin' | 'takenByOther' | 'alreadyMineOpen';
+export type InviteGroupStatus = 'available' | 'takenByOther' | 'alreadyMineOpen';
 
 export interface InviteGroupRow {
   groupId: string;
@@ -126,22 +124,6 @@ const MemberPill: React.FC<{ count?: number }> = ({ count }) => {
   );
 };
 
-const RejoinPill: React.FC = () => (
-  <span
-    style={{
-      fontSize: '11px',
-      fontWeight: 700,
-      color: '#6D28D9',
-      background: '#EDE9FE',
-      padding: '2px 8px',
-      borderRadius: '999px',
-      flexShrink: 0,
-    }}
-  >
-    You left earlier
-  </span>
-);
-
 const SkeletonRow: React.FC = () => (
   <div style={{ display: 'flex', alignItems: 'center', gap: '12px', minHeight: '44px', padding: '6px 4px' }}>
     <div style={{ width: '40px', height: '40px', borderRadius: '50%', background: '#F1F5F9', flexShrink: 0 }} />
@@ -239,7 +221,7 @@ const AvailableRow: React.FC<{
     <div style={{ flex: 1, minWidth: 0 }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
         <span style={rowNameStyle}>{row.name}</span>
-        {row.status === 'rejoin' ? <RejoinPill /> : <MemberPill count={row.memberCount} />}
+        <MemberPill count={row.memberCount} />
       </div>
       {error && (
         <div style={{ fontSize: '11.5px', fontWeight: 600, color: '#B91C1C', marginTop: '2px' }}>{error}</div>
@@ -296,51 +278,6 @@ const AlreadyMineOpenRow: React.FC<{ row: InviteGroupRow; index: number; onOpenG
   );
 };
 
-// The single-group header: the group itself is the content, so there's no
-// checkbox and no "choose the groups" copy — just who and how many.
-const SingleGroupHeader: React.FC<{
-  row: InviteGroupRow;
-  titleId: string;
-  titleRef: React.RefObject<HTMLHeadingElement | null>;
-  subtitle: string;
-}> = ({ row, titleId, titleRef, subtitle }) => (
-  <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '16px' }}>
-    <GroupAvatar name={row.name} emoji={row.emoji} index={0} />
-    <div style={{ flex: 1, minWidth: 0 }}>
-      <h3
-        id={titleId}
-        ref={titleRef}
-        tabIndex={-1}
-        className="nunito"
-        style={{ ...rowNameStyle, fontSize: '16px', fontWeight: 800, margin: 0, outline: 'none' }}
-      >
-        {row.name || 'A group on Divido'}
-      </h3>
-      <div style={{ fontSize: '12.5px', fontWeight: 600, color: row.status === 'rejoin' ? '#6D28D9' : '#64748B', marginTop: '2px' }}>
-        {subtitle}
-      </div>
-    </div>
-  </div>
-);
-
-const primaryButtonStyle = (disabled: boolean): React.CSSProperties => ({
-  width: '100%',
-  height: '48px',
-  borderRadius: '14px',
-  border: 'none',
-  background: '#16A34A',
-  color: '#FFFFFF',
-  fontWeight: 700,
-  fontSize: '15px',
-  cursor: disabled ? 'not-allowed' : 'pointer',
-  display: 'flex',
-  alignItems: 'center',
-  justifyContent: 'center',
-  gap: '8px',
-  opacity: disabled ? 0.6 : 1,
-  flexShrink: 0,
-});
-
 export const InviteLandingCard: React.FC<InviteLandingCardProps> = ({
   mode,
   totalCount,
@@ -366,73 +303,39 @@ export const InviteLandingCard: React.FC<InviteLandingCardProps> = ({
     return unregister;
   }, [onDismiss]);
 
-  const isSelectable = (r: InviteGroupRow) => r.status === 'available' || r.status === 'rejoin';
-  const hasAvailable = mode === 'signedIn' && rows.some(isSelectable);
-  const availableIds = new Set(rows.filter(isSelectable).map((r) => r.groupId));
+  const hasAvailable = mode === 'signedIn' && rows.some((r) => r.status === 'available');
+  const availableIds = new Set(rows.filter((r) => r.status === 'available').map((r) => r.groupId));
   const selectedAvailableCount = selectedGroupIds.filter((id) => availableIds.has(id)).length;
-  // Every choice on the sheet is a group they left: speak in "rejoin" terms.
-  const allRejoin = mode === 'signedIn' && rows.length > 0 && rows.every((r) => r.status === 'rejoin');
-  const actionVerb = allRejoin ? 'Rejoin' : 'Join';
-
-  // One group whose details we know: show it as the sheet's header instead
-  // of a one-item checklist.
-  const count = mode === 'signedOut' ? totalCount : rows.length;
-  const single = count === 1 && !!rows[0]?.name && (mode === 'signedOut' || isSelectable(rows[0])) ? rows[0] : null;
 
   const titleId = 'invite-landing-card-title';
   const title = mode === 'signedOut'
     ? `You're invited to ${totalCount} group${plural(totalCount)}`
-    : allRejoin
-      ? `Rejoin ${rows.length} group${plural(rows.length)}?`
-      : `You're invited to ${rows.length} group${plural(rows.length)}`;
-
-  const singleSubtitle = single
-    ? single.status === 'rejoin'
-      ? 'You left earlier — rejoin to see its balances'
-      : `You're invited${single.memberCount != null ? ` · ${single.memberCount} member${plural(single.memberCount)}` : ''}`
-    : '';
-
-  const subtitle = mode === 'signedOut'
-    ? 'Sign in to see the groups and pick which ones to join.'
-    : allRejoin
-      ? 'You left these earlier. Rejoin to see their balances again.'
-      : hasAvailable
-        ? 'Pick the ones to join.'
-        : "You're already part of everything in this invite.";
-
-  const joinLabel = busy
-    ? (allRejoin ? 'Rejoining…' : 'Joining…')
-    : single
-      ? `${actionVerb} group`
-      : `${actionVerb} ${selectedAvailableCount} group${plural(selectedAvailableCount)}`;
-
-  const singleError = single ? rowErrors?.[single.groupId] : undefined;
+    : `You're invited to ${rows.length} group${plural(rows.length)}`;
 
   return (
     <div
       role="dialog"
       aria-modal="true"
       aria-labelledby={titleId}
-      onClick={(e) => {
-        // Tapping the dimmed area outside the sheet = "Not now".
-        if (e.target === e.currentTarget && !busy) onDismiss();
-      }}
       style={{
         position: 'fixed',
         inset: 0,
         zIndex: 200000,
-        background: 'rgba(15,23,42,0.35)',
+        background: 'rgba(15,23,42,0.55)',
+        backdropFilter: 'blur(6px)',
         display: 'flex',
-        alignItems: 'flex-end',
+        alignItems: 'center',
         justifyContent: 'center',
-        animation: 'ilcFade 0.2s ease-out',
+        paddingTop: 'max(20px, env(safe-area-inset-top))',
+        paddingBottom: 'max(20px, env(safe-area-inset-bottom))',
+        paddingLeft: '20px',
+        paddingRight: '20px',
+        boxSizing: 'border-box',
       }}
     >
       <style>{`
         @keyframes ilcSpin { to { transform: rotate(360deg); } }
         @keyframes ilcShimmer { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
-        @keyframes ilcFade { from { opacity: 0; } to { opacity: 1; } }
-        @keyframes ilcSheetUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
         .ilc-shimmer-bar {
           background: linear-gradient(90deg, #F1F5F9 25%, #E2E8F0 50%, #F1F5F9 75%);
           background-size: 200% 100%;
@@ -440,136 +343,178 @@ export const InviteLandingCard: React.FC<InviteLandingCardProps> = ({
         }
       `}</style>
       <div
+        className="card shadow-xl"
         style={{
-          width: '100%',
-          maxWidth: '480px',
+          width: '90%',
+          maxWidth: '360px',
+          padding: '24px 20px',
+          borderRadius: '24px',
+          animation: 'slideUp 0.3s ease-out',
           background: '#FFFFFF',
-          borderRadius: '20px 20px 0 0',
-          padding: '10px 20px max(16px, env(safe-area-inset-bottom))',
-          boxSizing: 'border-box',
+          border: '1px solid rgba(0,0,0,0.05)',
+          position: 'relative',
           display: 'flex',
           flexDirection: 'column',
-          maxHeight: '85vh',
-          boxShadow: '0 -8px 24px rgba(15,23,42,0.12)',
-          animation: 'ilcSheetUp 0.28s cubic-bezier(0.32, 0.72, 0, 1)',
+          maxHeight: '90vh',
+          boxSizing: 'border-box',
         }}
       >
-        <div aria-hidden="true" style={{ width: '36px', height: '4px', borderRadius: '2px', background: '#E2E8F0', margin: '0 auto 16px', flexShrink: 0 }} />
+        <button
+          aria-label="Close"
+          onClick={onDismiss}
+          style={{
+            position: 'absolute',
+            top: '14px',
+            right: '14px',
+            width: '30px',
+            height: '30px',
+            borderRadius: '50%',
+            border: 'none',
+            background: '#F1F5F9',
+            color: '#64748B',
+            fontSize: '18px',
+            fontWeight: 700,
+            lineHeight: 1,
+            cursor: 'pointer',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 2,
+            flexShrink: 0,
+          }}
+        >
+          ×
+        </button>
 
-        {single ? (
-          <SingleGroupHeader row={single} titleId={titleId} titleRef={titleRef} subtitle={mode === 'signedOut' ? 'Sign in to join this group.' : singleSubtitle} />
-        ) : (
+        <h3
+          id={titleId}
+          ref={titleRef}
+          tabIndex={-1}
+          className="nunito"
+          style={{
+            fontSize: '18px', fontWeight: 900, color: '#0F172A', margin: '0 0 6px 0',
+            padding: '0 36px 0 0', boxSizing: 'border-box', lineHeight: 1.35, wordBreak: 'break-word',
+            outline: 'none', flexShrink: 0,
+          }}
+        >
+          {title}
+        </h3>
+
+        <p style={{ fontSize: '13px', color: '#64748B', fontWeight: 600, margin: '0 0 16px 0', lineHeight: 1.4, flexShrink: 0 }}>
+          {mode === 'signedOut'
+            ? 'Sign in to see the groups and pick which ones to join.'
+            : hasAvailable
+              ? "Choose the groups you'd like to join."
+              : "You're already part of everything in this invite."}
+        </p>
+
+        <div style={{ maxHeight: '46vh', overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '4px' }}>
+          {mode === 'signedOut' ? (
+            <SignedOutRows totalCount={totalCount} rows={rows} />
+          ) : (
+            rows.map((row, index) => {
+              if (row.status === 'available') {
+                return (
+                  <AvailableRow
+                    key={row.groupId}
+                    row={row}
+                    index={index}
+                    checked={selectedGroupIds.includes(row.groupId)}
+                    isJoining={joiningGroupId === row.groupId}
+                    busy={busy}
+                    error={rowErrors?.[row.groupId]}
+                    onToggleGroup={onToggleGroup}
+                  />
+                );
+              }
+              if (row.status === 'takenByOther') {
+                return <TakenByOtherRow key={row.groupId} row={row} index={index} />;
+              }
+              return <AlreadyMineOpenRow key={row.groupId} row={row} index={index} onOpenGroup={onOpenGroup} />;
+            })
+          )}
+        </div>
+
+        {mode === 'signedOut' && (
           <>
-            <h3
-              id={titleId}
-              ref={titleRef}
-              tabIndex={-1}
-              className="nunito"
-              style={{ fontSize: '17px', fontWeight: 900, color: '#0F172A', margin: '0 0 4px 0', lineHeight: 1.35, outline: 'none', flexShrink: 0 }}
+            <button
+              type="button"
+              onClick={onSignIn}
+              style={{
+                width: '100%',
+                height: '52px',
+                borderRadius: '26px',
+                border: '1.5px solid #FDBA74',
+                background: '#FFF7ED',
+                color: '#9A3412',
+                fontWeight: 700,
+                fontSize: '15px',
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: '12px',
+                marginTop: '16px',
+                flexShrink: 0,
+              }}
             >
-              {title}
-            </h3>
-            <p style={{ fontSize: '13px', color: '#64748B', fontWeight: 600, margin: '0 0 12px 0', lineHeight: 1.4, flexShrink: 0 }}>
-              {subtitle}
-            </p>
-            <div style={{ overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '2px', marginBottom: '16px' }}>
-              {mode === 'signedOut' ? (
-                <SignedOutRows totalCount={totalCount} rows={rows} />
-              ) : (
-                rows.map((row, index) => {
-                  if (isSelectable(row)) {
-                    return (
-                      <AvailableRow
-                        key={row.groupId}
-                        row={row}
-                        index={index}
-                        checked={selectedGroupIds.includes(row.groupId)}
-                        isJoining={joiningGroupId === row.groupId}
-                        busy={busy}
-                        error={rowErrors?.[row.groupId]}
-                        onToggleGroup={onToggleGroup}
-                      />
-                    );
-                  }
-                  if (row.status === 'takenByOther') {
-                    return <TakenByOtherRow key={row.groupId} row={row} index={index} />;
-                  }
-                  return <AlreadyMineOpenRow key={row.groupId} row={row} index={index} onOpenGroup={onOpenGroup} />;
-                })
-              )}
-            </div>
+              <GoogleIcon />
+              Continue with Google
+            </button>
           </>
         )}
 
-        {singleError && (
-          <div style={{ fontSize: '12px', fontWeight: 600, color: '#B91C1C', margin: '-8px 0 12px' }}>{singleError}</div>
-        )}
-
-        {mode === 'signedOut' ? (
-          <button
-            type="button"
-            onClick={onSignIn}
-            style={{
-              width: '100%',
-              height: '48px',
-              borderRadius: '14px',
-              border: '1px solid #E2E8F0',
-              background: '#FFFFFF',
-              color: '#0F172A',
-              fontWeight: 700,
-              fontSize: '15px',
-              cursor: 'pointer',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              gap: '10px',
-              flexShrink: 0,
-            }}
-          >
-            <GoogleIcon />
-            Continue with Google
-          </button>
-        ) : hasAvailable ? (
-          <button
-            type="button"
-            onClick={onJoinSelected}
-            disabled={busy || selectedAvailableCount === 0}
-            aria-busy={busy}
-            style={primaryButtonStyle(busy || selectedAvailableCount === 0)}
-          >
-            {busy && <Spinner size={16} color="#FFFFFF" />}
-            {joinLabel}
-          </button>
-        ) : (
-          <button
-            type="button"
-            onClick={onDismiss}
-            style={{ ...primaryButtonStyle(false), background: '#F1F5F9', color: '#334155' }}
-          >
-            Done
-          </button>
-        )}
-
-        {(mode === 'signedOut' || hasAvailable) && (
-          <button
-            type="button"
-            onClick={onDismiss}
-            disabled={busy}
-            style={{
-              width: '100%',
-              height: '40px',
-              marginTop: '4px',
-              border: 'none',
-              background: 'transparent',
-              color: '#64748B',
-              fontWeight: 700,
-              fontSize: '14px',
-              cursor: busy ? 'default' : 'pointer',
-              flexShrink: 0,
-            }}
-          >
-            Not now
-          </button>
+        {mode === 'signedIn' && (
+          hasAvailable ? (
+            <button
+              type="button"
+              onClick={onJoinSelected}
+              disabled={busy || selectedAvailableCount === 0}
+              aria-busy={busy}
+              style={{
+                width: '100%',
+                padding: '13px',
+                borderRadius: '14px',
+                border: 'none',
+                background: '#16A34A',
+                color: '#FFFFFF',
+                fontWeight: 700,
+                fontSize: '14px',
+                cursor: busy || selectedAvailableCount === 0 ? 'not-allowed' : 'pointer',
+                boxShadow: '0 4px 12px rgba(22, 163, 74, 0.3)',
+                marginTop: '16px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: '8px',
+                opacity: busy || selectedAvailableCount === 0 ? 0.6 : 1,
+                flexShrink: 0,
+              }}
+            >
+              {busy && <Spinner size={16} color="#FFFFFF" />}
+              {busy ? 'Joining…' : `Join ${selectedAvailableCount} group${plural(selectedAvailableCount)}`}
+            </button>
+          ) : (
+            <button
+              type="button"
+              onClick={onDismiss}
+              style={{
+                width: '100%',
+                padding: '13px',
+                borderRadius: '14px',
+                border: 'none',
+                background: '#F1F5F9',
+                color: '#334155',
+                fontWeight: 700,
+                fontSize: '14px',
+                cursor: 'pointer',
+                marginTop: '16px',
+                flexShrink: 0,
+              }}
+            >
+              Done
+            </button>
+          )
         )}
       </div>
     </div>

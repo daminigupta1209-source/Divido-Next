@@ -30,7 +30,6 @@ interface SidebarProps {
   onRequireSignIn?: () => boolean;
   onAddExpense?: () => void;
   setAnalyticsGroupId?: (id: string | number | null) => void;
-  onOpenGlobalSearch?: () => void;
 }
 
 export const Sidebar: React.FC<SidebarProps> = ({
@@ -58,7 +57,6 @@ export const Sidebar: React.FC<SidebarProps> = ({
   onRequireSignIn,
   onAddExpense,
   setAnalyticsGroupId,
-  onOpenGlobalSearch,
 }) => {
   const getSyncState = () => {
     switch (syncStatus) {
@@ -223,35 +221,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
         profilePhoto={profilePhoto}
       />
 
-      {onOpenGlobalSearch && (
-        <button
-          type="button"
-          aria-label="Search groups and friends"
-          onClick={() => {
-            onOpenGlobalSearch();
-            setIsSidebarOpen(false);
-          }}
-          style={{
-            width: '100%',
-            height: '44px',
-            borderRadius: '24px',
-            border: '2px solid #F1F5F9',
-            background: 'var(--bg)',
-            display: 'flex',
-            alignItems: 'center',
-            gap: '10px',
-            padding: '0 16px',
-            marginBottom: '24px',
-            cursor: 'pointer',
-          }}
-        >
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#64748B" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ opacity: 0.4, flexShrink: 0 }}>
-            <circle cx="11" cy="11" r="8" />
-            <line x1="21" y1="21" x2="16.65" y2="16.65" />
-          </svg>
-          <span style={{ fontSize: '14px', fontWeight: 600, color: '#94A3B8' }}>Search groups and friends</span>
-        </button>
-      )}
+
 
       <div style={{ width: '100%', marginBottom: '24px' }}>
         <p

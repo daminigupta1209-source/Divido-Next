@@ -5,7 +5,6 @@ import {
   visibleEntryCount,
   hasActionableEntry,
   claimInviteSpot,
-  rejoinInviteSpot,
   InviteGroupRow,
   InviteMemberRow,
   SupabaseLike,
@@ -58,34 +57,6 @@ describe('buildInviteLandingModel', () => {
   it('marks unavailable when the matched row is is_removed', () => {
     const groups = [group({ id: 'g1' })];
     const members = [member({ id: 'm1', group_id: 'g1', member_key: 'mk1', is_removed: true })];
-    const entries = buildInviteLandingModel([spot('g1', 'mk1')], groups, members, 'me@example.com');
-    expect(entries[0].status).toBe('unavailable');
-  });
-
-  it('marks rejoinable when the spot is my own "(Left)" row', () => {
-    const groups = [group({ id: 'g1' })];
-    const members = [member({ id: 'm1', group_id: 'g1', member_key: 'mk1', name: 'Me (Left)', user_email: 'me@example.com' })];
-    const entries = buildInviteLandingModel([spot('g1', 'mk1')], groups, members, 'me@example.com');
-    expect(entries[0].status).toBe('rejoinable');
-    expect(entries[0].targetRow?.id).toBe('m1');
-  });
-
-  it('marks rejoinable via my own "(Left)" row when the spot is taken by someone else', () => {
-    const groups = [group({ id: 'g1' })];
-    const members = [
-      member({ id: 'm1', group_id: 'g1', member_key: 'mk1', user_email: 'other@example.com' }),
-      member({ id: 'm2', group_id: 'g1', name: 'Me (Left)', invite_email: 'ME@example.com' }),
-    ];
-    const entries = buildInviteLandingModel([spot('g1', 'mk1')], groups, members, 'me@example.com');
-    expect(entries[0].status).toBe('rejoinable');
-    expect(entries[0].targetRow?.id).toBe('m2');
-    expect(defaultSelectedGroupIds(entries)).toEqual(['g1']);
-    expect(hasActionableEntry(entries)).toBe(true);
-  });
-
-  it('does not offer a rejoin through a removed "(Left)" row', () => {
-    const groups = [group({ id: 'g1' })];
-    const members = [member({ id: 'm1', group_id: 'g1', member_key: 'mk1', name: 'Me (Left)', user_email: 'me@example.com', is_removed: true })];
     const entries = buildInviteLandingModel([spot('g1', 'mk1')], groups, members, 'me@example.com');
     expect(entries[0].status).toBe('unavailable');
   });
@@ -410,48 +381,5 @@ describe('claimInviteSpot', () => {
     expect(r2.status).toBe('joined');
     if (r2.status !== 'joined') throw new Error('unreachable');
     expect(r2.claimedName).toBe('Priya');
-  });
-});
-
-describe('rejoinInviteSpot', () => {
-  it('reactivates my own "(Left)" row under its old name', async () => {
-    const { supabase, state } = makeFakeSupabase({
-      group_members: [
-        member({ id: 'm1', group_id: 'g1', name: 'Asha (Left)', user_email: 'me@example.com', is_pending: true, link_request_email: 'me@example.com' }),
-        member({ id: 'm2', group_id: 'g1', name: 'Ravi', user_email: 'ravi@example.com' }),
-      ],
-    });
-    const result = await rejoinInviteSpot(supabase, { groupRow: baseGroupRow, leftRow: { id: 'm1', name: 'Asha (Left)' }, myEmail: 'me@example.com' });
-    expect(result.status).toBe('rejoined');
-    if (result.status !== 'rejoined') throw new Error('unreachable');
-    expect(result.rejoinedName).toBe('Asha');
-    expect(result.group.members).toEqual(expect.arrayContaining(['Asha', 'Ravi']));
-    expect(state.group_members[0]).toMatchObject({ name: 'Asha', is_pending: false, link_request_email: null });
-  });
-
-  it("refuses a row that isn't mine", async () => {
-    const { supabase, state } = makeFakeSupabase({
-      group_members: [member({ id: 'm1', group_id: 'g1', name: 'Asha (Left)', user_email: 'other@example.com' })],
-    });
-    const result = await rejoinInviteSpot(supabase, { groupRow: baseGroupRow, leftRow: { id: 'm1', name: 'Asha (Left)' }, myEmail: 'me@example.com' });
-    expect(result.status).toBe('error');
-    expect(state.group_members[0].name).toBe('Asha (Left)');
-  });
-
-  it('returns alreadyMine when the row was already reactivated', async () => {
-    const { supabase } = makeFakeSupabase({
-      group_members: [member({ id: 'm1', group_id: 'g1', name: 'Asha', user_email: 'me@example.com' })],
-    });
-    const result = await rejoinInviteSpot(supabase, { groupRow: baseGroupRow, leftRow: { id: 'm1', name: 'Asha (Left)' }, myEmail: 'me@example.com' });
-    expect(result).toEqual({ status: 'alreadyMine' });
-  });
-
-  it('reports an error when the write is silently blocked', async () => {
-    const { supabase } = makeFakeSupabase(
-      { group_members: [member({ id: 'm1', group_id: 'g1', name: 'Asha (Left)', user_email: 'me@example.com' })] },
-      { blockClaimUpdate: true },
-    );
-    const result = await rejoinInviteSpot(supabase, { groupRow: baseGroupRow, leftRow: { id: 'm1', name: 'Asha (Left)' }, myEmail: 'me@example.com' });
-    expect(result.status).toBe('error');
   });
 });

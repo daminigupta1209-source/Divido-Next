@@ -1,13 +1,13 @@
 import React, { useState, useRef, useEffect, useMemo } from 'react';
 import { BalanceDisplay } from './BalanceDisplay';
 
-import { Group, UserMetadata, GlobalSettleData } from '../lib/types';
+import { Group, Expense, UserMetadata, GlobalSettleData } from '../lib/types';
 import { simplifyMultiCurrencyDebts, computeRawPairwiseTransactions } from '../lib/calculations';
-import { findDuplicatePeople, isValidEmail, type DuplicateEntry, type DuplicatePerson } from '../lib/identity';
+import { asyncBatchComputeGroups } from '../lib/workerHelper';
+import { getPersonKey, resolveSelfKey, toIdentitySpace, withoutEmailTag, buildNameEmailResolver, buildNameIdentityResolver, findDuplicatePeople, isValidEmail, type DuplicateEntry, type DuplicatePerson } from '../lib/identity';
 import { worldCurrencies, formatExactAmount, formatCompactAmount } from '../lib/utils';
 import { SearchableCurrencyPicker } from './SearchableCurrencyPicker';
 import { StyledDropdown } from './StyledDropdown';
-import type { FriendsBalancesResult } from '../hooks/useFriendsBalances';
 
 // Small translucent count chip for extra currencies in the Net Balance pill.
 const pillChipStyle: React.CSSProperties = { background: 'rgba(255,255,255,0.28)', borderRadius: '999px', padding: '1px 7px', fontSize: '11px', fontWeight: 700, flexShrink: 0 };
@@ -137,7 +137,9 @@ const pickAmount = (
 
 interface FriendsViewProps {
   groups: Group[];
+  expenses: Expense[];
   me: string;
+  userEmail?: string;
   setView: (view: string) => void;
   setSelectedId: (id: string | number | null) => void;
   setGlobalSettleData: (data: GlobalSettleData | null) => void;
@@ -145,7 +147,7 @@ interface FriendsViewProps {
   memberAvatars?: Record<string, string>;
   onMergePeople?: (entries: DuplicateEntry[], canonicalEmail?: string) => void | Promise<void>;
   setUserMetadata: (meta: Record<string, UserMetadata>) => void;
-  friendsBalances: FriendsBalancesResult;
+  searchQuery?: string;
   showConvertModal?: boolean;
   setShowConvertModal?: (b: boolean) => void;
   onQuickAddExpense?: (friendName: string) => void;
@@ -153,7 +155,9 @@ interface FriendsViewProps {
 
 export const FriendsView: React.FC<FriendsViewProps> = ({
   groups,
+  expenses,
   me,
+  userEmail,
   setView,
   setSelectedId,
   setGlobalSettleData,
@@ -161,13 +165,17 @@ export const FriendsView: React.FC<FriendsViewProps> = ({
   memberAvatars,
   onMergePeople,
   setUserMetadata,
-  friendsBalances,
+  searchQuery = '',
   showConvertModal = false,
   setShowConvertModal = () => {},
   onQuickAddExpense,
 }) => {
   const [showInfo, setShowInfo] = useState(false);
   const [showDetails, setShowDetails] = useState(false);
+  const [showFilters, setShowFilters] = useState(false);
+  const [search, setSearch] = useState('');
+  const [showFriendsDropdown, setShowFriendsDropdown] = useState(false);
+  const [selectedFriends, setSelectedFriends] = useState<string[]>([]);
   const [balanceFilter, setBalanceFilter] = useState<'all' | 'owed' | 'owe'>('all');
   // Tap the Net Balance bar → sheet with every currency + filter choices.
   const [showNetSheet, setShowNetSheet] = useState(false);
@@ -215,7 +223,178 @@ export const FriendsView: React.FC<FriendsViewProps> = ({
     return [...ranked, ...rest];
   }, [knownEmails]);
 
-  const { friends, isDupName, distinctCurrencies, allSharedMembers, isCalculating } = friendsBalances;
+  // Heavy balance derivation depends only on groups/expenses/me, so memoize it
+  // to avoid recomputing every friend's balance on unrelated re-renders (typing
+  // in the search box, opening a dropdown, etc.).
+  const [friendsData, setFriendsData] = useState<{
+    friends: { id: string; name: string; groups: string[]; bals: Record<string, number> }[];
+    isDupName: (name: string) => boolean;
+    distinctCurrencies: string[];
+    allSharedMembers: Set<string>;
+  }>({
+    friends: [],
+    isDupName: () => false,
+    distinctCurrencies: [],
+    allSharedMembers: new Set<string>()
+  });
+  const [isCalculatingFriends, setIsCalculatingFriends] = useState(true);
+
+  useEffect(() => {
+    let active = true;
+    const compute = async () => {
+      setIsCalculatingFriends(true);
+      const masterBal: Record<string, Record<string, number>> = {};
+      const idMeta: Record<string, { name: string; groups: Set<string> }> = {};
+      const bumpBal = (id: string, name: string, groupName: string | null, curr: string, delta: number) => {
+        if (!masterBal[id]) masterBal[id] = {};
+        masterBal[id][curr] = (masterBal[id][curr] || 0) + delta;
+        if (!idMeta[id]) idMeta[id] = { name, groups: new Set() };
+        if (groupName) idMeta[id].groups.add(groupName);
+      };
+      const allSharedMembers = new Set<string>();
+
+      // Prepare batch request. Each group runs in identity space: every name on
+      // an expense resolves through its recorded member_key (then the roster),
+      // so renamed / re-claimed people keep one ledger — the same path the
+      // settle sheet uses, so the two can't disagree.
+      let myEmail = userEmail || '';
+      if (!myEmail) { try { myEmail = localStorage.getItem('divido_email') || ''; } catch { /* ignore */ } }
+      let fullName = ''; try { fullName = localStorage.getItem('divido_username') || ''; } catch { /* ignore */ }
+      const prep = groups.map((g) => {
+        const groupExps = expenses.filter((e) => !e.isDeleted && String(e.gId) === String(g.id));
+        let myG = me;
+        let claimName = ''; try { claimName = localStorage.getItem(`divido_identity_${g.id}`) || ''; } catch { /* ignore */ }
+        if (claimName) myG = claimName;
+        // Identify "me" in THIS group robustly (see resolveSelfKey): the global
+        // `me` is only the first name, but the user may be enrolled under their
+        // full name in some groups, so match by the stable email when available
+        // and fall back through full name / first name / per-group claim. Getting
+        // this wrong silently drops the whole group from All balances.
+        const myKey = resolveSelfKey(g, { email: myEmail, fullName, firstName: me, claim: claimName });
+        const { expenses: keyedExps, keyToName } = toIdentitySpace(g, groupExps);
+        const effectiveMembers = Array.from(new Set([
+          myKey,
+          ...keyedExps.reduce((acc, e) => {
+            if (e.paid) acc.add(e.paid);
+            if (Array.isArray(e.splitters)) e.splitters.forEach((s) => acc.add(s));
+            return acc;
+          }, new Set<string>()),
+        ]));
+        return { g, myG, myKey, keyedExps, keyToName, effectiveMembers };
+      });
+
+      const groupsData = prep.map(({ g, keyedExps, effectiveMembers }) => ({
+        type: (g.id !== 'STANDALONE') ? 'simplify' as const : 'raw' as const,
+        members: effectiveMembers,
+        expenses: keyedExps,
+        defaultCurrency: g.currency || '₹',
+        gId: String(g.id)
+      }));
+
+      const batchResults = await asyncBatchComputeGroups(groupsData);
+
+      prep.forEach(({ g, myG, myKey, keyToName, effectiveMembers }) => {
+        const nameOf = (k: string) => withoutEmailTag(g, keyToName[k] ?? (k === myKey ? myG : k));
+        effectiveMembers.forEach((k) => { if (k !== myKey) allSharedMembers.add(nameOf(k)); });
+        (g.members || []).forEach((m) => {
+          const name = m.replace(' (Left)', '');
+          if (name && getPersonKey(g, name) !== myKey) allSharedMembers.add(name);
+        });
+
+        const gLabel = g.isDirect ? 'Non-Group' : g.name;
+
+        const groupTransactions = batchResults[String(g.id)] || [];
+
+        groupTransactions.forEach((t) => {
+          if (t.from === myKey) {
+            Object.entries(t.balances).forEach(([curr, val]) => {
+              bumpBal(t.to, nameOf(t.to), gLabel, curr, -val);
+            });
+          } else if (t.to === myKey) {
+            Object.entries(t.balances).forEach(([curr, val]) => {
+              bumpBal(t.from, nameOf(t.from), gLabel, curr, val);
+            });
+          }
+        });
+      });
+
+      const standaloneExps = expenses.filter((e) => !e.isDeleted && e.gId === 'STANDALONE');
+      const standaloneMembers = Array.from(new Set([
+        me,
+        ...standaloneExps.flatMap((e) => [e.paid, ...(e.splitters || [])])
+      ]));
+      standaloneMembers.forEach((m) => { if (m && m !== me) allSharedMembers.add(m); });
+
+      // Resolve a Non-Group person to their EMAIL identity (from any group they're
+      // in) so they merge into their in-group self instead of showing as a
+      // separate name-keyed duplicate that flickers as standalone data syncs.
+      // Never resolve to MY OWN email (would list me as my own friend) — keep the
+      // name in that case; the `m === me` guards below still exclude me by name.
+      const nameEmail = buildNameEmailResolver(groups);
+      let selfEmail = (userEmail || '').toLowerCase();
+      if (!selfEmail) { try { selfEmail = (localStorage.getItem('divido_email') || '').toLowerCase(); } catch { /* ignore */ } }
+      // No email? Fall back to the one identity this name has across groups
+      // (e.g. a person_id), so a Non-Group "Chhutki" joins her Raipur self.
+      // Ambiguous names stay separate; never resolve to myself.
+      const nameIdentity = buildNameIdentityResolver(groups);
+      const myKeys = new Set(prep.map((x) => String(x.myKey).toLowerCase()));
+      const standaloneId = (nm: string) => {
+        const em = nameEmail(nm) || nameIdentity(nm);
+        return em && em.toLowerCase() !== selfEmail && !myKeys.has(em.toLowerCase()) ? em : nm;
+      };
+
+      standaloneExps.forEach((e) => {
+        const c = e.currency || '₹';
+        const splitters = e.splitters || [e.paid];
+        const amount = e.amt || 0;
+
+        if (e.paid === me) {
+          splitters.forEach((m) => {
+            if (m === me) return;
+            const otherShare =
+              !e.mode || e.mode === 'Equally'
+                ? amount / splitters.length
+                : e.mode === 'Unequally'
+                ? parseFloat(e.shares?.[m]?.toString() || '0')
+                : (amount * parseFloat(e.shares?.[m]?.toString() || '0')) / 100;
+            bumpBal(standaloneId(m), m, 'Non-Group', c, otherShare);
+          });
+        } else if (splitters.includes(me)) {
+          const payer = e.paid;
+          const myShare =
+            !e.mode || e.mode === 'Equally'
+              ? amount / splitters.length
+              : e.mode === 'Unequally'
+              ? parseFloat(e.shares?.[me]?.toString() || '0')
+              : (amount * parseFloat(e.shares?.[me]?.toString() || '0')) / 100;
+          bumpBal(standaloneId(payer), payer, 'Non-Group', c, -myShare);
+        }
+      });
+
+      const friends = Object.entries(masterBal).map(([id, bals]) => ({
+        id,
+        name: idMeta[id]?.name || id,
+        groups: idMeta[id] ? Array.from(idMeta[id].groups) : [],
+        bals,
+      }));
+      const dupNameCount: Record<string, number> = {};
+      friends.forEach((f) => { const n = f.name.toLowerCase(); dupNameCount[n] = (dupNameCount[n] || 0) + 1; });
+      const isDupName = (name: string) => (dupNameCount[name.toLowerCase()] || 0) > 1;
+
+      const distinctCurrencies = Array.from(
+        new Set(friends.flatMap((f) => Object.entries(f.bals).filter(([_, v]) => Math.abs(v) > 0.01).map(([c]) => c)))
+      );
+
+      if (active) {
+        setFriendsData({ friends, isDupName, distinctCurrencies, allSharedMembers });
+        setIsCalculatingFriends(false);
+      }
+    };
+    compute();
+    return () => { active = false; };
+  }, [groups, expenses, me, userEmail]);
+
+  const { friends, isDupName, distinctCurrencies, allSharedMembers } = friendsData;
 
   // Fetch live rates (er-api, same source as the group converter) for every currency → target
   const fetchRatesTo = async (target: string) => {
@@ -297,9 +476,55 @@ export const FriendsView: React.FC<FriendsViewProps> = ({
   const filteredFriends = friends.filter((f) => {
     const isOwed = Object.values(f.bals).some((v) => v > 0.01);
     const isOwe = Object.values(f.bals).some((v) => v < -0.01);
+    const q = (search || searchQuery || '').trim().toLowerCase();
+    if (q && !f.name.toLowerCase().includes(q)) return false;
+    if (selectedFriends.length > 0 && !selectedFriends.includes(f.id)) return false;
     if (balanceFilter === 'owed' && !isOwed) return false;
     if (balanceFilter === 'owe' && !isOwe) return false;
     return true;
+  });
+
+  const toggleFriend = (id: string) => {
+    setSelectedFriends((prev) =>
+      prev.includes(id) ? prev.filter((n) => n !== id) : [...prev, id]
+    );
+  };
+
+  const friendsLabel = selectedFriends.length === 0
+    ? 'All Friends'
+    : selectedFriends.length === 1
+    ? (friends.find((f) => f.id === selectedFriends[0])?.name || 'Friend')
+    : `${selectedFriends.length} Friends`;
+
+  const dropdownStyle: React.CSSProperties = {
+    position: 'relative',
+    flex: 1,
+    minWidth: 0,
+  };
+
+  const btnStyle: React.CSSProperties = {
+    display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '5px',
+    width: '100%', boxSizing: 'border-box',
+    padding: '6px 12px', borderRadius: '20px',
+    border: '1.5px solid #E2E8F0', background: 'var(--w)',
+    fontSize: '12px', fontWeight: 600, color: '#475569',
+    cursor: 'pointer', whiteSpace: 'nowrap',
+    boxShadow: '0 1px 4px rgba(0,0,0,0.04)',
+  };
+
+  const popupStyle: React.CSSProperties = {
+    position: 'absolute', top: 'calc(100% + 6px)', left: 0,
+    background: 'var(--w)', border: '1.5px solid #F1F5F9',
+    borderRadius: '14px', boxShadow: '0 8px 20px rgba(0,0,0,0.1)',
+    zIndex: 200, width: 'max-content', minWidth: '130px', padding: '6px',
+  };
+
+  const optionStyle = (active: boolean): React.CSSProperties => ({
+    display: 'flex', alignItems: 'center', gap: '8px',
+    padding: '8px 12px', borderRadius: '8px', cursor: 'pointer',
+    fontSize: '12px', fontWeight: 600,
+    color: active ? '#16A34A' : '#1E293B',
+    background: active ? '#F0FDF4' : 'transparent',
   });
 
   return (
@@ -324,7 +549,7 @@ export const FriendsView: React.FC<FriendsViewProps> = ({
           suggestEmails={suggestEmails}
         />
       )}
-      {/* Universal Net Balance Card */}
+      {/* Universal Net Balance Card — kept above the search bar */}
       <div style={{ marginBottom: '18px', width: '100%', animation: 'fadeIn 0.25s ease-out' }}>
         <span style={{ fontSize: '11px', fontWeight: 700, letterSpacing: '1.5px', textTransform: 'uppercase', color: '#B0A79C', marginBottom: '10px', marginLeft: '2px', display: 'block' }}>
           {balanceFilter === 'owe' ? 'Net Payable' : balanceFilter === 'owed' ? 'Net Receivable' : 'Net Balance'}
@@ -486,6 +711,39 @@ export const FriendsView: React.FC<FriendsViewProps> = ({
         );
       })()}
 
+      {/* Search + funnel row */}
+      <div style={{ display: 'flex', gap: '10px', alignItems: 'center', marginBottom: '16px', width: '100%' }}>
+        <div style={{ position: 'relative', flex: 1, lineHeight: 0, fontSize: 0 }}>
+          <svg
+            viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"
+            style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', width: '13px', height: '13px', opacity: 0.4, pointerEvents: 'none', color: '#64748B', zIndex: 2 }}
+          >
+            <circle cx="11" cy="11" r="8" />
+            <line x1="21" y1="21" x2="16.65" y2="16.65" />
+          </svg>
+          <input
+            type="search"
+            placeholder="Search friends..."
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            style={{ display: 'block', width: '100%', height: '38px', lineHeight: 'normal', fontSize: '13px', margin: 0, padding: '0 12px 0 34px', borderRadius: '24px', border: '2px solid #F1F5F9', outline: 'none', fontWeight: 600, background: 'var(--w)', color: '#475569', boxSizing: 'border-box', verticalAlign: 'top' }}
+          />
+        </div>
+
+        <button
+          onClick={(e) => { e.stopPropagation(); setShowFilters(!showFilters); }}
+          title="Filters"
+          style={{ background: 'none', border: 'none', cursor: 'pointer', width: '44px', height: '44px', padding: 0, opacity: showFilters || selectedFriends.length > 0 || balanceFilter !== 'all' ? 1 : 0.55, transition: '0.2s all', display: 'flex', alignItems: 'center', justifyContent: 'center', color: selectedFriends.length > 0 || balanceFilter !== 'all' ? '#F59E0B' : '#475569', flexShrink: 0 }}
+        >
+          <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" style={{ width: '18px', height: '18px' }}>
+            <path d="M22 3H2L10 12.46V19L14 21V12.46L22 3Z" stroke="currentColor" strokeWidth="2" strokeLinejoin="round" strokeLinecap="round" />
+          </svg>
+          {balanceFilter !== 'all' && (
+            <span style={{ position: 'absolute', marginLeft: '16px', marginTop: '-14px', width: '8px', height: '8px', borderRadius: '50%', background: balanceFilter === 'owe' ? '#E11D48' : '#10B981', border: '1.5px solid #FFFFFF' }} />
+          )}
+        </button>
+      </div>
+
       {balanceFilter !== 'all' && (
         <div style={{ display: 'flex', marginTop: '-8px', marginBottom: '14px' }}>
           <button
@@ -497,6 +755,45 @@ export const FriendsView: React.FC<FriendsViewProps> = ({
             {balanceFilter === 'owe' ? 'To pay' : 'To collect'}
             <span style={{ fontSize: '13px', lineHeight: 1 }}>✕</span>
           </button>
+        </div>
+      )}
+
+      {/* Filter dropdowns — revealed by the funnel */}
+      {showFilters && (
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '24px', animation: 'fadeSlideIn 0.5s ease-out', flexWrap: 'nowrap' }}>
+          {/* Friends filter */}
+          <div style={dropdownStyle}>
+            <button style={btnStyle} onClick={(e) => { e.stopPropagation(); setShowFriendsDropdown(!showFriendsDropdown); }}>
+              <span>{friendsLabel}</span><span style={{ fontSize: '9px', marginLeft: '2px' }}>▼</span>
+            </button>
+            {showFriendsDropdown && (
+              <>
+                <div onClick={() => setShowFriendsDropdown(false)} style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, zIndex: 199 }} />
+                <div style={popupStyle}>
+                  <div style={optionStyle(selectedFriends.length === 0)} onClick={() => { setSelectedFriends([]); setShowFriendsDropdown(false); }}>
+                    <div style={{ width: '16px', height: '16px', borderRadius: '4px', border: `2px solid ${selectedFriends.length === 0 ? '#16A34A' : '#CBD5E1'}`, background: selectedFriends.length === 0 ? '#16A34A' : '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                      {selectedFriends.length === 0 && <span style={{ color: '#fff', fontSize: '10px', fontWeight: 600 }}>✓</span>}
+                    </div>
+                    <span>All Friends</span>
+                  </div>
+                  {friends.map((f) => (
+                    <div key={f.id} style={optionStyle(selectedFriends.includes(f.id))} onClick={() => toggleFriend(f.id)}>
+                      <div style={{ width: '16px', height: '16px', borderRadius: '4px', border: `2px solid ${selectedFriends.includes(f.id) ? '#16A34A' : '#CBD5E1'}`, background: selectedFriends.includes(f.id) ? '#16A34A' : '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                        {selectedFriends.includes(f.id) && <span style={{ color: '#fff', fontSize: '10px', fontWeight: 600 }}>✓</span>}
+                      </div>
+                      <span style={{ display: 'flex', flexDirection: 'column', minWidth: 0 }}>
+                        <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{f.name}</span>
+                        {isDupName(f.name) && f.groups.length > 0 && (
+                          <span style={{ fontSize: '10px', color: '#94A3B8', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{f.groups.join(', ')}</span>
+                        )}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              </>
+            )}
+          </div>
+
         </div>
       )}
 
