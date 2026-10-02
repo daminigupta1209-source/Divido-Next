@@ -52,7 +52,11 @@ const normEmail = (s: string | null | undefined): string => (s || '').trim().toL
 // group (first spot per group wins).
 // ─────────────────────────────────────────────────────────────────────────
 
-export type InviteEntryStatus = 'joinable' | 'alreadyMine' | 'takenByOther' | 'unavailable';
+// 'rejoinable': the opener left this group earlier (their own "(Left)" row is
+// still there) and the link has no open spot for them — they come back by
+// reactivating that row (see rejoinInviteSpot). `targetRow` is then their own
+// past row, not the spot the link named.
+export type InviteEntryStatus = 'joinable' | 'rejoinable' | 'alreadyMine' | 'takenByOther' | 'unavailable';
 
 export interface InviteLandingEntry {
   groupId: string;
@@ -109,13 +113,26 @@ export const buildInviteLandingModel = (
     const alreadyActiveElsewhere =
       !!myEmailNorm && groupMembers.some((m) => isActiveMemberRow(m) && normEmail(m.user_email) === myEmailNorm);
 
+    // My own past "(Left)" row here, if any (leaving keeps the email on it).
+    const ownLeftRow = myEmailNorm
+      ? groupMembers.find((m) => !m.is_removed && isLeftName(m.name) &&
+          (normEmail(m.user_email) === myEmailNorm || normEmail(m.invite_email) === myEmailNorm))
+      : undefined;
+
     let status: InviteEntryStatus;
+    let resolvedRow = targetRow;
     if (alreadyActiveElsewhere) {
       status = 'alreadyMine';
+    } else if (targetRow && !targetRow.is_removed && !isLeftName(targetRow.name) && !targetRow.user_email) {
+      // An open spot for me — claiming it also hides my old "(Left)" row.
+      status = 'joinable';
+    } else if (ownLeftRow) {
+      // The link's spot is my old (now "(Left)") row, or is gone/taken —
+      // either way I can come back as my past self.
+      status = 'rejoinable';
+      resolvedRow = ownLeftRow;
     } else if (!targetRow || targetRow.is_removed || isLeftName(targetRow.name)) {
       status = 'unavailable';
-    } else if (!targetRow.user_email) {
-      status = 'joinable';
     } else if (normEmail(targetRow.user_email) === myEmailNorm) {
       status = 'alreadyMine';
     } else {
@@ -128,7 +145,7 @@ export const buildInviteLandingModel = (
       groupName: groupRow.name || '',
       emoji: groupRow.emoji || undefined,
       activeMemberCount,
-      targetRow,
+      targetRow: resolvedRow,
       status,
     });
   }
@@ -136,10 +153,15 @@ export const buildInviteLandingModel = (
   return entries;
 };
 
+// Spots the opener can act on: claim an open spot, or come back to a group
+// they left.
+export const isActionableStatus = (status: InviteEntryStatus): boolean =>
+  status === 'joinable' || status === 'rejoinable';
+
 // Default selection for a multi-spot landing screen: only the spots the
-// opener can actually claim.
+// opener can actually claim or rejoin.
 export const defaultSelectedGroupIds = (entries: InviteLandingEntry[]): string[] =>
-  entries.filter((e) => e.status === 'joinable').map((e) => e.groupId);
+  entries.filter((e) => isActionableStatus(e.status)).map((e) => e.groupId);
 
 // Entries worth showing on the landing screen at all (a gone/unavailable spot
 // is silently skipped rather than rendered as an error row).
@@ -148,7 +170,7 @@ export const visibleEntryCount = (entries: InviteLandingEntry[]): number =>
 
 // Whether the link, as opened, lets this person actually join anything.
 export const hasActionableEntry = (entries: InviteLandingEntry[]): boolean =>
-  entries.some((e) => e.status === 'joinable');
+  entries.some((e) => isActionableStatus(e.status));
 
 // ─────────────────────────────────────────────────────────────────────────
 // B) Claim routine — seats `myEmail` into one group_members row and, if the
@@ -308,52 +330,109 @@ export async function claimInviteSpot(supabase: SupabaseLike, params: ClaimInvit
     // Put the group into local state WITH its roster before the caller
     // navigates, so the detail screen renders immediately instead of a blank
     // / stale group until the background cloud-load catches up.
-    let freshMembers: string[] = [];
-    let freshPending: string[] = [];
-    const memberIdentities: Record<string, string> = {};
-    try {
-      const { data: gm } = await supabase
-        .from<InviteMemberRow>('group_members')
-        .select('*')
-        .eq('group_id', groupRow.id)
-        .order('id', { ascending: true });
-      if (gm) {
-        const activeMems = gm.filter((m) => !m.link_request_email || !m.is_pending || String(m.name).endsWith(' (Left)'));
-        freshMembers = Array.from(new Set(activeMems.map((m) => titleCaseName(m.name))));
-        freshPending = Array.from(
-          new Set(
-            activeMems
-              .filter((m) => m.is_pending && !m.user_email && !String(m.name).endsWith(' (Left)'))
-              .map((m) => titleCaseName(m.name)),
-          ),
-        );
-        activeMems.forEach((m) => {
-          const dn = titleCaseName(m.name);
-          const identity =
-            (m.user_email ? m.user_email.toLowerCase() : '') ||
-            (m.invite_email ? m.invite_email.toLowerCase() : '') ||
-            m.person_id ||
-            dn.replace(PLACEHOLDER_LEFT_STRIP_RE, '');
-          if (!memberIdentities[dn]) memberIdentities[dn] = identity;
-        });
-      }
-    } catch {
-      /* background cloud-load will fill it in, same fallback as the original */
-    }
-
-    const group: Group = {
-      id: groupRow.id,
-      name: groupRow.name,
-      currency: groupRow.currency || '₹',
-      emoji: groupRow.emoji || undefined,
-      simplifyDebts: groupRow.simplify_debts || false,
-      createdDate: groupRow.created_date || (groupRow.created_at ? String(groupRow.created_at).split('T')[0] : undefined),
-      members: freshMembers.length ? freshMembers : [claimedName],
-      pendingMembers: freshPending,
-      memberIdentities,
-    };
+    const group = await loadGroupSnapshot(supabase, groupRow, claimedName);
 
     return { status: 'joined', claimedName, group };
+  } catch (err) {
+    return { status: 'error', message: err instanceof Error ? err.message : String(err) };
+  }
+}
+
+// Fresh roster for a group the opener just joined/rejoined, shaped like the
+// app's local `Group`. Falls back to just `myName` when the read fails — the
+// background cloud-load fills it in, same fallback as the original.
+async function loadGroupSnapshot(supabase: SupabaseLike, groupRow: InviteGroupRow, myName: string): Promise<Group> {
+  let freshMembers: string[] = [];
+  let freshPending: string[] = [];
+  const memberIdentities: Record<string, string> = {};
+  try {
+    const { data: gm } = await supabase
+      .from<InviteMemberRow>('group_members')
+      .select('*')
+      .eq('group_id', groupRow.id)
+      .order('id', { ascending: true });
+    if (gm) {
+      const activeMems = gm.filter((m) => !m.link_request_email || !m.is_pending || String(m.name).endsWith(' (Left)'));
+      freshMembers = Array.from(new Set(activeMems.map((m) => titleCaseName(m.name))));
+      freshPending = Array.from(
+        new Set(
+          activeMems
+            .filter((m) => m.is_pending && !m.user_email && !String(m.name).endsWith(' (Left)'))
+            .map((m) => titleCaseName(m.name)),
+        ),
+      );
+      activeMems.forEach((m) => {
+        const dn = titleCaseName(m.name);
+        const identity =
+          (m.user_email ? m.user_email.toLowerCase() : '') ||
+          (m.invite_email ? m.invite_email.toLowerCase() : '') ||
+          m.person_id ||
+          dn.replace(PLACEHOLDER_LEFT_STRIP_RE, '');
+        if (!memberIdentities[dn]) memberIdentities[dn] = identity;
+      });
+    }
+  } catch {
+    /* background cloud-load will fill it in, same fallback as the original */
+  }
+
+  return {
+    id: groupRow.id,
+    name: groupRow.name,
+    currency: groupRow.currency || '₹',
+    emoji: groupRow.emoji || undefined,
+    simplifyDebts: groupRow.simplify_debts || false,
+    createdDate: groupRow.created_date || (groupRow.created_at ? String(groupRow.created_at).split('T')[0] : undefined),
+    members: freshMembers.length ? freshMembers : [myName],
+    pendingMembers: freshPending,
+    memberIdentities,
+  };
+}
+
+// ─────────────────────────────────────────────────────────────────────────
+// C) Rejoin routine — brings the opener back into a group they left by
+// reactivating their own "(Left)" row. Same name and same history, so no
+// expense rewrite is needed. The caller logs the "X rejoined" activity and
+// notifies the group. The row is re-read first so a stale landing model can't
+// reactivate a row that isn't (or is no longer) this person's past spot.
+// ─────────────────────────────────────────────────────────────────────────
+
+export type RejoinInviteSpotResult =
+  | { status: 'rejoined'; rejoinedName: string; group: Group }
+  | { status: 'alreadyMine' }
+  | { status: 'error'; message: string };
+
+export async function rejoinInviteSpot(
+  supabase: SupabaseLike,
+  params: { groupRow: InviteGroupRow; leftRow: Pick<InviteMemberRow, 'id' | 'name'>; myEmail: string },
+): Promise<RejoinInviteSpotResult> {
+  try {
+    const { groupRow, leftRow, myEmail } = params;
+    const myEmailNorm = normEmail(myEmail);
+
+    const { data: freshRow, error: readErr } = await supabase
+      .from<InviteMemberRow>('group_members')
+      .select('*')
+      .eq('id', leftRow.id)
+      .maybeSingle();
+    if (readErr) return { status: 'error', message: readErr.message };
+    if (!freshRow || freshRow.is_removed) return { status: 'error', message: 'Your past spot in this group no longer exists.' };
+
+    const isMine = normEmail(freshRow.user_email) === myEmailNorm || normEmail(freshRow.invite_email) === myEmailNorm;
+    if (!isMine) return { status: 'error', message: 'That spot is not yours.' };
+    if (!isLeftName(freshRow.name)) return { status: 'alreadyMine' };
+
+    const rejoinedName = String(freshRow.name).replace(PLACEHOLDER_LEFT_STRIP_RE, '');
+    // `.select()` so an RLS-blocked write shows up as zero rows, not success.
+    const { data: updatedRows, error: updateErr } = await supabase
+      .from<InviteMemberRow>('group_members')
+      .update({ name: rejoinedName, user_email: myEmail, is_pending: false, link_request_email: null, link_request_name: null })
+      .eq('id', freshRow.id)
+      .select();
+    if (updateErr) return { status: 'error', message: updateErr.message };
+    if (!updatedRows || updatedRows.length === 0) return { status: 'error', message: "Couldn't rejoin — try again." };
+
+    const group = await loadGroupSnapshot(supabase, groupRow, rejoinedName);
+    return { status: 'rejoined', rejoinedName, group };
   } catch (err) {
     return { status: 'error', message: err instanceof Error ? err.message : String(err) };
   }

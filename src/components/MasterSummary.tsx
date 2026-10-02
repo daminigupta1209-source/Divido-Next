@@ -1,13 +1,10 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { BalanceDisplay } from './BalanceDisplay';
 import { getEmoji, GROUP_COLORS, formatExactAmount, parseExpenseId } from '../lib/utils';
-import { StyledDropdown } from './StyledDropdown';
 
-// Pill-style trigger for the compact filter dropdowns (matches the old selects).
 const JOIN_SNAPSHOT_KEY = 'divido_join_progress_v1';
 const JOIN_SNOOZE_KEY = 'divido_join_banner_snooze';
 
-const filterBtnStyle: React.CSSProperties = { padding: '6px 12px', borderRadius: '20px', border: '1px solid #E2E8F0', fontSize: '12px', fontWeight: 600, background: '#F1F5F9', color: '#475569', boxShadow: 'none' };
 import { simplifyMultiCurrencyDebts, computeRawPairwiseTransactions } from '../lib/calculations';
 import { ActivityStudio } from './ActivityStudio';
 import { computeJoinProgress, pendingNamesFor, detectCelebration, toSnapshot, joinNames, type JoinCelebration, type JoinSnapshot, type PendingPerson } from '../lib/joinProgress';
@@ -38,16 +35,6 @@ interface MasterSummaryProps {
   userMetadata: Record<string, UserMetadata>;
   setUserMetadata: (meta: Record<string, UserMetadata>) => void;
   onShowQR: (payee: string, amt: number, curr: string) => void;
-  // Filter state props
-  timeFilter?: 'all' | '30' | '90' | '365';
-  setTimeFilter?: (v: 'all' | '30' | '90' | '365') => void;
-  balanceFilter?: 'all' | 'owes' | 'owed' | 'settled';
-  setBalanceFilter?: (v: 'all' | 'owes' | 'owed' | 'settled') => void;
-  showTimeMenu?: boolean;
-  setShowTimeMenu?: (b: boolean) => void;
-  searchNonce?: number;
-  searchQuery?: string;
-  setSearchQuery?: (val: string) => void;
   onCreateGroup?: () => void;
   onImportSplitwise?: () => void;
   loading?: boolean;
@@ -86,9 +73,6 @@ export const MasterSummary: React.FC<MasterSummaryProps> = ({
   userMetadata,
   setUserMetadata,
   onShowQR,
-  searchNonce,
-  searchQuery = '',
-  setSearchQuery = () => {},
   onCreateGroup,
   onImportSplitwise,
   loading = false,
@@ -102,9 +86,6 @@ export const MasterSummary: React.FC<MasterSummaryProps> = ({
   onInvitePerson,
 }) => {
   const [openDropdownId, setOpenDropdownId] = useState<string | number | null>(null);
-  const [timeFilter, setTimeFilter] = useState<'all' | '30days' | '7days'>('all');
-  const [balanceFilter, setBalanceFilter] = useState<'all' | 'owe' | 'owed' | 'settled'>('all');
-  const [showFilters, setShowFilters] = useState(false);
   const [homeTab, setHomeTab] = useState<'groups' | 'activity'>('groups');
   // Make the phone Back gesture return from the Activities tab to Groups instead
   // of leaving the home screen: push a history entry when opening Activities, and
@@ -183,11 +164,6 @@ export const MasterSummary: React.FC<MasterSummaryProps> = ({
     }
   };
 
-  // Header search icon opens the filter panel (which contains the search field)
-  useEffect(() => {
-    if (searchNonce) setShowFilters(true);
-  }, [searchNonce]);
-
   // netBalances depends only on groups/expenses/me — memoize so it isn't
   // recomputed across every group/expense on unrelated re-renders (filters, dropdowns).
   const netBalances = useMemo(() => {
@@ -215,17 +191,6 @@ export const MasterSummary: React.FC<MasterSummaryProps> = ({
     add(getMemberBalance('STANDALONE', me));
     return nb;
   }, [groups, getMemberBalance, me]);
-
-  const isWithinRange = (dateStr: string, days: number) => {
-    try {
-      const expDate = new Date(dateStr);
-      const diffTime = Math.abs(Date.now() - expDate.getTime());
-      const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-      return diffDays <= days;
-    } catch {
-      return false;
-    }
-  };
 
   // The home screen has no group open, so the flat `me` is only the user's
   // global first name — which may not match the name they claimed inside a
@@ -353,30 +318,6 @@ export const MasterSummary: React.FC<MasterSummaryProps> = ({
     if (g.name.trim() === '' && !expenses.some((e) => String(e.gId) === String(g.id)) && g.members.length <= 1) {
       return false;
     }
-    
-    // Search filter
-    if (searchQuery && !g.name.toLowerCase().includes(searchQuery.toLowerCase())) {
-      return false;
-    }
-
-    const groupExps = expenses.filter((e) => String(e.gId) === String(g.id));
-
-    // Time filter
-    if (timeFilter !== 'all') {
-      const limitDays = timeFilter === '30days' ? 30 : 7;
-      const hasRecentExps = groupExps.some((e) => isWithinRange(e.date, limitDays));
-      if (!hasRecentExps) return false;
-    }
-
-    // Balance filter
-    if (balanceFilter !== 'all') {
-      const bal = getMemberBalance(g.id, myNameInGroup(g.id));
-      const totalNet = Object.values(bal).reduce((a, b) => a + b, 0);
-      if (balanceFilter === 'owed' && totalNet <= 0.01) return false;
-      if (balanceFilter === 'owe' && totalNet >= -0.01) return false;
-      if (balanceFilter === 'settled' && Math.abs(totalNet) > 0.01) return false;
-    }
-
     return true;
   });
 
@@ -888,115 +829,6 @@ export const MasterSummary: React.FC<MasterSummaryProps> = ({
 
       {homeTab === 'groups' ? (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-        {/* Section header: search bar + funnel */}
-        <div style={{ display: 'flex', gap: '10px', alignItems: 'center', marginBottom: '8px', width: '100%' }}>
-          {/* Search Input */}
-          <div style={{ position: 'relative', flex: 1, lineHeight: 0, fontSize: 0 }}>
-            <svg
-              viewBox="0 0 24 24" fill="none"
-              stroke="currentColor" strokeWidth="2.5"
-              strokeLinecap="round" strokeLinejoin="round"
-              style={{
-                position: 'absolute',
-                left: '12px',
-                top: '50%',
-                transform: 'translateY(-50%)',
-                width: '13px',
-                height: '13px',
-                opacity: 0.4,
-                pointerEvents: 'none',
-                color: '#64748B',
-                zIndex: 2,
-              }}
-            >
-              <circle cx="11" cy="11" r="8" />
-              <line x1="21" y1="21" x2="16.65" y2="16.65" />
-            </svg>
-            <input
-              type="search"
-              placeholder="Search groups..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              style={{
-                display: 'block',
-                width: '100%',
-                height: '38px',
-                lineHeight: 'normal',
-                fontSize: '13px',
-                margin: 0,
-                padding: '0 12px 0 34px',
-                borderRadius: '24px',
-                border: '2px solid #F1F5F9',
-                outline: 'none',
-                fontWeight: 600,
-                background: 'var(--w)',
-                color: '#475569',
-                boxSizing: 'border-box',
-                verticalAlign: 'top',
-              }}
-            />
-          </div>
-
-          {/* Funnel Filter Toggle */}
-          <button
-            onClick={(e) => { e.stopPropagation(); setShowFilters(!showFilters); }}
-            title="Filters"
-            style={{
-              background: 'none',
-              border: 'none',
-              cursor: 'pointer',
-              width: '44px',
-              height: '44px',
-              padding: 0,
-              opacity: showFilters || searchQuery || timeFilter !== 'all' || balanceFilter !== 'all' ? 1 : 0.55,
-              transition: '0.2s all',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              color: searchQuery || timeFilter !== 'all' || balanceFilter !== 'all' ? '#059669' : '#8A8178',
-              flexShrink: 0,
-            }}
-          >
-            <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" style={{ width: '18px', height: '18px' }}>
-              <path d="M22 3H2L10 12.46V19L14 21V12.46L22 3Z" stroke="currentColor" strokeWidth="2" strokeLinejoin="round" strokeLinecap="round" />
-            </svg>
-          </button>
-        </div>
-
-        {/* Filters (search + pills), revealed by funnel */}
-        {showFilters && (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', animation: 'fadeIn 0.2s ease-out', marginBottom: '4px' }}>
-
-            <div style={{ display: 'flex', gap: '8px' }}>
-            <StyledDropdown
-              fullWidth
-              ariaLabel="Filter by time"
-              value={timeFilter}
-              onChange={(v) => setTimeFilter(v as any)}
-              buttonStyle={filterBtnStyle}
-              options={[
-                { value: 'all', label: 'Any Time' },
-                { value: '7days', label: 'Last 7 Days' },
-                { value: '30days', label: 'Last 30 Days' },
-              ]}
-            />
-            <StyledDropdown
-              fullWidth
-              ariaLabel="Filter by balance"
-              value={balanceFilter}
-              onChange={(v) => setBalanceFilter(v as any)}
-              buttonStyle={filterBtnStyle}
-              options={[
-                { value: 'all', label: 'All Balances' },
-                { value: 'owed', label: 'You Get Back' },
-                { value: 'owe', label: 'You Pay Back' },
-                { value: 'settled', label: 'Settled Up' },
-              ]}
-            />
-            </div>
-          </div>
-        )}
-
         {/* Non-Group Expenses Card — first in the list, same look as a group card */}
         {(() => {
           // Net across all non-group people (STANDALONE + shared threads).

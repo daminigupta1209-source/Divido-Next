@@ -92,14 +92,17 @@ import { NetPayableModal } from './components/NetPayableModal';
 import { CurrencySetupModal } from './components/CurrencySetupModal';
 import { GroupGallery } from './components/GroupGallery';
 import { checkIfDemoMode } from './lib/demoMode';
-import { ensureArray, ensureObject, isLegacyRenameLog, formatCompactAmount, genGroupId, genExpenseId, titleCaseName } from './lib/utils';
+import { ensureArray, ensureObject, isLegacyRenameLog, formatCompactAmount, formatExactAmount, genGroupId, genExpenseId, titleCaseName } from './lib/utils';
 import { getPersonKey, toIdentitySpace, pickCanonicalIdentity, findDuplicateGroups, type DuplicateEntry, setSyncedDismissedPeople, buildNameEmailResolver, upiFor, fillPartyKeys, uniqueProfileName } from './lib/identity';
 import { groupActivityTimestamp } from './lib/joinProgress';
 import { parseInviteParam, buildPersonInviteLink, personInviteMessage, groupInviteMessage, type InviteSpot } from './lib/inviteLink';
 import {
   buildInviteLandingModel,
   defaultSelectedGroupIds,
+  hasActionableEntry,
+  isActionableStatus,
   claimInviteSpot,
+  rejoinInviteSpot,
   type InviteLandingEntry,
   type InviteGroupRow as InviteClaimGroupRow,
   type InviteMemberRow as InviteClaimMemberRow,
@@ -114,6 +117,8 @@ import { useAppHotkeys } from './hooks/useAppHotkeys';
 import { useUndoStack } from './hooks/useUndoStack';
 import { MobileHeader } from './components/MobileHeader';
 import { InstallPrompt } from './components/InstallPrompt';
+import { GlobalSearchSheet } from './components/GlobalSearchSheet';
+import { useFriendsBalances } from './hooks/useFriendsBalances';
 import { useExportCSV } from './hooks/useExportCSV';
 import { AppNotification, fetchNotifications, markAllNotificationsRead, subscribeNotifications, clearAllNotifications, pushNotification } from './lib/notifications';
 import { calculateNextOccurrenceDate, simplifyMultiCurrencyDebts, computeRawPairwiseTransactions, memberNetBalances } from './lib/calculations';
@@ -308,6 +313,10 @@ function App() {
     onSecondary?: () => void;
   }>(null);
   const [toastMsg, setToastMsg] = useState<string | null>(null);
+  const flashToast = (msg: string, ms = 3500) => {
+    setToastMsg(msg);
+    setTimeout(() => setToastMsg(null), ms);
+  };
   const [postExpenseShareData, setPostExpenseShareData] = useState<{
     expense: Expense;
     group: Group;
@@ -457,6 +466,11 @@ function App() {
   const [inviteLandingBusy, setInviteLandingBusy] = useState<boolean>(false);
   const [inviteLandingJoiningId, setInviteLandingJoiningId] = useState<string | null>(null);
   const [inviteLandingRowErrors, setInviteLandingRowErrors] = useState<Record<string, string>>({});
+  // The invite resolver found a real Supabase session. Back from the Google
+  // round-trip, `isAuthenticated` only flips after the auth listener finishes
+  // its profile/identity work; until then this lets the app (and its join
+  // card) render instead of the Login screen, so the invite opens right away.
+  const [inviteSessionReady, setInviteSessionReady] = useState<boolean>(false);
   const [tempName, setTempName] = useState<string>(() => {
     const saved = localStorage.getItem('divido_username');
     return saved && saved !== 'You' && saved !== 'undefined' ? saved : '';
@@ -513,9 +527,15 @@ function App() {
   const [mobileShowGroupOptionsMenu, setMobileShowGroupOptionsMenu] = useState(false);
   const [notifications, setNotifications] = useState<AppNotification[]>([]);
   const [showNotifPanel, setShowNotifPanel] = useState(false);
-  const [homeSearchNonce, setHomeSearchNonce] = useState(0);
   const [globalSearchQuery, setGlobalSearchQuery] = useState('');
   const [isHeaderSearchActive, setIsHeaderSearchActive] = useState(false);
+  // The app-wide group/friend search sheet (GlobalSearchSheet). Separate from
+  // isHeaderSearchActive (the inline header search box) — this one owns its
+  // own history entry and is rendered once for the whole authenticated tree.
+  const [isGlobalSearchOpen, setIsGlobalSearchOpen] = useState(false);
+  // Ready for MobileHeader / Sidebar to call once they grow a search entry
+  // point (neither can be edited in this change; wired in a follow-up step).
+  const openGlobalSearch = () => setIsGlobalSearchOpen(true);
   const mainContentRef = useRef<HTMLElement>(null);
   const [headerHidden, setHeaderHidden] = useState(false);
 
@@ -650,6 +670,12 @@ function App() {
   // 1. Listen for browser popstate and apply to React states
   useEffect(() => {
     const onPopState = (e: PopStateEvent) => {
+      // The global search sheet owns its own history entry and popstate
+      // listener (see GlobalSearchSheet): while it's open, this handler must
+      // not act on the same event, or the top-level-screen shortcut below
+      // would fire too (e.g. on the Friends screen) and bounce the user to
+      // Home instead of just closing the sheet.
+      if (isGlobalSearchOpen) return;
       // If any overlay (modal / panel / sheet / prompt) is open, a back-swipe
       // must close THAT first — never take the top-level shortcut below, or the
       // back would skip past the open modal (the "needs 2 swipes" bug: from
@@ -731,7 +757,8 @@ function App() {
   }, [
     view, selectedId, groupDetailTab, showExpModal, showSettleModal, showAddFriendModal,
     showGroupSettleList, showMembersHealth, qrModalData, netPayablePopup, netReceivablePopup, showConvertModalId,
-    showNotifPanel, mobileShowGroupOptionsMenu, editingSettle, globalSettleData, showFriendsList, showSplitwiseImport, samePersonPrompt, analyticsGroupId, confirmState
+    showNotifPanel, mobileShowGroupOptionsMenu, editingSettle, globalSettleData, showFriendsList, showSplitwiseImport, samePersonPrompt, analyticsGroupId, confirmState,
+    isGlobalSearchOpen
   ]);
 
   // 2. Watch for user changes and push states
@@ -870,13 +897,16 @@ function App() {
     }
   }, [view, isHeaderSearchActive]);
 
-  // Close the header search when tapping anywhere outside it.
+  // Close the header search when tapping anywhere outside it. Skipped while
+  // the global search sheet is open — the sheet is portaled straight onto
+  // document.body, so a tap on it (e.g. its backdrop) would otherwise bubble
+  // to this window-level listener and close the unrelated header search box.
   useEffect(() => {
-    if (!isHeaderSearchActive) return;
+    if (!isHeaderSearchActive || isGlobalSearchOpen) return;
     const close = () => { setIsHeaderSearchActive(false); setGlobalSearchQuery(''); };
     window.addEventListener('click', close);
     return () => window.removeEventListener('click', close);
-  }, [isHeaderSearchActive]);
+  }, [isHeaderSearchActive, isGlobalSearchOpen]);
 
   // Load notifications for the signed-in user and keep them live.
   useEffect(() => {
@@ -1288,6 +1318,17 @@ function App() {
 
   const { handleMobileExportCSV } = useExportCSV({ groups, expenses, selectedId });
   const { undoStack, deleteExpense, performUndo } = useUndoStack({ expenses, setExpenses });
+  // Same worker-backed per-friend balances FriendsView needs, computed once
+  // here so both FriendsView and the GlobalSearchSheet show friend rows
+  // without duplicating the derivation. Only runs while something actually
+  // needs it (Friends tab open, or the search sheet open).
+  const friendsBalances = useFriendsBalances({
+    groups,
+    expenses,
+    me,
+    userEmail,
+    enabled: view === 'friends' || isGlobalSearchOpen,
+  });
   const deleteExpenseSecure = (id: string | number) => {
     if (checkPastMemberAndShowRejoin(true)) return;
     deleteExpense(id);
@@ -2653,6 +2694,8 @@ function App() {
             return;
           }
 
+          setInviteSessionReady(true);
+
           // Signed in: only (re)fetch/rebuild once per invite — this effect
           // re-runs on every `groups` update, and redoing the fetch would wipe
           // the user's checkbox selection and un-dismiss the card.
@@ -2667,17 +2710,25 @@ function App() {
 
           // Nothing left to join (everything is already mine, taken or gone):
           // skip the card. If exactly one group is already mine, open it — same
-          // landing as the old single-group link — otherwise stay on home.
-          if (!entries.some((e) => e.status === 'joinable')) {
+          // landing as the old single-group link. Otherwise stay on home, but
+          // say why, so the link never looks like it silently did nothing.
+          if (!hasActionableEntry(entries)) {
             try { localStorage.removeItem('divido_pending_join'); } catch { /* ignore */ }
             cleanInviteUrl();
             setInviteLandingRaw(null);
             const mine = entries.filter((e) => e.status === 'alreadyMine');
-            if (mine.length === 1) {
+            if (mine.length >= 1) {
               const row = (groupRows || []).find((g) => String(g.id) === mine[0].groupId);
-              setSelectedId(row?.is_direct ? 'STANDALONE' : mine[0].groupId);
-              setView('detail');
-              setShowFriendsList(false);
+              if (mine.length === 1) {
+                setSelectedId(row?.is_direct ? 'STANDALONE' : mine[0].groupId);
+                setView('detail');
+                setShowFriendsList(false);
+              }
+              flashToast(mine.length === 1 && row?.name ? `You're already in ${row.name}` : "You're already in these groups");
+            } else if (entries.some((e) => e.status === 'takenByOther')) {
+              flashToast('This invite was already used by someone else');
+            } else {
+              flashToast('This invite is no longer available');
             }
             return;
           }
@@ -2685,13 +2736,13 @@ function App() {
           // Groups I'm already in are left off the card — they're clutter, not
           // a choice.
           const uiRows: InviteUiRow[] = entries
-            .filter((e) => e.status === 'joinable' || e.status === 'takenByOther')
+            .filter((e) => isActionableStatus(e.status) || e.status === 'takenByOther')
             .map((e): InviteUiRow => ({
               groupId: e.groupId,
               name: e.groupName,
               emoji: e.emoji,
               memberCount: e.activeMemberCount,
-              status: e.status === 'joinable' ? 'available' : e.status === 'alreadyMine' ? 'alreadyMineOpen' : 'takenByOther',
+              status: e.status === 'joinable' ? 'available' : e.status === 'rejoinable' ? 'rejoin' : 'takenByOther',
             }));
 
           setInviteLandingRaw(inviteRaw);
@@ -2754,17 +2805,35 @@ function App() {
         // sign-in redirect is built from (the friend then lands with no join
         // card on their first click). Keep both and resolve after sign-in; this
         // effect re-runs when auth changes.
-        {
-          const { data: { session: preSession } } = await supabase.auth.getSession();
-          if (!sessionEmailForInvite(preSession)) return;
+        // Meanwhile show the same "You're invited" card the multi-group link
+        // uses (from whatever is cached), so the friend sees what they're
+        // joining instead of a bare Login screen.
+        const { data: { session } } = await supabase.auth.getSession();
+        if (!sessionEmailForInvite(session)) {
+          const cached = groups.find((gr) => String(gr.id) === String(joinGroupId));
+          setInviteLandingRaw(`joinGroupId:${joinGroupId}`);
+          setInviteLandingMode('signedOut');
+          setInviteLandingSpots([{ groupId: String(joinGroupId), memberKey: '' }]);
+          setInviteLandingRows([cached
+            ? {
+                groupId: String(joinGroupId),
+                name: cached.name,
+                emoji: cached.emoji,
+                memberCount: (cached.members || []).filter((m) => !/\(Left\)\s*$/i.test(m)).length,
+                status: 'available',
+              }
+            : { groupId: String(joinGroupId), status: 'available' }]);
+          return;
         }
+        setInviteSessionReady(true);
+        // Signed in now: the signed-out preview card has done its job.
+        setInviteLandingRaw((prev) => (prev && prev.startsWith('joinGroupId:') ? null : prev));
 
-        // Fetch group
-        const { data: groupData, error: groupErr } = await supabase
-          .from('groups')
-          .select('*')
-          .eq('id', joinGroupId)
-          .single();
+        // Fetch the group and its members together (one round-trip, not two).
+        const [{ data: groupData, error: groupErr }, { data: existingMembers }] = await Promise.all([
+          supabase.from('groups').select('*').eq('id', joinGroupId).single(),
+          supabase.from('group_members').select('*').eq('group_id', joinGroupId),
+        ]);
 
         if (groupErr || !groupData) {
           // The thread genuinely isn't in the cloud — stop retrying this invite on
@@ -2777,18 +2846,11 @@ function App() {
           return;
         }
 
-        // Fetch members of the group
-        const { data: existingMembers } = await supabase
-          .from('group_members')
-          .select('*')
-          .eq('group_id', joinGroupId);
-
         if (!existingMembers) return;
         // Spots found already claimed by someone else during this run.
         const takenSpotIds = new Set<unknown>();
 
         const rejoinName = urlParams.get('rejoinName');
-        const { data: { session } } = await supabase.auth.getSession();
         const myEmail = session?.user?.email || userEmail;
 
         if (rejoinName && myEmail) {
@@ -2814,78 +2876,16 @@ function App() {
             (String(m.user_email || '').toLowerCase() === myEm || String(m.invite_email || '').toLowerCase() === myEm)
           );
           if (leftMemberRow) {
-            const cleanName = leftMemberRow.name.replace(/\s*\(Left\)$/i, '');
-            // Auto-rejoin: their email matches their past-member row unambiguously.
-            // Reactivate their row, log rejoin, and take them straight in without any modal or popup.
-            await supabase
-              .from('group_members')
-              .update({
-                name: cleanName,
-                user_email: myEmail,
-                is_pending: false,
-                link_request_email: null,
-                link_request_name: null,
-              })
-              .eq('id', leftMemberRow.id);
-
-            try {
-              await supabase
-                .from('expenses')
-                .insert({
-                  group_id: joinGroupId,
-                  timestamp: Date.now(),
-                  title: `${cleanName} rejoined`,
-                  amt: 0,
-                  paid: 'SYSTEM',
-                  date: new Date().toISOString().split('T')[0],
-                  mode: 'Equally',
-                  splitters: []
-                });
-            } catch (e) {
-              console.error('Rejoin activity log failed:', e);
-            }
-
-            // Local identity setup
-            const existing = localStorage.getItem('divido_username');
-            const hasRealName = !!existing && !['You', 'Guest', 'undefined', ''].includes(existing.trim());
-            if (!hasRealName) { localStorage.setItem('divido_username', cleanName); setUserName(cleanName); }
-            localStorage.setItem('divido_authenticated', 'true');
-            localStorage.setItem(`divido_identity_${joinGroupId}`, cleanName);
-            setIsAuthenticated(true);
-            localStorage.removeItem('divido_pending_join');
-
-            // Fetch fresh members so roster renders immediately
-            let freshMembers: string[] = [];
-            let freshPending: string[] = [];
-            try {
-              const { data: gm } = await supabase
-                .from('group_members')
-                .select('*')
-                .eq('group_id', joinGroupId)
-                .order('id', { ascending: true });
-              if (gm) {
-                const activeMems = gm.filter((m: any) => !m.link_request_email || !m.is_pending || m.name.endsWith(' (Left)'));
-                freshMembers = Array.from(new Set(activeMems.map((m: any) => m.name)));
-                freshPending = Array.from(new Set(activeMems
-                  .filter((m: any) => m.is_pending && !m.user_email && !m.name.endsWith(' (Left)'))
-                  .map((m: any) => m.name)));
-              }
-            } catch { /* background cloud-load will catch up */ }
-
-            const updatedGroup = {
-              ...groupData,
-              members: freshMembers.length ? freshMembers : [...(groupData.members || []).filter((m: string) => m !== leftMemberRow.name), cleanName],
-              pendingMembers: freshPending,
-            };
-            setGroups(prev => prev.some(g => g.id === updatedGroup.id)
-              ? prev.map(g => g.id === updatedGroup.id ? updatedGroup : g)
-              : [...prev, updatedGroup]);
-
-            setSelectedId(groupData.is_direct ? 'STANDALONE' : joinGroupId);
-            setView('detail');
-            setShowFriendsList(false);
-            const cleanUrl = window.location.protocol + '//' + window.location.host + window.location.pathname;
-            window.history.replaceState({ _divido: true, uiState: { view: 'summary', selectedId: null } }, '', cleanUrl);
+            // A returning member: their email matches their past "(Left)" row.
+            // Leaving was a deliberate choice, so ask before undoing it — show
+            // the claim card in rejoin mode with a single "Rejoin as …" button
+            // (runClaimPlaceholder's rejoin branch reactivates the row, logs
+            // "… rejoined", notifies the group and opens it). Nothing changes
+            // until they tap it.
+            if (claimInProgressRef.current || lastClaimedGroupRef.current === String(joinGroupId)) return;
+            setLinkRequestRejoinMode(true);
+            setLinkRequestGroup(groupData);
+            setLinkRequestPlaceholders([leftMemberRow]);
             return;
           }
 
@@ -2963,6 +2963,8 @@ function App() {
               // back.
               setSelectedId(groupData.is_direct ? 'STANDALONE' : joinGroupId);
               setView('detail');
+              // The join happened without a tap (the email matched), so say so.
+              flashToast(`You've joined ${groupData.name || 'the group'}`);
               const cleanUrl = window.location.protocol + '//' + window.location.host + window.location.pathname;
               // Seed a HOME base entry (not an empty one) so a back-swipe from
               // the group you just entered/claimed goes to the home screen
@@ -3483,6 +3485,32 @@ function App() {
     // already one bucket. Resolve the requested name to its key and read it.
     return groupBals[getPersonKey(g, memberName)] || groupBals[memberName] || {};
   }, [allGroupBalances, groups]);
+
+  // Same per-group claimed-identity fallback as MasterSummary's myNameInGroup
+  // (see MasterSummary.tsx): the flat `me` is only the user's global first
+  // name, which may not match the name they claimed inside a given group.
+  const myNameInGroupForSearch = React.useCallback((gId: string | number): string => {
+    try {
+      const claim = localStorage.getItem(`divido_identity_${gId}`);
+      if (claim) return claim;
+    } catch { /* localStorage unavailable */ }
+    return me;
+  }, [me]);
+
+  // Same "You pay / You collect / Settled up" line MasterSummary's group card
+  // shows (see MasterSummary.tsx ~1160-1264), reduced to one line + tone for
+  // GlobalSearchSheet's group rows: pay takes priority over collect, matching
+  // the card's display order when both currencies are outstanding.
+  const groupBalanceLine = React.useCallback((group: Group): { text: string; tone: 'pay' | 'collect' | 'settled' } | null => {
+    const bal = getMemberBalance(group.id, myNameInGroupForSearch(group.id));
+    const balEntries = Object.entries(bal).filter(([, v]) => Math.abs(v) > 0.01);
+    if (balEntries.length === 0) return { text: 'Settled up', tone: 'settled' };
+    const payEntry = balEntries.find(([, v]) => v < -0.01);
+    if (payEntry) return { text: `You pay ${payEntry[0]}${formatExactAmount(Math.abs(payEntry[1]))}`, tone: 'pay' };
+    const collectEntry = balEntries.find(([, v]) => v > 0.01);
+    if (!collectEntry) return { text: 'Settled up', tone: 'settled' };
+    return { text: `You collect ${collectEntry[0]}${formatExactAmount(collectEntry[1])}`, tone: 'collect' };
+  }, [getMemberBalance, myNameInGroupForSearch]);
 
   // ── "Same person?" prompt (Step 4b) ────────────────────────────────────────
   const findPersonCandidates = (name: string, excludeGroupId: string | number) => {
@@ -4059,8 +4087,48 @@ function App() {
   // Signed-in "Join N groups": claims each selected joinable spot sequentially
   // (keeps `joiningGroupId` meaningful for the per-row spinner; claimInviteSpot's
   // RLS-ordering contract is per-group so this is also the safest order).
+  // After a rejoin: log "X rejoined" in the group's activity and tell the
+  // other members — same as runClaimPlaceholder's rejoin branch.
+  const announceRejoin = async (groupId: string, groupName: string, name: string, myEmail: string) => {
+    try {
+      await supabase.from('expenses').insert({
+        group_id: groupId,
+        timestamp: Date.now(),
+        title: `${name} rejoined`,
+        amt: 0,
+        paid: 'SYSTEM',
+        date: new Date().toISOString().split('T')[0],
+        mode: 'Equally',
+        splitters: [],
+      });
+    } catch (e) {
+      console.error('Rejoin activity log failed:', e);
+    }
+    try {
+      const { data: activeMems } = await supabase
+        .from('group_members')
+        .select('user_email')
+        .eq('group_id', groupId)
+        .not('user_email', 'is', null);
+      for (const mem of activeMems || []) {
+        if (mem.user_email && mem.user_email !== myEmail) {
+          await pushNotification({
+            recipientEmail: mem.user_email,
+            type: 'join',
+            title: `${name} rejoined ${groupName}`,
+            body: `${name} is back in the group.`,
+            fromName: name,
+            groupId,
+          });
+        }
+      }
+    } catch (e) {
+      console.error('Rejoin notification push failed:', e);
+    }
+  };
+
   const joinSelectedInviteGroups = async () => {
-    const joinableIds = new Set(inviteLandingEntries.filter((e) => e.status === 'joinable').map((e) => e.groupId));
+    const joinableIds = new Set(inviteLandingEntries.filter((e) => isActionableStatus(e.status)).map((e) => e.groupId));
     const toJoin = inviteLandingSelectedIds.filter((id) => joinableIds.has(id));
     if (toJoin.length === 0) return;
 
@@ -4073,7 +4141,7 @@ function App() {
     const profileName = rawProfile ? titleCaseName(rawProfile) : '';
     const fallbackUsername = localStorage.getItem('divido_username') || undefined;
 
-    const succeeded: { groupId: string; group: Group }[] = [];
+    const succeeded: { groupId: string; group: Group; rejoined: boolean }[] = [];
     // Only real errors are retryable; a spot someone else took is final.
     const nextRowErrors: Record<string, string> = {};
     const takenIds = new Set<string>();
@@ -4086,6 +4154,24 @@ function App() {
         continue;
       }
       setInviteLandingJoiningId(groupId);
+
+      if (entry.status === 'rejoinable') {
+        const rj = await rejoinInviteSpot(inviteSupabase, { groupRow, leftRow: entry.targetRow, myEmail });
+        if (rj.status === 'rejoined') {
+          localStorage.setItem(`divido_identity_${groupId}`, rj.rejoinedName);
+          localStorage.setItem('divido_authenticated', 'true');
+          setIsAuthenticated(true);
+          await announceRejoin(groupId, groupRow.name, rj.rejoinedName, myEmail);
+          succeeded.push({ groupId, group: rj.group, rejoined: true });
+        } else if (rj.status === 'error') {
+          console.error('Invite rejoin failed:', rj.message);
+          nextRowErrors[groupId] = "Couldn't rejoin — try again";
+        }
+        // 'alreadyMine': someone (another tab) already brought them back —
+        // nothing to do; the card drops the row below.
+        continue;
+      }
+
       const existingMembers = inviteLandingMemberRows.filter((m) => String(m.group_id) === groupId);
       const result = await claimInviteSpot(inviteSupabase, {
         groupRow,
@@ -4102,7 +4188,7 @@ function App() {
         if (!hasRealName) { localStorage.setItem('divido_username', result.claimedName); setUserName(result.claimedName); }
         localStorage.setItem('divido_authenticated', 'true');
         setIsAuthenticated(true);
-        succeeded.push({ groupId, group: result.group });
+        succeeded.push({ groupId, group: result.group, rejoined: false });
       } else if (result.status === 'takenByOther') {
         takenIds.add(groupId);
       } else if (result.status === 'error') {
@@ -4110,7 +4196,7 @@ function App() {
         nextRowErrors[groupId] = "Couldn't join — try again";
       }
       // 'alreadyMine' can't occur here — entries are pre-filtered to
-      // 'joinable' before the loop.
+      // actionable ones before the loop.
     }
     setInviteLandingJoiningId(null);
 
@@ -4126,13 +4212,25 @@ function App() {
       });
     }
 
-    // Spots someone else took in the meantime can't be retried — say so once.
+    // One toast for the outcome: confirm what was joined/rejoined, and mention
+    // spots someone else took in the meantime (those can't be retried).
     const announceTaken = () => {
-      if (takenIds.size === 0) return;
-      setToastMsg(takenIds.size === 1
-        ? 'One group was already taken by someone else'
-        : `${takenIds.size} groups were already taken by someone else`);
-      setTimeout(() => setToastMsg(null), 3500);
+      const parts: string[] = [];
+      if (succeeded.length === 1) {
+        const s = succeeded[0];
+        parts.push(s.rejoined ? `Welcome back! You've rejoined ${s.group.name}` : `You've joined ${s.group.name}`);
+      } else if (succeeded.length > 1) {
+        const rejoinedCount = succeeded.filter((s) => s.rejoined).length;
+        parts.push(rejoinedCount === succeeded.length
+          ? `Welcome back! You've rejoined ${succeeded.length} groups`
+          : `You've joined ${succeeded.length} groups`);
+      }
+      if (takenIds.size > 0) {
+        parts.push(takenIds.size === 1
+          ? 'One group was already taken by someone else'
+          : `${takenIds.size} groups were already taken by someone else`);
+      }
+      if (parts.length) flashToast(parts.join(' · '));
     };
 
     if (Object.keys(nextRowErrors).length === 0) {
@@ -4166,10 +4264,15 @@ function App() {
       .filter((r) => !succeededIds.has(r.groupId))
       .map((r): InviteUiRow => (takenIds.has(r.groupId) ? { ...r, status: 'takenByOther' } : r)));
     setInviteLandingRowErrors(nextRowErrors);
+    announceTaken();
     setInviteLandingBusy(false);
   };
 
-  if (!isAuthenticated) {
+  // Back from Google with an invite pending: the session exists but the auth
+  // listener hasn't set isAuthenticated yet. Render the app (with its loader /
+  // join card on top) rather than flashing the Login screen meanwhile.
+  const inviteAwaitingAuth = inviteSessionReady && (isResolvingInvite || !!linkRequestGroup || (!!inviteLandingRaw && inviteLandingMode === 'signedIn'));
+  if (!isAuthenticated && !inviteAwaitingAuth) {
     return (
       <>
         <Login
@@ -4210,7 +4313,9 @@ function App() {
   // Divido cat) until the first cloud load finishes — so users never see an
   // empty "Your Groups" and get scared. Returning users with cached groups skip
   // this entirely (groups.length > 0). 5s safety timeout so it can't hang.
-  if (!isInitialLoadDone && !bootLoaderExpired && groups.length === 0 && isAuthenticated && !!userEmail) {
+  // Never over a pending join card — it is the destination, and hiding it
+  // behind the splash is what made invites feel slow to open.
+  if (!isInitialLoadDone && !bootLoaderExpired && groups.length === 0 && isAuthenticated && !!userEmail && !inviteLandingRaw && !linkRequestGroup) {
     return <BootSplash />;
   }
 
@@ -4260,13 +4365,16 @@ function App() {
       const cleanName = isRejoin ? p.name.replace(' (Left)', '') : p.name;
 
       if (isRejoin) {
-        // 1. Reactivate the left member row
+        // 1. Reactivate the left member row (and drop any stale link request
+        // on it, as the old auto-rejoin did)
         await supabase
           .from('group_members')
           .update({
             name: cleanName,
             user_email: activeEmail,
-            is_pending: false
+            is_pending: false,
+            link_request_email: null,
+            link_request_name: null,
           })
           .eq('id', p.id);
 
@@ -4448,6 +4556,9 @@ function App() {
       setSelectedId((linkRequestGroup as any).is_direct || (linkRequestGroup as any).isDirect ? 'STANDALONE' : linkRequestGroup.id);
       setView('detail');
       setShowFriendsList(false); // Clear any lingering overlay state
+      flashToast(isRejoin
+        ? `Welcome back! You've rejoined ${linkRequestGroup.name || 'the group'}`
+        : `You've joined ${linkRequestGroup.name || 'the group'}`);
       lastClaimedGroupRef.current = String(linkRequestGroup.id);
       setLinkRequestGroup(null);
       localStorage.removeItem('divido_pending_join');
@@ -4492,6 +4603,7 @@ function App() {
         onRequireSignIn={requireSignInToCreate}
         onAddExpense={addExpenseFromNav}
         setAnalyticsGroupId={setAnalyticsGroupId}
+        onOpenGlobalSearch={openGlobalSearch}
       />
 
       {isSidebarOpen && (
@@ -4545,10 +4657,10 @@ function App() {
             onOpenNotifications={handleOpenNotifications}
             onClearNotifications={handleClearNotifications}
             onNotificationClick={handleNotificationClick}
-            onHeaderSearch={() => { setView('summary'); setHomeSearchNonce((n) => n + 1); }}
             onAcceptRename={handleAcceptRename}
             onRejectRename={handleRejectRename}
             onInviteFriend={openGroupShareLink}
+            onOpenGlobalSearch={openGlobalSearch}
             searchQuery={globalSearchQuery}
             setSearchQuery={setGlobalSearchQuery}
             isHeaderSearchActive={isHeaderSearchActive}
@@ -4592,9 +4704,6 @@ function App() {
             userMetadata={userMetadata}
             setUserMetadata={setUserMetadata}
             onShowQR={(payee, amt, curr) => setQrModalData({ payee, amt, currency: curr })}
-            searchNonce={homeSearchNonce}
-            searchQuery={globalSearchQuery}
-            setSearchQuery={setGlobalSearchQuery}
             onCreateGroup={createGroupSecure}
             loading={!isInitialLoadDone && groups.length === 0}
             setEditingSettle={setEditingSettle}
@@ -4689,9 +4798,7 @@ function App() {
         ) : view === 'friends' ? (
           <FriendsView
             groups={groups}
-            expenses={expenses}
             me={me}
-            userEmail={userEmail}
             setView={setView}
             setSelectedId={setSelectedId}
             setGlobalSettleData={setGlobalSettleData}
@@ -4699,7 +4806,7 @@ function App() {
             memberAvatars={memberAvatars}
             onMergePeople={mergePeople}
             setUserMetadata={setUserMetadata}
-            searchQuery={globalSearchQuery}
+            friendsBalances={friendsBalances}
             showConvertModal={showFriendsConvert}
             setShowConvertModal={setShowFriendsConvert}
             onQuickAddExpense={quickAddExpenseWithFriend}
@@ -5398,7 +5505,24 @@ function App() {
         </React.Suspense>
       </main>
 
-
+      <GlobalSearchSheet
+        open={isGlobalSearchOpen}
+        groups={groups}
+        friends={friendsBalances.friends}
+        isCalculatingFriends={friendsBalances.isCalculating}
+        memberAvatars={memberAvatars}
+        groupBalanceLine={groupBalanceLine}
+        onOpenGroup={(id) => {
+          setGroupDetailTab('expenses');
+          setShowFriendsList(false);
+          setSelectedId(id);
+          setView('detail');
+        }}
+        onOpenFriend={(f) => {
+          setGlobalSettleData({ name: f.name, identity: f.id, groups: f.groups, balances: f.bals });
+        }}
+        onClose={() => setIsGlobalSearchOpen(false)}
+      />
 
 
       {/* Floating Scan / + Expense pills removed — the bottom-nav centre button
@@ -5660,10 +5784,15 @@ function App() {
                   return;
                 }
                 const declinedId = linkRequestGroup?.id;
+                const wasRejoin = linkRequestRejoinMode;
                 setLinkRequestGroup(null);
+                setLinkRequestRejoinMode(false);
                 setJoinNewName('');
                 localStorage.removeItem('divido_pending_join');
-                if (declinedId != null) {
+                // Declining a rejoin keeps the group as past history (they're
+                // still a "(Left)" member there); only a never-joined invite is
+                // dropped from the local list.
+                if (declinedId != null && !wasRejoin) {
                   setGroups(prev => prev.filter(g => String(g.id) !== String(declinedId)));
                 }
                 const cleanUrl = window.location.protocol + '//' + window.location.host + window.location.pathname;
@@ -5695,7 +5824,7 @@ function App() {
               ×
             </button>
             <h3 className="nunito" style={{ fontSize: '18px', fontWeight: 900, color: '#0F172A', margin: '0 0 6px 0', padding: '0 36px', boxSizing: 'border-box', lineHeight: 1.35, wordBreak: 'break-word' }}>
-              Join Group "{linkRequestGroup.name}"
+              {linkRequestRejoinMode ? `Rejoin "${linkRequestGroup.name}"?` : `Join Group "${linkRequestGroup.name}"`}
             </h3>
 
             {claimConfirmTarget ? (() => {
@@ -5758,7 +5887,9 @@ function App() {
             })() : (<>
             {linkRequestPlaceholders.length > 0 && (
               <p style={{ fontSize: '13px', color: '#64748B', fontWeight: 600, margin: '0 0 16px 0', lineHeight: 1.4 }}>
-                Select your name to join.
+                {linkRequestRejoinMode
+                  ? 'You left this group earlier. Rejoin to see its expenses and balances again.'
+                  : 'Select your name to join.'}
               </p>
             )}
 

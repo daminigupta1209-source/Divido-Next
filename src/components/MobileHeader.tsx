@@ -43,7 +43,6 @@ interface MobileHeaderProps {
   onOpenNotifications?: () => void;
   onClearNotifications?: () => void;
   onNotificationClick?: (n: AppNotification) => void;
-  onHeaderSearch?: () => void;
   onAcceptRename?: (n: AppNotification) => void;
   onRejectRename?: (n: AppNotification) => void;
   searchQuery?: string;
@@ -63,6 +62,7 @@ interface MobileHeaderProps {
   onScan?: () => void;
   userMetadata?: Record<string, any>;
   analyticsGroupId?: string | number | null;
+  onOpenGlobalSearch?: () => void;
 }
 
 export const MobileHeader: React.FC<MobileHeaderProps> = ({
@@ -103,7 +103,6 @@ export const MobileHeader: React.FC<MobileHeaderProps> = ({
   onOpenNotifications = () => {},
   onClearNotifications = () => {},
   onNotificationClick = () => {},
-  onHeaderSearch = () => {},
   onAcceptRename = () => {},
   onRejectRename = () => {},
   searchQuery = '',
@@ -122,6 +121,7 @@ export const MobileHeader: React.FC<MobileHeaderProps> = ({
   onCreateGroup,
   onScan,
   userMetadata = {},
+  onOpenGlobalSearch,
 }) => {
   // View-only guard: a member who has left this group can browse but not edit it.
   const amIPastMember = (() => {
@@ -817,7 +817,7 @@ export const MobileHeader: React.FC<MobileHeaderProps> = ({
               </button>
             )}
             
-            {!(isHomeStyle && isHeaderSearchActive) && (
+            {!(isHomeStyle && isHeaderSearchActive && view === 'gallery') && (
               <div
                 style={{
                   position: 'absolute',
@@ -906,7 +906,7 @@ export const MobileHeader: React.FC<MobileHeaderProps> = ({
 
             {isHomeStyle && (
               <div className="home-header-actions" aria-label="Home actions" onClick={(e) => e.stopPropagation()} style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', flex: 1, marginLeft: isHeaderSearchActive ? '40px' : '0px', minWidth: 0 }}>
-                {isHeaderSearchActive && (view === 'summary' || view === 'gallery') && (
+                {isHeaderSearchActive && view === 'gallery' && (
                   <input
                     type="search"
                     autoComplete="off"
@@ -914,7 +914,7 @@ export const MobileHeader: React.FC<MobileHeaderProps> = ({
                     spellCheck="false"
                     data-1p-ignore
                     data-lpignore="true"
-                    placeholder={view === 'gallery' ? "Search photos..." : "Search groups..."}
+                    placeholder="Search photos..."
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
                     onKeyDown={(e) => {
@@ -950,19 +950,23 @@ export const MobileHeader: React.FC<MobileHeaderProps> = ({
                     autoFocus
                   />
                 )}
-                {(view === 'summary' || view === 'gallery') && (
+                {(view === 'summary' || view === 'friends' || view === 'gallery') && (
                   <button
                     type="button"
                     className="home-header-icon"
-                    aria-label="Search"
+                    aria-label="Search groups and friends"
                     style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}
                     onClick={(e) => {
                       e.stopPropagation();
-                      if (isHeaderSearchActive) {
-                        setIsHeaderSearchActive(false);
-                        setSearchQuery('');
-                      } else {
-                        setIsHeaderSearchActive(true);
+                      if (view === 'gallery') {
+                        if (isHeaderSearchActive) {
+                          setIsHeaderSearchActive(false);
+                          setSearchQuery('');
+                        } else {
+                          setIsHeaderSearchActive(true);
+                        }
+                      } else if (onOpenGlobalSearch) {
+                        onOpenGlobalSearch();
                       }
                     }}
                   >
