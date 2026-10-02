@@ -7164,9 +7164,10 @@ function App() {
           (req.placeholderName || '').replace(/\s*\(Left\)$/i, '').toLowerCase() === cleanMeName ||
           (req.requestName || '').toLowerCase() === cleanMeName
         );
+        void hasPendingRejoin; // rejoin no longer waits for an admin
         return (
           <RejoinSelfModal
-            hasPendingRejoin={hasPendingRejoin}
+            hasPendingRejoin={false}
             noActiveAdmin={noActiveAdmin}
             adminLabel={adminLabel}
             onClose={() => setShowRejoinRequestModal(false)}
@@ -7182,7 +7183,8 @@ function App() {
                       .from('group_members')
                       .select('id, name')
                       .eq('group_id', selectedId)
-                      .eq('name', searchName)
+                      .ilike('name', searchName)
+                      .limit(1)
                       .maybeSingle();
 
                     if (matched) {
@@ -7192,9 +7194,10 @@ function App() {
                       // sole active member (and thus the new admin), reviving the
                       // group. Safe — it's their own identity, and there's no one to
                       // gate it against.
+                      // Rejoin is self-service: after the confirm card the user is
+                      // let straight back in (no admin approval step).
                       const grpForRejoin = groups.find((g) => String(g.id) === String(selectedId));
-                      const activeMems = (grpForRejoin?.members || []).filter((m) => !m.endsWith(' (Left)'));
-                      if (activeMems.length === 0) {
+                      {
                         const cleanName = me.replace(/\s*\(Left\)$/i, '');
                         await supabase
                           .from('group_members')
@@ -7221,69 +7224,27 @@ function App() {
                               }
                             : g
                         ));
-                        setToastMsg(`Welcome back! You rejoined ${grpForRejoin?.name || 'the group'}.`);
-                        setTimeout(() => setToastMsg(null), 3000);
-                        return;
-                      }
-
-                      await supabase
-                        .from('group_members')
-                        .update({
-                          is_pending: true,
-                          link_request_email: myEmail,
-                          link_request_name: me
-                        })
-                        .eq('id', matched.id);
-
-                      // Find Admin to notify
-                      let targetAdminName = 'Admin';
-                      const selectedGroup = groups.find((g) => String(g.id) === String(selectedId));
-                      if (selectedGroup) {
-                        const activeMembers = (selectedGroup.members || []).filter((m) => !m.endsWith(' (Left)'));
-                        const adminName = activeMembers[0];
-                        if (adminName) {
-                          targetAdminName = adminName.replace(/\s*\(me\)$/i, '');
-                          const { data: adminRows } = await supabase
+                        // Tell the others (no popup for me — I just land back in).
+                        try {
+                          const { data: others } = await supabase
                             .from('group_members')
                             .select('user_email')
                             .eq('group_id', selectedId)
-                            .eq('name', adminName)
-                            .not('user_email', 'is', null)
-                            .limit(1);
-                          const adminEmail = adminRows?.[0]?.user_email;
-                          if (adminEmail) {
+                            .not('user_email', 'is', null);
+                          for (const o of others || []) {
+                            if (!o.user_email || o.user_email === myEmail) continue;
                             await pushNotification({
-                              recipientEmail: adminEmail,
-                              type: 'link_request',
-                              title: `${me} wants to rejoin ${selectedGroup.name}`,
+                              recipientEmail: o.user_email,
+                              type: 'join',
+                              title: `${cleanName} rejoined ${grpForRejoin?.name || 'the group'}`,
+                              body: `${cleanName} is back in the group.`,
+                              fromName: cleanName,
                               groupId: selectedId,
                             });
                           }
-                        }
+                        } catch (e) { console.error('Rejoin notification failed:', e); }
+                        return;
                       }
-
-                      setToastMsg(`Request Sent to Admin (${targetAdminName})`);
-                      setTimeout(() => setToastMsg(null), 3000);
-                      
-                      setGroups(groups.map((g) => {
-                        if (String(g.id) === String(selectedId)) {
-                          const existingRequests = g.pendingLinkRequests || [];
-                          const updatedRequests = [
-                            ...existingRequests.filter(r => r.requestEmail !== myEmail),
-                            {
-                              id: String(matched.id),
-                              placeholderName: searchName,
-                              requestName: me,
-                              requestEmail: myEmail || '',
-                            }
-                          ];
-                          return {
-                            ...g,
-                            pendingLinkRequests: updatedRequests
-                          };
-                        }
-                        return g;
-                      }));
                     }
                   } catch (err) {
                     console.error('Failed to request rejoin:', err);

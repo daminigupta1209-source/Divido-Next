@@ -53,14 +53,14 @@ export function RejoinSelfModal({ hasPendingRejoin, noActiveAdmin, adminLabel, o
           )}
         </div>
         <h3 className="nunito" style={{ fontSize: '18px', fontWeight: 900, color: '#0F172A', margin: '0 0 8px 0' }}>
-          {hasPendingRejoin ? 'Waiting for approval' : noActiveAdmin ? 'Rejoin instantly?' : 'Rejoin this group?'}
+          {hasPendingRejoin ? 'Waiting for approval' : 'Rejoin this group?'}
         </h3>
         <p style={{ fontSize: '14px', color: '#64748B', fontWeight: 600, margin: '0 0 20px 0', lineHeight: 1.4 }}>
           {hasPendingRejoin
             ? <>Your request was sent to the group admin{adminLabel}. You'll get access once it's approved.</>
             : noActiveAdmin
             ? <>No one's active in this group right now, so you'll rejoin straight away and become the admin.</>
-            : <>The group admin{adminLabel} needs to approve.</>}
+            : <>You'll be back in straight away, with your past expenses and balance.</>}
         </p>
         {hasPendingRejoin ? (
           <button
@@ -87,7 +87,7 @@ export function RejoinSelfModal({ hasPendingRejoin, noActiveAdmin, adminLabel, o
               boxShadow: '0 4px 12px rgba(5, 150, 105, 0.2)',
             }}
           >
-            {noActiveAdmin ? 'Rejoin now' : 'Send request'}
+            Rejoin
           </button>
         )}
       </div>
