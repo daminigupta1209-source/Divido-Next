@@ -74,6 +74,14 @@ export const GroupHeader: React.FC<GroupHeaderProps> = ({
 }) => {
   // View-only guard: someone who has left this group can browse history but not edit it.
   const amIPastMember = isPastMemberOf(selectedGroup, me);
+  // My own join/leave/rejoin notes are for the others: keep them out of my bell.
+  const isAboutMe = (title: string | undefined): boolean => {
+    const t = String(title || '').trim().toLowerCase();
+    const names = [me, (typeof localStorage !== 'undefined' && selectedId != null ? localStorage.getItem(`divido_identity_${selectedId}`) : '') || '']
+      .map((x) => String(x || '').replace(/\s*\(me\)$/i, '').replace(/\s*\(Left\)$/i, '').trim().toLowerCase())
+      .filter(Boolean);
+    return names.some((nm) => t === nm + ' left' || t === nm + ' joined' || t === nm + ' rejoined' || t === nm + ' was removed');
+  };
   const [editingDate, setEditingDate] = React.useState(false);
   const uploadInputRef = React.useRef<HTMLInputElement>(null);
   const [selectedPhoto, setSelectedPhoto] = React.useState<string | null>(null);
@@ -356,7 +364,7 @@ export const GroupHeader: React.FC<GroupHeaderProps> = ({
                     <path d="M13.73 21a2 2 0 0 1-3.46 0" />
                   </svg>
                   {(() => {
-                    const systemLogs = expenses.filter(e => String(e.gId) === String(selectedId) && e.paid === 'SYSTEM');
+                    const systemLogs = expenses.filter(e => String(e.gId) === String(selectedId) && e.paid === 'SYSTEM' && !isAboutMe(e.title));
                     if (systemLogs.length > 0) {
                       return (
                         <span
@@ -390,7 +398,7 @@ export const GroupHeader: React.FC<GroupHeaderProps> = ({
 
                 {/* Group Notifications Dropdown */}
                 {showBellMenu && (() => {
-                  const systemLogs = expenses.filter(e => String(e.gId) === String(selectedId) && e.paid === 'SYSTEM');
+                  const systemLogs = expenses.filter(e => String(e.gId) === String(selectedId) && e.paid === 'SYSTEM' && !isAboutMe(e.title));
                   const getSystemTitle = (title: string) => {
                     const cleanMe = me.replace(/\s*\(me\)$/i, '').replace(/\s*\(Left\)$/i, '').toLowerCase();
                     const leftMatch = `${cleanMe} left`;

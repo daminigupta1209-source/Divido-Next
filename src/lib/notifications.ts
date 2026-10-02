@@ -89,6 +89,12 @@ export const pushNotification = async (payload: {
   currency?: string | null;
 }): Promise<void> => {
   if (!payload.recipientEmail) return;
+  // Never notify someone about their own action (e.g. "Damu left" to Damu).
+  try {
+    const { data: { session } } = await supabase.auth.getSession();
+    const me = (session?.user?.email || '').trim().toLowerCase();
+    if (me && payload.recipientEmail.trim().toLowerCase() === me) return;
+  } catch { /* can't tell — send */ }
   const { error } = await supabase.from('notifications').insert({
     recipient_email: payload.recipientEmail,
     type: payload.type,

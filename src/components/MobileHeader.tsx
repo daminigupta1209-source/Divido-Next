@@ -131,6 +131,14 @@ export const MobileHeader: React.FC<MobileHeaderProps> = ({
 }) => {
   // View-only guard: a member who has left this group can browse but not edit it.
   const amIPastMember = isPastMemberOf(selectedGroup, me);
+  // My own join/leave/rejoin notes are for the others: keep them out of my bell.
+  const isAboutMe = (title: string | undefined): boolean => {
+    const t = String(title || '').trim().toLowerCase();
+    const names = [me, (typeof localStorage !== 'undefined' && selectedId != null ? localStorage.getItem(`divido_identity_${selectedId}`) : '') || '']
+      .map((x) => String(x || '').replace(/\s*\(me\)$/i, '').replace(/\s*\(Left\)$/i, '').trim().toLowerCase())
+      .filter(Boolean);
+    return names.some((nm) => t === nm + ' left' || t === nm + ' joined' || t === nm + ' rejoined' || t === nm + ' was removed');
+  };
   // A shared "direct" thread reads as "with <other person>" instead of its
   // internal "Me & Them" name.
   const directOther = (() => {
@@ -654,7 +662,7 @@ export const MobileHeader: React.FC<MobileHeaderProps> = ({
                     <path d="M13.73 21a2 2 0 0 1-3.46 0" />
                   </svg>
                   {(() => {
-                    const systemLogs = expenses.filter(e => String(e.gId) === String(selectedId) && e.paid === 'SYSTEM');
+                    const systemLogs = expenses.filter(e => String(e.gId) === String(selectedId) && e.paid === 'SYSTEM' && !isAboutMe(e.title));
                     if (systemLogs.length > 0) {
                       return (
                         <span
@@ -688,7 +696,7 @@ export const MobileHeader: React.FC<MobileHeaderProps> = ({
 
                 {/* Mobile Group Notifications Dropdown */}
                 {showMobileBellMenu && (() => {
-                  const systemLogs = expenses.filter(e => String(e.gId) === String(selectedId) && e.paid === 'SYSTEM');
+                  const systemLogs = expenses.filter(e => String(e.gId) === String(selectedId) && e.paid === 'SYSTEM' && !isAboutMe(e.title));
                   const getSystemTitle = (title: string) => {
                     const cleanMe = me.replace(/\s*\(me\)$/i, '').replace(/\s*\(Left\)$/i, '').toLowerCase();
                     const leftMatch = `${cleanMe} left`;
