@@ -3226,6 +3226,11 @@ function App() {
     // Extracted so both the plain confirm (delete/standalone) and the bespoke
     // leave card run the exact same leave/delete logic.
     const performLeaveDelete = async () => {
+        // My roster name here as the cloud stored it. The display roster is
+        // title-cased and `me` can be just a first name, so an exact
+        // `.eq('name', me)` could match no row: the screen said "Left" while
+        // the cloud kept me active ("already in the group", no rejoin card).
+        let myRowName: string | null = null;
         if (!isStandalone) {
           // Leaving is always allowed, even with an outstanding balance. The
           // member's row is kept as "(Left)" so their expenses/balances stay
@@ -3234,15 +3239,31 @@ function App() {
           if (!checkIfDemoMode() && isAuthenticated) {
             try {
               if (hasOthers) {
-                // 1. Rename membership row to preserve history, keep email, set is_pending = true
-                await supabase
+                // 1. Rename my membership row to preserve history, keep email,
+                // set is_pending = true. Find it by my account email first,
+                // then by name ignoring case; update by id and confirm it took.
+                const { data: { session } } = await supabase.auth.getSession();
+                const myEm = String(session?.user?.email || userEmail || '').trim().toLowerCase();
+                const meLc = me.trim().toLowerCase();
+                const { data: rows, error: rowsErr } = await supabase
                   .from('group_members')
-                  .update({
-                    name: me + ' (Left)',
-                    is_pending: true
-                  })
-                  .eq('group_id', id)
-                  .eq('name', me);
+                  .select('id, name, user_email')
+                  .eq('group_id', id);
+                if (rowsErr) throw rowsErr;
+                const isLeftRow = (r: any) => /\s*\(Left\)\s*$/i.test(String(r.name || ''));
+                const myRow = (rows || []).find((r: any) => !isLeftRow(r) && !!myEm && String(r.user_email || '').trim().toLowerCase() === myEm)
+                  || (rows || []).find((r: any) => !isLeftRow(r) && String(r.name || '').trim().toLowerCase() === meLc);
+                if (myRow) {
+                  myRowName = String(myRow.name);
+                  const { data: updated, error: updErr } = await supabase
+                    .from('group_members')
+                    .update({ name: myRowName + ' (Left)', is_pending: true })
+                    .eq('id', myRow.id)
+                    .select('id');
+                  if (updErr || !updated || updated.length === 0) {
+                    throw updErr || new Error('Leave update affected no rows');
+                  }
+                }
 
                 // Send push notification to Admin with only a single text line
                 const activeMembers = (g.members || []).filter((m) => !m.endsWith(' (Left)'));
@@ -3301,14 +3322,29 @@ function App() {
               }
             } catch (err) {
               console.error('Failed to leave/delete group on Supabase:', err);
+              if (hasOthers) {
+                // Don't mark myself "Left" on screen while the cloud still has
+                // me active — that's the half-left state. Let them retry.
+                setConfirmState({ show: false });
+                setBalanceCard(null);
+                flashToast("Couldn't leave the group. Check your connection and try again.");
+                return;
+              }
             }
           }
-          // Update local groups state
+          // Update local groups state (case-insensitive: the roster is
+          // title-cased, `me` / the stored row name may not be).
+          const leaveNames = new Set([me, myRowName].filter(Boolean).map((n) => String(n).trim().toLowerCase()));
+          const isMine = (m: string) => leaveNames.has(m.trim().toLowerCase());
           setGroups(
             groups
               .map((x) =>
                 String(x.id) === String(id)
-                  ? { ...x, members: x.members.map((m) => (m === me ? me + ' (Left)' : m)) }
+                  ? {
+                      ...x,
+                      members: x.members.map((m) => (isMine(m) ? m + ' (Left)' : m)),
+                      pendingMembers: x.pendingMembers?.filter((m) => !isMine(m)),
+                    }
                   : x
               )
               // Only filter it out if we actually deleted it globally because no other members were in it

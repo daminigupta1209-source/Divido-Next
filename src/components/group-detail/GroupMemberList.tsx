@@ -117,7 +117,10 @@ export const GroupMemberList: React.FC<GroupMemberListProps> = ({
   // nothing extra.
   const emailFor = (name: string): string => {
     const id = selectedGroup.memberIdentities?.[name] || '';
-    return typeof id === 'string' && id.includes('@') ? id : '';
+    if (typeof id === 'string' && id.includes('@')) return id;
+    // My own row may carry no email in this group's identities (keyed by a
+    // person_id, or a not-yet-synced local group) — I'm signed in, so show mine.
+    return myEmail && checkIsMe(name) ? myEmail : '';
   };
   // Fallback for members this group knows only by name (person_id, no email —
   // e.g. added by typing): find the same person's email in ANY other group,
