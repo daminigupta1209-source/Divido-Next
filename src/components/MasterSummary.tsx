@@ -311,13 +311,9 @@ export const MasterSummary: React.FC<MasterSummaryProps> = ({
   const openJoinInvite = () => {
     const pending = joinProgress.pending;
     if (pending.length === 0) return;
-    // One person: straight to the share sheet. Several: pick a person first
-    // (one share can carry only one person's invite).
-    if (pending.length === 1) {
-      onInvitePerson?.(pending[0]);
-    } else {
-      setShowJoinSheet(true);
-    }
+    // Always show the list (even for one person) so it's clear who's pending;
+    // each row has its own share button.
+    setShowJoinSheet(true);
   };
 
   // A "direct" group (created by sharing a non-group card) is presented as a
