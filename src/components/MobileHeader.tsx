@@ -914,7 +914,7 @@ export const MobileHeader: React.FC<MobileHeaderProps> = ({
                     spellCheck="false"
                     data-1p-ignore
                     data-lpignore="true"
-                    placeholder={view === 'gallery' ? "Search photos..." : "Search groups..."}
+                    placeholder={view === 'gallery' ? "Search photos..." : "Search groups & activities..."}
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
                     onKeyDown={(e) => {

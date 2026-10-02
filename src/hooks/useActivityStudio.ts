@@ -16,6 +16,8 @@ export interface UseActivityStudioProps {
   deleteExpense: (id: string | number) => void;
   setSelectedId: (id: string | number | null) => void;
   setView: (view: string) => void;
+  // When set (home screen), the header search drives this list instead of the local box.
+  externalSearchQuery?: string;
 }
 
 export function useActivityStudio({
@@ -32,6 +34,7 @@ export function useActivityStudio({
   deleteExpense,
   setSelectedId,
   setView,
+  externalSearchQuery,
 }: UseActivityStudioProps) {
   const [openDropdownId, setOpenDropdownId] = useState<string | number | null>(null);
   const [filterType, setFilterType] = useState('all'); // 'all', 'expenses', 'settlements'
@@ -61,12 +64,15 @@ export function useActivityStudio({
   const filteredExpenses = useMemo(() => {
     return expenses.filter((e) => {
       if (e.paid === 'SYSTEM') return false;
-      if (searchQuery) {
-        const q = searchQuery.toLowerCase();
+      const query = (externalSearchQuery ?? searchQuery).trim();
+      if (query) {
+        const q = query.toLowerCase();
         const titleMatch = e.title?.toLowerCase().includes(q);
         const paidMatch = e.paid?.toLowerCase().includes(q);
         const tagMatch = e.tags?.some((t) => t.toLowerCase().includes(q));
-        if (!titleMatch && !paidMatch && !tagMatch) return false;
+        const splitterMatch = e.splitters?.some((m) => m.toLowerCase().includes(q));
+        const groupMatch = groups.find((g) => String(g.id) === String(e.gId))?.name?.toLowerCase().includes(q);
+        if (!titleMatch && !paidMatch && !tagMatch && !splitterMatch && !groupMatch) return false;
       }
       const isSettlement = e.title?.includes('💸 Settlement') || e.title?.includes('✅ Settlement') || e.title?.includes('🤝 Settlement') || e.category === '💸' || e.category === '✅' || e.category === '🤝' || e.title?.toLowerCase().includes('settlement') || e.title === 'Payment Recorded';
       const isConversion = !!e.isConversion;
@@ -110,7 +116,7 @@ export function useActivityStudio({
 
       return true;
     });
-  }, [expenses, filterType, dateFilter, customStartDate, customEndDate, selectedTag, searchQuery]);
+  }, [expenses, filterType, dateFilter, customStartDate, customEndDate, selectedTag, searchQuery, externalSearchQuery, groups]);
 
   const sorted = useMemo(() => {
     return [...filteredExpenses].sort((a, b) => {

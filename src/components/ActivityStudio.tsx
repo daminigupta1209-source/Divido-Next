@@ -25,6 +25,8 @@ interface ActivityStudioProps {
   setSelectedId: (id: string | number | null) => void;
   setView: (view: string) => void;
   hideBackButton?: boolean;
+  // Home screen passes the header search here and hides the local search + filters.
+  externalSearchQuery?: string;
 }
 
 export const ActivityStudio: React.FC<ActivityStudioProps> = ({
@@ -42,6 +44,7 @@ export const ActivityStudio: React.FC<ActivityStudioProps> = ({
   setSelectedId,
   setView,
   hideBackButton = false,
+  externalSearchQuery,
 }) => {
   const {
     openDropdownId,
@@ -83,6 +86,7 @@ export const ActivityStudio: React.FC<ActivityStudioProps> = ({
     deleteExpense,
     setSelectedId,
     setView,
+    externalSearchQuery,
   });
 
   const [showFilters, setShowFilters] = React.useState(false);
@@ -97,6 +101,7 @@ export const ActivityStudio: React.FC<ActivityStudioProps> = ({
 
   return (
     <div className="content-width-limit">
+      {externalSearchQuery === undefined && (<>
       <div style={{ display: 'flex', gap: '10px', alignItems: 'center', marginBottom: '16px', width: '100%' }}>
         {!hideBackButton && (
           <span
@@ -228,6 +233,8 @@ export const ActivityStudio: React.FC<ActivityStudioProps> = ({
           )}
         </div>
       )}
+
+      </>)}
 
         {dateFilter === 'custom' && (
           <div
