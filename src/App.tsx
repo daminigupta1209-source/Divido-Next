@@ -971,6 +971,26 @@ function App() {
 
   // Apply a confirmed name change everywhere: member row, all historical expenses
   // (paid + splitters), local identity, and let the other members know.
+  // A one-line entry in the group's own activity/bell feed (paid: 'SYSTEM'),
+  // e.g. "Ravi joined" / "Ravi left". Best-effort: never blocks the action.
+  const logGroupEvent = async (groupId: string | number, title: string) => {
+    if (!groupId || groupId === 'STANDALONE' || checkIfDemoMode()) return;
+    try {
+      await supabase.from('expenses').insert({
+        group_id: groupId,
+        timestamp: Date.now(),
+        title,
+        amt: 0,
+        paid: 'SYSTEM',
+        date: new Date().toISOString().split('T')[0],
+        mode: 'Equally',
+        splitters: [],
+      });
+    } catch (e) {
+      console.error('Group activity log failed:', e);
+    }
+  };
+
   const applyRename = async (groupId: string | number, oldName: string, newName: string) => {
     if (!oldName || !newName || oldName === newName) return;
     // Rename a member's key inside a shares/origShares map (used by Unequally /
@@ -3183,6 +3203,7 @@ function App() {
           if (!checkIfDemoMode() && isAuthenticated) {
             try {
               if (hasOthers) {
+                await logGroupEvent(id, `${me.replace(/\s*\(me\)$/i, '')} left`);
                 // 1. Rename membership row to preserve history, keep email, set is_pending = true
                 await supabase
                   .from('group_members')
@@ -4054,6 +4075,7 @@ function App() {
         localStorage.setItem('divido_authenticated', 'true');
         setIsAuthenticated(true);
         succeeded.push({ groupId, group: result.group });
+        logGroupEvent(groupId, `${result.claimedName} joined`);
       } else if (result.status === 'takenByOther') {
         takenIds.add(groupId);
       } else if (result.status === 'error') {
@@ -4406,6 +4428,7 @@ function App() {
         }
         localStorage.setItem('divido_authenticated', 'true');
         localStorage.setItem(`divido_identity_${linkRequestGroup.id}`, claimName);
+        logGroupEvent(linkRequestGroup.id, `${claimName} joined`);
         setIsAuthenticated(true);
         if (activeEmail.startsWith('guest-')) {
           setUserEmail(activeEmail);
@@ -5923,6 +5946,7 @@ function App() {
                       }
                     }
                     const myName = mine ? String(mine.name).replace(/\s*\(Left\)$/i, '') : (claimedPlaceholderName || typed);
+                    if (!mine) logGroupEvent(linkRequestGroup.id, `${myName} joined`);
                     {
                       const existing = localStorage.getItem('divido_username');
                       const hasRealName = !!existing && !['You', 'Guest', 'undefined', ''].includes(existing.trim());
@@ -7213,6 +7237,7 @@ function App() {
                           if (!hasRealName) { localStorage.setItem('divido_username', cleanName); setUserName(cleanName); }
                         }
                         localStorage.setItem(`divido_identity_${selectedId}`, cleanName);
+                        await logGroupEvent(selectedId, `${cleanName} rejoined`);
                         setGroups(groups.map((g) =>
                           String(g.id) === String(selectedId)
                             ? {
