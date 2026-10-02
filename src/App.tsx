@@ -976,9 +976,9 @@ function App() {
   const logGroupEvent = async (groupId: string | number, title: string) => {
     if (!groupId || groupId === 'STANDALONE' || checkIfDemoMode()) return;
     try {
-      await supabase.from('expenses').insert({
+      const { error } = await supabase.from('expenses').insert({
+        id: genExpenseId(),
         group_id: groupId,
-        timestamp: Date.now(),
         title,
         amt: 0,
         paid: 'SYSTEM',
@@ -986,6 +986,7 @@ function App() {
         mode: 'Equally',
         splitters: [],
       });
+      if (error) console.error('Group activity log failed:', error);
     } catch (e) {
       console.error('Group activity log failed:', e);
     }
@@ -2891,14 +2892,14 @@ function App() {
             try {
               const { data: logs } = await supabase
                 .from('expenses')
-                .select('title, timestamp')
+                .select('title, created_at')
                 .eq('group_id', joinGroupId)
                 .eq('paid', 'SYSTEM');
               let removedAt = -1; let rejoinedAt = -1;
               const n = cleanName.toLowerCase();
               for (const l of logs || []) {
                 const t = String(l.title || '').toLowerCase();
-                const ts = Number(l.timestamp || 0);
+                const ts = Date.parse(String(l.created_at || '')) || 0;
                 if (t === n + ' was removed') removedAt = Math.max(removedAt, ts);
                 if (t.startsWith(n + ' rejoined')) rejoinedAt = Math.max(rejoinedAt, ts);
               }
@@ -4344,8 +4345,8 @@ function App() {
         await supabase
           .from('expenses')
           .insert({
+            id: genExpenseId(),
             group_id: linkRequestGroup.id,
-            timestamp: Date.now(),
             title: `${cleanName} rejoined`,
             amt: 0,
             paid: 'SYSTEM',
@@ -5389,8 +5390,8 @@ function App() {
                     await supabase
                       .from('expenses')
                       .insert({
+                        id: genExpenseId(),
                         group_id: selectedId,
-                        timestamp: Date.now(),
                         title: `${memberName} was removed`,
                         amt: 0,
                         paid: 'SYSTEM',
@@ -7327,8 +7328,8 @@ function App() {
                 await supabase
                   .from('expenses')
                   .insert({
+                    id: genExpenseId(),
                     group_id: adminRejoinRequest.groupId,
-                    timestamp: Date.now(),
                     title: `${cleanName} rejoined`,
                     amt: 0,
                     paid: 'SYSTEM',
