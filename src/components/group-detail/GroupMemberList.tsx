@@ -715,9 +715,9 @@ export const GroupMemberList: React.FC<GroupMemberListProps> = ({
                       >
                         {checkIsMe(m) ? 'You' : withoutEmailTag(selectedGroup, m.replace(/\s*\(me\)$/i, ''))} {checkIsAdmin(m) && <span style={{ fontSize: '10px', fontWeight: 600, color: '#7C3AED', background: '#F5F3FF', padding: '1px 6px', borderRadius: '4px', marginLeft: '6px' }}>Admin</span>}
                       </span>
-                      {emailFor(m) && (
+                      {(emailFor(m) || (checkIsMe(m) ? myEmail : '') || emailAnywhere(m)) && (
                         <span style={{ fontSize: '11px', color: '#94A3B8', fontWeight: 500, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                          {emailFor(m)}
+                          {emailFor(m) || (checkIsMe(m) ? myEmail : '') || emailAnywhere(m)}
                         </span>
                       )}
                     </div>

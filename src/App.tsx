@@ -2866,77 +2866,36 @@ function App() {
           );
           if (leftMemberRow) {
             const cleanName = leftMemberRow.name.replace(/\s*\(Left\)$/i, '');
-            // Auto-rejoin: their email matches their past-member row unambiguously.
-            // Reactivate their row, log rejoin, and take them straight in without any modal or popup.
-            await supabase
-              .from('group_members')
-              .update({
-                name: cleanName,
-                user_email: myEmail,
-                is_pending: false,
-                link_request_email: null,
-                link_request_name: null,
-              })
-              .eq('id', leftMemberRow.id);
-
+            // Removed by the admin (not a voluntary leave): no rejoin via link.
+            let wasRemoved = false;
             try {
-              await supabase
+              const { data: logs } = await supabase
                 .from('expenses')
-                .insert({
-                  group_id: joinGroupId,
-                  timestamp: Date.now(),
-                  title: `${cleanName} rejoined`,
-                  amt: 0,
-                  paid: 'SYSTEM',
-                  date: new Date().toISOString().split('T')[0],
-                  mode: 'Equally',
-                  splitters: []
-                });
-            } catch (e) {
-              console.error('Rejoin activity log failed:', e);
-            }
-
-            // Local identity setup
-            const existing = localStorage.getItem('divido_username');
-            const hasRealName = !!existing && !['You', 'Guest', 'undefined', ''].includes(existing.trim());
-            if (!hasRealName) { localStorage.setItem('divido_username', cleanName); setUserName(cleanName); }
-            localStorage.setItem('divido_authenticated', 'true');
-            localStorage.setItem(`divido_identity_${joinGroupId}`, cleanName);
-            setIsAuthenticated(true);
-            localStorage.removeItem('divido_pending_join');
-
-            // Fetch fresh members so roster renders immediately
-            let freshMembers: string[] = [];
-            let freshPending: string[] = [];
-            try {
-              const { data: gm } = await supabase
-                .from('group_members')
-                .select('*')
+                .select('title, timestamp')
                 .eq('group_id', joinGroupId)
-                .order('id', { ascending: true });
-              if (gm) {
-                const activeMems = dropShadowedLeftRows(gm.filter((m: any) => !m.link_request_email || !m.is_pending || m.name.endsWith(' (Left)')));
-                freshMembers = Array.from(new Set(activeMems.map((m: any) => m.name)));
-                freshPending = Array.from(new Set(activeMems
-                  .filter((m: any) => m.is_pending && !m.user_email && !m.name.endsWith(' (Left)'))
-                  .map((m: any) => m.name)));
+                .eq('paid', 'SYSTEM');
+              let removedAt = -1; let rejoinedAt = -1;
+              const n = cleanName.toLowerCase();
+              for (const l of logs || []) {
+                const t = String(l.title || '').toLowerCase();
+                const ts = Number(l.timestamp || 0);
+                if (t === n + ' was removed') removedAt = Math.max(removedAt, ts);
+                if (t.startsWith(n + ' rejoined')) rejoinedAt = Math.max(rejoinedAt, ts);
               }
-            } catch { /* background cloud-load will catch up */ }
-
-            const updatedGroup = {
-              ...groupData,
-              members: freshMembers.length ? freshMembers : [...(groupData.members || []).filter((m: string) => m !== leftMemberRow.name), cleanName],
-              pendingMembers: freshPending,
-            };
-            setGroups(prev => prev.some(g => g.id === updatedGroup.id)
-              ? prev.map(g => g.id === updatedGroup.id ? updatedGroup : g)
-              : [...prev, updatedGroup]);
-
-            setSelectedId(groupData.is_direct ? 'STANDALONE' : joinGroupId);
-            setView('detail');
-            setShowFriendsList(false);
+              wasRemoved = removedAt >= 0 && removedAt > rejoinedAt;
+            } catch { /* can't tell: fall through to the confirm card */ }
             const cleanUrl = window.location.protocol + '//' + window.location.host + window.location.pathname;
             window.history.replaceState({ _divido: true, uiState: { view: 'summary', selectedId: null } }, '', cleanUrl);
+            if (wasRemoved) {
+              localStorage.removeItem('divido_pending_join');
+              setToastMsg('You were removed from ' + (groupData.name || 'this group') + ' by the admin. Ask them to add you back.');
+              setTimeout(() => setToastMsg(null), 4000);
+              return;
+            }
+            // Left by choice: ask first ("Rejoin as ..." card), then straight in.
+            setLinkRequestRejoinMode(true);
+            setLinkRequestGroup(groupData);
+            setLinkRequestPlaceholders([leftMemberRow]);
             return;
           }
 
@@ -5764,7 +5723,7 @@ function App() {
               ×
             </button>
             <h3 className="nunito" style={{ fontSize: '18px', fontWeight: 900, color: '#0F172A', margin: '0 0 6px 0', padding: '0 36px', boxSizing: 'border-box', lineHeight: 1.35, wordBreak: 'break-word' }}>
-              Join "{linkRequestGroup.name}"?
+              {linkRequestRejoinMode ? 'Rejoin' : 'Join'} "{linkRequestGroup.name}"?
             </h3>
 
             {claimConfirmTarget ? (() => {
