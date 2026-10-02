@@ -180,7 +180,6 @@ export const NonGroupView: React.FC<NonGroupViewProps> = ({
   const [activeTab, setActiveTab] = React.useState<'settle' | 'photos'>('settle');
   // Which person's full profile page is open (tapping their DP/avatar).
   const [profilePerson, setProfilePerson] = React.useState<string | null>(null);
-  const [showPersonNetSheet, setShowPersonNetSheet] = React.useState(false);
   const [showFrontNetSheet, setShowFrontNetSheet] = React.useState(false);
   // Shared-thread id of the open person (set while rendering their screen).
   const profilePersonThread = React.useRef<string | undefined>(undefined);
@@ -387,9 +386,9 @@ export const NonGroupView: React.FC<NonGroupViewProps> = ({
           </div>
         </div>
 
-        {/* Net balance card — above Settle / Invite, tappable */}
+        {/* Net balance card — tap to settle up with this person */}
         <div
-          onClick={() => hasBal && setShowPersonNetSheet(true)}
+          onClick={() => hasBal && onSettlePerson(profilePerson, p?.directGroupId)}
           style={{
             position: 'relative',
             display: 'flex',
@@ -433,18 +432,12 @@ export const NonGroupView: React.FC<NonGroupViewProps> = ({
           )}
         </div>
 
-        {/* Actions — always show Settle + Invite side by side */}
-        <div style={{ display: 'flex', gap: '8px', marginBottom: '20px' }}>
-          <button type="button" onClick={() => onSettlePerson(profilePerson, p?.directGroupId)} style={{ ...profileBtn, background: '#FB7185', border: 'none', color: '#FFFFFF' }}>Settle</button>
-          {onSharePerson && <button type="button" onClick={() => onSharePerson(profilePerson, p?.directGroupId)} style={{ ...profileBtn, background: '#1A73E8', border: 'none', color: '#FFFFFF' }}>Invite</button>}
-        </div>
-
-        <NetBalanceDetailsSheet
-          isOpen={showPersonNetSheet}
-          onClose={() => setShowPersonNetSheet(false)}
-          payLines={personPayLines}
-          collectLines={personCollectLines}
-        />
+        {/* Actions — settling is done by tapping the balance card above */}
+        {onSharePerson && (
+          <div style={{ display: 'flex', gap: '8px', marginBottom: '20px' }}>
+            <button type="button" onClick={() => onSharePerson(profilePerson, p?.directGroupId)} style={{ ...profileBtn, background: '#1A73E8', border: 'none', color: '#FFFFFF' }}>Invite</button>
+          </div>
+        )}
 
         <div style={{ display: 'flex', flexDirection: 'column' }}>
           {(() => {
