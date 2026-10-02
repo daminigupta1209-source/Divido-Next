@@ -31,7 +31,7 @@ export const EXPENSE_FIELDS: FieldDef[] = [
   { app: 'gId', db: 'group_id', strCompare: true },
   { app: 'title', db: 'title' },
   { app: 'amt', db: 'amt', fromDb: (v) => parseFloat(v) || 0 },
-  { app: 'paid', db: 'paid', fromDb: (v) => (v ? titleCaseName(v) : v) },
+  { app: 'paid', db: 'paid', fromDb: (v) => (!v ? v : String(v).toUpperCase() === 'SYSTEM' ? 'SYSTEM' : titleCaseName(v)) }, // 'SYSTEM' = activity log, never re-cased
   { app: 'date', db: 'date' },
   { app: 'mode', db: 'mode', toDb: (v) => v || 'Equally' },
   { app: 'splitters', db: 'splitters', fromDb: (v) => ensureArray(v).map(titleCaseName), toDb: (v) => v || [], deep: true },
