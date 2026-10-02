@@ -466,7 +466,10 @@ export const MasterSummary: React.FC<MasterSummaryProps> = ({
   // One top banner at a time, by priority: Budget exceeded > Yet to join > UPI.
   const showBudgetBanner = exceededBudgets.length > 0 && !budgetBannerDismissed;
   const showJoinTopBanner = showJoinBanner && !showBudgetBanner;
-  const showUpiBanner = hasNoUpi && !upiBannerDismissed && !showBudgetBanner && !showJoinTopBanner;
+  // UPI nudge turned off: new users shouldn't be pushed to link UPI on the home
+  // screen (they can still add it from Profile or when settling up).
+  const SHOW_UPI_NUDGE = false;
+  const showUpiBanner = SHOW_UPI_NUDGE && hasNoUpi && !upiBannerDismissed && !showBudgetBanner && !showJoinTopBanner;
 
   return (
     <div className="content-width-limit" onTouchStart={onSwipeStart} onTouchEnd={onSwipeEnd}>
