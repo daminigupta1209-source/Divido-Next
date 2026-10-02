@@ -236,6 +236,13 @@ export const MobileHeader: React.FC<MobileHeaderProps> = ({
     setSelectedPhoto(null);
   };
   const isHomeStyle = true;
+  // Non-Group: is a person's screen open? (NonGroupView announces it.)
+  const [nonGroupPersonOpen, setNonGroupPersonOpen] = React.useState(false);
+  React.useEffect(() => {
+    const on = (e: Event) => setNonGroupPersonOpen(!!(e as CustomEvent).detail?.open);
+    window.addEventListener('divido:nongroup-person', on);
+    return () => window.removeEventListener('divido:nongroup-person', on);
+  }, []);
 
   const relTime = (dateStr: string) => {
     const d = new Date(dateStr);
@@ -602,6 +609,24 @@ export const MobileHeader: React.FC<MobileHeaderProps> = ({
                     <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                       <circle cx="10.8" cy="10.8" r="6.6" />
                       <path d="m16 16 4.2 4.2" />
+                    </svg>
+                  </button>
+                )}
+
+                {selectedId === 'STANDALONE' && nonGroupPersonOpen && (
+                  <button
+                    type="button"
+                    aria-label="Invite"
+                    title="Invite"
+                    onClick={(e) => { e.stopPropagation(); window.dispatchEvent(new Event('divido:share-person')); }}
+                    style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#94A3B8', width: '36px', height: '36px', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, padding: 0, borderRadius: '8px' }}
+                  >
+                    <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                      <circle cx="18" cy="5" r="3" />
+                      <circle cx="6" cy="12" r="3" />
+                      <circle cx="18" cy="19" r="3" />
+                      <line x1="8.59" y1="13.51" x2="15.42" y2="17.49" />
+                      <line x1="15.41" y1="6.51" x2="8.59" y2="10.49" />
                     </svg>
                   </button>
                 )}

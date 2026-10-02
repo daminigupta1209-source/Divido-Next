@@ -216,10 +216,18 @@ export const NonGroupView: React.FC<NonGroupViewProps> = ({
       const t = profilePersonThread.current;
       onAddWithPerson(profilePerson, t);
     };
+    // Header share icon (shown only while a person is open) → invite them.
+    const onSharePersonEv = () => {
+      if (onSharePerson) onSharePerson(profilePerson, profilePersonThread.current);
+    };
+    window.dispatchEvent(new CustomEvent('divido:nongroup-person', { detail: { open: !!onSharePerson } }));
+    window.addEventListener('divido:share-person', onSharePersonEv);
     window.addEventListener('popstate', onPop);
     window.addEventListener('divido:header-back', onHeaderBack);
     window.addEventListener('divido:add-expense', onAddExpense);
     return () => {
+      window.dispatchEvent(new CustomEvent('divido:nongroup-person', { detail: { open: false } }));
+      window.removeEventListener('divido:share-person', onSharePersonEv);
       window.removeEventListener('popstate', onPop);
       window.removeEventListener('divido:header-back', onHeaderBack);
       window.removeEventListener('divido:add-expense', onAddExpense);
@@ -432,12 +440,8 @@ export const NonGroupView: React.FC<NonGroupViewProps> = ({
           )}
         </div>
 
-        {/* Actions — settling is done by tapping the balance card above */}
-        {onSharePerson && (
-          <div style={{ display: 'flex', gap: '8px', marginBottom: '20px' }}>
-            <button type="button" onClick={() => onSharePerson(profilePerson, p?.directGroupId)} style={{ ...profileBtn, background: '#1A73E8', border: 'none', color: '#FFFFFF' }}>Invite</button>
-          </div>
-        )}
+        {/* Settle = tap the balance card; Invite = share icon in the header. */}
+        <div style={{ height: '6px' }} />
 
         <div style={{ display: 'flex', flexDirection: 'column' }}>
           {(() => {
