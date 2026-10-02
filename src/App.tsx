@@ -5313,7 +5313,23 @@ function App() {
               // tombstone that just clutters Past Members. Balance need not be checked
               // separately: a non-zero balance can only come from an expense, so it is
               // already implied by hasExpenseHistory.
-              const hardDelete = !hasExpenseHistory || purgePastWithHistory;
+              // A member who actually JOINED (their row has an account email) is
+              // never hard-deleted on removal: hard-deleting them cut off their read
+              // access (blank history), skipped the "was removed" log, and left a
+              // stale Rejoin on their phone. Tombstone them like a member with
+              // history. Only never-used invites are deleted outright.
+              let joinedAccount = false;
+              if (!isPastMember && !hasExpenseHistory && !checkIfDemoMode() && isAuthenticated) {
+                try {
+                  const { data: rows } = await supabase
+                    .from('group_members')
+                    .select('user_email')
+                    .eq('group_id', selectedId)
+                    .ilike('name', cleanName);
+                  joinedAccount = (rows || []).some((r: any) => !!r.user_email);
+                } catch { /* fall back to the old rule */ }
+              }
+              const hardDelete = (!hasExpenseHistory && !joinedAccount) || purgePastWithHistory;
               // Delete EVERY row-name variant for this person so no stray row (e.g.
               // a clean-named pending row left over from an incomplete tombstone)
               // survives to reload as an active member. De-duplicated.
