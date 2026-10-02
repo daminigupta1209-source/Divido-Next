@@ -4492,6 +4492,7 @@ function App() {
         onRequireSignIn={requireSignInToCreate}
         onAddExpense={addExpenseFromNav}
         setAnalyticsGroupId={setAnalyticsGroupId}
+        onImportSplitwise={onImportSplitwise}
       />
 
       {isSidebarOpen && (

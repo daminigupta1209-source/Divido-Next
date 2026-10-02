@@ -30,6 +30,7 @@ interface SidebarProps {
   onRequireSignIn?: () => boolean;
   onAddExpense?: () => void;
   setAnalyticsGroupId?: (id: string | number | null) => void;
+  onImportSplitwise?: () => void;
 }
 
 export const Sidebar: React.FC<SidebarProps> = ({
@@ -57,6 +58,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
   onRequireSignIn,
   onAddExpense,
   setAnalyticsGroupId,
+  onImportSplitwise,
 }) => {
   const getSyncState = () => {
     switch (syncStatus) {
@@ -135,6 +137,14 @@ export const Sidebar: React.FC<SidebarProps> = ({
             <path d="M12 8v4l2.5 2" />
             <path d="M3.5 9a9 9 0 1 1-.5 5" />
             <path d="M3 5v4h4" />
+          </svg>
+        );
+      case 'splitwise': // Import from Splitwise — download into tray
+        return (
+          <svg {...common}>
+            <path d="M12 3v12" />
+            <path d="m7 10 5 5 5-5" />
+            <path d="M5 21h14" />
           </svg>
         );
       case 'analytics': // Analytics — line chart
@@ -278,6 +288,11 @@ export const Sidebar: React.FC<SidebarProps> = ({
                   gap: '12px',
                 }}
                 onClick={() => {
+                  if (it.id === 'splitwise') {
+                    onImportSplitwise?.();
+                    setIsSidebarOpen(false);
+                    return;
+                  }
                   setView(it.id);
                   setIsSidebarOpen(false);
                 }}
@@ -502,6 +517,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
             { id: 'friends', n: 'All balances', e: '✅', c: ['#10B981', '#059669'] },
             { id: 'activity', n: 'All Activities', e: '📜', c: ['#2DD4BF', '#14B8A6'] },
             { id: 'analytics', n: 'Analytics', e: '📈', c: ['#A78BFA', '#8B5CF6'] },
+            ...(onImportSplitwise ? [{ id: 'splitwise', n: 'Import from Splitwise', e: '📥', c: ['#5BC5A7', '#1CC29F'] }] : []),
           ].map((it) => {
             const isActive = view === it.id;
             return (
@@ -528,6 +544,11 @@ export const Sidebar: React.FC<SidebarProps> = ({
                   gap: '12px',
                 }}
                 onClick={() => {
+                  if (it.id === 'splitwise') {
+                    onImportSplitwise?.();
+                    setIsSidebarOpen(false);
+                    return;
+                  }
                   setView(it.id);
                   if (it.id === 'analytics' && setAnalyticsGroupId) {
                     setAnalyticsGroupId(null);
