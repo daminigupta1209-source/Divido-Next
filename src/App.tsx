@@ -3215,26 +3215,29 @@ function App() {
                   .eq('group_id', id)
                   .eq('name', me);
 
-                // Send push notification to Admin with only a single text line
+                // Tell every other joined member (by email — the old exact-name
+                // lookup of just the admin usually matched nobody).
                 const activeMembers = (g.members || []).filter((m) => !m.endsWith(' (Left)'));
-                const adminName = activeMembers.find(m => m !== me);
-                if (adminName) {
-                  const { data: adminRows } = await supabase
+                try {
+                  const myEm = (userEmail || '').toLowerCase();
+                  const { data: others } = await supabase
                     .from('group_members')
-                    .select('user_email')
+                    .select('user_email, name')
                     .eq('group_id', id)
-                    .eq('name', adminName)
-                    .not('user_email', 'is', null)
-                    .limit(1);
-                  const adminEmail = adminRows?.[0]?.user_email;
-                  if (adminEmail) {
+                    .not('user_email', 'is', null);
+                  for (const o of others || []) {
+                    const em = String(o.user_email || '').toLowerCase();
+                    if (!em || em === myEm || /\(Left\)\s*$/i.test(String(o.name || ''))) continue;
                     await pushNotification({
-                      recipientEmail: adminEmail,
+                      recipientEmail: o.user_email,
                       type: 'admin_transfer',
-                      title: `${me} left ${g.name}`,
+                      title: `${me.replace(/\s*\(me\)$/i, '')} left ${g.name}`,
+                      fromName: me,
                       groupId: id,
                     });
                   }
+                } catch (notifyErr) {
+                  console.error('Leave notification failed:', notifyErr);
                 }
 
                 // 3. Admin handoff: the next active member becomes admin (admin is
