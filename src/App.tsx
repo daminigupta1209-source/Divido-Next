@@ -516,6 +516,11 @@ function App() {
   const [homeSearchNonce, setHomeSearchNonce] = useState(0);
   const [globalSearchQuery, setGlobalSearchQuery] = useState('');
   const [isHeaderSearchActive, setIsHeaderSearchActive] = useState(false);
+  // Non-Group screen's own header search (null = closed).
+  const [nonGroupSearch, setNonGroupSearch] = useState<string | null>(null);
+  useEffect(() => {
+    if (selectedId !== 'STANDALONE' || view !== 'detail') setNonGroupSearch(null);
+  }, [selectedId, view]);
   const mainContentRef = useRef<HTMLElement>(null);
   const [headerHidden, setHeaderHidden] = useState(false);
 
@@ -4554,6 +4559,8 @@ function App() {
             setSearchQuery={setGlobalSearchQuery}
             isHeaderSearchActive={isHeaderSearchActive}
             setIsHeaderSearchActive={setIsHeaderSearchActive}
+            nonGroupSearch={nonGroupSearch}
+            setNonGroupSearch={setNonGroupSearch}
             onOpenConvert={() => setShowFriendsConvert(true)}
             setExpenses={setExpenses}
             setShowExpModal={setShowExpModalSecure}
@@ -4846,6 +4853,7 @@ function App() {
                 .filter((t) => t.otherName);
             })()}
             onBack={() => { setSelectedId(null); setView('summary'); }}
+            searchQuery={nonGroupSearch || ''}
             onOpenExpense={(exp) => { setEditingExpenseSecure(exp); setShowExpModalSecure(true); }}
             onSettlePerson={(name, directGroupId) => setGlobalSettleDataSecure({ name: name.replace(/\s*\(Left\)$/i, '').trim(), gId: directGroupId || 'STANDALONE' })}
             onAddWithPerson={(name, directGroupId) => quickAddExpenseWithFriend(name, directGroupId)}

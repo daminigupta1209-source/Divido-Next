@@ -50,6 +50,9 @@ interface MobileHeaderProps {
   setSearchQuery?: (val: string) => void;
   isHeaderSearchActive?: boolean;
   setIsHeaderSearchActive?: (val: boolean) => void;
+  // Non-Group search (null = closed, string = open with this text).
+  nonGroupSearch?: string | null;
+  setNonGroupSearch?: (val: string | null) => void;
   showGalleryFilters?: boolean;
   onToggleGalleryFilters?: () => void;
   onOpenConvert?: () => void;
@@ -110,6 +113,8 @@ export const MobileHeader: React.FC<MobileHeaderProps> = ({
   setSearchQuery = () => {},
   isHeaderSearchActive = false,
   setIsHeaderSearchActive = () => {},
+  nonGroupSearch = null,
+  setNonGroupSearch = () => {},
   showGalleryFilters = false,
   onToggleGalleryFilters,
   onOpenConvert = () => {},
@@ -530,6 +535,69 @@ export const MobileHeader: React.FC<MobileHeaderProps> = ({
                     <path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48" />
                   </svg>
                 </button>
+
+                {/* Non-Group search: icon left of the bell, opens an inline box */}
+                {selectedId === 'STANDALONE' && nonGroupSearch !== null && (
+                  <input
+                    type="search"
+                    autoComplete="off"
+                    autoCorrect="off"
+                    spellCheck="false"
+                    data-1p-ignore
+                    data-lpignore="true"
+                    placeholder="Search people & expenses..."
+                    value={nonGroupSearch}
+                    onChange={(e) => setNonGroupSearch(e.target.value)}
+                    onKeyDown={(e) => { if (e.key === 'Escape') setNonGroupSearch(null); }}
+                    onClick={(e) => e.stopPropagation()}
+                    className="header-search-input"
+                    autoFocus
+                    style={{
+                      background: 'transparent',
+                      border: 'none',
+                      borderBottom: '1.5px solid #C9BCAB',
+                      borderRadius: '0px',
+                      outline: 'none',
+                      boxShadow: 'none',
+                      fontSize: '14px',
+                      fontWeight: 600,
+                      height: '30px',
+                      padding: '0',
+                      margin: '0 6px 0 0',
+                      color: 'var(--t)',
+                      width: '150px',
+                      minWidth: 0,
+                      fontFamily: 'inherit',
+                    }}
+                  />
+                )}
+                {selectedId === 'STANDALONE' && (
+                  <button
+                    type="button"
+                    aria-label="Search"
+                    title="Search"
+                    onClick={(e) => { e.stopPropagation(); setNonGroupSearch(nonGroupSearch === null ? '' : null); }}
+                    style={{
+                      background: 'none',
+                      border: 'none',
+                      cursor: 'pointer',
+                      color: '#94A3B8',
+                      width: '36px',
+                      height: '36px',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      flexShrink: 0,
+                      padding: 0,
+                      borderRadius: '8px',
+                    }}
+                  >
+                    <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                      <circle cx="10.8" cy="10.8" r="6.6" />
+                      <path d="m16 16 4.2 4.2" />
+                    </svg>
+                  </button>
+                )}
 
                 <button
                   onClick={(e) => { e.stopPropagation(); setShowMobileBellMenu(!showMobileBellMenu); }}

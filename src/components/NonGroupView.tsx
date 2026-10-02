@@ -28,6 +28,8 @@ interface NonGroupViewProps {
   onClearAll?: () => void;
   onCleanupEmpty?: () => void;
   onDeletePerson?: (name: string, directGroupId?: string) => void;
+  // Header search text: filters the people list by name, email or expense name.
+  searchQuery?: string;
 }
 
 const cleanName = (n: string) => (n || '').replace(/\s*\(Left\)$/i, '').trim();
@@ -172,6 +174,7 @@ export const NonGroupView: React.FC<NonGroupViewProps> = ({
   onCleanupEmpty,
   onDeletePerson,
   onSharePerson,
+  searchQuery = '',
 }) => {
   // Bottom toggle on the front page: Settle | Photos (swipe left/right).
   const [activeTab, setActiveTab] = React.useState<'settle' | 'photos'>('settle');
@@ -294,6 +297,16 @@ export const NonGroupView: React.FC<NonGroupViewProps> = ({
       .filter((p) => p.count > 0 || Object.values(p.bal).some((v) => Math.abs(v) > 0.01))
       .sort((a, b) => a.name.localeCompare(b.name));
   }, [expenses, directThreads, nonGroupExps, isMe, getMemberBalance, expenseInvolves]);
+
+  const searchLower = searchQuery.trim().toLowerCase();
+  const shownPeople = React.useMemo(() => {
+    if (!searchLower) return people;
+    return people.filter((p) => {
+      if (p.name.toLowerCase().includes(searchLower) || p.email.toLowerCase().includes(searchLower)) return true;
+      const key = p.name.toLowerCase();
+      return nonGroupExps.some((e) => expenseInvolves(e, key) && (e.title || '').toLowerCase().includes(searchLower));
+    });
+  }, [people, searchLower, nonGroupExps, expenseInvolves]);
 
   const Avatar: React.FC<{ name: string; size?: number }> = ({ name, size = 38 }) => {
     const url = memberAvatars?.[name] || memberAvatars?.[cleanName(name)];
@@ -670,7 +683,12 @@ export const NonGroupView: React.FC<NonGroupViewProps> = ({
             </p>
           ) : (
             <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-              {people.map((p) => {
+              {searchLower && shownPeople.length === 0 && (
+                <p style={{ fontSize: '13px', color: '#94A3B8', textAlign: 'center', padding: '24px 0' }}>
+                  No one matches "{searchQuery.trim()}".
+                </p>
+              )}
+              {shownPeople.map((p) => {
                 const b = balanceText(p.bal);
                 return (
                   <div
