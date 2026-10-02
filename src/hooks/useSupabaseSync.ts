@@ -687,14 +687,16 @@ export function useSupabaseSync({
         localStorage.setItem('divido_last_synced_expenses', JSON.stringify(loadedExpenses));
 
         // Functional update: keep any group created locally while this load was in
-        // flight (not yet in the reconciled list) instead of overwriting it.
+        // flight (not yet in the reconciled list) instead of overwriting it — groups
+        // created here (pendingSync) AND groups just joined from an invite link
+        // (those used to vanish, bouncing a first-time invitee back to home).
         setGroups((latest) => {
           const mergedGroupIds = new Set(mergedGroups.map((g) => String(g.id)));
           // "Known" = present when the load began; those were already reconciled
           // (including being dropped as duplicates of a synced group).
           const knownIds = new Set(groups.map((g) => String(g.id)));
           const concurrentGroups = latest.filter((g) =>
-            g.pendingSync && !knownIds.has(String(g.id)) && !mergedGroupIds.has(String(g.id)));
+            !knownIds.has(String(g.id)) && !mergedGroupIds.has(String(g.id)));
           return concurrentGroups.length ? [...mergedGroups, ...concurrentGroups] : mergedGroups;
         });
         // Preserve any brand-new local expense added DURING this async load

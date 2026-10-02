@@ -459,6 +459,11 @@ function App() {
   const [inviteLandingBusy, setInviteLandingBusy] = useState<boolean>(false);
   const [inviteLandingJoiningId, setInviteLandingJoiningId] = useState<string | null>(null);
   const [inviteLandingRowErrors, setInviteLandingRowErrors] = useState<Record<string, string>>({});
+  // The invite resolver found a real Supabase session. Back from the Google
+  // round-trip, `isAuthenticated` only flips after the auth listener finishes
+  // its profile/identity work; until then this lets the app (and its join
+  // card) render instead of the Login screen, so the invite opens right away.
+  const [inviteSessionReady, setInviteSessionReady] = useState<boolean>(false);
   const [tempName, setTempName] = useState<string>(() => {
     const saved = localStorage.getItem('divido_username');
     return saved && saved !== 'You' && saved !== 'undefined' ? saved : '';
@@ -2660,6 +2665,8 @@ function App() {
             return;
           }
 
+          setInviteSessionReady(true);
+
           // Signed in: only (re)fetch/rebuild once per invite — this effect
           // re-runs on every `groups` update, and redoing the fetch would wipe
           // the user's checkbox selection and un-dismiss the card.
@@ -2761,17 +2768,35 @@ function App() {
         // sign-in redirect is built from (the friend then lands with no join
         // card on their first click). Keep both and resolve after sign-in; this
         // effect re-runs when auth changes.
-        {
-          const { data: { session: preSession } } = await supabase.auth.getSession();
-          if (!sessionEmailForInvite(preSession)) return;
+        // Meanwhile show the same "You're invited" card the multi-group link
+        // uses (from whatever is cached), so the friend sees what they're
+        // joining instead of a bare Login screen.
+        const { data: { session } } = await supabase.auth.getSession();
+        if (!sessionEmailForInvite(session)) {
+          const cached = groups.find((gr) => String(gr.id) === String(joinGroupId));
+          setInviteLandingRaw(`joinGroupId:${joinGroupId}`);
+          setInviteLandingMode('signedOut');
+          setInviteLandingSpots([{ groupId: String(joinGroupId), memberKey: '' }]);
+          setInviteLandingRows([cached
+            ? {
+                groupId: String(joinGroupId),
+                name: cached.name,
+                emoji: cached.emoji,
+                memberCount: (cached.members || []).filter((m) => !/\(Left\)\s*$/i.test(m)).length,
+                status: 'available',
+              }
+            : { groupId: String(joinGroupId), status: 'available' }]);
+          return;
         }
+        setInviteSessionReady(true);
+        // Signed in now: the signed-out preview card has done its job.
+        setInviteLandingRaw((prev) => (prev && prev.startsWith('joinGroupId:') ? null : prev));
 
-        // Fetch group
-        const { data: groupData, error: groupErr } = await supabase
-          .from('groups')
-          .select('*')
-          .eq('id', joinGroupId)
-          .single();
+        // Fetch the group and its members together (one round-trip, not two).
+        const [{ data: groupData, error: groupErr }, { data: existingMembers }] = await Promise.all([
+          supabase.from('groups').select('*').eq('id', joinGroupId).single(),
+          supabase.from('group_members').select('*').eq('group_id', joinGroupId),
+        ]);
 
         if (groupErr || !groupData) {
           // The thread genuinely isn't in the cloud — stop retrying this invite on
@@ -2784,19 +2809,12 @@ function App() {
           return;
         }
 
-        // Fetch members of the group
-        const { data: existingMembers } = await supabase
-          .from('group_members')
-          .select('*')
-          .eq('group_id', joinGroupId);
-
         if (!existingMembers) return;
         // Spots found already claimed by someone else during this run.
         const takenSpotIds = new Set<unknown>();
         let autoConfirmTarget: any = null;
 
         const rejoinName = urlParams.get('rejoinName');
-        const { data: { session } } = await supabase.auth.getSession();
         const myEmail = session?.user?.email || userEmail;
 
         if (rejoinName && myEmail) {
@@ -4118,7 +4136,11 @@ function App() {
     setInviteLandingBusy(false);
   };
 
-  if (!isAuthenticated) {
+  // Back from Google with an invite pending: the session exists but the auth
+  // listener hasn't set isAuthenticated yet. Render the app (with its loader /
+  // join card on top) rather than flashing the Login screen meanwhile.
+  const inviteAwaitingAuth = inviteSessionReady && (isResolvingInvite || !!linkRequestGroup || (!!inviteLandingRaw && inviteLandingMode === 'signedIn'));
+  if (!isAuthenticated && !inviteAwaitingAuth) {
     return (
       <>
         <Login
@@ -4159,7 +4181,9 @@ function App() {
   // Divido cat) until the first cloud load finishes — so users never see an
   // empty "Your Groups" and get scared. Returning users with cached groups skip
   // this entirely (groups.length > 0). 5s safety timeout so it can't hang.
-  if (!isInitialLoadDone && !bootLoaderExpired && groups.length === 0 && isAuthenticated && !!userEmail) {
+  // Never over a pending join card — it is the destination, and hiding it
+  // behind the splash is what made invites feel slow to open.
+  if (!isInitialLoadDone && !bootLoaderExpired && groups.length === 0 && isAuthenticated && !!userEmail && !inviteLandingRaw && !linkRequestGroup) {
     return <BootSplash />;
   }
 
