@@ -354,7 +354,7 @@ export const MobileHeader: React.FC<MobileHeaderProps> = ({
                 width: '38px',
                 height: '38px',
                 borderRadius: '50%',
-                background: 'var(--nav-bg)',
+                background: selectedId === 'STANDALONE' ? '#F5F3FF' : 'var(--nav-bg)',
                 color: 'var(--purple-text)',
                 display: 'flex',
                 alignItems: 'center',
@@ -367,11 +367,18 @@ export const MobileHeader: React.FC<MobileHeaderProps> = ({
                 cursor: selectedId === 'STANDALONE' ? 'default' : 'pointer',
               }}
             >
-              {selectedGroup.emoji && (selectedGroup.emoji.startsWith('data:image/') || selectedGroup.emoji.startsWith('http')) ? (
+              {selectedId === 'STANDALONE' ? (
+                // Same person-with-heart icon as the Non-Group card on Home.
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#6D28D9" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                  <path d="M8 7a4 4 0 1 0 8 0a4 4 0 0 0 -8 0" />
+                  <path d="M6 21v-2a4 4 0 0 1 4 -4h.5" />
+                  <path d="M18 22l3.35 -3.284a2.143 2.143 0 0 0 .005 -3.071a2.242 2.242 0 0 0 -3.129 -.006l-.224 .22l-.223 -.22a2.242 2.242 0 0 0 -3.128 -.006a2.143 2.143 0 0 0 -.006 3.071l3.355 3.296z" />
+                </svg>
+              ) : (selectedGroup.emoji && (selectedGroup.emoji.startsWith('data:image/') || selectedGroup.emoji.startsWith('http')) ? (
                 <img src={selectedGroup.emoji} style={{ width: '100%', height: '100%', objectFit: 'cover' }} alt="" />
               ) : (
                 (selectedGroup.isDirect && directOther ? directOther.charAt(0).toUpperCase() : selectedGroup.name?.charAt(0).toUpperCase()) || '👤'
-              )}
+              ))}
             </div>
 
             <div style={{
