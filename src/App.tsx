@@ -4164,6 +4164,29 @@ function App() {
   // Back from Google with an invite pending: the session exists but the auth
   // listener hasn't set isAuthenticated yet. Render the app (with its loader /
   // join card on top) rather than flashing the Login screen meanwhile.
+  // Was I removed from the open group by the admin (vs leaving myself)? A
+  // removed member gets no Rejoin option. Durable signal: the group's own
+  // "<me> was removed" log entry (newer than any "<me> rejoined"), with the
+  // 'removed' notification as a fallback.
+  const removedFromSelected = (() => {
+    if (!selectedId || selectedId === 'STANDALONE') return false;
+    const myNames = new Set([me, localStorage.getItem(`divido_identity_${selectedId}`) || '']
+      .map((n) => String(n || '').replace(/s*(me)$/i, '').replace(/s*(Left)$/i, '').trim().toLowerCase())
+      .filter(Boolean));
+    let removedAt = -1; let rejoinedAt = -1;
+    for (const e of expenses) {
+      if (String(e.gId) !== String(selectedId) || e.paid !== 'SYSTEM') continue;
+      const t = String(e.title || '').toLowerCase();
+      const ts = Number((e as any).timestamp || 0) || Date.parse(e.date || '') || 0;
+      for (const n of myNames) {
+        if (t === `${n} was removed` || t === `${n} (left) was removed`) removedAt = Math.max(removedAt, ts);
+        if (t.startsWith(`${n} rejoined`)) rejoinedAt = Math.max(rejoinedAt, ts);
+      }
+    }
+    if (removedAt >= 0) return removedAt > rejoinedAt;
+    return notifications.some((n) => n.type === 'removed' && String(n.groupId) === String(selectedId));
+  })();
+
   const inviteAwaitingAuth = inviteSessionReady && (isResolvingInvite || !!linkRequestGroup || (!!inviteLandingRaw && inviteLandingMode === 'signedIn'));
   if (!isAuthenticated && !inviteAwaitingAuth) {
     return (
@@ -4529,7 +4552,7 @@ function App() {
         {view !== 'create_group' && (
           <MobileHeader
             headerHidden={headerHidden}
-            onRequestRejoin={() => setShowRejoinRequestModal(true)}
+            onRequestRejoin={() => { if (!removedFromSelected) setShowRejoinRequestModal(true); }}
             view={view}
             selectedId={selectedId}
             selectedGroup={selectedGroup}
@@ -4929,7 +4952,7 @@ function App() {
             me={me}
             myEmail={userEmail}
             setShowConvertModalId={setShowConvertModalId}
-            wasRemovedByAdmin={notifications.some((n) => n.type === 'removed' && String(n.groupId) === String(selectedId))}
+            wasRemovedByAdmin={removedFromSelected}
             userMetadata={userMetadata}
             memberAvatars={memberAvatars}
             setUserMetadata={setUserMetadata}
@@ -5003,7 +5026,7 @@ function App() {
               }
             }}
             onRequestRejoin={async () => {
-              setShowRejoinRequestModal(true);
+              if (!removedFromSelected) setShowRejoinRequestModal(true);
             }}
             onDeclineLinkRequest={async (memberRecordId) => {
               try {
@@ -5353,7 +5376,7 @@ function App() {
                             recipientEmail: removedEmail,
                             type: 'removed',
                             title: `You were removed from ${grpName}`,
-                            body: `The group admin removed you from ${grpName}. You can view past history and request to rejoin.`,
+                            body: `The group admin removed you from ${grpName}. You can still view past history.`,
                             fromName: me,
                             fromEmail: userEmail,
                             groupId: selectedId,

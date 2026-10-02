@@ -534,7 +534,7 @@ export const GroupDetail: React.FC<GroupDetailProps> = ({
                 >
                   <span style={{ color: 'inherit', lineHeight: 1, display: 'flex', alignItems: 'center' }}>Invite</span>
                 </button>
-              ) : (
+              ) : wasRemovedByAdmin ? null : (
                 <button
                   onClick={(e) => {
                     e.stopPropagation();
@@ -976,7 +976,7 @@ export const GroupDetail: React.FC<GroupDetailProps> = ({
                           key={`my-${m}`}
                           onClick={() => {
                              if (isPastMemberOf(selectedGroup, me)) {
-                               if (onRequestRejoin) onRequestRejoin();
+                               if (onRequestRejoin && !wasRemovedByAdmin) onRequestRejoin();
                              } else {
                                setGlobalSettleData({ name: m, gId: selectedId });
                              }
