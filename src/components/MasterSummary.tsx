@@ -1357,38 +1357,6 @@ export const MasterSummary: React.FC<MasterSummaryProps> = ({
           </button>
         )}
 
-        {/* Import from Splitwise — secondary dashed card, same visual family as New Group. */}
-        {onImportSplitwise && (
-          <button
-            type="button"
-            onClick={onImportSplitwise}
-            className="hover-up-mini"
-            style={{
-              width: '100%',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              gap: '8px',
-              padding: '15px',
-              minHeight: '44px',
-              background: '#FFFFFF',
-              borderRadius: '16px',
-              border: '1.5px dashed #CBD5E1',
-              color: '#475569',
-              fontSize: '14px',
-              fontWeight: 700,
-              fontFamily: 'inherit',
-              cursor: 'pointer',
-              transition: '0.2s all ease',
-            }}
-          >
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" style={{ width: '18px', height: '18px', display: 'block', flexShrink: 0 }}>
-              <line x1="12" y1="5" x2="12" y2="19" />
-              <polyline points="6 13 12 19 18 13" />
-            </svg>
-            <span style={{ lineHeight: 1, display: 'block' }}>Import from Splitwise</span>
-          </button>
-        )}
         </div>
       ) : (
         <div style={{ marginTop: '16px' }}>
