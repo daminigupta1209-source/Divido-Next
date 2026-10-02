@@ -2791,6 +2791,7 @@ function App() {
         if (!existingMembers) return;
         // Spots found already claimed by someone else during this run.
         const takenSpotIds = new Set<unknown>();
+        let autoConfirmTarget: any = null;
 
         const rejoinName = urlParams.get('rejoinName');
         const { data: { session } } = await supabase.auth.getSession();
@@ -2930,72 +2931,9 @@ function App() {
             const openSpots = existingMembers.filter((m: any) => m.is_pending && !m.user_email && !m.name.toLowerCase().endsWith(' (left)'));
             if (openSpots.length === 1) inviteMatch = openSpots[0];
           }
-          if (inviteMatch) {
-            // No merge prompt here: an exact-email match or a private 1:1 link's
-            // single open spot is unambiguously this person, so claim it silently
-            // and take them straight in.
-            const rawProfile = (session?.user?.user_metadata?.full_name || session?.user?.user_metadata?.name || '').trim();
-            const claimResult = await claimInviteSpot(inviteSupabase, {
-              groupRow: groupData,
-              targetRow: inviteMatch,
-              existingMembers,
-              myEmail,
-              profileName: rawProfile ? titleCaseName(rawProfile) : '',
-              fallbackUsername: localStorage.getItem('divido_username') || undefined,
-            });
-
-            if (claimResult.status === 'joined') {
-              localStorage.setItem(`divido_identity_${joinGroupId}`, claimResult.claimedName);
-              {
-                const existing = localStorage.getItem('divido_username');
-                const hasRealName = !!existing && !['You', 'Guest', 'undefined', ''].includes(existing.trim());
-                if (!hasRealName) { localStorage.setItem('divido_username', claimResult.claimedName); setUserName(claimResult.claimedName); }
-              }
-              localStorage.setItem('divido_authenticated', 'true');
-              setIsAuthenticated(true);
-              localStorage.removeItem('divido_pending_join');
-
-              // Put the group into local state WITH its roster BEFORE
-              // navigating, so the detail screen renders immediately instead
-              // of flashing a blank / stale-group screen.
-              setGroups((prev) => prev.some((g) => String(g.id) === String(claimResult.group.id))
-                ? prev.map((g) => String(g.id) === String(claimResult.group.id) ? claimResult.group : g)
-                : [...prev, claimResult.group]);
-
-              // A shared (isDirect) thread presents under Non-Group, not as a
-              // raw group page — land the joiner on the Non-Group screen so
-              // they don't see the internal group-detail UI and have to swipe
-              // back.
-              setSelectedId(groupData.is_direct ? 'STANDALONE' : joinGroupId);
-              setView('detail');
-              const cleanUrl = window.location.protocol + '//' + window.location.host + window.location.pathname;
-              // Seed a HOME base entry (not an empty one) so a back-swipe from
-              // the group you just entered/claimed goes to the home screen
-              // instead of exiting the app. The detail entry is pushed on top
-              // by the history sync.
-              window.history.replaceState({ _divido: true, uiState: { view: 'summary', selectedId: null } }, '', cleanUrl);
-              return;
-            }
-
-            if (claimResult.status === 'alreadyMine') {
-              localStorage.removeItem('divido_pending_join');
-              setSelectedId(groupData.is_direct ? 'STANDALONE' : joinGroupId);
-              setView('detail');
-              setShowFriendsList(false);
-              const cleanUrl = window.location.protocol + '//' + window.location.host + window.location.pathname;
-              window.history.replaceState({ _divido: true, uiState: { view: 'summary', selectedId: null } }, '', cleanUrl);
-              return;
-            }
-
-            if (claimResult.status === 'error') {
-              console.error('Invite auto-claim failed:', claimResult.message);
-            }
-            // 'takenByOther' or 'error': fall through to the existing
-            // placeholder claim list below. existingMembers was read before
-            // the claim, so a spot someone else just took still looks open
-            // there — leave it off the list.
-            if (claimResult.status === 'takenByOther') takenSpotIds.add(inviteMatch.id);
-          }
+          // Exact-email match or a 1:1 link's single open spot: still ask first
+          // with a one-tap "Join" card (with "Not me"), then go straight in.
+          if (inviteMatch) autoConfirmTarget = inviteMatch;
         }
 
         // If this device has already claimed an identity in this group, don't show
@@ -3037,6 +2975,9 @@ function App() {
         setLinkRequestRejoinMode(false);
         setLinkRequestGroup(groupData);
         setLinkRequestPlaceholders(placeholders);
+        if (autoConfirmTarget && placeholders.some((m: any) => m.id === autoConfirmTarget.id)) {
+          setClaimConfirmTarget(autoConfirmTarget);
+        }
         // Returning from the Google sign-in the claim triggered: they already
         // picked a name before signing in, so reopen straight on that name's
         // confirm step (now showing their real Gmail) instead of the list.
@@ -5704,7 +5645,7 @@ function App() {
               ×
             </button>
             <h3 className="nunito" style={{ fontSize: '18px', fontWeight: 900, color: '#0F172A', margin: '0 0 6px 0', padding: '0 36px', boxSizing: 'border-box', lineHeight: 1.35, wordBreak: 'break-word' }}>
-              Join Group "{linkRequestGroup.name}"
+              Join "{linkRequestGroup.name}"?
             </h3>
 
             {claimConfirmTarget ? (() => {
@@ -5715,6 +5656,7 @@ function App() {
               // fallback since we don't know their email until they do.
               const isRealEmail = !!userEmail && !userEmail.startsWith('guest-') && !userEmail.startsWith('e2e-test');
               const emailLabel = isRealEmail ? userEmail : 'your Google account';
+              const profileShown = titleCaseName((userName || '').trim());
               return (
                 <div style={{ padding: '6px 0 2px' }}>
                   <div
@@ -5735,10 +5677,13 @@ function App() {
                     {confirmName.charAt(0)}
                   </div>
                   <p style={{ fontSize: '16px', fontWeight: 700, color: '#0F172A', margin: '0 0 8px 0' }}>
-                    Are you "{confirmName}"?
+                    You were added as "{confirmName}"
                   </p>
                   <p style={{ fontSize: '13px', color: '#64748B', fontWeight: 400, lineHeight: 1.5, margin: '0 0 22px 0' }}>
-                    This links {emailLabel} to {confirmName}.
+                    {profileShown && profileShown.toLowerCase() !== confirmName.toLowerCase()
+                      ? <>You'll show up as <b style={{ color: '#0F172A' }}>{profileShown}</b>. </>
+                      : null}
+                    This links {emailLabel} to this spot.
                   </p>
                   <button
                     disabled={submittingLinkRequest}
@@ -5760,7 +5705,15 @@ function App() {
                       boxShadow: '0 4px 12px rgba(22, 163, 74, 0.3)',
                     }}
                   >
-                    Yes, that's me
+                    Join
+                  </button>
+                  <button
+                    type="button"
+                    disabled={submittingLinkRequest}
+                    onClick={() => setClaimConfirmTarget(null)}
+                    style={{ marginTop: '12px', background: 'none', border: 'none', color: '#64748B', fontSize: '13px', fontWeight: 600, cursor: 'pointer', textDecoration: 'underline' }}
+                  >
+                    Not me
                   </button>
                 </div>
               );

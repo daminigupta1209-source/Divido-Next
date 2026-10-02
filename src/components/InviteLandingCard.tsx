@@ -492,7 +492,7 @@ export const InviteLandingCard: React.FC<InviteLandingCardProps> = ({
               }}
             >
               {busy && <Spinner size={16} color="#FFFFFF" />}
-              {busy ? 'Joining…' : `Join ${selectedAvailableCount} group${plural(selectedAvailableCount)}`}
+              {busy ? 'Joining…' : selectedAvailableCount === 1 ? 'Join' : `Join ${selectedAvailableCount} groups`}
             </button>
           ) : (
             <button
