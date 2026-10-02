@@ -408,6 +408,8 @@ function App() {
   // "are you sure" confirmation (replaces a native browser confirm() with a
   // styled step so the safety check doesn't look like an OS alert).
   const [claimConfirmTarget, setClaimConfirmTarget] = useState<any | null>(null);
+  // True when the confirm card was opened by an email match (not a manual pick).
+  const [claimConfirmAuto, setClaimConfirmAuto] = useState(false);
   // True while we resolve an invite link (fetch the group + members + session)
   // before deciding whether to show the claim card, admit the user, etc. Seeded
   // synchronously so the home feed never flashes behind the pending claim card.
@@ -2977,6 +2979,7 @@ function App() {
         setLinkRequestPlaceholders(placeholders);
         if (autoConfirmTarget && placeholders.some((m: any) => m.id === autoConfirmTarget.id)) {
           setClaimConfirmTarget(autoConfirmTarget);
+          setClaimConfirmAuto(!!autoConfirmTarget.invite_email);
         }
         // Returning from the Google sign-in the claim triggered: they already
         // picked a name before signing in, so reopen straight on that name's
@@ -4163,6 +4166,34 @@ function App() {
   // Runs the actual claim/rejoin after the in-app confirm step (claimConfirmTarget)
   // is accepted. Extracted from the claim button's onClick so the native
   // confirm() could be replaced with a styled in-app confirmation card.
+  // Someone the email matched tapped "Not me": the email on that spot is
+  // probably wrong, so tell the group's members to check it.
+  const notifyNotMe = async (spot: any, group: any) => {
+    try {
+      const spotName = titleCaseName(String(spot.name || '').replace(' (Left)', ''));
+      const who = titleCaseName((userName || '').trim()) || userEmail || 'Someone';
+      const { data: activeMems } = await supabase
+        .from('group_members')
+        .select('user_email')
+        .eq('group_id', group.id)
+        .not('user_email', 'is', null);
+      const me = (userEmail || '').toLowerCase();
+      for (const mem of activeMems || []) {
+        if (!mem.user_email || String(mem.user_email).toLowerCase() === me) continue;
+        await pushNotification({
+          recipientEmail: mem.user_email,
+          type: 'join',
+          title: `Check ${spotName}'s email in ${group.name}`,
+          body: `${who} opened the invite with ${spotName}'s email but said "Not me". The email may be wrong.`,
+          fromName: who,
+          groupId: group.id,
+        });
+      }
+    } catch (e) {
+      console.error('Not-me notification failed:', e);
+    }
+  };
+
   const runClaimPlaceholder = async (p: any) => {
     setSubmittingLinkRequest(true);
     claimInProgressRef.current = true;
@@ -5606,7 +5637,7 @@ function App() {
                 // Mid-confirm, the × just backs out to the name list — the
                 // whole invite is only declined from the list screen itself.
                 if (claimConfirmTarget) {
-                  setClaimConfirmTarget(null);
+                  setClaimConfirmTarget(null); setClaimConfirmAuto(false);
                   return;
                 }
                 const declinedId = linkRequestGroup?.id;
@@ -5689,7 +5720,7 @@ function App() {
                     disabled={submittingLinkRequest}
                     onClick={() => {
                       const target = claimConfirmTarget;
-                      setClaimConfirmTarget(null);
+                      setClaimConfirmTarget(null); setClaimConfirmAuto(false);
                       runClaimPlaceholder(target);
                     }}
                     style={{
@@ -5710,7 +5741,13 @@ function App() {
                   <button
                     type="button"
                     disabled={submittingLinkRequest}
-                    onClick={() => setClaimConfirmTarget(null)}
+                    onClick={() => {
+                      const spot = claimConfirmTarget;
+                      const wasAuto = claimConfirmAuto;
+                      setClaimConfirmTarget(null);
+                      setClaimConfirmAuto(false);
+                      if (wasAuto && spot && linkRequestGroup) notifyNotMe(spot, linkRequestGroup);
+                    }}
                     style={{ marginTop: '12px', background: 'none', border: 'none', color: '#64748B', fontSize: '13px', fontWeight: 600, cursor: 'pointer', textDecoration: 'underline' }}
                   >
                     Not me
