@@ -12,7 +12,7 @@
 
 import { Group } from './types';
 import { InviteSpot } from './inviteLink';
-import { uniqueProfileName, dropShadowedLeftRows } from './identity';
+import { uniqueProfileName } from './identity';
 import { titleCaseName } from './utils';
 import { computeClaimRenamePatches, ClaimRenameExpenseRow } from './claimRename';
 
@@ -352,16 +352,12 @@ async function loadGroupSnapshot(supabase: SupabaseLike, groupRow: InviteGroupRo
       .eq('group_id', groupRow.id)
       .order('id', { ascending: true });
     if (gm) {
-      const activeMems = dropShadowedLeftRows(gm.filter((m) => !m.link_request_email || !m.is_pending || String(m.name).endsWith(' (Left)')));
+      const activeMems = gm.filter((m) => !m.link_request_email || !m.is_pending || String(m.name).endsWith(' (Left)'));
       freshMembers = Array.from(new Set(activeMems.map((m) => titleCaseName(m.name))));
-      // Joined wins over a same-named pending row (see useSupabaseSync).
-      const joinedNames = new Set(activeMems
-        .filter((m) => m.user_email && !m.is_pending && !String(m.name).endsWith(' (Left)'))
-        .map((m) => titleCaseName(m.name).toLowerCase()));
       freshPending = Array.from(
         new Set(
           activeMems
-            .filter((m) => m.is_pending && !m.user_email && !String(m.name).endsWith(' (Left)') && !joinedNames.has(titleCaseName(m.name).toLowerCase()))
+            .filter((m) => m.is_pending && !m.user_email && !String(m.name).endsWith(' (Left)'))
             .map((m) => titleCaseName(m.name)),
         ),
       );

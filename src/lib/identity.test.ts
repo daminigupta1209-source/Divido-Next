@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { getPersonKey, resolveSelfKey, buildNameEmailResolver, upiFor, cleanMemberName, balancesByIdentity, buildKeyToName, buildPeopleSuggestions, isValidEmail, canonicalRosterName, findDuplicateGroups, dropShadowedLeftRows, isPastMemberOf } from './identity';
+import { getPersonKey, resolveSelfKey, buildNameEmailResolver, upiFor, cleanMemberName, balancesByIdentity, buildKeyToName, buildPeopleSuggestions, isValidEmail, canonicalRosterName, findDuplicateGroups } from './identity';
 import { Group, Expense } from './types';
 
 const mkGroup = (memberIdentities?: Record<string, string>, members: string[] = []): Group =>
@@ -454,41 +454,5 @@ describe('upiFor (email-anchored UPI lookup)', () => {
 
   it('tolerates empty metadata', () => {
     expect(upiFor(undefined, () => 'a@x.com', 'Chirag')).toBeUndefined();
-  });
-});
-
-describe('dropShadowedLeftRows', () => {
-  it('drops a "(Left)" row when the same name is live again (rejoin via a new spot)', () => {
-    const rows = [
-      { id: 1, name: 'Damini Gupta (Left)', is_removed: true },
-      { id: 2, name: 'Damini Gupta' },
-      { id: 3, name: 'Ravi (Left)' },
-    ];
-    expect(dropShadowedLeftRows(rows).map((r) => r.id)).toEqual([2, 3]);
-  });
-
-  it('matches names case-insensitively', () => {
-    const rows = [{ name: 'damini gupta (Left)' }, { name: 'Damini Gupta' }];
-    expect(dropShadowedLeftRows(rows)).toEqual([{ name: 'Damini Gupta' }]);
-  });
-
-  it('keeps a left row whose person has no live row', () => {
-    const rows = [{ name: 'Damini Gupta (Left)' }, { name: 'Chirag' }];
-    expect(dropShadowedLeftRows(rows)).toHaveLength(2);
-  });
-});
-
-describe('isPastMemberOf', () => {
-  it('is true for only a "(Left)" entry under my name', () => {
-    expect(isPastMemberOf({ members: ['Chirag', 'Damini Gupta (Left)'] }, 'Damini Gupta')).toBe(true);
-  });
-
-  it('is false when I also have a live entry (no left banner while joined)', () => {
-    expect(isPastMemberOf({ members: ['Damini Gupta', 'Damini Gupta (Left)'] }, 'Damini Gupta')).toBe(false);
-  });
-
-  it('is false for an active member and ignores case', () => {
-    expect(isPastMemberOf({ members: ['DAMINI GUPTA'] }, 'damini gupta')).toBe(false);
-    expect(isPastMemberOf({ members: ['damini gupta (left)'] }, 'Damini Gupta')).toBe(true);
   });
 });

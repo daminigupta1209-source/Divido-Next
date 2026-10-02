@@ -3,7 +3,6 @@ import { createPortal } from 'react-dom';
 import { Group, Expense } from '../../lib/types';
 import { getEmoji, formatDate } from '../../lib/utils';
 import { CameraCaptureModal } from '../CameraCaptureModal';
-import { isPastMemberOf } from '../../lib/identity';
 
 interface GroupHeaderProps {
   selectedGroup: Group;
@@ -73,7 +72,13 @@ export const GroupHeader: React.FC<GroupHeaderProps> = ({
   onCreateGroup,
 }) => {
   // View-only guard: someone who has left this group can browse history but not edit it.
-  const amIPastMember = isPastMemberOf(selectedGroup, me);
+  const amIPastMember = (() => {
+    const cleanMe = me.replace(/\s*\(me\)$/i, '').replace(/\s*\(Left\)$/i, '').toLowerCase();
+    return !!selectedGroup?.members?.some(m => {
+      const cleanM = m.replace(/\s*\(me\)$/i, '').replace(/\s*\(Left\)$/i, '').toLowerCase();
+      return cleanM === cleanMe && m.toLowerCase().endsWith(' (left)');
+    });
+  })();
   const [editingDate, setEditingDate] = React.useState(false);
   const uploadInputRef = React.useRef<HTMLInputElement>(null);
   const [selectedPhoto, setSelectedPhoto] = React.useState<string | null>(null);

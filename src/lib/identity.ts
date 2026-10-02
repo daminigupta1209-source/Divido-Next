@@ -365,28 +365,6 @@ export const cleanMemberName = (name: string): string =>
 
 const isLeftName = (name: string): boolean => /\s*\(Left\)\s*$/i.test(name);
 
-// group_members rows to build a roster from, minus any "(Left)" row whose
-// person is back under the same name on a live row (a rejoin through a new
-// spot keeps the old row, only flagged is_removed). Left in, that person was
-// "Joined" and "Left" at once: the left banner, the view-only guard and the
-// Left tab all fired while they were active. Same name only, so balances are
-// unchanged (expenses store the bare name the live row already covers).
-// Whether I'm only a past member of this group: a "(Left)" roster entry under
-// my name and no live one. A live entry wins, so stale state holding both
-// never shows the left banner or locks me into view-only.
-export const isPastMemberOf = (group: Pick<Group, 'members'> | null | undefined, me: string): boolean => {
-  const cleanMe = cleanMemberName(me || '').toLowerCase();
-  if (!cleanMe || !group?.members) return false;
-  const mine = group.members.filter((m) => cleanMemberName(m).toLowerCase() === cleanMe);
-  return mine.some(isLeftName) && !mine.some((m) => !isLeftName(m));
-};
-
-export const dropShadowedLeftRows =<T extends { name?: string | null }>(rows: T[]): T[] => {
-  const base = (r: T) => cleanMemberName(String(r.name || '')).toLowerCase();
-  const live = new Set(rows.filter((r) => !isLeftName(String(r.name || ''))).map(base));
-  return rows.filter((r) => !isLeftName(String(r.name || '')) || !live.has(base(r)));
-};
-
 // Pick the display name to show for each identity key in a group. Prefers a
 // current (non-"(Left)") roster name so a person who has both a live and a
 // left entry shows under their live name; falls back to a left name, then the

@@ -3,7 +3,7 @@ import { SettleModal } from './SettleModal';
 import { BalanceDisplay } from './BalanceDisplay';
 import { Group, Expense, UserMetadata } from '../lib/types';
 import { GROUP_COLORS, formatExactAmount } from '../lib/utils';
-import { withoutEmailTag, isPastMemberOf } from '../lib/identity';
+import { withoutEmailTag } from '../lib/identity';
 import { useGroupDetailForm } from '../hooks/useGroupDetailForm';
 
 // Subcomponents
@@ -297,7 +297,11 @@ export const GroupDetail: React.FC<GroupDetailProps> = ({
       {/* Past Member Rejoin Banner */}
       {(() => {
         const cleanMe = me.replace(/\s*\(me\)$/i, '').replace(/\s*\(Left\)$/i, '').toLowerCase();
-        if (!isPastMemberOf(selectedGroup, me)) return null;
+        const isPastMember = selectedGroup.members.some(m => {
+          const cleanM = m.replace(/\s*\(me\)$/i, '').replace(/\s*\(Left\)$/i, '').toLowerCase();
+          return cleanM === cleanMe && m.toLowerCase().endsWith(' (left)');
+        });
+        if (!isPastMember) return null;
 
         // Check if current user has a pending rejoin request
         const myRequest = selectedGroup.pendingLinkRequests?.find(
@@ -975,7 +979,12 @@ export const GroupDetail: React.FC<GroupDetailProps> = ({
                         <div
                           key={`my-${m}`}
                           onClick={() => {
-                             if (isPastMemberOf(selectedGroup, me)) {
+                             const cleanMe = me.replace(/\s*\(me\)$/i, '').replace(/\s*\(Left\)$/i, '').toLowerCase();
+                             const isPastMember = selectedGroup.members.some(x => {
+                               const cleanM = x.replace(/\s*\(me\)$/i, '').replace(/\s*\(Left\)$/i, '').toLowerCase();
+                               return cleanM === cleanMe && x.toLowerCase().endsWith(' (left)');
+                             });
+                             if (isPastMember) {
                                if (onRequestRejoin) onRequestRejoin();
                              } else {
                                setGlobalSettleData({ name: m, gId: selectedId });
