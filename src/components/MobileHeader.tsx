@@ -131,6 +131,21 @@ export const MobileHeader: React.FC<MobileHeaderProps> = ({
 }) => {
   // View-only guard: a member who has left this group can browse but not edit it.
   const amIPastMember = isPastMemberOf(selectedGroup, me);
+  // Group bell "seen" marker (per group, this device): the red badge counts
+  // only notes newer than the last time the bell was opened.
+  const bellKey = `divido_bell_seen_${selectedId}`;
+  const [bellSeenAt, setBellSeenAt] = React.useState<number>(() => {
+    try { return Number(localStorage.getItem(bellKey) || 0); } catch { return 0; }
+  });
+  React.useEffect(() => {
+    try { setBellSeenAt(Number(localStorage.getItem(bellKey) || 0)); } catch { setBellSeenAt(0); }
+  }, [bellKey]);
+  const markBellSeen = () => {
+    const now = Date.now();
+    try { localStorage.setItem(bellKey, String(now)); } catch { /* ignore */ }
+    setBellSeenAt(now);
+  };
+  const logTime = (l: any): number => Number(l?.timestamp || 0) || Date.parse(String(l?.date || '')) || 0;
   // My own join/leave/rejoin notes are for the others: keep them out of my bell.
   const isAboutMe = (title: string | undefined): boolean => {
     const t = String(title || '').trim().toLowerCase();
@@ -635,7 +650,7 @@ export const MobileHeader: React.FC<MobileHeaderProps> = ({
                 )}
 
                 <button
-                  onClick={(e) => { e.stopPropagation(); setShowMobileBellMenu(!showMobileBellMenu); }}
+                  onClick={(e) => { e.stopPropagation(); setShowMobileBellMenu(!showMobileBellMenu); markBellSeen(); }}
                   style={{
                     background: 'none',
                     border: 'none',
@@ -663,7 +678,8 @@ export const MobileHeader: React.FC<MobileHeaderProps> = ({
                   </svg>
                   {(() => {
                     const systemLogs = expenses.filter(e => String(e.gId) === String(selectedId) && e.paid === 'SYSTEM' && !isAboutMe(e.title));
-                    if (systemLogs.length > 0) {
+                    const unseen = systemLogs.filter((l) => logTime(l) > bellSeenAt);
+                    if (unseen.length > 0) {
                       return (
                         <span
                           style={{
@@ -686,7 +702,7 @@ export const MobileHeader: React.FC<MobileHeaderProps> = ({
                             lineHeight: 1,
                           }}
                         >
-                          {systemLogs.length}
+                          {unseen.length}
                         </span>
                       );
                     }
