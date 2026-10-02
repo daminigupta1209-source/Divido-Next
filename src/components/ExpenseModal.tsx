@@ -1158,6 +1158,7 @@ export const ExpenseModal: React.FC<ExpenseModalProps> = ({
                     singleSelect
                     onClose={() => setShowFriendPickerPopup(false)}
                     existingMembers={[me]}
+                    myName={me}
                     suggestions={buildPeopleSuggestions(groups, null, [me], me, myEmail)}
                     memberAvatars={memberAvatars}
                     onAddFriends={(friends) => {

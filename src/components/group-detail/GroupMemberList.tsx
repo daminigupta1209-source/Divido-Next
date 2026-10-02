@@ -1011,6 +1011,7 @@ export const GroupMemberList: React.FC<GroupMemberListProps> = ({
             window.history.back();
           }}
           existingMembers={selectedGroup.members}
+          myName={me}
           suggestions={buildSuggestions()}
           memberAvatars={memberAvatars}
           existingEmails={{

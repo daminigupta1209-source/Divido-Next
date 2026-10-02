@@ -12,6 +12,8 @@ interface FullScreenAddFriendProps {
   onClose: () => void;
   onAddFriends: (friends: FriendSelection[]) => void;
   existingMembers: string[];
+  // My own name in this list, so a same-name clash with ME can be explained.
+  myName?: string;
   suggestions: { name: string; email: string; identity?: string; pastMember?: boolean }[];
   // Non-group mode: split is always between exactly two people (you + one
   // other), so picking a person commits immediately and closes — no ticking
@@ -44,6 +46,7 @@ export const FullScreenAddFriend: React.FC<FullScreenAddFriendProps> = ({
   onClose,
   onAddFriends,
   existingMembers,
+  myName,
   suggestions,
   singleSelect = false,
   title = 'Add friend',
@@ -97,6 +100,13 @@ export const FullScreenAddFriend: React.FC<FullScreenAddFriendProps> = ({
   // new person gets a short email tag ("Damini Gupta (dg.work)") to keep the
   // two separate in balances. Their profile name replaces it when they join.
   const inGroupClash = existsInGroup || alreadyPicked;
+  const clashesWithMe = !!myName && myName.replace(/s*(me)$/i, '').trim().toLowerCase() === q;
+  // Plain-language reason shown whenever an email is required.
+  const needsEmailReason = clashesWithMe
+    ? `"${qRaw}" is your own name here. Add their email so Divido can tell the two of you apart, otherwise your balances would get mixed up.`
+    : inGroupClash
+    ? `There is already a "${qRaw}" in this group. Add the new person's email so their balances stay separate.`
+    : `You already have a friend called "${qRaw}". Add the new person's email so Divido knows it's someone else.`;
   const needsEmail = inGroupClash || sameNameSugs.length > 0;
   const canAddNew = qRaw.length > 0;
 
@@ -125,7 +135,7 @@ export const FullScreenAddFriend: React.FC<FullScreenAddFriendProps> = ({
   // Returns an error message, or '' if the typed new person can be added.
   const newPersonError = (em: string): string => {
     if (em && !isValidEmail(em)) return 'Enter a valid email';
-    if (needsEmail && !em) return 'Email is required';
+    if (needsEmail && !em) return `Email needed: ${needsEmailReason}`;
     if (em) {
       const e = norm(em);
       if (sameNameSugs.some((s) => s.email && norm(s.email) === e)) {
@@ -368,13 +378,9 @@ export const FullScreenAddFriend: React.FC<FullScreenAddFriendProps> = ({
           <p style={{ margin: '-8px 4px 0', fontSize: '12px', color: '#DC2626', fontWeight: 600, lineHeight: 1.35 }}>
             {emailErr}
           </p>
-        ) : inGroupClash ? (
-          <p style={{ margin: '-8px 4px 0', fontSize: '11px', color: '#B45309', lineHeight: 1.35 }}>
-            Already in this group. Add their email to add another {qRaw}.
-          </p>
         ) : needsEmail ? (
           <p style={{ margin: '-8px 4px 0', fontSize: '11px', color: '#B45309', lineHeight: 1.35 }}>
-            Already in your list. Add their email to add another {qRaw}.
+            {needsEmailReason}
           </p>
         ) : (
           <p style={{ margin: '-8px 4px 0', fontSize: '11px', color: '#94A3B8', lineHeight: 1.35 }}>

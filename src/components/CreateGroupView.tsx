@@ -702,6 +702,7 @@ export const CreateGroupView: React.FC<CreateGroupViewProps> = ({
         onClose={() => setIsAddingFriend(false)}
         onAddFriends={handleAddFriendsFromModal}
         existingMembers={participants}
+        myName={me}
         suggestions={buildPeopleSuggestions(groups, null, participants, me, myEmail)}
         memberAvatars={memberAvatars}
         existingEmails={{ ...participantEmails, ...(myEmail ? { [me]: myEmail } : {}) }}
