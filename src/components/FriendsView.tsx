@@ -236,7 +236,6 @@ export const FriendsView: React.FC<FriendsViewProps> = ({
     });
     return out;
   }, [duplicatePeople, groups]);
-  const [mergingName, setMergingName] = useState<string | null>(null);
 
   // Emails the app already knows (from any group's member identities), for the
   // merge sheet's "Merge into this email" autocomplete. Ranked so ones tied to a
@@ -594,36 +593,6 @@ export const FriendsView: React.FC<FriendsViewProps> = ({
           <span style={{ color: '#B45309', fontSize: '13px', fontWeight: 700, whiteSpace: 'nowrap' }}>Review ›</span>
         </div>
       )}
-      {showMergeModal && (
-        <MergeDuplicatesModal
-          reviews={mergeReviews}
-          onClose={() => setShowMergeModal(false)}
-          onMerge={async (entries, canonicalEmail) => { if (onMergePeople) await onMergePeople(entries, canonicalEmail); }}
-        />
-      )}
-      {onMergePeople && mergeReviews.map((r) => (
-        <div key={r.name} style={{ background: '#FFFBEB', border: '1px solid #FDE68A', borderRadius: '14px', padding: '12px 14px', marginBottom: '14px' }}>
-          <div style={{ fontSize: '14px', fontWeight: 700, color: '#92400E', marginBottom: '4px' }}>Is {r.name} one person?</div>
-          <div style={{ fontSize: '12.5px', color: '#78350F', lineHeight: 1.45 }}>
-            Primary email (joined): <b>{r.primary}</b>
-          </div>
-          {r.others.map((o, i) => (
-            <div key={i} style={{ fontSize: '12.5px', color: '#92400E', opacity: 0.85, lineHeight: 1.45 }}>
-              {o.groupName}: {o.email || 'no email'}
-            </div>
-          ))}
-          <button
-            disabled={mergingName === r.name}
-            onClick={async () => {
-              setMergingName(r.name);
-              try { await onMergePeople(r.others, r.primary); } finally { setMergingName(null); }
-            }}
-            style={{ width: '100%', marginTop: '10px', padding: '10px', borderRadius: '12px', border: 'none', background: '#10B981', color: '#FFFFFF', fontWeight: 600, fontSize: '13.5px', cursor: 'pointer' }}
-          >
-            {mergingName === r.name ? 'Merging…' : `Merge into ${r.primary}`}
-          </button>
-        </div>
-      ))}
       {/* Universal Net Balance Card — kept above the search bar */}
       <div style={{ marginBottom: '18px', width: '100%', animation: 'fadeIn 0.25s ease-out' }}>
         <span style={{ fontSize: '11px', fontWeight: 700, letterSpacing: '1.5px', textTransform: 'uppercase', color: '#B0A79C', marginBottom: '10px', marginLeft: '2px', display: 'block' }}>
