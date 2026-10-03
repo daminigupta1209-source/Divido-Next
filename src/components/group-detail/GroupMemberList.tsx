@@ -62,6 +62,17 @@ export const GroupMemberList: React.FC<GroupMemberListProps> = ({
   const [emailEditVal, setEmailEditVal] = React.useState<string>('');
   // Pending-invite editor popup: the member being edited (name+email), or null.
   const [pendingEditName, setPendingEditName] = React.useState<string | null>(null);
+  // Keep the Edit invite card above the on-screen keyboard: size the overlay to
+  // the visible area (visualViewport) so it re-centres the moment the keyboard opens.
+  const [visibleH, setVisibleH] = React.useState<number | null>(null);
+  React.useEffect(() => {
+    const vv = window.visualViewport;
+    if (!pendingEditName || !vv) { setVisibleH(null); return; }
+    const update = () => setVisibleH(vv.height);
+    update();
+    vv.addEventListener('resize', update);
+    return () => vv.removeEventListener('resize', update);
+  }, [pendingEditName]);
   const [pendingEditNameVal, setPendingEditNameVal] = React.useState<string>('');
   const openPendingEditor = (m: string) => {
     setPendingEditNameVal(m.replace(/\s*\(me\)$/i, ''));
@@ -439,7 +450,7 @@ export const GroupMemberList: React.FC<GroupMemberListProps> = ({
       {pendingEditName && (
         <div
           onClick={() => setPendingEditName(null)}
-          style={{ position: 'fixed', inset: 0, background: 'rgba(15,23,42,0.45)', zIndex: 10002, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px' }}
+          style={{ position: 'fixed', top: 0, left: 0, right: 0, height: visibleH ? visibleH + 'px' : '100%', background: 'rgba(15,23,42,0.45)', zIndex: 10002, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px', boxSizing: 'border-box', transition: 'height 0.15s ease-out' }}
         >
           <div
             onClick={(e) => e.stopPropagation()}
