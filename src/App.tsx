@@ -107,7 +107,7 @@ import {
 } from './lib/inviteClaim';
 import { InviteLandingCard, type InviteGroupRow as InviteUiRow } from './components/InviteLandingCard';
 import { computeClaimRenamePatches } from './lib/claimRename';
-import { useSupabaseSync, getGidRemap } from './hooks/useSupabaseSync';
+import { useSupabaseSync, getGidRemap, markPendingRename } from './hooks/useSupabaseSync';
 import { BalanceActionCard } from './components/BalanceActionCard';
 import { asyncBatchNetBalances } from './lib/workerHelper';
 import { useAppHotkeys } from './hooks/useAppHotkeys';
@@ -1003,6 +1003,38 @@ function App() {
       for (const k of Object.keys(obj)) next[k === oldN ? newN : k] = obj[k];
       return next;
     };
+    // Show the new name straight away (paid, splitters, shares, origShares,
+    // roster). markPendingRename stops the background sync from treating the
+    // new name as a NEW member while the cloud rename below is in flight.
+    markPendingRename(groupId, newName);
+    setExpenses((prev) => prev.map((e) => (String(e.gId) === String(groupId)
+      ? {
+          ...e,
+          paid: e.paid === oldName ? newName : e.paid,
+          splitters: (e.splitters || []).map((s) => (s === oldName ? newName : s)),
+          shares: renameShareKey(e.shares, oldName, newName) as any,
+          origShares: renameShareKey(e.origShares, oldName, newName) as any,
+        }
+      : e)));
+    setGroups((prev) => prev.map((g) => (String(g.id) === String(groupId)
+      ? (() => {
+          // Carry the person's pending status, email and member key over to the
+          // new name too, so they stay in the right tab with their email.
+          const swapKey = (obj: Record<string, string> | undefined) => {
+            if (!obj || !(oldName in obj)) return obj;
+            const { [oldName]: v, ...rest } = obj;
+            return { ...rest, [newName]: v };
+          };
+          return {
+            ...g,
+            members: (g.members || []).map((m) => (m === oldName ? newName : m)),
+            pendingMembers: g.pendingMembers?.map((m) => (m === oldName ? newName : m)),
+            memberIdentities: swapKey(g.memberIdentities),
+            memberKeys: swapKey(g.memberKeys),
+          };
+        })()
+      : g)));
+
     try {
       // 1+2. Member row + every expense reference, in ONE database transaction
       // (api/rename_member.sql) so a dropped connection can't leave a balance
@@ -1028,20 +1060,6 @@ function App() {
         }
       }
       }
-
-      // 3. Local state (paid, splitters, shares, origShares)
-      setExpenses((prev) => prev.map((e) => (String(e.gId) === String(groupId)
-        ? {
-            ...e,
-            paid: e.paid === oldName ? newName : e.paid,
-            splitters: (e.splitters || []).map((s) => (s === oldName ? newName : s)),
-            shares: renameShareKey(e.shares, oldName, newName) as any,
-            origShares: renameShareKey(e.origShares, oldName, newName) as any,
-          }
-        : e)));
-      setGroups((prev) => prev.map((g) => (String(g.id) === String(groupId)
-        ? { ...g, members: (g.members || []).map((m) => (m === oldName ? newName : m)) }
-        : g)));
 
       // 4. Local identity (if this device is the renamed person)
       const cleanMe = me.replace(/\s*\(me\)$/i, '').replace(/\s*\(Left\)$/i, '').toLowerCase();

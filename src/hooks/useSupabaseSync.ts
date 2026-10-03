@@ -76,6 +76,19 @@ const rememberGidRemap = (tempId: any, dbId: any): void => {
   } catch { /* ignore */ }
 };
 
+// Member renames shown on screen before the cloud rename finishes. The sync
+// must not mistake the new name for a NEW member and insert a duplicate row.
+const pendingRenames = new Map<string, number>();
+export const markPendingRename = (groupId: string | number, newName: string) => {
+  pendingRenames.set(`${groupId}|${newName}`, Date.now() + 60000);
+};
+const isPendingRename = (groupId: string | number, name: string): boolean => {
+  const until = pendingRenames.get(`${groupId}|${name}`);
+  if (!until) return false;
+  if (Date.now() > until) { pendingRenames.delete(`${groupId}|${name}`); return false; }
+  return true;
+};
+
 export const getGidRemap = (): Record<string, any> => {
   try {
     return JSON.parse(localStorage.getItem(GID_MAP_KEY) || '{}');
@@ -1039,7 +1052,7 @@ export function useSupabaseSync({
             }
 
             // Compare members to find new ones (ignore left members and existing name-variants)
-            const newMembers = g.members.filter(m => !m.endsWith(' (Left)') && !old.members.includes(m) && !old.members.includes(m + ' (Left)'));
+            const newMembers = g.members.filter(m => !m.endsWith(' (Left)') && !old.members.includes(m) && !old.members.includes(m + ' (Left)') && !isPendingRename(g.id, m));
             if (newMembers.length > 0) {
               const memberInserts = newMembers.map(m => {
                 // If this member was added with an email, memberIdentities[m] holds
