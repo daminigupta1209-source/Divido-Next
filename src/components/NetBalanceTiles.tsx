@@ -50,7 +50,7 @@ const Tile: React.FC<{ bg: string; label: string; amount: string; more?: number;
   >
     <div style={{ fontSize: '11px', fontWeight: 500, opacity: 0.9, lineHeight: 1.3 }}>{label}</div>
     <div style={{ display: 'flex', alignItems: 'center', gap: '6px', minWidth: 0 }}>
-      <span style={{ fontSize: '16px', fontWeight: 600, lineHeight: 1.35, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{amount}</span>
+      <span style={{ fontSize: '14.5px', fontWeight: 600, lineHeight: 1.35, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{amount}</span>
       {!!more && more > 0 && <span style={chipStyle}>+{more}</span>}
     </div>
     {chevron && (
