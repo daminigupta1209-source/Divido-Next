@@ -75,7 +75,8 @@ export const GroupMemberList: React.FC<GroupMemberListProps> = ({
   }, [pendingEditName]);
   const [pendingEditNameVal, setPendingEditNameVal] = React.useState<string>('');
   const openPendingEditor = (m: string) => {
-    setPendingEditNameVal(m.replace(/\s*\(me\)$/i, ''));
+    // Show the name as people see it — never the hidden email tag.
+    setPendingEditNameVal(withoutEmailTag(selectedGroup, m).replace(/\s*\(me\)$/i, ''));
     setEmailEditVal(emailFor(m));
     setPendingEditName(m);
   };
@@ -507,7 +508,7 @@ export const GroupMemberList: React.FC<GroupMemberListProps> = ({
                 const newName = pendingEditNameVal.trim();
                 const v = emailEditVal.trim();
                 if (onSetMemberEmail && v && isValidEmail(v)) onSetMemberEmail(original, v.toLowerCase());
-                if (newName && newName.toLowerCase() !== original.replace(/\s*\(me\)$/i, '').toLowerCase()) {
+                if (newName && newName.toLowerCase() !== original.replace(/\s*\(me\)$/i, '').toLowerCase() && newName.toLowerCase() !== withoutEmailTag(selectedGroup, original).replace(/\s*\(me\)$/i, '').toLowerCase()) {
                   let finalName = newName;
                   const clash = selectedGroup.members.find((x) => x !== original && x.replace(/\s*\(Left\)$/i, '').trim().toLowerCase() === newName.toLowerCase());
                   if (clash) {
