@@ -795,9 +795,10 @@ export const MasterSummary: React.FC<MasterSummaryProps> = ({
               payMore={payBacks.length - 1}
               collect={hasActiveBalancesForCard && getBacks.length > 0 ? primaryAmt(getBacks) : undefined}
               collectMore={getBacks.length - 1}
-              onClick={() => { window.dispatchEvent(new CustomEvent('divido:friends-filter', { detail: 'all' })); setView('friends'); }}
-              onPayClick={() => { try { sessionStorage.setItem('divido_friends_filter', 'owe'); } catch { /* ignore */ } window.dispatchEvent(new CustomEvent('divido:friends-filter', { detail: 'owe' })); setView('friends'); }}
-              onCollectClick={() => { try { sessionStorage.setItem('divido_friends_filter', 'owed'); } catch { /* ignore */ } window.dispatchEvent(new CustomEvent('divido:friends-filter', { detail: 'owed' })); setView('friends'); }}
+              // Tap Pay / Collect to filter the group list below (tap again to clear).
+              active={balanceFilter === 'owe' ? 'pay' : balanceFilter === 'owed' ? 'collect' : null}
+              onPayClick={() => { setBalanceFilter((f) => (f === 'owe' ? 'all' : 'owe')); if (homeTab !== 'groups') selectHomeTab('groups'); }}
+              onCollectClick={() => { setBalanceFilter((f) => (f === 'owed' ? 'all' : 'owed')); if (homeTab !== 'groups') selectHomeTab('groups'); }}
             />
           </div>
         );
@@ -849,8 +850,19 @@ export const MasterSummary: React.FC<MasterSummaryProps> = ({
 
       {homeTab === 'groups' ? (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+        {(balanceFilter === 'owe' || balanceFilter === 'owed') && (
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '12px', color: '#64748B' }}>
+            <span
+              onClick={() => setBalanceFilter('all')}
+              style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', padding: '4px 10px', borderRadius: '999px', background: balanceFilter === 'owe' ? '#FEE2E2' : '#D1FAE5', color: balanceFilter === 'owe' ? '#B91C1C' : '#047857', fontWeight: 600, cursor: 'pointer' }}
+            >
+              {balanceFilter === 'owe' ? 'Groups where you pay' : 'Groups where you collect'} <span style={{ fontWeight: 700 }}>✕</span>
+            </span>
+            {filteredGroups.length === 0 && <span>None</span>}
+          </div>
+        )}
         {/* Non-Group Expenses Card — first in the list, same look as a group card */}
-        {(() => {
+        {balanceFilter !== 'owe' && balanceFilter !== 'owed' && (() => {
           // Net across all non-group people (STANDALONE + shared threads).
           const netByCurr: Record<string, number> = {};
           nonGroupRels.forEach((r) => Object.entries(r.balances).forEach(([c, v]) => { netByCurr[c] = (netByCurr[c] || 0) + v; }));

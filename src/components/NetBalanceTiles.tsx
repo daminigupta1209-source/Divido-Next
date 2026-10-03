@@ -17,6 +17,8 @@ export interface NetBalanceTilesProps {
   /** Optional per-tile taps (e.g. open the list filtered to pay / collect). */
   onPayClick?: () => void;
   onCollectClick?: () => void;
+  /** Which tile is the active filter (the other one is dimmed). */
+  active?: 'pay' | 'collect' | null;
   /** Label for the settled state. */
   settledLabel?: string;
   /** Override the "Pay" / "Collect" labels (e.g. another person's balance). */
@@ -37,7 +39,7 @@ const chipStyle: React.CSSProperties = {
   flexShrink: 0,
 };
 
-const Tile: React.FC<{ bg: string; label: string; amount: string; more?: number; chevron: boolean; clickable: boolean; onTap?: () => void }> = ({ bg, label, amount, more, chevron, clickable, onTap }) => (
+const Tile: React.FC<{ bg: string; label: string; amount: string; more?: number; chevron: boolean; clickable: boolean; onTap?: () => void; dim?: boolean; selected?: boolean }> = ({ bg, label, amount, more, chevron, clickable, onTap, dim, selected }) => (
   <div
     onClick={onTap ? (e) => { e.stopPropagation(); onTap(); } : undefined}
     style={{
@@ -48,7 +50,9 @@ const Tile: React.FC<{ bg: string; label: string; amount: string; more?: number;
       borderRadius: '14px',
       padding: '6px 14px',
       paddingRight: chevron ? '28px' : '14px',
-      boxShadow: '0 6px 16px rgba(0,0,0,0.06)',
+      boxShadow: selected ? '0 0 0 2px #FFFFFF, 0 0 0 4px ' + bg : '0 6px 16px rgba(0,0,0,0.06)',
+      opacity: dim ? 0.45 : 1,
+      transition: 'opacity 0.2s, box-shadow 0.2s',
       cursor: clickable ? 'pointer' : 'default',
     }}
   >
@@ -71,6 +75,7 @@ export const NetBalanceTiles: React.FC<NetBalanceTilesProps> = ({
   onClick,
   onPayClick,
   onCollectClick,
+  active = null,
   settledLabel = 'All settled up',
   payLabel = 'Pay',
   collectLabel = 'Collect',
@@ -105,8 +110,8 @@ export const NetBalanceTiles: React.FC<NetBalanceTilesProps> = ({
       onClick={onClick}
       style={{ display: 'grid', gridTemplateColumns: both ? 'minmax(0,1fr) minmax(0,1fr)' : 'minmax(0,1fr)', gap: '8px', width: '100%', ...style }}
     >
-      {pay && <Tile bg={PINK} label={payLabel} amount={pay} more={payMore} chevron={!collect && !!(onClick || onPayClick)} clickable={!!(onClick || onPayClick)} onTap={onPayClick} />}
-      {collect && <Tile bg={GREEN} label={collectLabel} amount={collect} more={collectMore} chevron={!!(onClick || onCollectClick)} clickable={!!(onClick || onCollectClick)} onTap={onCollectClick} />}
+      {pay && <Tile bg={PINK} label={payLabel} amount={pay} more={payMore} chevron={!collect && !!onClick} clickable={!!(onClick || onPayClick)} onTap={onPayClick} dim={active === 'collect'} selected={active === 'pay'} />}
+      {collect && <Tile bg={GREEN} label={collectLabel} amount={collect} more={collectMore} chevron={!!onClick} clickable={!!(onClick || onCollectClick)} onTap={onCollectClick} dim={active === 'pay'} selected={active === 'collect'} />}
     </div>
   );
 };
