@@ -23,6 +23,10 @@
   <body>
     <div id="root"></div>
     <script>
+      // Remember the last errors so a white screen can show what went wrong.
+      window.__dvErrors = [];
+      window.addEventListener('error', function (e) { window.__dvErrors.push(String((e && (e.message || (e.target && (e.target.src || e.target.href)))) || 'error')); });
+      window.addEventListener('unhandledrejection', function (e) { window.__dvErrors.push(String((e && e.reason && (e.reason.message || e.reason)) || 'rejection')); });
       // Blank-screen rescue: if the app still hasn't drawn anything after 8s
       // (a JS file failed to load — usually an old cached copy after a
       // deploy), clear the offline cache once and reload, instead of leaving
@@ -30,7 +34,16 @@
       setTimeout(function () {
         var r = document.getElementById('root');
         if (r && r.children.length) return;
-        try { if (sessionStorage.getItem('dv_blank_fix')) return; sessionStorage.setItem('dv_blank_fix', '1'); } catch (e) {}
+        var tried = false;
+        try { tried = !!sessionStorage.getItem('dv_blank_fix'); if (!tried) sessionStorage.setItem('dv_blank_fix', '1'); } catch (e) {}
+        if (tried) {
+          // Already cleared the cache once and still blank: show the error.
+          var errs = (window.__dvErrors || []).slice(-3).join('
+') || 'No error captured';
+          r.innerHTML = '<div style="padding:24px;font-family:sans-serif;color:#1E293B"><h3>Divido could not start</h3><p style="font-size:13px;color:#64748B">Please send a screenshot of this screen.</p><pre style="white-space:pre-wrap;font-size:12px;background:#F1F5F9;padding:12px;border-radius:8px"></pre><button onclick="sessionStorage.removeItem('dv_blank_fix');location.reload()" style="padding:10px 16px;border:0;border-radius:8px;background:#10B981;color:#fff">Try again</button></div>';
+          r.querySelector('pre').textContent = errs;
+          return;
+        }
         var reload = function () { location.reload(); };
         Promise.all([
           navigator.serviceWorker ? navigator.serviceWorker.getRegistrations().then(function (rs) { return Promise.all(rs.map(function (x) { return x.unregister(); })); }) : null,

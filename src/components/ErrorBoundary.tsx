@@ -72,6 +72,11 @@ export class ErrorBoundary extends Component<Props, State> {
         <p style={{ fontSize: '14px', color: '#64748B', margin: '0 0 24px', maxWidth: '320px' }}>
           Divido was updated. Tap below to refresh and load the latest version.
         </p>
+        {this.state.error && (
+          <pre style={{ whiteSpace: 'pre-wrap', fontSize: '11px', color: '#64748B', background: '#F1F5F9', padding: '10px', borderRadius: '8px', maxWidth: '320px', margin: '0 0 16px', textAlign: 'left' }}>
+            {String(this.state.error.message || this.state.error).slice(0, 300)}
+          </pre>
+        )}
         <button
           onClick={this.handleReload}
           style={{
