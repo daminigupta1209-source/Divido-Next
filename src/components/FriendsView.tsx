@@ -96,13 +96,12 @@ const MergeDuplicatesModal: React.FC<{
   return (
     <div style={{ position: 'fixed', inset: 0, background: '#F8FAFC', zIndex: 10001, overflowY: 'auto', padding: '16px 16px calc(24px + env(safe-area-inset-bottom))', boxSizing: 'border-box' }}>
       <div style={{ maxWidth: '480px', margin: '0 auto' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '4px' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '16px' }}>
           <button type="button" onClick={() => window.history.back()} aria-label="Back" style={{ background: 'none', border: 'none', padding: '4px', margin: '0 0 0 -6px', cursor: 'pointer', color: '#475569', display: 'flex' }}>
             <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="15 18 9 12 15 6" /></svg>
           </button>
           <h3 style={{ margin: 0, fontSize: '19px', fontWeight: 600, color: '#1E293B' }}>Duplicate names</h3>
         </div>
-        <p style={{ margin: '0 0 16px 30px', fontSize: '13px', color: '#64748B' }}>Tick the invites that are the same person as the primary email. Tap ✕ if they're different people.</p>
 
         {reviews.length === 0 && (
           <p style={{ textAlign: 'center', color: '#16A34A', fontWeight: 600, fontSize: '14px', padding: '20px 0' }}>
