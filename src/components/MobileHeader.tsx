@@ -1109,7 +1109,7 @@ export const MobileHeader: React.FC<MobileHeaderProps> = ({
                     </svg>
                   </button>
                 )}
-                {view === 'friends' && (
+                {false && view === 'friends' && (
                   <button
                     type="button"
                     className="home-header-icon"
