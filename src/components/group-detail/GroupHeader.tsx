@@ -2,6 +2,7 @@ import React from 'react';
 import { createPortal } from 'react-dom';
 import { Group, Expense } from '../../lib/types';
 import { getEmoji, formatDate } from '../../lib/utils';
+import { buildGroupUpdates, formatUpdateStamp, formatExpenseUpdate, formatExpenseByLine } from '../../lib/groupUpdates';
 import { CameraCaptureModal } from '../CameraCaptureModal';
 import { isPastMemberOf } from '../../lib/identity';
 
@@ -97,6 +98,14 @@ export const GroupHeader: React.FC<GroupHeaderProps> = ({
       .filter(Boolean);
     return names.some((nm) => t === nm + ' left' || t === nm + ' joined' || t === nm + ' rejoined' || t === nm + ' was removed');
   };
+  // Expenses I added myself are already known to me: listed, but not badged.
+  const isAddedByMe = (addedBy: string | undefined): boolean => {
+    const clean = (x: string) => x.replace(/\s*\(me\)$/i, '').replace(/\s*\(Left\)$/i, '').trim().toLowerCase();
+    return !!addedBy && clean(addedBy) === clean(me);
+  };
+  // Updates Log rows: expenses added + membership notes (minus my own).
+  const visibleUpdates = () =>
+    buildGroupUpdates(expenses, selectedId).filter((u) => u.kind === 'expense' || !isAboutMe(u.log.title));
   const [editingDate, setEditingDate] = React.useState(false);
   const uploadInputRef = React.useRef<HTMLInputElement>(null);
   const [selectedPhoto, setSelectedPhoto] = React.useState<string | null>(null);
@@ -379,9 +388,10 @@ export const GroupHeader: React.FC<GroupHeaderProps> = ({
                     <path d="M13.73 21a2 2 0 0 1-3.46 0" />
                   </svg>
                   {(() => {
-                    const systemLogs = expenses.filter(e => String(e.gId) === String(selectedId) && e.paid === 'SYSTEM' && !isAboutMe(e.title));
-                    const unseen = systemLogs.filter((l) => logTime(l) > bellSeenAt);
-                    if (unseen.length > 0) {
+                    const unseenCount = visibleUpdates()
+                      .filter((u) => logTime(u.log) > bellSeenAt && !(u.kind === 'expense' && isAddedByMe(u.log.addedBy)))
+                      .length;
+                    if (unseenCount > 0) {
                       return (
                         <span
                           style={{
@@ -390,7 +400,7 @@ export const GroupHeader: React.FC<GroupHeaderProps> = ({
                             right: '4px',
                             minWidth: '16px',
                             height: '16px',
-                            borderRadius: '50%',
+                            borderRadius: '999px',
                             background: '#FF4B4B',
                             color: '#FFFFFF',
                             fontSize: '9px',
@@ -404,7 +414,7 @@ export const GroupHeader: React.FC<GroupHeaderProps> = ({
                             lineHeight: 1,
                           }}
                         >
-                          {unseen.length}
+                          {unseenCount > 99 ? '99+' : unseenCount}
                         </span>
                       );
                     }
@@ -414,7 +424,7 @@ export const GroupHeader: React.FC<GroupHeaderProps> = ({
 
                 {/* Group Notifications Dropdown */}
                 {showBellMenu && (() => {
-                  const systemLogs = expenses.filter(e => String(e.gId) === String(selectedId) && e.paid === 'SYSTEM' && !isAboutMe(e.title));
+                  const updates = visibleUpdates();
                   const getSystemTitle = (title: string) => {
                     const cleanMe = me.replace(/\s*\(me\)$/i, '').replace(/\s*\(Left\)$/i, '').toLowerCase();
                     const leftMatch = `${cleanMe} left`;
@@ -454,19 +464,24 @@ export const GroupHeader: React.FC<GroupHeaderProps> = ({
                       <div style={{ fontSize: '11px', fontWeight: 600, color: '#475569', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '8px', borderBottom: '1px solid #F1F5F9', paddingBottom: '6px', textAlign: 'left' }}>
                         Updates Log 🔔
                       </div>
-                      {systemLogs.length === 0 ? (
+                      {updates.length === 0 ? (
                         <div style={{ padding: '16px 8px', fontSize: '12px', color: '#94A3B8', textAlign: 'center' }}>
                           No recent updates
                         </div>
                       ) : (
                         <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-                          {systemLogs.slice().reverse().map((log, idx) => (
-                            <div key={idx} style={{ display: 'flex', flexDirection: 'column', gap: '2px', padding: '6px 8px', borderRadius: '8px', background: '#F8FAFC', border: '1px solid #F1F5F9', textAlign: 'left' }}>
+                          {updates.map((u) => (
+                            <div key={u.key} style={{ display: 'flex', flexDirection: 'column', gap: '2px', padding: '6px 8px', borderRadius: '8px', background: '#F8FAFC', border: '1px solid #F1F5F9', textAlign: 'left' }}>
                               <div style={{ fontSize: '11.5px', color: '#334155', fontWeight: 700 }}>
-                                {getSystemTitle(log.title)}
+                                {u.kind === 'system' ? getSystemTitle(u.log.title) : formatExpenseUpdate(u.log)}
                               </div>
+                              {u.kind === 'expense' && (
+                                <div style={{ fontSize: '10px', color: '#64748B' }}>
+                                  {formatExpenseByLine(u.log, me)}
+                                </div>
+                              )}
                               <div style={{ fontSize: '9px', color: '#94A3B8', textAlign: 'right' }}>
-                                {formatDate(log.date)}
+                                {formatUpdateStamp(u)}
                               </div>
                             </div>
                           ))}

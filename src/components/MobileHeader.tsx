@@ -3,6 +3,7 @@ import { createPortal } from 'react-dom';
 import { Group, Expense } from '../lib/types';
 import { formatDate } from '../lib/utils';
 import { AppNotification } from '../lib/notifications';
+import { buildGroupUpdates, formatUpdateStamp, formatExpenseUpdate, formatExpenseByLine } from '../lib/groupUpdates';
 import { CameraCaptureModal } from './CameraCaptureModal';
 import { GroupSettingsModal } from './GroupSettingsModal';
 import { isPastMemberOf } from '../lib/identity';
@@ -154,6 +155,14 @@ export const MobileHeader: React.FC<MobileHeaderProps> = ({
       .filter(Boolean);
     return names.some((nm) => t === nm + ' left' || t === nm + ' joined' || t === nm + ' rejoined' || t === nm + ' was removed');
   };
+  // Expenses I added myself are already known to me: listed, but not badged.
+  const isAddedByMe = (addedBy: string | undefined): boolean => {
+    const clean = (x: string) => x.replace(/\s*\(me\)$/i, '').replace(/\s*\(Left\)$/i, '').trim().toLowerCase();
+    return !!addedBy && clean(addedBy) === clean(me);
+  };
+  // Updates Log rows: expenses added + membership notes (minus my own).
+  const visibleUpdates = () =>
+    buildGroupUpdates(expenses, selectedId).filter((u) => u.kind === 'expense' || !isAboutMe(u.log.title));
   // A shared "direct" thread reads as "with <other person>" instead of its
   // internal "Me & Them" name.
   const directOther = (() => {
@@ -677,9 +686,10 @@ export const MobileHeader: React.FC<MobileHeaderProps> = ({
                     <path d="M13.73 21a2 2 0 0 1-3.46 0" />
                   </svg>
                   {(() => {
-                    const systemLogs = expenses.filter(e => String(e.gId) === String(selectedId) && e.paid === 'SYSTEM' && !isAboutMe(e.title));
-                    const unseen = systemLogs.filter((l) => logTime(l) > bellSeenAt);
-                    if (unseen.length > 0) {
+                    const unseenCount = visibleUpdates()
+                      .filter((u) => logTime(u.log) > bellSeenAt && !(u.kind === 'expense' && isAddedByMe(u.log.addedBy)))
+                      .length;
+                    if (unseenCount > 0) {
                       return (
                         <span
                           style={{
@@ -688,7 +698,7 @@ export const MobileHeader: React.FC<MobileHeaderProps> = ({
                             right: '1px',
                             minWidth: '15px',
                             height: '15px',
-                            borderRadius: '50%',
+                            borderRadius: '999px',
                             background: '#FF4B4B',
                             color: '#FFFFFF',
                             fontSize: '8px',
@@ -702,7 +712,7 @@ export const MobileHeader: React.FC<MobileHeaderProps> = ({
                             lineHeight: 1,
                           }}
                         >
-                          {unseen.length}
+                          {unseenCount > 99 ? '99+' : unseenCount}
                         </span>
                       );
                     }
@@ -712,7 +722,7 @@ export const MobileHeader: React.FC<MobileHeaderProps> = ({
 
                 {/* Mobile Group Notifications Dropdown */}
                 {showMobileBellMenu && (() => {
-                  const systemLogs = expenses.filter(e => String(e.gId) === String(selectedId) && e.paid === 'SYSTEM' && !isAboutMe(e.title));
+                  const updates = visibleUpdates();
                   const getSystemTitle = (title: string) => {
                     const cleanMe = me.replace(/\s*\(me\)$/i, '').replace(/\s*\(Left\)$/i, '').toLowerCase();
                     const leftMatch = `${cleanMe} left`;
@@ -728,17 +738,6 @@ export const MobileHeader: React.FC<MobileHeaderProps> = ({
                     if (lowerTitle.endsWith(' was removed')) return `🚫 ${title}`;
                     if (lowerTitle.endsWith(' rejoined')) return `🎉 ${title}`;
                     return title;
-                  };
-                  const formatDateMobile = (dStr: string) => {
-                    const parts = dStr.split('-');
-                    if (parts.length === 3) {
-                      const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-                      const day = parseInt(parts[2], 10);
-                      const month = months[parseInt(parts[1], 10) - 1];
-                      const year = parts[0];
-                      return `${day} ${month} ${year}`;
-                    }
-                    return dStr;
                   };
 
                   return createPortal(
@@ -793,21 +792,26 @@ export const MobileHeader: React.FC<MobileHeaderProps> = ({
                         onClick={(e) => e.stopPropagation()}
                         style={{ flex: 1, overflowY: 'auto', padding: '16px 18px', boxSizing: 'border-box' }}
                       >
-                        {systemLogs.length === 0 ? (
+                        {updates.length === 0 ? (
                           <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '10px', padding: '80px 20px', color: '#94A3B8' }}>
                             <span style={{ fontSize: '38px' }}>🔔</span>
                             <p style={{ margin: 0, fontSize: '14px', fontWeight: 700 }}>No recent updates</p>
-                            <p style={{ margin: 0, fontSize: '12px', textAlign: 'center' }}>Membership changes for this group will show up here.</p>
+                            <p style={{ margin: 0, fontSize: '12px', textAlign: 'center' }}>Expenses added and membership changes for this group will show up here.</p>
                           </div>
                         ) : (
                           <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-                            {systemLogs.slice().reverse().map((log, idx) => (
-                              <div key={idx} style={{ display: 'flex', flexDirection: 'column', gap: '4px', padding: '12px 14px', borderRadius: '14px', background: '#F8FAFC', border: '1px solid #F1F5F9', textAlign: 'left' }}>
+                            {updates.map((u) => (
+                              <div key={u.key} style={{ display: 'flex', flexDirection: 'column', gap: '4px', padding: '12px 14px', borderRadius: '14px', background: '#F8FAFC', border: '1px solid #F1F5F9', textAlign: 'left' }}>
                                 <div style={{ fontSize: '13px', color: '#334155', fontWeight: 600 }}>
-                                  {getSystemTitle(log.title)}
+                                  {u.kind === 'system' ? getSystemTitle(u.log.title) : formatExpenseUpdate(u.log)}
                                 </div>
+                                {u.kind === 'expense' && (
+                                  <div style={{ fontSize: '12px', color: '#64748B', fontWeight: 500 }}>
+                                    {formatExpenseByLine(u.log, me)}
+                                  </div>
+                                )}
                                 <div style={{ fontSize: '11px', color: '#94A3B8', fontWeight: 600 }}>
-                                  {formatDateMobile(log.date)}
+                                  {formatUpdateStamp(u)}
                                 </div>
                               </div>
                             ))}

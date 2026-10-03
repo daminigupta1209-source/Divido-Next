@@ -538,6 +538,8 @@ export function useExpenseForm({
           localGId === 'STANDALONE' && friendPickerEmail.trim().includes('@')
             ? friendPickerEmail.trim().toLowerCase()
             : (localGId === 'STANDALONE' ? editingExpense?.otherEmail : undefined),
+        // Creator never changes on edit; a new expense is added by me.
+        addedBy: (editingExpense && !isTemporaryNewExpense) ? editingExpense.addedBy : canonName(me),
       };
 
       setExpenses(

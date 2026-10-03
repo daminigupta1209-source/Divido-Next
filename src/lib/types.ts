@@ -81,6 +81,9 @@ export interface Expense {
   // Name (as written on this expense) → group_members.member_key it referred
   // to when written. See fillPartyKeys in lib/identity.
   partyKeys?: Record<string, string>;
+  // Roster name of whoever created the expense (may differ from `paid`).
+  // Undefined for expenses created before api/add_expense_added_by.sql.
+  addedBy?: string;
 }
 
 export interface ConfirmState {

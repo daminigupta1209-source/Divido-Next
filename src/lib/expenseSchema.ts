@@ -58,6 +58,9 @@ export const EXPENSE_FIELDS: FieldDef[] = [
   // Name → member_key map (api/add_member_key.sql). Left undefined until the
   // group has member keys, so it's never sent before the column exists.
   { app: 'partyKeys', db: 'party_keys', fromDb: (v) => (v ? ensureObject(v) : undefined), deep: true },
+  // Creator's roster name (api/add_expense_added_by.sql). Undefined on older
+  // rows, so it's dropped from the JSON payload and never sent for them.
+  { app: 'addedBy', db: 'added_by', fromDb: (v) => (v ? titleCaseName(v) : undefined) },
 ];
 
 // DB row -> the mapped fields of an Expense (caller adds id + timestamp).

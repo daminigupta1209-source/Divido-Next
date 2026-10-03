@@ -1249,9 +1249,18 @@ export function useSupabaseSync({
               // occurrence spawned on two devices, or a retried row — updates
               // instead of throwing a PK violation and aborting the batch.
               const insertId = updatedExpense.id != null ? String(updatedExpense.id) : undefined;
-              const { error } = await supabase
+              const row = { id: insertId, ...expenseToRow(updatedExpense) };
+              let { error } = await supabase
                 .from('expenses')
-                .upsert({ id: insertId, ...expenseToRow(updatedExpense) }, { onConflict: 'id' });
+                .upsert(row, { onConflict: 'id' });
+              // Until api/add_expense_added_by.sql has run, the column is missing:
+              // retry without it so new expenses still sync.
+              if (error && String(error.message || '').includes('added_by')) {
+                const { added_by: _omit, ...rowWithoutAddedBy } = row;
+                ({ error } = await supabase
+                  .from('expenses')
+                  .upsert(rowWithoutAddedBy, { onConflict: 'id' }));
+              }
 
               if (error) throw error;
               // No id remap needed — the id we sent is permanent.
