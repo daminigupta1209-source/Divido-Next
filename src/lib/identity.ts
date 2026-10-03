@@ -259,7 +259,31 @@ export const buildPeopleSuggestions = (
     }
   }
   const dismissed = new Set(dismissedPeople);
-  return out
+  // Match people by EMAIL, not just name: someone already active in this group
+  // (even under another spelling or a hidden email tag) is never suggested,
+  // and one email listed under two names ("Esha", "Esha Gupta") shows once,
+  // under the longer (fuller) name.
+  const cur = (groups || []).find((g) => g && String(g.id) === String(currentGroupId));
+  const curEmails = new Set<string>();
+  if (cur) {
+    const mi = cur.memberIdentities || {};
+    (cur.members || []).forEach((m) => {
+      if (/\s*\(Left\)$/i.test(m)) return;
+      const id = String(mi[m] || '').toLowerCase();
+      if (id.includes('@')) curEmails.add(id);
+    });
+  }
+  const byEmail = new Map<string, (typeof out)[number]>();
+  const result: typeof out = [];
+  for (const s of out) {
+    const em = s.email.toLowerCase();
+    if (!em) { result.push(s); continue; }
+    if (curEmails.has(em)) continue;
+    const prev = byEmail.get(em);
+    if (!prev) { byEmail.set(em, s); result.push(s); continue; }
+    if (s.name.length > prev.name.length) { result[result.indexOf(prev)] = s; byEmail.set(em, s); }
+  }
+  return result
     .filter((s) => !dismissed.has(dismissedPersonKey(s)))
     .sort((a, b) => a.name.localeCompare(b.name));
 };

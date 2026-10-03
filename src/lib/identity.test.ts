@@ -492,3 +492,17 @@ describe('isPastMemberOf', () => {
     expect(isPastMemberOf({ members: ['damini gupta (left)'] }, 'Damini Gupta')).toBe(true);
   });
 });
+
+describe('buildPeopleSuggestions: match by email', () => {
+  const raipur = { id: 'r', name: 'Raipur', members: ['Me', 'Esha Gupta (eshadgupta1993)'], memberIdentities: { 'Esha Gupta (eshadgupta1993)': 'eshadgupta1993@gmail.com' } } as unknown as Group;
+  const goa = { id: 'g', name: 'Goa', members: ['Me', 'Esha', 'Latika'], memberIdentities: { Esha: 'eshadgupta1993@gmail.com' } } as unknown as Group;
+  const kota = { id: 'k', name: 'Kota', members: ['Me', 'Esha Gupta'], memberIdentities: { 'Esha Gupta': 'eshadgupta1993@gmail.com' } } as unknown as Group;
+  it('hides someone already in this group, whatever name they have elsewhere', () => {
+    const out = buildPeopleSuggestions([raipur, goa, kota], 'r', raipur.members, 'Me');
+    expect(out.map((s) => s.name)).toEqual(['Latika']);
+  });
+  it('shows one email once, under the fuller name', () => {
+    const out = buildPeopleSuggestions([goa, kota], 'new', [], 'Me');
+    expect(out.filter((s) => s.email === 'eshadgupta1993@gmail.com').map((s) => s.name)).toEqual(['Esha Gupta']);
+  });
+});
