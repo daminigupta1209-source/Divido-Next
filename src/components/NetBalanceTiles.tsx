@@ -22,7 +22,7 @@ export interface NetBalanceTilesProps {
   style?: React.CSSProperties;
 }
 
-const PINK = '#E11D48';
+const PINK = '#EF4444';
 const GREEN = '#10B981';
 
 const chipStyle: React.CSSProperties = {

@@ -511,7 +511,7 @@ export const ActivityStudio: React.FC<ActivityStudioProps> = ({
                                 fontSize: '12px',
                                 fontWeight: 600,
                                 cursor: 'pointer',
-                                color: '#E11D48',
+                                color: '#EF4444',
                                 borderRadius: '8px',
                               }}
                               className="hover-bg"

@@ -1110,13 +1110,13 @@ export const GroupMemberList: React.FC<GroupMemberListProps> = ({
                                 title: `Remove "${shown}"?`,
                                 desc: `Balance remaining: ${bt}. It will be written off, then they're removed from this list. Past expenses stay.`,
                                 primaryLabel: 'Write off & remove',
-                                primaryColor: '#E11D48',
+                                primaryColor: '#EF4444',
                                 onPrimary: () => { setActionCard(null); onWriteOff && onWriteOff(cleanName); onRemovePastMember(m); },
                               } : {
                                 title: `Remove "${shown}"?`,
                                 desc: 'They\'ll be removed from this list. Past expenses stay.',
                                 primaryLabel: 'Remove',
-                                primaryColor: '#E11D48',
+                                primaryColor: '#EF4444',
                                 onPrimary: () => { setActionCard(null); onRemovePastMember(m); },
                               });
                             }}

@@ -622,7 +622,7 @@ export const GroupDetail: React.FC<GroupDetailProps> = ({
           return `${curr}${formatExactAmount(val)}`;
         };
 
-        const PINK = '#E11D48';
+        const PINK = '#EF4444';
         const GREEN = '#10B981';
 
         // Original single-line look (regular weight, no uppercase). Segments size
@@ -1000,7 +1000,7 @@ export const GroupDetail: React.FC<GroupDetailProps> = ({
 
                             <div style={{ display: 'flex', flexDirection: 'column', gap: '2px', minWidth: 0 }}>
                               {payList.length > 0 && (
-                                <span style={{ fontSize: '13px', fontWeight: 500, color: '#E11D48', display: 'inline-flex', alignItems: 'center', gap: '5px', minWidth: 0 }}>
+                                <span style={{ fontSize: '13px', fontWeight: 500, color: '#EF4444', display: 'inline-flex', alignItems: 'center', gap: '5px', minWidth: 0 }}>
                                   <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{`You pay ${balPrimary(payList)}`}</span>
                                   {payList.length > 1 && <span style={{ background: '#F1EFE8', borderRadius: '999px', padding: '0 6px', fontSize: '10px', fontWeight: 600, lineHeight: '16px', flexShrink: 0 }}>+{payList.length - 1}</span>}
                                 </span>

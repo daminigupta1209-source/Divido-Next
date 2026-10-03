@@ -452,7 +452,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
                           style={{
                             cursor: 'pointer',
                             fontSize: '12px',
-                            color: '#E11D48',
+                            color: '#EF4444',
                             opacity: 0.8,
                           }}
                           className="hover-up"

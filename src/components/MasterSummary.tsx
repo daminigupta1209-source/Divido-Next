@@ -694,7 +694,7 @@ export const MasterSummary: React.FC<MasterSummaryProps> = ({
               justifyContent: 'center',
               flexShrink: 0
             }}>
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#E11D48" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#EF4444" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                 <circle cx="12" cy="12" r="10"></circle>
                 <line x1="12" y1="8" x2="12" y2="12"></line>
                 <line x1="12" y1="16" x2="12.01" y2="16"></line>
@@ -710,7 +710,7 @@ export const MasterSummary: React.FC<MasterSummaryProps> = ({
             </div>
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#E11D48" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ opacity: 0.6 }}>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#EF4444" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ opacity: 0.6 }}>
               <polyline points="9 18 15 12 9 6"></polyline>
             </svg>
             <button
@@ -729,7 +729,7 @@ export const MasterSummary: React.FC<MasterSummaryProps> = ({
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                color: '#E11D48',
+                color: '#EF4444',
                 marginLeft: '4px',
                 transition: 'transform 0.2s ease',
               }}
@@ -760,7 +760,7 @@ export const MasterSummary: React.FC<MasterSummaryProps> = ({
         };
 
         // Match the in-group net-balance pill (GroupDetail) for a consistent look.
-        const PINK = '#E11D48';
+        const PINK = '#EF4444';
         const GREEN = '#10B981';
 
         // Original single-line look (regular weight, no uppercase). Segments size
@@ -912,7 +912,7 @@ export const MasterSummary: React.FC<MasterSummaryProps> = ({
                 ) : (
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '1px', minWidth: 0 }}>
                     {ngPay.length > 0 && (
-                      <span style={{ fontSize: '13px', fontWeight: 500, color: '#E11D48', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                      <span style={{ fontSize: '13px', fontWeight: 500, color: '#EF4444', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                         You pay {ngPay[0][0]}{formatExactAmount(Math.abs(ngPay[0][1]))}
                       </span>
                     )}
@@ -1103,7 +1103,7 @@ export const MasterSummary: React.FC<MasterSummaryProps> = ({
                     return (
                       <div style={{ display: 'flex', flexDirection: 'column', gap: '1px', minWidth: 0 }}>
                         {payList.length > 0 && (
-                          <span style={{ fontSize: '13px', fontWeight: 500, color: '#E11D48', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                          <span style={{ fontSize: '13px', fontWeight: 500, color: '#EF4444', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                             You pay {payList[0][0]}{formatExactAmount(Math.abs(payList[0][1]))}
                           </span>
                         )}

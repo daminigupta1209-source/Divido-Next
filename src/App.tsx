@@ -6302,7 +6302,7 @@ function App() {
                         style={{
                           background: 'none',
                           border: 'none',
-                          color: !isSelected ? '#94A3B8' : (isPayable ? '#E11D48' : '#0D9488'),
+                          color: !isSelected ? '#94A3B8' : (isPayable ? '#EF4444' : '#0D9488'),
                           textDecoration: 'underline',
                           fontSize: '11.5px',
                           fontWeight: 700,
@@ -6375,7 +6375,7 @@ function App() {
                           {isOwed ? (
                             <span>
                               You pay <strong>{friendName}</strong> a net of{' '}
-                              <strong style={{ color: '#E11D48', fontSize: '14.5px', fontWeight: 700, marginLeft: '2px' }}>
+                              <strong style={{ color: '#EF4444', fontSize: '14.5px', fontWeight: 700, marginLeft: '2px' }}>
                                 {curr}{absoluteAmt >= 1000000 ? formatCompactAmount(absoluteAmt) : absoluteAmt.toFixed(2)}
                               </strong>
                             </span>

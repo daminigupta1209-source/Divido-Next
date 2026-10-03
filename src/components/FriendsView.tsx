@@ -576,7 +576,7 @@ export const FriendsView: React.FC<FriendsViewProps> = ({
       {showNetSheet && (() => {
         const payList = Object.entries(totalPayable);
         const collectList = Object.entries(totalReceivable);
-        const segColor = { all: '#1E293B', owe: '#E11D48', owed: '#10B981' };
+        const segColor = { all: '#1E293B', owe: '#EF4444', owed: '#10B981' };
         const filterBtn = (key: 'all' | 'owe' | 'owed', label: string) => {
           const active = balanceFilter === key;
           return (
@@ -673,7 +673,7 @@ export const FriendsView: React.FC<FriendsViewProps> = ({
             <path d="M22 3H2L10 12.46V19L14 21V12.46L22 3Z" stroke="currentColor" strokeWidth="2" strokeLinejoin="round" strokeLinecap="round" />
           </svg>
           {balanceFilter !== 'all' && (
-            <span style={{ position: 'absolute', marginLeft: '16px', marginTop: '-14px', width: '8px', height: '8px', borderRadius: '50%', background: balanceFilter === 'owe' ? '#E11D48' : '#10B981', border: '1.5px solid #FFFFFF' }} />
+            <span style={{ position: 'absolute', marginLeft: '16px', marginTop: '-14px', width: '8px', height: '8px', borderRadius: '50%', background: balanceFilter === 'owe' ? '#EF4444' : '#10B981', border: '1.5px solid #FFFFFF' }} />
           )}
         </button>
       </div>
