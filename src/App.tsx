@@ -4774,6 +4774,7 @@ function App() {
             userEmail={userEmail}
             setView={setView}
             setSelectedId={setSelectedId}
+            onMergePeople={mergePeople}
             setGlobalSettleData={setGlobalSettleData}
             userMetadata={userMetadata}
             memberAvatars={memberAvatars}

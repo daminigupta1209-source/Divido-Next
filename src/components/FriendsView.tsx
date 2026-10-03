@@ -209,17 +209,29 @@ export const FriendsView: React.FC<FriendsViewProps> = ({
   // People who appear under one name but with 2+ identities (usually fragmented
   // after an account deletion) — offered for review/merge. Recompute on data.
   const duplicatePeople: DuplicatePerson[] = useMemo(() => findDuplicatePeople(groups, me), [groups, me]);
-  // Same name, 2+ DIFFERENT emails across groups → a small "2 emails?" hint on
-  // that row; tapping it lists the groups so the admin can fix the invite email.
-  const emailConflicts = useMemo(() => {
-    const m = new Map<string, DuplicateEntry[]>();
+  // Review cards: same name, 2+ different emails, where exactly ONE email is a
+  // joined (signed-in) account. That account is the primary; Merge points the
+  // other (pending) invites at it. Two different joined accounts are never
+  // offered — they really are separate people.
+  const mergeReviews = useMemo(() => {
+    const out: { name: string; primary: string; entries: DuplicateEntry[]; others: DuplicateEntry[] }[] = [];
     duplicatePeople.forEach((d) => {
-      const emails = new Set(d.entries.map((e) => e.email).filter(Boolean));
-      if (emails.size >= 2) m.set(d.name.toLowerCase(), d.entries.filter((e) => e.email));
+      const withEmail = d.entries.filter((e) => e.email);
+      if (new Set(withEmail.map((e) => e.email)).size < 2) return;
+      const isJoined = (e: DuplicateEntry) => {
+        const g = groups.find((x) => String(x.id) === String(e.groupId));
+        return !!g && !(g.pendingMembers || []).includes(e.memberName);
+      };
+      const joinedEmails = new Set(withEmail.filter(isJoined).map((e) => e.email));
+      if (joinedEmails.size !== 1) return;
+      const primary = [...joinedEmails][0];
+      const others = d.entries.filter((e) => e.email !== primary && !isJoined(e));
+      if (others.length === 0) return;
+      out.push({ name: d.name, primary, entries: d.entries, others });
     });
-    return m;
-  }, [duplicatePeople]);
-  const [conflictFor, setConflictFor] = useState<{ name: string; entries: DuplicateEntry[] } | null>(null);
+    return out;
+  }, [duplicatePeople, groups]);
+  const [mergingName, setMergingName] = useState<string | null>(null);
 
   // Emails the app already knows (from any group's member identities), for the
   // merge sheet's "Merge into this email" autocomplete. Ranked so ones tied to a
@@ -559,18 +571,6 @@ export const FriendsView: React.FC<FriendsViewProps> = ({
 
   return (
     <div className="content-width-limit">
-      {/* Duplicate-person review banner */}
-      {onMergePeople && duplicatePeople.length > 0 && (
-        <div
-          onClick={() => setShowMergeModal(true)}
-          style={{ display: 'flex', alignItems: 'center', gap: '10px', background: '#FDF2F8', border: '1px solid #FBCFE8', borderRadius: '14px', padding: '10px 14px', marginBottom: '14px', cursor: 'pointer' }}
-        >
-          <span style={{ flex: 1, minWidth: 0, fontSize: '13.5px', fontWeight: 600, color: '#9D174D', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-            {duplicatePeople.length} {duplicatePeople.length === 1 ? 'friend appears' : 'friends appear'} twice
-          </span>
-          <span style={{ color: '#BE185D', fontSize: '13px', fontWeight: 700, whiteSpace: 'nowrap' }}>Review ›</span>
-        </div>
-      )}
       {showMergeModal && (
         <MergeDuplicatesModal
           duplicates={duplicatePeople}
@@ -579,24 +579,29 @@ export const FriendsView: React.FC<FriendsViewProps> = ({
           suggestEmails={suggestEmails}
         />
       )}
-      {conflictFor && (
-        <div onClick={() => setConflictFor(null)} style={{ position: 'fixed', inset: 0, background: 'rgba(15,23,42,0.45)', zIndex: 10002, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px' }}>
-          <div onClick={(e) => e.stopPropagation()} style={{ width: '100%', maxWidth: '340px', background: '#FFFFFF', borderRadius: '16px', padding: '18px', boxShadow: '0 12px 40px rgba(0,0,0,0.25)' }}>
-            <h3 style={{ margin: '0 0 6px', fontSize: '16px', fontWeight: 700, color: '#1E293B' }}>{conflictFor.name} has 2 emails</h3>
-            <p style={{ margin: '0 0 12px', fontSize: '13px', color: '#64748B', lineHeight: 1.45 }}>If this is the same person, open the group with the wrong email and edit their invite. If they're different people, you can ignore this.</p>
-            {conflictFor.entries.map((en, i) => (
-              <div key={i} onClick={() => { setConflictFor(null); setSelectedId(en.groupId); setView('detail'); }} style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '10px 0', borderTop: '1px solid #F1F5F9', cursor: 'pointer' }}>
-                <div style={{ minWidth: 0, flex: 1 }}>
-                  <div style={{ fontSize: '14px', fontWeight: 600, color: '#1E293B' }}>{en.groupName}</div>
-                  <div style={{ fontSize: '12px', color: '#94A3B8', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{en.email}</div>
-                </div>
-                <span style={{ fontSize: '13px', fontWeight: 600, color: '#10B981', flexShrink: 0 }}>Open ›</span>
-              </div>
-            ))}
-            <button onClick={() => setConflictFor(null)} style={{ width: '100%', marginTop: '10px', padding: '10px', borderRadius: '12px', border: 'none', background: '#F1F5F9', color: '#475569', fontWeight: 600, fontSize: '13.5px', cursor: 'pointer' }}>Close</button>
+      {onMergePeople && mergeReviews.map((r) => (
+        <div key={r.name} style={{ background: '#FFFBEB', border: '1px solid #FDE68A', borderRadius: '14px', padding: '12px 14px', marginBottom: '14px' }}>
+          <div style={{ fontSize: '14px', fontWeight: 700, color: '#92400E', marginBottom: '4px' }}>Is {r.name} one person?</div>
+          <div style={{ fontSize: '12.5px', color: '#78350F', lineHeight: 1.45 }}>
+            Primary email (joined): <b>{r.primary}</b>
           </div>
+          {r.others.map((o, i) => (
+            <div key={i} style={{ fontSize: '12.5px', color: '#92400E', opacity: 0.85, lineHeight: 1.45 }}>
+              {o.groupName}: {o.email || 'no email'}
+            </div>
+          ))}
+          <button
+            disabled={mergingName === r.name}
+            onClick={async () => {
+              setMergingName(r.name);
+              try { await onMergePeople(r.others, r.primary); } finally { setMergingName(null); }
+            }}
+            style={{ width: '100%', marginTop: '10px', padding: '10px', borderRadius: '12px', border: 'none', background: '#10B981', color: '#FFFFFF', fontWeight: 600, fontSize: '13.5px', cursor: 'pointer' }}
+          >
+            {mergingName === r.name ? 'Merging…' : `Merge into ${r.primary}`}
+          </button>
         </div>
-      )}
+      ))}
       {/* Universal Net Balance Card — kept above the search bar */}
       <div style={{ marginBottom: '18px', width: '100%', animation: 'fadeIn 0.25s ease-out' }}>
         <span style={{ fontSize: '11px', fontWeight: 700, letterSpacing: '1.5px', textTransform: 'uppercase', color: '#B0A79C', marginBottom: '10px', marginLeft: '2px', display: 'block' }}>
@@ -879,12 +884,6 @@ export const FriendsView: React.FC<FriendsViewProps> = ({
               <div style={{ minWidth: 0, flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center', gap: '6px' }}>
                 <div style={{ display: 'flex', alignItems: 'baseline', gap: '8px', minWidth: 0 }}>
                   <h3 style={{ fontSize: '16px', fontWeight: 600, color: '#2E2A25', margin: 0, textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap', textTransform: 'capitalize', flexShrink: 1 }}>{f.name}</h3>
-                  {emailConflicts.has(String(f.name).toLowerCase()) && (
-                    <span
-                      onClick={(e) => { e.stopPropagation(); setConflictFor({ name: f.name, entries: emailConflicts.get(String(f.name).toLowerCase())! }); }}
-                      style={{ flexShrink: 0, alignSelf: 'center', fontSize: '11px', fontWeight: 600, color: '#B45309', background: '#FEF3C7', borderRadius: '999px', padding: '2px 8px', cursor: 'pointer' }}
-                    >2 emails?</span>
-                  )}
                   {!(f.id && String(f.id).includes('@')) && f.groups && f.groups.length > 0 && (
                     <span style={{ fontSize: '13px', fontWeight: 500, color: '#94A3B8', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', flexShrink: 1 }}>({f.groups.join(', ')})</span>
                   )}
