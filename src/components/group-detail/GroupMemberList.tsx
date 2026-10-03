@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Group, Expense, UserMetadata } from '../../lib/types';
 import { BalanceActionCard } from '../BalanceActionCard';
-import { buildPeopleSuggestions, balancesByIdentity, getPersonKey, isValidEmail, buildNameEmailResolver, upiFor, withoutEmailTag } from '../../lib/identity';
+import { buildPeopleSuggestions, balancesByIdentity, getPersonKey, isValidEmail, buildNameEmailResolver, upiFor, withoutEmailTag, uniqueProfileName } from '../../lib/identity';
 import { FullScreenAddFriend } from '../FullScreenAddFriend';
 
 interface GroupMemberListProps {
@@ -493,11 +493,23 @@ export const GroupMemberList: React.FC<GroupMemberListProps> = ({
                 const v = emailEditVal.trim();
                 if (onSetMemberEmail && v && isValidEmail(v)) onSetMemberEmail(original, v.toLowerCase());
                 if (newName && newName.toLowerCase() !== original.replace(/\s*\(me\)$/i, '').toLowerCase()) {
-                  if (selectedGroup.members.some((x) => x.replace(/\s*\(Left\)$/i, '').trim().toLowerCase() === newName.toLowerCase())) {
-                    alert(`"${newName}" is already taken in this group! 🛑`);
-                    return;
+                  let finalName = newName;
+                  const clash = selectedGroup.members.find((x) => x !== original && x.replace(/\s*\(Left\)$/i, '').trim().toLowerCase() === newName.toLowerCase());
+                  if (clash) {
+                    // Same name is fine for a DIFFERENT person (different email):
+                    // save it with a short email tag, hidden on screen — the same
+                    // rule used when adding / joining. Same or no email → block.
+                    const mi = (selectedGroup as any).memberIdentities || {};
+                    const myEmail = (v && isValidEmail(v) ? v : String(mi[original] || '')).toLowerCase();
+                    const clashEmail = String(mi[clash] || '').toLowerCase();
+                    if (!myEmail.includes('@') || myEmail === clashEmail) {
+                      alert(`"${newName}" is already in this group. Add a different email to use the same name.`);
+                      return;
+                    }
+                    const taken = new Set(selectedGroup.members.filter((x) => x !== original).map((x) => x.replace(/\s*\(Left\)$/i, '').trim().toLowerCase()));
+                    finalName = uniqueProfileName(newName, myEmail, taken);
                   }
-                  if (onRenameMember) onRenameMember(original, newName);
+                  if (onRenameMember) onRenameMember(original, finalName);
                 }
                 setPendingEditName(null);
               }}
