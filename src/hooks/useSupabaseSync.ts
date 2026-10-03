@@ -1256,7 +1256,7 @@ export function useSupabaseSync({
               // Until api/add_expense_added_by.sql has run, the column is missing:
               // retry without it so new expenses still sync.
               if (error && String(error.message || '').includes('added_by')) {
-                const { added_by: _omit, ...rowWithoutAddedBy } = row;
+                const { added_by: _omit, ...rowWithoutAddedBy } = row as Record<string, unknown>;
                 ({ error } = await supabase
                   .from('expenses')
                   .upsert(rowWithoutAddedBy, { onConflict: 'id' }));
