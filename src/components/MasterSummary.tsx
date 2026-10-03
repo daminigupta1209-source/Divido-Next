@@ -191,31 +191,6 @@ export const MasterSummary: React.FC<MasterSummaryProps> = ({
 
   // netBalances depends only on groups/expenses/me — memoize so it isn't
   // recomputed across every group/expense on unrelated re-renders (filters, dropdowns).
-  const netBalances = useMemo(() => {
-    const nb: Record<string, number> = {};
-    // Resolve the user's OWN name within a group (the per-group claimed
-    // identity), so the net total is read for the right member — the flat `me`
-    // is just the global first name and can miss on other devices, which made
-    // the card say "All settled up" while the group rows showed real balances.
-    const myNameFor = (gId: string | number): string => {
-      try {
-        const claim = localStorage.getItem(`divido_identity_${gId}`);
-        if (claim) return claim;
-      } catch { /* localStorage unavailable */ }
-      return me;
-    };
-    const add = (bal: Record<string, number>) => {
-      Object.entries(bal).forEach(([curr, val]) => { nb[curr] = (nb[curr] || 0) + val; });
-    };
-    // Sum EXACTLY what the group cards show (getMemberBalance is identity-aware),
-    // so the Net Balance total can never disagree with the per-group rows.
-    groups.forEach((g) => {
-      if (!g || g.id === 'STANDALONE') return;
-      add(getMemberBalance(g.id, myNameFor(g.id)));
-    });
-    add(getMemberBalance('STANDALONE', me));
-    return nb;
-  }, [groups, getMemberBalance, me]);
 
   const isWithinRange = (dateStr: string, days: number) => {
     try {
@@ -342,6 +317,35 @@ export const MasterSummary: React.FC<MasterSummaryProps> = ({
       return { name: m, balances: rel };
     })
     .filter((r) => Object.values(r.balances).some((v) => Math.abs(v) > 0.01));
+
+  const netBalances = useMemo(() => {
+    const nb: Record<string, number> = {};
+    // Resolve the user's OWN name within a group (the per-group claimed
+    // identity), so the net total is read for the right member — the flat `me`
+    // is just the global first name and can miss on other devices, which made
+    // the card say "All settled up" while the group rows showed real balances.
+    const myNameFor = (gId: string | number): string => {
+      try {
+        const claim = localStorage.getItem(`divido_identity_${gId}`);
+        if (claim) return claim;
+      } catch { /* localStorage unavailable */ }
+      return me;
+    };
+    const add = (bal: Record<string, number>) => {
+      Object.entries(bal).forEach(([curr, val]) => { nb[curr] = (nb[curr] || 0) + val; });
+    };
+    // Sum EXACTLY what the group cards show (getMemberBalance is identity-aware),
+    // so the Net Balance total can never disagree with the per-group rows.
+    // Only groups that appear as rows on Home (direct threads live under the
+    // Non-Group card and are added below via the same math that card uses), so
+    // the Pay / Collect tiles always equal what the visible rows add up to.
+    groups.forEach((g) => {
+      if (!g || g.id === 'STANDALONE' || g.isDirect) return;
+      add(getMemberBalance(g.id, myNameFor(g.id)));
+    });
+    nonGroupRels.forEach((r) => add(r.balances));
+    return nb;
+  }, [groups, getMemberBalance, me, nonGroupRels]);
 
   const filteredGroups = groups.filter((g) => {
     // Direct (shared non-group) threads never appear in the Groups list — their
