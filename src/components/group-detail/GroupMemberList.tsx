@@ -275,6 +275,15 @@ export const GroupMemberList: React.FC<GroupMemberListProps> = ({
     // into a fresh name-only person. Ambiguous names (buildNameEmailResolver
     // returns undefined) are left name-only, so distinct people aren't merged.
     const knownEmail = buildNameEmailResolver(groups || []);
+    // Emails of people already active here: the same person under another
+    // name ("Esha" vs "Esha Gupta") must not be added a second time.
+    const groupMi = (selectedGroup as any).memberIdentities || {};
+    const activeEmails = new Map<string, string>();
+    selectedGroup.members.filter((m) => !/\s*\(Left\)$/i.test(m)).forEach((m) => {
+      const id = String(groupMi[m] || '').toLowerCase();
+      if (id.includes('@')) activeEmails.set(id, withoutEmailTag(selectedGroup, m));
+    });
+    const alreadyIn: string[] = [];
     for (const f of friends) {
       const nm = f.name.trim();
       if (!nm) continue;
@@ -289,12 +298,17 @@ export const GroupMemberList: React.FC<GroupMemberListProps> = ({
         markJustAdded(nm);
         continue;
       }
-      names.push(nm);
       let email = (f.email || '').trim().toLowerCase();
       if (!email.includes('@')) {
         const inherited = knownEmail(nm);
         if (inherited) email = inherited;
       }
+      if (email.includes('@') && activeEmails.has(email)) {
+        alreadyIn.push(`${activeEmails.get(email)} (${email})`);
+        continue;
+      }
+      names.push(nm);
+      activeEmails.set(email, nm);
       if (email.includes('@')) emails[nm] = email;
       const identity = (email.includes('@') ? email : (f.identity || '')).trim();
       if (identity) identities[nm] = identity;
@@ -305,6 +319,7 @@ export const GroupMemberList: React.FC<GroupMemberListProps> = ({
     if (names.length && onAddMembers) {
       onAddMembers(names, Object.keys(emails).length ? emails : undefined, Object.keys(identities).length ? identities : undefined);
     }
+    if (alreadyIn.length) alert(`Already in this group: ${alreadyIn.join(', ')}`);
     setActiveTab('pending');
   };
 
