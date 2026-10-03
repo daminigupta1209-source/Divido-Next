@@ -307,14 +307,18 @@ export const NonGroupView: React.FC<NonGroupViewProps> = ({
   }, [expenses, directThreads, nonGroupExps, isMe, getMemberBalance, expenseInvolves]);
 
   const searchLower = searchQuery.trim().toLowerCase();
+  const [balFilter, setBalFilter] = React.useState<'pay' | 'collect' | null>(null);
   const shownPeople = React.useMemo(() => {
-    if (!searchLower) return people;
-    return people.filter((p) => {
+    const byBal = balFilter
+      ? people.filter((p) => myPerspective(p.bal).some((l) => (balFilter === 'pay' ? l.amount < 0 : l.amount > 0)))
+      : people;
+    if (!searchLower) return byBal;
+    return byBal.filter((p) => {
       if (p.name.toLowerCase().includes(searchLower) || p.email.toLowerCase().includes(searchLower)) return true;
       const key = p.name.toLowerCase();
       return nonGroupExps.some((e) => expenseInvolves(e, key) && (e.title || '').toLowerCase().includes(searchLower));
     });
-  }, [people, searchLower, nonGroupExps, expenseInvolves]);
+  }, [people, searchLower, nonGroupExps, expenseInvolves, balFilter]);
 
   const Avatar: React.FC<{ name: string; size?: number }> = ({ name, size = 38 }) => {
     const url = memberAvatars?.[name] || memberAvatars?.[cleanName(name)];
@@ -550,8 +554,18 @@ export const NonGroupView: React.FC<NonGroupViewProps> = ({
           payMore={frontPayLines.length - 1}
           collect={netHasBalance && frontCollectLines.length > 0 ? frontCollectLines[0].curr + formatExactAmount(Math.abs(frontCollectLines[0].amount)) : undefined}
           collectMore={frontCollectLines.length - 1}
-          onClick={() => setShowFrontNetSheet(true)}
+          active={balFilter}
+          onPayClick={() => { setBalFilter((f) => (f === 'pay' ? null : 'pay')); setActiveTab('settle'); }}
+          onCollectClick={() => { setBalFilter((f) => (f === 'collect' ? null : 'collect')); setActiveTab('settle'); }}
         />
+        {balFilter && (
+          <button
+            onClick={() => setBalFilter(null)}
+            style={{ marginTop: '10px', display: 'inline-flex', alignItems: 'center', gap: '6px', padding: '5px 10px 5px 12px', borderRadius: '999px', border: 'none', cursor: 'pointer', fontSize: '12px', fontWeight: 700, background: balFilter === 'pay' ? '#FFE4E6' : '#D1FAE5', color: balFilter === 'pay' ? '#BE123C' : '#047857' }}
+          >
+            {balFilter === 'pay' ? 'To pay' : 'To collect'} <span style={{ fontSize: '13px' }}>✕</span>
+          </button>
+        )}
       </div>
 
       <NetBalanceDetailsSheet
