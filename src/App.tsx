@@ -4777,7 +4777,6 @@ function App() {
             setGlobalSettleData={setGlobalSettleData}
             userMetadata={userMetadata}
             memberAvatars={memberAvatars}
-            onMergePeople={mergePeople}
             setUserMetadata={setUserMetadata}
             searchQuery={globalSearchQuery}
             showConvertModal={showFriendsConvert}
