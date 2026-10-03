@@ -38,6 +38,8 @@ interface GroupsViewProps {
   handleRenameGroup: (id: string | number) => void;
   handleDeleteGroup: (id: string | number) => void;
   me: string;
+  // Text typed in the mobile header search (combined with the in-page box).
+  headerSearchQuery?: string;
 }
 
 export const GroupsView: React.FC<GroupsViewProps> = ({
@@ -51,6 +53,7 @@ export const GroupsView: React.FC<GroupsViewProps> = ({
   handleRenameGroup,
   handleDeleteGroup,
   me,
+  headerSearchQuery = '',
 }) => {
   const [openDropdownId, setOpenDropdownId] = useState<string | number | null>(null);
   const [showInfo, setShowInfo] = useState(false);
@@ -124,7 +127,8 @@ export const GroupsView: React.FC<GroupsViewProps> = ({
     }
     
     // Search filter
-    if (searchQuery && !g.name.toLowerCase().includes(searchQuery.toLowerCase())) {
+    const q = (searchQuery || headerSearchQuery).trim().toLowerCase();
+    if (q && !g.name.toLowerCase().includes(q)) {
       return false;
     }
 

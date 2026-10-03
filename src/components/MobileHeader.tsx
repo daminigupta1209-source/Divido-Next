@@ -1029,7 +1029,7 @@ export const MobileHeader: React.FC<MobileHeaderProps> = ({
 
             {isHomeStyle && (
               <div className="home-header-actions" aria-label="Home actions" onClick={(e) => e.stopPropagation()} style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', flex: 1, marginLeft: isHeaderSearchActive ? '40px' : '0px', minWidth: 0 }}>
-                {isHeaderSearchActive && (view === 'summary' || view === 'gallery') && (
+                {isHeaderSearchActive && (view === 'summary' || view === 'gallery' || view === 'friends' || view === 'groups') && (
                   <input
                     type="search"
                     autoComplete="off"
@@ -1037,7 +1037,7 @@ export const MobileHeader: React.FC<MobileHeaderProps> = ({
                     spellCheck="false"
                     data-1p-ignore
                     data-lpignore="true"
-                    placeholder={view === 'gallery' ? "Search photos..." : "Search groups & activities..."}
+                    placeholder={view === 'gallery' ? "Search photos..." : view === 'friends' ? "Search people..." : view === 'groups' ? "Search groups..." : "Search groups & activities..."}
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
                     onKeyDown={(e) => {
@@ -1073,7 +1073,7 @@ export const MobileHeader: React.FC<MobileHeaderProps> = ({
                     autoFocus
                   />
                 )}
-                {(view === 'summary' || view === 'gallery') && (
+                {(view === 'summary' || view === 'gallery' || view === 'friends' || view === 'groups') && (
                   <button
                     type="button"
                     className="home-header-icon"
@@ -1095,7 +1095,7 @@ export const MobileHeader: React.FC<MobileHeaderProps> = ({
                     </svg>
                   </button>
                 )}
-                {view === 'summary' && !isHeaderSearchActive && onScan && (
+                {(view === 'summary' || view === 'friends' || view === 'groups') && !isHeaderSearchActive && onScan && (
                   <button
                     type="button"
                     className="home-header-icon"

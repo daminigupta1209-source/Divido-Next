@@ -876,7 +876,7 @@ function App() {
 
   // Header search should never linger — close it when leaving the home / settle pages.
   useEffect(() => {
-    if (view !== 'summary' && view !== 'friends' && isHeaderSearchActive) {
+    if (view !== 'summary' && view !== 'friends' && view !== 'groups' && isHeaderSearchActive) {
       setIsHeaderSearchActive(false);
       setGlobalSearchQuery('');
     }
@@ -4765,6 +4765,7 @@ function App() {
             handleRenameGroup={handleRenameGroup}
             handleDeleteGroup={handleDeleteGroup}
             me={me}
+            headerSearchQuery={globalSearchQuery}
           />
         ) : view === 'friends' ? (
           <FriendsView
