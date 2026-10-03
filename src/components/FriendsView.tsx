@@ -23,7 +23,8 @@ export interface MergeReview { name: string; primary: string; primaryGroups: str
 const MergeRow: React.FC<{
   r: MergeReview;
   onMerge: (entries: DuplicateEntry[], canonicalEmail?: string) => Promise<void>;
-}> = ({ r, onMerge }) => {
+  onDismiss: () => void;
+}> = ({ r, onMerge, onDismiss }) => {
   const [busy, setBusy] = useState(false);
   const [checked, setChecked] = useState<boolean[]>(() => r.others.map(() => true));
   const selectedCount = checked.filter(Boolean).length;
@@ -37,7 +38,14 @@ const MergeRow: React.FC<{
         <div style={{ width: '36px', height: '36px', borderRadius: '50%', background: bg, color: '#FFFFFF', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '15px', fontWeight: 600, flexShrink: 0 }}>
           {r.name.charAt(0).toUpperCase()}
         </div>
-        <div style={{ fontSize: '15px', fontWeight: 600, color: '#1E293B', minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{r.name}</div>
+        <div style={{ flex: 1, fontSize: '15px', fontWeight: 600, color: '#1E293B', minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{r.name}</div>
+        <button
+          type="button"
+          onClick={onDismiss}
+          aria-label="Not the same person"
+          title="Not the same person"
+          style={{ background: '#F1F5F9', border: 'none', borderRadius: '50%', width: '28px', height: '28px', flexShrink: 0, cursor: 'pointer', color: '#64748B', fontSize: '14px', fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+        >✕</button>
       </div>
       <div style={{ padding: '9px 0', borderTop: '1px solid #F1F5F9' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
@@ -75,7 +83,8 @@ const MergeDuplicatesModal: React.FC<{
   reviews: MergeReview[];
   onClose: () => void;
   onMerge: (entries: DuplicateEntry[], canonicalEmail?: string) => Promise<void>;
-}> = ({ reviews, onClose, onMerge }) => {
+  onDismiss: (r: MergeReview) => void;
+}> = ({ reviews, onClose, onMerge, onDismiss }) => {
   // Full screen; phone back closes it.
   React.useEffect(() => {
     window.history.pushState({ dividoMergeScreen: true }, '');
@@ -93,7 +102,7 @@ const MergeDuplicatesModal: React.FC<{
           </button>
           <h3 style={{ margin: 0, fontSize: '19px', fontWeight: 600, color: '#1E293B' }}>Duplicate names</h3>
         </div>
-        <p style={{ margin: '0 0 16px 30px', fontSize: '13px', color: '#64748B' }}>Tick the invites that are the same person as the primary email.</p>
+        <p style={{ margin: '0 0 16px 30px', fontSize: '13px', color: '#64748B' }}>Tick the invites that are the same person as the primary email. Tap ✕ if they're different people.</p>
 
         {reviews.length === 0 && (
           <p style={{ textAlign: 'center', color: '#16A34A', fontWeight: 600, fontSize: '14px', padding: '20px 0' }}>
@@ -103,7 +112,7 @@ const MergeDuplicatesModal: React.FC<{
 
         <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
           {reviews.map((r) => (
-            <MergeRow key={r.name + r.primary} r={r} onMerge={onMerge} />
+            <MergeRow key={r.name + r.primary} r={r} onMerge={onMerge} onDismiss={() => onDismiss(r)} />
           ))}
         </div>
       </div>
@@ -217,7 +226,18 @@ export const FriendsView: React.FC<FriendsViewProps> = ({
   // joined (signed-in) account. That account is the primary; Merge points the
   // other (pending) invites at it. Two different joined accounts are never
   // offered — they really are separate people.
-  const mergeReviews = useMemo(() => {
+  const reviewKey = (r: MergeReview) => [r.name.toLowerCase(), r.primary, ...r.others.map((o) => o.email || o.groupId).sort()].join('|');
+  const [dismissedReviews, setDismissedReviews] = useState<string[]>(() => {
+    try { return JSON.parse(localStorage.getItem('divido_merge_dismissed') || '[]'); } catch { return []; }
+  });
+  const dismissReview = (r: MergeReview) => {
+    setDismissedReviews((prev) => {
+      const next = [...prev, reviewKey(r)];
+      try { localStorage.setItem('divido_merge_dismissed', JSON.stringify(next)); } catch { /* ignore */ }
+      return next;
+    });
+  };
+  const allMergeReviews = useMemo(() => {
     const out: MergeReview[] = [];
     duplicatePeople.forEach((d) => {
       const withEmail = d.entries.filter((e) => e.email);
@@ -236,6 +256,7 @@ export const FriendsView: React.FC<FriendsViewProps> = ({
     });
     return out;
   }, [duplicatePeople, groups]);
+  const mergeReviews = allMergeReviews.filter((r) => !dismissedReviews.includes(reviewKey(r)));
 
   // Emails the app already knows (from any group's member identities), for the
   // merge sheet's "Merge into this email" autocomplete. Ranked so ones tied to a
@@ -578,6 +599,7 @@ export const FriendsView: React.FC<FriendsViewProps> = ({
       {showMergeModal && (
         <MergeDuplicatesModal
           reviews={mergeReviews}
+          onDismiss={dismissReview}
           onClose={() => setShowMergeModal(false)}
           onMerge={async (entries, canonicalEmail) => { if (onMergePeople) await onMergePeople(entries, canonicalEmail); }}
         />
