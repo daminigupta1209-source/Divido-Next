@@ -1781,6 +1781,48 @@ function App() {
     }
   };
 
+  // Auto-link pending spots that have no email to the ONE email that name has
+  // in your other groups (e.g. "Chirag Gupta" pending in Raipur, joined in
+  // Spain ka vada pav), so the same person shows once and can auto-join.
+  // Ambiguous names (2+ emails) and your own name are never touched.
+  const autoLinkTried = React.useRef(new Set<string>());
+  useEffect(() => {
+    if (checkIfDemoMode() || !isAuthenticated) return;
+    const resolve = buildNameEmailResolver(groups);
+    const mine = (userEmail || '').toLowerCase();
+    const fixes: { gid: string | number; name: string; key?: string; email: string }[] = [];
+    groups.forEach((g) => {
+      if (!g || g.id === 'STANDALONE') return;
+      const mi = (g as any).memberIdentities || {};
+      (g.pendingMembers || []).forEach((name) => {
+        const cur = String(mi[name] || '');
+        if (cur.includes('@')) return;
+        const em = resolve(name);
+        if (!em || em === mine) return;
+        const tag = `${g.id}|${name}`;
+        if (autoLinkTried.current.has(tag)) return;
+        autoLinkTried.current.add(tag);
+        fixes.push({ gid: g.id, name, key: (g as any).memberKeys?.[name], email: em });
+      });
+    });
+    if (fixes.length === 0) return;
+    setGroups((prev) => prev.map((g) => {
+      const fs = fixes.filter((f) => String(f.gid) === String(g.id));
+      if (fs.length === 0) return g;
+      const mi = { ...((g as any).memberIdentities || {}) };
+      fs.forEach((f) => { mi[f.name] = f.email; });
+      return { ...g, memberIdentities: mi } as typeof g;
+    }));
+    fixes.forEach(async (f) => {
+      try {
+        let q = supabase.from('group_members').update({ invite_email: f.email })
+          .eq('group_id', f.gid).eq('is_pending', true).is('invite_email', null).is('user_email', null);
+        q = f.key ? q.eq('member_key', f.key) : q.eq('name', f.name);
+        await q;
+      } catch (err) { console.error('auto-link pending email failed:', err); }
+    });
+  }, [groups, isAuthenticated, userEmail]);
+
   const mergePeople = async (entries: DuplicateEntry[], canonicalOverride?: string) => {
     if (!entries || entries.length < 2) return;
     // The user can choose the primary email to merge everyone into; otherwise
