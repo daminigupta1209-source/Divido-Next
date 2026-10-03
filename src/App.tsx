@@ -5100,6 +5100,14 @@ function App() {
                 if (!selectedId || selectedId === 'STANDALONE') return;
                 if (!newName.trim() || oldName === newName) return;
 
+                // A pending invite (or me) is renamed straight away — no extra
+                // lookup round-trip first, so the new name shows faster.
+                const grpLocal = groups.find((g) => String(g.id) === String(selectedId));
+                if (oldName === me || (grpLocal?.pendingMembers || []).includes(oldName)) {
+                  await applyRename(selectedId, oldName, newName);
+                  return;
+                }
+
                 const { data: mems } = await supabase
                   .from('group_members')
                   .select('*')
@@ -5128,7 +5136,6 @@ function App() {
                 } else {
                   // Placeholder (not joined) or renaming yourself — apply immediately.
                   await applyRename(selectedId, oldName, newName);
-                  alert(`Name changed to "${newName}"! 🎉`);
                 }
               } catch (err) {
                 console.error('Rename failed:', err);
