@@ -23,33 +23,86 @@
   <body>
     <div id="root"></div>
     <script>
-      // Remember the last errors so a white screen can show what went wrong.
-      window.__dvErrors = [];
-      window.addEventListener('error', function (e) { window.__dvErrors.push(String((e && (e.message || (e.target && (e.target.src || e.target.href)))) || 'error')); });
-      window.addEventListener('unhandledrejection', function (e) { window.__dvErrors.push(String((e && e.reason && (e.reason.message || e.reason)) || 'rejection')); });
-      // Blank-screen rescue: if the app still hasn't drawn anything after 8s
-      // (a JS file failed to load — usually an old cached copy after a
-      // deploy), clear the offline cache once and reload, instead of leaving
-      // the user stuck on a white screen.
-      setTimeout(function () {
-        var r = document.getElementById('root');
-        if (r && r.children.length) return;
-        var tried = false;
-        try { tried = !!sessionStorage.getItem('dv_blank_fix'); if (!tried) sessionStorage.setItem('dv_blank_fix', '1'); } catch (e) {}
-        if (tried) {
-          // Already cleared the cache once and still blank: show the error.
-          var errs = (window.__dvErrors || []).slice(-3).join('
-') || 'No error captured';
-          r.innerHTML = '<div style="padding:24px;font-family:sans-serif;color:#1E293B"><h3>Divido could not start</h3><p style="font-size:13px;color:#64748B">Please send a screenshot of this screen.</p><pre style="white-space:pre-wrap;font-size:12px;background:#F1F5F9;padding:12px;border-radius:8px"></pre><button onclick="sessionStorage.removeItem('dv_blank_fix');location.reload()" style="padding:10px 16px;border:0;border-radius:8px;background:#10B981;color:#fff">Try again</button></div>';
-          r.querySelector('pre').textContent = errs;
-          return;
+      // ---- Startup safety net -------------------------------------------
+      // After a deploy, a phone holding an old cached copy can ask for JS files
+      // that no longer exist and get stuck on a white screen. Instead:
+      //  * a missing file triggers an immediate one-time rescue (clear the
+      //    offline cache + reload), shown as "Updating Divido..." not white;
+      //  * if nothing has drawn after 3s with an error, or 8s without one, the
+      //    same rescue runs;
+      //  * if it is still blank after the rescue, show the error so the user
+      //    can send a screenshot, with a Try again button.
+      // Everything runs at most once per session, so it can never loop.
+      (function () {
+        var errors = [];
+        window.__dvErrors = errors;
+        function note(msg) { errors.push(String(msg || 'error')); }
+        function root() { return document.getElementById('root'); }
+        function drawn() { var r = root(); return !!(r && r.children.length && !r.getAttribute('data-dv-overlay')); }
+        function showUpdating() {
+          var r = root();
+          if (!r) return;
+          r.setAttribute('data-dv-overlay', '1');
+          r.innerHTML = '<div style="min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;font-family:sans-serif;color:#475569;background:#F8FAFC">' +
+            '<div style="width:32px;height:32px;border-radius:50%;border:3px solid rgba(16,185,129,0.25);border-top-color:#10B981;animation:dvspin 0.8s linear infinite"></div>' +
+            '<p style="margin-top:14px;font-size:14px">Updating Divido…</p>' +
+            '<style>@keyframes dvspin{to{transform:rotate(360deg)}}</style></div>';
         }
-        var reload = function () { location.reload(); };
-        Promise.all([
-          navigator.serviceWorker ? navigator.serviceWorker.getRegistrations().then(function (rs) { return Promise.all(rs.map(function (x) { return x.unregister(); })); }) : null,
-          window.caches ? caches.keys().then(function (ks) { return Promise.all(ks.map(function (k) { return caches.delete(k); })); }) : null
-        ]).then(reload, reload);
-      }, 8000);
+        function showError() {
+          var r = root();
+          if (!r) return;
+          r.setAttribute('data-dv-overlay', '1');
+          r.innerHTML = '<div style="padding:24px;font-family:sans-serif;color:#1E293B">' +
+            '<h3>Divido could not start</h3>' +
+            '<p style="font-size:13px;color:#64748B">Please send a screenshot of this screen.</p>' +
+            '<pre style="white-space:pre-wrap;font-size:12px;background:#F1F5F9;padding:12px;border-radius:8px"></pre>' +
+            '<button id="dv-retry" style="padding:10px 16px;border:0;border-radius:8px;background:#10B981;color:#fff">Try again</button></div>';
+          r.querySelector('pre').textContent = errors.slice(-3).join('\n') || 'No error captured';
+          r.querySelector('#dv-retry').onclick = function () {
+            try { sessionStorage.removeItem('dv_rescued'); } catch (e) {}
+            location.reload();
+          };
+        }
+        function alreadyRescued() { try { return !!sessionStorage.getItem('dv_rescued'); } catch (e) { return true; } }
+        window.__dvRescue = function () {
+          if (alreadyRescued()) return false;
+          try { sessionStorage.setItem('dv_rescued', '1'); } catch (e) { return false; }
+          showUpdating();
+          var reload = function () { location.reload(); };
+          Promise.all([
+            navigator.serviceWorker ? navigator.serviceWorker.getRegistrations().then(function (rs) { return Promise.all(rs.map(function (x) { return x.unregister(); })); }) : null,
+            window.caches ? caches.keys().then(function (ks) { return Promise.all(ks.map(function (k) { return caches.delete(k); })); }) : null
+          ]).then(reload, reload);
+          return true;
+        };
+        function isMissingFile(msg) {
+          return /dynamically imported module|Loading chunk|Importing a module script failed|Failed to fetch|error loading dynamically/i.test(msg);
+        }
+        window.addEventListener('error', function (e) {
+          var t = e && e.target;
+          if (t && (t.tagName === 'SCRIPT' || t.tagName === 'LINK')) {
+            note('Could not load ' + (t.src || t.href));
+            if (!drawn()) window.__dvRescue();
+            return;
+          }
+          note(e && e.message);
+        }, true);
+        window.addEventListener('unhandledrejection', function (e) {
+          var msg = String((e && e.reason && (e.reason.message || e.reason)) || 'rejection');
+          note(msg);
+          if (isMissingFile(msg) && !drawn()) window.__dvRescue();
+        });
+        function check() {
+          if (drawn()) {
+            // Started fine: allow a future rescue in this session again.
+            try { sessionStorage.removeItem('dv_rescued'); } catch (e) {}
+            return true;
+          }
+          return false;
+        }
+        setTimeout(function () { if (!check() && errors.length) { if (!window.__dvRescue()) showError(); } }, 3000);
+        setTimeout(function () { if (!check()) { if (!window.__dvRescue()) showError(); } }, 8000);
+      })();
     </script>
     <script type="module" src="/src/main.tsx"></script>
   </body>

@@ -31,13 +31,23 @@ try {
 
 // A lazily-loaded screen whose file vanished in a new deploy → reload once to
 // pick up the current files instead of failing.
-window.addEventListener('vite:preloadError', () => {
+window.addEventListener('vite:preloadError', (ev) => {
+  // Shared one-time rescue from index.html: clears the stale offline copy
+  // (a plain reload could serve it again) and shows "Updating Divido...".
+  const rescue = (window as unknown as { __dvRescue?: () => boolean }).__dvRescue;
+  if (rescue && rescue()) { ev.preventDefault(); return; }
   try {
     if (sessionStorage.getItem('divido_chunk_reloaded')) return;
     sessionStorage.setItem('divido_chunk_reloaded', '1');
   } catch { /* ignore */ }
   window.location.reload();
 });
+
+// Drop any "Updating..." overlay the startup safety net drew.
+{
+  const rootEl = document.getElementById('root');
+  if (rootEl?.getAttribute('data-dv-overlay')) { rootEl.removeAttribute('data-dv-overlay'); rootEl.innerHTML = ''; }
+}
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>

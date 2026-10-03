@@ -31,6 +31,8 @@ export class ErrorBoundary extends Component<Props, State> {
       msg.includes('Failed to fetch');
 
     if (isChunkError && typeof window !== 'undefined') {
+      const rescue = (window as unknown as { __dvRescue?: () => boolean }).__dvRescue;
+      if (rescue && rescue()) return;
       const reloaded = sessionStorage.getItem('divido_chunk_reloaded');
       if (!reloaded) {
         sessionStorage.setItem('divido_chunk_reloaded', '1');
