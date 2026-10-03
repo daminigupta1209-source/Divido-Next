@@ -48,16 +48,18 @@ const Tile: React.FC<{ bg: string; label: string; amount: string; more?: number;
       background: bg,
       color: '#FFFFFF',
       borderRadius: '14px',
-      padding: '6px 14px',
+      paddingTop: '6px',
+      paddingBottom: '6px',
       paddingRight: chevron ? '28px' : '14px',
+      paddingLeft: chevron ? '28px' : '14px',
       boxShadow: selected ? '0 0 0 2px #FFFFFF, 0 0 0 4px ' + bg : '0 6px 16px rgba(0,0,0,0.06)',
       opacity: dim ? 0.45 : 1,
       transition: 'opacity 0.2s, box-shadow 0.2s',
       cursor: clickable ? 'pointer' : 'default',
     }}
   >
-    <div style={{ fontSize: '11px', fontWeight: 500, opacity: 0.9, lineHeight: 1.3 }}>{label}</div>
-    <div style={{ display: 'flex', alignItems: 'center', gap: '6px', minWidth: 0 }}>
+    <div style={{ fontSize: '11px', fontWeight: 500, opacity: 0.9, lineHeight: 1.3, textAlign: 'center' }}>{label}</div>
+    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px', minWidth: 0 }}>
       <span style={{ fontSize: '14.5px', fontWeight: 600, lineHeight: 1.35, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{amount}</span>
       {!!more && more > 0 && <span style={chipStyle}>+{more}</span>}
     </div>
