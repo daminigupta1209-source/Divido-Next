@@ -580,12 +580,13 @@ export const FriendsView: React.FC<FriendsViewProps> = ({
           const amt = (e: [string, number][]) => (e.length ? pickAmount(e[0][1], e[0][0], '', '', 13).text : undefined);
           return (
             <NetBalanceTiles
-              pay={balanceFilter !== 'owed' ? amt(payEntries) : undefined}
+              pay={amt(payEntries)}
               payMore={payEntries.length - 1}
-              collect={balanceFilter !== 'owe' ? amt(collectEntries) : undefined}
+              collect={amt(collectEntries)}
               collectMore={collectEntries.length - 1}
-              settledLabel={balanceFilter === 'owe' ? 'Nothing to pay' : balanceFilter === 'owed' ? 'Nothing to collect' : 'All settled up'}
-              onClick={() => setShowNetSheet(true)}
+              active={balanceFilter === 'owe' ? 'pay' : balanceFilter === 'owed' ? 'collect' : null}
+              onPayClick={() => setBalanceFilter((f) => (f === 'owe' ? 'all' : 'owe'))}
+              onCollectClick={() => setBalanceFilter((f) => (f === 'owed' ? 'all' : 'owed'))}
             />
           );
         })()}
