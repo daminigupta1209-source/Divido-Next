@@ -1,4 +1,5 @@
 import React from 'react';
+import { NetBalanceTiles } from './NetBalanceTiles';
 import type { Expense } from '../lib/types';
 import { formatDate, getEmoji, formatExactAmount, getMonthYearKey } from '../lib/utils';
 
@@ -395,50 +396,14 @@ export const NonGroupView: React.FC<NonGroupViewProps> = ({
         </div>
 
         {/* Net balance card — tap to settle up with this person */}
-        <div
-          onClick={() => hasBal && onSettlePerson(profilePerson, p?.directGroupId)}
-          style={{
-            position: 'relative',
-            display: 'flex',
-            height: '38px',
-            borderRadius: '999px',
-            overflow: 'hidden',
-            boxShadow: '0 6px 16px rgba(0,0,0,0.06)',
-            cursor: hasBal ? 'pointer' : 'default',
-            width: '100%',
-            marginBottom: '14px',
-          }}
-        >
-          {!hasBal ? (
-            <div style={{ ...segStyle, background: '#10B981', cursor: 'default' }}>All settled up</div>
-          ) : (
-            <>
-              {personPayLines.length > 0 && (
-                <div
-                  style={{ ...segStyle, background: '#E11D48', paddingRight: personCollectLines.length > 0 ? '18px' : '34px' }}
-                >
-                  <span style={{ overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                    You pay {personPayLines[0].curr}{formatExactAmount(Math.abs(personPayLines[0].amount))}
-                  </span>
-                  {personPayLines.length > 1 && <span style={chipStyle}>+{personPayLines.length - 1}</span>}
-                </div>
-              )}
-              {personCollectLines.length > 0 && (
-                <div
-                  style={{ ...segStyle, background: '#10B981', paddingRight: '34px' }}
-                >
-                  <span style={{ overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                    You collect {personCollectLines[0].curr}{formatExactAmount(Math.abs(personCollectLines[0].amount))}
-                  </span>
-                  {personCollectLines.length > 1 && <span style={chipStyle}>+{personCollectLines.length - 1}</span>}
-                </div>
-              )}
-            </>
-          )}
-          {hasBal && (
-            <span style={{ position: 'absolute', right: '14px', top: '50%', transform: 'translateY(-50%)', color: '#FFFFFF', fontSize: '18px', fontWeight: 600, lineHeight: 1, pointerEvents: 'none', opacity: 0.9 }}>›</span>
-          )}
-        </div>
+        <NetBalanceTiles
+          style={{ marginBottom: '14px' }}
+          pay={hasBal && personPayLines.length > 0 ? personPayLines[0].curr + formatExactAmount(Math.abs(personPayLines[0].amount)) : undefined}
+          payMore={personPayLines.length - 1}
+          collect={hasBal && personCollectLines.length > 0 ? personCollectLines[0].curr + formatExactAmount(Math.abs(personCollectLines[0].amount)) : undefined}
+          collectMore={personCollectLines.length - 1}
+          onClick={() => onSettlePerson(profilePerson, p?.directGroupId)}
+        />
 
         {/* Settle = tap the balance card; Invite = share icon in the header. */}
         <div style={{ height: '6px' }} />
@@ -580,49 +545,13 @@ export const NonGroupView: React.FC<NonGroupViewProps> = ({
         <div style={{ fontSize: '11px', fontWeight: 700, letterSpacing: '1.5px', textTransform: 'uppercase', color: '#B0A79C', marginBottom: '10px', marginLeft: '2px' }}>
           Net Balance
         </div>
-        <div
-          onClick={() => netHasBalance && setShowFrontNetSheet(true)}
-          style={{
-            position: 'relative',
-            display: 'flex',
-            height: '38px',
-            borderRadius: '999px',
-            overflow: 'hidden',
-            boxShadow: '0 6px 16px rgba(0,0,0,0.06)',
-            cursor: netHasBalance ? 'pointer' : 'default',
-            width: '100%',
-          }}
-        >
-          {!netHasBalance ? (
-            <div style={{ ...segStyle, background: '#10B981', cursor: 'default' }}>All settled up</div>
-          ) : (
-            <>
-              {frontPayLines.length > 0 && (
-                <div
-                  style={{ ...segStyle, background: '#E11D48', paddingRight: frontCollectLines.length > 0 ? '18px' : '34px' }}
-                >
-                  <span style={{ overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                    You pay {frontPayLines[0].curr}{formatExactAmount(Math.abs(frontPayLines[0].amount))}
-                  </span>
-                  {frontPayLines.length > 1 && <span style={chipStyle}>+{frontPayLines.length - 1}</span>}
-                </div>
-              )}
-              {frontCollectLines.length > 0 && (
-                <div
-                  style={{ ...segStyle, background: '#10B981', paddingRight: '34px' }}
-                >
-                  <span style={{ overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                    You collect {frontCollectLines[0].curr}{formatExactAmount(Math.abs(frontCollectLines[0].amount))}
-                  </span>
-                  {frontCollectLines.length > 1 && <span style={chipStyle}>+{frontCollectLines.length - 1}</span>}
-                </div>
-              )}
-            </>
-          )}
-          {netHasBalance && (
-            <span style={{ position: 'absolute', right: '14px', top: '50%', transform: 'translateY(-50%)', color: '#FFFFFF', fontSize: '18px', fontWeight: 600, lineHeight: 1, pointerEvents: 'none', opacity: 0.9 }}>›</span>
-          )}
-        </div>
+        <NetBalanceTiles
+          pay={netHasBalance && frontPayLines.length > 0 ? frontPayLines[0].curr + formatExactAmount(Math.abs(frontPayLines[0].amount)) : undefined}
+          payMore={frontPayLines.length - 1}
+          collect={netHasBalance && frontCollectLines.length > 0 ? frontCollectLines[0].curr + formatExactAmount(Math.abs(frontCollectLines[0].amount)) : undefined}
+          collectMore={frontCollectLines.length - 1}
+          onClick={() => setShowFrontNetSheet(true)}
+        />
       </div>
 
       <NetBalanceDetailsSheet

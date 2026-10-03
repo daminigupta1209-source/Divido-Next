@@ -1,4 +1,5 @@
 import React from 'react';
+import { NetBalanceTiles } from './NetBalanceTiles';
 import { SettleModal } from './SettleModal';
 import { BalanceDisplay } from './BalanceDisplay';
 import { Group, Expense, UserMetadata } from '../lib/types';
@@ -653,35 +654,13 @@ export const GroupDetail: React.FC<GroupDetailProps> = ({
               Your Group Balance
             </div>
 
-            <div onClick={() => hasActiveBalancesForCard && setActiveTab('balances')} style={{ position: 'relative', display: 'flex', height: '38px', borderRadius: '999px', overflow: 'hidden', boxShadow: '0 6px 16px rgba(0,0,0,0.06)', cursor: hasActiveBalancesForCard ? 'pointer' : 'default' }}>
-              {!hasActiveBalancesForCard ? (
-                <div style={{ ...segStyle, background: GREEN, cursor: 'default' }}>All settled up</div>
-              ) : (
-                <>
-                  {payBacks.length > 0 && (
-                    <div
-                      style={{ ...segStyle, background: PINK, paddingRight: getBacks.length > 0 ? '18px' : '34px' }}
-                      onClick={() => setActiveTab('balances')}
-                    >
-                      <span style={{ overflow: 'hidden', textOverflow: 'ellipsis' }}>You pay {primaryAmt(payBacks)}</span>
-                      {payBacks.length > 1 && <span style={chipStyle}>+{payBacks.length - 1}</span>}
-                    </div>
-                  )}
-                  {getBacks.length > 0 && (
-                    <div
-                      style={{ ...segStyle, background: GREEN, paddingRight: '34px' }}
-                      onClick={() => setActiveTab('balances')}
-                    >
-                      <span style={{ overflow: 'hidden', textOverflow: 'ellipsis' }}>You collect {primaryAmt(getBacks)}</span>
-                      {getBacks.length > 1 && <span style={chipStyle}>+{getBacks.length - 1}</span>}
-                    </div>
-                  )}
-                </>
-              )}
-              {hasActiveBalancesForCard && (
-                <span style={{ position: 'absolute', right: '14px', top: '50%', transform: 'translateY(-50%)', color: '#FFFFFF', fontSize: '18px', fontWeight: 600, lineHeight: 1, pointerEvents: 'none', opacity: 0.9 }}>›</span>
-              )}
-            </div>
+            <NetBalanceTiles
+              pay={hasActiveBalancesForCard && payBacks.length > 0 ? primaryAmt(payBacks) : undefined}
+              payMore={payBacks.length - 1}
+              collect={hasActiveBalancesForCard && getBacks.length > 0 ? primaryAmt(getBacks) : undefined}
+              collectMore={getBacks.length - 1}
+              onClick={() => setActiveTab('balances')}
+            />
           </div>
         );
       })()}

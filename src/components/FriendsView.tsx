@@ -1,4 +1,5 @@
 import React, { useState, useRef, useEffect, useMemo } from 'react';
+import { NetBalanceTiles } from './NetBalanceTiles';
 import { BalanceDisplay } from './BalanceDisplay';
 
 import { Group, Expense, UserMetadata, GlobalSettleData } from '../lib/types';
@@ -555,88 +556,21 @@ export const FriendsView: React.FC<FriendsViewProps> = ({
           {balanceFilter === 'owe' ? 'Net Payable' : balanceFilter === 'owed' ? 'Net Receivable' : 'Net Balance'}
         </span>
         {/* Tap → sheet with the full per-currency breakdown and filters. */}
-        <div
-          onClick={() => setShowNetSheet(true)}
-          style={{ position: 'relative', display: 'flex', borderRadius: '999px', overflow: 'hidden', height: '38px', width: '100%', boxShadow: '0 6px 16px rgba(0,0,0,0.06)', cursor: 'pointer' }}
-        >
-          {/* Left section: to pay */}
-          {balanceFilter !== 'owed' && (
-          <div
-            style={{
-              flex: '1 1 auto',
-              minWidth: 0,
-              background: '#E11D48',
-              color: '#FFFFFF',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              fontSize: '13px',
-              fontWeight: 600,
-              gap: '6px',
-              cursor: 'pointer',
-              transition: 'opacity 0.2s',
-              userSelect: 'none',
-              padding: balanceFilter === 'owe' || (balanceFilter === 'all' && Object.keys(totalReceivable).length === 0) ? '0 34px 0 18px' : '0 18px',
-              whiteSpace: 'nowrap',
-              overflow: 'hidden',
-            }}
-            title="Filter by Payables"
-            onMouseEnter={(e) => { e.currentTarget.style.opacity = '0.9'; }}
-            onMouseLeave={(e) => { e.currentTarget.style.opacity = '1'; }}
-          >
-            {(() => {
-              const entries = Object.entries(totalPayable);
-              if (entries.length === 0) return 'Nothing to pay';
-              const [c, v] = entries[0];
-              const { text: txt } = pickAmount(v, c, 'You pay ', '', 13); const fontSize = 13;
-              return (<>
-                <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', fontSize: `${fontSize}px` }}>{txt}</span>
-                {entries.length > 1 && <span style={pillChipStyle}>+{entries.length - 1} more</span>}
-              </>);
-            })()}
-          </div>
-          )}
-          {/* Right section: to collect */}
-          {balanceFilter !== 'owe' && (
-          <div
-            style={{
-              flex: '1 1 auto',
-              minWidth: 0,
-              background: '#10B981',
-              color: '#FFFFFF',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              fontSize: '13px',
-              fontWeight: 600,
-              gap: '6px',
-              cursor: 'pointer',
-              transition: 'opacity 0.2s',
-              userSelect: 'none',
-              padding: '0 34px 0 18px',
-              whiteSpace: 'nowrap',
-              overflow: 'hidden',
-            }}
-            title="Filter by Receivables"
-            onMouseEnter={(e) => { e.currentTarget.style.opacity = '0.9'; }}
-            onMouseLeave={(e) => { e.currentTarget.style.opacity = '1'; }}
-          >
-            {(() => {
-              const entries = Object.entries(totalReceivable);
-              if (entries.length === 0) return 'Nothing to collect';
-              const [c, v] = entries[0];
-              const { text: txt } = pickAmount(v, c, 'You collect ', '', 13); const fontSize = 13;
-              return (<>
-                <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', fontSize: `${fontSize}px` }}>{txt}</span>
-                {entries.length > 1 && <span style={pillChipStyle}>+{entries.length - 1} more</span>}
-              </>);
-            })()}
-          </div>
-          )}
-          {(Object.keys(totalPayable).length > 0 || Object.keys(totalReceivable).length > 0) && (
-            <span style={{ position: 'absolute', right: '14px', top: '50%', transform: 'translateY(-50%)', color: '#FFFFFF', fontSize: '18px', fontWeight: 600, lineHeight: 1, pointerEvents: 'none', opacity: 0.9 }}>›</span>
-          )}
-        </div>
+        {(() => {
+          const payEntries = Object.entries(totalPayable);
+          const collectEntries = Object.entries(totalReceivable);
+          const amt = (e: [string, number][]) => (e.length ? pickAmount(e[0][1], e[0][0], '', '', 13).text : undefined);
+          return (
+            <NetBalanceTiles
+              pay={balanceFilter !== 'owed' ? amt(payEntries) : undefined}
+              payMore={payEntries.length - 1}
+              collect={balanceFilter !== 'owe' ? amt(collectEntries) : undefined}
+              collectMore={collectEntries.length - 1}
+              settledLabel={balanceFilter === 'owe' ? 'Nothing to pay' : balanceFilter === 'owed' ? 'Nothing to collect' : 'All settled up'}
+              onClick={() => setShowNetSheet(true)}
+            />
+          );
+        })()}
       </div>
 
       {showNetSheet && (() => {
