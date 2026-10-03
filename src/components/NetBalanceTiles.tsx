@@ -30,7 +30,7 @@ const chipStyle: React.CSSProperties = {
   borderRadius: '999px',
   padding: '1px 7px',
   fontSize: '11px',
-  fontWeight: 700,
+  fontWeight: 600,
   flexShrink: 0,
 };
 
@@ -48,9 +48,9 @@ const Tile: React.FC<{ bg: string; label: string; amount: string; more?: number;
       cursor: clickable ? 'pointer' : 'default',
     }}
   >
-    <div style={{ fontSize: '11px', fontWeight: 600, opacity: 0.9, lineHeight: 1.3 }}>{label}</div>
+    <div style={{ fontSize: '11px', fontWeight: 500, opacity: 0.9, lineHeight: 1.3 }}>{label}</div>
     <div style={{ display: 'flex', alignItems: 'center', gap: '6px', minWidth: 0 }}>
-      <span style={{ fontSize: '16px', fontWeight: 700, lineHeight: 1.35, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{amount}</span>
+      <span style={{ fontSize: '16px', fontWeight: 600, lineHeight: 1.35, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{amount}</span>
       {!!more && more > 0 && <span style={chipStyle}>+{more}</span>}
     </div>
     {chevron && (
@@ -83,7 +83,7 @@ export const NetBalanceTiles: React.FC<NetBalanceTilesProps> = ({
           alignItems: 'center',
           justifyContent: 'center',
           fontSize: '13px',
-          fontWeight: 600,
+          fontWeight: 500,
           boxShadow: '0 6px 16px rgba(0,0,0,0.06)',
           width: '100%',
           ...style,
