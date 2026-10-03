@@ -451,7 +451,10 @@ export const GroupMemberList: React.FC<GroupMemberListProps> = ({
             </div>
             <div style={{ fontSize: '11px', color: '#64748B', fontWeight: 600, marginBottom: '4px' }}>Name</div>
             <input
-              autoFocus
+              type="search"
+              autoComplete="off"
+              autoCorrect="off"
+              enterKeyHint="next"
               value={pendingEditNameVal}
               onChange={(e) => setPendingEditNameVal(e.target.value)}
               placeholder="Name"
