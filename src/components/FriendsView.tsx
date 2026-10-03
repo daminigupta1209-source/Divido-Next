@@ -13,65 +13,69 @@ import { StyledDropdown } from './StyledDropdown';
 // Small translucent count chip for extra currencies in the Net Balance pill.
 const pillChipStyle: React.CSSProperties = { background: 'rgba(255,255,255,0.28)', borderRadius: '999px', padding: '1px 7px', fontSize: '11px', fontWeight: 700, flexShrink: 0 };
 
-// Review-and-merge screen: one card per name that shows up as 2+ people.
-// Tick the groups that are really the same person, then merge. The email to
-// keep is picked automatically (first one found among the ticked groups).
+// Review-and-merge screen: one section per duplicate name. The joined
+// account's email is the primary (locked); the other pending invites under that
+// name are ticked by default and get pointed at the primary on Merge.
 const AV_BG = ['#B39DDB', '#F48FB1', '#80CBC4', '#FFB74D', '#9FA8DA', '#A5D6A7', '#EF9A9A', '#7FC8CE'];
 
+export interface MergeReview { name: string; primary: string; primaryGroups: string[]; others: DuplicateEntry[] }
+
 const MergeRow: React.FC<{
-  d: DuplicatePerson;
+  r: MergeReview;
   onMerge: (entries: DuplicateEntry[], canonicalEmail?: string) => Promise<void>;
-}> = ({ d, onMerge }) => {
+}> = ({ r, onMerge }) => {
   const [busy, setBusy] = useState(false);
-  // All ticked by default (the common case is they ARE the same person).
-  const [checked, setChecked] = useState<boolean[]>(() => d.entries.map(() => true));
+  const [checked, setChecked] = useState<boolean[]>(() => r.others.map(() => true));
   const selectedCount = checked.filter(Boolean).length;
-  const canMerge = selectedCount >= 2 && !busy;
+  const canMerge = selectedCount >= 1 && !busy;
   const toggle = (i: number) => setChecked((prev) => prev.map((v, idx) => (idx === i ? !v : v)));
-  const bg = AV_BG[(d.name.charCodeAt(0) || 0) % AV_BG.length];
+  const bg = AV_BG[(r.name.charCodeAt(0) || 0) % AV_BG.length];
 
   return (
     <div style={{ background: '#FFFFFF', border: '1px solid #F1F5F9', borderRadius: '16px', padding: '14px', boxShadow: '0 2px 10px rgba(0,0,0,0.03)' }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '8px' }}>
         <div style={{ width: '36px', height: '36px', borderRadius: '50%', background: bg, color: '#FFFFFF', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '15px', fontWeight: 600, flexShrink: 0 }}>
-          {d.name.charAt(0).toUpperCase()}
+          {r.name.charAt(0).toUpperCase()}
         </div>
-        <div style={{ fontSize: '15px', fontWeight: 600, color: '#1E293B', minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{d.name}</div>
+        <div style={{ fontSize: '15px', fontWeight: 600, color: '#1E293B', minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{r.name}</div>
       </div>
-      {d.entries.map((e, i) => (
+      <div style={{ padding: '9px 0', borderTop: '1px solid #F1F5F9' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+          <span style={{ fontSize: '10.5px', fontWeight: 700, color: '#047857', background: '#D1FAE5', borderRadius: '999px', padding: '2px 8px', flexShrink: 0 }}>Primary</span>
+          <span style={{ fontSize: '13px', fontWeight: 600, color: '#1E293B', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', minWidth: 0 }}>{r.primary}</span>
+        </div>
+        <div style={{ fontSize: '11.5px', color: '#94A3B8', marginTop: '3px' }}>Joined in {r.primaryGroups.join(', ')}</div>
+      </div>
+      {r.others.map((e, i) => (
         <label key={i} onClick={() => toggle(i)} style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '9px 0', borderTop: '1px solid #F1F5F9', cursor: 'pointer' }}>
           <span style={{ width: '20px', height: '20px', borderRadius: '6px', flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', background: checked[i] ? '#10B981' : '#FFFFFF', border: checked[i] ? 'none' : '2px solid #CBD5E1', boxSizing: 'border-box', color: '#FFFFFF', fontSize: '12px', fontWeight: 700 }}>
             {checked[i] ? '✓' : ''}
           </span>
           <span style={{ fontSize: '14px', color: checked[i] ? '#1E293B' : '#94A3B8', flexShrink: 0 }}>{e.groupName}</span>
-          {e.email && (
-            <span style={{ marginLeft: 'auto', fontSize: '11.5px', color: '#94A3B8', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', minWidth: 0 }}>{e.email}</span>
-          )}
+          <span style={{ marginLeft: 'auto', fontSize: '11.5px', color: '#94A3B8', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', minWidth: 0 }}>{e.email || 'no email'}</span>
         </label>
       ))}
       <button
         disabled={!canMerge}
         onClick={async () => {
-          const entries = d.entries.filter((_, i) => checked[i]);
-          if (entries.length < 2) return;
-          const email = entries.find((x) => x.email)?.email;
+          const entries = r.others.filter((_, i) => checked[i]);
+          if (entries.length === 0) return;
           setBusy(true);
-          try { await onMerge(entries, email || undefined); } finally { setBusy(false); }
+          try { await onMerge(entries, r.primary); } finally { setBusy(false); }
         }}
         style={{ width: '100%', marginTop: '10px', padding: '11px', borderRadius: '12px', border: 'none', background: canMerge ? '#10B981' : '#CBD5E1', color: '#FFFFFF', fontWeight: 600, fontSize: '13.5px', cursor: canMerge ? 'pointer' : 'default' }}
       >
-        {busy ? 'Merging…' : selectedCount < 2 ? 'Tick at least 2 to merge' : `Merge ${selectedCount} as one`}
+        {busy ? 'Merging…' : selectedCount === 0 ? 'Tick at least 1 to merge' : 'Merge into primary'}
       </button>
     </div>
   );
 };
 
 const MergeDuplicatesModal: React.FC<{
-  duplicates: DuplicatePerson[];
+  reviews: MergeReview[];
   onClose: () => void;
   onMerge: (entries: DuplicateEntry[], canonicalEmail?: string) => Promise<void>;
-  suggestEmails?: (name: string) => string[];
-}> = ({ duplicates, onClose, onMerge }) => {
+}> = ({ reviews, onClose, onMerge }) => {
   // Full screen; phone back closes it.
   React.useEffect(() => {
     window.history.pushState({ dividoMergeScreen: true }, '');
@@ -87,19 +91,19 @@ const MergeDuplicatesModal: React.FC<{
           <button type="button" onClick={() => window.history.back()} aria-label="Back" style={{ background: 'none', border: 'none', padding: '4px', margin: '0 0 0 -6px', cursor: 'pointer', color: '#475569', display: 'flex' }}>
             <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="15 18 9 12 15 6" /></svg>
           </button>
-          <h3 style={{ margin: 0, fontSize: '19px', fontWeight: 600, color: '#1E293B' }}>Same person?</h3>
+          <h3 style={{ margin: 0, fontSize: '19px', fontWeight: 600, color: '#1E293B' }}>Duplicate names</h3>
         </div>
-        <p style={{ margin: '0 0 16px 30px', fontSize: '13px', color: '#64748B' }}>Tick the ones that are the same person.</p>
+        <p style={{ margin: '0 0 16px 30px', fontSize: '13px', color: '#64748B' }}>Tick the invites that are the same person as the primary email.</p>
 
-        {duplicates.length === 0 && (
+        {reviews.length === 0 && (
           <p style={{ textAlign: 'center', color: '#16A34A', fontWeight: 600, fontSize: '14px', padding: '20px 0' }}>
             All done — no duplicates left.
           </p>
         )}
 
         <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-          {duplicates.map((d) => (
-            <MergeRow key={d.name + d.entries.map((e) => e.groupId).join(',')} d={d} onMerge={onMerge} />
+          {reviews.map((r) => (
+            <MergeRow key={r.name + r.primary} r={r} onMerge={onMerge} />
           ))}
         </div>
       </div>
@@ -214,7 +218,7 @@ export const FriendsView: React.FC<FriendsViewProps> = ({
   // other (pending) invites at it. Two different joined accounts are never
   // offered — they really are separate people.
   const mergeReviews = useMemo(() => {
-    const out: { name: string; primary: string; entries: DuplicateEntry[]; others: DuplicateEntry[] }[] = [];
+    const out: MergeReview[] = [];
     duplicatePeople.forEach((d) => {
       const withEmail = d.entries.filter((e) => e.email);
       if (new Set(withEmail.map((e) => e.email)).size < 2) return;
@@ -227,7 +231,8 @@ export const FriendsView: React.FC<FriendsViewProps> = ({
       const primary = [...joinedEmails][0];
       const others = d.entries.filter((e) => e.email !== primary && !isJoined(e));
       if (others.length === 0) return;
-      out.push({ name: d.name, primary, entries: d.entries, others });
+      const primaryGroups = withEmail.filter((e) => e.email === primary && isJoined(e)).map((e) => e.groupName);
+      out.push({ name: d.name, primary, primaryGroups, others });
     });
     return out;
   }, [duplicatePeople, groups]);
@@ -573,10 +578,27 @@ export const FriendsView: React.FC<FriendsViewProps> = ({
     <div className="content-width-limit">
       {showMergeModal && (
         <MergeDuplicatesModal
-          duplicates={duplicatePeople}
+          reviews={mergeReviews}
           onClose={() => setShowMergeModal(false)}
           onMerge={async (entries, canonicalEmail) => { if (onMergePeople) await onMergePeople(entries, canonicalEmail); }}
-          suggestEmails={suggestEmails}
+        />
+      )}
+      {onMergePeople && mergeReviews.length > 0 && (
+        <div
+          onClick={() => setShowMergeModal(true)}
+          style={{ display: 'flex', alignItems: 'center', gap: '10px', background: '#FFFBEB', border: '1px solid #FDE68A', borderRadius: '14px', padding: '10px 14px', marginBottom: '14px', cursor: 'pointer' }}
+        >
+          <span style={{ flex: 1, minWidth: 0, fontSize: '13.5px', fontWeight: 600, color: '#92400E', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+            Found {mergeReviews.length} duplicate {mergeReviews.length === 1 ? 'name' : 'names'}
+          </span>
+          <span style={{ color: '#B45309', fontSize: '13px', fontWeight: 700, whiteSpace: 'nowrap' }}>Review ›</span>
+        </div>
+      )}
+      {showMergeModal && (
+        <MergeDuplicatesModal
+          reviews={mergeReviews}
+          onClose={() => setShowMergeModal(false)}
+          onMerge={async (entries, canonicalEmail) => { if (onMergePeople) await onMergePeople(entries, canonicalEmail); }}
         />
       )}
       {onMergePeople && mergeReviews.map((r) => (
