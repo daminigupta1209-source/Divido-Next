@@ -795,7 +795,9 @@ export const MasterSummary: React.FC<MasterSummaryProps> = ({
               payMore={payBacks.length - 1}
               collect={hasActiveBalancesForCard && getBacks.length > 0 ? primaryAmt(getBacks) : undefined}
               collectMore={getBacks.length - 1}
-              onClick={() => setView('friends')}
+              onClick={() => { window.dispatchEvent(new CustomEvent('divido:friends-filter', { detail: 'all' })); setView('friends'); }}
+              onPayClick={() => { try { sessionStorage.setItem('divido_friends_filter', 'owe'); } catch { /* ignore */ } window.dispatchEvent(new CustomEvent('divido:friends-filter', { detail: 'owe' })); setView('friends'); }}
+              onCollectClick={() => { try { sessionStorage.setItem('divido_friends_filter', 'owed'); } catch { /* ignore */ } window.dispatchEvent(new CustomEvent('divido:friends-filter', { detail: 'owed' })); setView('friends'); }}
             />
           </div>
         );

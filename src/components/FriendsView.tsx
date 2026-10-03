@@ -177,7 +177,25 @@ export const FriendsView: React.FC<FriendsViewProps> = ({
   const [search, setSearch] = useState('');
   const [showFriendsDropdown, setShowFriendsDropdown] = useState(false);
   const [selectedFriends, setSelectedFriends] = useState<string[]>([]);
-  const [balanceFilter, setBalanceFilter] = useState<'all' | 'owed' | 'owe'>('all');
+  // Home's Pay / Collect tile opens this list pre-filtered (one-time hint).
+  const [balanceFilter, setBalanceFilter] = useState<'all' | 'owed' | 'owe'>(() => {
+    try {
+      const hint = sessionStorage.getItem('divido_friends_filter');
+      sessionStorage.removeItem('divido_friends_filter');
+      if (hint === 'owe' || hint === 'owed') return hint;
+    } catch { /* ignore */ }
+    return 'all';
+  });
+  // Already mounted (kept alive): follow Home's tile taps live too.
+  useEffect(() => {
+    const on = (e: Event) => {
+      const v = (e as CustomEvent).detail;
+      if (v === 'owe' || v === 'owed' || v === 'all') setBalanceFilter(v);
+      try { sessionStorage.removeItem('divido_friends_filter'); } catch { /* ignore */ }
+    };
+    window.addEventListener('divido:friends-filter', on);
+    return () => window.removeEventListener('divido:friends-filter', on);
+  }, []);
   // Tap the Net Balance bar → sheet with every currency + filter choices.
   const [showNetSheet, setShowNetSheet] = useState(false);
   const [convertTo, setConvertTo] = useState<string | null>(null);

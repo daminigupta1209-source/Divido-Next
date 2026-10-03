@@ -14,6 +14,9 @@ export interface NetBalanceTilesProps {
   collectMore?: number;
   /** Tap handler (opens the breakdown / settle screen). */
   onClick?: () => void;
+  /** Optional per-tile taps (e.g. open the list filtered to pay / collect). */
+  onPayClick?: () => void;
+  onCollectClick?: () => void;
   /** Label for the settled state. */
   settledLabel?: string;
   /** Override the "Pay" / "Collect" labels (e.g. another person's balance). */
@@ -34,8 +37,9 @@ const chipStyle: React.CSSProperties = {
   flexShrink: 0,
 };
 
-const Tile: React.FC<{ bg: string; label: string; amount: string; more?: number; chevron: boolean; clickable: boolean }> = ({ bg, label, amount, more, chevron, clickable }) => (
+const Tile: React.FC<{ bg: string; label: string; amount: string; more?: number; chevron: boolean; clickable: boolean; onTap?: () => void }> = ({ bg, label, amount, more, chevron, clickable, onTap }) => (
   <div
+    onClick={onTap ? (e) => { e.stopPropagation(); onTap(); } : undefined}
     style={{
       position: 'relative',
       minWidth: 0,
@@ -65,6 +69,8 @@ export const NetBalanceTiles: React.FC<NetBalanceTilesProps> = ({
   collect,
   collectMore,
   onClick,
+  onPayClick,
+  onCollectClick,
   settledLabel = 'All settled up',
   payLabel = 'Pay',
   collectLabel = 'Collect',
@@ -99,8 +105,8 @@ export const NetBalanceTiles: React.FC<NetBalanceTilesProps> = ({
       onClick={onClick}
       style={{ display: 'grid', gridTemplateColumns: both ? 'minmax(0,1fr) minmax(0,1fr)' : 'minmax(0,1fr)', gap: '8px', width: '100%', ...style }}
     >
-      {pay && <Tile bg={PINK} label={payLabel} amount={pay} more={payMore} chevron={!collect && !!onClick} clickable={!!onClick} />}
-      {collect && <Tile bg={GREEN} label={collectLabel} amount={collect} more={collectMore} chevron={!!onClick} clickable={!!onClick} />}
+      {pay && <Tile bg={PINK} label={payLabel} amount={pay} more={payMore} chevron={!collect && !!(onClick || onPayClick)} clickable={!!(onClick || onPayClick)} onTap={onPayClick} />}
+      {collect && <Tile bg={GREEN} label={collectLabel} amount={collect} more={collectMore} chevron={!!(onClick || onCollectClick)} clickable={!!(onClick || onCollectClick)} onTap={onCollectClick} />}
     </div>
   );
 };
