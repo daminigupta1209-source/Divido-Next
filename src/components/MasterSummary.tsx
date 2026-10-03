@@ -347,6 +347,26 @@ export const MasterSummary: React.FC<MasterSummaryProps> = ({
     return nb;
   }, [groups, getMemberBalance, me, nonGroupRels]);
 
+  // Card tiles: total to pay and total to collect kept SEPARATE (like All
+  // balances), so collecting ₹ in one group and paying ₹ in another shows both
+  // tiles instead of netting into a single "Pay".
+  const cardTotals = useMemo(() => {
+    const pay: Record<string, number> = {};
+    const collect: Record<string, number> = {};
+    const add = (bal: Record<string, number>) => {
+      Object.entries(bal).forEach(([curr, v]) => {
+        if (v > 0.01) collect[curr] = (collect[curr] || 0) + v;
+        else if (v < -0.01) pay[curr] = (pay[curr] || 0) + v;
+      });
+    };
+    groups.forEach((g) => {
+      if (!g || g.id === 'STANDALONE' || g.isDirect) return;
+      add(getMemberBalance(g.id, myNameInGroup(g.id)));
+    });
+    nonGroupRels.forEach((r) => add(r.balances));
+    return { pay, collect };
+  }, [groups, getMemberBalance, me, nonGroupRels]);
+
   const filteredGroups = groups.filter((g) => {
     // Direct (shared non-group) threads never appear in the Groups list — their
     // cards live under Non-Group Expenses.
@@ -751,10 +771,12 @@ export const MasterSummary: React.FC<MasterSummaryProps> = ({
       )}
 
       {(() => {
-        const hasActiveBalancesForCard = totalOwed > 0.01 || totalOwe > 0.01;
+        const hasActiveBalancesForCard = Object.keys(cardTotals.pay).length > 0 || Object.keys(cardTotals.collect).length > 0;
         const netEntries = Object.entries(netBalances).filter(([_, v]) => Math.abs(v) > 0.01);
-        const getBacks = netEntries.filter(([_, v]) => v > 0.01);
-        const payBacks = netEntries.filter(([_, v]) => v < -0.01);
+        void netEntries;
+        const byBiggest = (m: Record<string, number>) => Object.entries(m).sort((a, b) => Math.abs(b[1]) - Math.abs(a[1]));
+        const getBacks = byBiggest(cardTotals.collect);
+        const payBacks = byBiggest(cardTotals.pay);
 
         // Only the primary currency's amount is shown in the pill; the small label
         // above it carries a "+N" when more currencies exist (full detail on tap).
