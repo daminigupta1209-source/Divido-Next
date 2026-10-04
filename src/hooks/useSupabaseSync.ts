@@ -143,6 +143,11 @@ export function useSupabaseSync({
   const groupSyncDirtyRef = useRef(false);
   const expenseSyncRunningRef = useRef(false);
   const expenseSyncDirtyRef = useRef(false);
+  // Bumped whenever a cloud load replaces the baselines. A sync pass that was
+  // in flight across a load diffed against the OLD baseline and holds OLD state,
+  // so it must not write its stale snapshot back over the fresh one (that
+  // turned another device's member rename into a "new member" next pass).
+  const baselineGenRef = useRef(0);
 
   const [isOnline, setIsOnline] = useState(navigator.onLine);
   const [isInitialLoadDone, setIsInitialLoadDone] = useState(false);
@@ -706,6 +711,7 @@ export function useSupabaseSync({
         // from a local cache or re-upload after being deleted.
         const mergedExpenses = [...fieldMergedExpenses, ...localOnlyExpenses].filter((e) => !isLegacyRenameLog(e));
 
+        baselineGenRef.current++;
         prevGroupsRef.current = loadedGroups;
         localStorage.setItem('divido_last_synced_groups', JSON.stringify(loadedGroups));
         prevExpensesRef.current = loadedExpenses;
@@ -847,6 +853,22 @@ export function useSupabaseSync({
       try {
         const prev = prevGroupsRef.current;
         const curr = groups;
+        const genAtStart = baselineGenRef.current;
+        // Advance the group baseline - unless a cloud load replaced it mid-pass.
+        // Then keep the fresh one and only add groups this pass created (their
+        // inserts aren't repeatable). Field updates this pass sent that the load
+        // missed just get re-sent next pass, which is harmless.
+        const commitGroupBaseline = (synced: Group[]) => {
+          let next = synced;
+          if (baselineGenRef.current !== genAtStart) {
+            const fresh = prevGroupsRef.current;
+            const freshIds = new Set(fresh.map((g) => String(g.id)));
+            const prevIds = new Set(prev.map((g) => String(g.id)));
+            next = [...fresh, ...synced.filter((g) => !freshIds.has(String(g.id)) && !prevIds.has(String(g.id)))];
+          }
+          prevGroupsRef.current = next;
+          localStorage.setItem('divido_last_synced_groups', JSON.stringify(next));
+        };
 
         const { data: { session } } = await supabase.auth.getSession();
         let userEmail = session?.user?.email;
@@ -1109,11 +1131,14 @@ export function useSupabaseSync({
           }
 
           const syncedGroups = uniqueNextGroups.filter(g => g.name.trim() !== '' && !g.pendingSync);
-          prevGroupsRef.current = syncedGroups;
-          localStorage.setItem('divido_last_synced_groups', JSON.stringify(syncedGroups));
+          commitGroupBaseline(syncedGroups);
 
-          prevExpensesRef.current = nextExpenses;
-          localStorage.setItem('divido_last_synced_expenses', JSON.stringify(nextExpenses));
+          // An expense baseline written by a mid-pass load is fresher than this
+          // pass's (possibly stale) expenses snapshot - keep it in that case.
+          if (baselineGenRef.current === genAtStart) {
+            prevExpensesRef.current = nextExpenses;
+            localStorage.setItem('divido_last_synced_expenses', JSON.stringify(nextExpenses));
+          }
 
           // Apply as functional updates against the LATEST state: this pass awaited
           // network calls, so `curr`/`expenses` may be stale and a plain set would
@@ -1149,10 +1174,9 @@ export function useSupabaseSync({
             setSelectedId((cur) => (cur != null && idRemap.has(String(cur)) ? idRemap.get(String(cur)) : cur));
           }
         } else {
-          const syncedGroups = groups.filter(g => g.name.trim() !== '' && !g.pendingSync);
-          prevGroupsRef.current = syncedGroups;
-          localStorage.setItem('divido_last_synced_groups', JSON.stringify(syncedGroups));
-        }        // Trigger load data once queue is fully caught up
+          commitGroupBaseline(groups.filter(g => g.name.trim() !== '' && !g.pendingSync));
+        }
+        // Trigger load data once queue is fully caught up
         if (!initialLoadDoneRef.current) {
           setLoadTrigger(prev => prev + 1);
         }
@@ -1186,6 +1210,7 @@ export function useSupabaseSync({
       try {
         const prev = prevExpensesRef.current;
         const curr = expenses;
+        const genAtStart = baselineGenRef.current;
 
         // Skip syncing if we are loading initial data
         if (!initialLoadDoneRef.current) {
@@ -1337,8 +1362,13 @@ export function useSupabaseSync({
           failedExpenseIds.has(String(p.id)) && !currIds.has(String(p.id))
         );
         const newBaseline = [...syncedRows, ...pendingFailedDeletes];
-        prevExpensesRef.current = newBaseline;
-        localStorage.setItem('divido_last_synced_expenses', JSON.stringify(newBaseline));
+        // A cloud load replaced the baseline mid-pass: it's fresher than this
+        // pass's snapshot, so keep it. Writes this pass made that the load missed
+        // are re-sent next pass (upsert by id / field update) - idempotent.
+        if (baselineGenRef.current === genAtStart) {
+          prevExpensesRef.current = newBaseline;
+          localStorage.setItem('divido_last_synced_expenses', JSON.stringify(newBaseline));
+        }
         // Functional update: only patch the uploaded attachment URLs onto the LATEST
         // state, so edits made while this (slow, network-bound) pass ran survive.
         if (localStateUpdated && uploadedAttachments.size > 0) {
