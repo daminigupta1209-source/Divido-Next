@@ -2534,20 +2534,27 @@ function App() {
       const next = prevGroups.map((g) => {
         if (!g || g.id === 'STANDALONE') return g;
         const known = new Set([meClean, ...(g.members || []).map(norm)]);
+        // A rename keeps old expenses under the OLD name (applyRename), so a
+        // name missing from the roster may still be a current member. If the
+        // expense's member key for that name is on the roster, it's a rename,
+        // not someone who left.
+        const rosterKeys = new Set(Object.values(g.memberKeys || {}));
         const missing: string[] = [];
         const seenMissing = new Set<string>();
         expenses.forEach((e) => {
           if (String(e.gId) !== String(g.id)) return;
-          const consider = (raw?: string) => {
+          const consider = (raw?: string, memberKey?: string) => {
             if (!raw || raw === 'SYSTEM' || raw === 'STANDALONE') return;
             const key = norm(raw);
             if (known.has(key) || seenMissing.has(key)) return;
+            const k = e.partyKeys?.[raw] || memberKey;
+            if (k && rosterKeys.has(k)) return;
             seenMissing.add(key);
             missing.push(raw);
           };
-          consider(e.paid);
-          if (Array.isArray(e.splitters)) e.splitters.forEach(consider);
-          if (e.shares) Object.keys(e.shares).forEach(consider);
+          consider(e.paid, e.paidKey);
+          if (Array.isArray(e.splitters)) e.splitters.forEach((s, i) => consider(s, e.splitterKeys?.[i]));
+          if (e.shares) Object.keys(e.shares).forEach((s) => consider(s));
         });
         if (missing.length === 0) return g;
         changed = true;
