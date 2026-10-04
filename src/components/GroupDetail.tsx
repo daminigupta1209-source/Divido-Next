@@ -669,6 +669,9 @@ export const GroupDetail: React.FC<GroupDetailProps> = ({
               collectLines={getBacks.map(([curr, amount]) => ({ curr, amount }))}
               active={filterType === 'owe' ? 'pay' : filterType === 'owed' ? 'collect' : null}
               onSummaryFilter={(f) => { setFilterType(f === 'pay' ? 'owe' : f === 'collect' ? 'owed' : 'all'); setActiveTab('balances'); }}
+              // "Settle up" closes the summary onto the Settle tab, already
+              // filtered the same way — pick the person to settle with there.
+              summaryAction={{ label: 'Settle up', onClick: () => setActiveTab('balances') }}
               onClick={() => setActiveTab('balances')}
             />
           </div>
