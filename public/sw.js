@@ -24,7 +24,7 @@ const CORE = ['/index.html', '/manifest.json'];
 // Precache the shell: core files plus every hashed /assets/*.js and *.css that
 // index.html references, so the entry bundle is guaranteed present offline.
 async function precacheShell(cache) {
-  await Promise.allSettled(CORE.map((u) => cache.add(u)));
+  await Promise.allSettled(CORE.map((u) => cache.add(new Request(u, { cache: 'reload' }))));
   try {
     const res = await fetch('/index.html', { cache: 'no-cache' });
     if (res && res.ok) {
@@ -39,7 +39,7 @@ async function precacheShell(cache) {
           urls.add(u);
         }
       }
-      await Promise.allSettled([...urls].map((u) => cache.add(u)));
+      await Promise.allSettled([...urls].map((u) => cache.add(new Request(u, { cache: 'reload' }))));
     }
   } catch (e) {
     // Offline during install (rare) — the core files are enough to boot.
@@ -95,10 +95,13 @@ self.addEventListener('fetch', (event) => {
   }
 
   // Static assets: cache-first, populate on first successful fetch.
+  const fresh = () => fetch(req.url, { cache: 'reload', credentials: 'same-origin' });
   event.respondWith(
     caches.match(req).then((cached) => {
       if (cached) return cached;
       return fetch(req)
+        .then((res) => (res && res.ok ? res : fresh()))
+        .catch(fresh)
         .then((res) => {
           // Never cache an HTML page under a JS/CSS URL (a host fallback page
           // for a missing file) — it would be served as code forever → blank.

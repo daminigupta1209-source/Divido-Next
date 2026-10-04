@@ -87,6 +87,18 @@
           var t = e && e.target;
           if (t && (t.tagName === 'SCRIPT' || t.tagName === 'LINK')) {
             note('Could not load ' + (t.src || t.href));
+            // First, retry the app file once under a fresh address (?r=…) that
+            // no cache on the phone can hold — a stuck cached copy was blocking
+            // start-up on one phone while the file was fine everywhere else.
+            if (t.tagName === 'SCRIPT' && t.src && t.src.indexOf('/assets/') !== -1 && !t.getAttribute('data-dv-retry')) {
+              var s = document.createElement('script');
+              if (t.type) s.type = t.type;
+              s.crossOrigin = t.crossOrigin || null;
+              s.setAttribute('data-dv-retry', '1');
+              s.src = t.src + (t.src.indexOf('?') === -1 ? '?' : '&') + 'r=' + Date.now();
+              document.head.appendChild(s);
+              return;
+            }
             if (!drawn()) window.__dvRescue();
             return;
           }
