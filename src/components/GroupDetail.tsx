@@ -5,6 +5,7 @@ import { BalanceDisplay } from './BalanceDisplay';
 import { Group, Expense, UserMetadata } from '../lib/types';
 import { GROUP_COLORS, formatExactAmount } from '../lib/utils';
 import { withoutEmailTag, isPastMemberOf, shown } from '../lib/identity';
+import { matchesAmount } from '../lib/utils';
 import { useGroupDetailForm } from '../hooks/useGroupDetailForm';
 
 // Subcomponents
@@ -15,6 +16,8 @@ import { ExpenseList } from './group-detail/ExpenseList';
 import { GroupGallery } from './GroupGallery';
 
 interface GroupDetailProps {
+  /** Header 🔍 text — filters whichever tab is open. */
+  headerSearchQuery?: string;
   selectedId: string | number | null;
   groups: Group[];
   expenses: Expense[];
@@ -71,6 +74,7 @@ interface GroupDetailProps {
 }
 
 export const GroupDetail: React.FC<GroupDetailProps> = ({
+  headerSearchQuery = '',
   selectedId,
   groups,
   expenses,
@@ -181,6 +185,8 @@ export const GroupDetail: React.FC<GroupDetailProps> = ({
     setExpenses,
     me,
   });
+  // The header 🔍 drives the Activities search (Settle and Photos read it directly).
+  React.useEffect(() => { setSearchQuery(headerSearchQuery); }, [headerSearchQuery, setSearchQuery]);
 
   const activeTab = propActiveTab !== undefined ? propActiveTab : hookActiveTab;
   const setActiveTab = propSetActiveTab !== undefined ? propSetActiveTab : hookSetActiveTab;
@@ -687,7 +693,9 @@ export const GroupDetail: React.FC<GroupDetailProps> = ({
             return (
               <button
                 key={tab.id}
-                onClick={() => {
+                onClick={(e) => {
+                  // Keep the header search open while switching tabs.
+                  if (headerSearchQuery) e.stopPropagation();
                   if (setActiveTab) setActiveTab(tab.id as 'expenses' | 'balances' | 'photos');
                 }}
                 style={{
@@ -795,79 +803,6 @@ export const GroupDetail: React.FC<GroupDetailProps> = ({
 
         return (
           <div className="animate-fade-in" style={{ display: 'flex', flexDirection: 'column', gap: '16px', marginBottom: '24px' }}>
-            {/* Filter Pills */}
-            {(() => {
-              const groupExps = expenses.filter((e) => String(e.gId) === String(selectedGroup.id));
-              const distinctCurrencies = Array.from(new Set(groupExps.map((e) => e.currency || selectedGroup.currency || '₹')));
-
-              return (
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '12px', animation: 'fadeIn 0.2s ease-out', flexWrap: 'wrap' }}>
-                  {/* Friends filter */}
-                  <div style={dropdownStyle}>
-                    <button style={btnStyle} onClick={(e) => { e.stopPropagation(); setShowDetailFriendsMenu(!showDetailFriendsMenu); setShowDetailBalancesMenu(false); }}>
-                      <span>{filterFriendLabel}</span><span style={{ fontSize: '9px', marginLeft: '2px' }}>▼</span>
-                    </button>
-                    {showDetailFriendsMenu && (
-                      <>
-                        <div onClick={() => setShowDetailFriendsMenu(false)} style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, zIndex: 199 }} />
-                        <div style={popupStyle}>
-                          <div style={optionStyle(filterFriend === 'all')} onClick={() => { setFilterFriend('all'); setShowDetailFriendsMenu(false); }}>
-                            <span>All Friends</span>
-                          </div>
-                          <div style={optionStyle(filterFriend === 'me')} onClick={() => { setFilterFriend('me'); setShowDetailFriendsMenu(false); }}>
-                            <span>You</span>
-                          </div>
-                          {selectedGroup.members
-                            .filter((m) => m !== me)
-                            .map((m) => (
-                              <div key={m} style={optionStyle(filterFriend === m)} onClick={() => { setFilterFriend(m); setShowDetailFriendsMenu(false); }}>
-                                <span>{shown(m)}</span>
-                              </div>
-                            ))}
-                        </div>
-                      </>
-                    )}
-                  </div>
-
-                  {/* Balance filter */}
-                  <div style={dropdownStyle}>
-                    <button style={btnStyle} onClick={(e) => { e.stopPropagation(); setShowDetailBalancesMenu(!showDetailBalancesMenu); setShowDetailFriendsMenu(false); }}>
-                      <span>{filterTypeLabel}</span><span style={{ fontSize: '9px', marginLeft: '2px' }}>▼</span>
-                    </button>
-                    {showDetailBalancesMenu && (
-                      <>
-                        <div onClick={() => setShowDetailBalancesMenu(false)} style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, zIndex: 199 }} />
-                        <div style={popupStyle}>
-                          {(['all', 'owed', 'owe'] as const).map((opt) => (
-                            <div
-                              key={opt}
-                              onClick={() => {
-                                setFilterType(opt);
-                                setShowDetailBalancesMenu(false);
-                              }}
-                              style={{
-                                padding: '8px 12px',
-                                borderRadius: '8px',
-                                fontSize: '12px',
-                                fontWeight: filterType === opt ? 800 : 600,
-                                cursor: 'pointer',
-                                color: '#1E293B',
-                                background: filterType === opt ? '#F1F5F9' : 'transparent',
-                                textAlign: 'left',
-                              }}
-                            >
-                              {opt === 'all' ? 'All Balances' : opt === 'owed' ? 'To Collect' : 'To Pay'}
-                            </div>
-                          ))}
-                        </div>
-                      </>
-                    )}
-                  </div>
-
-                </div>
-              );
-            })()}
-
             <div className="" style={{ textAlign: 'left', marginTop: '4px' }}>
               {(() => {
                 // 1. Combine all transactions
@@ -882,6 +817,15 @@ export const GroupDetail: React.FC<GroupDetailProps> = ({
                   filtered = filtered.filter(t => t.from === me || t.to === me);
                 } else if (filterFriend !== 'all') {
                   filtered = filtered.filter(t => t.from === filterFriend || t.to === filterFriend);
+                }
+
+                // 2b. Header search: the other person's name or email, or the amount.
+                const hq = headerSearchQuery.trim().toLowerCase();
+                if (hq) {
+                  const mi = selectedGroup.memberIdentities || {};
+                  filtered = filtered.filter((t) => [t.from, t.to].some((n) => n !== me && (
+                    shown(n).toLowerCase().includes(hq) || String(mi[n] || '').toLowerCase().includes(hq)
+                  )) || matchesAmount(hq, Object.entries(t.balances || {})));
                 }
 
                 // 3. Filter by balance type selection (relative to 'me')
@@ -1275,6 +1219,7 @@ export const GroupDetail: React.FC<GroupDetailProps> = ({
           setEditingSettle={setEditingSettle}
           setShowSettleModal={setShowSettleModal}
           onPhotoViewerChange={onPhotoViewerChange}
+          searchQuery={headerSearchQuery}
         />
       )}
 

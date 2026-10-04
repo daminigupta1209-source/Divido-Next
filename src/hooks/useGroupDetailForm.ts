@@ -1,7 +1,7 @@
 import { useState, useEffect, useMemo } from 'react';
 import { Group, Expense, UserMetadata } from '../lib/types';
 import { balancesByIdentity, getPersonKey, shown } from '../lib/identity';
-import { getEmoji } from '../lib/utils';
+import { getEmoji, matchesAmount } from '../lib/utils';
 
 export interface UseGroupDetailFormProps {
   selectedId: string | number | null;
@@ -463,7 +463,16 @@ export function useGroupDetailForm({
       const when = Number.isFinite(t) ? t : (e.timestamp ?? NaN);
       if (Number.isFinite(when) && when < cutoff) return false;
     }
-    if (searchQuery && !e.title.toLowerCase().includes(searchQuery.toLowerCase())) return false;
+    if (searchQuery) {
+      // Title, who paid, who shared, notes, or the amount.
+      const q = searchQuery.trim().toLowerCase();
+      const people = [e.paid, ...(e.splitters || [])].filter(Boolean).map((n) => shown(n).toLowerCase());
+      const hit = (e.title || '').toLowerCase().includes(q)
+        || people.some((n) => n.includes(q))
+        || (e.notes || '').toLowerCase().includes(q)
+        || matchesAmount(q, [[e.currency || '₹', e.amt || 0]]);
+      if (!hit) return false;
+    }
     if (selectedTag !== 'all') {
       if (!e.tags || !e.tags.includes(selectedTag)) return false;
     }

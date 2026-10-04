@@ -163,7 +163,8 @@ export const GroupGallery: React.FC<GroupGalleryProps> = ({
     <div className="content-width-limit" style={{ paddingBottom: '24px', boxSizing: 'border-box' }}>
       {/* Search and filter row - matching Activities */}
       <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', paddingLeft: '8px', paddingRight: '8px', marginBottom: '14px' }}>
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '12px', position: 'relative', width: '100%' }}>
+        {/* Search + funnel moved to the group header's 🔍 */}
+        <div style={{ display: 'none' }}>
           {/* Search bar */}
           <div style={{ position: 'relative', flex: 1, lineHeight: 0, fontSize: 0 }}>
             <svg

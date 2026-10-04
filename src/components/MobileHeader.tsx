@@ -472,10 +472,27 @@ export const MobileHeader: React.FC<MobileHeaderProps> = ({
                     </span>
                   )}
                 </div>
+              ) : isHeaderSearchActive && selectedId !== 'STANDALONE' ? (
+                <input
+                  type="search"
+                  autoComplete="off"
+                  autoCorrect="off"
+                  spellCheck="false"
+                  data-1p-ignore
+                  data-lpignore="true"
+                  autoFocus
+                  placeholder="Search this group..."
+                  value={searchQuery}
+                  onClick={(e) => e.stopPropagation()}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  onKeyDown={(e) => { if (e.key === 'Escape') { setIsHeaderSearchActive(false); setSearchQuery(''); } }}
+                  className="header-search-input"
+                  style={{ background: 'transparent', border: 'none', borderBottom: '1.5px solid #C9BCAB', borderRadius: 0, outline: 'none', boxShadow: 'none', fontSize: '15px', fontWeight: 600, height: '32px', padding: 0, margin: 0, color: 'var(--t)', width: '100%', fontFamily: 'inherit' }}
+                />
               ) : (
                 <>
                   <h1
-                    
+
                     style={{
                       fontSize: selectedId === 'STANDALONE' ? '18px' : '20px',
                       fontWeight: 600,
@@ -517,40 +534,25 @@ export const MobileHeader: React.FC<MobileHeaderProps> = ({
             {/* ⋮ Vertical three-dots button — positioned at the rightmost edge */}
             {selectedGroup && (
               <div style={{ zIndex: 9999, display: 'inline-flex', alignItems: 'center', flexShrink: 0, marginLeft: 'auto' }}>
-                {/* Share Group Link Button — not for Non-Group (no single group to share) */}
-                {!amIPastMember && selectedId !== 'STANDALONE' && (
+                {/* Search inside the group (all tabs) — replaces the old share icon */}
+                {selectedId !== 'STANDALONE' && (
                   <button
-                    onClick={() => { onInviteFriend && onInviteFriend(); }}
-                    style={{
-                      background: 'none',
-                      border: 'none',
-                      cursor: 'pointer',
-                      color: '#94A3B8',
-                      width: '36px',
-                      height: '36px',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      flexShrink: 0,
-                      padding: 0,
-                      borderRadius: '8px',
-                      transition: '0.15s all',
-                      marginRight: '-4px',
+                    type="button"
+                    aria-label="Search"
+                    title="Search this group"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      if (isHeaderSearchActive) { setIsHeaderSearchActive(false); setSearchQuery(''); }
+                      else setIsHeaderSearchActive(true);
                     }}
-                    onMouseEnter={(e) => { e.currentTarget.style.background = 'rgba(0,0,0,0.05)'; }}
-                    onMouseLeave={(e) => { e.currentTarget.style.background = 'none'; }}
-                    title="Share Group Link"
+                    style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#94A3B8', width: '36px', height: '36px', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, padding: 0, borderRadius: '8px', marginRight: '-4px' }}
                   >
-                    <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ color: '#94A3B8' }}>
-                      <circle cx="18" cy="5" r="3" />
-                      <circle cx="6" cy="12" r="3" />
-                      <circle cx="18" cy="19" r="3" />
-                      <line x1="8.59" y1="13.51" x2="15.42" y2="17.49" />
-                      <line x1="15.41" y1="6.51" x2="8.59" y2="10.49" />
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.3" strokeLinecap="round">
+                      <circle cx="10.8" cy="10.8" r="6.6" />
+                      <path d="m16 16 4.2 4.2" />
                     </svg>
                   </button>
                 )}
-
 
                 <button
                   onClick={() => setShowAttachMenu(true)}

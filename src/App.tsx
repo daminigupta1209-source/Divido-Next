@@ -876,11 +876,17 @@ function App() {
 
   // Header search should never linger — close it when leaving the home / settle pages.
   useEffect(() => {
-    if (view !== 'summary' && view !== 'friends' && view !== 'groups' && isHeaderSearchActive) {
+    if (view !== 'summary' && view !== 'friends' && view !== 'groups' && view !== 'detail' && isHeaderSearchActive) {
       setIsHeaderSearchActive(false);
       setGlobalSearchQuery('');
     }
   }, [view, isHeaderSearchActive]);
+
+  // A new group starts with an empty search.
+  useEffect(() => {
+    if (view === 'detail') { setIsHeaderSearchActive(false); setGlobalSearchQuery(''); }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedId]);
 
   // Close the header search when tapping anywhere outside it.
   useEffect(() => {
@@ -4974,6 +4980,7 @@ function App() {
           />
         ) : (
           <GroupDetail
+            headerSearchQuery={selectedId !== 'STANDALONE' ? globalSearchQuery : ''}
             activeTab={groupDetailTab}
             setActiveTab={setGroupDetailTab}
             showFriendsList={showFriendsList}

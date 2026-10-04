@@ -71,7 +71,8 @@ export const ExpenseList: React.FC<ExpenseListProps> = ({
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
       <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', paddingLeft: '8px', paddingRight: '8px' }}>
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '12px', position: 'relative', width: '100%' }}>
+        {/* Search + funnel moved to the group header's 🔍 */}
+        <div style={{ display: 'none' }}>
           {/* Search bar — always visible */}
           <div style={{ position: 'relative', flex: 1, lineHeight: 0, fontSize: 0 }}>
             <svg
