@@ -915,22 +915,22 @@ export const FriendsView: React.FC<FriendsViewProps> = ({
               {/* Name with the amount stacked right below it (left-aligned) */}
               <div style={{ minWidth: 0, flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center', gap: '6px' }}>
                 <div style={{ display: 'flex', alignItems: 'baseline', gap: '8px', minWidth: 0 }}>
-                  <h3 style={{ fontSize: '16px', fontWeight: 600, color: '#2E2A25', margin: 0, textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap', textTransform: 'capitalize', flexShrink: 1 }}>{shown(f.name)}</h3>
+                  <h3 style={{ fontSize: '16px', fontWeight: 500, color: '#2E2A25', margin: 0, textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap', textTransform: 'capitalize', flexShrink: 1 }}>{shown(f.name)}</h3>
                   {!(f.id && String(f.id).includes('@')) && f.groups && f.groups.length > 0 && (
-                    <span style={{ fontSize: '13px', fontWeight: 500, color: '#94A3B8', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', flexShrink: 1 }}>({f.groups.join(', ')})</span>
+                    <span style={{ fontSize: '13px', fontWeight: 400, color: '#94A3B8', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', flexShrink: 1 }}>({f.groups.join(', ')})</span>
                   )}
                 </div>
                 {f.id && String(f.id).includes('@') && (
-                  <span style={{ fontSize: '12px', fontWeight: 500, color: '#94A3B8', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{f.id}</span>
+                  <span style={{ fontSize: '12px', fontWeight: 400, color: '#94A3B8', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{f.id}</span>
                 )}
                 {!active ? (
-                  <span style={{ fontSize: '13px', fontWeight: 500, color: '#94A3B8' }}>Settled up</span>
+                  <span style={{ fontSize: '13px', fontWeight: 400, color: '#94A3B8' }}>Settled up</span>
                 ) : (
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '2px', minWidth: 0 }}>
                     {payList.length > 0 && (() => {
                       const { text: txt, fontSize } = fitRow(payList, 'You pay ');
                       return (
-                      <span style={{ fontSize: `${fontSize}px`, fontWeight: 500, color: '#B91C1C', display: 'inline-flex', alignItems: 'center', gap: '5px', minWidth: 0 }}>
+                      <span style={{ fontSize: `${fontSize}px`, fontWeight: 400, color: '#B91C1C', display: 'inline-flex', alignItems: 'center', gap: '5px', minWidth: 0 }}>
                         <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{txt}</span>
                         {payList.length > 1 && <span style={{ ...cardChip, flexShrink: 0 }}>+{payList.length - 1}</span>}
                       </span>
@@ -939,7 +939,7 @@ export const FriendsView: React.FC<FriendsViewProps> = ({
                     {collectList.length > 0 && (() => {
                       const { text: txt, fontSize } = fitRow(collectList, 'You collect ');
                       return (
-                      <span style={{ fontSize: `${fontSize}px`, fontWeight: 500, color: '#047857', display: 'inline-flex', alignItems: 'center', gap: '5px', minWidth: 0 }}>
+                      <span style={{ fontSize: `${fontSize}px`, fontWeight: 400, color: '#047857', display: 'inline-flex', alignItems: 'center', gap: '5px', minWidth: 0 }}>
                         <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{txt}</span>
                         {collectList.length > 1 && <span style={{ ...cardChip, flexShrink: 0 }}>+{collectList.length - 1}</span>}
                       </span>
