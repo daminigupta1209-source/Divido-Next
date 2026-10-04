@@ -5,157 +5,13 @@ import { BalanceDisplay } from './BalanceDisplay';
 import { Group, Expense, UserMetadata, GlobalSettleData } from '../lib/types';
 import { simplifyMultiCurrencyDebts, computeRawPairwiseTransactions } from '../lib/calculations';
 import { asyncBatchComputeGroups } from '../lib/workerHelper';
-import { getPersonKey, resolveSelfKey, toIdentitySpace, withoutEmailTag, buildNameEmailResolver, buildNameIdentityResolver, findDuplicatePeople, isValidEmail, type DuplicateEntry, type DuplicatePerson, shown } from '../lib/identity';
+import { getPersonKey, resolveSelfKey, toIdentitySpace, withoutEmailTag, buildNameEmailResolver, buildNameIdentityResolver, shown } from '../lib/identity';
 import { worldCurrencies, formatExactAmount, formatCompactAmount } from '../lib/utils';
 import { SearchableCurrencyPicker } from './SearchableCurrencyPicker';
 import { StyledDropdown } from './StyledDropdown';
 
 // Small translucent count chip for extra currencies in the Net Balance pill.
 const pillChipStyle: React.CSSProperties = { background: 'rgba(255,255,255,0.28)', borderRadius: '999px', padding: '1px 7px', fontSize: '11px', fontWeight: 700, flexShrink: 0 };
-
-// Review-and-merge screen: one section per duplicate name. The joined
-// account's email is the primary (locked); the other pending invites under that
-// name are ticked by default and get pointed at the primary on Merge.
-const AV_BG = ['#B39DDB', '#F48FB1', '#80CBC4', '#FFB74D', '#9FA8DA', '#A5D6A7', '#EF9A9A', '#7FC8CE'];
-
-export interface MergeReview {
-  name: string;
-  primary: string;
-  primaryGroups: string[];
-  others: DuplicateEntry[];
-  /** Set when nobody with this name has joined yet: the user picks the primary. */
-  all?: DuplicateEntry[];
-}
-
-// Spots that can be folded into `primary`: a different email, in a group where
-// the primary isn't already a member (two same-named members of one group are
-// different people, never merged into one).
-export const mergeableInto = (entries: DuplicateEntry[], primary: string): DuplicateEntry[] => {
-  const p = primary.toLowerCase();
-  const primaryGroupIds = new Set(entries.filter((e) => e.email.toLowerCase() === p).map((e) => String(e.groupId)));
-  return entries.filter((e) => e.email.toLowerCase() !== p && !primaryGroupIds.has(String(e.groupId)));
-};
-
-const MergeRow: React.FC<{
-  r: MergeReview;
-  onMerge: (entries: DuplicateEntry[], canonicalEmail?: string) => Promise<void>;
-  onDismiss: () => void;
-}> = ({ r, onMerge, onDismiss }) => {
-  const [busy, setBusy] = useState(false);
-  // Nobody joined yet → the user can choose which email is the primary.
-  const [primary, setPrimary] = useState(r.primary);
-  const others = r.all ? mergeableInto(r.all, primary) : r.others;
-  const primaryGroups = r.all ? r.all.filter((e) => e.email === primary).map((e) => e.groupName) : r.primaryGroups;
-  // Emails that could be made primary instead (each must leave something to merge).
-  const canBePrimary = (email: string) => !!r.all && !!email && mergeableInto(r.all, email).length > 0;
-  const [checked, setChecked] = useState<boolean[]>(() => others.map(() => true));
-  React.useEffect(() => { setChecked(others.map(() => true)); }, [primary]); // eslint-disable-line react-hooks/exhaustive-deps
-  const selectedCount = checked.filter(Boolean).length;
-  const canMerge = selectedCount >= 1 && !busy;
-  const toggle = (i: number) => setChecked((prev) => prev.map((v, idx) => (idx === i ? !v : v)));
-  const bg = AV_BG[(r.name.charCodeAt(0) || 0) % AV_BG.length];
-  const oneLine: React.CSSProperties = { overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', minWidth: 0 };
-
-  return (
-    <div style={{ background: '#FFFFFF', border: '1px solid #F1F5F9', borderRadius: '16px', padding: '14px', boxShadow: '0 2px 10px rgba(0,0,0,0.03)' }}>
-      <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '10px' }}>
-        <div style={{ width: '36px', height: '36px', borderRadius: '50%', background: bg, color: '#FFFFFF', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '15px', fontWeight: 600, flexShrink: 0 }}>
-          {r.name.charAt(0).toUpperCase()}
-        </div>
-        <div style={{ flex: 1, minWidth: 0 }}>
-          <div style={{ ...oneLine, fontSize: '15px', fontWeight: 600, color: '#1E293B' }}>{shown(r.name)}</div>
-          <div style={{ fontSize: '12px', color: '#64748B', marginTop: '1px' }}>Same name in different groups. Same person?</div>
-        </div>
-      </div>
-
-      <div style={{ background: '#F0FDF4', border: '1px solid #BBF7D0', borderRadius: '12px', padding: '10px 12px' }}>
-        <span style={{ fontSize: '10.5px', fontWeight: 700, color: '#047857', background: '#D1FAE5', borderRadius: '999px', padding: '2px 8px' }}>Primary</span>
-        <div style={{ ...oneLine, fontSize: '13.5px', fontWeight: 600, color: '#1E293B', marginTop: '6px' }}>{primary}</div>
-        <div style={{ ...oneLine, fontSize: '12px', color: '#64748B', marginTop: '2px' }}>{r.all ? 'In' : 'Joined in'} {primaryGroups.join(', ')}</div>
-      </div>
-
-      <div style={{ fontSize: '11.5px', fontWeight: 600, color: '#94A3B8', margin: '12px 0 2px' }}>Merge into primary</div>
-      {others.map((e, i) => (
-        <div key={i} onClick={() => toggle(i)} style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '10px 0', borderTop: i > 0 ? '1px solid #F1F5F9' : 'none', cursor: 'pointer' }}>
-          <span style={{ width: '20px', height: '20px', borderRadius: '6px', flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', background: checked[i] ? '#10B981' : '#FFFFFF', border: checked[i] ? 'none' : '2px solid #CBD5E1', boxSizing: 'border-box', color: '#FFFFFF', fontSize: '12px', fontWeight: 700 }}>
-            {checked[i] ? '✓' : ''}
-          </span>
-          <div style={{ flex: 1, minWidth: 0 }}>
-            <div style={{ ...oneLine, fontSize: '13.5px', fontWeight: 600, color: checked[i] ? '#1E293B' : '#94A3B8' }}>{e.email || 'No email'}</div>
-            <div style={{ ...oneLine, fontSize: '12px', color: '#94A3B8', marginTop: '2px' }}>In {e.groupName}</div>
-          </div>
-          {canBePrimary(e.email) && (
-            <button
-              type="button"
-              onClick={(ev) => { ev.stopPropagation(); setPrimary(e.email); }}
-              style={{ flexShrink: 0, background: '#FFFFFF', border: '1px solid #A7F3D0', borderRadius: '999px', padding: '5px 10px', fontSize: '11.5px', fontWeight: 600, color: '#047857', cursor: 'pointer' }}
-            >Make primary</button>
-          )}
-        </div>
-      ))}
-
-      <div style={{ display: 'flex', gap: '8px', marginTop: '12px' }}>
-        <button
-          type="button"
-          onClick={onDismiss}
-          style={{ flex: 1, padding: '11px', borderRadius: '12px', border: '1px solid #E2E8F0', background: '#FFFFFF', color: '#475569', fontWeight: 600, fontSize: '13.5px', cursor: 'pointer' }}
-        >Not the same</button>
-        <button
-          disabled={!canMerge}
-          onClick={async () => {
-            const entries = others.filter((_, i) => checked[i]);
-            if (entries.length === 0) return;
-            setBusy(true);
-            try { await onMerge(entries, primary); } finally { setBusy(false); }
-          }}
-          style={{ flex: 1.4, padding: '11px', borderRadius: '12px', border: 'none', background: canMerge ? '#10B981' : '#CBD5E1', color: '#FFFFFF', fontWeight: 600, fontSize: '13.5px', cursor: canMerge ? 'pointer' : 'default' }}
-        >
-          {busy ? 'Merging…' : selectedCount === 0 ? 'Tick 1 to merge' : 'Merge'}
-        </button>
-      </div>
-    </div>
-  );
-};
-
-const MergeDuplicatesModal: React.FC<{
-  reviews: MergeReview[];
-  onClose: () => void;
-  onMerge: (entries: DuplicateEntry[], canonicalEmail?: string) => Promise<void>;
-  onDismiss: (r: MergeReview) => void;
-}> = ({ reviews, onClose, onMerge, onDismiss }) => {
-  // Full screen; phone back closes it.
-  React.useEffect(() => {
-    window.history.pushState({ dividoMergeScreen: true }, '');
-    const onPop = () => onClose();
-    window.addEventListener('popstate', onPop);
-    return () => window.removeEventListener('popstate', onPop);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-  return (
-    <div style={{ position: 'fixed', inset: 0, background: '#F8FAFC', zIndex: 10001, overflowY: 'auto', padding: '16px 16px calc(24px + env(safe-area-inset-bottom))', boxSizing: 'border-box' }}>
-      <div style={{ maxWidth: '480px', margin: '0 auto' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '16px' }}>
-          <button type="button" onClick={() => window.history.back()} aria-label="Back" style={{ background: 'none', border: 'none', padding: '4px', margin: '0 0 0 -6px', cursor: 'pointer', color: '#475569', display: 'flex' }}>
-            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="15 18 9 12 15 6" /></svg>
-          </button>
-          <h3 style={{ margin: 0, fontSize: '19px', fontWeight: 600, color: '#1E293B' }}>Duplicate names</h3>
-        </div>
-
-        {reviews.length === 0 && (
-          <p style={{ textAlign: 'center', color: '#16A34A', fontWeight: 600, fontSize: '14px', padding: '20px 0' }}>
-            All done — no duplicates left.
-          </p>
-        )}
-
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-          {reviews.map((r) => (
-            <MergeRow key={r.name + r.primary} r={r} onMerge={onMerge} onDismiss={() => onDismiss(r)} />
-          ))}
-        </div>
-      </div>
-    </div>
-  );
-};
 
 // Shrink the amount line to fit when the exact figure gets long, so big
 // balances (e.g. ₹1,250,000 to collect) always fit on one line instead of
@@ -196,7 +52,6 @@ interface FriendsViewProps {
   setGlobalSettleData: (data: GlobalSettleData | null) => void;
   userMetadata: Record<string, UserMetadata>;
   memberAvatars?: Record<string, string>;
-  onMergePeople?: (entries: DuplicateEntry[], canonicalEmail?: string) => void | Promise<void>;
   setUserMetadata: (meta: Record<string, UserMetadata>) => void;
   searchQuery?: string;
   showConvertModal?: boolean;
@@ -214,7 +69,6 @@ export const FriendsView: React.FC<FriendsViewProps> = ({
   setGlobalSettleData,
   userMetadata,
   memberAvatars,
-  onMergePeople,
   setUserMetadata,
   searchQuery = '',
   showConvertModal = false,
@@ -255,95 +109,6 @@ export const FriendsView: React.FC<FriendsViewProps> = ({
   const [showConvertPicker, setShowConvertPicker] = useState(false);
   const [manualRates, setManualRates] = useState(false);
   const [sourceCurr, setSourceCurr] = useState<string>('ALL');
-  const [showMergeModal, setShowMergeModal] = useState(false);
-  // People who appear under one name but with 2+ identities (usually fragmented
-  // after an account deletion) — offered for review/merge. Recompute on data.
-  const duplicatePeople: DuplicatePerson[] = useMemo(() => findDuplicatePeople(groups, me), [groups, me]);
-  // Review cards: same name, 2+ different emails, where exactly ONE email is a
-  // joined (signed-in) account. That account is the primary; Merge points the
-  // other (pending) invites at it. Two different joined accounts are never
-  // offered — they really are separate people.
-  const reviewKey = (r: MergeReview) => [r.name.toLowerCase(), r.primary, ...r.others.map((o) => o.email || o.groupId).sort()].join('|');
-  const [dismissedReviews, setDismissedReviews] = useState<string[]>(() => {
-    try { return JSON.parse(localStorage.getItem('divido_merge_dismissed') || '[]'); } catch { return []; }
-  });
-  const dismissReview = (r: MergeReview) => {
-    setDismissedReviews((prev) => {
-      const next = [...prev, reviewKey(r)];
-      try { localStorage.setItem('divido_merge_dismissed', JSON.stringify(next)); } catch { /* ignore */ }
-      return next;
-    });
-  };
-  const allMergeReviews = useMemo(() => {
-    const out: MergeReview[] = [];
-    duplicatePeople.forEach((d) => {
-      const withEmail = d.entries.filter((e) => e.email);
-      if (new Set(withEmail.map((e) => e.email)).size < 2) return;
-      const isJoined = (e: DuplicateEntry) => {
-        const g = groups.find((x) => String(x.id) === String(e.groupId));
-        return !!g && !(g.pendingMembers || []).includes(e.memberName);
-      };
-      // Same name twice in ONE group is two people on purpose (adding or
-      // renaming to a taken name needs a different email, and the name gets a
-      // hidden tag), so only spots in different groups are offered.
-      if (new Set(d.entries.map((e) => String(e.groupId))).size < 2) return;
-      const joinedEmails = new Set(withEmail.filter(isJoined).map((e) => e.email));
-      if (joinedEmails.size === 0) {
-        // Nobody has joined: offer it, the user chooses the primary email.
-        const primary = withEmail.find((e) => mergeableInto(d.entries, e.email).length > 0)?.email;
-        if (!primary) return;
-        out.push({
-          name: d.name,
-          primary,
-          primaryGroups: withEmail.filter((e) => e.email === primary).map((e) => e.groupName),
-          others: mergeableInto(d.entries, primary),
-          all: d.entries,
-        });
-        return;
-      }
-      if (joinedEmails.size !== 1) return;
-      const primary = [...joinedEmails][0];
-      const others = mergeableInto(d.entries, primary).filter((e) => !isJoined(e));
-      if (others.length === 0) return;
-      const primaryGroups = withEmail.filter((e) => e.email === primary && isJoined(e)).map((e) => e.groupName);
-      out.push({ name: d.name, primary, primaryGroups, others });
-    });
-    return out;
-  }, [duplicatePeople, groups]);
-  const mergeReviews = allMergeReviews.filter((r) => !dismissedReviews.includes(reviewKey(r)));
-
-  // Emails the app already knows (from any group's member identities), for the
-  // merge sheet's "Merge into this email" autocomplete. Ranked so ones tied to a
-  // matching name (exact, then same first name) come first, then all the rest.
-  const knownEmails = useMemo(() => {
-    const byName: Record<string, Set<string>> = {};
-    const all = new Set<string>();
-    for (const g of groups || []) {
-      const mi = (g as any).memberIdentities || {};
-      for (const [nm, id] of Object.entries(mi)) {
-        if (typeof id === 'string' && id.includes('@')) {
-          const em = id.toLowerCase();
-          all.add(em);
-          const k = nm.replace(/\s*\(Left\)$/i, '').trim().toLowerCase();
-          (byName[k] = byName[k] || new Set()).add(em);
-        }
-      }
-    }
-    return { byName, all: Array.from(all) };
-  }, [groups]);
-
-  const suggestEmails = useMemo(() => (name: string): string[] => {
-    const key = name.trim().toLowerCase();
-    const first = key.split(' ')[0];
-    const exact = knownEmails.byName[key] ? Array.from(knownEmails.byName[key]) : [];
-    const firstMatches = Object.entries(knownEmails.byName)
-      .filter(([k]) => k.split(' ')[0] === first)
-      .flatMap(([, s]) => Array.from(s));
-    const ranked = Array.from(new Set([...exact, ...firstMatches]));
-    const rest = knownEmails.all.filter((e) => !ranked.includes(e));
-    return [...ranked, ...rest];
-  }, [knownEmails]);
-
   // Heavy balance derivation depends only on groups/expenses/me, so memoize it
   // to avoid recomputing every friend's balance on unrelated re-renders (typing
   // in the search box, opening a dropdown, etc.).
@@ -660,25 +425,6 @@ export const FriendsView: React.FC<FriendsViewProps> = ({
 
   return (
     <div className="content-width-limit">
-      {showMergeModal && (
-        <MergeDuplicatesModal
-          reviews={mergeReviews}
-          onDismiss={dismissReview}
-          onClose={() => setShowMergeModal(false)}
-          onMerge={async (entries, canonicalEmail) => { if (onMergePeople) await onMergePeople(entries, canonicalEmail); }}
-        />
-      )}
-      {onMergePeople && mergeReviews.length > 0 && (
-        <div
-          onClick={() => setShowMergeModal(true)}
-          style={{ display: 'flex', alignItems: 'center', gap: '10px', background: '#FFFBEB', border: '1px solid #FDE68A', borderRadius: '14px', padding: '10px 14px', marginBottom: '14px', cursor: 'pointer' }}
-        >
-          <span style={{ flex: 1, minWidth: 0, fontSize: '13.5px', fontWeight: 600, color: '#92400E', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-            Found {mergeReviews.length} duplicate {mergeReviews.length === 1 ? 'name' : 'names'}
-          </span>
-          <span style={{ color: '#B45309', fontSize: '13px', fontWeight: 700, whiteSpace: 'nowrap' }}>Review ›</span>
-        </div>
-      )}
       {/* Universal Net Balance Card — kept above the search bar */}
       <div style={{ marginBottom: '18px', width: '100%', animation: 'fadeIn 0.25s ease-out' }}>
         <span style={{ fontSize: '11px', fontWeight: 700, letterSpacing: '1.5px', textTransform: 'uppercase', color: '#B0A79C', marginBottom: '10px', marginLeft: '2px', display: 'block' }}>

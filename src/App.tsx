@@ -93,7 +93,7 @@ import { CurrencySetupModal } from './components/CurrencySetupModal';
 import { GroupGallery } from './components/GroupGallery';
 import { checkIfDemoMode } from './lib/demoMode';
 import { ensureArray, ensureObject, isLegacyRenameLog, formatCompactAmount, genGroupId, genExpenseId, titleCaseName } from './lib/utils';
-import { getPersonKey, toIdentitySpace, pickCanonicalIdentity, findDuplicateGroups, type DuplicateEntry, setSyncedDismissedPeople, buildNameEmailResolver, upiFor, fillPartyKeys, deriveKeyColumns, sameShareMap, memberNamesByKey, applyKeyNames, setDisplayGroups, shown, uniqueProfileName, dropShadowedLeftRows, isPastMemberOf } from './lib/identity';
+import { getPersonKey, toIdentitySpace, findDuplicateGroups, setSyncedDismissedPeople, buildNameEmailResolver, upiFor, fillPartyKeys, deriveKeyColumns, sameShareMap, memberNamesByKey, applyKeyNames, setDisplayGroups, shown, uniqueProfileName, dropShadowedLeftRows, isPastMemberOf } from './lib/identity';
 import { groupActivityTimestamp } from './lib/joinProgress';
 import { parseInviteParam, buildPersonInviteLink, personInviteMessage, groupInviteMessage, type InviteSpot } from './lib/inviteLink';
 import {
@@ -1753,11 +1753,6 @@ function App() {
     return empties.length;
   };
 
-  // Merge several roster entries that are the SAME person (usually fragmented
-  // after an account deletion dropped their email) into one shared identity, so
-  // they collapse to a single person in balances/suggestions everywhere.
-  // Writes a shared key onto each row (invite_email when the canonical is an
-  // email, else the hidden person_id) and mirrors it into local memberIdentities.
   // Attach an email to a pending invite so the joiner auto-claims by email (no
   // "pick your name" step, and no same-name mix-up). Sets invite_email in the
   // cloud + the member's local identity.
@@ -1834,43 +1829,6 @@ function App() {
       } catch (err) { console.error('auto-link pending email failed:', err); }
     });
   }, [groups, isAuthenticated, userEmail]);
-
-  const mergePeople = async (entries: DuplicateEntry[], canonicalOverride?: string) => {
-    // The review screen passes only the entries to fold in (often just one)
-    // plus the primary email; without a primary, 2+ entries are needed.
-    if (!entries || entries.length === 0) return;
-    if (entries.length < 2 && !(canonicalOverride && canonicalOverride.trim())) return;
-    // The user can choose the primary email to merge everyone into; otherwise
-    // fall back to the automatic pick (existing email > person_id).
-    const canonical = (canonicalOverride && canonicalOverride.trim())
-      ? canonicalOverride.trim().toLowerCase()
-      : pickCanonicalIdentity(entries);
-    const isEmail = canonical.includes('@');
-    if (!checkIfDemoMode() && isAuthenticated) {
-      for (const e of entries) {
-        const upd: Record<string, unknown> = isEmail
-          ? { invite_email: canonical }
-          : { person_id: canonical };
-        try {
-          await supabase
-            .from('group_members')
-            .update(upd)
-            .eq('group_id', e.groupId)
-            .eq('name', e.memberName);
-        } catch (err) {
-          console.error('Failed to merge member on Supabase:', err);
-        }
-      }
-    }
-    // Reflect immediately in local state so the UI consolidates without a reload.
-    setGroups((prev) => prev.map((g) => {
-      const es = entries.filter((e) => String(e.groupId) === String(g.id));
-      if (es.length === 0) return g;
-      const mi = { ...((g as any).memberIdentities || {}) };
-      es.forEach((e) => { mi[e.memberName] = canonical; });
-      return { ...g, memberIdentities: mi } as typeof g;
-    }));
-  };
 
   useEffect(() => {
     try { sessionStorage.removeItem('divido_chunk_reloaded'); } catch {}
@@ -4790,7 +4748,6 @@ function App() {
             userEmail={userEmail}
             setView={setView}
             setSelectedId={setSelectedId}
-            onMergePeople={mergePeople}
             setGlobalSettleData={setGlobalSettleData}
             userMetadata={userMetadata}
             memberAvatars={memberAvatars}

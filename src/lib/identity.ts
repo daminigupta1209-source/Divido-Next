@@ -288,65 +288,6 @@ export const buildPeopleSuggestions = (
     .sort((a, b) => a.name.localeCompare(b.name));
 };
 
-// ─────────────────────────────────────────────────────────────────────────
-// Duplicate-person detection for the "Merge people" tool.
-//
-// The same real person can end up with DIFFERENT identity keys across groups —
-// most often after they delete their account (their email is dropped, so each
-// group falls back to a per-group person_id) — which makes them show up as
-// several separate people in balances/suggestions. This finds names that
-// resolve to 2+ distinct identities so the user can review and merge them.
-// It only SUGGESTS by matching name; the user confirms, because two genuinely
-// different people can share a name.
-// ─────────────────────────────────────────────────────────────────────────
-export interface DuplicateEntry {
-  groupId: string | number;
-  groupName: string;
-  memberName: string; // exact roster string (may end in " (Left)")
-  identity: string;
-  email: string;
-}
-export interface DuplicatePerson {
-  name: string;
-  entries: DuplicateEntry[];
-}
-
-export const findDuplicatePeople = (groups: Group[], me: string): DuplicatePerson[] => {
-  const meLower = (me || '').replace(/\s*\((me|you|left)\)$/i, '').trim().toLowerCase();
-  const byName = new Map<string, DuplicateEntry[]>();
-  for (const g of groups || []) {
-    if (!g || g.id === 'STANDALONE') continue;
-    const mi = g.memberIdentities || {};
-    for (const m of g.members || []) {
-      // Compare the name people SEE: drop "(Left)" and the hidden email tag
-      // ("Esha Gupta (esha1997)" is the same name as "Esha Gupta").
-      const clean = withoutEmailTag(g, m).replace(/\s*\(Left\)$/i, '').trim();
-      const lower = clean.toLowerCase();
-      if (!clean || lower === meLower) continue;
-      const identity = typeof mi[m] === 'string' && mi[m] ? mi[m] : clean;
-      if (!byName.has(lower)) byName.set(lower, []);
-      byName.get(lower)!.push({
-        groupId: g.id,
-        // Shared 2-person threads are shown as Non-Group everywhere.
-        groupName: (g as any).isDirect ? 'Non-Group' : g.name,
-        memberName: m,
-        identity,
-        email: identity.includes('@') ? identity : '',
-      });
-    }
-  }
-  const out: DuplicatePerson[] = [];
-  for (const entries of byName.values()) {
-    const distinct = new Set(entries.map((e) => e.identity.toLowerCase()));
-    if (distinct.size >= 2) {
-      const first = entries[0];
-      const g0 = (groups || []).find((g) => g && String(g.id) === String(first.groupId));
-      out.push({ name: withoutEmailTag(g0, first.memberName).replace(/\s*\(Left\)$/i, '').trim(), entries });
-    }
-  }
-  return out.sort((a, b) => a.name.localeCompare(b.name));
-};
-
 // Find groups that are almost certainly accidental duplicates of each other —
 // created when two devices made the "same" group at the same moment. To avoid
 // flagging two LEGITIMATELY distinct same-named groups (a user can have two
@@ -374,15 +315,6 @@ export const findDuplicateGroups = (groups: Group[]): { name: string; groups: Gr
     if (gs.length >= 2) out.push({ name: gs[0].name, groups: gs });
   }
   return out;
-};
-
-// Pick the identity all merged rows should share: prefer a real email, then an
-// existing hidden person_id, else mint a stable merged id.
-export const pickCanonicalIdentity = (entries: DuplicateEntry[]): string => {
-  const email = entries.map((e) => e.identity).find((id) => id.includes('@'));
-  if (email) return email.toLowerCase();
-  const pid = entries.map((e) => e.identity).find((id) => id && !id.includes('@'));
-  return pid || `merged-${Date.now()}`;
 };
 
 // Strip the "(Left)" / "(me)" display suffixes to get the bare name. Kept here
