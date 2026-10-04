@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { resolveMemberKey, fillPartyKeys } from './identity';
+import { resolveMemberKey, fillPartyKeys, deriveKeyColumns, sameShareMap } from './identity';
 import { Group, Expense } from './types';
 
 const grp = (memberKeys?: Record<string, string>, memberIdentities?: Record<string, string>): Group =>
@@ -194,5 +194,26 @@ describe('buildNameIdentityResolver', () => {
     expect(r('chhutki')).toBe('pid-c');
     expect(r('Didi')).toBeUndefined();
     expect(r('Stranger')).toBeUndefined();
+  });
+});
+
+describe('deriveKeyColumns (permanent ID step 2)', () => {
+  const base = { id: 'x', gId: 'g1', title: 't', amt: 100, date: '2026-10-04', currency: '?' } as unknown as Expense;
+  it('maps payer, splitters (same order) and shares to member keys', () => {
+    const e = { ...base, paid: 'Ravi', splitters: ['Asha', 'Ravi'], shares: { Asha: 40, Ravi: 60 }, partyKeys: { Ravi: 'k-r', asha: 'k-a' } } as Expense;
+    expect(deriveKeyColumns(e)).toEqual({ paidKey: 'k-r', splitterKeys: ['k-a', 'k-r'], sharesByKey: { 'k-a': 40, 'k-r': 60 } });
+  });
+  it('sends nothing when any name has no key (the database fills it)', () => {
+    const e = { ...base, paid: 'Ravi', splitters: ['Ravi', 'Ghost'], partyKeys: { Ravi: 'k-r' } } as Expense;
+    expect(deriveKeyColumns(e)).toBeNull();
+  });
+  it('skips SYSTEM notes and Non-Group expenses', () => {
+    expect(deriveKeyColumns({ ...base, paid: 'SYSTEM', splitters: [] } as Expense)).toBeNull();
+    expect(deriveKeyColumns({ ...base, gId: 'STANDALONE', paid: 'Ravi', splitters: ['Ravi'], partyKeys: { Ravi: 'k' } } as Expense)).toBeNull();
+  });
+  it('sameShareMap ignores key order and number-vs-string', () => {
+    expect(sameShareMap({ a: 1, b: '2' }, { b: 2, a: 1 })).toBe(true);
+    expect(sameShareMap({ a: 1 }, { a: 2 })).toBe(false);
+    expect(sameShareMap(undefined, undefined)).toBe(true);
   });
 });

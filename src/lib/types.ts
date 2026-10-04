@@ -81,6 +81,11 @@ export interface Expense {
   // Name (as written on this expense) → group_members.member_key it referred
   // to when written. See fillPartyKeys in lib/identity.
   partyKeys?: Record<string, string>;
+  // Permanent ID columns (api/expense_member_ids.sql): the same people as
+  // paid / splitters / shares, by member_key. See deriveKeyColumns.
+  paidKey?: string;
+  splitterKeys?: string[];
+  sharesByKey?: Record<string, number>;
   // Roster name of whoever created the expense (may differ from `paid`).
   // Undefined for expenses created before api/add_expense_added_by.sql.
   addedBy?: string;

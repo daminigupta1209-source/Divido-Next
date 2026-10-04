@@ -577,6 +577,44 @@ export const fillPartyKeys = (e: Expense, group: Group | undefined | null): Expe
   return added ? { ...e, partyKeys: added } : null;
 };
 
+// Permanent ID project, step 2 (docs/permanent-id-plan.md): the ID columns
+// saved next to the names — payer, splitters (same order) and shares, each by
+// member_key. Read from the expense's own party_keys. Returns null (send
+// nothing; the database trigger fills it) for Non-Group / SYSTEM rows, or when
+// any name has no key yet, so the app never sends a half-resolved row.
+export const deriveKeyColumns = (
+  e: Expense,
+): { paidKey: string; splitterKeys: string[]; sharesByKey?: Record<string, number> } | null => {
+  if (!e.paid || e.paid === 'SYSTEM' || String(e.gId) === 'STANDALONE') return null;
+  const pk = e.partyKeys || {};
+  const lower: Record<string, string> = {};
+  Object.entries(pk).forEach(([n, k]) => { lower[n.trim().toLowerCase()] = k; });
+  let missing = false;
+  const keyOf = (n: string): string => {
+    const k = pk[n] || lower[String(n).trim().toLowerCase()];
+    if (!k) missing = true;
+    return k || '';
+  };
+  const paidKey = keyOf(e.paid);
+  const splitterKeys = (e.splitters || []).map(keyOf);
+  let sharesByKey: Record<string, number> | undefined;
+  if (e.shares && typeof e.shares === 'object') {
+    sharesByKey = {};
+    Object.entries(e.shares).forEach(([n, v]) => { sharesByKey![keyOf(n)] = v as number; });
+  }
+  if (missing) return null;
+  return { paidKey, splitterKeys, sharesByKey };
+};
+
+// Same shares map regardless of key order (the database stores jsonb keys in
+// its own order, so a plain JSON compare would see a change on every load).
+export const sameShareMap = (a?: Record<string, unknown>, b?: Record<string, unknown>): boolean => {
+  if (!a || !b) return !a && !b;
+  const ka = Object.keys(a);
+  if (ka.length !== Object.keys(b).length) return false;
+  return ka.every((k) => k in b && Number(a[k]) === Number(b[k]));
+};
+
 // A same-named person added with an email is stored as "Name (emailpart)" so
 // expenses (which still carry names) can't mix the two people up. That tag is
 // bookkeeping, not part of their name: return the name without it wherever the

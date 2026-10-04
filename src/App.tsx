@@ -93,7 +93,7 @@ import { CurrencySetupModal } from './components/CurrencySetupModal';
 import { GroupGallery } from './components/GroupGallery';
 import { checkIfDemoMode } from './lib/demoMode';
 import { ensureArray, ensureObject, isLegacyRenameLog, formatCompactAmount, genGroupId, genExpenseId, titleCaseName } from './lib/utils';
-import { getPersonKey, toIdentitySpace, pickCanonicalIdentity, findDuplicateGroups, type DuplicateEntry, setSyncedDismissedPeople, buildNameEmailResolver, upiFor, fillPartyKeys, uniqueProfileName, dropShadowedLeftRows } from './lib/identity';
+import { getPersonKey, toIdentitySpace, pickCanonicalIdentity, findDuplicateGroups, type DuplicateEntry, setSyncedDismissedPeople, buildNameEmailResolver, upiFor, fillPartyKeys, deriveKeyColumns, sameShareMap, uniqueProfileName, dropShadowedLeftRows } from './lib/identity';
 import { groupActivityTimestamp } from './lib/joinProgress';
 import { parseInviteParam, buildPersonInviteLink, personInviteMessage, groupInviteMessage, type InviteSpot } from './lib/inviteLink';
 import {
@@ -2545,10 +2545,19 @@ function App() {
     setExpenses((prev) => {
       let changed = false;
       const next = prev.map((e) => {
-        const filled = fillPartyKeys(e, byId.get(String(e.gId)));
-        if (!filled) return e;
+        const filled = fillPartyKeys(e, byId.get(String(e.gId))) || e;
+        // Permanent ID step 2: keep the ID columns in step with the names.
+        const cols = deriveKeyColumns(filled);
+        const withCols = cols
+          && (filled.paidKey !== cols.paidKey
+            || JSON.stringify(filled.splitterKeys) !== JSON.stringify(cols.splitterKeys)
+            // Key order doesn't matter (the database re-orders object keys).
+            || !sameShareMap(filled.sharesByKey, cols.sharesByKey))
+          ? { ...filled, ...cols }
+          : filled;
+        if (withCols === e) return e;
         changed = true;
-        return filled;
+        return withCols;
       });
       return changed ? next : prev;
     });

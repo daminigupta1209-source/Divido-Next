@@ -58,6 +58,11 @@ export const EXPENSE_FIELDS: FieldDef[] = [
   // Name → member_key map (api/add_member_key.sql). Left undefined until the
   // group has member keys, so it's never sent before the column exists.
   { app: 'partyKeys', db: 'party_keys', fromDb: (v) => (v ? ensureObject(v) : undefined), deep: true },
+  // Permanent ID columns (api/expense_member_ids.sql). Undefined until derived,
+  // so they're dropped from the payload and the DB trigger fills them instead.
+  { app: 'paidKey', db: 'paid_key', fromDb: (v) => v || undefined },
+  { app: 'splitterKeys', db: 'splitter_keys', fromDb: (v) => (v ? ensureArray(v) : undefined), deep: true },
+  { app: 'sharesByKey', db: 'shares_by_key', fromDb: (v) => (v ? ensureObject(v) : undefined), deep: true },
   // Creator's roster name (api/add_expense_added_by.sql). Undefined on older
   // rows, so it's dropped from the JSON payload and never sent for them.
   { app: 'addedBy', db: 'added_by', fromDb: (v) => (v ? titleCaseName(v) : undefined) },
