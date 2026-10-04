@@ -820,7 +820,7 @@ export const GroupDetail: React.FC<GroupDetailProps> = ({
                 >
                   {filterType === 'owe' ? 'To pay' : 'To collect'} <span style={{ fontSize: '13px', lineHeight: 1 }}>✕</span>
                 </button>
-                <span style={{ fontSize: '12.5px', color: '#64748B' }}>
+                <span style={{ fontSize: '12.5px', fontStyle: 'italic', fontWeight: 600, color: filterType === 'owe' ? '#B91C1C' : '#047857' }}>
                   {(() => {
                     const n = new Set(myTrans
                       .filter((t) => (filterType === 'owe' ? t.from === me : t.to === me))

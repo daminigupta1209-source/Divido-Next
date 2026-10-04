@@ -765,7 +765,7 @@ export const FriendsView: React.FC<FriendsViewProps> = ({
             <span style={{ fontSize: '13px', lineHeight: 1 }}>✕</span>
           </button>
           {/* Short summary so it's clear what this list is and what to do next. */}
-          <span style={{ fontSize: '12.5px', color: '#64748B' }}>
+          <span style={{ fontSize: '12.5px', fontStyle: 'italic', fontWeight: 600, color: balanceFilter === 'owe' ? '#B91C1C' : '#047857' }}>
             {(() => {
               const n = filteredFriends.length;
               if (n === 0) return balanceFilter === 'owe' ? 'No one to pay' : 'No one to collect from';
