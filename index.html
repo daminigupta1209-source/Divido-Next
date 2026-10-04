@@ -60,7 +60,12 @@
           r.querySelector('pre').textContent = errors.slice(-3).join('\n') || 'No error captured';
           r.querySelector('#dv-retry').onclick = function () {
             try { sessionStorage.removeItem('dv_rescued'); } catch (e) {}
-            location.reload();
+            // Clear the offline copy too, so the retry fetches a fresh app.
+            var reload = function () { location.reload(); };
+            Promise.all([
+              navigator.serviceWorker ? navigator.serviceWorker.getRegistrations().then(function (rs) { return Promise.all(rs.map(function (x) { return x.unregister(); })); }) : null,
+              window.caches ? caches.keys().then(function (ks) { return Promise.all(ks.map(function (k) { return caches.delete(k); })); }) : null
+            ]).then(reload, reload);
           };
         }
         function alreadyRescued() { try { return !!sessionStorage.getItem('dv_rescued'); } catch (e) { return true; } }
