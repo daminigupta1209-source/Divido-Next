@@ -855,7 +855,7 @@ export const FriendsView: React.FC<FriendsViewProps> = ({
             const prefix = `${label}${convertTo ? '≈ ' : ''}`;
             // Fixed size on every card (long text truncates with …) so rows
             // never differ in size between people.
-            return { ...pickAmount(val, curr, prefix, '', 13), fontSize: 13 };
+            return { ...pickAmount(val, curr, prefix, '', 12.5), fontSize: 12.5 };
           };
 
           const AV_COLORS = ['#B39DDB', '#F48FB1', '#80CBC4', '#FFB74D', '#9FA8DA', '#A5D6A7', '#EF9A9A', '#7FC8CE'];
@@ -917,14 +917,14 @@ export const FriendsView: React.FC<FriendsViewProps> = ({
                 <div style={{ display: 'flex', alignItems: 'baseline', gap: '8px', minWidth: 0 }}>
                   <h3 style={{ fontSize: '16px', fontWeight: 500, color: '#2E2A25', margin: 0, textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap', textTransform: 'capitalize', flexShrink: 1 }}>{shown(f.name)}</h3>
                   {!(f.id && String(f.id).includes('@')) && f.groups && f.groups.length > 0 && (
-                    <span style={{ fontSize: '13px', fontWeight: 400, color: '#94A3B8', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', flexShrink: 1 }}>({f.groups.join(', ')})</span>
+                    <span style={{ fontSize: '12px', fontWeight: 400, color: '#94A3B8', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', flexShrink: 1 }}>({f.groups.join(', ')})</span>
                   )}
                 </div>
                 {f.id && String(f.id).includes('@') && (
                   <span style={{ fontSize: '12px', fontWeight: 400, color: '#94A3B8', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{f.id}</span>
                 )}
                 {!active ? (
-                  <span style={{ fontSize: '13px', fontWeight: 400, color: '#94A3B8' }}>Settled up</span>
+                  <span style={{ fontSize: '12.5px', fontWeight: 400, color: '#94A3B8' }}>Settled up</span>
                 ) : (
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '2px', minWidth: 0 }}>
                     {payList.length > 0 && (() => {

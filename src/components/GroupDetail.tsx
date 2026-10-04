@@ -968,20 +968,20 @@ export const GroupDetail: React.FC<GroupDetailProps> = ({
                           })()}
 
                           <div style={{ minWidth: 0, flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center', gap: '6px' }}>
-                            <h3  style={{ fontSize: '16px', fontWeight: 600, color: '#2E2A25', margin: 0, textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap', textTransform: 'capitalize' }}>{shown(m)}</h3>
+                            <h3  style={{ fontSize: '16px', fontWeight: 500, color: '#2E2A25', margin: 0, textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap', textTransform: 'capitalize' }}>{shown(m)}</h3>
                             {selectedGroup.memberIdentities?.[m] && String(selectedGroup.memberIdentities[m]).includes('@') && (
-                              <span style={{ fontSize: '11px', fontWeight: 500, color: '#94A3B8', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{selectedGroup.memberIdentities[m]}</span>
+                              <span style={{ fontSize: '12px', fontWeight: 400, color: '#94A3B8', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{selectedGroup.memberIdentities[m]}</span>
                             )}
 
                             <div style={{ display: 'flex', flexDirection: 'column', gap: '2px', minWidth: 0 }}>
                               {payList.length > 0 && (
-                                <span style={{ fontSize: '13px', fontWeight: 500, color: '#EF4444', display: 'inline-flex', alignItems: 'center', gap: '5px', minWidth: 0 }}>
+                                <span style={{ fontSize: '12.5px', fontWeight: 400, color: '#EF4444', display: 'inline-flex', alignItems: 'center', gap: '5px', minWidth: 0 }}>
                                   <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{`You pay ${balPrimary(payList)}`}</span>
                                   {payList.length > 1 && <span style={{ background: '#F1EFE8', borderRadius: '999px', padding: '0 6px', fontSize: '10px', fontWeight: 600, lineHeight: '16px', flexShrink: 0 }}>+{payList.length - 1}</span>}
                                 </span>
                               )}
                               {collectList.length > 0 && (
-                                <span style={{ fontSize: '13px', fontWeight: 500, color: '#047857', display: 'inline-flex', alignItems: 'center', gap: '5px', minWidth: 0 }}>
+                                <span style={{ fontSize: '12.5px', fontWeight: 400, color: '#047857', display: 'inline-flex', alignItems: 'center', gap: '5px', minWidth: 0 }}>
                                   <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{`You collect ${balPrimary(collectList)}`}</span>
                                   {collectList.length > 1 && <span style={{ background: '#F1EFE8', borderRadius: '999px', padding: '0 6px', fontSize: '10px', fontWeight: 600, lineHeight: '16px', flexShrink: 0 }}>+{collectList.length - 1}</span>}
                                 </span>

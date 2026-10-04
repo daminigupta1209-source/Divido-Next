@@ -970,16 +970,16 @@ export const MasterSummary: React.FC<MasterSummaryProps> = ({
                   Non-Group
                 </h3>
                 {ngEntries.length === 0 ? (
-                  <span style={{ fontSize: '13px', fontWeight: 500, color: '#94A3B8' }}>Settled up</span>
+                  <span style={{ fontSize: '12.5px', fontWeight: 400, color: '#94A3B8' }}>Settled up</span>
                 ) : (
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '1px', minWidth: 0 }}>
                     {ngPay.length > 0 && (
-                      <span style={{ fontSize: '13px', fontWeight: 500, color: '#EF4444', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                      <span style={{ fontSize: '12.5px', fontWeight: 400, color: '#EF4444', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                         You pay {ngPay[0][0]}{formatExactAmount(Math.abs(ngPay[0][1]))}
                       </span>
                     )}
                     {ngCollect.length > 0 && (
-                      <span style={{ fontSize: '13px', fontWeight: 500, color: '#3FA97C', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                      <span style={{ fontSize: '12.5px', fontWeight: 400, color: '#3FA97C', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                         You collect {ngCollect[0][0]}{formatExactAmount(ngCollect[0][1])}
                       </span>
                     )}
@@ -1155,7 +1155,7 @@ export const MasterSummary: React.FC<MasterSummaryProps> = ({
                   {g.name || 'Untitled Group'}
                 </h3>
                 {balEntries.length === 0 ? (
-                  <span style={{ fontSize: '13px', fontWeight: 500, color: '#94A3B8' }}>Settled up</span>
+                  <span style={{ fontSize: '12.5px', fontWeight: 400, color: '#94A3B8' }}>Settled up</span>
                 ) : (
                   (() => {
                     // Show only the primary currency per direction; fold the rest
@@ -1165,12 +1165,12 @@ export const MasterSummary: React.FC<MasterSummaryProps> = ({
                     return (
                       <div style={{ display: 'flex', flexDirection: 'column', gap: '1px', minWidth: 0 }}>
                         {payList.length > 0 && (
-                          <span style={{ fontSize: '13px', fontWeight: 500, color: '#EF4444', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                          <span style={{ fontSize: '12.5px', fontWeight: 400, color: '#EF4444', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                             You pay {payList[0][0]}{formatExactAmount(Math.abs(payList[0][1]))}
                           </span>
                         )}
                         {collectList.length > 0 && (
-                          <span style={{ fontSize: '13px', fontWeight: 500, color: '#3FA97C', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                          <span style={{ fontSize: '12.5px', fontWeight: 400, color: '#3FA97C', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                             You collect {collectList[0][0]}{formatExactAmount(collectList[0][1])}
                           </span>
                         )}

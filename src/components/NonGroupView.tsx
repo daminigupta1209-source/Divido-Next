@@ -654,12 +654,12 @@ export const NonGroupView: React.FC<NonGroupViewProps> = ({
                       </div>
                       <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', gap: '4px' }}>
                         <div style={{ display: 'flex', alignItems: 'baseline', gap: '6px', minWidth: 0 }}>
-                          <h3 style={{ fontSize: '16px', fontWeight: 600, color: '#2E2A25', margin: 0, textTransform: 'capitalize', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', flexShrink: 1 }}>{shown(p.name)}</h3>
+                          <h3 style={{ fontSize: '16px', fontWeight: 500, color: '#2E2A25', margin: 0, textTransform: 'capitalize', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', flexShrink: 1 }}>{shown(p.name)}</h3>
                         </div>
                         {p.email && (
-                          <span style={{ fontSize: '11.5px', color: '#94A3B8', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{p.email}</span>
+                          <span style={{ fontSize: '12px', fontWeight: 400, color: '#94A3B8', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{p.email}</span>
                         )}
-                        <span style={{ fontSize: '13px', fontWeight: 500, color: b.color }}>{b.text}</span>
+                        <span style={{ fontSize: '12.5px', fontWeight: 400, color: b.color }}>{b.text}</span>
                       </div>
                       {onAddWithPerson && (
                         <button
