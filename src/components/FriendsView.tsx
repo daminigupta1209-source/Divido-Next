@@ -771,8 +771,8 @@ export const FriendsView: React.FC<FriendsViewProps> = ({
               if (n === 0) return balanceFilter === 'owe' ? 'No one to pay' : 'No one to collect from';
               const who = `${n} ${n === 1 ? 'friend' : 'friends'}`;
               return balanceFilter === 'owe'
-                ? `You have ${who} to pay · tap one to settle`
-                : `You have ${who} to collect from · tap one to settle`;
+                ? `You have ${who} to pay · settle up below`
+                : `You have ${who} to collect from · settle up below`;
             })()}
           </span>
         </div>
