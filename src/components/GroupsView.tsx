@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { getEmoji, GROUP_COLORS, formatExactAmount, formatCompactAmount } from '../lib/utils';
+import { getEmoji, GROUP_COLORS, formatExactAmount, formatCompactAmount, matchesAmount } from '../lib/utils';
 import { StyledDropdown } from './StyledDropdown';
 
 const filterBtnStyle: React.CSSProperties = { padding: '6px 12px', borderRadius: '20px', border: '1px solid #E2E8F0', fontSize: '12px', fontWeight: 600, background: '#F1F5F9', color: '#475569', boxShadow: 'none' };
@@ -128,8 +128,13 @@ export const GroupsView: React.FC<GroupsViewProps> = ({
     
     // Search filter
     const q = (searchQuery || headerSearchQuery).trim().toLowerCase();
-    if (q && !g.name.toLowerCase().includes(q)) {
-      return false;
+    if (q) {
+      const inGroup = g.name.toLowerCase().includes(q)
+        || (g.members || []).some((mem) => String(mem).toLowerCase().includes(q))
+        || expenses.some((e) => String(e.gId) === String(g.id) && !e.isDeleted && (e.title || '').toLowerCase().includes(q))
+        || matchesAmount(q, Object.entries(getMemberBalance(g.id, me)))
+        || expenses.some((e) => String(e.gId) === String(g.id) && !e.isDeleted && e.paid !== 'SYSTEM' && matchesAmount(q, [[e.currency || g.currency || '₹', e.amt || 0]]));
+      if (!inGroup) return false;
     }
 
     const groupExps = expenses.filter((e) => String(e.gId) === String(g.id));

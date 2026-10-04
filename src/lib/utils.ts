@@ -422,3 +422,18 @@ export const ensureObject = (val: any): Record<string, number> => {
   }
   return {};
 };
+
+// Header search on amounts: does the typed text match any of these amounts?
+// "300", "₹300", "1,200", "1200" and "1200.50" all match ₹1,200.50-style values.
+export const matchesAmount = (query: string, amounts: Array<[string, number]>): boolean => {
+  const q = query.trim().toLowerCase().replace(/,/g, '');
+  if (!q || !/\d/.test(q)) return false;
+  return amounts.some(([curr, v]) => {
+    const a = Math.abs(Number(v) || 0);
+    const forms = [formatExactAmount(a), String(Math.round(a * 100) / 100), a.toFixed(2)];
+    return forms.some((f) => {
+      const plain = f.replace(/,/g, '').toLowerCase();
+      return plain.includes(q) || `${curr}${plain}`.toLowerCase().includes(q);
+    });
+  });
+};

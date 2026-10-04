@@ -2,7 +2,7 @@ import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { shown } from '../lib/identity';
 import { NetBalanceTiles } from './NetBalanceTiles';
 import { BalanceDisplay } from './BalanceDisplay';
-import { getEmoji, GROUP_COLORS, formatExactAmount, parseExpenseId } from '../lib/utils';
+import { getEmoji, GROUP_COLORS, formatExactAmount, parseExpenseId, matchesAmount } from '../lib/utils';
 import { StyledDropdown } from './StyledDropdown';
 
 // Pill-style trigger for the compact filter dropdowns (matches the old selects).
@@ -382,7 +382,10 @@ export const MasterSummary: React.FC<MasterSummaryProps> = ({
     if (q) {
       const inGroup = g.name.toLowerCase().includes(q)
         || (g.members || []).some((mem) => String(mem).toLowerCase().includes(q))
-        || expenses.some((e) => String(e.gId) === String(g.id) && !e.isDeleted && (e.title || '').toLowerCase().includes(q));
+        || expenses.some((e) => String(e.gId) === String(g.id) && !e.isDeleted && (e.title || '').toLowerCase().includes(q))
+        // Amounts: my balance in the group, or any expense's amount.
+        || matchesAmount(q, Object.entries(getMemberBalance(g.id, myNameInGroup(g.id))))
+        || expenses.some((e) => String(e.gId) === String(g.id) && !e.isDeleted && e.paid !== 'SYSTEM' && matchesAmount(q, [[e.currency || g.currency || '₹', e.amt || 0]]));
       if (!inGroup) return false;
     }
 

@@ -2,7 +2,7 @@ import React from 'react';
 import { shown } from '../lib/identity';
 import { NetBalanceTiles } from './NetBalanceTiles';
 import type { Expense } from '../lib/types';
-import { formatDate, getEmoji, formatExactAmount, getMonthYearKey } from '../lib/utils';
+import { formatDate, getEmoji, formatExactAmount, getMonthYearKey, matchesAmount } from '../lib/utils';
 
 interface NonGroupViewProps {
   expenses: Expense[];
@@ -316,6 +316,8 @@ export const NonGroupView: React.FC<NonGroupViewProps> = ({
     if (!searchLower) return byBal;
     return byBal.filter((p) => {
       if (p.name.toLowerCase().includes(searchLower) || p.email.toLowerCase().includes(searchLower)) return true;
+      if (matchesAmount(searchLower, Object.entries(p.bal))) return true;
+      if (nonGroupExps.some((e) => expenseInvolves(e, p.name.toLowerCase()) && matchesAmount(searchLower, [[e.currency || '₹', e.amt || 0]]))) return true;
       const key = p.name.toLowerCase();
       return nonGroupExps.some((e) => expenseInvolves(e, key) && (e.title || '').toLowerCase().includes(searchLower));
     });
