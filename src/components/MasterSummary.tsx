@@ -1163,42 +1163,6 @@ export const MasterSummary: React.FC<MasterSummaryProps> = ({
                     );
                   })()
                 )}
-                {(() => {
-                  // Subtle "yet to join" nudge: dashed initials read as "not here yet".
-                  const pendingNames = pendingNamesFor(g, myNameInGroup(g.id));
-                  if (pendingNames.length === 0) return null;
-                  return (
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginTop: '2px', minWidth: 0 }}>
-                      <div style={{ display: 'flex', flexShrink: 0 }}>
-                        {pendingNames.slice(0, 3).map((n, idx) => (
-                          <span
-                            key={n}
-                            style={{
-                              width: '16px',
-                              height: '16px',
-                              borderRadius: '50%',
-                              border: '1px dashed #B8AEA2',
-                              background: '#FFFFFF',
-                              color: '#8A8076',
-                              fontSize: '8.5px',
-                              fontWeight: 700,
-                              display: 'flex',
-                              alignItems: 'center',
-                              justifyContent: 'center',
-                              marginLeft: idx === 0 ? 0 : '-5px',
-                              boxSizing: 'border-box',
-                            }}
-                          >
-                            {n.charAt(0).toUpperCase()}
-                          </span>
-                        ))}
-                      </div>
-                      <span style={{ fontSize: '11.5px', fontWeight: 500, color: '#94A3B8', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                        {pendingNames.length} yet to join
-                      </span>
-                    </div>
-                  );
-                })()}
               </div>
 
               <span style={{ fontSize: '18px', color: '#C9BEB2', fontWeight: 600, lineHeight: 1, flexShrink: 0 }}>›</span>
