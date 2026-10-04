@@ -747,21 +747,23 @@ export const uniqueProfileName = (name: string, email: string, taken: Set<string
   return out;
 };
 
-// Short name for activity text ("X paid"). Hides the auto email tag; when
-// another member shares the same name, adds a short email hint instead
-// ("Vandana Investment (vandanagupt…)") so the two are still distinguishable.
-export const activityName = (group: Group | undefined | null, name: string): string => {
-  if (!name) return name;
-  const shown = withoutEmailTag(group, name);
+// Name for activity text ("X paid"), without the hidden email tag. When two
+// members share the name, the screen adds lookalikeEmail() on a second line.
+export const activityName = (group: Group | undefined | null, name: string): string =>
+  (name ? withoutEmailTag(group, name) : name);
+
+// The email to show on a SECOND line under "X paid" when another member of
+// the group has the same name — so you can tell which one. '' otherwise.
+export const lookalikeEmail = (group: Group | undefined | null, name: string): string => {
+  if (!name) return '';
   const base = (s: string) => withoutEmailTag(group, s).replace(/\s*\(Left\)\s*$/i, '').trim().toLowerCase();
   const b = base(name);
+  const self = name.replace(/\s*\(Left\)\s*$/i, '').trim().toLowerCase();
   const dup = (group?.members || []).some((o) =>
-    o.replace(/\s*\(Left\)\s*$/i, '').trim().toLowerCase() !== name.replace(/\s*\(Left\)\s*$/i, '').trim().toLowerCase() && base(o) === b);
-  if (!dup) return shown;
+    o.replace(/\s*\(Left\)\s*$/i, '').trim().toLowerCase() !== self && base(o) === b);
+  if (!dup) return '';
   const email = String(getPersonKey(group, name) || '');
-  if (!email.includes('@')) return shown;
-  // Same style as the pickers: "Esha Gupta · esha1990@gmail.com".
-  return `${shown} · ${email}`;
+  return email.includes('@') ? email : '';
 };
 
 // The member's CURRENT roster name for a name written on an expense. Uses the

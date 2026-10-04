@@ -2,7 +2,7 @@ import React from 'react';
 import { Group, Expense } from '../../lib/types';
 import { formatDate, getEmoji, getExactTime, formatExactAmount } from '../../lib/utils';
 import { revertGroupConversions } from '../../lib/conversions';
-import { activityName } from '../../lib/identity';
+import { activityName, lookalikeEmail } from '../../lib/identity';
 
 interface ExpenseRowProps {
   e: Expense;
@@ -493,6 +493,11 @@ export const ExpenseRow: React.FC<ExpenseRowProps> = ({
               </>
             )}
           </div>
+          {e.paid !== me && e.title !== 'Written off' && lookalikeEmail(selectedGroup, e.paid) && (
+            <div style={{ fontSize: '11px', color: '#94A3B8', marginTop: '2px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+              {lookalikeEmail(selectedGroup, e.paid)}
+            </div>
+          )}
           {e.notes && e.notes !== 'Granular Global Clearance' && (
             <p
               style={{

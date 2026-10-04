@@ -158,15 +158,17 @@ describe('uniqueProfileName', () => {
   });
 });
 
-import { activityName } from './identity';
+import { activityName, lookalikeEmail } from './identity';
 
 describe('activityName', () => {
   const g = { id: 'g', name: 'T', currency: '₹', members: ['Vandana Investment', 'Vandana Investment (Vandanaguptainvestment)', 'Ravi'], memberIdentities: {
     'Vandana Investment': 'vandana.work@gmail.com', 'Vandana Investment (Vandanaguptainvestment)': 'vandanaguptainvestment@gmail.com', Ravi: 'pid',
   } } as unknown as Group;
-  it('hides the tag and adds the email only for look-alikes', () => {
-    expect(activityName(g, 'Vandana Investment (Vandanaguptainvestment)')).toBe('Vandana Investment · vandanaguptainvestment@gmail.com');
-    expect(activityName(g, 'Vandana Investment')).toBe('Vandana Investment · vandana.work@gmail.com');
+  it('hides the tag; look-alikes get their email on a second line', () => {
+    expect(activityName(g, 'Vandana Investment (Vandanaguptainvestment)')).toBe('Vandana Investment');
+    expect(lookalikeEmail(g, 'Vandana Investment (Vandanaguptainvestment)')).toBe('vandanaguptainvestment@gmail.com');
+    expect(lookalikeEmail(g, 'Vandana Investment')).toBe('vandana.work@gmail.com');
+    expect(lookalikeEmail(g, 'Ravi')).toBe('');
     expect(activityName(g, 'Ravi')).toBe('Ravi');
   });
 });
