@@ -562,6 +562,7 @@ export const NonGroupView: React.FC<NonGroupViewProps> = ({
           payLines={frontPayLines}
           collectLines={frontCollectLines}
           active={balFilter}
+          onSummaryFilter={(f) => { setBalFilter(f === 'all' ? null : f); setActiveTab('settle'); }}
           onPayClick={() => { setBalFilter((f) => (f === 'pay' ? null : 'pay')); setActiveTab('settle'); }}
           onCollectClick={() => { setBalFilter((f) => (f === 'collect' ? null : 'collect')); setActiveTab('settle'); }}
         />

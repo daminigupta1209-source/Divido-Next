@@ -829,6 +829,7 @@ export const MasterSummary: React.FC<MasterSummaryProps> = ({
               collectLines={getBacks.map(([curr, amount]) => ({ curr, amount }))}
               // Tap Pay / Collect to filter the group list below (tap again to clear).
               active={balanceFilter === 'owe' ? 'pay' : balanceFilter === 'owed' ? 'collect' : null}
+              onSummaryFilter={(f) => { setBalanceFilter(f === 'pay' ? 'owe' : f === 'collect' ? 'owed' : 'all'); if (homeTab !== 'groups') selectHomeTab('groups'); }}
               onPayClick={() => { setBalanceFilter((f) => (f === 'owe' ? 'all' : 'owe')); if (homeTab !== 'groups') selectHomeTab('groups'); }}
               onCollectClick={() => { setBalanceFilter((f) => (f === 'owed' ? 'all' : 'owed')); if (homeTab !== 'groups') selectHomeTab('groups'); }}
             />

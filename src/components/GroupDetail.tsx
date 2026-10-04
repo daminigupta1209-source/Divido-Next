@@ -667,6 +667,8 @@ export const GroupDetail: React.FC<GroupDetailProps> = ({
               collectMore={getBacks.length - 1}
               payLines={payBacks.map(([curr, amount]) => ({ curr, amount }))}
               collectLines={getBacks.map(([curr, amount]) => ({ curr, amount }))}
+              active={filterType === 'owe' ? 'pay' : filterType === 'owed' ? 'collect' : null}
+              onSummaryFilter={(f) => { setFilterType(f === 'pay' ? 'owe' : f === 'collect' ? 'owed' : 'all'); setActiveTab('balances'); }}
               onClick={() => setActiveTab('balances')}
             />
           </div>
@@ -805,6 +807,18 @@ export const GroupDetail: React.FC<GroupDetailProps> = ({
 
         return (
           <div className="animate-fade-in" style={{ display: 'flex', flexDirection: 'column', gap: '16px', marginBottom: '24px' }}>
+            {filterType !== 'all' && (
+              <div style={{ display: 'flex', marginBottom: '-6px' }}>
+                <button
+                  type="button"
+                  onClick={() => setFilterType('all')}
+                  title="Clear filter"
+                  style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', padding: '5px 10px 5px 12px', borderRadius: '999px', border: 'none', cursor: 'pointer', fontSize: '12px', fontWeight: 700, background: filterType === 'owe' ? '#FFE4E6' : '#D1FAE5', color: filterType === 'owe' ? '#BE123C' : '#047857' }}
+                >
+                  {filterType === 'owe' ? 'To pay' : 'To collect'} <span style={{ fontSize: '13px', lineHeight: 1 }}>✕</span>
+                </button>
+              </div>
+            )}
             <div className="" style={{ textAlign: 'left', marginTop: '4px' }}>
               {(() => {
                 // 1. Combine all transactions

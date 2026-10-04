@@ -19,6 +19,9 @@ export interface NetBalanceTilesProps {
    *  given, tapping "+N" slides up the full breakdown. */
   payLines?: BalanceLine[];
   collectLines?: BalanceLine[];
+  /** Called with the summary's All / Pay / Collect choice (on open and on
+   *  every change), so the list behind the summary filters the same way. */
+  onSummaryFilter?: (f: 'all' | 'pay' | 'collect') => void;
   /** Tap handler (opens the breakdown / settle screen). */
   onClick?: () => void;
   /** Optional per-tile taps (e.g. open the list filtered to pay / collect). */
@@ -55,9 +58,12 @@ export const BalanceSummarySheet: React.FC<{
   initial?: 'all' | 'pay' | 'collect';
   payLabel?: string;
   collectLabel?: string;
-}> = ({ isOpen, onClose, payLines, collectLines, initial = 'all', payLabel = 'You pay', collectLabel = 'You collect' }) => {
+  onFilterChange?: (f: 'all' | 'pay' | 'collect') => void;
+}> = ({ isOpen, onClose, payLines, collectLines, initial = 'all', payLabel = 'You pay', collectLabel = 'You collect', onFilterChange }) => {
   const [filter, setFilter] = React.useState<'all' | 'pay' | 'collect'>(initial);
   React.useEffect(() => { if (isOpen) setFilter(initial); }, [isOpen, initial]);
+  // Keep the page behind in step with the summary's filter.
+  React.useEffect(() => { if (isOpen && onFilterChange) onFilterChange(filter); }, [isOpen, filter]); // eslint-disable-line react-hooks/exhaustive-deps
   if (!isOpen) return null;
   const showPay = filter !== 'collect' && payLines.length > 0;
   const showCollect = filter !== 'pay' && collectLines.length > 0;
@@ -184,6 +190,7 @@ export const NetBalanceTiles: React.FC<NetBalanceTilesProps> = ({
   payLines,
   collectLines,
   onClick,
+  onSummaryFilter,
   onPayClick,
   onCollectClick,
   active = null,
@@ -233,7 +240,8 @@ export const NetBalanceTiles: React.FC<NetBalanceTilesProps> = ({
           onClose={() => setSummary(null)}
           payLines={payLines || []}
           collectLines={collectLines || []}
-          initial="all"
+          initial={summary || 'all'}
+          onFilterChange={onSummaryFilter}
           payLabel={payLabel === 'Pay' ? 'You pay' : payLabel}
           collectLabel={collectLabel === 'Collect' ? 'You collect' : collectLabel}
         />
