@@ -811,7 +811,7 @@ export const GroupDetail: React.FC<GroupDetailProps> = ({
         return (
           <div className="animate-fade-in" style={{ display: 'flex', flexDirection: 'column', gap: '16px', marginBottom: '24px' }}>
             {filterType !== 'all' && (
-              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: '12px', marginTop: '4px', marginBottom: '8px' }}>
+              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: '18px', marginTop: '6px', marginBottom: '14px' }}>
                 <button
                   type="button"
                   onClick={() => setFilterType('all')}
@@ -820,7 +820,7 @@ export const GroupDetail: React.FC<GroupDetailProps> = ({
                 >
                   {filterType === 'owe' ? 'To pay' : 'To collect'} <span style={{ fontSize: '13px', lineHeight: 1 }}>✕</span>
                 </button>
-                <span style={{ fontSize: '12.5px', fontStyle: 'italic', fontWeight: 600, color: filterType === 'owe' ? '#B91C1C' : '#047857' }}>
+                <span style={{ alignSelf: 'stretch', textAlign: 'center', fontSize: '12.5px', fontStyle: 'italic', fontWeight: 600, color: filterType === 'owe' ? '#B91C1C' : '#047857' }}>
                   {(() => {
                     const n = new Set(myTrans
                       .filter((t) => (filterType === 'owe' ? t.from === me : t.to === me))
