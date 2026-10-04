@@ -330,7 +330,7 @@ export const ExpenseRow: React.FC<ExpenseRowProps> = ({
             ✅
           </div>
           <div style={{ minWidth: 0, flex: 1, marginRight: '16px' }}>
-            <h3 style={{ fontSize: '14px', color: 'var(--t)', margin: 0, fontWeight: 600, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', textDecoration: e.isDeleted ? 'line-through' : 'none' }}>
+            <h3 style={{ fontSize: '14px', color: 'var(--t)', margin: 0, fontWeight: 500, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', textDecoration: e.isDeleted ? 'line-through' : 'none' }}>
               Settlement
             </h3>
             {e.isDeleted && <span style={{fontSize: '10px', background: '#FEE2E2', color: '#EF4444', padding: '2px 6px', borderRadius: '4px', fontWeight: 600, marginLeft: '6px'}}>Deleted</span>}
@@ -461,7 +461,7 @@ export const ExpenseRow: React.FC<ExpenseRowProps> = ({
           {e.title === 'Written off' ? '➖' : (getEmoji(e.title) || (e.attachments && e.attachments.length > 0 ? '🖼️' : '⚡'))}
         </div>
         <div style={{ minWidth: 0, flex: 1, marginRight: '16px' }}>
-          <h3 style={{ fontSize: '14px', color: 'var(--t)', margin: 0, fontWeight: 600, display: 'flex', alignItems: 'center', gap: '4px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', textDecoration: e.isDeleted ? 'line-through' : 'none' }}>
+          <h3 style={{ fontSize: '14px', color: 'var(--t)', margin: 0, fontWeight: 500, display: 'flex', alignItems: 'center', gap: '4px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', textDecoration: e.isDeleted ? 'line-through' : 'none' }}>
             {e.title}
           </h3>
           {e.isDeleted && <span style={{fontSize: '10px', background: '#FEE2E2', color: '#EF4444', padding: '2px 6px', borderRadius: '4px', fontWeight: 600}}>Deleted</span>}

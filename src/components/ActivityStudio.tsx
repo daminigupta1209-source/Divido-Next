@@ -580,7 +580,7 @@ export const ActivityStudio: React.FC<ActivityStudioProps> = ({
                       </div>
                       <div style={{ minWidth: 0, flex: 1, marginRight: '16px' }}>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '6px', whiteSpace: 'nowrap', overflow: 'hidden', minWidth: 0 }}>
-                          <h3  style={{ fontSize: isSettlement ? '13px' : '15px', color: 'var(--t)', margin: 0, fontWeight: 700, display: 'flex', alignItems: 'center', gap: '4px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', flexShrink: 0, textDecoration: e.isDeleted ? 'line-through' : 'none' }}>
+                          <h3  style={{ fontSize: isSettlement ? '13px' : '15px', color: 'var(--t)', margin: 0, fontWeight: 500, display: 'flex', alignItems: 'center', gap: '4px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', flexShrink: 0, textDecoration: e.isDeleted ? 'line-through' : 'none' }}>
                             {isSettlement ? 'Settlement' : e.title}
                           </h3>
                           {e.isDeleted && <span style={{fontSize: '10px', background: '#FEE2E2', color: '#EF4444', padding: '2px 6px', borderRadius: '4px', fontWeight: 600}}>Deleted</span>}
