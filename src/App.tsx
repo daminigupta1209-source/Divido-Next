@@ -1410,11 +1410,15 @@ function App() {
         }
       }
 
-      if (toUpdateIds.length > 0) {
-        await supabase
+      // One row at a time: a group where this email already has an active row
+      // rejects the link (api/unique_member_email.sql), and that must not
+      // block the other groups.
+      for (const id of toUpdateIds) {
+        const { error } = await supabase
           .from('group_members')
           .update({ user_email: email, is_pending: false })
-          .in('id', toUpdateIds);
+          .eq('id', id);
+        if (error) console.error('Guest identity link skipped for row', id, error);
       }
     } catch (e) {
       console.error('Failed to link guest identities to account:', e);
@@ -2640,12 +2644,17 @@ function App() {
   const handleMatch = async (newMemberRecordId: string, placeholderId: string | null) => {
     if (!matchPrompt) return;
     if (placeholderId) {
-      await supabase.from('group_members').update({
+      // Delete the new row FIRST: the placeholder takes over its email, and one
+      // group can't hold two active rows with the same email
+      // (api/unique_member_email.sql).
+      const { error: delErr } = await supabase.from('group_members').delete().eq('id', newMemberRecordId);
+      if (delErr) { console.error('Match failed (remove new row):', delErr); return; }
+      const { error: upErr } = await supabase.from('group_members').update({
         user_email: matchPrompt.newMemberEmail,
         name: matchPrompt.newMemberName,
         is_pending: false,
       }).eq('id', placeholderId);
-      await supabase.from('group_members').delete().eq('id', newMemberRecordId);
+      if (upErr) console.error('Match failed (claim placeholder):', upErr);
     }
     setMatchPrompt(null);
     setGroups((prev) => [...prev]);
