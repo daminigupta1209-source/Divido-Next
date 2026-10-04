@@ -1052,7 +1052,29 @@ export function useSupabaseSync({
             }
 
             // Compare members to find new ones (ignore left members and existing name-variants)
-            const newMembers = g.members.filter(m => !m.endsWith(' (Left)') && !old.members.includes(m) && !old.members.includes(m + ' (Left)') && !isPendingRename(g.id, m));
+            let newMembers = g.members.filter(m => !m.endsWith(' (Left)') && !old.members.includes(m) && !old.members.includes(m + ' (Left)') && !isPendingRename(g.id, m));
+            if (newMembers.length > 0) {
+              // The local diff alone can't be trusted: a cloud load landing mid-pass
+              // can leave the baseline holding a member's OLD name while state holds
+              // the new one, so a rename made on ANOTHER device (e.g. someone
+              // changing their profile name) looks like a brand-new member here.
+              // Ask the cloud first and drop anyone already in the group — by name,
+              // email, person_id or member_key — so a rename never inserts a twin.
+              const { data: cloudRows, error: rowsErr } = await supabase
+                .from('group_members')
+                .select('name, user_email, invite_email, person_id, member_key')
+                .eq('group_id', g.id);
+              if (rowsErr) throw rowsErr;
+              const norm = (s: any) => String(s || '').trim().toLowerCase();
+              newMembers = newMembers.filter((m) => {
+                const ident = norm(g.memberIdentities?.[m]);
+                const key = g.memberKeys?.[m];
+                return !(cloudRows || []).some((r: any) =>
+                  norm(r.name) === norm(m) ||
+                  (ident && (norm(r.user_email) === ident || norm(r.invite_email) === ident || norm(r.person_id) === ident)) ||
+                  (key && r.member_key === key));
+              });
+            }
             if (newMembers.length > 0) {
               const memberInserts = newMembers.map(m => {
                 // If this member was added with an email, memberIdentities[m] holds
