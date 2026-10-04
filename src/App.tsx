@@ -93,7 +93,7 @@ import { CurrencySetupModal } from './components/CurrencySetupModal';
 import { GroupGallery } from './components/GroupGallery';
 import { checkIfDemoMode } from './lib/demoMode';
 import { ensureArray, ensureObject, isLegacyRenameLog, formatCompactAmount, genGroupId, genExpenseId, titleCaseName } from './lib/utils';
-import { getPersonKey, toIdentitySpace, pickCanonicalIdentity, findDuplicateGroups, type DuplicateEntry, setSyncedDismissedPeople, buildNameEmailResolver, upiFor, fillPartyKeys, deriveKeyColumns, sameShareMap, memberNamesByKey, applyKeyNames, setDisplayGroups, shown, uniqueProfileName, dropShadowedLeftRows } from './lib/identity';
+import { getPersonKey, toIdentitySpace, pickCanonicalIdentity, findDuplicateGroups, type DuplicateEntry, setSyncedDismissedPeople, buildNameEmailResolver, upiFor, fillPartyKeys, deriveKeyColumns, sameShareMap, memberNamesByKey, applyKeyNames, setDisplayGroups, shown, uniqueProfileName, dropShadowedLeftRows, isPastMemberOf } from './lib/identity';
 import { groupActivityTimestamp } from './lib/joinProgress';
 import { parseInviteParam, buildPersonInviteLink, personInviteMessage, groupInviteMessage, type InviteSpot } from './lib/inviteLink';
 import {
@@ -5579,6 +5579,47 @@ function App() {
 
 
 
+
+      {/* Floating "Scan bill" pill inside a group — same spot and look as the
+          home "+ Group" pill; opens the add-expense screen straight into the
+          bill scanner for this group. */}
+      {view === 'detail' && selectedId && selectedId !== 'STANDALONE' && !isPhotoViewerOpen && !showExpModal
+        && !(selectedGroup && isPastMemberOf(selectedGroup as Group, me)) && (
+        <button
+          onClick={() => addExpenseFromNav(true)}
+          aria-label="Scan bill"
+          style={{
+            position: 'fixed',
+            bottom: '100px',
+            right: '20px',
+            zIndex: 1000,
+            height: '38px',
+            padding: '0 18px',
+            borderRadius: '19px',
+            background: 'linear-gradient(135deg, #FB923C 0%, #F97316 100%)',
+            border: 'none',
+            color: '#FFFFFF',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            gap: '7px',
+            cursor: 'pointer',
+            boxShadow: '0 6px 16px rgba(249, 115, 22, 0.35)',
+            transition: '0.2s all cubic-bezier(0.175, 0.885, 0.32, 1.275)',
+          }}
+          onMouseEnter={(e) => { e.currentTarget.style.transform = 'scale(1.04)'; }}
+          onMouseLeave={(e) => { e.currentTarget.style.transform = 'scale(1)'; }}
+        >
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" style={{ width: '18px', height: '18px', display: 'block', flexShrink: 0 }}>
+            <path d="M4 7V6a2 2 0 0 1 2-2h2" />
+            <path d="M4 17v1a2 2 0 0 0 2 2h2" />
+            <path d="M16 4h2a2 2 0 0 1 2 2v1" />
+            <path d="M16 20h2a2 2 0 0 0 2-2v-1" />
+            <line x1="5" y1="12" x2="19" y2="12" />
+          </svg>
+          <span style={{ fontSize: '14px', fontWeight: 800, whiteSpace: 'nowrap', lineHeight: 1, display: 'block' }}>Scan bill</span>
+        </button>
+      )}
 
       {showExpModal && (
         <React.Suspense fallback={null}>
