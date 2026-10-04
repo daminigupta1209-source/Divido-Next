@@ -22,6 +22,9 @@ export interface NetBalanceTilesProps {
   /** Called with the summary's All / Pay / Collect choice (on open and on
    *  every change), so the list behind the summary filters the same way. */
   onSummaryFilter?: (f: 'all' | 'pay' | 'collect') => void;
+  /** Optional button at the bottom of the summary (e.g. "Settle up"). When
+   *  set, tapping a tile opens the summary even without onSummaryFilter. */
+  summaryAction?: { label: string; onClick: () => void };
   /** Tap handler (opens the breakdown / settle screen). */
   onClick?: () => void;
   /** Optional per-tile taps (e.g. open the list filtered to pay / collect). */
@@ -59,7 +62,8 @@ export const BalanceSummarySheet: React.FC<{
   payLabel?: string;
   collectLabel?: string;
   onFilterChange?: (f: 'all' | 'pay' | 'collect') => void;
-}> = ({ isOpen, onClose, payLines, collectLines, initial = 'all', payLabel = 'You pay', collectLabel = 'You collect', onFilterChange }) => {
+  action?: { label: string; onClick: () => void };
+}> = ({ isOpen, onClose, payLines, collectLines, initial = 'all', payLabel = 'You pay', collectLabel = 'You collect', onFilterChange, action }) => {
   const [filter, setFilter] = React.useState<'all' | 'pay' | 'collect'>(initial);
   React.useEffect(() => { if (isOpen) setFilter(initial); }, [isOpen, initial]);
   // Keep the page behind in step with the summary's filter.
@@ -134,6 +138,15 @@ export const BalanceSummarySheet: React.FC<{
             {filter === 'pay' ? 'Nothing to pay' : filter === 'collect' ? 'Nothing to collect' : 'All settled up'}
           </div>
         )}
+        {action && (
+          <button
+            type="button"
+            onClick={() => { onClose(); action.onClick(); }}
+            style={{ width: '100%', marginTop: '16px', padding: '12px', borderRadius: '14px', border: 'none', background: '#10B981', color: '#FFFFFF', fontWeight: 600, fontSize: '14px', cursor: 'pointer' }}
+          >
+            {action.label}
+          </button>
+        )}
       </div>
     </div>
   );
@@ -191,6 +204,7 @@ export const NetBalanceTiles: React.FC<NetBalanceTilesProps> = ({
   collectLines,
   onClick,
   onSummaryFilter,
+  summaryAction,
   onPayClick,
   onCollectClick,
   active = null,
@@ -204,7 +218,7 @@ export const NetBalanceTiles: React.FC<NetBalanceTilesProps> = ({
   // Where the page follows the summary's filter, tapping a tile opens the
   // summary on that side (it also filters the list behind) — with or
   // without a "+N".
-  const tileOpensSummary = hasLines && !!onSummaryFilter;
+  const tileOpensSummary = hasLines && !!(onSummaryFilter || summaryAction);
   const payTap = tileOpensSummary ? () => setSummary('pay') : onPayClick;
   const collectTap = tileOpensSummary ? () => setSummary('collect') : onCollectClick;
   const settled = !pay && !collect;
@@ -248,6 +262,7 @@ export const NetBalanceTiles: React.FC<NetBalanceTilesProps> = ({
           collectLines={collectLines || []}
           initial={summary || 'all'}
           onFilterChange={onSummaryFilter}
+          action={summaryAction}
           payLabel={payLabel === 'Pay' ? 'You pay' : payLabel}
           collectLabel={collectLabel === 'Collect' ? 'You collect' : collectLabel}
         />

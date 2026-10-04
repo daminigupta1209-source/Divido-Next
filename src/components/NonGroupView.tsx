@@ -402,7 +402,7 @@ export const NonGroupView: React.FC<NonGroupViewProps> = ({
           </div>
         </div>
 
-        {/* Net balance card — tap to settle up with this person */}
+        {/* Net balance card — tap for the summary, with "Settle up" inside */}
         <NetBalanceTiles
           style={{ marginBottom: '14px' }}
           pay={hasBal && personPayLines.length > 0 ? personPayLines[0].curr + formatExactAmount(Math.abs(personPayLines[0].amount)) : undefined}
@@ -411,7 +411,7 @@ export const NonGroupView: React.FC<NonGroupViewProps> = ({
           collectMore={personCollectLines.length - 1}
           payLines={personPayLines}
           collectLines={personCollectLines}
-          onClick={() => onSettlePerson(profilePerson, p?.directGroupId)}
+          summaryAction={{ label: 'Settle up', onClick: () => onSettlePerson(profilePerson, p?.directGroupId) }}
         />
 
         {/* Settle = tap the balance card; Invite = share icon in the header. */}
