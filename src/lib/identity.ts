@@ -606,6 +606,63 @@ export const deriveKeyColumns = (
   return { paidKey, splitterKeys, sharesByKey };
 };
 
+// Permanent ID step 3a: the CURRENT roster name for each person on an expense,
+// read from its ID columns (paidKey / splitterKeys / sharesByKey). A renamed
+// member therefore shows their new name on every old expense without the
+// expense being rewritten. Read-only: callers use the result for display and
+// never write it back on their own (a device with a stale roster could
+// otherwise undo another device's rename). Unknown keys keep the stored name.
+// Returns the SAME object when nothing changes, so memoised screens don't
+// re-render.
+export const memberNamesByKey = (group: Group | undefined | null): Record<string, string> => {
+  const out: Record<string, string> = {};
+  Object.entries(group?.memberKeys || {}).forEach(([disp, k]) => {
+    const isLeft = /\s*\(Left\)\s*$/i.test(disp);
+    const name = disp.replace(/\s*\(Left\)\s*$/i, '').trim();
+    // A live row's name wins over a "(Left)" row sharing the same key.
+    if (!out[k] || !isLeft) out[k] = name;
+  });
+  return out;
+};
+
+export const applyKeyNames = (e: Expense, group: Group | undefined | null, names: Record<string, string>): Expense => {
+  if (!e.paidKey || !e.paid || e.paid === 'SYSTEM') return e;
+  // Only replace a stored name that NO LONGER points at that member (i.e. they
+  // were renamed). A name that still resolves to the same member — e.g. the
+  // first name "Damini" for "Damini Gupta" — is kept as written, so screens
+  // that compare names with `me` keep working.
+  const nameOf = (k: string | undefined, stored: string): string => {
+    if (!k || k.startsWith('name:')) return stored;
+    if (resolveMemberKey(group, stored) === k) return stored;
+    return names[k] || stored;
+  };
+  const paid = nameOf(e.paidKey, e.paid);
+  const sp = e.splitters || [];
+  const sk = e.splitterKeys || [];
+  const splitters = sk.length === sp.length ? sp.map((n, i) => nameOf(sk[i], n)) : sp;
+  // Old name → new name, for the name-keyed maps (shares, origShares).
+  const renamed: Record<string, string> = {};
+  if (paid !== e.paid) renamed[e.paid] = paid;
+  sp.forEach((n, i) => { if (splitters[i] !== n) renamed[n] = splitters[i]; });
+  const remapKeys = <T,>(obj: Record<string, T> | undefined): Record<string, T> | undefined => {
+    if (!obj || !Object.keys(obj).some((k) => renamed[k])) return obj;
+    const next: Record<string, T> = {};
+    Object.entries(obj).forEach(([k, v]) => { next[renamed[k] || k] = v; });
+    return next;
+  };
+  if (Object.keys(renamed).length === 0) return e;
+  const pk = { ...(e.partyKeys || {}) };
+  Object.entries(renamed).forEach(([oldN, newN]) => { if (pk[oldN] && !pk[newN]) pk[newN] = pk[oldN]; });
+  return {
+    ...e,
+    paid,
+    splitters,
+    shares: remapKeys(e.shares as Record<string, number> | undefined) as Expense['shares'],
+    origShares: remapKeys(e.origShares as Record<string, number> | undefined) as Expense['origShares'],
+    partyKeys: pk,
+  };
+};
+
 // Same shares map regardless of key order (the database stores jsonb keys in
 // its own order, so a plain JSON compare would see a change on every load).
 export const sameShareMap = (a?: Record<string, unknown>, b?: Record<string, unknown>): boolean => {

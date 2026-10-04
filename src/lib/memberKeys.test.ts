@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { resolveMemberKey, fillPartyKeys, deriveKeyColumns, sameShareMap } from './identity';
+import { resolveMemberKey, fillPartyKeys, deriveKeyColumns, sameShareMap, memberNamesByKey, applyKeyNames } from './identity';
 import { Group, Expense } from './types';
 
 const grp = (memberKeys?: Record<string, string>, memberIdentities?: Record<string, string>): Group =>
@@ -215,5 +215,38 @@ describe('deriveKeyColumns (permanent ID step 2)', () => {
     expect(sameShareMap({ a: 1, b: '2' }, { b: 2, a: 1 })).toBe(true);
     expect(sameShareMap({ a: 1 }, { a: 2 })).toBe(false);
     expect(sameShareMap(undefined, undefined)).toBe(true);
+  });
+});
+
+describe('applyKeyNames (permanent ID step 3a)', () => {
+  const g = { id: 'g1', name: 'G', members: ['Rahul', 'Asha', 'Old (Left)'], memberKeys: { Rahul: 'k-r', Asha: 'k-a', 'Old (Left)': 'k-o' } } as unknown as Group;
+  const names = memberNamesByKey(g);
+  const base = { id: 'x', gId: 'g1', title: 't', amt: 100, date: '2026-10-04', currency: '?' } as unknown as Expense;
+  it('shows the current roster name for a renamed member', () => {
+    const e = { ...base, paid: 'Ravi', splitters: ['Ravi', 'Asha'], shares: { Ravi: 60, Asha: 40 }, partyKeys: { Ravi: 'k-r', Asha: 'k-a' }, paidKey: 'k-r', splitterKeys: ['k-r', 'k-a'] } as Expense;
+    const v = applyKeyNames(e, g, names);
+    expect(v.paid).toBe('Rahul');
+    expect(v.splitters).toEqual(['Rahul', 'Asha']);
+    expect(v.shares).toEqual({ Rahul: 60, Asha: 40 });
+    expect(v.partyKeys!.Rahul).toBe('k-r');
+  });
+  it('returns the same object when nothing changed', () => {
+    const e = { ...base, paid: 'Asha', splitters: ['Asha'], paidKey: 'k-a', splitterKeys: ['k-a'] } as Expense;
+    expect(applyKeyNames(e, g, names)).toBe(e);
+  });
+  it('drops "(Left)" and keeps stored names for unknown or name: keys', () => {
+    const e = { ...base, paid: 'Ghost', splitters: ['Ghost', 'Old'], paidKey: 'name:Ghost', splitterKeys: ['name:Ghost', 'k-o'] } as Expense;
+    const v = applyKeyNames(e, g, names);
+    expect(v.paid).toBe('Ghost');
+    expect(v.splitters).toEqual(['Ghost', 'Old']);
+  });
+  it('keeps a first name that still means the same member', () => {
+    const g2 = { ...g, members: ['Ravi Kumar'], memberKeys: { 'Ravi Kumar': 'k-r' } } as unknown as Group;
+    const e = { ...base, paid: 'Ravi', splitters: ['Ravi'], paidKey: 'k-r', splitterKeys: ['k-r'] } as Expense;
+    expect(applyKeyNames(e, g2, memberNamesByKey(g2))).toBe(e);
+  });
+  it('leaves expenses without keys untouched', () => {
+    const e = { ...base, paid: 'Ravi', splitters: ['Ravi'] } as Expense;
+    expect(applyKeyNames(e, g, names)).toBe(e);
   });
 });

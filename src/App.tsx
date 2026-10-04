@@ -93,7 +93,7 @@ import { CurrencySetupModal } from './components/CurrencySetupModal';
 import { GroupGallery } from './components/GroupGallery';
 import { checkIfDemoMode } from './lib/demoMode';
 import { ensureArray, ensureObject, isLegacyRenameLog, formatCompactAmount, genGroupId, genExpenseId, titleCaseName } from './lib/utils';
-import { getPersonKey, toIdentitySpace, pickCanonicalIdentity, findDuplicateGroups, type DuplicateEntry, setSyncedDismissedPeople, buildNameEmailResolver, upiFor, fillPartyKeys, deriveKeyColumns, sameShareMap, uniqueProfileName, dropShadowedLeftRows } from './lib/identity';
+import { getPersonKey, toIdentitySpace, pickCanonicalIdentity, findDuplicateGroups, type DuplicateEntry, setSyncedDismissedPeople, buildNameEmailResolver, upiFor, fillPartyKeys, deriveKeyColumns, sameShareMap, memberNamesByKey, applyKeyNames, uniqueProfileName, dropShadowedLeftRows } from './lib/identity';
 import { groupActivityTimestamp } from './lib/joinProgress';
 import { parseInviteParam, buildPersonInviteLink, personInviteMessage, groupInviteMessage, type InviteSpot } from './lib/inviteLink';
 import {
@@ -1686,6 +1686,24 @@ function App() {
   // Duplicate groups the user probably created twice (same name AND same member
   // set). Never auto-merged — surfaced as a prompt the user confirms.
   const duplicateGroups = React.useMemo(() => findDuplicateGroups(groups), [groups]);
+
+  // Permanent ID step 3a: what screens see. Each expense's people are read
+  // from their member IDs against the CURRENT roster, so names are always the
+  // latest. Display only — the stored expenses are never rewritten from this.
+  const expensesView = React.useMemo(() => {
+    const namesByGroup = new Map<string, Record<string, string>>();
+    const groupById = new Map(groups.map((g) => [String(g.id), g]));
+    groups.forEach((g) => namesByGroup.set(String(g.id), memberNamesByKey(g)));
+    let changed = false;
+    const out = expenses.map((e) => {
+      const names = namesByGroup.get(String(e.gId));
+      if (!names) return e;
+      const v = applyKeyNames(e, groupById.get(String(e.gId)), names);
+      if (v !== e) changed = true;
+      return v;
+    });
+    return changed ? out : expenses;
+  }, [expenses, groups]);
   // Name -> email resolver so pay/QR screens read the RIGHT person's synced UPI
   // (money — never key UPI by raw display name).
   const nameToEmailUpi = React.useMemo(() => buildNameEmailResolver(groups), [groups]);
@@ -4579,7 +4597,7 @@ function App() {
         groups={groups}
         selectedId={selectedId}
         setSelectedId={setSelectedId}
-        expenses={expenses}
+        expenses={expensesView}
         isGroupsExpanded={isGroupsExpanded}
         setIsGroupsExpanded={setIsGroupsExpanded}
         handleRenameGroup={handleRenameGroup}
@@ -4613,7 +4631,7 @@ function App() {
             selectedGroup={selectedGroup}
             me={me}
             groups={groups}
-            expenses={expenses}
+            expenses={expensesView}
             setGroups={setGroups}
             setIsSidebarOpen={setIsSidebarOpen}
             onEditGroup={(id) => {
@@ -4679,7 +4697,7 @@ function App() {
         {view === 'summary' ? (
           <MasterSummary
             groups={groups}
-            expenses={expenses}
+            expenses={expensesView}
             getMemberBalance={getMemberBalance}
             setSelectedId={setSelectedId}
             setView={setView}
@@ -4783,7 +4801,7 @@ function App() {
         ) : view === 'groups' ? (
           <GroupsView
             groups={groups}
-            expenses={expenses}
+            expenses={expensesView}
             getMemberBalance={getMemberBalance}
             setSelectedId={setSelectedId}
             setView={setView}
@@ -4797,7 +4815,7 @@ function App() {
         ) : view === 'friends' ? (
           <FriendsView
             groups={groups}
-            expenses={expenses}
+            expenses={expensesView}
             me={me}
             userEmail={userEmail}
             setView={setView}
@@ -4814,7 +4832,7 @@ function App() {
           />
         ) : view === 'analytics' ? (
           <Analytics
-            expenses={expenses}
+            expenses={expensesView}
             groups={groups}
             me={me}
             userMetadata={userMetadata}
@@ -4831,7 +4849,7 @@ function App() {
           />
         ) : view === 'activity' ? (
           <ActivityStudio
-            expenses={expenses}
+            expenses={expensesView}
             groups={groups}
             setExpenses={setExpenses}
             setEditingExpense={setEditingExpenseSecure}
@@ -4848,7 +4866,7 @@ function App() {
         ) : view === 'profile' ? (
           <Profile
             groups={groups}
-            expenses={expenses}
+            expenses={expensesView}
             currentTheme={theme}
             onThemeChange={setTheme}
             userName={userName}
@@ -4865,7 +4883,7 @@ function App() {
           <GroupGallery
             selectedId={selectedId}
             groups={groups}
-            expenses={expenses}
+            expenses={expensesView}
             me={me}
             setView={setView}
             setEditingExpense={setEditingExpenseSecure}
@@ -4916,7 +4934,7 @@ function App() {
           />
         ) : selectedId === 'STANDALONE' ? (
           <NonGroupView
-            expenses={expenses}
+            expenses={expensesView}
             me={me}
             userName={userName}
             myEmail={userEmail}
@@ -4994,7 +5012,7 @@ function App() {
             onShareGroupLink={openGroupShareLink}
             selectedId={selectedId}
             groups={groups}
-            expenses={expenses}
+            expenses={expensesView}
             getMemberBalance={getMemberBalance}
             setView={setView}
             setGroups={setGroups}
@@ -5585,7 +5603,7 @@ function App() {
           editingExpense={editingExpense}
           selectedGroup={selectedGroup}
           selectedId={selectedId}
-          expenses={expenses}
+          expenses={expensesView}
           setExpenses={setExpenses}
           setShowCurrPickerId={setShowCurrPickerId}
           showCurrPickerId={showCurrPickerId}
@@ -5637,7 +5655,7 @@ function App() {
           group={groups.find((g) => String(g.id) === String(showConvertModalId))!}
           setGroups={setGroups}
           groups={groups}
-          expenses={expenses}
+          expenses={expensesView}
           setExpenses={setExpenses}
           me={me}
         />
@@ -6886,7 +6904,7 @@ function App() {
             oauthCode={swOauthCode}
             oauthError={swOauthError}
             groups={groups}
-            expenses={expenses}
+            expenses={expensesView}
             me={me}
             myEmail={userEmail}
             onCommit={handleSplitwiseCommit}
@@ -7241,7 +7259,7 @@ function App() {
         setEditingSettle={setEditingSettle}
         selectedGroup={selectedGroup || { id: '', name: 'Default Group', members: [me], currency: '₹', emoji: '🏡', simplifyDebts: false }}
         selectedId={selectedId}
-        expenses={expenses}
+        expenses={expensesView}
         setExpenses={setExpenses}
         groups={groups}
         me={me}
