@@ -201,6 +201,12 @@ export const NetBalanceTiles: React.FC<NetBalanceTilesProps> = ({
 }) => {
   const [summary, setSummary] = React.useState<null | 'pay' | 'collect'>(null);
   const hasLines = !!(payLines || collectLines);
+  // Where the page follows the summary's filter, tapping a tile opens the
+  // summary on that side (it also filters the list behind) — with or
+  // without a "+N".
+  const tileOpensSummary = hasLines && !!onSummaryFilter;
+  const payTap = tileOpensSummary ? () => setSummary('pay') : onPayClick;
+  const collectTap = tileOpensSummary ? () => setSummary('collect') : onCollectClick;
   const settled = !pay && !collect;
   if (settled) {
     return (
@@ -231,8 +237,8 @@ export const NetBalanceTiles: React.FC<NetBalanceTilesProps> = ({
         onClick={onClick}
         style={{ display: 'grid', gridTemplateColumns: both ? 'minmax(0,1fr) minmax(0,1fr)' : 'minmax(0,1fr)', gap: '8px', width: '100%', ...style }}
       >
-        {pay && <Tile bg={PINK} label={payLabel} amount={pay} more={payMore} chevron={!collect && !!onClick} clickable={!!(onClick || onPayClick)} onTap={onPayClick} onMore={hasLines ? () => setSummary('pay') : undefined} dim={active === 'collect'} selected={active === 'pay'} />}
-        {collect && <Tile bg={GREEN} label={collectLabel} amount={collect} more={collectMore} chevron={!!onClick} clickable={!!(onClick || onCollectClick)} onTap={onCollectClick} onMore={hasLines ? () => setSummary('collect') : undefined} dim={active === 'pay'} selected={active === 'collect'} />}
+        {pay && <Tile bg={PINK} label={payLabel} amount={pay} more={payMore} chevron={!collect && !!onClick && !tileOpensSummary} clickable={!!(onClick || payTap)} onTap={payTap} onMore={hasLines ? () => setSummary('pay') : undefined} dim={active === 'collect'} selected={active === 'pay'} />}
+        {collect && <Tile bg={GREEN} label={collectLabel} amount={collect} more={collectMore} chevron={!!onClick && !tileOpensSummary} clickable={!!(onClick || collectTap)} onTap={collectTap} onMore={hasLines ? () => setSummary('collect') : undefined} dim={active === 'pay'} selected={active === 'collect'} />}
       </div>
       {hasLines && (
         <BalanceSummarySheet
