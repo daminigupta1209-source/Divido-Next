@@ -966,7 +966,7 @@ export const MasterSummary: React.FC<MasterSummaryProps> = ({
               </div>
 
               <div style={{ minWidth: 0, flex: 1, display: 'flex', flexDirection: 'column', gap: '3px' }}>
-                <h3 style={{ fontSize: '17px', color: '#2E2A25', fontWeight: 600, margin: 0, lineHeight: 1.2, textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap' }}>
+                <h3 style={{ fontSize: '16px', color: '#2E2A25', fontWeight: 500, margin: 0, lineHeight: 1.2, textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap' }}>
                   Non-Group
                 </h3>
                 {ngEntries.length === 0 ? (
@@ -1141,9 +1141,9 @@ export const MasterSummary: React.FC<MasterSummaryProps> = ({
               <div style={{ minWidth: 0, flex: 1, display: 'flex', flexDirection: 'column', gap: '3px' }}>
                 <h3
                   style={{
-                    fontSize: '17px',
+                    fontSize: '16px',
                     color: '#2E2A25',
-                    fontWeight: 600,
+                    fontWeight: 500,
                     margin: 0,
                     lineHeight: 1.2,
                     opacity: g.name ? 1 : 0.5,
