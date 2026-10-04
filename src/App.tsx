@@ -117,6 +117,7 @@ import { InstallPrompt } from './components/InstallPrompt';
 import { useExportCSV } from './hooks/useExportCSV';
 import { AppNotification, fetchNotifications, markAllNotificationsRead, subscribeNotifications, clearAllNotifications, pushNotification } from './lib/notifications';
 import { calculateNextOccurrenceDate, simplifyMultiCurrencyDebts, computeRawPairwiseTransactions, memberNetBalances } from './lib/calculations';
+import { buildDirectThreads } from './lib/nonGroupPeople';
 import {
   consumeOAuthState,
   parseCallback,
@@ -4625,6 +4626,8 @@ function App() {
         {view === 'summary' ? (
           <MasterSummary
             groups={groups}
+            userName={userName}
+            userEmail={userEmail}
             expenses={expensesView}
             getMemberBalance={getMemberBalance}
             setSelectedId={setSelectedId}
@@ -4868,35 +4871,7 @@ function App() {
             defaultCurrency={myDefaultCurrency}
             memberAvatars={memberAvatars}
             getMemberBalance={getMemberBalance}
-            directThreads={(() => {
-              const clean = (n: string) => (n || '').replace(/\s*\(Left\)$/i, '').trim();
-              const myFirst = (me || '').trim().toLowerCase();
-              const myFull = (userName || '').trim().toLowerCase();
-              const myEmailLower = (userEmail || '').trim().toLowerCase();
-              return groups
-                .filter((g) => g.isDirect)
-                .map((g) => {
-                  // "Me" in this thread can be stored under my first name, my full
-                  // name, or (after another device/claim synced it) keyed only by
-                  // my email — so exclude by all three, else we'd pick MYSELF as
-                  // the other person (both sides then show the owner's name).
-                  const isMe = (m: string) => {
-                    const c = clean(m).toLowerCase();
-                    if (c && (c === myFirst || c === myFull)) return true;
-                    const id = (g.memberIdentities?.[m] || '').trim().toLowerCase();
-                    return !!myEmailLower && id === myEmailLower;
-                  };
-                  const otherRaw = (g.members || []).find((m) => clean(m) && !isMe(m)) || '';
-                  const other = clean(otherRaw);
-                  return {
-                    groupId: String(g.id),
-                    otherName: other,
-                    email: (g.memberIdentities?.[otherRaw] || '').includes('@') ? g.memberIdentities![otherRaw] : '',
-                    pending: (g.pendingMembers || []).some((pm) => clean(pm).toLowerCase() === other.toLowerCase()),
-                  };
-                })
-                .filter((t) => t.otherName);
-            })()}
+            directThreads={buildDirectThreads(groups, me, userName, userEmail)}
             onBack={() => { setSelectedId(null); setView('summary'); }}
             searchQuery={nonGroupSearch || ''}
             onOpenExpense={(exp) => { setEditingExpenseSecure(exp); setShowExpModalSecure(true); }}
@@ -5630,7 +5605,8 @@ function App() {
       {showConvertModalId && (
         <CurrencyConverterModal
           setShowConvertModalId={setShowConvertModalId}
-          group={groups.find((g) => String(g.id) === String(showConvertModalId))!}
+          // Non-Group isn't in `groups`; selectedGroup is its synthetic group.
+          group={String(showConvertModalId) === 'STANDALONE' ? selectedGroup : groups.find((g) => String(g.id) === String(showConvertModalId))!}
           setGroups={setGroups}
           groups={groups}
           expenses={expensesView}

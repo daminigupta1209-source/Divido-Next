@@ -2,6 +2,7 @@ import React from 'react';
 import { shown } from '../lib/identity';
 import { NetBalanceTiles } from './NetBalanceTiles';
 import type { Expense } from '../lib/types';
+import { computeNonGroupPeople } from '../lib/nonGroupPeople';
 import { formatDate, getEmoji, formatExactAmount, getMonthYearKey, matchesAmount } from '../lib/utils';
 
 interface NonGroupViewProps {
@@ -254,58 +255,24 @@ export const NonGroupView: React.FC<NonGroupViewProps> = ({
     [expenses, directGroupIds]
   );
 
-  // One entry per OTHER person. Balance is combined across both buckets (their
-  // plain STANDALONE net + their net in a shared direct thread) via the canonical
-  // engine — never hand-rolled.
-  const people = React.useMemo(() => {
-    type P = { name: string; email: string; standalone: boolean; directGroupId?: string; otherNameInGroup?: string; pending: boolean };
-    const byName = new Map<string, P>();
-    // Seed shared (direct) threads first so pending/email are captured.
-    directThreads.forEach((t) => {
-      const c = cleanName(t.otherName);
-      if (!c || isMe(c)) return;
-      const key = c.toLowerCase();
-      const ex = byName.get(key);
-      if (ex) {
-        ex.directGroupId = String(t.groupId);
-        ex.otherNameInGroup = t.otherName;
-        ex.pending = ex.pending || t.pending;
-        if (!ex.email && t.email) ex.email = t.email;
-      } else {
-        byName.set(key, { name: c, email: t.email || '', standalone: false, directGroupId: String(t.groupId), otherNameInGroup: t.otherName, pending: t.pending });
-      }
-    });
-    // Add plain STANDALONE participants.
-    expenses
-      .filter((e) => e && String(e.gId) === 'STANDALONE' && !e.isDeleted)
-      .forEach((e) => {
-        const names = new Set<string>();
-        if (e.paid) names.add(e.paid);
-        (e.splitters || []).forEach((s) => names.add(s));
-        const otherEmail = (e.otherEmail || '').trim().toLowerCase();
-        names.forEach((raw) => {
-          const c = cleanName(raw);
-          if (!c || isMe(c)) return;
-          const key = c.toLowerCase();
-          const ex = byName.get(key);
-          if (ex) { ex.standalone = true; if (!ex.email && otherEmail.includes('@')) ex.email = otherEmail; }
-          else byName.set(key, { name: c, email: otherEmail.includes('@') ? otherEmail : '', standalone: true, pending: false });
-        });
-      });
-    return Array.from(byName.values())
-      .map((p) => {
-        const key = p.name.toLowerCase();
-        const bal: Record<string, number> = {};
-        if (p.standalone) Object.entries(getMemberBalance('STANDALONE', p.name)).forEach(([c, v]) => { bal[c] = (bal[c] || 0) + v; });
-        if (p.directGroupId && p.otherNameInGroup) Object.entries(getMemberBalance(p.directGroupId, p.otherNameInGroup)).forEach(([c, v]) => { bal[c] = (bal[c] || 0) + v; });
-        const count = nonGroupExps.filter((e) => expenseInvolves(e, key)).length;
-        return { name: p.name, email: p.email, pending: p.pending, directGroupId: p.directGroupId, bal, count };
-      })
-      // Hide empty leftovers: a person with no expenses AND no balance (e.g. a
-      // stray/abandoned direct thread) shouldn't clutter the list.
-      .filter((p) => p.count > 0 || Object.values(p.bal).some((v) => Math.abs(v) > 0.01))
-      .sort((a, b) => a.name.localeCompare(b.name));
-  }, [expenses, directThreads, nonGroupExps, isMe, getMemberBalance, expenseInvolves]);
+  // One entry per OTHER person, from the canonical engine (shared with Home).
+  const people = React.useMemo(
+    () => computeNonGroupPeople(expenses, directThreads, isMe, getMemberBalance),
+    [expenses, directThreads, isMe, getMemberBalance]
+  );
+
+  // Options sheet → "Share Link": with a person open, share them directly (same
+  // as the header share icon); otherwise pick who to share with.
+  const [showSharePicker, setShowSharePicker] = React.useState(false);
+  React.useEffect(() => {
+    const on = () => {
+      if (!onSharePerson) return;
+      if (profilePerson) onSharePerson(profilePerson, profilePersonThread.current);
+      else setShowSharePicker(true);
+    };
+    window.addEventListener('divido:nongroup-share', on);
+    return () => window.removeEventListener('divido:nongroup-share', on);
+  }, [profilePerson, onSharePerson]);
 
   const searchLower = searchQuery.trim().toLowerCase();
   const [balFilter, setBalFilter] = React.useState<'pay' | 'collect' | null>(null);
@@ -582,6 +549,39 @@ export const NonGroupView: React.FC<NonGroupViewProps> = ({
         payLines={frontPayLines}
         collectLines={frontCollectLines}
       />
+
+      {showSharePicker && (
+        <div
+          onClick={() => setShowSharePicker(false)}
+          style={{ position: 'fixed', inset: 0, background: 'rgba(15,23,42,0.45)', zIndex: 10001, display: 'flex', alignItems: 'flex-end', justifyContent: 'center' }}
+        >
+          <div
+            onClick={(e) => e.stopPropagation()}
+            style={{ width: '100%', maxWidth: '480px', background: '#FFFFFF', borderRadius: '24px 24px 0 0', padding: '14px 18px calc(20px + env(safe-area-inset-bottom))', boxSizing: 'border-box', maxHeight: '85vh', overflowY: 'auto' }}
+          >
+            <div style={{ width: '40px', height: '4px', borderRadius: '999px', background: '#E2E8F0', margin: '0 auto 14px' }} />
+            <div style={{ fontSize: '11px', fontWeight: 700, letterSpacing: '1px', textTransform: 'uppercase', color: '#94A3B8', marginBottom: '8px' }}>Share with</div>
+            {people.length === 0 ? (
+              <div style={{ fontSize: '14px', color: '#94A3B8', textAlign: 'center', padding: '12px 0' }}>No one to share with yet</div>
+            ) : (
+              people.map((p) => (
+                <button
+                  key={p.name}
+                  type="button"
+                  onClick={() => { setShowSharePicker(false); onSharePerson?.(p.name, p.directGroupId); }}
+                  style={{ display: 'flex', alignItems: 'center', gap: '12px', width: '100%', padding: '10px 4px', background: 'none', border: 'none', borderBottom: '1px solid #F1F5F9', cursor: 'pointer', textAlign: 'left' }}
+                >
+                  <Avatar name={p.name} size={34} />
+                  <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', gap: '2px' }}>
+                    <span style={{ fontSize: '14px', fontWeight: 500, color: '#2E2A25', textTransform: 'capitalize', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{shown(p.name)}</span>
+                    {p.email && <span style={{ fontSize: '12px', color: '#94A3B8', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{p.email}</span>}
+                  </div>
+                </button>
+              ))
+            )}
+          </div>
+        </div>
+      )}
 
       {/* Settle / Photos toggle (swipeable) — matches the home Groups/Activities tabs */}
       <div style={{ marginBottom: '14px', marginTop: '4px' }}>

@@ -14,6 +14,7 @@ import { simplifyMultiCurrencyDebts, computeRawPairwiseTransactions } from '../l
 import { ActivityStudio } from './ActivityStudio';
 import { computeJoinProgress, pendingNamesFor, detectCelebration, toSnapshot, joinNames, type JoinCelebration, type JoinSnapshot, type PendingPerson } from '../lib/joinProgress';
 import { escManager } from '../lib/escManager';
+import { buildDirectThreads, computeNonGroupPeople, makeIsMe } from '../lib/nonGroupPeople';
 
 import { Group, Expense, UserMetadata, GlobalSettleData } from '../lib/types';
 
@@ -32,6 +33,9 @@ interface MasterSummaryProps {
   handleRenameGroup: (id: string | number) => void;
   handleDeleteGroup: (id: string | number) => void;
   me: string;
+  // Full name / email: how I may be stored in shared non-group threads.
+  userName?: string;
+  userEmail?: string;
   setShowExpModal: (show: boolean) => void;
   setEditingExpense: (exp: Expense | null) => void;
   setShowConvertModalId?: (id: string | number | null) => void;
@@ -80,6 +84,8 @@ export const MasterSummary: React.FC<MasterSummaryProps> = ({
   handleRenameGroup,
   handleDeleteGroup,
   me,
+  userName,
+  userEmail,
   setShowExpModal,
   setEditingExpense,
   setShowConvertModalId,
@@ -295,31 +301,20 @@ export const MasterSummary: React.FC<MasterSummaryProps> = ({
     setShowJoinSheet(true);
   };
 
-  // A "direct" group (created by sharing a non-group card) is presented as a
-  // Non-Group expense, not as its own group. So non-group = plain STANDALONE
-  // expenses PLUS any expense living in an isDirect group.
-  const directGroupIds = new Set(groups.filter((g) => g.isDirect).map((g) => String(g.id)));
-  const isNonGroupExpense = (e: Expense) => String(e.gId) === 'STANDALONE' || directGroupIds.has(String(e.gId));
-  const nonGroupExps = expenses.filter((e) => isNonGroupExpense(e) && !e.isDeleted);
-  const nonGroupMembers = Array.from(new Set(nonGroupExps.flatMap((e) => e.splitters || [])));
-  
-  const nonGroupRels = nonGroupMembers
-    .filter((m) => m !== me)
-    .map((m) => {
-      const rel: Record<string, number> = {};
-      nonGroupExps.forEach((e) => {
-        const curr = e.currency || '₹';
-        if (!rel[curr]) rel[curr] = 0;
-        const splitters = e.splitters && e.splitters.length > 0 ? e.splitters : [e.paid];
-        const amount = (Number(e.amt) || 0);
-        const myShare = !e.mode || e.mode === 'Equally' ? amount / splitters.length : e.mode === 'Unequally' ? parseFloat(e.shares?.[me]?.toString() || '0') : (amount * parseFloat(e.shares?.[me]?.toString() || '0')) / 100;
-        const otherShare = !e.mode || e.mode === 'Equally' ? amount / splitters.length : e.mode === 'Unequally' ? parseFloat(e.shares?.[m]?.toString() || '0') : (amount * parseFloat(e.shares?.[m]?.toString() || '0')) / 100;
-        if (e.paid === me && splitters.includes(m)) rel[curr] += otherShare;
-        if (e.paid === m && splitters.includes(me)) rel[curr] -= myShare;
-      });
-      return { name: m, balances: rel };
-    })
-    .filter((r) => Object.values(r.balances).some((v) => Math.abs(v) > 0.01));
+  // Non-group = plain STANDALONE expenses PLUS shared 2-person "direct"
+  // threads. Read through the SAME canonical engine as the Non-Group screen so
+  // this card can never say "Settled up" while that screen shows a balance.
+  // balances are MY perspective: positive = I collect, negative = I pay.
+  const nonGroupRels = useMemo(() => {
+    const threads = buildDirectThreads(groups, me, userName, userEmail);
+    return computeNonGroupPeople(expenses, threads, makeIsMe(me, userName), getMemberBalance)
+      .map((p) => {
+        const balances: Record<string, number> = {};
+        Object.entries(p.bal).forEach(([c, v]) => { balances[c] = -v; });
+        return { name: p.name, balances };
+      })
+      .filter((r) => Object.values(r.balances).some((v) => Math.abs(v) > 0.01));
+  }, [groups, expenses, me, userName, userEmail, getMemberBalance]);
 
   const netBalances = useMemo(() => {
     const nb: Record<string, number> = {};
