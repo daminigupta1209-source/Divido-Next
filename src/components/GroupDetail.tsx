@@ -816,7 +816,7 @@ export const GroupDetail: React.FC<GroupDetailProps> = ({
                   type="button"
                   onClick={() => setFilterType('all')}
                   title="Clear filter"
-                  style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', padding: '5px 10px 5px 12px', borderRadius: '999px', border: 'none', cursor: 'pointer', fontSize: '12px', fontWeight: 700, background: filterType === 'owe' ? '#FFE4E6' : '#D1FAE5', color: filterType === 'owe' ? '#BE123C' : '#047857' }}
+                  style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', padding: '5px 10px 5px 12px', borderRadius: '999px', border: 'none', cursor: 'pointer', fontSize: '12px', fontWeight: 700, background: '#F1F5F9', color: '#334155' }}
                 >
                   {filterType === 'owe' ? 'To pay' : 'To collect'} <span style={{ fontSize: '13px', lineHeight: 1 }}>✕</span>
                 </button>

@@ -569,7 +569,7 @@ export const NonGroupView: React.FC<NonGroupViewProps> = ({
         {balFilter && (
           <button
             onClick={() => setBalFilter(null)}
-            style={{ marginTop: '10px', display: 'inline-flex', alignItems: 'center', gap: '6px', padding: '5px 10px 5px 12px', borderRadius: '999px', border: 'none', cursor: 'pointer', fontSize: '12px', fontWeight: 700, background: balFilter === 'pay' ? '#FFE4E6' : '#D1FAE5', color: balFilter === 'pay' ? '#BE123C' : '#047857' }}
+            style={{ marginTop: '10px', display: 'inline-flex', alignItems: 'center', gap: '6px', padding: '5px 10px 5px 12px', borderRadius: '999px', border: 'none', cursor: 'pointer', fontSize: '12px', fontWeight: 700, background: '#F1F5F9', color: '#334155' }}
           >
             {balFilter === 'pay' ? 'To pay' : 'To collect'} <span style={{ fontSize: '13px' }}>✕</span>
           </button>

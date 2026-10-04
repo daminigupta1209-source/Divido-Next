@@ -902,7 +902,7 @@ export const MasterSummary: React.FC<MasterSummaryProps> = ({
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '12px', color: '#64748B' }}>
             <span
               onClick={() => setBalanceFilter('all')}
-              style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', padding: '4px 10px', borderRadius: '999px', background: balanceFilter === 'owe' ? '#FEE2E2' : '#D1FAE5', color: balanceFilter === 'owe' ? '#B91C1C' : '#047857', fontWeight: 600, cursor: 'pointer' }}
+              style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', padding: '4px 10px', borderRadius: '999px', background: '#F1F5F9', color: '#334155', fontWeight: 600, cursor: 'pointer' }}
             >
               {balanceFilter === 'owe' ? 'Groups where you pay' : 'Groups where you collect'} <span style={{ fontWeight: 700 }}>✕</span>
             </span>
