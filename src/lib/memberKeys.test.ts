@@ -164,9 +164,9 @@ describe('activityName', () => {
   const g = { id: 'g', name: 'T', currency: '₹', members: ['Vandana Investment', 'Vandana Investment (Vandanaguptainvestment)', 'Ravi'], memberIdentities: {
     'Vandana Investment': 'vandana.work@gmail.com', 'Vandana Investment (Vandanaguptainvestment)': 'vandanaguptainvestment@gmail.com', Ravi: 'pid',
   } } as unknown as Group;
-  it('hides the tag and adds a short email hint only for look-alikes', () => {
-    expect(activityName(g, 'Vandana Investment (Vandanaguptainvestment)')).toBe('Vandana Investment (vandanagupt…)');
-    expect(activityName(g, 'Vandana Investment')).toBe('Vandana Investment (vandana.wor…)');
+  it('hides the tag and adds the email only for look-alikes', () => {
+    expect(activityName(g, 'Vandana Investment (Vandanaguptainvestment)')).toBe('Vandana Investment · vandanaguptainvestment@gmail.com');
+    expect(activityName(g, 'Vandana Investment')).toBe('Vandana Investment · vandana.work@gmail.com');
     expect(activityName(g, 'Ravi')).toBe('Ravi');
   });
 });

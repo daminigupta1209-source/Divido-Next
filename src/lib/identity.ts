@@ -760,8 +760,8 @@ export const activityName = (group: Group | undefined | null, name: string): str
   if (!dup) return shown;
   const email = String(getPersonKey(group, name) || '');
   if (!email.includes('@')) return shown;
-  const local = email.split('@')[0];
-  return `${shown} (${local.length > 11 ? local.slice(0, 11) + '…' : local})`;
+  // Same style as the pickers: "Esha Gupta · esha1990@gmail.com".
+  return `${shown} · ${email}`;
 };
 
 // The member's CURRENT roster name for a name written on an expense. Uses the
