@@ -825,10 +825,9 @@ export const MobileHeader: React.FC<MobileHeaderProps> = ({
                   );
                 })()}
 
-                {/* Non-Group is a bucket, not a real group — its options menu
-                    (Leave/Delete, Edit, Convert…) doesn't apply and Delete would
-                    wipe every non-group expense, so hide it entirely. */}
-                {selectedId !== 'STANDALONE' && (
+                {/* Non-Group gets the same options sheet minus Leave/Delete (it's a
+                    bucket, not a real group — Delete would wipe every non-group
+                    expense). Its Convert / Share are handled inside NonGroupView. */}
                 <button
                   onClick={(e) => {
                     e.stopPropagation();
@@ -857,12 +856,12 @@ export const MobileHeader: React.FC<MobileHeaderProps> = ({
                     <line x1="14" y1="18" x2="20" y2="18" />
                   </svg>
                 </button>
-                )}
-                {selectedId !== 'STANDALONE' && mobileShowGroupOptionsMenu && selectedGroup && (
+                {mobileShowGroupOptionsMenu && selectedGroup && (
                   <GroupSettingsModal
                     group={selectedGroup}
                     me={me}
                     userMetadata={userMetadata}
+                    isNonGroup={selectedId === 'STANDALONE'}
                     onClose={() => setMobileShowGroupOptionsMenu(false)}
                     onSimplifyToggle={() => {
                       setGroups(groups.map((g) => String(g.id) === String(selectedId) ? { ...g, simplifyDebts: !g.simplifyDebts } : g));
@@ -895,7 +894,8 @@ export const MobileHeader: React.FC<MobileHeaderProps> = ({
                     }}
                     onShareLink={() => {
                       setMobileShowGroupOptionsMenu(false);
-                      if (onInviteFriend) onInviteFriend();
+                      if (selectedId === 'STANDALONE') window.dispatchEvent(new Event('divido:nongroup-share'));
+                      else if (onInviteFriend) onInviteFriend();
                     }}
                   />
                 )}

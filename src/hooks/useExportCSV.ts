@@ -10,11 +10,19 @@ interface UseExportCSVProps {
 
 export const useExportCSV = ({ groups, expenses, selectedId }: UseExportCSVProps) => {
   const handleMobileExportCSV = useCallback(() => {
-    if (!selectedId || selectedId === 'STANDALONE') return;
-    const currentGroup = groups.find((g) => String(g.id) === String(selectedId));
+    if (!selectedId) return;
+    // Non-Group = plain STANDALONE expenses PLUS shared 2-person "direct"
+    // threads (the same set NonGroupView shows).
+    const isNonGroup = selectedId === 'STANDALONE';
+    const directIds = new Set(groups.filter((g) => g.isDirect).map((g) => String(g.id)));
+    const currentGroup = isNonGroup
+      ? { name: 'Non Group', currency: '₹' }
+      : groups.find((g) => String(g.id) === String(selectedId));
     if (!currentGroup) return;
 
-    const groupExpenses = expenses.filter((e) => String(e.gId) === String(selectedId));
+    const groupExpenses = isNonGroup
+      ? expenses.filter((e) => e && !e.isDeleted && !e.isConversion && (String(e.gId) === 'STANDALONE' || directIds.has(String(e.gId))))
+      : expenses.filter((e) => String(e.gId) === String(selectedId));
     const baseCurrency = currentGroup.currency || '₹';
     
     // CSV Header

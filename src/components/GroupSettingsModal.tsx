@@ -17,6 +17,9 @@ interface GroupSettingsModalProps {
   onShareLink?: () => void;
   onNewGroup?: () => void;
   userMetadata?: Record<string, any>;
+  // Non-Group is a bucket, not a real group: no Leave/Delete (that would wipe
+  // every non-group expense).
+  isNonGroup?: boolean;
 }
 
 export const GroupSettingsModal: React.FC<GroupSettingsModalProps> = ({
@@ -33,6 +36,7 @@ export const GroupSettingsModal: React.FC<GroupSettingsModalProps> = ({
   onShareLink,
   onNewGroup,
   userMetadata = {},
+  isNonGroup = false,
 }) => {
   const [isVisible, setIsVisible] = useState(false);
 
@@ -215,7 +219,7 @@ export const GroupSettingsModal: React.FC<GroupSettingsModalProps> = ({
             </button>
           )}
 
-          {(isActiveMember || isPastMember) && (
+          {!isNonGroup && (isActiveMember || isPastMember) && (
             <button
               onClick={() => { handleClose(); onLeaveOrDeleteGroup(); }}
               style={{
