@@ -1196,19 +1196,6 @@ export const MasterSummary: React.FC<MasterSummaryProps> = ({
                       <span style={{ fontSize: '11.5px', fontWeight: 500, color: '#94A3B8', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                         {pendingNames.length} yet to join
                       </span>
-                      {onInviteToGroup && (
-                        <>
-                          <span style={{ fontSize: '11.5px', color: '#CBD5E1' }}>·</span>
-                          <button
-                            type="button"
-                            onClick={(ev) => { ev.stopPropagation(); onInviteToGroup(g, pendingNames); }}
-                            title={`Invite ${joinNames(pendingNames)}`}
-                            style={{ background: 'none', border: 'none', padding: 0, margin: 0, cursor: 'pointer', fontSize: '11.5px', fontWeight: 700, color: '#7C3AED', flexShrink: 0 }}
-                          >
-                            Invite
-                          </button>
-                        </>
-                      )}
                     </div>
                   );
                 })()}
