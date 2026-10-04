@@ -148,6 +148,12 @@ export function useSupabaseSync({
   // so it must not write its stale snapshot back over the fresh one (that
   // turned another device's member rename into a "new member" next pass).
   const baselineGenRef = useRef(0);
+  // The same generation as STATE, so it lands in the same render as the groups/
+  // expenses that load produced. A sync effect whose render predates the latest
+  // load (React can flush a queued effect after the load already swapped the
+  // baseline) holds pre-load state against a post-load baseline - it must skip;
+  // the load's own render runs a fresh pass.
+  const [baselineGen, setBaselineGen] = useState(0);
 
   const [isOnline, setIsOnline] = useState(navigator.onLine);
   const [isInitialLoadDone, setIsInitialLoadDone] = useState(false);
@@ -712,6 +718,7 @@ export function useSupabaseSync({
         const mergedExpenses = [...fieldMergedExpenses, ...localOnlyExpenses].filter((e) => !isLegacyRenameLog(e));
 
         baselineGenRef.current++;
+        setBaselineGen(baselineGenRef.current);
         prevGroupsRef.current = loadedGroups;
         localStorage.setItem('divido_last_synced_groups', JSON.stringify(loadedGroups));
         prevExpensesRef.current = loadedExpenses;
@@ -851,9 +858,10 @@ export function useSupabaseSync({
 
     const syncGroups = async () => {
       try {
+        const genAtStart = baselineGen;
+        if (baselineGenRef.current !== genAtStart) return; // pre-load state - see baselineGen
         const prev = prevGroupsRef.current;
         const curr = groups;
-        const genAtStart = baselineGenRef.current;
         // Advance the group baseline - unless a cloud load replaced it mid-pass.
         // Then keep the fresh one and only add groups this pass created (their
         // inserts aren't repeatable). Field updates this pass sent that the load
@@ -1199,7 +1207,7 @@ export function useSupabaseSync({
         setGroups((prev) => [...prev]);
       }
     });
-  }, [groups, expenses, selectedId, isAuthenticated, hasCloudSession, me, setGroups, setExpenses, setSelectedId]);
+  }, [groups, expenses, selectedId, isAuthenticated, hasCloudSession, me, setGroups, setExpenses, setSelectedId, baselineGen]);
 
   // Sync expenses to Supabase in real-time
   useEffect(() => {
@@ -1208,9 +1216,10 @@ export function useSupabaseSync({
 
     const syncExpenses = async () => {
       try {
+        const genAtStart = baselineGen;
+        if (baselineGenRef.current !== genAtStart) return; // pre-load state - see baselineGen
         const prev = prevExpensesRef.current;
         const curr = expenses;
-        const genAtStart = baselineGenRef.current;
 
         // Skip syncing if we are loading initial data
         if (!initialLoadDoneRef.current) {
@@ -1401,7 +1410,7 @@ export function useSupabaseSync({
         setExpenses((prev) => [...prev]);
       }
     });
-  }, [expenses, isAuthenticated, hasCloudSession, setExpenses]);
+  }, [expenses, isAuthenticated, hasCloudSession, setExpenses, baselineGen]);
 
   // Listen for online status to trigger automatic sync queue flush
   useEffect(() => {
