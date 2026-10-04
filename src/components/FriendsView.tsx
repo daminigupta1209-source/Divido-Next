@@ -574,8 +574,15 @@ export const FriendsView: React.FC<FriendsViewProps> = ({
     const isOwe = Object.values(f.bals).some((v) => v < -0.01);
     const q = (search || searchQuery || '').trim().toLowerCase();
     if (q) {
-      const hay = [f.name, shown(f.name), String(f.id || ''), ...(f.groups || [])].join(' ').toLowerCase();
-      if (!hay.includes(q)) return false;
+      // Amounts too: "300", "₹300", "1,200", "1200.50" all match.
+      const amounts = Object.entries(f.bals || {}).flatMap(([curr, v]) => {
+        const a = Math.abs(v);
+        const exact = formatExactAmount(a);
+        return [exact, `${curr}${exact}`, String(Math.round(a * 100) / 100), a.toFixed(2)];
+      });
+      const hay = [f.name, shown(f.name), String(f.id || ''), ...(f.groups || []), ...amounts].join(' ').toLowerCase();
+      const noCommas = (s: string) => s.replace(/,/g, '');
+      if (!hay.includes(q) && !noCommas(hay).includes(noCommas(q))) return false;
     }
     if (selectedFriends.length > 0 && !selectedFriends.includes(f.id)) return false;
     if (balanceFilter === 'owed' && !isOwed) return false;
