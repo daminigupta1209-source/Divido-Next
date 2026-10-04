@@ -106,6 +106,8 @@ export const MasterSummary: React.FC<MasterSummaryProps> = ({
   const [openDropdownId, setOpenDropdownId] = useState<string | number | null>(null);
   const [timeFilter, setTimeFilter] = useState<'all' | '30days' | '7days'>('all');
   const [balanceFilter, setBalanceFilter] = useState<'all' | 'owe' | 'owed' | 'settled'>('all');
+  // Last All / Pay / Collect chosen in the balance summary (for its Settle up).
+  const summarySideRef = React.useRef<'all' | 'pay' | 'collect'>('all');
   const [showFilters, setShowFilters] = useState(false);
   const [homeTab, setHomeTab] = useState<'groups' | 'activity'>('groups');
   // Make the phone Back gesture return from the Activities tab to Groups instead
@@ -829,7 +831,20 @@ export const MasterSummary: React.FC<MasterSummaryProps> = ({
               collectLines={getBacks.map(([curr, amount]) => ({ curr, amount }))}
               // Tap Pay / Collect to filter the group list below (tap again to clear).
               active={balanceFilter === 'owe' ? 'pay' : balanceFilter === 'owed' ? 'collect' : null}
-              onSummaryFilter={(f) => { setBalanceFilter(f === 'pay' ? 'owe' : f === 'collect' ? 'owed' : 'all'); if (homeTab !== 'groups') selectHomeTab('groups'); }}
+              onSummaryFilter={(f) => { summarySideRef.current = f; setBalanceFilter(f === 'pay' ? 'owe' : f === 'collect' ? 'owed' : 'all'); if (homeTab !== 'groups') selectHomeTab('groups'); }}
+              // Home only: "Settle up" opens All balances, filtered the same way,
+              // where you pick the person to settle with.
+              summaryAction={{
+                label: 'Settle up',
+                onClick: () => {
+                  const f = summarySideRef.current;
+                  const hint = f === 'pay' ? 'owe' : f === 'collect' ? 'owed' : 'all';
+                  try { sessionStorage.setItem('divido_friends_filter', hint); } catch { /* ignore */ }
+                  window.dispatchEvent(new CustomEvent('divido:friends-filter', { detail: hint }));
+                  setBalanceFilter('all');
+                  setView('friends');
+                },
+              }}
               onPayClick={() => { setBalanceFilter((f) => (f === 'owe' ? 'all' : 'owe')); if (homeTab !== 'groups') selectHomeTab('groups'); }}
               onCollectClick={() => { setBalanceFilter((f) => (f === 'owed' ? 'all' : 'owed')); if (homeTab !== 'groups') selectHomeTab('groups'); }}
             />
