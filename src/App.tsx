@@ -994,28 +994,13 @@ function App() {
 
   const applyRename = async (groupId: string | number, oldName: string, newName: string) => {
     if (!oldName || !newName || oldName === newName) return;
-    // Rename a member's key inside a shares/origShares map (used by Unequally /
-    // Percentage splits). Previously these were NOT rewritten on rename, so the
-    // renamed person's share got orphaned and their balance broke.
-    const renameShareKey = (obj: Record<string, number> | undefined | null, oldN: string, newN: string) => {
-      if (!obj || !(oldN in obj)) return obj;
-      const next: Record<string, number> = {};
-      for (const k of Object.keys(obj)) next[k === oldN ? newN : k] = obj[k];
-      return next;
-    };
-    // Show the new name straight away (paid, splitters, shares, origShares,
-    // roster). markPendingRename stops the background sync from treating the
-    // new name as a NEW member while the cloud rename below is in flight.
+    // Permanent ID step 4: a rename changes ONLY the member's record. Old
+    // expenses keep the name they were written with, and every screen shows the
+    // current name through the expense's member IDs (expensesView /
+    // applyKeyNames). markPendingRename stops the background sync from treating
+    // the new name as a NEW member while the cloud update is in flight.
     markPendingRename(groupId, newName);
-    setExpenses((prev) => prev.map((e) => (String(e.gId) === String(groupId)
-      ? {
-          ...e,
-          paid: e.paid === oldName ? newName : e.paid,
-          splitters: (e.splitters || []).map((s) => (s === oldName ? newName : s)),
-          shares: renameShareKey(e.shares, oldName, newName) as any,
-          origShares: renameShareKey(e.origShares, oldName, newName) as any,
-        }
-      : e)));
+    const renamedKey = groups.find((g) => String(g.id) === String(groupId))?.memberKeys?.[oldName];
     setGroups((prev) => prev.map((g) => (String(g.id) === String(groupId)
       ? (() => {
           // Carry the person's pending status, email and member key over to the
@@ -1036,30 +1021,11 @@ function App() {
       : g)));
 
     try {
-      // 1+2. Member row + every expense reference, in ONE database transaction
-      // (api/rename_member.sql) so a dropped connection can't leave a balance
-      // split between the old and new name. Until that SQL is run, fall back to
-      // the old step-by-step rename below.
-      const { error: rpcErr } = await supabase.rpc('rename_member', {
-        p_group_id: String(groupId), p_old: oldName, p_new: newName,
-      });
-      if (rpcErr) {
-        console.warn('rename_member RPC unavailable, using step-by-step rename:', rpcErr.message);
-      await supabase.from('group_members').update({ name: newName, pending_name: null }).eq('group_id', groupId).ilike('name', oldName);
-      const { data: exps } = await supabase.from('expenses').select('*').eq('group_id', groupId);
-      for (const e of exps || []) {
-        const paidNew = e.paid === oldName ? newName : e.paid;
-        const splittersNew = Array.isArray(e.splitters) ? e.splitters.map((s: string) => (s === oldName ? newName : s)) : e.splitters;
-        const sharesNew = renameShareKey(e.shares, oldName, newName);
-        if (
-          paidNew !== e.paid ||
-          JSON.stringify(splittersNew) !== JSON.stringify(e.splitters) ||
-          JSON.stringify(sharesNew) !== JSON.stringify(e.shares)
-        ) {
-          await supabase.from('expenses').update({ paid: paidNew, splitters: splittersNew, shares: sharesNew }).eq('id', e.id);
-        }
-      }
-      }
+      // The member's row only — found by its permanent key when known.
+      let q = supabase.from('group_members').update({ name: newName, pending_name: null }).eq('group_id', groupId);
+      q = renamedKey ? q.eq('member_key', renamedKey) : q.ilike('name', oldName.replace(/[\\%_]/g, (c) => '\\' + c));
+      const { error: renameErr } = await q;
+      if (renameErr) throw renameErr;
 
       // 4. Local identity (if this device is the renamed person)
       const cleanMe = me.replace(/\s*\(me\)$/i, '').replace(/\s*\(Left\)$/i, '').toLowerCase();
@@ -5362,9 +5328,18 @@ function App() {
               // as a phantom person. Tombstone them as "(Left)" instead — the same path an
               // active member takes on leaving — so history is preserved and they stay
               // rejoinable.
+              // Match by permanent member ID too: after a rename, old expenses
+              // still carry the OLD name, but their keys point at this member.
+              const removalKeys = (selectedGroup as Group | undefined)?.memberKeys;
+              const memberKeyForRemoval = removalKeys?.[memberName] || removalKeys?.[cleanName];
               const hasExpenseHistory = expenses.some((e) => {
                 const names = [cleanName, memberName];
-                const referencesMember =
+                const byKey = !!memberKeyForRemoval && (
+                  e.paidKey === memberKeyForRemoval ||
+                  (e.splitterKeys || []).includes(memberKeyForRemoval) ||
+                  Object.values(e.partyKeys || {}).includes(memberKeyForRemoval)
+                );
+                const referencesMember = byKey ||
                   names.includes(e.paid) ||
                   (Array.isArray(e.splitters) && e.splitters.some((s) => names.includes(s)));
                 if (!referencesMember) return false;
