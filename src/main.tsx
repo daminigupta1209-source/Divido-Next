@@ -3,6 +3,10 @@ import { createRoot } from 'react-dom/client'
 import './index.css'
 import App from './App.tsx'
 import { ErrorBoundary } from './components/ErrorBoundary'
+import { initMonitoring } from './lib/monitoring'
+
+// Crash alerts (no-op until VITE_SENTRY_DSN is set).
+initMonitoring();
 
 // Build marker — check the console to confirm which version is actually loaded
 // (helps tell a fresh deploy apart from a stale service-worker cache).

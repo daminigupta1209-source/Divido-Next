@@ -49,6 +49,12 @@
             '<style>@keyframes dvspin{to{transform:rotate(360deg)}}</style></div>';
         }
         function showError() {
+          // Keep it for the crash report, sent the next time the app starts.
+          try {
+            var saved = JSON.parse(localStorage.getItem('dv_startup_errors') || '[]');
+            saved.push({ at: new Date().toISOString(), errors: errors.slice(-3) });
+            localStorage.setItem('dv_startup_errors', JSON.stringify(saved.slice(-5)));
+          } catch (e) {}
           var r = root();
           if (!r) return;
           r.setAttribute('data-dv-overlay', '1');

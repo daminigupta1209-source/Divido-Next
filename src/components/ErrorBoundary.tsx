@@ -1,4 +1,5 @@
 import { Component, ReactNode } from 'react';
+import { reportError } from '../lib/monitoring';
 
 interface Props {
   children: ReactNode;
@@ -23,6 +24,7 @@ export class ErrorBoundary extends Component<Props, State> {
 
   componentDidCatch(error: Error, info: unknown) {
     console.error('[Divido] Unhandled render error:', error, info);
+    reportError(error, { where: 'render', info: String((info as { componentStack?: string })?.componentStack || '').slice(0, 2000) });
 
     const msg = error?.message || '';
     const isChunkError =
