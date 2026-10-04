@@ -754,7 +754,7 @@ export const FriendsView: React.FC<FriendsViewProps> = ({
       })()}
 
       {balanceFilter !== 'all' && (
-        <div style={{ display: 'flex', marginBottom: '14px' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap', marginBottom: '14px' }}>
           <button
             type="button"
             onClick={() => setBalanceFilter('all')}
@@ -764,6 +764,17 @@ export const FriendsView: React.FC<FriendsViewProps> = ({
             {balanceFilter === 'owe' ? 'To pay' : 'To collect'}
             <span style={{ fontSize: '13px', lineHeight: 1 }}>✕</span>
           </button>
+          {/* Short summary so it's clear what this list is and what to do next. */}
+          <span style={{ fontSize: '12.5px', color: '#64748B' }}>
+            {(() => {
+              const n = filteredFriends.length;
+              if (n === 0) return balanceFilter === 'owe' ? 'No one to pay' : 'No one to collect from';
+              const who = `${n} ${n === 1 ? 'friend' : 'friends'}`;
+              return balanceFilter === 'owe'
+                ? `You have ${who} to pay · tap one to settle`
+                : `You have ${who} to collect from · tap one to settle`;
+            })()}
+          </span>
         </div>
       )}
 
