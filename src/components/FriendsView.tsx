@@ -754,7 +754,7 @@ export const FriendsView: React.FC<FriendsViewProps> = ({
       })()}
 
       {balanceFilter !== 'all' && (
-        <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap', marginBottom: '14px' }}>
+        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: '12px', marginTop: '4px', marginBottom: '20px' }}>
           <button
             type="button"
             onClick={() => setBalanceFilter('all')}
