@@ -930,7 +930,7 @@ export const MasterSummary: React.FC<MasterSummaryProps> = ({
               onClick={openNonGroup}
               style={{
                 position: 'relative',
-                padding: '14px 16px',
+                padding: '10px 14px',
                 marginBottom: '2px',
                 background: '#F5F3FF',
                 borderRadius: '20px',
@@ -945,8 +945,8 @@ export const MasterSummary: React.FC<MasterSummaryProps> = ({
             >
               <div
                 style={{
-                  width: '46px',
-                  height: '46px',
+                  width: '38px',
+                  height: '38px',
                   borderRadius: '50%',
                   background: '#FFFFFF',
                   color: '#6D28D9',
@@ -958,7 +958,7 @@ export const MasterSummary: React.FC<MasterSummaryProps> = ({
                   flexShrink: 0,
                 }}
               >
-                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
                   <path d="M8 7a4 4 0 1 0 8 0a4 4 0 0 0 -8 0" />
                   <path d="M6 21v-2a4 4 0 0 1 4 -4h.5" />
                   <path d="M18 22l3.35 -3.284a2.143 2.143 0 0 0 .005 -3.071a2.242 2.242 0 0 0 -3.129 -.006l-.224 .22l-.223 -.22a2.242 2.242 0 0 0 -3.128 -.006a2.143 2.143 0 0 0 -.006 3.071l3.355 3.296z" />
@@ -1002,7 +1002,7 @@ export const MasterSummary: React.FC<MasterSummaryProps> = ({
           <>
             <style>{`@keyframes sk-pulse{0%,100%{opacity:1}50%{opacity:.45}}`}</style>
             {[0, 1, 2].map((i) => (
-              <div key={`sk-${i}`} style={{ padding: '14px 16px', background: '#FFFFFF', borderRadius: '16px', border: '0.5px solid #EFE7DC', display: 'flex', alignItems: 'center', gap: '12px', animation: 'sk-pulse 1.2s ease-in-out infinite' }}>
+              <div key={`sk-${i}`} style={{ padding: '10px 14px', background: '#FFFFFF', borderRadius: '16px', border: '0.5px solid #EFE7DC', display: 'flex', alignItems: 'center', gap: '12px', animation: 'sk-pulse 1.2s ease-in-out infinite' }}>
                 <div style={{ width: '44px', height: '44px', borderRadius: '50%', background: '#EEE9E2', flexShrink: 0 }} />
                 <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '8px' }}>
                   <div style={{ height: '12px', width: '55%', borderRadius: '6px', background: '#EEE9E2' }} />
@@ -1100,7 +1100,7 @@ export const MasterSummary: React.FC<MasterSummaryProps> = ({
               }}
               style={{
                 position: 'relative',
-                padding: '14px 16px',
+                padding: '10px 14px',
                 marginBottom: '2px',
                 background: '#FFFFFF',
                 borderRadius: '20px',
@@ -1116,15 +1116,15 @@ export const MasterSummary: React.FC<MasterSummaryProps> = ({
               {/* Avatar */}
               <div
                 style={{
-                  width: '46px',
-                  height: '46px',
+                  width: '38px',
+                  height: '38px',
                   borderRadius: '50%',
                   background: c.bg,
                   color: c.text,
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
-                  fontSize: '18px',
+                  fontSize: '15px',
                   fontWeight: 600,
                   flexShrink: 0,
                   overflow: 'hidden',
