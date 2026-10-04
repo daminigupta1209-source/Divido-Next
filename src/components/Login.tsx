@@ -4,9 +4,12 @@ import { supabase } from '../lib/supabaseClient';
 interface LoginProps {
   onLoginSuccess: (name: string) => void;
   currentTheme: 'lavender' | 'sunset';
+  /** Opened from an invite link while signed out: a short note above sign-in.
+   *  After signing in, the join card shows the real group(s). */
+  inviteCount?: number;
 }
 
-export const Login: React.FC<LoginProps> = ({ onLoginSuccess, currentTheme }) => {
+export const Login: React.FC<LoginProps> = ({ onLoginSuccess, currentTheme, inviteCount }) => {
   const isThemeSunset = currentTheme === 'sunset';
   const [loading, setLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
@@ -194,9 +197,16 @@ export const Login: React.FC<LoginProps> = ({ onLoginSuccess, currentTheme }) =>
         </div>
 
         <h2 className="suno-title">Welcome to Divido</h2>
-        <p style={{ fontSize: '14px', color: '#64748B', marginBottom: '32px', lineHeight: '1.5' }}>
+        <p style={{ fontSize: '14px', color: '#64748B', marginBottom: inviteCount ? '18px' : '32px', lineHeight: '1.5' }}>
           Manage groups, split expenses, and track balances.
         </p>
+
+        {!!inviteCount && (
+          <div style={{ background: '#ECFDF5', border: '1px solid #A7F3D0', borderRadius: '14px', padding: '12px 14px', marginBottom: '24px', color: '#065F46', fontSize: '14px', fontWeight: 600, lineHeight: 1.45 }}>
+            🎉 You've been invited to {inviteCount > 1 ? `${inviteCount} groups` : 'a group'}
+            <div style={{ fontSize: '12.5px', fontWeight: 500, color: '#047857', marginTop: '2px' }}>Sign in to see it and join.</div>
+          </div>
+        )}
 
         {errorMsg && (
           <div

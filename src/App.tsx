@@ -4245,21 +4245,12 @@ function App() {
             setIsAuthenticated(true);
           }}
           currentTheme={theme}
+          // Signed out with an invite link: sign in first (with a short
+          // "you've been invited" note), then the join card shows the real
+          // group — no empty placeholder card for a brand-new user.
+          inviteCount={inviteLandingRaw && inviteLandingMode === 'signedOut' ? Math.max(1, inviteLandingSpots.length) : undefined}
         />
         <InstallPrompt />
-        {inviteLandingRaw && inviteLandingMode === 'signedOut' && (
-          <InviteLandingCard
-            mode="signedOut"
-            totalCount={inviteLandingSpots.length}
-            rows={inviteLandingRows}
-            selectedGroupIds={[]}
-            onToggleGroup={() => {}}
-            busy={false}
-            onJoinSelected={() => {}}
-            onSignIn={inviteSignIn}
-            onDismiss={dismissInviteLanding}
-          />
-        )}
       </>
     );
   }
