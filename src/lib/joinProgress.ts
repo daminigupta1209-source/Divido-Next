@@ -25,22 +25,32 @@ const activeRoster = (g: Group): string[] => {
   return g.members.filter((m) => !LEFT_RE.test(m) && !removed.has(m.toLowerCase()));
 };
 
-// Members of `g` who were added but haven't joined, excluding me. Stale entries
-// in pendingMembers that are no longer on the active roster are ignored.
-export const pendingNamesFor = (g: Group, myName: string): string[] => {
+// One member seat in a group: the roster string minus "(Left)", lower-cased.
+// Not the clean name: two different people can share a visible name ("Esha
+// Gupta" and "Esha Gupta (esha1997)", told apart by email), and each is a seat.
+const seatOf = (m: string): string => m.replace(LEFT_RE, '').trim().toLowerCase();
+
+// Raw pendingMembers entries of `g` that are real pending seats: on the active
+// roster, not me, one per seat.
+const pendingRawFor = (g: Group, myName: string): string[] => {
   if (g.isDirect) return [];
   const roster = new Set(activeRoster(g).map((m) => m.toLowerCase()));
   const seen = new Set<string>();
   const out: string[] = [];
   for (const m of g.pendingMembers || []) {
     if (!roster.has(m.toLowerCase()) || isMe(g, m, myName)) continue;
-    const clean = cleanMemberName(g, m);
-    if (!clean || seen.has(clean.toLowerCase())) continue;
-    seen.add(clean.toLowerCase());
-    out.push(clean);
+    if (!cleanMemberName(g, m) || seen.has(seatOf(m))) continue;
+    seen.add(seatOf(m));
+    out.push(m);
   }
   return out;
 };
+
+// Members of `g` who were added but haven't joined, excluding me. Stale entries
+// in pendingMembers that are no longer on the active roster are ignored. One
+// name per seat, so two same-named people both appear.
+export const pendingNamesFor = (g: Group, myName: string): string[] =>
+  pendingRawFor(g, myName).map((m) => cleanMemberName(g, m));
 
 // A group's latest-activity timestamp: its latest non-deleted expense date, else
 // its creation date. Returns null when neither is available (a brand new group
@@ -115,7 +125,7 @@ const spotKeysFor = (g: Group, name: string): string[] => {
   const keys: string[] = [];
   const mk = memberKeyFor(g, name);
   if (mk) keys.push(`${g.id}|k:${mk}`);
-  keys.push(`${g.id}|n:${cleanMemberName(g, name).toLowerCase()}`);
+  keys.push(`${g.id}|n:${seatOf(name)}`);
   return keys;
 };
 
@@ -140,19 +150,20 @@ export const computeJoinProgress = (
     if (!isActiveGroup(g, expenses, now)) continue;
     const myName = myNameFor(g.id);
     const keyOf = (m: string) => String(getPersonKey(g, m.replace(ME_RE, ''))).trim().toLowerCase();
-    const names = pendingNamesFor(g, myName);
-    const pendingSet = new Set(names.map((n) => n.toLowerCase()));
+    const pendingRaw = pendingRawFor(g, myName);
+    const names = pendingRaw.map((m) => cleanMemberName(g, m));
+    const pendingSet = new Set(pendingRaw.map(seatOf));
 
     const seenSeats = new Set<string>();
     for (const m of activeRoster(g)) {
       if (isMe(g, m, myName)) continue;
       seenAll.add(keyOf(m));
       const clean = cleanMemberName(g, m);
-      if (!clean || seenSeats.has(clean.toLowerCase())) continue;
-      seenSeats.add(clean.toLowerCase());
+      if (!clean || seenSeats.has(seatOf(m))) continue;
+      seenSeats.add(seatOf(m));
       totalSpots++;
       const keys = spotKeysFor(g, m);
-      if (pendingSet.has(clean.toLowerCase())) {
+      if (pendingSet.has(seatOf(m))) {
         pendingSpotCount++;
         spotIndex.pending[keys[0]] = { name: clean, groupName: g.name || 'your group' };
       } else {
@@ -161,7 +172,6 @@ export const computeJoinProgress = (
     }
     if (names.length === 0) continue;
     perGroup.push({ group: g, names });
-    const pendingRaw = (g.pendingMembers || []).filter((m) => names.some((n) => n.toLowerCase() === cleanMemberName(g, m).toLowerCase()));
     for (const m of pendingRaw) {
       const key = keyOf(m);
       if (!pendingAcc.has(key)) pendingAcc.set(key, { key, groupName: g.name || 'your group', spots: [] });

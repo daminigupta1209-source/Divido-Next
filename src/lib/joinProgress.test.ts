@@ -28,6 +28,30 @@ describe('pendingNamesFor', () => {
   });
 });
 
+describe('same-named people in one group', () => {
+  // "Esha Gupta" and "Esha Gupta (esha1997)" are two people (different emails,
+  // hidden tag): the banner count and the sheet must both say 2.
+  const g = grp({
+    members: ['Me', 'Esha Gupta', 'Esha Gupta (esha1997)'],
+    pendingMembers: ['Esha Gupta', 'Esha Gupta (esha1997)'],
+    memberIdentities: { 'Esha Gupta': 'eshadgupta1993@gmail.com', 'Esha Gupta (esha1997)': 'esha1997@gmail.com' },
+  });
+
+  it('counts each as its own pending seat', () => {
+    expect(pendingNamesFor(g, 'Me')).toEqual(['Esha Gupta', 'Esha Gupta']);
+    const p = computeJoinProgress([g], [], meFor, NOW);
+    expect(p.pendingSpotCount).toBe(2);
+    expect(p.totalSpots).toBe(2);
+    expect(p.pending.map((x) => x.key).sort()).toEqual(['esha1997@gmail.com', 'eshadgupta1993@gmail.com']);
+  });
+
+  it('drops only the seat that joined', () => {
+    const p = computeJoinProgress([{ ...g, pendingMembers: ['Esha Gupta (esha1997)'] }], [], meFor, NOW);
+    expect(p.pendingSpotCount).toBe(1);
+    expect(p.pending.map((x) => x.key)).toEqual(['esha1997@gmail.com']);
+  });
+});
+
 describe('isActiveGroup', () => {
   it('uses the latest non-deleted expense, else createdDate', () => {
     const old = grp({ createdDate: '2025-01-01' });

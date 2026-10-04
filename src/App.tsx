@@ -1836,7 +1836,10 @@ function App() {
   }, [groups, isAuthenticated, userEmail]);
 
   const mergePeople = async (entries: DuplicateEntry[], canonicalOverride?: string) => {
-    if (!entries || entries.length < 2) return;
+    // The review screen passes only the entries to fold in (often just one)
+    // plus the primary email; without a primary, 2+ entries are needed.
+    if (!entries || entries.length === 0) return;
+    if (entries.length < 2 && !(canonicalOverride && canonicalOverride.trim())) return;
     // The user can choose the primary email to merge everyone into; otherwise
     // fall back to the automatic pick (existing email > person_id).
     const canonical = (canonicalOverride && canonicalOverride.trim())

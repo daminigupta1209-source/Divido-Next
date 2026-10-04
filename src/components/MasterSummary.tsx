@@ -1274,6 +1274,8 @@ export const MasterSummary: React.FC<MasterSummaryProps> = ({
             <div style={{ display: 'flex', flexDirection: 'column' }}>
               {joinProgress.pending.map((person, idx) => {
                 const groupNames = person.spots.map((s) => s.group.name || 'Untitled Group').join(' · ');
+                // Email on every row, so same-named people (or one person invited twice) can be told apart.
+                const email = person.key.includes('@') ? person.key : '';
                 const invited = !!invitedPersonKeys[person.key];
                 return (
                   <div
@@ -1285,6 +1287,9 @@ export const MasterSummary: React.FC<MasterSummaryProps> = ({
                     </div>
                     <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', gap: '2px' }}>
                       <span style={{ fontSize: '15px', fontWeight: 600, color: '#0F172A', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{shown(person.name)}</span>
+                      <span style={{ fontSize: '12px', fontWeight: 500, color: email ? '#64748B' : '#B8AEA2', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                        {email || 'No email'}
+                      </span>
                       <span
                         title={groupNames}
                         style={{ fontSize: '12px', fontWeight: 500, color: '#94A3B8', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}

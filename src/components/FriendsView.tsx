@@ -27,6 +27,15 @@ export interface MergeReview {
   all?: DuplicateEntry[];
 }
 
+// Spots that can be folded into `primary`: a different email, in a group where
+// the primary isn't already a member (two same-named members of one group are
+// different people, never merged into one).
+export const mergeableInto = (entries: DuplicateEntry[], primary: string): DuplicateEntry[] => {
+  const p = primary.toLowerCase();
+  const primaryGroupIds = new Set(entries.filter((e) => e.email.toLowerCase() === p).map((e) => String(e.groupId)));
+  return entries.filter((e) => e.email.toLowerCase() !== p && !primaryGroupIds.has(String(e.groupId)));
+};
+
 const MergeRow: React.FC<{
   r: MergeReview;
   onMerge: (entries: DuplicateEntry[], canonicalEmail?: string) => Promise<void>;
@@ -35,64 +44,75 @@ const MergeRow: React.FC<{
   const [busy, setBusy] = useState(false);
   // Nobody joined yet → the user can choose which email is the primary.
   const [primary, setPrimary] = useState(r.primary);
-  const others = r.all ? r.all.filter((e) => e.email !== primary) : r.others;
+  const others = r.all ? mergeableInto(r.all, primary) : r.others;
   const primaryGroups = r.all ? r.all.filter((e) => e.email === primary).map((e) => e.groupName) : r.primaryGroups;
-  const [checked, setChecked] = useState<boolean[]>(() => (r.all || r.others).map(() => true));
+  // Emails that could be made primary instead (each must leave something to merge).
+  const canBePrimary = (email: string) => !!r.all && !!email && mergeableInto(r.all, email).length > 0;
+  const [checked, setChecked] = useState<boolean[]>(() => others.map(() => true));
   React.useEffect(() => { setChecked(others.map(() => true)); }, [primary]); // eslint-disable-line react-hooks/exhaustive-deps
   const selectedCount = checked.filter(Boolean).length;
   const canMerge = selectedCount >= 1 && !busy;
   const toggle = (i: number) => setChecked((prev) => prev.map((v, idx) => (idx === i ? !v : v)));
   const bg = AV_BG[(r.name.charCodeAt(0) || 0) % AV_BG.length];
+  const oneLine: React.CSSProperties = { overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', minWidth: 0 };
 
   return (
     <div style={{ background: '#FFFFFF', border: '1px solid #F1F5F9', borderRadius: '16px', padding: '14px', boxShadow: '0 2px 10px rgba(0,0,0,0.03)' }}>
-      <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '8px' }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '10px' }}>
         <div style={{ width: '36px', height: '36px', borderRadius: '50%', background: bg, color: '#FFFFFF', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '15px', fontWeight: 600, flexShrink: 0 }}>
           {r.name.charAt(0).toUpperCase()}
         </div>
-        <div style={{ flex: 1, fontSize: '15px', fontWeight: 600, color: '#1E293B', minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{shown(r.name)}</div>
-        <button
-          type="button"
-          onClick={onDismiss}
-          aria-label="Not the same person"
-          title="Not the same person"
-          style={{ background: '#F1F5F9', border: 'none', borderRadius: '50%', width: '28px', height: '28px', flexShrink: 0, cursor: 'pointer', color: '#64748B', fontSize: '14px', fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'center' }}
-        >✕</button>
-      </div>
-      <div style={{ padding: '9px 0', borderTop: '1px solid #F1F5F9' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-          <span style={{ fontSize: '10.5px', fontWeight: 700, color: '#047857', background: '#D1FAE5', borderRadius: '999px', padding: '2px 8px', flexShrink: 0 }}>Primary</span>
-          <span style={{ fontSize: '13px', fontWeight: 600, color: '#1E293B', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', minWidth: 0 }}>{primary}</span>
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <div style={{ ...oneLine, fontSize: '15px', fontWeight: 600, color: '#1E293B' }}>{shown(r.name)}</div>
+          <div style={{ fontSize: '12px', color: '#64748B', marginTop: '1px' }}>Same name in different groups. Same person?</div>
         </div>
-        <div style={{ fontSize: '11.5px', color: '#94A3B8', marginTop: '3px' }}>{r.all ? 'In' : 'Joined in'} {primaryGroups.join(', ')}</div>
       </div>
+
+      <div style={{ background: '#F0FDF4', border: '1px solid #BBF7D0', borderRadius: '12px', padding: '10px 12px' }}>
+        <span style={{ fontSize: '10.5px', fontWeight: 700, color: '#047857', background: '#D1FAE5', borderRadius: '999px', padding: '2px 8px' }}>Primary</span>
+        <div style={{ ...oneLine, fontSize: '13.5px', fontWeight: 600, color: '#1E293B', marginTop: '6px' }}>{primary}</div>
+        <div style={{ ...oneLine, fontSize: '12px', color: '#64748B', marginTop: '2px' }}>{r.all ? 'In' : 'Joined in'} {primaryGroups.join(', ')}</div>
+      </div>
+
+      <div style={{ fontSize: '11.5px', fontWeight: 600, color: '#94A3B8', margin: '12px 0 2px' }}>Merge into primary</div>
       {others.map((e, i) => (
-        <label key={i} onClick={() => toggle(i)} style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '9px 0', borderTop: '1px solid #F1F5F9', cursor: 'pointer' }}>
+        <div key={i} onClick={() => toggle(i)} style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '10px 0', borderTop: i > 0 ? '1px solid #F1F5F9' : 'none', cursor: 'pointer' }}>
           <span style={{ width: '20px', height: '20px', borderRadius: '6px', flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', background: checked[i] ? '#10B981' : '#FFFFFF', border: checked[i] ? 'none' : '2px solid #CBD5E1', boxSizing: 'border-box', color: '#FFFFFF', fontSize: '12px', fontWeight: 700 }}>
             {checked[i] ? '✓' : ''}
           </span>
-          <span style={{ fontSize: '14px', color: checked[i] ? '#1E293B' : '#94A3B8', flexShrink: 0 }}>{e.groupName}</span>
-          <span style={{ marginLeft: 'auto', fontSize: '11.5px', color: '#94A3B8', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', minWidth: 0 }}>{e.email || 'no email'}</span>
-          {r.all && e.email && (
-            <span
-              onClick={(ev) => { ev.preventDefault(); ev.stopPropagation(); setPrimary(e.email); }}
-              style={{ fontSize: '11px', fontWeight: 600, color: '#047857', flexShrink: 0, cursor: 'pointer', paddingLeft: '4px' }}
-            >Make primary</span>
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <div style={{ ...oneLine, fontSize: '13.5px', fontWeight: 600, color: checked[i] ? '#1E293B' : '#94A3B8' }}>{e.email || 'No email'}</div>
+            <div style={{ ...oneLine, fontSize: '12px', color: '#94A3B8', marginTop: '2px' }}>In {e.groupName}</div>
+          </div>
+          {canBePrimary(e.email) && (
+            <button
+              type="button"
+              onClick={(ev) => { ev.stopPropagation(); setPrimary(e.email); }}
+              style={{ flexShrink: 0, background: '#FFFFFF', border: '1px solid #A7F3D0', borderRadius: '999px', padding: '5px 10px', fontSize: '11.5px', fontWeight: 600, color: '#047857', cursor: 'pointer' }}
+            >Make primary</button>
           )}
-        </label>
+        </div>
       ))}
-      <button
-        disabled={!canMerge}
-        onClick={async () => {
-          const entries = others.filter((_, i) => checked[i]);
-          if (entries.length === 0) return;
-          setBusy(true);
-          try { await onMerge(entries, primary); } finally { setBusy(false); }
-        }}
-        style={{ width: '100%', marginTop: '10px', padding: '11px', borderRadius: '12px', border: 'none', background: canMerge ? '#10B981' : '#CBD5E1', color: '#FFFFFF', fontWeight: 600, fontSize: '13.5px', cursor: canMerge ? 'pointer' : 'default' }}
-      >
-        {busy ? 'Merging…' : selectedCount === 0 ? 'Tick at least 1 to merge' : 'Merge into primary'}
-      </button>
+
+      <div style={{ display: 'flex', gap: '8px', marginTop: '12px' }}>
+        <button
+          type="button"
+          onClick={onDismiss}
+          style={{ flex: 1, padding: '11px', borderRadius: '12px', border: '1px solid #E2E8F0', background: '#FFFFFF', color: '#475569', fontWeight: 600, fontSize: '13.5px', cursor: 'pointer' }}
+        >Not the same</button>
+        <button
+          disabled={!canMerge}
+          onClick={async () => {
+            const entries = others.filter((_, i) => checked[i]);
+            if (entries.length === 0) return;
+            setBusy(true);
+            try { await onMerge(entries, primary); } finally { setBusy(false); }
+          }}
+          style={{ flex: 1.4, padding: '11px', borderRadius: '12px', border: 'none', background: canMerge ? '#10B981' : '#CBD5E1', color: '#FFFFFF', fontWeight: 600, fontSize: '13.5px', cursor: canMerge ? 'pointer' : 'default' }}
+        >
+          {busy ? 'Merging…' : selectedCount === 0 ? 'Tick 1 to merge' : 'Merge'}
+        </button>
+      </div>
     </div>
   );
 };
@@ -263,22 +283,27 @@ export const FriendsView: React.FC<FriendsViewProps> = ({
         const g = groups.find((x) => String(x.id) === String(e.groupId));
         return !!g && !(g.pendingMembers || []).includes(e.memberName);
       };
+      // Same name twice in ONE group is two people on purpose (adding or
+      // renaming to a taken name needs a different email, and the name gets a
+      // hidden tag), so only spots in different groups are offered.
+      if (new Set(d.entries.map((e) => String(e.groupId))).size < 2) return;
       const joinedEmails = new Set(withEmail.filter(isJoined).map((e) => e.email));
       if (joinedEmails.size === 0) {
         // Nobody has joined: offer it, the user chooses the primary email.
-        const primary = withEmail[0].email;
+        const primary = withEmail.find((e) => mergeableInto(d.entries, e.email).length > 0)?.email;
+        if (!primary) return;
         out.push({
           name: d.name,
           primary,
           primaryGroups: withEmail.filter((e) => e.email === primary).map((e) => e.groupName),
-          others: d.entries.filter((e) => e.email !== primary),
+          others: mergeableInto(d.entries, primary),
           all: d.entries,
         });
         return;
       }
       if (joinedEmails.size !== 1) return;
       const primary = [...joinedEmails][0];
-      const others = d.entries.filter((e) => e.email !== primary && !isJoined(e));
+      const others = mergeableInto(d.entries, primary).filter((e) => !isJoined(e));
       if (others.length === 0) return;
       const primaryGroups = withEmail.filter((e) => e.email === primary && isJoined(e)).map((e) => e.groupName);
       out.push({ name: d.name, primary, primaryGroups, others });
