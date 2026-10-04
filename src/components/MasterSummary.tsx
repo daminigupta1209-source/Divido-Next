@@ -825,6 +825,8 @@ export const MasterSummary: React.FC<MasterSummaryProps> = ({
               payMore={payBacks.length - 1}
               collect={hasActiveBalancesForCard && getBacks.length > 0 ? primaryAmt(getBacks) : undefined}
               collectMore={getBacks.length - 1}
+              payLines={payBacks.map(([curr, amount]) => ({ curr, amount }))}
+              collectLines={getBacks.map(([curr, amount]) => ({ curr, amount }))}
               // Tap Pay / Collect to filter the group list below (tap again to clear).
               active={balanceFilter === 'owe' ? 'pay' : balanceFilter === 'owed' ? 'collect' : null}
               onPayClick={() => { setBalanceFilter((f) => (f === 'owe' ? 'all' : 'owe')); if (homeTab !== 'groups') selectHomeTab('groups'); }}

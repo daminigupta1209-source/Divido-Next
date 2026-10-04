@@ -665,6 +665,8 @@ export const GroupDetail: React.FC<GroupDetailProps> = ({
               payMore={payBacks.length - 1}
               collect={hasActiveBalancesForCard && getBacks.length > 0 ? primaryAmt(getBacks) : undefined}
               collectMore={getBacks.length - 1}
+              payLines={payBacks.map(([curr, amount]) => ({ curr, amount }))}
+              collectLines={getBacks.map(([curr, amount]) => ({ curr, amount }))}
               onClick={() => setActiveTab('balances')}
             />
           </div>

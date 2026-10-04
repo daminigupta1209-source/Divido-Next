@@ -409,6 +409,8 @@ export const NonGroupView: React.FC<NonGroupViewProps> = ({
           payMore={personPayLines.length - 1}
           collect={hasBal && personCollectLines.length > 0 ? personCollectLines[0].curr + formatExactAmount(Math.abs(personCollectLines[0].amount)) : undefined}
           collectMore={personCollectLines.length - 1}
+          payLines={personPayLines}
+          collectLines={personCollectLines}
           onClick={() => onSettlePerson(profilePerson, p?.directGroupId)}
         />
 
@@ -557,6 +559,8 @@ export const NonGroupView: React.FC<NonGroupViewProps> = ({
           payMore={frontPayLines.length - 1}
           collect={netHasBalance && frontCollectLines.length > 0 ? frontCollectLines[0].curr + formatExactAmount(Math.abs(frontCollectLines[0].amount)) : undefined}
           collectMore={frontCollectLines.length - 1}
+          payLines={frontPayLines}
+          collectLines={frontCollectLines}
           active={balFilter}
           onPayClick={() => { setBalFilter((f) => (f === 'pay' ? null : 'pay')); setActiveTab('settle'); }}
           onCollectClick={() => { setBalFilter((f) => (f === 'collect' ? null : 'collect')); setActiveTab('settle'); }}

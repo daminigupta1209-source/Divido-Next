@@ -670,6 +670,8 @@ export const FriendsView: React.FC<FriendsViewProps> = ({
               payMore={payEntries.length - 1}
               collect={amt(collectEntries)}
               collectMore={collectEntries.length - 1}
+              payLines={payEntries.map(([curr, amount]) => ({ curr, amount }))}
+              collectLines={collectEntries.map(([curr, amount]) => ({ curr, amount }))}
               active={balanceFilter === 'owe' ? 'pay' : balanceFilter === 'owed' ? 'collect' : null}
               onPayClick={() => setBalanceFilter((f) => (f === 'owe' ? 'all' : 'owe'))}
               onCollectClick={() => setBalanceFilter((f) => (f === 'owed' ? 'all' : 'owed'))}
