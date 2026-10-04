@@ -1,4 +1,5 @@
 ﻿import { useState, useEffect, useMemo } from 'react';
+import { shown } from '../lib/identity';
 import { Group, Expense } from '../lib/types';
 import { getEmoji, parseExpenseId } from '../lib/utils';
 
@@ -134,11 +135,11 @@ export function useActivityStudio({
       
       const escapedTitle = `"${e.title.replace(/"/g, '""')}"`;
       const escapedCategory = `"${category.replace(/"/g, '""')}"`;
-      const escapedPaidBy = `"${e.paid.replace(/"/g, '""')}"`;
+      const escapedPaidBy = `"${shown(e.paid).replace(/"/g, '""')}"`;
       const escapedSplitMode = `"${(e.mode || 'Equally').replace(/"/g, '""')}"`;
       
       const splitters = e.splitters || [];
-      const escapedSplitters = `"${splitters.join(', ').replace(/"/g, '""')}"`;
+      const escapedSplitters = `"${splitters.map(shown).join(', ').replace(/"/g, '""')}"`;
       
       return [
         e.date,
@@ -231,7 +232,7 @@ export function useActivityStudio({
                       </span>
                     </td>
                     <td>${e.title}</td>
-                    <td>${e.paid}</td>
+                    <td>${shown(e.paid)}</td>
                     <td>${e.mode || 'Equally'}</td>
                     <td class="amt">${e.currency || 'â‚¹'}${e.amt.toFixed(2)}</td>
                   </tr>

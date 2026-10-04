@@ -1,4 +1,5 @@
 import React from 'react';
+import { shown } from '../lib/identity';
 import { PendingMatchPrompt } from '../lib/types';
 
 interface Props {
@@ -66,7 +67,7 @@ export const MatchPromptModal: React.FC<Props> = ({ prompt, onMatch, onDismiss }
                 👤
               </div>
               <div style={{ flex: 1, minWidth: 0 }}>
-                <div style={{ fontSize: '13px', fontWeight: 600, color: '#0F172A', textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap' }}>{p.name}</div>
+                <div style={{ fontSize: '13px', fontWeight: 600, color: '#0F172A', textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap' }}>{shown(p.name)}</div>
               </div>
               <div style={{ fontSize: '11px', fontWeight: 600, color: '#7C3AED', flexShrink: 0 }}>
                 Link →

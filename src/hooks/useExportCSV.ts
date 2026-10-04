@@ -1,4 +1,5 @@
 import { useCallback } from 'react';
+import { shown } from '../lib/identity';
 import { Group, Expense } from '../lib/types';
 
 interface UseExportCSVProps {
@@ -22,7 +23,7 @@ export const useExportCSV = ({ groups, expenses, selectedId }: UseExportCSVProps
     // CSV Rows
     const rows = groupExpenses.map((e) => {
       const escapedTitle = `"${e.title.replace(/"/g, '""')}"`;
-      const escapedPaidBy = `"${e.paid.replace(/"/g, '""')}"`;
+      const escapedPaidBy = `"${shown(e.paid).replace(/"/g, '""')}"`;
       return [
         e.date,
         escapedTitle,

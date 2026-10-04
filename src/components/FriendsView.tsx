@@ -5,7 +5,7 @@ import { BalanceDisplay } from './BalanceDisplay';
 import { Group, Expense, UserMetadata, GlobalSettleData } from '../lib/types';
 import { simplifyMultiCurrencyDebts, computeRawPairwiseTransactions } from '../lib/calculations';
 import { asyncBatchComputeGroups } from '../lib/workerHelper';
-import { getPersonKey, resolveSelfKey, toIdentitySpace, withoutEmailTag, buildNameEmailResolver, buildNameIdentityResolver, findDuplicatePeople, isValidEmail, type DuplicateEntry, type DuplicatePerson } from '../lib/identity';
+import { getPersonKey, resolveSelfKey, toIdentitySpace, withoutEmailTag, buildNameEmailResolver, buildNameIdentityResolver, findDuplicatePeople, isValidEmail, type DuplicateEntry, type DuplicatePerson, shown } from '../lib/identity';
 import { worldCurrencies, formatExactAmount, formatCompactAmount } from '../lib/utils';
 import { SearchableCurrencyPicker } from './SearchableCurrencyPicker';
 import { StyledDropdown } from './StyledDropdown';
@@ -50,7 +50,7 @@ const MergeRow: React.FC<{
         <div style={{ width: '36px', height: '36px', borderRadius: '50%', background: bg, color: '#FFFFFF', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '15px', fontWeight: 600, flexShrink: 0 }}>
           {r.name.charAt(0).toUpperCase()}
         </div>
-        <div style={{ flex: 1, fontSize: '15px', fontWeight: 600, color: '#1E293B', minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{r.name}</div>
+        <div style={{ flex: 1, fontSize: '15px', fontWeight: 600, color: '#1E293B', minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{shown(r.name)}</div>
         <button
           type="button"
           onClick={onDismiss}
@@ -811,7 +811,7 @@ export const FriendsView: React.FC<FriendsViewProps> = ({
                         {selectedFriends.includes(f.id) && <span style={{ color: '#fff', fontSize: '10px', fontWeight: 600 }}>✓</span>}
                       </div>
                       <span style={{ display: 'flex', flexDirection: 'column', minWidth: 0 }}>
-                        <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{f.name}</span>
+                        <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{shown(f.name)}</span>
                         {isDupName(f.name) && f.groups.length > 0 && (
                           <span style={{ fontSize: '10px', color: '#94A3B8', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{f.groups.join(', ')}</span>
                         )}
@@ -925,7 +925,7 @@ export const FriendsView: React.FC<FriendsViewProps> = ({
               {/* Name with the amount stacked right below it (left-aligned) */}
               <div style={{ minWidth: 0, flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center', gap: '6px' }}>
                 <div style={{ display: 'flex', alignItems: 'baseline', gap: '8px', minWidth: 0 }}>
-                  <h3 style={{ fontSize: '16px', fontWeight: 600, color: '#2E2A25', margin: 0, textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap', textTransform: 'capitalize', flexShrink: 1 }}>{f.name}</h3>
+                  <h3 style={{ fontSize: '16px', fontWeight: 600, color: '#2E2A25', margin: 0, textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap', textTransform: 'capitalize', flexShrink: 1 }}>{shown(f.name)}</h3>
                   {!(f.id && String(f.id).includes('@')) && f.groups && f.groups.length > 0 && (
                     <span style={{ fontSize: '13px', fontWeight: 500, color: '#94A3B8', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', flexShrink: 1 }}>({f.groups.join(', ')})</span>
                   )}
@@ -964,7 +964,7 @@ export const FriendsView: React.FC<FriendsViewProps> = ({
                 <button
                   className="hover-up-mini"
                   onClick={(e) => { e.stopPropagation(); onQuickAddExpense(f.name); }}
-                  title={`Add expense with ${f.name}`}
+                  title={`Add expense with ${shown(f.name)}`}
                   style={{
                     flexShrink: 0, width: '30px', height: '30px', borderRadius: '50%',
                     background: '#059669', color: '#FFFFFF', border: 'none',

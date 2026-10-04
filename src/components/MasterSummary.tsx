@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
+import { shown } from '../lib/identity';
 import { NetBalanceTiles } from './NetBalanceTiles';
 import { BalanceDisplay } from './BalanceDisplay';
 import { getEmoji, GROUP_COLORS, formatExactAmount, parseExpenseId } from '../lib/utils';
@@ -514,7 +515,7 @@ export const MasterSummary: React.FC<MasterSummaryProps> = ({
           sub = joinedN === 1 ? '1 member joined' : `All ${joinedN} members joined`;
         } else if (joinCelebration?.kind === 'joined') {
           const [first, ...rest] = joinCelebration.people;
-          title = `${first.name} joined${rest.length ? ` + ${rest.length} more` : ` ${first.groupName}`} 🎉`;
+          title = `${shown(first.name)} joined${rest.length ? ` + ${rest.length} more` : ` ${first.groupName}`} 🎉`;
           sub = `${pendingN} to go`;
         } else {
           title = `${pendingN} member${pendingN === 1 ? '' : 's'} yet to join`;
@@ -1311,7 +1312,7 @@ export const MasterSummary: React.FC<MasterSummaryProps> = ({
                       {person.name.charAt(0).toUpperCase()}
                     </div>
                     <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', gap: '2px' }}>
-                      <span style={{ fontSize: '15px', fontWeight: 600, color: '#0F172A', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{person.name}</span>
+                      <span style={{ fontSize: '15px', fontWeight: 600, color: '#0F172A', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{shown(person.name)}</span>
                       <span
                         title={groupNames}
                         style={{ fontSize: '12px', fontWeight: 500, color: '#94A3B8', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}
@@ -1321,7 +1322,7 @@ export const MasterSummary: React.FC<MasterSummaryProps> = ({
                     </div>
                     <button
                       type="button"
-                      aria-label={`Invite ${person.name}`}
+                      aria-label={`Invite ${shown(person.name)}`}
                       disabled={invited}
                       onClick={() => handleInvitePerson(person)}
                       style={{

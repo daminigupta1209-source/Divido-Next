@@ -4,7 +4,7 @@ import { SettleModal } from './SettleModal';
 import { BalanceDisplay } from './BalanceDisplay';
 import { Group, Expense, UserMetadata } from '../lib/types';
 import { GROUP_COLORS, formatExactAmount } from '../lib/utils';
-import { withoutEmailTag, isPastMemberOf } from '../lib/identity';
+import { withoutEmailTag, isPastMemberOf, shown } from '../lib/identity';
 import { useGroupDetailForm } from '../hooks/useGroupDetailForm';
 
 // Subcomponents
@@ -821,7 +821,7 @@ export const GroupDetail: React.FC<GroupDetailProps> = ({
                             .filter((m) => m !== me)
                             .map((m) => (
                               <div key={m} style={optionStyle(filterFriend === m)} onClick={() => { setFilterFriend(m); setShowDetailFriendsMenu(false); }}>
-                                <span>{m}</span>
+                                <span>{shown(m)}</span>
                               </div>
                             ))}
                         </div>
@@ -993,7 +993,7 @@ export const GroupDetail: React.FC<GroupDetailProps> = ({
                           })()}
 
                           <div style={{ minWidth: 0, flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center', gap: '6px' }}>
-                            <h3  style={{ fontSize: '16px', fontWeight: 600, color: '#2E2A25', margin: 0, textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap', textTransform: 'capitalize' }}>{m}</h3>
+                            <h3  style={{ fontSize: '16px', fontWeight: 600, color: '#2E2A25', margin: 0, textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap', textTransform: 'capitalize' }}>{shown(m)}</h3>
                             {selectedGroup.memberIdentities?.[m] && String(selectedGroup.memberIdentities[m]).includes('@') && (
                               <span style={{ fontSize: '11px', fontWeight: 500, color: '#94A3B8', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{selectedGroup.memberIdentities[m]}</span>
                             )}
@@ -1032,7 +1032,7 @@ export const GroupDetail: React.FC<GroupDetailProps> = ({
                               });
                               setShowExpModal(true);
                             }}
-                            title={`Add expense with ${m}`}
+                            title={`Add expense with ${shown(m)}`}
                             style={{
                               flexShrink: 0, width: '30px', height: '30px', borderRadius: '50%',
                               background: '#059669', color: '#FFFFFF', border: 'none',
@@ -1401,7 +1401,7 @@ export const GroupDetail: React.FC<GroupDetailProps> = ({
                           <div style={{ minWidth: 0 }}>
                             <div style={{ display: 'flex', alignItems: 'center', gap: '4px', flexWrap: 'wrap' }}>
                               <h4  style={{ fontSize: '13px', fontWeight: 600, margin: 0, textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap', textTransform: 'capitalize' }}>
-                                {m}
+                                {shown(m)}
                               </h4>
                             </div>
                           </div>
@@ -1430,7 +1430,7 @@ export const GroupDetail: React.FC<GroupDetailProps> = ({
                               });
                               setShowExpModal(true);
                             }}
-                            title={`Add expense with ${m}`}
+                            title={`Add expense with ${shown(m)}`}
                             style={{
                               flexShrink: 0, width: '30px', height: '30px', borderRadius: '50%',
                               background: '#059669', color: '#FFFFFF', border: 'none',
@@ -1509,9 +1509,9 @@ export const GroupDetail: React.FC<GroupDetailProps> = ({
                           ✅
                         </div>
                         <div style={{ minWidth: 0, fontSize: '12px', color: '#64748B', fontWeight: 700 }}>
-                          <span style={{ color: '#475569', fontWeight: 600 }}>{t.from}</span>
+                          <span style={{ color: '#475569', fontWeight: 600 }}>{shown(t.from)}</span>
                           <span style={{ margin: '0 4px', fontWeight: 500, opacity: 0.7 }}>➔</span>
-                          <span style={{ color: '#475569', fontWeight: 600 }}>{t.to}</span>
+                          <span style={{ color: '#475569', fontWeight: 600 }}>{shown(t.to)}</span>
                         </div>
                       </div>
 

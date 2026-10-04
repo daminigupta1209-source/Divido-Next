@@ -627,13 +627,18 @@ export const memberNamesByKey = (group: Group | undefined | null): Record<string
 
 export const applyKeyNames = (e: Expense, group: Group | undefined | null, names: Record<string, string>): Expense => {
   if (!e.paidKey || !e.paid || e.paid === 'SYSTEM') return e;
-  // Only replace a stored name that NO LONGER points at that member (i.e. they
-  // were renamed). A name that still resolves to the same member — e.g. the
-  // first name "Damini" for "Damini Gupta" — is kept as written, so screens
-  // that compare names with `me` keep working.
+  // Keep a stored name only while the roster still has EXACTLY that name for
+  // the same member; otherwise (renamed, or written as a first name before a
+  // rename to the full name) show the member's current roster name — the same
+  // result the old rewrite-every-expense rename produced.
+  const exactKey = (nm: string): string | undefined => {
+    const target = normMember(nm);
+    const hit = Object.entries(group?.memberKeys || {}).find(([d]) => normMember(d) === target);
+    return hit ? hit[1] : undefined;
+  };
   const nameOf = (k: string | undefined, stored: string): string => {
     if (!k || k.startsWith('name:')) return stored;
-    if (resolveMemberKey(group, stored) === k) return stored;
+    if (exactKey(stored) === k) return stored;
     return names[k] || stored;
   };
   const paid = nameOf(e.paidKey, e.paid);
@@ -661,6 +666,32 @@ export const applyKeyNames = (e: Expense, group: Group | undefined | null, names
     origShares: remapKeys(e.origShares as Record<string, number> | undefined) as Expense['origShares'],
     partyKeys: pk,
   };
+};
+
+// ── Display names without the hidden tag, anywhere ─────────────────────────
+// Many screens, alerts, exports and notifications only have a name string, not
+// its group. App registers every group once (setDisplayGroups); `shown(name)`
+// then strips the hidden "(emailpart)" tag from any EXACT stored name that
+// withoutEmailTag would strip in its own group. Real names like "Ram (Delhi)"
+// are never touched (they aren't registered).
+let displayNameMap = new Map<string, string>();
+export const setDisplayGroups = (groups: Array<Group | undefined | null>): void => {
+  const next = new Map<string, string>();
+  for (const g of groups || []) {
+    for (const m of g?.members || []) {
+      const clean = withoutEmailTag(g, m);
+      if (clean !== m) {
+        next.set(m, clean);
+        const bare = m.replace(/\s*\(Left\)\s*$/i, '');
+        if (bare !== m) next.set(bare, clean.replace(/\s*\(Left\)\s*$/i, ''));
+      }
+    }
+  }
+  displayNameMap = next;
+};
+export const shown = (name: string | null | undefined): string => {
+  if (!name) return name || '';
+  return displayNameMap.get(name) || name;
 };
 
 // Same shares map regardless of key order (the database stores jsonb keys in

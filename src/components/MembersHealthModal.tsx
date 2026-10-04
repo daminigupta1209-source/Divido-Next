@@ -1,4 +1,5 @@
 import React from 'react';
+import { shown } from '../lib/identity';
 import { BalanceDisplay } from './BalanceDisplay';
 
 // Read-only "Members Health" overlay: lists every member of the selected group
@@ -36,7 +37,7 @@ export const MembersHealthModal: React.FC<MembersHealthModalProps> = ({
               }}
             >
               <div style={{ fontWeight: 'bold' }}>
-                {m} {m === me && '(You)'}
+                {shown(m)} {m === me && '(You)'}
               </div>
               <BalanceDisplay
                 balances={mBalance}

@@ -1,4 +1,5 @@
 // Multi-group person invite links: one shareable link that can seat a person
+import { shown } from './identity';
 // into several groups at once via a `?invite=<gid>.<memberKey>,<gid>.<memberKey>`
 // query param. Pure module — no React, no Supabase, no `window` access, so the
 // caller always passes `origin` explicitly. The parser is fed attacker-supplied
@@ -91,7 +92,7 @@ const joinGroupNames = (names: string[]): string => {
 // becomes "your group".
 export const personInviteMessage = (name: string, groupNames: string[]): string => {
   const cleaned = groupNames.map((n) => n || 'your group');
-  return `Hey ${name}! Join ${joinGroupNames(cleaned)} on Divido to split expenses 💸`;
+  return `Hey ${shown(name)}! Join ${joinGroupNames(cleaned)} on Divido to split expenses 💸`;
 };
 
 // "Hey Rahul!", "Hey Rahul & Priya!", "Hey Rahul, Priya & Amit!" for up to 3

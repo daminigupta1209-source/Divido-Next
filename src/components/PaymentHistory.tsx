@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { shown } from '../lib/identity';
 import { getExactTime, parseExpenseId } from '../lib/utils';
 
 import { Group, Expense } from '../lib/types';
@@ -102,7 +103,7 @@ export const PaymentHistory: React.FC<PaymentHistoryProps> = ({
                   <div>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
                       <h3  style={{ fontSize: '18px', color: '#1E293B' }}>
-                        {isByMe ? 'You Paid' : `${s.paid} Paid You`}
+                        {isByMe ? 'You Paid' : `${shown(s.paid)} Paid You`}
                       </h3>
                       <span
                         onClick={(ev) => {
@@ -119,7 +120,7 @@ export const PaymentHistory: React.FC<PaymentHistoryProps> = ({
                       </span>
                     </div>
                     <p style={{ fontSize: '11px', fontWeight: 600, color: 'var(--g)', marginTop: '4px' }}>
-                      {isByMe ? `To: ${s.splitters?.[0]}` : `From: ${s.paid}`} • {s.date}
+                      {isByMe ? `To: ${shown(s.splitters?.[0])}` : `From: ${shown(s.paid)}`} • {s.date}
                       {timeStr ? ` at ${timeStr}` : ''}
                     </p>
                   </div>

@@ -240,13 +240,27 @@ describe('applyKeyNames (permanent ID step 3a)', () => {
     expect(v.paid).toBe('Ghost');
     expect(v.splitters).toEqual(['Ghost', 'Old']);
   });
-  it('keeps a first name that still means the same member', () => {
+  it('shows the full roster name for an expense written with the first name', () => {
     const g2 = { ...g, members: ['Ravi Kumar'], memberKeys: { 'Ravi Kumar': 'k-r' } } as unknown as Group;
     const e = { ...base, paid: 'Ravi', splitters: ['Ravi'], paidKey: 'k-r', splitterKeys: ['k-r'] } as Expense;
-    expect(applyKeyNames(e, g2, memberNamesByKey(g2))).toBe(e);
+    expect(applyKeyNames(e, g2, memberNamesByKey(g2)).paid).toBe('Ravi Kumar');
   });
   it('leaves expenses without keys untouched', () => {
     const e = { ...base, paid: 'Ravi', splitters: ['Ravi'] } as Expense;
     expect(applyKeyNames(e, g, names)).toBe(e);
+  });
+});
+
+import { setDisplayGroups, shown } from './identity';
+describe('shown (hidden tag never displayed)', () => {
+  it('strips a registered email tag, keeps real brackets', () => {
+    const g = { id: 'g', name: 'G', members: ['Esha Gupta', 'Esha Gupta (esha1990)', 'Ram (Delhi)', 'Old (old1) (Left)'], memberIdentities: { 'Esha Gupta': 'eshadgupta1993@gmail.com', 'Esha Gupta (esha1990)': 'esha1990@gmail.com', 'Old (old1) (Left)': 'old1@x.com' } } as unknown as Group;
+    setDisplayGroups([g]);
+    expect(shown('Esha Gupta (esha1990)')).toBe('Esha Gupta');
+    expect(shown('Esha Gupta')).toBe('Esha Gupta');
+    expect(shown('Ram (Delhi)')).toBe('Ram (Delhi)');
+    expect(shown('Old (old1)')).toBe('Old');
+    expect(shown(undefined)).toBe('');
+    setDisplayGroups([]);
   });
 });

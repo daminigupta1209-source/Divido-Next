@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { shown } from '../lib/identity';
 import { Group, Expense } from '../lib/types';
 import { escManager } from '../lib/escManager';
 import { ShareGrid } from './ShareGrid';
@@ -129,7 +130,7 @@ export const PostExpenseShareSheet: React.FC<PostExpenseShareSheetProps> = ({
   };
 
   const unregisteredText = unregisteredShares.length === 1
-    ? `${unregisteredShares[0].name} is not on Divido yet`
+    ? `${shown(unregisteredShares[0].name)} is not on Divido yet`
     : `${unregisteredShares.length} members are not on Divido yet`;
 
   return (
@@ -250,7 +251,7 @@ export const PostExpenseShareSheet: React.FC<PostExpenseShareSheetProps> = ({
                 <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
                   <span style={{ fontSize: '14px' }}>👤</span>
                   <span style={{ fontWeight: 600, color: '#F8FAFC' }}>
-                    {item.name}
+                    {shown(item.name)}
                   </span>
                   <span
                     style={{

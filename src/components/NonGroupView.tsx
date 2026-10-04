@@ -1,4 +1,5 @@
 import React from 'react';
+import { shown } from '../lib/identity';
 import { NetBalanceTiles } from './NetBalanceTiles';
 import type { Expense } from '../lib/types';
 import { formatDate, getEmoji, formatExactAmount, getMonthYearKey } from '../lib/utils';
@@ -447,7 +448,7 @@ export const NonGroupView: React.FC<NonGroupViewProps> = ({
                   <div style={{ width: '34px', height: '34px', borderRadius: '50%', background: '#F1EFE8', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '15px', flexShrink: 0 }}>{emoji}</div>
                   <div style={{ flex: 1, minWidth: 0 }}>
                     <div style={{ fontSize: '14px', fontWeight: 600, color: '#0F172A', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{cleanTitle}</div>
-                    <div style={{ fontSize: '11px', color: '#94A3B8' }}>{iPaid ? 'You paid' : `${cleanName(e.paid)} paid`} · {formatDate(e.date)}</div>
+                    <div style={{ fontSize: '11px', color: '#94A3B8' }}>{iPaid ? 'You paid' : `${shown(cleanName(e.paid))} paid`} · {formatDate(e.date)}</div>
                   </div>
                   <span style={{ fontSize: '14px', fontWeight: 600, color: '#0F172A' }}>{curr} {formatExactAmount(Number(e.amt) || 0)}</span>
                 </div>
@@ -646,7 +647,7 @@ export const NonGroupView: React.FC<NonGroupViewProps> = ({
                       </div>
                       <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', gap: '4px' }}>
                         <div style={{ display: 'flex', alignItems: 'baseline', gap: '6px', minWidth: 0 }}>
-                          <h3 style={{ fontSize: '16px', fontWeight: 600, color: '#2E2A25', margin: 0, textTransform: 'capitalize', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', flexShrink: 1 }}>{p.name}</h3>
+                          <h3 style={{ fontSize: '16px', fontWeight: 600, color: '#2E2A25', margin: 0, textTransform: 'capitalize', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', flexShrink: 1 }}>{shown(p.name)}</h3>
                         </div>
                         {p.email && (
                           <span style={{ fontSize: '11.5px', color: '#94A3B8', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{p.email}</span>
@@ -657,7 +658,7 @@ export const NonGroupView: React.FC<NonGroupViewProps> = ({
                         <button
                           type="button"
                           onClick={(ev) => { ev.stopPropagation(); onAddWithPerson(p.name, p.directGroupId); }}
-                          title={`Add expense with ${p.name}`}
+                          title={`Add expense with ${shown(p.name)}`}
                           style={{ flexShrink: 0, width: '30px', height: '30px', borderRadius: '50%', background: '#059669', color: '#FFFFFF', border: 'none', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', padding: 0, boxShadow: '0 2px 6px rgba(5,150,105,0.25)' }}
                         >
                           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.6" strokeLinecap="round" style={{ width: '15px', height: '15px' }}>

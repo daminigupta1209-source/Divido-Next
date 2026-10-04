@@ -1,4 +1,5 @@
 import { Expense } from './types';
+import { shown } from './identity';
 import { formatExactAmount, getEmoji, parseExpenseId } from './utils';
 
 // One row in a group's "Updates Log": a membership change (SYSTEM row) or an
@@ -76,7 +77,7 @@ export const formatExpenseUpdate = (e: Expense): string => {
 // they show the payer only.
 export const formatExpenseByLine = (e: Expense, me: string): string => {
   const self = cleanName(me).toLowerCase();
-  const label = (n: string) => (cleanName(n).toLowerCase() === self ? 'you' : cleanName(n));
+  const label = (n: string) => (cleanName(n).toLowerCase() === self ? 'you' : shown(cleanName(n)));
   const parts: string[] = [];
   if (e.addedBy) parts.push(`Added by ${label(e.addedBy)}`);
   if (e.paid) parts.push(`Paid by ${label(e.paid)}`);

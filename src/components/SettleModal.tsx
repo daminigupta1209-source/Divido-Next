@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
-import { buildNameEmailResolver, getPersonKey, upiFor } from '../lib/identity';
+import { buildNameEmailResolver, getPersonKey, upiFor, shown } from '../lib/identity';
 import { SearchableCurrencyPicker } from './SearchableCurrencyPicker';
 
 import { Group, Expense, UserMetadata } from '../lib/types';
@@ -514,7 +514,7 @@ export const SettleModal: React.FC<SettleModalProps> = ({
                           const finalUpiAmt = isDirectINR ? t.amount : (t.amount / rates[toCurrencyCode(t.currency)]);
                           return (
                             <a
-                              href={`upi://pay?pa=${upi}&pn=${t.to}&am=${finalUpiAmt.toFixed(2)}&cu=INR`}
+                              href={`upi://pay?pa=${upi}&pn=${encodeURIComponent(shown(t.to))}&am=${finalUpiAmt.toFixed(2)}&cu=INR`}
                               style={{
                                 padding: '10px 14px',
                                 background: '#F0F9FF',

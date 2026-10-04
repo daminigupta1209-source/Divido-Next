@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { Group, UserMetadata } from '../lib/types';
 import { escManager } from '../lib/escManager';
-import { buildPeopleSuggestions, isValidEmail } from '../lib/identity';
+import { buildPeopleSuggestions, isValidEmail, shown } from '../lib/identity';
 
 interface AddFriendModalProps {
   setShowAddFriendModal: (show: boolean) => void;
@@ -391,7 +391,7 @@ export const AddFriendModal: React.FC<AddFriendModalProps> = ({
                 <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px', marginTop: '10px' }}>
                   {pending.map((n) => (
                     <div key={n} style={{ display: 'flex', alignItems: 'center', gap: '5px', background: '#EEF2FF', border: '1.5px solid #C7D2FE', borderRadius: '20px', padding: '4px 10px 4px 12px' }}>
-                      <span style={{ fontSize: '12px', fontWeight: 700, color: '#4338CA' }}>⏳ {n}</span>
+                      <span style={{ fontSize: '12px', fontWeight: 700, color: '#4338CA' }}>⏳ {shown(n)}</span>
                       <button
                         onClick={() => setPending((prev) => prev.filter((x) => x !== n))}
                         style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#818CF8', fontSize: '12px', padding: 0, lineHeight: 1, fontWeight: 'bold' }}

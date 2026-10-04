@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo } from 'react';
 import { Group, Expense, UserMetadata } from '../lib/types';
-import { balancesByIdentity, getPersonKey } from '../lib/identity';
+import { balancesByIdentity, getPersonKey, shown } from '../lib/identity';
 import { getEmoji } from '../lib/utils';
 
 export interface UseGroupDetailFormProps {
@@ -113,11 +113,11 @@ export function useGroupDetailForm({
       
       const escapedTitle = `"${e.title.replace(/"/g, '""')}"`;
       const escapedCategory = `"${category.replace(/"/g, '""')}"`;
-      const escapedPaidBy = `"${e.paid.replace(/"/g, '""')}"`;
+      const escapedPaidBy = `"${shown(e.paid).replace(/"/g, '""')}"`;
       const escapedSplitMode = `"${(e.mode || 'Equally').replace(/"/g, '""')}"`;
       
       const splitters = e.splitters || selectedGroup.members || [];
-      const escapedSplitters = `"${splitters.join(', ').replace(/"/g, '""')}"`;
+      const escapedSplitters = `"${splitters.map(shown).join(', ').replace(/"/g, '""')}"`;
       
       return [
         e.date,
@@ -311,7 +311,7 @@ export function useGroupDetailForm({
                   const cl = isOwedVal ? 'positive' : isOweVal ? 'negative' : 'settled';
                   return `
                     <tr>
-                      <td style="font-weight: 700;">${m.name}</td>
+                      <td style="font-weight: 700;">${shown(m.name)}</td>
                       <td class="${cl}">${balStr}</td>
                     </tr>
                   `;
@@ -333,7 +333,7 @@ export function useGroupDetailForm({
               return `
                 <div class="due-card">
                   <div>
-                    <strong>${t.from}</strong> pays <strong>${t.to}</strong>
+                    <strong>${shown(t.from)}</strong> pays <strong>${shown(t.to)}</strong>
                   </div>
                   <div style="font-weight: 900; color: ${color};">
                     ${formatSettleBalance(t.balances)}
@@ -364,12 +364,12 @@ export function useGroupDetailForm({
                     ? 'Settlement'
                     : isPersonal
                     ? 'Personal Expense'
-                    : `${e.mode || 'Equally'} (${splitters.join(', ')})`;
+                    : `${e.mode || 'Equally'} (${splitters.map(shown).join(', ')})`;
                   return `
                     <tr>
                       <td style="color: #64748B; white-space: nowrap;">${e.date}</td>
                       <td style="font-weight: 600;">${e.title}</td>
-                      <td>${e.paid}</td>
+                      <td>${shown(e.paid)}</td>
                       <td style="color: #64748B; font-size: 11px;">${splitText}</td>
                       <td style="text-align: right; font-weight: 700; ${isSettle ? 'color: #10B981;' : ''}">
                         ${e.currency || baseCurrency}${e.amt.toFixed(2)}

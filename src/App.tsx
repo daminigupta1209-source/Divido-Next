@@ -93,7 +93,7 @@ import { CurrencySetupModal } from './components/CurrencySetupModal';
 import { GroupGallery } from './components/GroupGallery';
 import { checkIfDemoMode } from './lib/demoMode';
 import { ensureArray, ensureObject, isLegacyRenameLog, formatCompactAmount, genGroupId, genExpenseId, titleCaseName } from './lib/utils';
-import { getPersonKey, toIdentitySpace, pickCanonicalIdentity, findDuplicateGroups, type DuplicateEntry, setSyncedDismissedPeople, buildNameEmailResolver, upiFor, fillPartyKeys, deriveKeyColumns, sameShareMap, memberNamesByKey, applyKeyNames, uniqueProfileName, dropShadowedLeftRows } from './lib/identity';
+import { getPersonKey, toIdentitySpace, pickCanonicalIdentity, findDuplicateGroups, type DuplicateEntry, setSyncedDismissedPeople, buildNameEmailResolver, upiFor, fillPartyKeys, deriveKeyColumns, sameShareMap, memberNamesByKey, applyKeyNames, setDisplayGroups, shown, uniqueProfileName, dropShadowedLeftRows } from './lib/identity';
 import { groupActivityTimestamp } from './lib/joinProgress';
 import { parseInviteParam, buildPersonInviteLink, personInviteMessage, groupInviteMessage, type InviteSpot } from './lib/inviteLink';
 import {
@@ -1050,7 +1050,7 @@ function App() {
           await pushNotification({
             recipientEmail: m.user_email,
             type: 'group_add',
-            title: `${oldName} is now ${newName}`,
+            title: `${shown(oldName)} is now ${shown(newName)}`,
             body: `Name updated in ${grp?.name || 'your group'}`,
             groupId,
           });
@@ -1653,6 +1653,10 @@ function App() {
   // set). Never auto-merged — surfaced as a prompt the user confirms.
   const duplicateGroups = React.useMemo(() => findDuplicateGroups(groups), [groups]);
 
+  // Register every group's hidden name tags so shown(name) can strip them on
+  // any screen. Done during render so children always read the current map.
+  React.useMemo(() => setDisplayGroups(groups), [groups]);
+
   // Permanent ID step 3a: what screens see. Each expense's people are read
   // from their member IDs against the CURRENT roster, so names are always the
   // latest. Display only — the stored expenses are never rewritten from this.
@@ -1778,7 +1782,7 @@ function App() {
         applyLocal(oldId);
         alert(error
           ? `Couldn't save the email: ${error.message}`
-          : `Couldn't save the email: ${cleanName}'s spot wasn't found in the cloud. Pull down to refresh and try again.`);
+          : `Couldn't save the email: ${shown(cleanName)}'s spot wasn't found in the cloud. Pull down to refresh and try again.`);
       }
     }
   };
@@ -4293,7 +4297,7 @@ function App() {
         await pushNotification({
           recipientEmail: mem.user_email,
           type: 'join',
-          title: `Check ${spotName}'s email in ${group.name}`,
+          title: `Check ${shown(spotName)}'s email in ${group.name}`,
           body: `${who} opened the invite with ${spotName}'s email but said "Not me". The email may be wrong.`,
           fromName: who,
           groupId: group.id,
@@ -4385,8 +4389,8 @@ function App() {
                 await pushNotification({
                   recipientEmail: mem.user_email,
                   type: 'join',
-                  title: `${cleanName} rejoined ${linkRequestGroup.name}`,
-                  body: `${cleanName} is back in the group.`,
+                  title: `${shown(cleanName)} rejoined ${linkRequestGroup.name}`,
+                  body: `${shown(cleanName)} is back in the group.`,
                   fromName: cleanName,
                   groupId: linkRequestGroup.id,
                 });
@@ -4403,7 +4407,7 @@ function App() {
           .insert({
             id: genExpenseId(),
             group_id: linkRequestGroup.id,
-            title: `${cleanName} rejoined`,
+            title: `${shown(cleanName)} rejoined`,
             amt: 0,
             paid: 'SYSTEM',
             date: new Date().toISOString().split('T')[0],
@@ -5137,13 +5141,13 @@ function App() {
                   await pushNotification({
                     recipientEmail: target.user_email,
                     type: 'rename_request',
-                    title: `${userName} wants to rename you to "${newName}"`,
+                    title: `${userName} wants to rename you to "${shown(newName)}"`,
                     body: `In ${grp?.name || 'your group'}. Accept to update your name everywhere, or reject to keep "${oldName}".`,
                     fromName: userName,
                     fromEmail: userEmail,
                     groupId: selectedId,
                   });
-                  alert(`Rename proposed. ${oldName} will be asked to accept "${newName}". ⏳`);
+                  alert(`Rename proposed. ${shown(oldName)} will be asked to accept "${shown(newName)}". ⏳`);
                 } else {
                   // Placeholder (not joined) or renaming yourself — apply immediately.
                   await applyRename(selectedId, oldName, newName);
@@ -5164,7 +5168,7 @@ function App() {
 
               const grpName = selectedGroup?.name;
               const inviteLink = `${window.location.origin}/?joinGroupId=${selectedId}`;
-              const shareText = `Hey ${memberName}! Join ${grpName ? `"${grpName}"` : 'my group'} on Divido to split expenses 💸`;
+              const shareText = `Hey ${shown(memberName)}! Join ${grpName ? `"${grpName}"` : 'my group'} on Divido to split expenses 💸`;
 
               // Mobile: open the phone's own share sheet directly (all apps),
               // no in-app card. Runs inside the tap, so the browser permits it.
@@ -5187,7 +5191,7 @@ function App() {
             }}
             onReinviteMember={async (memberName: string, inviteUrl: string, silent?: boolean) => {
               const grpName = selectedGroup?.name;
-              const shareText = `Hey ${memberName}! Rejoin ${grpName ? `"${grpName}"` : 'our group'} on Divido 💸`;
+              const shareText = `Hey ${shown(memberName)}! Rejoin ${grpName ? `"${grpName}"` : 'our group'} on Divido 💸`;
               // `silent` (re-add from the friend list) just reactivates them to
               // pending — no share sheet, no rejoin-link fallback popup.
               const nativeShare = !silent && typeof navigator !== 'undefined' && (navigator as any).share;
@@ -5465,7 +5469,7 @@ function App() {
                       .insert({
                         id: genExpenseId(),
                         group_id: selectedId,
-                        title: `${memberName} was removed`,
+                        title: `${shown(memberName)} was removed`,
                         amt: 0,
                         paid: 'SYSTEM',
                         date: new Date().toISOString().split('T')[0],
@@ -5929,7 +5933,7 @@ function App() {
                     const rejoinParam = new URLSearchParams(window.location.search).get('rejoinName');
                     const isRejoinLabel = p.name.endsWith(' (Left)') ||
                       (!!rejoinParam && rejoinParam.toLowerCase() === p.name.replace(' (Left)', '').toLowerCase());
-                    return isRejoinLabel ? `Rejoin as "${titleCaseName(p.name.replace(' (Left)', ''))}"` : `Claim "${titleCaseName(p.name)}"`;
+                    return isRejoinLabel ? `Rejoin as "${shown(titleCaseName(p.name.replace(' (Left)', '')))}"` : `Claim "${shown(titleCaseName(p.name))}"`;
                   })()}
                 </button>
               ))}
@@ -6181,7 +6185,7 @@ function App() {
                   </svg>
                 </button>
                 <h3 className="nunito" style={{ flex: 1, minWidth: 0, textAlign: 'center', fontSize: '19px', fontWeight: 800, color: '#1E293B', margin: 0, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                  Settle with {globalSettleData.name}
+                  Settle with {shown(globalSettleData.name)}
                 </h3>
                 <div style={{ width: '32px', flexShrink: 0 }} />
               </div>
@@ -6828,7 +6832,7 @@ function App() {
               Did your payment go through?
             </p>
             <p style={{ fontSize: '13px', fontWeight: 600, color: 'var(--g)', margin: '0 0 18px', lineHeight: 1.5 }}>
-              You started a <strong style={{ color: 'var(--t)' }}>{pendingPayPrompt.curr}{pendingPayPrompt.amt.toFixed(2)}</strong> UPI payment to {pendingPayPrompt.name} but didn't confirm it.
+              You started a <strong style={{ color: 'var(--t)' }}>{pendingPayPrompt.curr}{pendingPayPrompt.amt.toFixed(2)}</strong> UPI payment to {shown(pendingPayPrompt.name)} but didn't confirm it.
             </p>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
               <button
@@ -7311,7 +7315,7 @@ function App() {
                           if (!hasRealName) { localStorage.setItem('divido_username', cleanName); setUserName(cleanName); }
                         }
                         localStorage.setItem(`divido_identity_${selectedId}`, cleanName);
-                        await logGroupEvent(selectedId, `${cleanName} rejoined`);
+                        await logGroupEvent(selectedId, `${shown(cleanName)} rejoined`);
                         setGroups(groups.map((g) =>
                           String(g.id) === String(selectedId)
                             ? {
@@ -7333,8 +7337,8 @@ function App() {
                             await pushNotification({
                               recipientEmail: o.user_email,
                               type: 'join',
-                              title: `${cleanName} rejoined ${grpForRejoin?.name || 'the group'}`,
-                              body: `${cleanName} is back in the group.`,
+                              title: `${shown(cleanName)} rejoined ${grpForRejoin?.name || 'the group'}`,
+                              body: `${shown(cleanName)} is back in the group.`,
                               fromName: cleanName,
                               groupId: selectedId,
                             });
@@ -7403,7 +7407,7 @@ function App() {
                   .insert({
                     id: genExpenseId(),
                     group_id: adminRejoinRequest.groupId,
-                    title: `${cleanName} rejoined`,
+                    title: `${shown(cleanName)} rejoined`,
                     amt: 0,
                     paid: 'SYSTEM',
                     date: new Date().toISOString().split('T')[0],

@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Group, Expense, UserMetadata } from '../../lib/types';
 import { BalanceActionCard } from '../BalanceActionCard';
-import { buildPeopleSuggestions, balancesByIdentity, getPersonKey, isValidEmail, buildNameEmailResolver, upiFor, withoutEmailTag, uniqueProfileName } from '../../lib/identity';
+import { buildPeopleSuggestions, balancesByIdentity, getPersonKey, isValidEmail, buildNameEmailResolver, upiFor, withoutEmailTag, uniqueProfileName, shown } from '../../lib/identity';
 import { FullScreenAddFriend } from '../FullScreenAddFriend';
 
 interface GroupMemberListProps {
@@ -519,7 +519,7 @@ export const GroupMemberList: React.FC<GroupMemberListProps> = ({
                     const myEmail = (v && isValidEmail(v) ? v : String(mi[original] || '')).toLowerCase();
                     const clashEmail = String(mi[clash] || '').toLowerCase();
                     if (!myEmail.includes('@') || myEmail === clashEmail) {
-                      alert(`"${newName}" is already in this group. Add a different email to use the same name.`);
+                      alert(`"${shown(newName)}" is already in this group. Add a different email to use the same name.`);
                       return;
                     }
                     const taken = new Set(selectedGroup.members.filter((x) => x !== original).map((x) => x.replace(/\s*\(Left\)$/i, '').trim().toLowerCase()));
@@ -784,7 +784,7 @@ export const GroupMemberList: React.FC<GroupMemberListProps> = ({
                           const hasThirdPartyDebt = memberHasThirdPartyBalance(m);
                           if (hasThirdPartyDebt) {
                             setActionCard({
-                              title: `Cannot remove "${m}"`,
+                              title: `Cannot remove "${shown(m)}"`,
                               desc: 'They have unsettled debts with other members.',
                               primaryLabel: 'Got it',
                               primaryColor: '#3B82F6',
@@ -792,7 +792,7 @@ export const GroupMemberList: React.FC<GroupMemberListProps> = ({
                             });
                           } else if (bt) {
                             setActionCard({
-                              title: `Remove "${m}"?`,
+                              title: `Remove "${shown(m)}"?`,
                               desc: `Balance remaining: ${bt}. Settle up or write it off to remove them.`,
                               primaryLabel: 'Settle up →',
                               primaryColor: '#10B981',
@@ -805,7 +805,7 @@ export const GroupMemberList: React.FC<GroupMemberListProps> = ({
                           } else {
                             // No balance — a plain Remove, straight to Past Members.
                             setActionCard({
-                              title: `Remove "${m}"?`,
+                              title: `Remove "${shown(m)}"?`,
                               desc: 'They move to Past Members and history is kept.',
                               primaryLabel: 'Remove',
                               primaryColor: '#F97316',
@@ -908,10 +908,10 @@ export const GroupMemberList: React.FC<GroupMemberListProps> = ({
                         } else {
                           const inviteLink = `${window.location.origin}/?joinGroupId=${selectedId}`;
                           await navigator.clipboard.writeText(inviteLink);
-                          alert(`Invite link for "${m}" copied to clipboard! 📋`);
+                          alert(`Invite link for "${shown(m)}" copied to clipboard! 📋`);
                         }
                       }}
-                      title={`Remind ${m}`}
+                      title={`Remind ${shown(m)}`}
                       style={{
                         background: '#FFEDD5',
                         border: 'none',
@@ -971,7 +971,7 @@ export const GroupMemberList: React.FC<GroupMemberListProps> = ({
                           const hasThirdPartyDebt = memberHasThirdPartyBalance(m);
                           if (hasThirdPartyDebt) {
                             setActionCard({
-                              title: `Cannot remove "${m}"`,
+                              title: `Cannot remove "${shown(m)}"`,
                               desc: 'They have unsettled debts with other members.',
                               primaryLabel: 'Got it',
                               primaryColor: '#3B82F6',
@@ -981,7 +981,7 @@ export const GroupMemberList: React.FC<GroupMemberListProps> = ({
                             // Zero-to-remove: even a not-yet-joined member with a
                             // live balance must settle or be written off first.
                             setActionCard({
-                              title: `Remove "${m}"?`,
+                              title: `Remove "${shown(m)}"?`,
                               desc: `Balance remaining: ${bt}. Settle up or write it off to remove them.`,
                               primaryLabel: 'Settle up →',
                               primaryColor: '#10B981',
@@ -991,7 +991,7 @@ export const GroupMemberList: React.FC<GroupMemberListProps> = ({
                             });
                           } else {
                             setActionCard({
-                              title: `Remove "${m}"?`,
+                              title: `Remove "${shown(m)}"?`,
                               desc: "They haven't joined yet — this removes them.",
                               primaryLabel: 'Remove',
                               primaryColor: '#F97316',
@@ -1119,7 +1119,7 @@ export const GroupMemberList: React.FC<GroupMemberListProps> = ({
                               onReinviteMember(cleanName, inviteUrl);
                             } else {
                               await navigator.clipboard.writeText(inviteUrl);
-                              alert(`Rejoin invite link for "${cleanName}" copied to clipboard! 📋\nSend this to them to rejoin: \n\n${inviteUrl}`);
+                              alert(`Rejoin invite link for "${shown(cleanName)}" copied to clipboard! 📋\nSend this to them to rejoin: \n\n${inviteUrl}`);
                             }
                           }}
                           style={{

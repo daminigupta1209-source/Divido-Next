@@ -1,4 +1,5 @@
 import React from 'react';
+import { shown } from '../../lib/identity';
 import { BalanceDisplay } from '../BalanceDisplay';
 import { SimplifiedTransaction } from '../../lib/calculations';
 import { GlobalSettleData } from '../../lib/types';
@@ -211,7 +212,7 @@ export const PaybackPlan: React.FC<PaybackPlanProps> = ({
                     }}
                   >
                     <div style={{ fontSize: '14px', fontWeight: '800', opacity: 0.7, color: 'var(--t)' }}>
-                      {t.from} ──▶ {t.to}
+                      {shown(t.from)} ──▶ {shown(t.to)}
                     </div>
                     <BalanceDisplay balances={t.balances} align="right" style={{ fontSize: '14px', fontWeight: '900' }} />
                   </div>
