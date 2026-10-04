@@ -318,7 +318,9 @@ export const findDuplicatePeople = (groups: Group[], me: string): DuplicatePerso
     if (!g || g.id === 'STANDALONE') continue;
     const mi = g.memberIdentities || {};
     for (const m of g.members || []) {
-      const clean = m.replace(/\s*\(Left\)$/i, '').trim();
+      // Compare the name people SEE: drop "(Left)" and the hidden email tag
+      // ("Esha Gupta (esha1997)" is the same name as "Esha Gupta").
+      const clean = withoutEmailTag(g, m).replace(/\s*\(Left\)$/i, '').trim();
       const lower = clean.toLowerCase();
       if (!clean || lower === meLower) continue;
       const identity = typeof mi[m] === 'string' && mi[m] ? mi[m] : clean;
@@ -337,7 +339,9 @@ export const findDuplicatePeople = (groups: Group[], me: string): DuplicatePerso
   for (const entries of byName.values()) {
     const distinct = new Set(entries.map((e) => e.identity.toLowerCase()));
     if (distinct.size >= 2) {
-      out.push({ name: entries[0].memberName.replace(/\s*\(Left\)$/i, '').trim(), entries });
+      const first = entries[0];
+      const g0 = (groups || []).find((g) => g && String(g.id) === String(first.groupId));
+      out.push({ name: withoutEmailTag(g0, first.memberName).replace(/\s*\(Left\)$/i, '').trim(), entries });
     }
   }
   return out.sort((a, b) => a.name.localeCompare(b.name));

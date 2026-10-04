@@ -18,7 +18,14 @@ const pillChipStyle: React.CSSProperties = { background: 'rgba(255,255,255,0.28)
 // name are ticked by default and get pointed at the primary on Merge.
 const AV_BG = ['#B39DDB', '#F48FB1', '#80CBC4', '#FFB74D', '#9FA8DA', '#A5D6A7', '#EF9A9A', '#7FC8CE'];
 
-export interface MergeReview { name: string; primary: string; primaryGroups: string[]; others: DuplicateEntry[] }
+export interface MergeReview {
+  name: string;
+  primary: string;
+  primaryGroups: string[];
+  others: DuplicateEntry[];
+  /** Set when nobody with this name has joined yet: the user picks the primary. */
+  all?: DuplicateEntry[];
+}
 
 const MergeRow: React.FC<{
   r: MergeReview;
@@ -26,7 +33,12 @@ const MergeRow: React.FC<{
   onDismiss: () => void;
 }> = ({ r, onMerge, onDismiss }) => {
   const [busy, setBusy] = useState(false);
-  const [checked, setChecked] = useState<boolean[]>(() => r.others.map(() => true));
+  // Nobody joined yet → the user can choose which email is the primary.
+  const [primary, setPrimary] = useState(r.primary);
+  const others = r.all ? r.all.filter((e) => e.email !== primary) : r.others;
+  const primaryGroups = r.all ? r.all.filter((e) => e.email === primary).map((e) => e.groupName) : r.primaryGroups;
+  const [checked, setChecked] = useState<boolean[]>(() => (r.all || r.others).map(() => true));
+  React.useEffect(() => { setChecked(others.map(() => true)); }, [primary]); // eslint-disable-line react-hooks/exhaustive-deps
   const selectedCount = checked.filter(Boolean).length;
   const canMerge = selectedCount >= 1 && !busy;
   const toggle = (i: number) => setChecked((prev) => prev.map((v, idx) => (idx === i ? !v : v)));
@@ -50,26 +62,32 @@ const MergeRow: React.FC<{
       <div style={{ padding: '9px 0', borderTop: '1px solid #F1F5F9' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
           <span style={{ fontSize: '10.5px', fontWeight: 700, color: '#047857', background: '#D1FAE5', borderRadius: '999px', padding: '2px 8px', flexShrink: 0 }}>Primary</span>
-          <span style={{ fontSize: '13px', fontWeight: 600, color: '#1E293B', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', minWidth: 0 }}>{r.primary}</span>
+          <span style={{ fontSize: '13px', fontWeight: 600, color: '#1E293B', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', minWidth: 0 }}>{primary}</span>
         </div>
-        <div style={{ fontSize: '11.5px', color: '#94A3B8', marginTop: '3px' }}>Joined in {r.primaryGroups.join(', ')}</div>
+        <div style={{ fontSize: '11.5px', color: '#94A3B8', marginTop: '3px' }}>{r.all ? 'In' : 'Joined in'} {primaryGroups.join(', ')}</div>
       </div>
-      {r.others.map((e, i) => (
+      {others.map((e, i) => (
         <label key={i} onClick={() => toggle(i)} style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '9px 0', borderTop: '1px solid #F1F5F9', cursor: 'pointer' }}>
           <span style={{ width: '20px', height: '20px', borderRadius: '6px', flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', background: checked[i] ? '#10B981' : '#FFFFFF', border: checked[i] ? 'none' : '2px solid #CBD5E1', boxSizing: 'border-box', color: '#FFFFFF', fontSize: '12px', fontWeight: 700 }}>
             {checked[i] ? '✓' : ''}
           </span>
           <span style={{ fontSize: '14px', color: checked[i] ? '#1E293B' : '#94A3B8', flexShrink: 0 }}>{e.groupName}</span>
           <span style={{ marginLeft: 'auto', fontSize: '11.5px', color: '#94A3B8', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', minWidth: 0 }}>{e.email || 'no email'}</span>
+          {r.all && e.email && (
+            <span
+              onClick={(ev) => { ev.preventDefault(); ev.stopPropagation(); setPrimary(e.email); }}
+              style={{ fontSize: '11px', fontWeight: 600, color: '#047857', flexShrink: 0, cursor: 'pointer', paddingLeft: '4px' }}
+            >Make primary</span>
+          )}
         </label>
       ))}
       <button
         disabled={!canMerge}
         onClick={async () => {
-          const entries = r.others.filter((_, i) => checked[i]);
+          const entries = others.filter((_, i) => checked[i]);
           if (entries.length === 0) return;
           setBusy(true);
-          try { await onMerge(entries, r.primary); } finally { setBusy(false); }
+          try { await onMerge(entries, primary); } finally { setBusy(false); }
         }}
         style={{ width: '100%', marginTop: '10px', padding: '11px', borderRadius: '12px', border: 'none', background: canMerge ? '#10B981' : '#CBD5E1', color: '#FFFFFF', fontWeight: 600, fontSize: '13.5px', cursor: canMerge ? 'pointer' : 'default' }}
       >
@@ -246,6 +264,18 @@ export const FriendsView: React.FC<FriendsViewProps> = ({
         return !!g && !(g.pendingMembers || []).includes(e.memberName);
       };
       const joinedEmails = new Set(withEmail.filter(isJoined).map((e) => e.email));
+      if (joinedEmails.size === 0) {
+        // Nobody has joined: offer it, the user chooses the primary email.
+        const primary = withEmail[0].email;
+        out.push({
+          name: d.name,
+          primary,
+          primaryGroups: withEmail.filter((e) => e.email === primary).map((e) => e.groupName),
+          others: d.entries.filter((e) => e.email !== primary),
+          all: d.entries,
+        });
+        return;
+      }
       if (joinedEmails.size !== 1) return;
       const primary = [...joinedEmails][0];
       const others = d.entries.filter((e) => e.email !== primary && !isJoined(e));
