@@ -573,7 +573,10 @@ export const FriendsView: React.FC<FriendsViewProps> = ({
     const isOwed = Object.values(f.bals).some((v) => v > 0.01);
     const isOwe = Object.values(f.bals).some((v) => v < -0.01);
     const q = (search || searchQuery || '').trim().toLowerCase();
-    if (q && !f.name.toLowerCase().includes(q)) return false;
+    if (q) {
+      const hay = [f.name, shown(f.name), String(f.id || ''), ...(f.groups || [])].join(' ').toLowerCase();
+      if (!hay.includes(q)) return false;
+    }
     if (selectedFriends.length > 0 && !selectedFriends.includes(f.id)) return false;
     if (balanceFilter === 'owed' && !isOwed) return false;
     if (balanceFilter === 'owe' && !isOwe) return false;
@@ -740,41 +743,8 @@ export const FriendsView: React.FC<FriendsViewProps> = ({
         );
       })()}
 
-      {/* Search + funnel row */}
-      <div style={{ display: 'flex', gap: '10px', alignItems: 'center', marginBottom: '16px', width: '100%' }}>
-        <div style={{ position: 'relative', flex: 1, lineHeight: 0, fontSize: 0 }}>
-          <svg
-            viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"
-            style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', width: '13px', height: '13px', opacity: 0.4, pointerEvents: 'none', color: '#64748B', zIndex: 2 }}
-          >
-            <circle cx="11" cy="11" r="8" />
-            <line x1="21" y1="21" x2="16.65" y2="16.65" />
-          </svg>
-          <input
-            type="search"
-            placeholder="Search friends..."
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            style={{ display: 'block', width: '100%', height: '38px', lineHeight: 'normal', fontSize: '13px', margin: 0, padding: '0 12px 0 34px', borderRadius: '24px', border: '2px solid #F1F5F9', outline: 'none', fontWeight: 600, background: 'var(--w)', color: '#475569', boxSizing: 'border-box', verticalAlign: 'top' }}
-          />
-        </div>
-
-        <button
-          onClick={(e) => { e.stopPropagation(); setShowFilters(!showFilters); }}
-          title="Filters"
-          style={{ background: 'none', border: 'none', cursor: 'pointer', width: '44px', height: '44px', padding: 0, opacity: showFilters || selectedFriends.length > 0 || balanceFilter !== 'all' ? 1 : 0.55, transition: '0.2s all', display: 'flex', alignItems: 'center', justifyContent: 'center', color: selectedFriends.length > 0 || balanceFilter !== 'all' ? '#F59E0B' : '#475569', flexShrink: 0 }}
-        >
-          <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" style={{ width: '18px', height: '18px' }}>
-            <path d="M22 3H2L10 12.46V19L14 21V12.46L22 3Z" stroke="currentColor" strokeWidth="2" strokeLinejoin="round" strokeLinecap="round" />
-          </svg>
-          {balanceFilter !== 'all' && (
-            <span style={{ position: 'absolute', marginLeft: '16px', marginTop: '-14px', width: '8px', height: '8px', borderRadius: '50%', background: balanceFilter === 'owe' ? '#EF4444' : '#10B981', border: '1.5px solid #FFFFFF' }} />
-          )}
-        </button>
-      </div>
-
       {balanceFilter !== 'all' && (
-        <div style={{ display: 'flex', marginTop: '-8px', marginBottom: '14px' }}>
+        <div style={{ display: 'flex', marginBottom: '14px' }}>
           <button
             type="button"
             onClick={() => setBalanceFilter('all')}
