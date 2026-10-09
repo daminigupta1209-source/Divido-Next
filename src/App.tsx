@@ -1162,7 +1162,11 @@ function App() {
     const upiLink = (myUpi && isINR)
       ? buildUpiLink({ pa: myUpi, pn: me, am: amt, tn: 'Divido Settle' })
       : '';
-    const shareMessage = upiLink ? `${baseMsg}\n\nPay instantly: ${upiLink}` : baseMsg;
+    // Lead with UPI ID + amount for "Pay UPI ID": UPI apps decline link-launched
+    // payments to a personal UPI ID, so the link is only a secondary option.
+    const shareMessage = upiLink
+      ? `${baseMsg}\n\nPay in GPay or any UPI app → Pay UPI ID:\nUPI ID: ${myUpi.trim()}\nAmount: ₹${amt.toFixed(2)}\n\nOr try the direct link (some apps decline it): ${upiLink}`
+      : baseMsg;
 
     const nativeShare = typeof navigator !== 'undefined' && (navigator as any).share;
 

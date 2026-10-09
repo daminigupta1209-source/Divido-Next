@@ -123,7 +123,7 @@ export const UPIQRModal: React.FC<UPIQRModalProps> = ({
   const handleCopy = () => copy('upi-inline', localUpi.trim());
 
   const handleShareRequest = async () => {
-    const shareText = `Hi! Please pay ${currency}${amount.toFixed(2)} to settle our dues on Divido.\nUPI ID: ${localUpi.trim()}\nDirect payment link: ${buildUpiLink({ pa: localUpi, pn: payeeName, am: amount, tn: 'Divido Settle' })}\n\nIf your UPI app declines the link, pay manually:\nUPI ID: ${localUpi.trim()}\nAmount: ${currency}${amount.toFixed(2)}`;
+    const shareText = `Hi! Please pay ${currency}${amount.toFixed(2)} to settle our dues on Divido.\n\nPay in GPay or any UPI app → Pay UPI ID:\nUPI ID: ${localUpi.trim()}\nAmount: ${currency}${amount.toFixed(2)}\n\nOr try the direct link (some apps decline it): ${buildUpiLink({ pa: localUpi, pn: payeeName, am: amount, tn: 'Divido Settle' })}`;
     
     if (navigator.share) {
       try {
@@ -298,35 +298,14 @@ export const UPIQRModal: React.FC<UPIQRModalProps> = ({
 
             {/* Interactive Actions */}
             <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginTop: '20px' }}>
-              <a
-                href={upiDeepLink}
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  gap: '8px',
-                  background: 'var(--p)',
-                  color: 'white',
-                  textDecoration: 'none',
-                  fontSize: '13px',
-                  fontWeight: 600,
-                  padding: '12px',
-                  borderRadius: '14px',
-                  boxShadow: '0 4px 12px rgba(124, 58, 237, 0.2)',
-                  transition: '0.2s all ease',
-                }}
-                className="hover-upi-app"
-              >
-                <span>📱 Pay via UPI App</span>
-              </a>
-
-              {/* Manual-pay fallback: UPI apps often decline app-launched payments to a
-                  personal UPI ID; pasting these into "Pay UPI ID" goes through. Only
-                  when paying from this device — a request is shared/scanned instead. */}
+              {/* Pay-by-UPI-ID is the primary path: UPI apps decline link-launched
+                  payments to a personal UPI ID, but "Pay UPI ID" in the app goes
+                  through. Only when paying from this device — a request is
+                  shared/scanned instead. */}
               {!requestFrom && (
                 <div style={{ background: 'var(--bg)', padding: '10px 12px', borderRadius: '14px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
                   <p style={{ fontSize: '11px', fontWeight: 600, color: 'var(--g)', margin: 0, lineHeight: 1.45 }}>
-                    UPI app declined it? Open it, choose <strong style={{ color: 'var(--t)' }}>Pay UPI ID</strong> and paste these:
+                    Open GPay or any UPI app → <strong style={{ color: 'var(--t)' }}>Pay UPI ID</strong> → paste these (or scan the QR in the app):
                   </p>
                   <div style={{ display: 'flex', gap: '8px' }}>
                     <button
@@ -345,6 +324,12 @@ export const UPIQRModal: React.FC<UPIQRModalProps> = ({
                       {copiedKey === 'amt' ? '✓ Copied' : `📋 ${currency}${amount.toFixed(2)}`}
                     </button>
                   </div>
+                  <a
+                    href={upiDeepLink}
+                    style={{ color: 'var(--g)', fontSize: '11px', fontWeight: 600, textDecoration: 'underline', textAlign: 'center' }}
+                  >
+                    Or try the direct pay link (some UPI apps decline it)
+                  </a>
                 </div>
               )}
 

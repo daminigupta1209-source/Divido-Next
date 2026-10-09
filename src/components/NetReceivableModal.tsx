@@ -126,10 +126,11 @@ export const NetReceivableModal: React.FC<NetReceivableModalProps> = ({
   const upiLink = remPopupUpi.trim()
     ? buildUpiLink({ pa: remPopupUpi, pn: me, am: upiAmt, tn: 'Divido Settle' })
     : '';
-  // UPI apps often decline a link-launched payment to a personal UPI ID, so also
-  // give the friend the ID and amount on their own lines to paste into "Pay UPI ID".
+  // UPI apps decline link-launched payments to a personal UPI ID, so lead with
+  // the ID and amount (on their own lines, easy to copy) for "Pay UPI ID"; the
+  // link is only a secondary option.
   const shareMessage = upiLink
-    ? `${reminderText}\n\nPay instantly: ${upiLink}\n\nIf your UPI app declines the link, pay manually:\nUPI ID: ${remPopupUpi.trim()}\nAmount: ₹${upiAmt}`
+    ? `${reminderText}\n\nPay in GPay or any UPI app → Pay UPI ID:\nUPI ID: ${remPopupUpi.trim()}\nAmount: ₹${upiAmt}\n\nOr try the direct link (some apps decline it): ${upiLink}`
     : reminderText;
   const copyChipStyle: React.CSSProperties = {
     padding: '3px 8px',

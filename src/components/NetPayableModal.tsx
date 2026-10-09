@@ -122,11 +122,41 @@ export const NetPayableModal: React.FC<NetPayableModalProps> = ({
 
   if (!popupData) return null;
 
-  // Manual-pay fallback: GPay & co. often decline app-launched payments to a
-  // personal UPI ID ("exceeded bank limit"), but the same payment entered by
-  // hand inside the UPI app goes through.
-  const showManualPay =
-    primaryIsINR && canPayViaUpi && inrEquivalent !== null && payPopupUpi.trim().includes('@') && !payPopupEditing;
+  // Pay-by-UPI-ID is the PRIMARY path: GPay, Amazon Pay & co. decline
+  // link-launched payments to a personal UPI ID ("exceeded bank limit"), but the
+  // same payment entered by hand inside the UPI app goes through. The upi://
+  // link stays only as a secondary "try the direct link" option.
+  const canUseUpi = primaryIsINR && canPayViaUpi;
+
+  // Validate + remember the payee's UPI. Returns the trimmed ID, or null (alerted).
+  const ensurePayable = (): string | null => {
+    const finalUpi = payPopupUpi.trim();
+    if (!finalUpi || !finalUpi.includes('@')) {
+      alert('Please enter a valid UPI ID (e.g. friend@okaxis) to proceed!');
+      return null;
+    }
+    if (inrEquivalent === null) {
+      alert('Could not fetch a live exchange rate. Please settle this one offline.');
+      return null;
+    }
+    setUserMetadata((prev) => ({
+      ...prev,
+      [popupData.friendName]: {
+        ...prev[popupData.friendName],
+        upiId: finalUpi,
+      },
+    }));
+    return finalUpi;
+  };
+
+  // Neither path can report success back to the web app, so we never auto-settle:
+  // remember a payment was started (nudge on next open) and ask the user to confirm.
+  const startPayment = () => {
+    onPaymentInitiated?.();
+    setPayPopupEditing(false);
+    setAwaitingConfirm(true);
+  };
+
   const chipStyle: React.CSSProperties = {
     padding: '8px 10px',
     background: 'var(--w)',
@@ -266,50 +296,37 @@ export const NetPayableModal: React.FC<NetPayableModalProps> = ({
             {!awaitingConfirm && (
               <>
                 {/* UPI pay — only for INR payers with a resolvable INR amount. Does NOT settle on its own. */}
-                {primaryIsINR && canPayViaUpi ? (
-                  <button
-                    className="btn-green press-anim"
-                    onClick={() => {
-                      const finalUpi = payPopupUpi.trim();
-                      if (!finalUpi || !finalUpi.includes('@')) {
-                        alert('Please enter a valid UPI ID (e.g. friend@okaxis) to proceed!');
-                        return;
-                      }
-                      if (inrEquivalent === null) {
-                        alert('Could not fetch a live exchange rate. Please settle this one offline.');
-                        return;
-                      }
-
-                      setUserMetadata((prev) => ({
-                        ...prev,
-                        [popupData.friendName]: {
-                          ...prev[popupData.friendName],
-                          upiId: finalUpi,
-                        },
-                      }));
-
-                      const inrAmt = inrEquivalent.toFixed(2);
-                      const note = debtIsINR
-                        ? 'Divido Settle'
-                        : `Divido Settle (${popupData.curr}${popupData.amt.toFixed(2)})`;
-                      window.location.href = buildUpiLink({ pa: finalUpi, pn: popupData.friendName, am: inrAmt, tn: note });
-
-                      // Remember that a payment was started, so if the user leaves
-                      // without confirming they get nudged to finish on next open.
-                      onPaymentInitiated?.();
-
-                      // A upi:// intent can't report success back to the web app, so we
-                      // must NOT auto-settle. Ask the user to confirm after they return.
-                      // Delay the state update so the OS has time to launch the UPI app
-                      // without the button vanishing instantly (which looks like a glitch).
-                      setTimeout(() => {
-                        setAwaitingConfirm(true);
-                      }, 600);
-                    }}
-                    style={{ padding: '12px', fontSize: '13px', borderRadius: '14px', width: '100%', fontWeight: 600, cursor: 'pointer' }}
-                  >
-                    {debtIsINR ? 'Proceed to Pay' : `Pay ${inrDisplay || '...'} via UPI`}
-                  </button>
+                {canUseUpi ? (
+                  <>
+                    <button
+                      className="btn-green press-anim"
+                      onClick={() => {
+                        const finalUpi = ensurePayable();
+                        if (!finalUpi) return;
+                        copyField('upi', finalUpi);
+                        startPayment();
+                      }}
+                      style={{ padding: '12px', fontSize: '13px', borderRadius: '14px', width: '100%', fontWeight: 600, cursor: 'pointer' }}
+                    >
+                      {debtIsINR ? 'Copy UPI ID & Pay' : `Copy UPI ID & Pay ${inrDisplay || '...'}`}
+                    </button>
+                    <button
+                      onClick={() => {
+                        const finalUpi = ensurePayable();
+                        if (!finalUpi || inrEquivalent === null) return;
+                        const note = debtIsINR
+                          ? 'Divido Settle'
+                          : `Divido Settle (${popupData.curr}${popupData.amt.toFixed(2)})`;
+                        window.location.href = buildUpiLink({ pa: finalUpi, pn: popupData.friendName, am: inrEquivalent.toFixed(2), tn: note });
+                        // Delay so the OS can launch the UPI app before the button
+                        // swaps out (an instant swap looks like a glitch).
+                        setTimeout(startPayment, 600);
+                      }}
+                      style={{ background: 'none', border: 'none', color: 'var(--g)', fontSize: '11px', fontWeight: 600, cursor: 'pointer', textDecoration: 'underline', padding: '2px' }}
+                    >
+                      Or try the direct pay link (some UPI apps decline it)
+                    </button>
+                  </>
                 ) : (
                   /* No UPI rail available — fallback so the popup isn't a dead-end. */
                   <button
@@ -329,6 +346,30 @@ export const NetPayableModal: React.FC<NetPayableModalProps> = ({
             {/* ── Confirm step — the ONLY place a balance is marked settled. ── */}
             {awaitingConfirm && (
               <>
+                {canUseUpi && inrEquivalent !== null && (
+                  <div style={{ background: 'var(--bg)', padding: '10px 12px', borderRadius: '14px', display: 'flex', flexDirection: 'column', gap: '8px', textAlign: 'left' }}>
+                    <p style={{ fontSize: '11.5px', fontWeight: 600, color: 'var(--g)', margin: 0, lineHeight: 1.5 }}>
+                      Open GPay or any UPI app → <strong style={{ color: 'var(--t)' }}>Pay UPI ID</strong> → paste the ID → enter <strong style={{ color: 'var(--t)' }}>₹{inrEquivalent.toFixed(2)}</strong>
+                    </p>
+                    <div style={{ display: 'flex', gap: '8px' }}>
+                      <button
+                        className="press-anim"
+                        onClick={() => copyField('upi', payPopupUpi.trim())}
+                        style={{ ...chipStyle, flex: 1 }}
+                        title={payPopupUpi.trim()}
+                      >
+                        {copiedField === 'upi' ? '✓ UPI ID copied' : `📋 ${payPopupUpi.trim()}`}
+                      </button>
+                      <button
+                        className="press-anim"
+                        onClick={() => copyField('amt', inrEquivalent.toFixed(2))}
+                        style={{ ...chipStyle, flex: '0 0 auto' }}
+                      >
+                        {copiedField === 'amt' ? '✓ Copied' : `📋 ₹${inrEquivalent.toFixed(2)}`}
+                      </button>
+                    </div>
+                  </div>
+                )}
                 <button
                   onClick={() => {
                     onPaymentResolved?.();
@@ -362,30 +403,6 @@ export const NetPayableModal: React.FC<NetPayableModalProps> = ({
               </>
             )}
 
-            {showManualPay && (
-              <div style={{ background: 'var(--bg)', padding: '10px 12px', borderRadius: '14px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                <p style={{ fontSize: '11px', fontWeight: 600, color: 'var(--g)', margin: 0, lineHeight: 1.45 }}>
-                  UPI app declined it? Open it, choose <strong style={{ color: 'var(--t)' }}>Pay UPI ID</strong> and paste these:
-                </p>
-                <div style={{ display: 'flex', gap: '8px' }}>
-                  <button
-                    className="press-anim"
-                    onClick={() => copyField('upi', payPopupUpi.trim())}
-                    style={{ ...chipStyle, flex: 1 }}
-                    title={payPopupUpi.trim()}
-                  >
-                    {copiedField === 'upi' ? '✓ Copied' : `📋 ${payPopupUpi.trim()}`}
-                  </button>
-                  <button
-                    className="press-anim"
-                    onClick={() => copyField('amt', inrEquivalent.toFixed(2))}
-                    style={{ ...chipStyle, flex: '0 0 auto' }}
-                  >
-                    {copiedField === 'amt' ? '✓ Copied' : `📋 ₹${inrEquivalent.toFixed(2)}`}
-                  </button>
-                </div>
-              </div>
-            )}
           </div>
         </div>
       </div>

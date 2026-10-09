@@ -1,10 +1,9 @@
 import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
-import { buildNameEmailResolver, getPersonKey, upiFor, shown } from '../lib/identity';
+import { buildNameEmailResolver, getPersonKey, upiFor } from '../lib/identity';
 import { SearchableCurrencyPicker } from './SearchableCurrencyPicker';
 
 import { Group, Expense, UserMetadata } from '../lib/types';
 import { escManager } from '../lib/escManager';
-import { buildUpiLink } from '../lib/upi';
 import { useCopyFeedback } from '../hooks/useCopyFeedback';
 import { formatExactAmount, toCurrencyCode, genExpenseId } from '../lib/utils';
 import { StyledDropdown } from './StyledDropdown';
@@ -528,10 +527,10 @@ export const SettleModal: React.FC<SettleModalProps> = ({
                           </p>
                         )}
                         {canUpiPay && (
-                          // Manual-pay fallback: UPI apps often decline app-launched payments
-                          // to a personal UPI ID; pasting these into "Pay UPI ID" works.
+                          // Pay-by-UPI-ID is the primary path: UPI apps decline link-launched
+                          // payments to a personal UPI ID, but "Pay UPI ID" in the app works.
                           <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px', marginTop: '6px', alignItems: 'center' }}>
-                            <span style={{ fontSize: '10px', fontWeight: 600, color: 'var(--g)' }}>Declined? Copy:</span>
+                            <span style={{ fontSize: '10px', fontWeight: 600, color: 'var(--g)' }}>GPay → Pay UPI ID:</span>
                             <button
                               className="press-anim"
                               onClick={() => copyField(`${idx}-upi`, upi)}
@@ -552,8 +551,11 @@ export const SettleModal: React.FC<SettleModalProps> = ({
                       </div>
                       <div style={{ display: 'flex', gap: '8px' }}>
                         {canUpiPay && (
-                          <a
-                            href={buildUpiLink({ pa: upi, pn: shown(t.to), am: finalUpiAmt })}
+                          // Copies the UPI ID to paste into the UPI app's "Pay UPI ID" (a
+                          // upi:// link here gets declined as "exceeded bank limit").
+                          <button
+                            className="press-anim"
+                            onClick={() => copyField(`${idx}-upi`, upi)}
                             style={{
                               padding: '10px 14px',
                               background: '#F0F9FF',
@@ -561,13 +563,13 @@ export const SettleModal: React.FC<SettleModalProps> = ({
                               borderRadius: '12px',
                               fontSize: '11px',
                               fontWeight: 600,
-                              textDecoration: 'none',
                               border: '1.5px solid #B0E5FC',
+                              cursor: 'pointer',
                             }}
-                            title={isDirectINR ? undefined : `Converted from ${t.currency}${t.amount.toFixed(2)}`}
+                            title={`Copy ${upi}, then paste it in your UPI app's "Pay UPI ID"${isDirectINR ? '' : ` (converted from ${t.currency}${t.amount.toFixed(2)})`}`}
                           >
-                            ⚡ Pay (≈ ₹{finalUpiAmt.toFixed(2)})
-                          </a>
+                            {copiedField === `${idx}-upi` ? '✓ ID copied' : `⚡ Pay ₹${finalUpiAmt.toFixed(2)}`}
+                          </button>
                         )}
                         {canUpiPay && (
                           // QR is INR-only like the link, so pass the converted ₹ amount.
