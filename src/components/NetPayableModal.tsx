@@ -2,6 +2,8 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { escManager } from '../lib/escManager';
 import { buildUpiLink } from '../lib/upi';
 import { useCopyFeedback } from '../hooks/useCopyFeedback';
+import { UpiLinkTestPanel } from './UpiLinkTestPanel';
+import { isUpiTestEnabled } from '../lib/upiTestFlag';
 import { toCurrencyCode } from '../lib/utils';
 import { Group } from '../lib/types';
 import { buildNameEmailResolver, upiFor } from '../lib/identity';
@@ -326,6 +328,9 @@ export const NetPayableModal: React.FC<NetPayableModalProps> = ({
                     >
                       Or try the direct pay link (some UPI apps decline it)
                     </button>
+                    {isUpiTestEnabled() && payPopupUpi.trim().includes('@') && !payPopupEditing && (
+                      <UpiLinkTestPanel upiId={payPopupUpi} payeeName={popupData.friendName} />
+                    )}
                   </>
                 ) : (
                   /* No UPI rail available — fallback so the popup isn't a dead-end. */
