@@ -5,6 +5,7 @@ import { SearchableCurrencyPicker } from './SearchableCurrencyPicker';
 import { Group, Expense, UserMetadata } from '../lib/types';
 import { escManager } from '../lib/escManager';
 import { buildUpiLink } from '../lib/upi';
+import { useCopyFeedback } from '../hooks/useCopyFeedback';
 import { formatExactAmount, toCurrencyCode, genExpenseId } from '../lib/utils';
 import { StyledDropdown } from './StyledDropdown';
 
@@ -78,21 +79,7 @@ export const SettleModal: React.FC<SettleModalProps> = ({
   const [showSettleNotes, setShowSettleNotes] = useState(false);
   const [rates, setRates] = useState<Record<string, number>>({});
   const [loadingRates, setLoadingRates] = useState(false);
-  const [copiedField, setCopiedField] = useState<string | null>(null);
-
-  const copyField = (key: string, value: string) => {
-    if (!navigator.clipboard) {
-      alert(value);
-      return;
-    }
-    navigator.clipboard.writeText(value).then(
-      () => {
-        setCopiedField(key);
-        setTimeout(() => setCopiedField((f) => (f === key ? null : f)), 2000);
-      },
-      () => alert(value)
-    );
-  };
+  const { copiedKey: copiedField, copy: copyField } = useCopyFeedback();
   const copyChipStyle: React.CSSProperties = {
     padding: '3px 8px',
     background: 'var(--bg)',

@@ -4,6 +4,7 @@ import { escManager } from '../lib/escManager';
 import { ShareGrid } from './ShareGrid';
 import { toCurrencyCode } from '../lib/utils';
 import { buildUpiLink } from '../lib/upi';
+import { useCopyFeedback } from '../hooks/useCopyFeedback';
 
 interface NetReceivableModalProps {
   popupData: { friendName: string; amt: number; curr: string } | null;
@@ -29,6 +30,7 @@ export const NetReceivableModal: React.FC<NetReceivableModalProps> = ({
   const [showQr, setShowQr] = useState(false);
   const [rates, setRates] = useState<Record<string, number>>({});
   const reminderCanvasRef = useRef<HTMLCanvasElement | null>(null);
+  const { copiedKey, copy } = useCopyFeedback();
 
   // UPI is an INR-only rail. For a non-INR debt, convert to the INR equivalent
   // (rates fetched with INR base, so rates[CODE] = units of CODE per 1 INR).
@@ -124,7 +126,25 @@ export const NetReceivableModal: React.FC<NetReceivableModalProps> = ({
   const upiLink = remPopupUpi.trim()
     ? buildUpiLink({ pa: remPopupUpi, pn: me, am: upiAmt, tn: 'Divido Settle' })
     : '';
-  const shareMessage = upiLink ? `${reminderText}\n\nPay instantly: ${upiLink}` : reminderText;
+  // UPI apps often decline a link-launched payment to a personal UPI ID, so also
+  // give the friend the ID and amount on their own lines to paste into "Pay UPI ID".
+  const shareMessage = upiLink
+    ? `${reminderText}\n\nPay instantly: ${upiLink}\n\nIf your UPI app declines the link, pay manually:\nUPI ID: ${remPopupUpi.trim()}\nAmount: ₹${upiAmt}`
+    : reminderText;
+  const copyChipStyle: React.CSSProperties = {
+    padding: '3px 8px',
+    background: 'white',
+    border: '1px solid #E2E8F0',
+    borderRadius: '8px',
+    fontSize: '10.5px',
+    fontWeight: 600,
+    color: 'var(--t)',
+    cursor: 'pointer',
+    maxWidth: '150px',
+    overflow: 'hidden',
+    textOverflow: 'ellipsis',
+    whiteSpace: 'nowrap',
+  };
 
   return (
     <div
@@ -256,8 +276,23 @@ export const NetReceivableModal: React.FC<NetReceivableModalProps> = ({
                   <div style={{ fontSize: '12px', fontWeight: 600, color: 'var(--t)' }}>
                     Scan to pay ₹{upiAmt}{!debtIsINR ? ` (${popupData.curr}${popupData.amt.toFixed(2)})` : ''}
                   </div>
-                  <div style={{ fontSize: '10.5px', fontWeight: 600, color: 'var(--g)', display: 'flex', alignItems: 'center', gap: '4px' }}>
-                    <span>{remPopupUpi}</span>
+                  <div style={{ fontSize: '10.5px', fontWeight: 600, color: 'var(--g)', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                    <button
+                      className="press-anim"
+                      onClick={() => copy('upi', remPopupUpi.trim())}
+                      style={copyChipStyle}
+                      title="Copy UPI ID"
+                    >
+                      {copiedKey === 'upi' ? '✓ Copied' : `📋 ${remPopupUpi}`}
+                    </button>
+                    <button
+                      className="press-anim"
+                      onClick={() => copy('amt', upiAmt)}
+                      style={copyChipStyle}
+                      title="Copy amount"
+                    >
+                      {copiedKey === 'amt' ? '✓ Copied' : `📋 ₹${upiAmt}`}
+                    </button>
                     <span onClick={() => setRemPopupEditing(true)} style={{ cursor: 'pointer', fontSize: '11px' }} title="Edit UPI ID">✏️</span>
                   </div>
                 </div>

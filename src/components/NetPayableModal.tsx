@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { escManager } from '../lib/escManager';
 import { buildUpiLink } from '../lib/upi';
+import { useCopyFeedback } from '../hooks/useCopyFeedback';
 import { toCurrencyCode } from '../lib/utils';
 import { Group } from '../lib/types';
 import { buildNameEmailResolver, upiFor } from '../lib/identity';
@@ -38,7 +39,7 @@ export const NetPayableModal: React.FC<NetPayableModalProps> = ({
   const [rates, setRates] = useState<Record<string, number>>({});
   const [ratesError, setRatesError] = useState(false);
   const [awaitingConfirm, setAwaitingConfirm] = useState(false);
-  const [copiedField, setCopiedField] = useState<'upi' | 'amt' | null>(null);
+  const { copiedKey: copiedField, copy: copyField, reset: resetCopied } = useCopyFeedback();
 
   // The user's own primary currency: explicit profile default, else browser locale, else ₹.
   const getPrimaryCurrency = (): string => {
@@ -81,8 +82,9 @@ export const NetPayableModal: React.FC<NetPayableModalProps> = ({
       setPayPopupUpi(existingUpi);
       setPayPopupEditing(!existingUpi);
       setAwaitingConfirm(false);
-      setCopiedField(null);
+      resetCopied();
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [popupData, userMetadata, nameToEmail]);
 
   // Fetch live INR-based rates whenever a non-INR debt popup opens.
@@ -119,20 +121,6 @@ export const NetPayableModal: React.FC<NetPayableModalProps> = ({
   }, [popupData, onClose]);
 
   if (!popupData) return null;
-
-  const copyField = (field: 'upi' | 'amt', value: string) => {
-    if (!navigator.clipboard) {
-      alert(`${field === 'upi' ? 'UPI ID' : 'Amount'}: ${value}`);
-      return;
-    }
-    navigator.clipboard.writeText(value).then(
-      () => {
-        setCopiedField(field);
-        setTimeout(() => setCopiedField((f) => (f === field ? null : f)), 2000);
-      },
-      () => alert(`${field === 'upi' ? 'UPI ID' : 'Amount'}: ${value}`)
-    );
-  };
 
   // Manual-pay fallback: GPay & co. often decline app-launched payments to a
   // personal UPI ID ("exceeded bank limit"), but the same payment entered by
