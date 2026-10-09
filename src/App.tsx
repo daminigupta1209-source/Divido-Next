@@ -253,7 +253,7 @@ function App() {
   const [localSettleEdits, setLocalSettleEdits] = useState<any[]>([]);
   // Row index whose amount box should shake (user tried to exceed the max).
   const [settleShakeIdx, setSettleShakeIdx] = useState<number | null>(null);
-  const [qrModalData, setQrModalData] = useState<{ payee: string; amt: number; currency: string; requestFrom?: string } | null>(() => initialSavedState?.qrModalData || null);
+  const [qrModalData, setQrModalData] = useState<{ payee: string; amt: number; currency: string; requestFrom?: string; identity?: string } | null>(() => initialSavedState?.qrModalData || null);
   const [netPayablePopup, setNetPayablePopup] = useState<{ friendName: string; amt: number; curr: string } | null>(() => initialSavedState?.netPayablePopup || null);
   const [netReceivablePopup, setNetReceivablePopup] = useState<{ friendName: string; amt: number; curr: string } | null>(() => initialSavedState?.netReceivablePopup || null);
   const [isGroupsExpanded, setIsGroupsExpanded] = useState<boolean>(false);
@@ -4776,6 +4776,7 @@ function App() {
             showConvertModal={showFriendsConvert}
             setShowConvertModal={setShowFriendsConvert}
             onQuickAddExpense={quickAddExpenseWithFriend}
+            onShowQR={(payee, amt, curr, identity) => setQrModalData({ payee, amt, currency: curr, identity })}
           />
         ) : view === 'analytics' ? (
           <Analytics
@@ -6744,8 +6745,11 @@ function App() {
             onClose={() => setQrModalData(null)}
             payeeName={qrModalData.payee}
             upiId={upiFor(userMetadata, (n) => {
-              // QR opens from a group balance — that group pins the payee's exact
-              // email; fall back to the cross-group resolver only if it can't.
+              // All balances passes the payee's exact email (two friends can share
+              // a name, and selectedGroup may be unrelated there).
+              if (qrModalData.identity?.includes('@')) return qrModalData.identity;
+              // From a group balance, that group pins the payee's exact email;
+              // fall back to the cross-group resolver only if it can't.
               const k = getPersonKey(selectedGroup, n);
               return typeof k === 'string' && k.includes('@') ? k : nameToEmailUpi(n);
             }, qrModalData.payee) || ''}

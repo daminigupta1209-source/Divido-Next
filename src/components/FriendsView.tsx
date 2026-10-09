@@ -6,7 +6,7 @@ import { Group, Expense, UserMetadata, GlobalSettleData } from '../lib/types';
 import { simplifyMultiCurrencyDebts, computeRawPairwiseTransactions } from '../lib/calculations';
 import { asyncBatchComputeGroups } from '../lib/workerHelper';
 import { getPersonKey, resolveSelfKey, toIdentitySpace, withoutEmailTag, buildNameEmailResolver, buildNameIdentityResolver, shown } from '../lib/identity';
-import { worldCurrencies, formatExactAmount, formatCompactAmount } from '../lib/utils';
+import { worldCurrencies, formatExactAmount, formatCompactAmount, toCurrencyCode } from '../lib/utils';
 import { SearchableCurrencyPicker } from './SearchableCurrencyPicker';
 import { StyledDropdown } from './StyledDropdown';
 
@@ -57,6 +57,8 @@ interface FriendsViewProps {
   showConvertModal?: boolean;
   setShowConvertModal?: (b: boolean) => void;
   onQuickAddExpense?: (friendName: string) => void;
+  // identity = the friend's email when known, so the QR resolves the right UPI.
+  onShowQR?: (payee: string, amt: number, curr: string, identity?: string) => void;
 }
 
 export const FriendsView: React.FC<FriendsViewProps> = ({
@@ -74,6 +76,7 @@ export const FriendsView: React.FC<FriendsViewProps> = ({
   showConvertModal = false,
   setShowConvertModal = () => {},
   onQuickAddExpense,
+  onShowQR,
 }) => {
   const [showInfo, setShowInfo] = useState(false);
   const [showDetails, setShowDetails] = useState(false);
@@ -637,6 +640,12 @@ export const FriendsView: React.FC<FriendsViewProps> = ({
             : (f.name.charCodeAt(0) || 0);
           const avBg = AV_COLORS[avSeed % AV_COLORS.length];
 
+          // UPI QR is INR-only. Use the RAW ₹ balance (never a converted estimate).
+          // Without an email, a shared name can't pin the right person's UPI, so skip.
+          const friendEmail = f.id && String(f.id).includes('@') ? String(f.id).toLowerCase() : undefined;
+          const inrOwed = Object.entries(f.bals).find(([c, v]) => toCurrencyCode(c) === 'INR' && v < -0.01);
+          const canShowQr = !!onShowQR && !!inrOwed && (!!friendEmail || !isDupName(f.name));
+
           const pillBase: React.CSSProperties = {
             padding: '4px 12px',
             borderRadius: '999px',
@@ -720,6 +729,29 @@ export const FriendsView: React.FC<FriendsViewProps> = ({
                 )}
               </div>
 
+              {canShowQr && (
+                <button
+                  className="press-anim"
+                  onClick={(e) => {
+                    e.stopPropagation(); // the card itself opens the settle flow
+                    onShowQR!(f.name, Number(Math.abs(inrOwed![1]).toFixed(2)), '₹', friendEmail);
+                  }}
+                  title="Show UPI QR — scan it from another phone, or from inside your UPI app"
+                  style={{
+                    padding: '8px 12px',
+                    background: '#F0F9FF',
+                    color: '#0284C7',
+                    borderRadius: '12px',
+                    fontSize: '11px',
+                    fontWeight: 600,
+                    border: '1.5px solid #B0E5FC',
+                    cursor: 'pointer',
+                    flexShrink: 0,
+                  }}
+                >
+                  QR
+                </button>
+              )}
 
               <span style={{ fontSize: '18px', color: '#B8ADA0', fontWeight: 600, lineHeight: 1, flexShrink: 0 }}>›</span>
             </div>
