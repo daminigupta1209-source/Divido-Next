@@ -2,6 +2,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import QRCode from 'qrcode';
 import { escManager } from '../lib/escManager';
 import { buildUpiLink } from '../lib/upi';
+import { useCopyFeedback } from '../hooks/useCopyFeedback';
 
 interface UPIQRModalProps {
   show: boolean;
@@ -27,7 +28,7 @@ export const UPIQRModal: React.FC<UPIQRModalProps> = ({
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const [localUpi, setLocalUpi] = useState(upiId);
   const [isEditing, setIsEditing] = useState(false);
-  const [copied, setCopied] = useState(false);
+  const { copiedKey, copy } = useCopyFeedback();
   const [shareCopied, setShareCopied] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
 
@@ -119,14 +120,10 @@ export const UPIQRModal: React.FC<UPIQRModalProps> = ({
     setIsEditing(false);
   };
 
-  const handleCopy = () => {
-    navigator.clipboard.writeText(localUpi);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
-  };
+  const handleCopy = () => copy('upi-inline', localUpi.trim());
 
   const handleShareRequest = async () => {
-    const shareText = `Hi! Please pay ${currency}${amount.toFixed(2)} to settle our dues on Divido.\nUPI ID: ${localUpi.trim()}\nDirect payment link: ${buildUpiLink({ pa: localUpi, pn: payeeName, am: amount, tn: 'Divido Settle' })}`;
+    const shareText = `Hi! Please pay ${currency}${amount.toFixed(2)} to settle our dues on Divido.\nUPI ID: ${localUpi.trim()}\nDirect payment link: ${buildUpiLink({ pa: localUpi, pn: payeeName, am: amount, tn: 'Divido Settle' })}\n\nIf your UPI app declines the link, pay manually:\nUPI ID: ${localUpi.trim()}\nAmount: ${currency}${amount.toFixed(2)}`;
     
     if (navigator.share) {
       try {
@@ -145,6 +142,20 @@ export const UPIQRModal: React.FC<UPIQRModalProps> = ({
   };
 
   const upiDeepLink = buildUpiLink({ pa: localUpi, pn: payeeName, am: amount, tn: 'Divido Settle' });
+  const copyChipStyle: React.CSSProperties = {
+    padding: '8px 10px',
+    background: 'var(--w)',
+    border: '1px solid #E2E8F0',
+    borderRadius: '10px',
+    fontSize: '11px',
+    fontWeight: 600,
+    color: 'var(--t)',
+    cursor: 'pointer',
+    minWidth: 0,
+    overflow: 'hidden',
+    textOverflow: 'ellipsis',
+    whiteSpace: 'nowrap',
+  };
 
   return (
     <div className="modal-overlay" style={{ zIndex: 5000 }} onClick={onClose}>
@@ -279,7 +290,7 @@ export const UPIQRModal: React.FC<UPIQRModalProps> = ({
                 ✏️
               </span>
             </div>
-            {copied && (
+            {copiedKey === 'upi-inline' && (
               <p style={{ fontSize: '10px', color: '#16A34A', fontWeight: 600, marginTop: '4px', animation: 'fadeSlideIn 0.2s ease-out' }}>
                 ✓ UPI ID Copied!
               </p>
@@ -308,6 +319,34 @@ export const UPIQRModal: React.FC<UPIQRModalProps> = ({
               >
                 <span>📱 Pay via UPI App</span>
               </a>
+
+              {/* Manual-pay fallback: UPI apps often decline app-launched payments to a
+                  personal UPI ID; pasting these into "Pay UPI ID" goes through. Only
+                  when paying from this device — a request is shared/scanned instead. */}
+              {!requestFrom && (
+                <div style={{ background: 'var(--bg)', padding: '10px 12px', borderRadius: '14px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                  <p style={{ fontSize: '11px', fontWeight: 600, color: 'var(--g)', margin: 0, lineHeight: 1.45 }}>
+                    UPI app declined it? Open it, choose <strong style={{ color: 'var(--t)' }}>Pay UPI ID</strong> and paste these:
+                  </p>
+                  <div style={{ display: 'flex', gap: '8px' }}>
+                    <button
+                      className="press-anim"
+                      onClick={() => copy('upi', localUpi.trim())}
+                      style={{ ...copyChipStyle, flex: 1 }}
+                      title={localUpi.trim()}
+                    >
+                      {copiedKey === 'upi' ? '✓ Copied' : `📋 ${localUpi.trim()}`}
+                    </button>
+                    <button
+                      className="press-anim"
+                      onClick={() => copy('amt', amount.toFixed(2))}
+                      style={{ ...copyChipStyle, flex: '0 0 auto' }}
+                    >
+                      {copiedKey === 'amt' ? '✓ Copied' : `📋 ${currency}${amount.toFixed(2)}`}
+                    </button>
+                  </div>
+                </div>
+              )}
 
               <button
                 onClick={handleShareRequest}
