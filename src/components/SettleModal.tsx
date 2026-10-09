@@ -78,6 +78,34 @@ export const SettleModal: React.FC<SettleModalProps> = ({
   const [showSettleNotes, setShowSettleNotes] = useState(false);
   const [rates, setRates] = useState<Record<string, number>>({});
   const [loadingRates, setLoadingRates] = useState(false);
+  const [copiedField, setCopiedField] = useState<string | null>(null);
+
+  const copyField = (key: string, value: string) => {
+    if (!navigator.clipboard) {
+      alert(value);
+      return;
+    }
+    navigator.clipboard.writeText(value).then(
+      () => {
+        setCopiedField(key);
+        setTimeout(() => setCopiedField((f) => (f === key ? null : f)), 2000);
+      },
+      () => alert(value)
+    );
+  };
+  const copyChipStyle: React.CSSProperties = {
+    padding: '3px 8px',
+    background: 'var(--bg)',
+    border: '1px solid #E2E8F0',
+    borderRadius: '8px',
+    fontSize: '10px',
+    fontWeight: 600,
+    color: 'var(--t)',
+    cursor: 'pointer',
+    overflow: 'hidden',
+    textOverflow: 'ellipsis',
+    whiteSpace: 'nowrap',
+  };
 
   // Resolve a payee's display name to their email identity so we read the RIGHT
   // person's synced UPI (money — never key UPI by raw name). The settle card runs
@@ -480,6 +508,10 @@ export const SettleModal: React.FC<SettleModalProps> = ({
 
                 return finalTransactions.map((t, idx) => {
                   const upi = upiFor(userMetadata, nameToEmail, t.to);
+                  const isDirectINR = toCurrencyCode(t.currency) === 'INR';
+                  const canUpiPay =
+                    t.from === me && !!upi && (isDirectINR || (toCurrencyCode(primaryCurrency) === 'INR' && !!rates[toCurrencyCode(t.currency)]));
+                  const finalUpiAmt = isDirectINR ? t.amount : t.amount / rates[toCurrencyCode(t.currency)];
                   return (
                     <div
                       key={idx}
@@ -495,7 +527,7 @@ export const SettleModal: React.FC<SettleModalProps> = ({
                         boxShadow: '0 2px 4px rgba(0,0,0,0.02)',
                       }}
                     >
-                      <div>
+                      <div style={{ minWidth: 0, flex: 1 }}>
                         <p style={{ fontSize: '11px', fontWeight: 600, color: 'var(--g)' }}>
                           {t.from === me ? `💸 You pay ${t.to}` : `💸 You get back from ${t.from}`}
                         </p>
@@ -508,30 +540,48 @@ export const SettleModal: React.FC<SettleModalProps> = ({
                             ≈ {primaryCurrency}{(t.amount / rates[toCurrencyCode(t.currency)]).toFixed(2)}
                           </p>
                         )}
+                        {canUpiPay && (
+                          // Manual-pay fallback: UPI apps often decline app-launched payments
+                          // to a personal UPI ID; pasting these into "Pay UPI ID" works.
+                          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px', marginTop: '6px', alignItems: 'center' }}>
+                            <span style={{ fontSize: '10px', fontWeight: 600, color: 'var(--g)' }}>Declined? Copy:</span>
+                            <button
+                              className="press-anim"
+                              onClick={() => copyField(`${idx}-upi`, upi)}
+                              style={{ ...copyChipStyle, maxWidth: '110px' }}
+                              title={upi}
+                            >
+                              {copiedField === `${idx}-upi` ? '✓ Copied' : upi}
+                            </button>
+                            <button
+                              className="press-anim"
+                              onClick={() => copyField(`${idx}-amt`, finalUpiAmt.toFixed(2))}
+                              style={copyChipStyle}
+                            >
+                              {copiedField === `${idx}-amt` ? '✓ Copied' : `₹${finalUpiAmt.toFixed(2)}`}
+                            </button>
+                          </div>
+                        )}
                       </div>
                       <div style={{ display: 'flex', gap: '8px' }}>
-                        {t.from === me && upi && (toCurrencyCode(t.currency) === 'INR' || (toCurrencyCode(primaryCurrency) === 'INR' && rates[toCurrencyCode(t.currency)])) && (() => {
-                          const isDirectINR = toCurrencyCode(t.currency) === 'INR';
-                          const finalUpiAmt = isDirectINR ? t.amount : (t.amount / rates[toCurrencyCode(t.currency)]);
-                          return (
-                            <a
-                              href={buildUpiLink({ pa: upi, pn: shown(t.to), am: finalUpiAmt })}
-                              style={{
-                                padding: '10px 14px',
-                                background: '#F0F9FF',
-                                color: '#0284C7',
-                                borderRadius: '12px',
-                                fontSize: '11px',
-                                fontWeight: 600,
-                                textDecoration: 'none',
-                                border: '1.5px solid #B0E5FC',
-                              }}
-                              title={isDirectINR ? undefined : `Converted from ${t.currency}${t.amount.toFixed(2)}`}
-                            >
-                              ⚡ Pay (≈ ₹{finalUpiAmt.toFixed(2)})
-                            </a>
-                          );
-                        })()}
+                        {canUpiPay && (
+                          <a
+                            href={buildUpiLink({ pa: upi, pn: shown(t.to), am: finalUpiAmt })}
+                            style={{
+                              padding: '10px 14px',
+                              background: '#F0F9FF',
+                              color: '#0284C7',
+                              borderRadius: '12px',
+                              fontSize: '11px',
+                              fontWeight: 600,
+                              textDecoration: 'none',
+                              border: '1.5px solid #B0E5FC',
+                            }}
+                            title={isDirectINR ? undefined : `Converted from ${t.currency}${t.amount.toFixed(2)}`}
+                          >
+                            ⚡ Pay (≈ ₹{finalUpiAmt.toFixed(2)})
+                          </a>
+                        )}
                         <button
                           onClick={() => {
                             setSettleFrom(t.from);
