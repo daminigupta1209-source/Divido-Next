@@ -3,7 +3,7 @@ import { NetBalanceTiles } from './NetBalanceTiles';
 import { SettleModal } from './SettleModal';
 import { BalanceDisplay } from './BalanceDisplay';
 import { Group, Expense, UserMetadata } from '../lib/types';
-import { GROUP_COLORS, formatExactAmount } from '../lib/utils';
+import { GROUP_COLORS, formatExactAmount, toCurrencyCode } from '../lib/utils';
 import { withoutEmailTag, isPastMemberOf, shown } from '../lib/identity';
 import { matchesAmount } from '../lib/utils';
 import { useGroupDetailForm } from '../hooks/useGroupDetailForm';
@@ -924,6 +924,9 @@ export const GroupDetail: React.FC<GroupDetailProps> = ({
                       const collectList = balEntries.filter(([_, v]) => v > 0.01);
                       const payList = balEntries.filter(([_, v]) => v < -0.01);
                       const avBg = AV_COLORS[(m.charCodeAt(0) || 0) % AV_COLORS.length];
+                      // UPI QR is INR-only: offer it for the ₹ part of what I owe m.
+                      const inrPay = payList.find(([c]) => toCurrencyCode(c) === 'INR');
+                      const canShowQr = !!inrPay && !isPastMemberOf(selectedGroup, me);
 
                       return (
                         <div
@@ -989,6 +992,29 @@ export const GroupDetail: React.FC<GroupDetailProps> = ({
                             </div>
                           </div>
 
+                          {canShowQr && (
+                            <button
+                              className="press-anim"
+                              onClick={(e) => {
+                                e.stopPropagation(); // the card itself opens the settle flow
+                                onShowQR(m, Number(Math.abs(inrPay![1]).toFixed(2)), '₹');
+                              }}
+                              title="Show UPI QR — scan it from another phone, or from inside your UPI app"
+                              style={{
+                                padding: '8px 12px',
+                                background: '#F0F9FF',
+                                color: '#0284C7',
+                                borderRadius: '12px',
+                                fontSize: '11px',
+                                fontWeight: 600,
+                                border: '1.5px solid #B0E5FC',
+                                cursor: 'pointer',
+                                flexShrink: 0,
+                              }}
+                            >
+                              QR
+                            </button>
+                          )}
 
                           <span style={{ fontSize: '18px', color: '#C9BEB2', fontWeight: 600, lineHeight: 1, flexShrink: 0 }}>›</span>
                         </div>
