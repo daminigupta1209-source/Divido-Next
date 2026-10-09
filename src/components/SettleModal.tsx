@@ -569,6 +569,26 @@ export const SettleModal: React.FC<SettleModalProps> = ({
                             ⚡ Pay (≈ ₹{finalUpiAmt.toFixed(2)})
                           </a>
                         )}
+                        {canUpiPay && (
+                          // QR is INR-only like the link, so pass the converted ₹ amount.
+                          <button
+                            className="press-anim"
+                            onClick={() => onShowQR(t.to, Number(finalUpiAmt.toFixed(2)), '₹')}
+                            title="Show UPI QR — scan it from another phone, or from inside your UPI app"
+                            style={{
+                              padding: '10px 12px',
+                              background: 'var(--w)',
+                              color: '#0284C7',
+                              borderRadius: '12px',
+                              fontSize: '11px',
+                              fontWeight: 600,
+                              border: '1.5px solid #B0E5FC',
+                              cursor: 'pointer',
+                            }}
+                          >
+                            QR
+                          </button>
+                        )}
                         <button
                           onClick={() => {
                             setSettleFrom(t.from);
