@@ -1,6 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import QRCode from 'qrcode';
 import { escManager } from '../lib/escManager';
+import { buildUpiLink } from '../lib/upi';
 
 interface UPIQRModalProps {
   show: boolean;
@@ -54,9 +55,7 @@ export const UPIQRModal: React.FC<UPIQRModalProps> = ({
     const canvas = canvasRef.current;
     if (canvas) {
       // Standard UPI Payment URI Format
-      const upiLink = `upi://pay?pa=${localUpi.trim()}&pn=${encodeURIComponent(
-        payeeName
-      )}&am=${amount.toFixed(2)}&cu=INR&tn=Divido Settle`;
+      const upiLink = buildUpiLink({ pa: localUpi, pn: payeeName, am: amount, tn: 'Divido Settle' });
 
       QRCode.toCanvas(
         canvas,
@@ -127,7 +126,7 @@ export const UPIQRModal: React.FC<UPIQRModalProps> = ({
   };
 
   const handleShareRequest = async () => {
-    const shareText = `Hi! Please pay ${currency}${amount.toFixed(2)} to settle our dues on Divido.\nUPI ID: ${localUpi.trim()}\nDirect payment link: upi://pay?pa=${localUpi.trim()}&pn=${encodeURIComponent(payeeName)}&am=${amount.toFixed(2)}&cu=INR&tn=Divido%20Settle`;
+    const shareText = `Hi! Please pay ${currency}${amount.toFixed(2)} to settle our dues on Divido.\nUPI ID: ${localUpi.trim()}\nDirect payment link: ${buildUpiLink({ pa: localUpi, pn: payeeName, am: amount, tn: 'Divido Settle' })}`;
     
     if (navigator.share) {
       try {
@@ -145,9 +144,7 @@ export const UPIQRModal: React.FC<UPIQRModalProps> = ({
     }
   };
 
-  const upiDeepLink = `upi://pay?pa=${localUpi.trim()}&pn=${encodeURIComponent(
-    payeeName
-  )}&am=${amount.toFixed(2)}&cu=INR&tn=Divido Settle`;
+  const upiDeepLink = buildUpiLink({ pa: localUpi, pn: payeeName, am: amount, tn: 'Divido Settle' });
 
   return (
     <div className="modal-overlay" style={{ zIndex: 5000 }} onClick={onClose}>

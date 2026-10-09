@@ -87,6 +87,7 @@ import { SearchableCurrencyPicker } from './components/SearchableCurrencyPicker'
 import { BalanceDisplay } from './components/BalanceDisplay';
 import { PremiumConfirm } from './components/PremiumConfirm';
 import { escManager } from './lib/escManager';
+import { buildUpiLink } from './lib/upi';
 import { SettleModal } from './components/SettleModal';
 import { NetPayableModal } from './components/NetPayableModal';
 import { CurrencySetupModal } from './components/CurrencySetupModal';
@@ -1159,7 +1160,7 @@ function App() {
     const isINR = curr === '₹';
     const baseMsg = `Hey ${friendName}, just a quick reminder to settle our net balance of ${curr}${amt.toFixed(2)} on Divido.${myUpi ? ` Pay me at UPI: ${myUpi}` : ''} Thank you!`;
     const upiLink = (myUpi && isINR)
-      ? `upi://pay?pa=${myUpi.trim()}&pn=${encodeURIComponent(me)}&am=${amt.toFixed(2)}&cu=INR&tn=Divido Settle`
+      ? buildUpiLink({ pa: myUpi, pn: me, am: amt, tn: 'Divido Settle' })
       : '';
     const shareMessage = upiLink ? `${baseMsg}\n\nPay instantly: ${upiLink}` : baseMsg;
 

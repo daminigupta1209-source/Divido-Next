@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import QRCode from 'qrcode';
 import jsQR from 'jsqr';
+import { buildUpiLink } from '../lib/upi';
 
 interface UpiSectionProps {
   localUpi: string;
@@ -196,7 +197,7 @@ export const UpiSection: React.FC<UpiSectionProps> = ({
     if (!verifyCanvasRef.current || !(localUpi || '').trim()) return;
 
     if (verificationStep === 'awaiting_action') {
-      const upiLink = `upi://pay?pa=${encodeURIComponent((localUpi || '').trim())}&pn=${encodeURIComponent(userName || '')}&am=1.00&cu=INR&tn=Divido Verify`;
+      const upiLink = buildUpiLink({ pa: localUpi || '', pn: userName || '', am: 1, tn: 'Divido Verify' });
       QRCode.toCanvas(
         verifyCanvasRef.current,
         upiLink,
@@ -210,7 +211,7 @@ export const UpiSection: React.FC<UpiSectionProps> = ({
         }
       );
     } else if (verificationStep === 'show_qr') {
-      const upiLink = `upi://pay?pa=${encodeURIComponent((localUpi || '').trim())}&pn=${encodeURIComponent(userName || '')}`;
+      const upiLink = buildUpiLink({ pa: localUpi || '', pn: userName || '' });
       QRCode.toCanvas(
         verifyCanvasRef.current,
         upiLink,
@@ -436,7 +437,7 @@ export const UpiSection: React.FC<UpiSectionProps> = ({
                       type="button"
                       onClick={() => {
                         mobileReturnPendingRef.current = Date.now();
-                        window.location.href = `upi://pay?pa=${encodeURIComponent((localUpi || '').trim())}&pn=${encodeURIComponent(userName || '')}&am=1.00&cu=INR&tn=Divido Verify`;
+                        window.location.href = buildUpiLink({ pa: localUpi || '', pn: userName || '', am: 1, tn: 'Divido Verify' });
                       }}
                       style={{
                         marginTop: '8px',
@@ -670,10 +671,10 @@ export const UpiSection: React.FC<UpiSectionProps> = ({
                     if (navigator.share) {
                       navigator.share({
                         title: `Pay ${userName || ''} on Divido`,
-                        text: `Here is my UPI ID: ${localUpi || ''}\nYou can pay me directly using this link: upi://pay?pa=${encodeURIComponent(localUpi || '')}&pn=${encodeURIComponent(userName || '')}`,
+                        text: `Here is my UPI ID: ${localUpi || ''}\nYou can pay me directly using this link: ${buildUpiLink({ pa: localUpi || '', pn: userName || '' })}`,
                       }).catch(console.error);
                     } else {
-                      navigator.clipboard.writeText(`upi://pay?pa=${encodeURIComponent(localUpi || '')}&pn=${encodeURIComponent(userName || '')}`);
+                      navigator.clipboard.writeText(buildUpiLink({ pa: localUpi || '', pn: userName || '' }));
                       alert('Payment link copied to clipboard!');
                     }
                   }}

@@ -3,6 +3,7 @@ import QRCode from 'qrcode';
 import { escManager } from '../lib/escManager';
 import { ShareGrid } from './ShareGrid';
 import { toCurrencyCode } from '../lib/utils';
+import { buildUpiLink } from '../lib/upi';
 
 interface NetReceivableModalProps {
   popupData: { friendName: string; amt: number; curr: string } | null;
@@ -88,9 +89,7 @@ export const NetReceivableModal: React.FC<NetReceivableModalProps> = ({
     if (!popupData || !remPopupUpi || remPopupEditing) return;
     const canvas = reminderCanvasRef.current;
     if (canvas) {
-      const upiLink = `upi://pay?pa=${remPopupUpi.trim()}&pn=${encodeURIComponent(
-        me
-      )}&am=${upiAmt}&cu=INR&tn=Divido Settle`;
+      const upiLink = buildUpiLink({ pa: remPopupUpi, pn: me, am: upiAmt, tn: 'Divido Settle' });
 
       QRCode.toCanvas(
         canvas,
@@ -123,7 +122,7 @@ export const NetReceivableModal: React.FC<NetReceivableModalProps> = ({
   // The shared payload = clean message + a tappable UPI pay link (amount
   // pre-filled). Kept separate so the raw link never clutters the visible text.
   const upiLink = remPopupUpi.trim()
-    ? `upi://pay?pa=${remPopupUpi.trim()}&pn=${encodeURIComponent(me)}&am=${upiAmt}&cu=INR&tn=Divido Settle`
+    ? buildUpiLink({ pa: remPopupUpi, pn: me, am: upiAmt, tn: 'Divido Settle' })
     : '';
   const shareMessage = upiLink ? `${reminderText}\n\nPay instantly: ${upiLink}` : reminderText;
 

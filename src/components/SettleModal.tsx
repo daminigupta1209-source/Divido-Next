@@ -4,6 +4,7 @@ import { SearchableCurrencyPicker } from './SearchableCurrencyPicker';
 
 import { Group, Expense, UserMetadata } from '../lib/types';
 import { escManager } from '../lib/escManager';
+import { buildUpiLink } from '../lib/upi';
 import { formatExactAmount, toCurrencyCode, genExpenseId } from '../lib/utils';
 import { StyledDropdown } from './StyledDropdown';
 
@@ -514,7 +515,7 @@ export const SettleModal: React.FC<SettleModalProps> = ({
                           const finalUpiAmt = isDirectINR ? t.amount : (t.amount / rates[toCurrencyCode(t.currency)]);
                           return (
                             <a
-                              href={`upi://pay?pa=${upi}&pn=${encodeURIComponent(shown(t.to))}&am=${finalUpiAmt.toFixed(2)}&cu=INR`}
+                              href={buildUpiLink({ pa: upi, pn: shown(t.to), am: finalUpiAmt })}
                               style={{
                                 padding: '10px 14px',
                                 background: '#F0F9FF',

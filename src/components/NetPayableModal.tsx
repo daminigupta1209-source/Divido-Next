@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { escManager } from '../lib/escManager';
+import { buildUpiLink } from '../lib/upi';
 import { toCurrencyCode } from '../lib/utils';
 import { Group } from '../lib/types';
 import { buildNameEmailResolver, upiFor } from '../lib/identity';
@@ -37,6 +38,7 @@ export const NetPayableModal: React.FC<NetPayableModalProps> = ({
   const [rates, setRates] = useState<Record<string, number>>({});
   const [ratesError, setRatesError] = useState(false);
   const [awaitingConfirm, setAwaitingConfirm] = useState(false);
+  const [copiedField, setCopiedField] = useState<'upi' | 'amt' | null>(null);
 
   // The user's own primary currency: explicit profile default, else browser locale, else ₹.
   const getPrimaryCurrency = (): string => {
@@ -79,6 +81,7 @@ export const NetPayableModal: React.FC<NetPayableModalProps> = ({
       setPayPopupUpi(existingUpi);
       setPayPopupEditing(!existingUpi);
       setAwaitingConfirm(false);
+      setCopiedField(null);
     }
   }, [popupData, userMetadata, nameToEmail]);
 
@@ -116,6 +119,40 @@ export const NetPayableModal: React.FC<NetPayableModalProps> = ({
   }, [popupData, onClose]);
 
   if (!popupData) return null;
+
+  const copyField = (field: 'upi' | 'amt', value: string) => {
+    if (!navigator.clipboard) {
+      alert(`${field === 'upi' ? 'UPI ID' : 'Amount'}: ${value}`);
+      return;
+    }
+    navigator.clipboard.writeText(value).then(
+      () => {
+        setCopiedField(field);
+        setTimeout(() => setCopiedField((f) => (f === field ? null : f)), 2000);
+      },
+      () => alert(`${field === 'upi' ? 'UPI ID' : 'Amount'}: ${value}`)
+    );
+  };
+
+  // Manual-pay fallback: GPay & co. often decline app-launched payments to a
+  // personal UPI ID ("exceeded bank limit"), but the same payment entered by
+  // hand inside the UPI app goes through.
+  const showManualPay =
+    primaryIsINR && canPayViaUpi && inrEquivalent !== null && payPopupUpi.trim().includes('@') && !payPopupEditing;
+  const chipStyle: React.CSSProperties = {
+    padding: '8px 10px',
+    background: 'var(--w)',
+    border: '1px solid #E2E8F0',
+    borderRadius: '10px',
+    fontSize: '11px',
+    fontWeight: 600,
+    color: 'var(--t)',
+    cursor: 'pointer',
+    minWidth: 0,
+    overflow: 'hidden',
+    textOverflow: 'ellipsis',
+    whiteSpace: 'nowrap',
+  };
 
   const inrDisplay =
     inrEquivalent !== null
@@ -267,9 +304,7 @@ export const NetPayableModal: React.FC<NetPayableModalProps> = ({
                       const note = debtIsINR
                         ? 'Divido Settle'
                         : `Divido Settle (${popupData.curr}${popupData.amt.toFixed(2)})`;
-                      window.location.href = `upi://pay?pa=${finalUpi}&pn=${encodeURIComponent(
-                        popupData.friendName
-                      )}&am=${inrAmt}&cu=INR&tn=${encodeURIComponent(note)}`;
+                      window.location.href = buildUpiLink({ pa: finalUpi, pn: popupData.friendName, am: inrAmt, tn: note });
 
                       // Remember that a payment was started, so if the user leaves
                       // without confirming they get nudged to finish on next open.
@@ -337,6 +372,31 @@ export const NetPayableModal: React.FC<NetPayableModalProps> = ({
                   Not yet - keep it open
                 </button>
               </>
+            )}
+
+            {showManualPay && (
+              <div style={{ background: 'var(--bg)', padding: '10px 12px', borderRadius: '14px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                <p style={{ fontSize: '11px', fontWeight: 600, color: 'var(--g)', margin: 0, lineHeight: 1.45 }}>
+                  UPI app declined it? Open it, choose <strong style={{ color: 'var(--t)' }}>Pay UPI ID</strong> and paste these:
+                </p>
+                <div style={{ display: 'flex', gap: '8px' }}>
+                  <button
+                    className="press-anim"
+                    onClick={() => copyField('upi', payPopupUpi.trim())}
+                    style={{ ...chipStyle, flex: 1 }}
+                    title={payPopupUpi.trim()}
+                  >
+                    {copiedField === 'upi' ? '✓ Copied' : `📋 ${payPopupUpi.trim()}`}
+                  </button>
+                  <button
+                    className="press-anim"
+                    onClick={() => copyField('amt', inrEquivalent.toFixed(2))}
+                    style={{ ...chipStyle, flex: '0 0 auto' }}
+                  >
+                    {copiedField === 'amt' ? '✓ Copied' : `📋 ₹${inrEquivalent.toFixed(2)}`}
+                  </button>
+                </div>
+              </div>
             )}
           </div>
         </div>
