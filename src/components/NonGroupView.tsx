@@ -3,7 +3,7 @@ import { shown } from '../lib/identity';
 import { NetBalanceTiles } from './NetBalanceTiles';
 import type { Expense } from '../lib/types';
 import { computeNonGroupPeople } from '../lib/nonGroupPeople';
-import { getPersonalExpenses, personalSpendByCurrency, filterByPeriod, periodLabel, type SpendPeriod } from '../lib/personalExpenses';
+import { getPersonalExpenses, personalSpendByCurrency, filterByPeriod, periodLabel, filterByDayRange, customRangeLabel, todayDayKey, type SpendPeriod } from '../lib/personalExpenses';
 import { formatDate, getEmoji, formatExactAmount, getMonthYearKey, matchesAmount } from '../lib/utils';
 
 interface NonGroupViewProps {
@@ -213,18 +213,43 @@ export const NonGroupView: React.FC<NonGroupViewProps> = ({
 
   // Personal screen summary: period picker (remembered per device) drives the
   // total card AND the list below it.
-  const [spendPeriod, setSpendPeriodState] = React.useState<SpendPeriod>(() => {
+  const [spendPeriod, setSpendPeriodState] = React.useState<SpendPeriod | 'custom'>(() => {
     try {
       const v = localStorage.getItem('divido_personal_period');
-      if (v === 'month' || v === 'year' || v === 'fiveYears' || v === 'all') return v;
+      if (v === 'month' || v === 'year' || v === 'fiveYears' || v === 'all' || v === 'custom') return v;
     } catch { /* storage unavailable */ }
     return 'month';
   });
-  const setSpendPeriod = (p: SpendPeriod) => {
+  const setSpendPeriod = (p: SpendPeriod | 'custom') => {
     setSpendPeriodState(p);
     try { localStorage.setItem('divido_personal_period', p); } catch { /* storage unavailable */ }
   };
-  const periodExps = React.useMemo(() => filterByPeriod(personalExps, spendPeriod, new Date()), [personalExps, spendPeriod]);
+  // Custom range, both ends inclusive ('YYYY-MM-DD'). Defaults to this month so far.
+  const [customRange, setCustomRangeState] = React.useState<{ from: string; to: string }>(() => {
+    try {
+      const v = JSON.parse(localStorage.getItem('divido_personal_custom') || 'null');
+      if (v && /^\d{4}-\d{2}-\d{2}$/.test(v.from) && /^\d{4}-\d{2}-\d{2}$/.test(v.to) && v.from <= v.to) return v;
+    } catch { /* storage unavailable / bad JSON */ }
+    const today = todayDayKey(new Date());
+    return { from: `${today.slice(0, 8)}01`, to: today };
+  });
+  const setCustomRange = (r: { from: string; to: string }) => {
+    setCustomRangeState(r);
+    try { localStorage.setItem('divido_personal_custom', JSON.stringify(r)); } catch { /* storage unavailable */ }
+  };
+  const periodExps = React.useMemo(
+    () => (spendPeriod === 'custom'
+      ? filterByDayRange(personalExps, customRange.from, customRange.to)
+      : filterByPeriod(personalExps, spendPeriod, new Date())),
+    [personalExps, spendPeriod, customRange]
+  );
+  const currentPeriodLabel = spendPeriod === 'custom'
+    ? customRangeLabel(customRange.from, customRange.to)
+    : periodLabel(spendPeriod, new Date());
+  // Pill dropdown + custom-range editor.
+  const [periodMenuOpen, setPeriodMenuOpen] = React.useState(false);
+  const [customDraft, setCustomDraft] = React.useState<{ from: string; to: string } | null>(null);
+  const [customError, setCustomError] = React.useState('');
   const periodSpend = React.useMemo(
     () => personalSpendByCurrency(periodExps, isMe, defaultCurrency),
     [periodExps, isMe, defaultCurrency]
@@ -415,51 +440,106 @@ export const NonGroupView: React.FC<NonGroupViewProps> = ({
   if (personalMode) {
     return (
       <div className="content-width-limit" style={{ paddingTop: '4px' }}>
-        {/* Summary card: period picker + total for that period. */}
+        {/* Spend pill (same shape as the person screens' balance pill). Tap it
+            to pick the period, or a custom date range. */}
         {(() => {
           const lines = Object.entries(periodSpend).filter(([, v]) => v > 0.004);
           const primary = lines.find(([c]) => c === defaultCurrency) || lines[0];
           const others = lines.filter((l) => l !== primary);
-          const periods: { id: SpendPeriod; label: string }[] = [
-            { id: 'month', label: 'Month' },
-            { id: 'year', label: 'Year' },
-            { id: 'fiveYears', label: '5 years' },
+          const now = new Date();
+          const pillLabel =
+            spendPeriod === 'month' ? 'This month'
+            : spendPeriod === 'year' ? 'This year'
+            : currentPeriodLabel;
+          const options: { id: SpendPeriod; label: string; sub?: string }[] = [
+            { id: 'month', label: 'This month', sub: periodLabel('month', now) },
+            { id: 'year', label: 'This year', sub: periodLabel('year', now) },
+            { id: 'fiveYears', label: 'Last 5 years', sub: periodLabel('fiveYears', now) },
             { id: 'all', label: 'All time' },
           ];
-          const n = periodExps.length;
+          const closeMenu = () => { setPeriodMenuOpen(false); setCustomDraft(null); setCustomError(''); };
+          const applyCustom = () => {
+            if (!customDraft || !customDraft.from || !customDraft.to) { setCustomError('Pick both dates.'); return; }
+            if (customDraft.from > customDraft.to) { setCustomError('Start date must be on or before the end date.'); return; }
+            setCustomRange(customDraft);
+            setSpendPeriod('custom');
+            closeMenu();
+          };
+          const itemStyle = (active: boolean): React.CSSProperties => ({
+            width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '8px',
+            background: active ? '#F1F5F9' : 'transparent', border: 'none', borderRadius: '10px',
+            padding: '9px 10px', cursor: 'pointer', fontSize: '13.5px', fontWeight: active ? 600 : 500, color: '#0F172A', textAlign: 'left',
+          });
+          const dateInput: React.CSSProperties = { width: '100%', boxSizing: 'border-box', border: '1px solid #E2E8F0', borderRadius: '10px', padding: '8px 10px', fontSize: '13px', color: '#0F172A', background: '#FFFFFF', fontFamily: 'inherit' };
           return (
-            <div style={{ background: '#FFFFFF', border: '0.5px solid #EFE7DC', borderRadius: '18px', padding: '14px', boxShadow: '0 2px 10px rgba(0,0,0,0.04)', marginBottom: '12px' }}>
-              <div role="tablist" aria-label="Spending period" style={{ display: 'flex', background: '#F1F5F9', borderRadius: '999px', padding: '3px', gap: '2px' }}>
-                {periods.map((p) => {
-                  const active = p.id === spendPeriod;
-                  return (
-                    <button
-                      key={p.id}
-                      type="button"
-                      role="tab"
-                      aria-selected={active}
-                      onClick={() => setSpendPeriod(p.id)}
-                      style={{ flex: 1, border: 'none', cursor: 'pointer', borderRadius: '999px', padding: '6px 4px', fontSize: '12px', fontWeight: active ? 700 : 500, background: active ? '#FFFFFF' : 'transparent', color: active ? '#0F172A' : '#64748B', boxShadow: active ? '0 1px 4px rgba(0,0,0,0.08)' : 'none', whiteSpace: 'nowrap' }}
-                    >
-                      {p.label}
-                    </button>
-                  );
-                })}
-              </div>
-              <div style={{ marginTop: '12px', fontSize: '11px', fontWeight: 700, letterSpacing: '0.5px', color: '#94A3B8', textTransform: 'uppercase' }}>
-                Spent · {periodLabel(spendPeriod, new Date())}
-              </div>
-              <div style={{ fontSize: '26px', fontWeight: 700, color: '#0F172A', marginTop: '2px' }}>
-                {primary ? `${primary[0]}${formatExactAmount(primary[1])}` : `${defaultCurrency}0`}
-              </div>
-              {others.length > 0 && (
-                <div style={{ fontSize: '13px', fontWeight: 600, color: '#475569' }}>
-                  {others.map(([c, v]) => `+ ${c}${formatExactAmount(v)}`).join('  ')}
+            <div style={{ position: 'relative', marginBottom: '14px' }}>
+              <button
+                type="button"
+                aria-haspopup="menu"
+                aria-expanded={periodMenuOpen}
+                aria-label={`Spending period: ${pillLabel}. Change period`}
+                onClick={() => (periodMenuOpen ? closeMenu() : setPeriodMenuOpen(true))}
+                style={{ width: '100%', background: '#334155', color: '#FFFFFF', border: 'none', borderRadius: '14px', padding: '6px 14px', boxShadow: '0 6px 16px rgba(0,0,0,0.06)', cursor: 'pointer', textAlign: 'center', fontFamily: 'inherit' }}
+              >
+                <div style={{ fontSize: '11px', fontWeight: 500, display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+                  Spent · {pillLabel}
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" style={{ transform: periodMenuOpen ? 'rotate(180deg)' : 'none', transition: 'transform 0.15s' }}><polyline points="6 9 12 15 18 9" /></svg>
                 </div>
+                <div style={{ fontSize: '16px', fontWeight: 700 }}>
+                  {primary ? `${primary[0]}${formatExactAmount(primary[1])}` : `${defaultCurrency}0`}
+                  {others.length > 0 && (
+                    <span style={{ fontSize: '12px', fontWeight: 600, opacity: 0.85 }}>
+                      {'  '}{others.map(([c, v]) => `+ ${c}${formatExactAmount(v)}`).join('  ')}
+                    </span>
+                  )}
+                </div>
+              </button>
+
+              {periodMenuOpen && (
+                <>
+                  {/* Tap outside closes the menu. */}
+                  <div onClick={closeMenu} style={{ position: 'fixed', inset: 0, zIndex: 40 }} />
+                  <div role="menu" aria-label="Spending period" style={{ position: 'absolute', top: 'calc(100% + 6px)', left: 0, right: 0, zIndex: 41, background: '#FFFFFF', border: '0.5px solid #E2E8F0', borderRadius: '14px', boxShadow: '0 12px 28px rgba(15,23,42,0.14)', padding: '6px' }}>
+                    {customDraft ? (
+                      <div style={{ padding: '6px 6px 4px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                        <div style={{ fontSize: '13px', fontWeight: 600, color: '#0F172A' }}>Custom range</div>
+                        <div style={{ display: 'flex', gap: '8px' }}>
+                          <label style={{ flex: 1, minWidth: 0, fontSize: '11px', fontWeight: 600, color: '#94A3B8', display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                            From
+                            <input type="date" value={customDraft.from} max={customDraft.to || undefined} onChange={(e) => { setCustomDraft({ ...customDraft, from: e.target.value }); setCustomError(''); }} style={dateInput} />
+                          </label>
+                          <label style={{ flex: 1, minWidth: 0, fontSize: '11px', fontWeight: 600, color: '#94A3B8', display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                            To
+                            <input type="date" value={customDraft.to} min={customDraft.from || undefined} onChange={(e) => { setCustomDraft({ ...customDraft, to: e.target.value }); setCustomError(''); }} style={dateInput} />
+                          </label>
+                        </div>
+                        {customError && <div role="alert" style={{ fontSize: '12px', color: '#B91C1C' }}>{customError}</div>}
+                        <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end' }}>
+                          <button type="button" onClick={() => { setCustomDraft(null); setCustomError(''); }} style={{ background: 'transparent', border: '1px solid #E2E8F0', borderRadius: '10px', padding: '7px 14px', fontSize: '13px', fontWeight: 500, color: '#334155', cursor: 'pointer' }}>Back</button>
+                          <button type="button" onClick={applyCustom} style={{ background: '#059669', border: 'none', borderRadius: '10px', padding: '7px 16px', fontSize: '13px', fontWeight: 600, color: '#FFFFFF', cursor: 'pointer' }}>Apply</button>
+                        </div>
+                      </div>
+                    ) : (
+                      <>
+                        {options.map((o) => {
+                          const active = spendPeriod === o.id;
+                          return (
+                            <button key={o.id} type="button" role="menuitemradio" aria-checked={active} onClick={() => { setSpendPeriod(o.id); closeMenu(); }} style={itemStyle(active)}>
+                              <span>{o.label}{o.sub && <span style={{ fontSize: '12px', fontWeight: 400, color: '#94A3B8' }}>{'  '}{o.sub}</span>}</span>
+                              {active && <span aria-hidden="true" style={{ color: '#059669', fontWeight: 700 }}>✓</span>}
+                            </button>
+                          );
+                        })}
+                        <div style={{ height: '1px', background: '#F1F5F9', margin: '4px 6px' }} />
+                        <button type="button" role="menuitemradio" aria-checked={spendPeriod === 'custom'} onClick={() => setCustomDraft({ ...customRange })} style={itemStyle(spendPeriod === 'custom')}>
+                          <span>Custom range…{spendPeriod === 'custom' && <span style={{ fontSize: '12px', fontWeight: 400, color: '#94A3B8' }}>{'  '}{currentPeriodLabel}</span>}</span>
+                          {spendPeriod === 'custom' && <span aria-hidden="true" style={{ color: '#059669', fontWeight: 700 }}>✓</span>}
+                        </button>
+                      </>
+                    )}
+                  </div>
+                </>
               )}
-              <div style={{ fontSize: '12px', color: '#94A3B8', marginTop: '2px' }}>
-                {n === 0 ? 'No expenses' : `${n} expense${n === 1 ? '' : 's'}`}
-              </div>
             </div>
           );
         })()}
@@ -535,7 +615,7 @@ export const NonGroupView: React.FC<NonGroupViewProps> = ({
           })()}
           {personalExps.length > 0 && periodExps.length === 0 && (
             <p style={{ fontSize: '13px', color: '#94A3B8', textAlign: 'center', padding: '16px 0' }}>
-              No personal expenses in {periodLabel(spendPeriod, new Date())}.
+              No personal expenses in {currentPeriodLabel}.
             </p>
           )}
         </div>

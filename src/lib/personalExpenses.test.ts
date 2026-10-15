@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { isPersonalExpense, getPersonalExpenses, personalSpendByCurrency, expenseDayKey, periodRange, filterByPeriod, periodLabel, type SpendPeriod } from './personalExpenses';
+import { isPersonalExpense, getPersonalExpenses, personalSpendByCurrency, expenseDayKey, periodRange, filterByPeriod, periodLabel, filterByDayRange, customRangeLabel, todayDayKey, type SpendPeriod } from './personalExpenses';
 import { makeIsMe } from './nonGroupPeople';
 import { Expense } from './types';
 
@@ -156,6 +156,19 @@ describe('periodRange / filterByPeriod', () => {
     const withBad = [...exps, mkExp({ id: 'bad', date: '' })];
     expect(filterByPeriod(withBad, 'all', now)).toHaveLength(withBad.length);
     expect(filterByPeriod(withBad, 'fiveYears', now).some((e) => e.id === 'bad')).toBe(false);
+  });
+
+  it('custom range includes both end dates and drops undatable rows', () => {
+    const withBad = [...exps, mkExp({ id: 'bad', date: '' })];
+    expect(filterByDayRange(withBad, '2025-12-31', '2026-09-30').map((e) => e.date)).toEqual(['2025-12-31', '2026-01-01', '2026-09-30']);
+    expect(filterByDayRange(withBad, '2026-10-01', '2026-10-01').map((e) => e.date)).toEqual(['2026-10-01']);
+  });
+
+  it('labels custom ranges', () => {
+    expect(customRangeLabel('2026-10-15', '2026-10-15')).toBe('15 Oct 2026');
+    expect(customRangeLabel('2026-09-01', '2026-10-15')).toBe('1 Sep – 15 Oct 2026');
+    expect(customRangeLabel('2025-09-01', '2026-10-15')).toBe('1 Sep 2025 – 15 Oct 2026');
+    expect(todayDayKey(now)).toBe('2026-10-15');
   });
 
   it('labels each period', () => {

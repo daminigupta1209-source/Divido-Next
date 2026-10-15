@@ -73,6 +73,31 @@ export const filterByPeriod = <T extends Pick<Expense, 'date' | 'timestamp' | 'i
   });
 };
 
+// Custom range: both ends INCLUSIVE, as 'YYYY-MM-DD' day keys. Undatable rows
+// are excluded.
+export const filterByDayRange = <T extends Pick<Expense, 'date' | 'timestamp' | 'id'>>(exps: T[], from: string, to: string): T[] =>
+  exps.filter((e) => {
+    const k = expenseDayKey(e);
+    return !!k && k >= from && k <= to;
+  });
+
+const MONTHS_SHORT = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+const dayParts = (k: string) => {
+  const [y, m, d] = k.split('-').map(Number);
+  return { y, mon: MONTHS_SHORT[m - 1] || '', d };
+};
+
+// "15 Oct 2026" | "1 Sep – 15 Oct 2026" | "1 Sep 2025 – 15 Oct 2026".
+export const customRangeLabel = (from: string, to: string): string => {
+  const a = dayParts(from);
+  const b = dayParts(to);
+  if (from === to) return `${b.d} ${b.mon} ${b.y}`;
+  if (a.y === b.y) return `${a.d} ${a.mon} – ${b.d} ${b.mon} ${b.y}`;
+  return `${a.d} ${a.mon} ${a.y} – ${b.d} ${b.mon} ${b.y}`;
+};
+
+export const todayDayKey = (now: Date) => toDayKey(now);
+
 // Label for the selected period, e.g. "October 2026", "2026", "2022 – 2026".
 export const periodLabel = (period: SpendPeriod, now: Date): string => {
   const y = now.getFullYear();
