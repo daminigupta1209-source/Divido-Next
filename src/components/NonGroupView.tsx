@@ -25,8 +25,7 @@ interface NonGroupViewProps {
   onSettlePerson: (name: string, directGroupId?: string) => void;
   onRemindPerson?: (name: string) => void;
   onAddWithPerson?: (name: string, directGroupId?: string) => void;
-  // Optional title prefill (from the quick category chips).
-  onAddPersonal?: (title?: string) => void;
+  onAddPersonal?: () => void;
   onSharePerson?: (name: string, directGroupId?: string) => void;
   // How many backed-up non-group expenses aren't present locally (for restore).
   backupMissingCount?: number;
@@ -482,7 +481,7 @@ export const NonGroupView: React.FC<NonGroupViewProps> = ({
           </div>
         )}
 
-        {/* Add button + quick category chips (prefill the title). */}
+        {/* Add button. */}
         {onAddPersonal && (
           <div style={{ marginBottom: '14px' }}>
             <button
@@ -493,25 +492,6 @@ export const NonGroupView: React.FC<NonGroupViewProps> = ({
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.6" strokeLinecap="round" aria-hidden="true"><line x1="12" y1="5" x2="12" y2="19" /><line x1="5" y1="12" x2="19" y2="12" /></svg>
               Add personal expense
             </button>
-            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px', justifyContent: 'center', marginTop: '10px' }}>
-              {[
-                { emoji: '🏥', title: 'Medical' },
-                { emoji: '🛒', title: 'Groceries' },
-                { emoji: '🛍️', title: 'Shopping' },
-                { emoji: '✈️', title: 'Travel' },
-                { emoji: '🏠', title: 'Rent' },
-              ].map((c) => (
-                <button
-                  key={c.title}
-                  type="button"
-                  onClick={() => onAddPersonal(c.title)}
-                  aria-label={`Add ${c.title} expense`}
-                  style={{ background: '#FFFFFF', border: '1px solid #E2E8F0', borderRadius: '999px', padding: '6px 11px', fontSize: '12.5px', fontWeight: 500, color: '#334155', cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: '5px' }}
-                >
-                  <span aria-hidden="true">{c.emoji}</span>{c.title}
-                </button>
-              ))}
-            </div>
           </div>
         )}
 

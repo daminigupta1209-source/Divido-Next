@@ -3837,15 +3837,13 @@ function App() {
 
   // Personal (self-only) expense — WhatsApp "message yourself" pattern. Mirrors
   // quickAddExpenseWithFriend's STANDALONE branch exactly, minus the friend.
-  // Optional title prefill comes from the personal screen's category chips; the
-  // form derives the category emoji from it (getEmoji).
-  const openPersonalExpense = (title?: string) => {
+  const openPersonalExpense = () => {
     if (!requireSignInToCreate()) return;
     setAutoOpenScanner(false);
     setEditingExpenseSecure({
       id: 'temp-' + Date.now(),
       gId: 'STANDALONE',
-      title: typeof title === 'string' ? title : '',
+      title: '',
       amt: 0,
       date: new Date().toISOString().split('T')[0],
       splitters: [me],
