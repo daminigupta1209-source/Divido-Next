@@ -515,6 +515,11 @@ export function useExpenseForm({
       const canonName = (nm: string): string => canonicalRosterName(nm, roster);
       const canonShares: Record<string, number> = {};
       Object.entries(shares || {}).forEach(([nm, v]) => { canonShares[canonName(nm)] = v as number; });
+      const finalSplitters = Array.from(new Set(selectedSplitters.map(canonName)));
+      // A STANDALONE expense whose only (canonicalized) splitter is me is a
+      // personal, self-only expense — it was never shared with anyone, so it
+      // must not carry a stray otherEmail from a prior person's entry.
+      const isSelfOnlySave = localGId === 'STANDALONE' && finalSplitters.length === 1 && finalSplitters[0] === canonName(me);
       const savedExp: Expense = {
         id: (editingExpense && !isTemporaryNewExpense) ? editingExpense.id : genExpenseId(),
         timestamp: (editingExpense && !isTemporaryNewExpense && editingExpense.timestamp) ? editingExpense.timestamp : Date.now(),
@@ -525,7 +530,7 @@ export function useExpenseForm({
         date,
         mode: splitMode,
         shares: canonShares,
-        splitters: Array.from(new Set(selectedSplitters.map(canonName))),
+        splitters: finalSplitters,
         category: overrideEmoji || getEmoji(title) || '⚡',
         currency: curr,
         notes: notes.trim() ? notes : undefined,
@@ -535,9 +540,9 @@ export function useExpenseForm({
         nextOccurrence: recurrence === 'none' ? undefined : calculateNextOccurrenceDate(date, recurrence),
         tags: tagsInput.split(',').map(t => t.trim().replace(/^#/, '')).filter(t => t.length > 0),
         otherEmail:
-          localGId === 'STANDALONE' && friendPickerEmail.trim().includes('@')
+          localGId === 'STANDALONE' && !isSelfOnlySave && friendPickerEmail.trim().includes('@')
             ? friendPickerEmail.trim().toLowerCase()
-            : (localGId === 'STANDALONE' ? editingExpense?.otherEmail : undefined),
+            : (localGId === 'STANDALONE' && !isSelfOnlySave ? editingExpense?.otherEmail : undefined),
         // Creator never changes on edit; a new expense is added by me.
         addedBy: (editingExpense && !isTemporaryNewExpense) ? editingExpense.addedBy : canonName(me),
       };

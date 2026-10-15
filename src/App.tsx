@@ -119,7 +119,8 @@ import { InstallPrompt } from './components/InstallPrompt';
 import { useExportCSV } from './hooks/useExportCSV';
 import { AppNotification, fetchNotifications, markAllNotificationsRead, subscribeNotifications, clearAllNotifications, pushNotification } from './lib/notifications';
 import { calculateNextOccurrenceDate, simplifyMultiCurrencyDebts, computeRawPairwiseTransactions, memberNetBalances } from './lib/calculations';
-import { buildDirectThreads } from './lib/nonGroupPeople';
+import { buildDirectThreads, makeIsMe } from './lib/nonGroupPeople';
+import { isPersonalExpense, getPersonalExpenses } from './lib/personalExpenses';
 import {
   consumeOAuthState,
   parseCallback,
@@ -1641,7 +1642,9 @@ function App() {
   // Wipe ALL non-group data for a fresh start: local STANDALONE expenses, any
   // leftover shared "direct" threads (local + cloud), and the cloud backup.
   const clearAllNonGroup = async () => {
-    if (!window.confirm('Delete ALL non-group expenses?\n\nThis clears them from this device, removes shared threads, and empties your cloud backup. This cannot be undone.')) return;
+    const personalCount = getPersonalExpenses(expenses, makeIsMe(me, userName)).length;
+    const extra = personalCount > 0 ? `\n\nThis also deletes ${personalCount} personal expense${personalCount === 1 ? '' : 's'}.` : '';
+    if (!window.confirm(`Delete ALL non-group expenses?\n\nThis clears them from this device, removes shared threads, and empties your cloud backup. This cannot be undone.${extra}`)) return;
     const directIds = groups.filter((g) => g.isDirect).map((g) => String(g.id));
     const directIdSet = new Set(directIds);
     setExpenses((prev) => prev.filter((e) => !(String(e.gId) === 'STANDALONE' || directIdSet.has(String(e.gId)))));
@@ -3832,6 +3835,23 @@ function App() {
     setShowExpModalSecure(true);
   };
 
+  // Personal (self-only) expense — WhatsApp "message yourself" pattern. Mirrors
+  // quickAddExpenseWithFriend's STANDALONE branch exactly, minus the friend.
+  const openPersonalExpense = () => {
+    if (!requireSignInToCreate()) return;
+    setAutoOpenScanner(false);
+    setEditingExpenseSecure({
+      id: 'temp-' + Date.now(),
+      gId: 'STANDALONE',
+      title: '',
+      amt: 0,
+      date: new Date().toISOString().split('T')[0],
+      splitters: [me],
+      paid: me,
+    } as any);
+    setShowExpModalSecure(true);
+  };
+
   const handleCreateGroup = (groupData: { name: string; currency: string; members: string[]; emoji: string; createdDate?: string; memberEmails?: Record<string, string>; memberIdentities?: Record<string, string> }) => {
     const id = genGroupId();
     // Emails supplied for members at creation become their identity (invite_email
@@ -4884,6 +4904,7 @@ function App() {
             onOpenExpense={(exp) => { setEditingExpenseSecure(exp); setShowExpModalSecure(true); }}
             onSettlePerson={(name, directGroupId) => setGlobalSettleDataSecure({ name: name.replace(/\s*\(Left\)$/i, '').trim(), gId: directGroupId || 'STANDALONE' })}
             onAddWithPerson={(name, directGroupId) => quickAddExpenseWithFriend(name, directGroupId)}
+            onAddPersonal={openPersonalExpense}
             backupMissingCount={(() => {
               const ids = new Set(expenses.map((e) => String(e.id)));
               return nonGroupBackup.filter((e) => e && String(e.gId) === 'STANDALONE' && !ids.has(String(e.id))).length;
@@ -5584,6 +5605,7 @@ function App() {
           onRequireSignIn={requireSignInToCreate}
           deleteExpense={deleteExpenseSecure}
           onExpenseSaved={(savedExp, activeGrp) => {
+            if (isPersonalExpense(savedExp, makeIsMe(me, userName))) return;
             const targetGroup = activeGrp || groups.find(g => String(g.id) === String(savedExp.gId)) || {
               id: savedExp.gId || 'STANDALONE',
               name: 'Non-Group',

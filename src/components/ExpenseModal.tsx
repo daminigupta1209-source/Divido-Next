@@ -251,6 +251,16 @@ export const ExpenseModal: React.FC<ExpenseModalProps> = ({
 
   const [shakingFriend, setShakingFriend] = React.useState<string | null>(null);
 
+  // STANDALONE "Split with" — true when this is (or started as) a personal,
+  // self-only expense (splitters === [me]). Lazily seeded from the raw prop
+  // at mount so nav "+ Expense" ([] splitters) still opens the dashed
+  // Add-friend prompt, while openPersonalExpense ([me]) and editing an
+  // existing personal expense both land on "Just me".
+  const [justMeChosen, setJustMeChosen] = React.useState<boolean>(() => {
+    const s = editingExpense?.splitters;
+    return !!s && s.length === 1 && s[0] === me;
+  });
+
   // Bottom-right date pill (mirrors the New Group card): native date input opened
   // via showPicker(), label formatted like "7 Sep 26'".
   const dateInputRef = React.useRef<HTMLInputElement>(null);
@@ -1083,68 +1093,169 @@ export const ExpenseModal: React.FC<ExpenseModalProps> = ({
                         <span style={{ fontSize: '12.5px', fontWeight: 700, color: '#B45309' }}>You</span>
                       </div>
 
-                      {/* Other person — soft blue tint, tappable dropdown */}
-                      <div
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          setShowFriendPickerPopup((prev) => !prev);
-                          setHighlightAddFriend(false);
-                        }}
-                        style={{
-                          display: 'flex',
-                          alignItems: 'center',
-                          gap: '7px',
-                          background: other ? '#EFF6FF' : '#FFFFFF',
-                          borderRadius: '20px',
-                          padding: other ? '5px 12px 5px 5px' : '6px 14px',
-                          border: other ? 'none' : '1.5px dashed #CBD5E1',
-                          cursor: 'pointer',
-                          minWidth: 0,
-                          maxWidth: '100%',
-                        }}
-                      >
-                        {other ? (
-                          <>
-                            <div
-                              style={{
-                                width: '26px',
-                                height: '26px',
-                                borderRadius: '50%',
-                                background: '#FFFFFF',
-                                color: '#2563EB',
-                                display: 'flex',
-                                alignItems: 'center',
-                                justifyContent: 'center',
-                                fontSize: '9.5px',
-                                fontWeight: 700,
-                                flexShrink: 0,
-                              }}
-                            >
-                              {otherInitials}
-                            </div>
-                            <span
-                              style={{
-                                fontSize: '12.5px',
-                                fontWeight: 700,
-                                color: '#1D4ED8',
-                                whiteSpace: 'nowrap',
-                                overflow: 'hidden',
-                                textOverflow: 'ellipsis',
-                                minWidth: 0,
-                              }}
-                            >
-                              {other}
-                            </span>
-                            <span style={{ fontSize: '10px', color: '#2563EB', flexShrink: 0 }}>▾</span>
-                          </>
-                        ) : (
-                          <>
+                      {/* Other person — soft blue tint, tappable dropdown — or,
+                          when the expense is self-only, a "Just me" chip /
+                          text button in its place. Any highlightAddFriend
+                          nudge must only apply when !other && !justMeChosen
+                          (the dashed Add-friend prompt is the only state that
+                          currently reads it for rendering, which is none —
+                          the value itself isn't read anywhere yet). */}
+                      {other ? (
+                        <div
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setShowFriendPickerPopup((prev) => !prev);
+                            setHighlightAddFriend(false);
+                          }}
+                          style={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '7px',
+                            background: '#EFF6FF',
+                            borderRadius: '20px',
+                            padding: '5px 12px 5px 5px',
+                            border: 'none',
+                            cursor: 'pointer',
+                            minWidth: 0,
+                            maxWidth: '100%',
+                          }}
+                        >
+                          <div
+                            style={{
+                              width: '26px',
+                              height: '26px',
+                              borderRadius: '50%',
+                              background: '#FFFFFF',
+                              color: '#2563EB',
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              fontSize: '9.5px',
+                              fontWeight: 700,
+                              flexShrink: 0,
+                            }}
+                          >
+                            {otherInitials}
+                          </div>
+                          <span
+                            style={{
+                              fontSize: '12.5px',
+                              fontWeight: 700,
+                              color: '#1D4ED8',
+                              whiteSpace: 'nowrap',
+                              overflow: 'hidden',
+                              textOverflow: 'ellipsis',
+                              minWidth: 0,
+                            }}
+                          >
+                            {other}
+                          </span>
+                          <span style={{ fontSize: '10px', color: '#2563EB', flexShrink: 0 }}>▾</span>
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setSelectedSplitters([me]);
+                              setFriendPickerEmail('');
+                              setHighlightAddFriend(false);
+                              setJustMeChosen(true);
+                            }}
+                            aria-label="Remove — split with just me"
+                            style={{
+                              width: '16px',
+                              height: '16px',
+                              borderRadius: '50%',
+                              background: 'transparent',
+                              border: 'none',
+                              color: '#2563EB',
+                              cursor: 'pointer',
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              fontSize: '10px',
+                              flexShrink: 0,
+                              padding: 0,
+                            }}
+                          >
+                            ✕
+                          </button>
+                        </div>
+                      ) : justMeChosen ? (
+                        <div
+                          role="button"
+                          tabIndex={0}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setShowFriendPickerPopup((prev) => !prev);
+                            setHighlightAddFriend(false);
+                          }}
+                          onKeyDown={(e) => {
+                            if (e.key === 'Enter' || e.key === ' ') {
+                              e.preventDefault();
+                              setShowFriendPickerPopup((prev) => !prev);
+                              setHighlightAddFriend(false);
+                            }
+                          }}
+                          aria-label="Just me — tap to split with someone"
+                          style={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '6px',
+                            background: '#F1F5F9',
+                            borderRadius: '20px',
+                            padding: '6px 14px',
+                            cursor: 'pointer',
+                          }}
+                        >
+                          <span style={{ fontSize: '12.5px', fontWeight: 700, color: '#475569' }}>Just me</span>
+                          <span style={{ fontSize: '10px', color: '#94A3B8' }}>▾</span>
+                        </div>
+                      ) : (
+                        <>
+                          <div
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setShowFriendPickerPopup((prev) => !prev);
+                              setHighlightAddFriend(false);
+                            }}
+                            style={{
+                              display: 'flex',
+                              alignItems: 'center',
+                              gap: '7px',
+                              background: '#FFFFFF',
+                              borderRadius: '20px',
+                              padding: '6px 14px',
+                              border: '1.5px dashed #CBD5E1',
+                              cursor: 'pointer',
+                              minWidth: 0,
+                              maxWidth: '100%',
+                            }}
+                          >
                             <span style={{ fontSize: '15px', color: '#64748B', lineHeight: 1 }}>+</span>
                             <span style={{ fontSize: '12.5px', fontWeight: 700, color: '#64748B' }}>Add friend</span>
                             <span style={{ fontSize: '10px', color: '#94A3B8', flexShrink: 0 }}>▾</span>
-                          </>
-                        )}
-                      </div>
+                          </div>
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setJustMeChosen(true);
+                              setHighlightAddFriend(false);
+                            }}
+                            style={{
+                              fontSize: '11.5px',
+                              fontWeight: 600,
+                              color: '#64748B',
+                              background: 'transparent',
+                              border: 'none',
+                              cursor: 'pointer',
+                              padding: 0,
+                            }}
+                          >
+                            Just me
+                          </button>
+                        </>
+                      )}
                     </div>
                   );
                 })()}
@@ -1167,6 +1278,7 @@ export const ExpenseModal: React.FC<ExpenseModalProps> = ({
                         setSelectedSplitters([me, picked.name]);
                         setFriendPickerEmail(picked.email && picked.email.trim().includes('@') ? picked.email.trim() : '');
                       }
+                      setJustMeChosen(false);
                       setFriendPickerSearch('');
                       setShowFriendPickerPopup(false);
                     }}

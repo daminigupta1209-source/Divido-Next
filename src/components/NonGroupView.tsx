@@ -3,6 +3,7 @@ import { shown } from '../lib/identity';
 import { NetBalanceTiles } from './NetBalanceTiles';
 import type { Expense } from '../lib/types';
 import { computeNonGroupPeople } from '../lib/nonGroupPeople';
+import { getPersonalExpenses, personalSpendByCurrency } from '../lib/personalExpenses';
 import { formatDate, getEmoji, formatExactAmount, getMonthYearKey, matchesAmount } from '../lib/utils';
 
 interface NonGroupViewProps {
@@ -24,6 +25,7 @@ interface NonGroupViewProps {
   onSettlePerson: (name: string, directGroupId?: string) => void;
   onRemindPerson?: (name: string) => void;
   onAddWithPerson?: (name: string, directGroupId?: string) => void;
+  onAddPersonal?: () => void;
   onSharePerson?: (name: string, directGroupId?: string) => void;
   // How many backed-up non-group expenses aren't present locally (for restore).
   backupMissingCount?: number;
@@ -171,6 +173,7 @@ export const NonGroupView: React.FC<NonGroupViewProps> = ({
   onOpenExpense,
   onSettlePerson,
   onAddWithPerson,
+  onAddPersonal,
   backupMissingCount = 0,
   onRestoreBackup,
   onClearAll,
@@ -183,6 +186,9 @@ export const NonGroupView: React.FC<NonGroupViewProps> = ({
   const [activeTab, setActiveTab] = React.useState<'settle' | 'photos'>('settle');
   // Which person's full profile page is open (tapping their DP/avatar).
   const [profilePerson, setProfilePerson] = React.useState<string | null>(null);
+  // "You" pinned row — self-only (personal) expenses screen. Mutually
+  // exclusive with profilePerson (entering one clears the other).
+  const [personalMode, setPersonalMode] = React.useState(false);
   const [showFrontNetSheet, setShowFrontNetSheet] = React.useState(false);
   // Shared-thread id of the open person (set while rendering their screen).
   const profilePersonThread = React.useRef<string | undefined>(undefined);
@@ -201,6 +207,13 @@ export const NonGroupView: React.FC<NonGroupViewProps> = ({
       return false;
     },
     [meLower, userName]
+  );
+
+  // Personal (self-only) expenses — paid by me, split only with me.
+  const personalExps = React.useMemo(() => getPersonalExpenses(expenses, isMe), [expenses, isMe]);
+  const personalSpend = React.useMemo(
+    () => personalSpendByCurrency(expenses, isMe, defaultCurrency),
+    [expenses, isMe, defaultCurrency]
   );
 
   // Phone/browser back closes the open profile (returns to the list) instead of
@@ -236,6 +249,32 @@ export const NonGroupView: React.FC<NonGroupViewProps> = ({
       window.removeEventListener('divido:add-expense', onAddExpense);
     };
   }, [profilePerson]);
+
+  // Phone/browser back closes the personal-expenses screen (returns to the
+  // list) instead of leaving the non-group screen entirely. Mirrors the
+  // profile-person effect above, minus the share icon (nothing to invite).
+  React.useEffect(() => {
+    if (!personalMode) return;
+    window.history.pushState({ dividoPersonalExpenses: true }, '');
+    const onPop = () => setPersonalMode(false);
+    const onHeaderBack = (ev: Event) => { ev.preventDefault(); window.history.back(); };
+    // Bottom "+ Expense" while personal expenses are open → log a new one.
+    const onAddExpense = (ev: Event) => {
+      if (!onAddPersonal) return;
+      ev.preventDefault();
+      onAddPersonal();
+    };
+    window.dispatchEvent(new CustomEvent('divido:nongroup-person', { detail: { open: false } }));
+    window.addEventListener('popstate', onPop);
+    window.addEventListener('divido:header-back', onHeaderBack);
+    window.addEventListener('divido:add-expense', onAddExpense);
+    return () => {
+      window.dispatchEvent(new CustomEvent('divido:nongroup-person', { detail: { open: false } }));
+      window.removeEventListener('popstate', onPop);
+      window.removeEventListener('divido:header-back', onHeaderBack);
+      window.removeEventListener('divido:add-expense', onAddExpense);
+    };
+  }, [personalMode, onAddPersonal]);
 
   const directGroupIds = React.useMemo(() => new Set(directThreads.map((t) => String(t.groupId))), [directThreads]);
 
@@ -290,6 +329,20 @@ export const NonGroupView: React.FC<NonGroupViewProps> = ({
     });
   }, [people, searchLower, nonGroupExps, expenseInvolves, balFilter]);
 
+  // The pinned "You" row is a permanent entry point (shown even with zero
+  // personal expenses) — search only hides it when nothing could match, and
+  // it never appears under a balance filter (personal expenses have no
+  // counterpart balance).
+  const personalMatchesSearch =
+    !searchLower ||
+    'you'.includes(searchLower) ||
+    'personal'.includes(searchLower) ||
+    meLower.includes(searchLower) ||
+    personalExps.some(
+      (e) => (e.title || '').toLowerCase().includes(searchLower) || matchesAmount(searchLower, [[e.currency || defaultCurrency, e.amt || 0]])
+    );
+  const showPersonalRow = !balFilter && personalMatchesSearch;
+
   const Avatar: React.FC<{ name: string; size?: number }> = ({ name, size = 38 }) => {
     const url = memberAvatars?.[name] || memberAvatars?.[cleanName(name)];
     if (url) {
@@ -336,6 +389,62 @@ export const NonGroupView: React.FC<NonGroupViewProps> = ({
     const color = lines[0].amount > 0 ? '#047857' : '#B91C1C';
     return { text, color };
   };
+
+  // ── Personal (self-only) expenses — tap the pinned "You" row ────────────────
+  if (personalMode) {
+    return (
+      <div className="content-width-limit" style={{ paddingTop: '4px' }}>
+        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center', marginBottom: '14px' }}>
+          <img
+            src="/divido_laughing_cat_mascot_1778063273427.png"
+            alt=""
+            style={{ width: '52px', height: '52px', borderRadius: '50%', objectFit: 'cover', border: '2px solid #FFFFFF', marginBottom: '6px' }}
+          />
+          <div style={{ display: 'flex', alignItems: 'baseline', gap: '6px', justifyContent: 'center' }}>
+            <span style={{ fontSize: '17px', fontWeight: 700, color: '#0F172A' }}>You</span>
+            <span style={{ background: '#FEF3C7', color: '#B45309', borderRadius: '999px', padding: '1px 8px', fontSize: '10.5px', fontWeight: 700 }}>Personal</span>
+          </div>
+          <div style={{ fontSize: '12px', color: '#94A3B8', marginTop: '2px' }}>Expenses only for you — never shared or split.</div>
+        </div>
+
+        <div style={{ display: 'flex', flexDirection: 'column' }}>
+          {(() => {
+            let lastKey = '';
+            const rows: React.ReactNode[] = [];
+            personalExps.forEach((e) => {
+              const { key, label } = getMonthYearKey(e.date, e.id);
+              if (key !== lastKey) {
+                lastKey = key;
+                rows.push(
+                  <div key={`mh-${key}`} style={{ fontSize: '11px', fontWeight: 700, letterSpacing: '0.5px', color: '#94A3B8', margin: '8px 2px 8px' }}>{label}</div>
+                );
+              }
+              const curr = e.currency || defaultCurrency;
+              const cleanTitle = (e.title || '').replace(/\s*💎\s*$/, '').trim();
+              const emoji = getEmoji(e.title) || '⚡';
+
+              rows.push(
+                <div key={e.id} className="hover-up-mini" onClick={() => onOpenExpense(e)} style={{ display: 'flex', alignItems: 'center', gap: '12px', background: '#FFFFFF', border: '0.5px solid #EFE7DC', borderRadius: '14px', padding: '12px 14px', boxShadow: '0 2px 10px rgba(0,0,0,0.03)', cursor: 'pointer', marginBottom: '12px' }}>
+                  <div style={{ width: '34px', height: '34px', borderRadius: '50%', background: '#F1EFE8', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '15px', flexShrink: 0 }}>{emoji}</div>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ fontSize: '14px', fontWeight: 600, color: '#0F172A', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{cleanTitle}</div>
+                    <div style={{ fontSize: '11px', color: '#94A3B8' }}>You paid · {formatDate(e.date)}</div>
+                  </div>
+                  <span style={{ fontSize: '14px', fontWeight: 600, color: '#0F172A' }}>{curr} {formatExactAmount(Number(e.amt) || 0)}</span>
+                </div>
+              );
+            });
+            return rows;
+          })()}
+          {personalExps.length === 0 && (
+            <p style={{ fontSize: '13px', color: '#94A3B8', textAlign: 'center', padding: '20px 0' }}>
+              No personal expenses yet. Tap "+ Expense" to log your first one.
+            </p>
+          )}
+        </div>
+      </div>
+    );
+  }
 
   // ── Person profile (tap the DP) ──────────────────────────────────────────────
   if (profilePerson) {
@@ -475,6 +584,14 @@ export const NonGroupView: React.FC<NonGroupViewProps> = ({
   const photos = nonGroupExps.flatMap((e) =>
     (e.attachments || []).map((url) => ({ url, exp: e }))
   );
+
+  // Pinned "You" row subtitle — primary currency spent (defaultCurrency wins
+  // ties), folding any others into a compact "+N more".
+  const personalSpendLines = Object.entries(personalSpend).filter(([, v]) => v > 0.004);
+  const personalPrimary = personalSpendLines.find(([c]) => c === defaultCurrency) || personalSpendLines[0];
+  const personalSubtitle = !personalPrimary
+    ? 'Tap to log a personal expense'
+    : `${personalPrimary[0]}${fmt(personalPrimary[1])} spent${personalSpendLines.length > 1 ? ` · +${personalSpendLines.length - 1} more` : ''}`;
 
   const onTouchStart = (e: React.TouchEvent) => {
     touchStartX.current = e.touches[0].clientX;
@@ -625,18 +742,63 @@ export const NonGroupView: React.FC<NonGroupViewProps> = ({
 
       <div style={{ minHeight: '80px' }}>
         {activeTab === 'settle' ? (
-          people.length === 0 ? (
-            <p style={{ fontSize: '13px', color: '#94A3B8', textAlign: 'center', padding: '24px 0' }}>
-              No non-group expenses yet. Add a quick expense with someone and it'll show up here.
-            </p>
-          ) : (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-              {searchLower && shownPeople.length === 0 && (
-                <p style={{ fontSize: '13px', color: '#94A3B8', textAlign: 'center', padding: '24px 0' }}>
-                  No one matches "{searchQuery.trim()}".
-                </p>
-              )}
-              {shownPeople.map((p) => {
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+            {showPersonalRow && (
+              <div
+                role="button"
+                tabIndex={0}
+                className="hover-up-mini"
+                onClick={() => { setProfilePerson(null); setPersonalMode(true); }}
+                onKeyDown={(ev) => {
+                  if (ev.key === 'Enter' || ev.key === ' ') { ev.preventDefault(); setProfilePerson(null); setPersonalMode(true); }
+                }}
+                aria-label={`Personal expenses, ${personalPrimary ? personalSubtitle : 'none yet'}`}
+                style={{ background: '#FFFBEB', border: '1px solid #FDE68A', borderRadius: '20px', boxShadow: '0 2px 10px rgba(0,0,0,0.04)', display: 'flex', alignItems: 'center', gap: '12px', padding: '16px', cursor: 'pointer' }}
+              >
+                <img
+                  src="/divido_laughing_cat_mascot_1778063273427.png"
+                  alt=""
+                  style={{ width: '40px', height: '40px', borderRadius: '50%', objectFit: 'cover', flexShrink: 0 }}
+                />
+                <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                  <div style={{ display: 'flex', alignItems: 'baseline', gap: '6px', minWidth: 0 }}>
+                    <h3 style={{ fontSize: '16px', fontWeight: 500, color: '#2E2A25', margin: 0 }}>You</h3>
+                    <span style={{ background: '#FEF3C7', color: '#B45309', borderRadius: '999px', padding: '1px 8px', fontSize: '10.5px', fontWeight: 700 }}>Personal</span>
+                  </div>
+                  <span style={{ fontSize: '12.5px', fontWeight: 400, color: personalPrimary ? '#64748B' : '#94A3B8' }}>{personalSubtitle}</span>
+                </div>
+                {onAddPersonal && (
+                  <button
+                    type="button"
+                    onClick={(ev) => { ev.stopPropagation(); onAddPersonal(); }}
+                    aria-label="Add personal expense"
+                    style={{ flexShrink: 0, width: '30px', height: '30px', borderRadius: '50%', background: '#059669', color: '#FFFFFF', border: 'none', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', padding: 0, boxShadow: '0 2px 6px rgba(5,150,105,0.25)' }}
+                  >
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.6" strokeLinecap="round" style={{ width: '15px', height: '15px' }}>
+                      <line x1="12" y1="5" x2="12" y2="19" /><line x1="5" y1="12" x2="19" y2="12" />
+                    </svg>
+                  </button>
+                )}
+                <span style={{ display: 'flex', alignItems: 'center', color: '#94A3B8', flexShrink: 0 }}>
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
+                    <polyline points="9 6 15 12 9 18" />
+                  </svg>
+                </span>
+              </div>
+            )}
+            {people.length === 0 && !showPersonalRow && (
+              <p style={{ fontSize: '13px', color: '#94A3B8', textAlign: 'center', padding: '24px 0' }}>
+                No non-group expenses yet. Add a quick expense with someone and it'll show up here.
+              </p>
+            )}
+            {people.length > 0 && (
+              <>
+                {searchLower && shownPeople.length === 0 && !showPersonalRow && (
+                  <p style={{ fontSize: '13px', color: '#94A3B8', textAlign: 'center', padding: '24px 0' }}>
+                    No one matches "{searchQuery.trim()}".
+                  </p>
+                )}
+                {shownPeople.map((p) => {
                 const b = balanceText(p.bal);
                 return (
                   <div
@@ -646,7 +808,7 @@ export const NonGroupView: React.FC<NonGroupViewProps> = ({
                     {/* Tap the card to open this person's screen */}
                     <div
                       className="hover-up-mini"
-                      onClick={() => setProfilePerson(p.name)}
+                      onClick={() => { setPersonalMode(false); setProfilePerson(p.name); }}
                       style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '16px', cursor: 'pointer' }}
                     >
                       <div style={{ flexShrink: 0 }}>
@@ -680,10 +842,11 @@ export const NonGroupView: React.FC<NonGroupViewProps> = ({
                       </span>
                     </div>
                   </div>
-                );
-              })}
-            </div>
-          )
+                  );
+                })}
+              </>
+            )}
+          </div>
         ) : photos.length === 0 ? (
           <p style={{ fontSize: '13px', color: '#94A3B8', textAlign: 'center', padding: '24px 0' }}>
             No receipts yet. Attach a photo to a non-group expense and it'll appear here.

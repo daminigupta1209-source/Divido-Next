@@ -15,6 +15,7 @@ import { ActivityStudio } from './ActivityStudio';
 import { computeJoinProgress, pendingNamesFor, detectCelebration, toSnapshot, joinNames, type JoinCelebration, type JoinSnapshot, type PendingPerson } from '../lib/joinProgress';
 import { escManager } from '../lib/escManager';
 import { buildDirectThreads, computeNonGroupPeople, makeIsMe } from '../lib/nonGroupPeople';
+import { personalSpendByCurrency } from '../lib/personalExpenses';
 
 import { Group, Expense, UserMetadata, GlobalSettleData } from '../lib/types';
 
@@ -315,6 +316,11 @@ export const MasterSummary: React.FC<MasterSummaryProps> = ({
       })
       .filter((r) => Object.values(r.balances).some((v) => Math.abs(v) > 0.01));
   }, [groups, expenses, me, userName, userEmail, getMemberBalance]);
+
+  // All-time personal (self-only) spend, shown when the Non-Group card has no
+  // outstanding balance so "Settled up" isn't misleading about solo spending.
+  const isMeHome = useMemo(() => makeIsMe(me, userName), [me, userName]);
+  const personalSpendHome = useMemo(() => personalSpendByCurrency(expenses, isMeHome, '₹'), [expenses, isMeHome]);
 
   const netBalances = useMemo(() => {
     const nb: Record<string, number> = {};
@@ -965,7 +971,19 @@ export const MasterSummary: React.FC<MasterSummaryProps> = ({
                   Non-Group
                 </h3>
                 {ngEntries.length === 0 ? (
-                  <span style={{ fontSize: '12.5px', fontWeight: 400, color: '#94A3B8' }}>Settled up</span>
+                  (() => {
+                    const personalLines = Object.entries(personalSpendHome).filter(([, v]) => v > 0.004);
+                    if (personalLines.length === 0) {
+                      return <span style={{ fontSize: '12.5px', fontWeight: 400, color: '#94A3B8' }}>Settled up</span>;
+                    }
+                    const primary = personalLines.find(([c]) => c === '₹') || personalLines[0];
+                    const more = personalLines.length - 1;
+                    return (
+                      <span style={{ fontSize: '12.5px', fontWeight: 400, color: '#64748B' }}>
+                        {primary[0]}{formatExactAmount(primary[1])} personal{more > 0 ? ` · +${more} more` : ''}
+                      </span>
+                    );
+                  })()
                 ) : (
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '1px', minWidth: 0 }}>
                     {ngPay.length > 0 && (
