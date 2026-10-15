@@ -714,7 +714,7 @@ export const NonGroupView: React.FC<NonGroupViewProps> = ({
   const personalSpendLines = Object.entries(personalSpend).filter(([, v]) => v > 0.004);
   const personalPrimary = personalSpendLines.find(([c]) => c === defaultCurrency) || personalSpendLines[0];
   const personalSubtitle = !personalPrimary
-    ? 'Tap to log a personal expense'
+    ? ''
     : `${personalPrimary[0]}${formatExactAmount(personalPrimary[1])} spent${personalSpendLines.length > 1 ? ` · +${personalSpendLines.length - 1} more` : ''}`;
 
   const onTouchStart = (e: React.TouchEvent) => {
@@ -889,7 +889,7 @@ export const NonGroupView: React.FC<NonGroupViewProps> = ({
                     <h3 style={{ fontSize: '16px', fontWeight: 500, color: '#2E2A25', margin: 0 }}>You</h3>
                     <span style={{ background: '#FEF3C7', color: '#B45309', borderRadius: '999px', padding: '1px 8px', fontSize: '10.5px', fontWeight: 700 }}>Personal</span>
                   </div>
-                  <span style={{ fontSize: '12.5px', fontWeight: 400, color: personalPrimary ? '#64748B' : '#94A3B8' }}>{personalSubtitle}</span>
+                  {personalSubtitle && <span style={{ fontSize: '12.5px', fontWeight: 400, color: '#64748B' }}>{personalSubtitle}</span>}
                 </div>
                 {onAddPersonal && (
                   <button
