@@ -267,6 +267,11 @@ export const NonGroupView: React.FC<NonGroupViewProps> = ({
   // Phone/browser back closes the personal-expenses screen (returns to the
   // list) instead of leaving the non-group screen entirely. Mirrors the
   // profile-person effect above, minus the share icon (nothing to invite).
+  // Keyed ONLY on personalMode: onAddPersonal is a new function on every App
+  // render, and re-running this effect re-pushed a history entry mid-back,
+  // which broke back-swipe (Android exited the app). Read it via a ref.
+  const onAddPersonalRef = React.useRef(onAddPersonal);
+  onAddPersonalRef.current = onAddPersonal;
   React.useEffect(() => {
     if (!personalMode) return;
     window.history.pushState({ dividoPersonalExpenses: true }, '');
@@ -274,9 +279,10 @@ export const NonGroupView: React.FC<NonGroupViewProps> = ({
     const onHeaderBack = (ev: Event) => { ev.preventDefault(); window.history.back(); };
     // Bottom "+ Expense" while personal expenses are open → log a new one.
     const onAddExpense = (ev: Event) => {
-      if (!onAddPersonal) return;
+      const add = onAddPersonalRef.current;
+      if (!add) return;
       ev.preventDefault();
-      onAddPersonal();
+      add();
     };
     window.dispatchEvent(new CustomEvent('divido:nongroup-person', { detail: { open: false } }));
     window.addEventListener('popstate', onPop);
@@ -288,7 +294,7 @@ export const NonGroupView: React.FC<NonGroupViewProps> = ({
       window.removeEventListener('divido:header-back', onHeaderBack);
       window.removeEventListener('divido:add-expense', onAddExpense);
     };
-  }, [personalMode, onAddPersonal]);
+  }, [personalMode]);
 
   const directGroupIds = React.useMemo(() => new Set(directThreads.map((t) => String(t.groupId))), [directThreads]);
 
