@@ -123,7 +123,7 @@ export const UPIQRModal: React.FC<UPIQRModalProps> = ({
   const handleCopy = () => copy('upi-inline', localUpi.trim());
 
   const handleShareRequest = async () => {
-    const shareText = `Hi! Please pay ${currency}${amount.toFixed(2)} to settle our dues on Divido.\n\nPay in GPay or any UPI app → Pay UPI ID:\nUPI ID: ${localUpi.trim()}\nAmount: ${currency}${amount.toFixed(2)}\n\nOr try the direct link (some apps decline it): ${buildUpiLink({ pa: localUpi, pn: payeeName, am: amount, tn: 'Divido Settle' })}`;
+    const shareText = `Hi! Please pay ${currency}${amount.toFixed(2)} to settle our dues on Divido.\n\nPay in GPay or any UPI app → Pay UPI ID:\nUPI ID: ${localUpi.trim()}\nAmount: ${currency}${amount.toFixed(2)}`;
     
     if (navigator.share) {
       try {
@@ -141,7 +141,6 @@ export const UPIQRModal: React.FC<UPIQRModalProps> = ({
     }
   };
 
-  const upiDeepLink = buildUpiLink({ pa: localUpi, pn: payeeName, am: amount, tn: 'Divido Settle' });
   const copyChipStyle: React.CSSProperties = {
     padding: '8px 10px',
     background: 'var(--w)',
@@ -324,12 +323,6 @@ export const UPIQRModal: React.FC<UPIQRModalProps> = ({
                       {copiedKey === 'amt' ? '✓ Copied' : `📋 ${currency}${amount.toFixed(2)}`}
                     </button>
                   </div>
-                  <a
-                    href={upiDeepLink}
-                    style={{ color: 'var(--g)', fontSize: '11px', fontWeight: 600, textDecoration: 'underline', textAlign: 'center' }}
-                  >
-                    Or try the direct pay link (some UPI apps decline it)
-                  </a>
                 </div>
               )}
 
@@ -380,9 +373,9 @@ export const UPIQRModal: React.FC<UPIQRModalProps> = ({
           />
           <p style={{ fontSize: '10px', fontWeight: 600, color: '#92400E', margin: 0, lineHeight: '1.4' }}>
             {requestFrom ? (
-              <span>Your friend can scan this or click deep-links to pay you. Once transferred, click Settle to clear.</span>
+              <span>Your friend can scan this in their UPI app or pay to your UPI ID. Once transferred, click Settle to clear.</span>
             ) : (
-              <span>Scan using any BHIM UPI app or tap the mobile app button to pay. Tap Settle when complete.</span>
+              <span>Scan this in any UPI app, or pay to the UPI ID above. Tap Settle when complete.</span>
             )}
           </p>
         </div>

@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import QRCode from 'qrcode';
 import jsQR from 'jsqr';
 import { buildUpiLink } from '../lib/upi';
+import { useCopyFeedback } from '../hooks/useCopyFeedback';
 
 interface UpiSectionProps {
   localUpi: string;
@@ -37,6 +38,7 @@ export const UpiSection: React.FC<UpiSectionProps> = ({
   // come back. This stamps when they left; the visibility handler uses it to
   // start verification only after a genuine round-trip to a UPI app.
   const mobileReturnPendingRef = useRef<number | null>(null);
+  const { copiedKey, copy } = useCopyFeedback();
 
   const validateUpi = (upi: string) => {
     if (!upi) return true;
@@ -430,14 +432,16 @@ export const UpiSection: React.FC<UpiSectionProps> = ({
               <div style={{ display: 'flex', flexDirection: 'column', gap: '14px', alignItems: 'center', textAlign: 'center' }}>
                 {isMobile ? (
                   <>
+                    {/* No ₹1 upi:// link here: UPI apps decline link-launched payments to a
+                        personal UPI ID. "Pay UPI ID" in the app shows the registered name. */}
                     <p style={{ fontSize: '13px', color: '#64748B', fontWeight: 600, margin: 0, lineHeight: 1.5 }}>
-                      We will open your UPI app with a ₹1 test payment. <strong style={{color:'#EF4444'}}>Do not pay it!</strong> Just check the name on the screen and press back.
+                      Copy your UPI ID, then in GPay or any UPI app go to <strong style={{ color: '#2E2A25' }}>Pay UPI ID</strong> and paste it. It shows the name registered with your bank. <strong style={{color:'#EF4444'}}>Don't pay</strong> — just check the name and come back.
                     </p>
                     <button
                       type="button"
                       onClick={() => {
                         mobileReturnPendingRef.current = Date.now();
-                        window.location.href = buildUpiLink({ pa: localUpi || '', pn: userName || '', am: 1, tn: 'Divido Verify' });
+                        copy('verify-upi', (localUpi || '').trim());
                       }}
                       style={{
                         marginTop: '8px',
@@ -454,7 +458,7 @@ export const UpiSection: React.FC<UpiSectionProps> = ({
                         boxShadow: '0 4px 12px rgba(234, 88, 12, 0.25)'
                       }}
                     >
-                      Open UPI App
+                      {copiedKey === 'verify-upi' ? '✓ UPI ID copied — now open GPay' : 'Copy my UPI ID'}
                     </button>
                   </>
                 ) : (
@@ -671,11 +675,11 @@ export const UpiSection: React.FC<UpiSectionProps> = ({
                     if (navigator.share) {
                       navigator.share({
                         title: `Pay ${userName || ''} on Divido`,
-                        text: `Here is my UPI ID: ${localUpi || ''}\nYou can pay me directly using this link: ${buildUpiLink({ pa: localUpi || '', pn: userName || '' })}`,
+                        // No upi:// link: UPI apps decline link-launched payments to a personal UPI ID.
+                        text: `Here is my UPI ID: ${localUpi || ''}\nPay me in GPay or any UPI app → Pay UPI ID.`,
                       }).catch(console.error);
                     } else {
-                      navigator.clipboard.writeText(buildUpiLink({ pa: localUpi || '', pn: userName || '' }));
-                      alert('Payment link copied to clipboard!');
+                      copy('share-upi', (localUpi || '').trim());
                     }
                   }}
                   style={{
@@ -701,7 +705,7 @@ export const UpiSection: React.FC<UpiSectionProps> = ({
                     e.currentTarget.style.background = '#1877F2';
                   }}
                 >
-                  Share QR Code
+                  {copiedKey === 'share-upi' ? '✓ UPI ID copied' : 'Share my UPI ID'}
                 </button>
                 <button
                   type="button"

@@ -87,7 +87,6 @@ import { SearchableCurrencyPicker } from './components/SearchableCurrencyPicker'
 import { BalanceDisplay } from './components/BalanceDisplay';
 import { PremiumConfirm } from './components/PremiumConfirm';
 import { escManager } from './lib/escManager';
-import { buildUpiLink } from './lib/upi';
 import { SettleModal } from './components/SettleModal';
 import { NetPayableModal } from './components/NetPayableModal';
 import { CurrencySetupModal } from './components/CurrencySetupModal';
@@ -1154,18 +1153,16 @@ function App() {
   };
 
   const handleOpenReceivablePopup = (friendName: string, amt: number, curr: string) => {
-    // Build the reminder message (+ a tappable UPI pay link when it's an INR
-    // debt and a UPI id is set — UPI is INR-only, so skip the link otherwise).
-    const myUpi = localStorage.getItem('divido_global_upi_id') || userMetadata[me]?.upiId || '';
+    // Build the reminder message. For an INR debt with a UPI id set, add the UPI ID
+    // + amount on their own lines for "Pay UPI ID". No upi:// link: UPI apps
+    // decline link-launched payments to a personal UPI ID (every variant tested fails).
+    const myUpi = (localStorage.getItem('divido_global_upi_id') || userMetadata[me]?.upiId || '').trim();
     const isINR = curr === '₹';
-    const baseMsg = `Hey ${friendName}, just a quick reminder to settle our net balance of ${curr}${amt.toFixed(2)} on Divido.${myUpi ? ` Pay me at UPI: ${myUpi}` : ''} Thank you!`;
-    const upiLink = (myUpi && isINR)
-      ? buildUpiLink({ pa: myUpi, pn: me, am: amt, tn: 'Divido Settle' })
-      : '';
-    // Lead with UPI ID + amount for "Pay UPI ID": UPI apps decline link-launched
-    // payments to a personal UPI ID, so the link is only a secondary option.
-    const shareMessage = upiLink
-      ? `${baseMsg}\n\nPay in GPay or any UPI app → Pay UPI ID:\nUPI ID: ${myUpi.trim()}\nAmount: ₹${amt.toFixed(2)}\n\nOr try the direct link (some apps decline it): ${upiLink}`
+    const baseMsg = `Hey ${friendName}, just a quick reminder to settle our net balance of ${curr}${amt.toFixed(2)} on Divido. Thank you!`;
+    const shareMessage = (myUpi && isINR)
+      ? `${baseMsg}\n\nPay in GPay or any UPI app → Pay UPI ID:\nUPI ID: ${myUpi}\nAmount: ₹${amt.toFixed(2)}`
+      : myUpi
+      ? `${baseMsg}\n\nUPI: ${myUpi}`
       : baseMsg;
 
     const nativeShare = typeof navigator !== 'undefined' && (navigator as any).share;

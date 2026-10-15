@@ -79,13 +79,12 @@ export const NetReceivableModal: React.FC<NetReceivableModalProps> = ({
 
   useEffect(() => {
     if (popupData) {
-      const myUpi = remPopupUpi.trim();
-      // Keep the visible message clean and human-readable; the tappable pay link
-      // is attached only to the shared payload (see shareMessage below).
-      const msg = `Hey ${popupData.friendName}, just a quick reminder to settle our net balance of ${popupData.curr}${popupData.amt.toFixed(2)}${inrNote} on Divido.${myUpi ? ` Pay me at UPI: ${myUpi}` : ''} Thank you!`;
+      // Keep the message clean; the UPI ID + amount are appended to the shared
+      // payload on their own lines (see shareMessage below).
+      const msg = `Hey ${popupData.friendName}, just a quick reminder to settle our net balance of ${popupData.curr}${popupData.amt.toFixed(2)}${inrNote} on Divido. Thank you!`;
       setReminderText(msg);
     }
-  }, [remPopupUpi, popupData, inrNote]);
+  }, [popupData, inrNote]);
 
   useEffect(() => {
     if (!popupData || !remPopupUpi || remPopupEditing) return;
@@ -121,16 +120,11 @@ export const NetReceivableModal: React.FC<NetReceivableModalProps> = ({
 
   if (!popupData) return null;
 
-  // The shared payload = clean message + a tappable UPI pay link (amount
-  // pre-filled). Kept separate so the raw link never clutters the visible text.
-  const upiLink = remPopupUpi.trim()
-    ? buildUpiLink({ pa: remPopupUpi, pn: me, am: upiAmt, tn: 'Divido Settle' })
-    : '';
-  // UPI apps decline link-launched payments to a personal UPI ID, so lead with
-  // the ID and amount (on their own lines, easy to copy) for "Pay UPI ID"; the
-  // link is only a secondary option.
-  const shareMessage = upiLink
-    ? `${reminderText}\n\nPay in GPay or any UPI app → Pay UPI ID:\nUPI ID: ${remPopupUpi.trim()}\nAmount: ₹${upiAmt}\n\nOr try the direct link (some apps decline it): ${upiLink}`
+  // The shared payload = clean message + the UPI ID and amount on their own lines
+  // (easy to copy) for "Pay UPI ID". No upi:// link: UPI apps decline
+  // link-launched payments to a personal UPI ID (every variant tested fails).
+  const shareMessage = remPopupUpi.trim()
+    ? `${reminderText}\n\nPay in GPay or any UPI app → Pay UPI ID:\nUPI ID: ${remPopupUpi.trim()}\nAmount: ₹${upiAmt}`
     : reminderText;
   const copyChipStyle: React.CSSProperties = {
     padding: '3px 8px',
