@@ -99,14 +99,16 @@ export const GroupHeader: React.FC<GroupHeaderProps> = ({
     return names.some((nm) => t === nm + ' left' || t === nm + ' joined' || t === nm + ' rejoined' || t === nm + ' was removed');
   };
   // Expenses I added myself are already known to me: hidden from Updates.
-  const isAddedByMe = (addedBy: string | undefined): boolean => {
+  // Rows with no creator recorded fall back to the payer.
+  const isAddedByMe = (e: { addedBy?: string; paid?: string }): boolean => {
     const clean = (x: string) => x.replace(/\s*\(me\)$/i, '').replace(/\s*\(Left\)$/i, '').trim().toLowerCase();
-    return !!addedBy && clean(addedBy) === clean(me);
+    const creator = e.addedBy || e.paid;
+    return !!creator && clean(creator) === clean(me);
   };
   // Updates rows: expenses others added + membership notes (minus my own).
   const visibleUpdates = () =>
     buildGroupUpdates(expenses, selectedId).filter((u) =>
-      u.kind === 'expense' ? !isAddedByMe(u.log.addedBy) : !isAboutMe(u.log.title));
+      u.kind === 'expense' ? !isAddedByMe(u.log) : !isAboutMe(u.log.title));
   const [editingDate, setEditingDate] = React.useState(false);
   const uploadInputRef = React.useRef<HTMLInputElement>(null);
   const [selectedPhoto, setSelectedPhoto] = React.useState<string | null>(null);
