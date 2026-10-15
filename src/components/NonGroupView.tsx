@@ -42,11 +42,6 @@ const cleanName = (n: string) => (n || '').replace(/\s*\(Left\)$/i, '').trim();
 // Same solid avatar palette as the All-balances (Friends) view.
 const AVATAR_BG = ['#B39DDB', '#F48FB1', '#80CBC4', '#FFB74D', '#9FA8DA', '#A5D6A7', '#EF9A9A', '#7FC8CE'];
 
-const fmt = (v: number) => {
-  const abs = Math.abs(v);
-  return abs.toFixed(2).replace(/\.00$/, '');
-};
-
 // "I collect X" from a person = the negative of their net position (2-person
 // non-group expenses only ever involve me + them, so their net IS the pairwise
 // balance). Positive => I collect, negative => I pay.
@@ -381,7 +376,7 @@ export const NonGroupView: React.FC<NonGroupViewProps> = ({
   const balanceText = (bal: Record<string, number>): { text: string; color: string } => {
     const lines = myPerspective(bal);
     if (lines.length === 0) return { text: 'Settled up', color: '#94A3B8' };
-    const parts = lines.map((l) => `${l.amount > 0 ? 'You collect' : 'You pay'} ${l.curr}${fmt(l.amount)}`);
+    const parts = lines.map((l) => `${l.amount > 0 ? 'You collect' : 'You pay'} ${l.curr}${formatExactAmount(l.amount)}`);
     // Show the primary currency; fold the rest into a compact "+N more" so 2-3
     // currencies don't crowd the row. Colour follows the PRIMARY line's direction
     // (green = collect, red = pay) so it never washes out to grey.
