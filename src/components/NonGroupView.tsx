@@ -591,7 +591,7 @@ export const NonGroupView: React.FC<NonGroupViewProps> = ({
   const personalPrimary = personalSpendLines.find(([c]) => c === defaultCurrency) || personalSpendLines[0];
   const personalSubtitle = !personalPrimary
     ? 'Tap to log a personal expense'
-    : `${personalPrimary[0]}${fmt(personalPrimary[1])} spent${personalSpendLines.length > 1 ? ` · +${personalSpendLines.length - 1} more` : ''}`;
+    : `${personalPrimary[0]}${formatExactAmount(personalPrimary[1])} spent${personalSpendLines.length > 1 ? ` · +${personalSpendLines.length - 1} more` : ''}`;
 
   const onTouchStart = (e: React.TouchEvent) => {
     touchStartX.current = e.touches[0].clientX;
