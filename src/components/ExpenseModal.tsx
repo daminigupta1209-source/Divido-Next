@@ -260,6 +260,25 @@ export const ExpenseModal: React.FC<ExpenseModalProps> = ({
     const s = editingExpense?.splitters;
     return !!s && s.length === 1 && s[0] === me;
   });
+  // Opened as a personal expense (from the personal screen, or editing one):
+  // frozen at mount, hides the whole "Split with" row.
+  const [isPersonalForm] = React.useState<boolean>(() => justMeChosen);
+  // Self-only non-group expense: payer, split mode and "Paid for" are fixed
+  // (me, Equally, [me]) so those controls are hidden.
+  const isSelfOnly =
+    localGId === 'STANDALONE' && justMeChosen && selectedSplitters.every((s) => s === me);
+  // Switching to "Just me" must also reset payer/split so nothing hidden can
+  // keep a friend as payer or a custom share.
+  const switchToJustMe = () => {
+    setSelectedSplitters([me]);
+    setFriendPickerEmail('');
+    setHighlightAddFriend(false);
+    setPayer(me);
+    setSplitMode('Equally');
+    setShares({});
+    setManualEdits(new Set());
+    setJustMeChosen(true);
+  };
 
   // Bottom-right date pill (mirrors the New Group card): native date input opened
   // via showPicker(), label formatted like "7 Sep 26'".
@@ -1047,7 +1066,7 @@ export const ExpenseModal: React.FC<ExpenseModalProps> = ({
           )}
 
           {/* COMPACT REARRANGEMENT SECTION 1: SPLIT DETAILS & FRIENDS (Moved to the Top) */}
-          {localGId === 'STANDALONE' && (
+          {localGId === 'STANDALONE' && !isPersonalForm && (
             <div className="step-container">
               <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                 <label
@@ -1155,10 +1174,7 @@ export const ExpenseModal: React.FC<ExpenseModalProps> = ({
                             type="button"
                             onClick={(e) => {
                               e.stopPropagation();
-                              setSelectedSplitters([me]);
-                              setFriendPickerEmail('');
-                              setHighlightAddFriend(false);
-                              setJustMeChosen(true);
+                              switchToJustMe();
                             }}
                             aria-label="Remove — split with just me"
                             style={{
@@ -1239,8 +1255,7 @@ export const ExpenseModal: React.FC<ExpenseModalProps> = ({
                             type="button"
                             onClick={(e) => {
                               e.stopPropagation();
-                              setJustMeChosen(true);
-                              setHighlightAddFriend(false);
+                              switchToJustMe();
                             }}
                             style={{
                               fontSize: '11.5px',
@@ -1567,6 +1582,7 @@ export const ExpenseModal: React.FC<ExpenseModalProps> = ({
           </div>
 
           {/* COMPACT REARRANGEMENT SECTION 4: COMBINED PAID BY & SPLIT MODE */}
+          {!isSelfOnly && (
           <div className="step-container" style={{ flexDirection: 'row', gap: '16px' }}>
             {/* Paid By Selector */}
             <div style={{ flex: 1.3, display: 'flex', flexDirection: 'column', gap: '4px' }}>
@@ -1640,9 +1656,10 @@ export const ExpenseModal: React.FC<ExpenseModalProps> = ({
               </div>
             </div>
           </div>
+          )}
 
           {/* MEMBER LIST WITH TICK/UNTICK */}
-          {friendsToSelect.length > 0 && (
+          {friendsToSelect.length > 0 && !isSelfOnly && (
             <div className="step-container" style={{ gap: '6px' }}>
               {(() => {
                 const cleanedMembers = friendsToSelect.map((m) => m.replace(' (Left)', ''));
