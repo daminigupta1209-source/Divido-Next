@@ -3,7 +3,7 @@ import { shown } from '../lib/identity';
 import { NetBalanceTiles } from './NetBalanceTiles';
 import type { Expense } from '../lib/types';
 import { computeNonGroupPeople } from '../lib/nonGroupPeople';
-import { getPersonalExpenses, personalSpendByCurrency } from '../lib/personalExpenses';
+import { getPersonalExpenses, personalSpendByCurrency, filterByPeriod, periodLabel, type SpendPeriod } from '../lib/personalExpenses';
 import { formatDate, getEmoji, formatExactAmount, getMonthYearKey, matchesAmount } from '../lib/utils';
 
 interface NonGroupViewProps {
@@ -25,7 +25,8 @@ interface NonGroupViewProps {
   onSettlePerson: (name: string, directGroupId?: string) => void;
   onRemindPerson?: (name: string) => void;
   onAddWithPerson?: (name: string, directGroupId?: string) => void;
-  onAddPersonal?: () => void;
+  // Optional title prefill (from the quick category chips).
+  onAddPersonal?: (title?: string) => void;
   onSharePerson?: (name: string, directGroupId?: string) => void;
   // How many backed-up non-group expenses aren't present locally (for restore).
   backupMissingCount?: number;
@@ -211,6 +212,25 @@ export const NonGroupView: React.FC<NonGroupViewProps> = ({
     [expenses, isMe, defaultCurrency]
   );
 
+  // Personal screen summary: period picker (remembered per device) drives the
+  // total card AND the list below it.
+  const [spendPeriod, setSpendPeriodState] = React.useState<SpendPeriod>(() => {
+    try {
+      const v = localStorage.getItem('divido_personal_period');
+      if (v === 'month' || v === 'year' || v === 'fiveYears' || v === 'all') return v;
+    } catch { /* storage unavailable */ }
+    return 'month';
+  });
+  const setSpendPeriod = (p: SpendPeriod) => {
+    setSpendPeriodState(p);
+    try { localStorage.setItem('divido_personal_period', p); } catch { /* storage unavailable */ }
+  };
+  const periodExps = React.useMemo(() => filterByPeriod(personalExps, spendPeriod, new Date()), [personalExps, spendPeriod]);
+  const periodSpend = React.useMemo(
+    () => personalSpendByCurrency(periodExps, isMe, defaultCurrency),
+    [periodExps, isMe, defaultCurrency]
+  );
+
   // Phone/browser back closes the open profile (returns to the list) instead of
   // leaving the non-group screen entirely.
   React.useEffect(() => {
@@ -389,29 +409,138 @@ export const NonGroupView: React.FC<NonGroupViewProps> = ({
   if (personalMode) {
     return (
       <div className="content-width-limit" style={{ paddingTop: '4px' }}>
-        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center', marginBottom: '14px' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '14px' }}>
           <img
             src="/divido_laughing_cat_mascot_1778063273427.png"
             alt=""
-            style={{ width: '52px', height: '52px', borderRadius: '50%', objectFit: 'cover', border: '2px solid #FFFFFF', marginBottom: '6px' }}
+            style={{ width: '40px', height: '40px', borderRadius: '50%', objectFit: 'cover', border: '2px solid #FFFFFF', flexShrink: 0 }}
           />
-          <div style={{ display: 'flex', alignItems: 'baseline', gap: '6px', justifyContent: 'center' }}>
-            <span style={{ fontSize: '17px', fontWeight: 700, color: '#0F172A' }}>You</span>
-            <span style={{ background: '#FEF3C7', color: '#B45309', borderRadius: '999px', padding: '1px 8px', fontSize: '10.5px', fontWeight: 700 }}>Personal</span>
+          <div style={{ minWidth: 0 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+              <span style={{ fontSize: '17px', fontWeight: 700, color: '#0F172A' }}>You</span>
+              <span style={{ background: '#FEF3C7', color: '#B45309', borderRadius: '999px', padding: '1px 8px', fontSize: '10.5px', fontWeight: 700 }}>Personal</span>
+            </div>
+            <div style={{ fontSize: '12px', color: '#94A3B8' }}>Only you can see these expenses.</div>
           </div>
-          <div style={{ fontSize: '12px', color: '#94A3B8', marginTop: '2px' }}>Expenses only for you — never shared or split.</div>
         </div>
+
+        {/* Summary card: period picker + total for that period. */}
+        {(() => {
+          const lines = Object.entries(periodSpend).filter(([, v]) => v > 0.004);
+          const primary = lines.find(([c]) => c === defaultCurrency) || lines[0];
+          const others = lines.filter((l) => l !== primary);
+          const periods: { id: SpendPeriod; label: string }[] = [
+            { id: 'month', label: 'Month' },
+            { id: 'year', label: 'Year' },
+            { id: 'fiveYears', label: '5 years' },
+            { id: 'all', label: 'All time' },
+          ];
+          const n = periodExps.length;
+          return (
+            <div style={{ background: '#FFFFFF', border: '0.5px solid #EFE7DC', borderRadius: '18px', padding: '14px', boxShadow: '0 2px 10px rgba(0,0,0,0.04)', marginBottom: '12px' }}>
+              <div role="tablist" aria-label="Spending period" style={{ display: 'flex', background: '#F1F5F9', borderRadius: '999px', padding: '3px', gap: '2px' }}>
+                {periods.map((p) => {
+                  const active = p.id === spendPeriod;
+                  return (
+                    <button
+                      key={p.id}
+                      type="button"
+                      role="tab"
+                      aria-selected={active}
+                      onClick={() => setSpendPeriod(p.id)}
+                      style={{ flex: 1, border: 'none', cursor: 'pointer', borderRadius: '999px', padding: '6px 4px', fontSize: '12px', fontWeight: active ? 700 : 500, background: active ? '#FFFFFF' : 'transparent', color: active ? '#0F172A' : '#64748B', boxShadow: active ? '0 1px 4px rgba(0,0,0,0.08)' : 'none', whiteSpace: 'nowrap' }}
+                    >
+                      {p.label}
+                    </button>
+                  );
+                })}
+              </div>
+              <div style={{ marginTop: '12px', fontSize: '11px', fontWeight: 700, letterSpacing: '0.5px', color: '#94A3B8', textTransform: 'uppercase' }}>
+                Spent · {periodLabel(spendPeriod, new Date())}
+              </div>
+              <div style={{ fontSize: '26px', fontWeight: 700, color: '#0F172A', marginTop: '2px' }}>
+                {primary ? `${primary[0]}${formatExactAmount(primary[1])}` : `${defaultCurrency}0`}
+              </div>
+              {others.length > 0 && (
+                <div style={{ fontSize: '13px', fontWeight: 600, color: '#475569' }}>
+                  {others.map(([c, v]) => `+ ${c}${formatExactAmount(v)}`).join('  ')}
+                </div>
+              )}
+              <div style={{ fontSize: '12px', color: '#94A3B8', marginTop: '2px' }}>
+                {n === 0 ? 'No expenses' : `${n} expense${n === 1 ? '' : 's'}`}
+              </div>
+            </div>
+          );
+        })()}
+
+        {/* Empty state — only before the first personal expense ever. */}
+        {personalExps.length === 0 && (
+          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center', gap: '6px', padding: '18px 12px 14px' }}>
+            <div style={{ width: '56px', height: '56px', borderRadius: '50%', background: '#ECFDF5', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '26px' }}>🧾</div>
+            <div style={{ fontSize: '15px', fontWeight: 700, color: '#0F172A' }}>Track your own spending</div>
+            <div style={{ fontSize: '12.5px', color: '#94A3B8', maxWidth: '260px' }}>Doctor visits, bills, shopping — logged just for you, never split.</div>
+          </div>
+        )}
+
+        {/* Add button + quick category chips (prefill the title). */}
+        {onAddPersonal && (
+          <div style={{ marginBottom: '14px' }}>
+            <button
+              type="button"
+              onClick={() => onAddPersonal()}
+              style={{ width: '100%', background: '#059669', color: '#FFFFFF', border: 'none', borderRadius: '14px', padding: '12px', fontSize: '14px', fontWeight: 600, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px', boxShadow: '0 2px 8px rgba(5,150,105,0.25)' }}
+            >
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.6" strokeLinecap="round" aria-hidden="true"><line x1="12" y1="5" x2="12" y2="19" /><line x1="5" y1="12" x2="19" y2="12" /></svg>
+              Add personal expense
+            </button>
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px', justifyContent: 'center', marginTop: '10px' }}>
+              {[
+                { emoji: '🏥', title: 'Medical' },
+                { emoji: '🛒', title: 'Groceries' },
+                { emoji: '🛍️', title: 'Shopping' },
+                { emoji: '✈️', title: 'Travel' },
+                { emoji: '🏠', title: 'Rent' },
+              ].map((c) => (
+                <button
+                  key={c.title}
+                  type="button"
+                  onClick={() => onAddPersonal(c.title)}
+                  aria-label={`Add ${c.title} expense`}
+                  style={{ background: '#FFFFFF', border: '1px solid #E2E8F0', borderRadius: '999px', padding: '6px 11px', fontSize: '12.5px', fontWeight: 500, color: '#334155', cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: '5px' }}
+                >
+                  <span aria-hidden="true">{c.emoji}</span>{c.title}
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
 
         <div style={{ display: 'flex', flexDirection: 'column' }}>
           {(() => {
+            // Per-month totals for the headers (primary currency first).
+            const monthTotals = new Map<string, Record<string, number>>();
+            periodExps.forEach((e) => {
+              const { key } = getMonthYearKey(e.date, e.id);
+              const c = e.currency || defaultCurrency;
+              const t = monthTotals.get(key) || {};
+              t[c] = (t[c] || 0) + (Number(e.amt) || 0);
+              monthTotals.set(key, t);
+            });
+            const totalText = (key: string) => {
+              const t = Object.entries(monthTotals.get(key) || {}).sort(([a], [b]) => (a === defaultCurrency ? -1 : b === defaultCurrency ? 1 : 0));
+              return t.map(([c, v]) => `${c}${formatExactAmount(v)}`).join(' · ');
+            };
             let lastKey = '';
             const rows: React.ReactNode[] = [];
-            personalExps.forEach((e) => {
+            periodExps.forEach((e) => {
               const { key, label } = getMonthYearKey(e.date, e.id);
               if (key !== lastKey) {
                 lastKey = key;
                 rows.push(
-                  <div key={`mh-${key}`} style={{ fontSize: '11px', fontWeight: 700, letterSpacing: '0.5px', color: '#94A3B8', margin: '8px 2px 8px' }}>{label}</div>
+                  <div key={`mh-${key}`} style={{ display: 'flex', justifyContent: 'space-between', fontSize: '11px', fontWeight: 700, letterSpacing: '0.5px', color: '#94A3B8', margin: '8px 2px 8px' }}>
+                    <span>{label}</span>
+                    <span style={{ color: '#64748B' }}>{totalText(key)}</span>
+                  </div>
                 );
               }
               const curr = e.currency || defaultCurrency;
@@ -431,9 +560,9 @@ export const NonGroupView: React.FC<NonGroupViewProps> = ({
             });
             return rows;
           })()}
-          {personalExps.length === 0 && (
-            <p style={{ fontSize: '13px', color: '#94A3B8', textAlign: 'center', padding: '20px 0' }}>
-              No personal expenses yet. Tap "+ Expense" to log your first one.
+          {personalExps.length > 0 && periodExps.length === 0 && (
+            <p style={{ fontSize: '13px', color: '#94A3B8', textAlign: 'center', padding: '16px 0' }}>
+              No personal expenses in {periodLabel(spendPeriod, new Date())}.
             </p>
           )}
         </div>

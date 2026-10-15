@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { isPersonalExpense, getPersonalExpenses, personalSpendByCurrency } from './personalExpenses';
+import { isPersonalExpense, getPersonalExpenses, personalSpendByCurrency, expenseDayKey, periodRange, filterByPeriod, periodLabel, type SpendPeriod } from './personalExpenses';
 import { makeIsMe } from './nonGroupPeople';
 import { Expense } from './types';
 
@@ -104,5 +104,72 @@ describe('personalSpendByCurrency', () => {
 
   it('returns {} when there are no personal expenses', () => {
     expect(personalSpendByCurrency([], isMe, '₹')).toEqual({});
+  });
+});
+
+describe('expenseDayKey', () => {
+  it('reads ISO dates verbatim (no timezone shift)', () => {
+    expect(expenseDayKey({ id: 'x', date: '2026-10-01' })).toBe('2026-10-01');
+    expect(expenseDayKey({ id: 'x', date: '2026-10-01T23:30:00Z' })).toBe('2026-10-01');
+  });
+
+  it('parses non-ISO dates as local dates', () => {
+    expect(expenseDayKey({ id: 'x', date: 'Oct 5, 2026' })).toBe('2026-10-05');
+  });
+
+  it('falls back to timestamp, then id, when the date is unusable', () => {
+    const ts = new Date(2025, 2, 9, 12).getTime();
+    expect(expenseDayKey({ id: 'x', date: '', timestamp: ts })).toBe('2025-03-09');
+    expect(expenseDayKey({ id: ts, date: 'garbage' })).toBe('2025-03-09');
+  });
+
+  it('returns null when nothing is datable', () => {
+    expect(expenseDayKey({ id: 'abc', date: '' })).toBeNull();
+  });
+});
+
+describe('periodRange / filterByPeriod', () => {
+  const now = new Date(2026, 9, 15); // 15 Oct 2026
+  const days = ['2021-12-31', '2022-01-01', '2025-12-31', '2026-01-01', '2026-09-30', '2026-10-01', '2026-10-31', '2026-11-01', '2027-01-01'];
+  const exps = days.map((date, i) => mkExp({ id: `e${i}`, date }));
+  const pick = (p: SpendPeriod) => filterByPeriod(exps, p, now).map((e) => e.date);
+
+  it('month = 1st of this month up to (not incl.) 1st of next', () => {
+    expect(periodRange('month', now)).toEqual({ start: '2026-10-01', end: '2026-11-01' });
+    expect(pick('month')).toEqual(['2026-10-01', '2026-10-31']);
+  });
+
+  it('month rolls over the year in December', () => {
+    expect(periodRange('month', new Date(2026, 11, 31))).toEqual({ start: '2026-12-01', end: '2027-01-01' });
+  });
+
+  it('year = this calendar year', () => {
+    expect(pick('year')).toEqual(['2026-01-01', '2026-09-30', '2026-10-01', '2026-10-31', '2026-11-01']);
+  });
+
+  it('fiveYears = this year plus the four before it', () => {
+    expect(periodRange('fiveYears', now)).toEqual({ start: '2022-01-01', end: '2027-01-01' });
+    expect(pick('fiveYears')).toEqual(days.slice(1, 8));
+  });
+
+  it('all keeps everything, including undatable rows', () => {
+    const withBad = [...exps, mkExp({ id: 'bad', date: '' })];
+    expect(filterByPeriod(withBad, 'all', now)).toHaveLength(withBad.length);
+    expect(filterByPeriod(withBad, 'fiveYears', now).some((e) => e.id === 'bad')).toBe(false);
+  });
+
+  it('labels each period', () => {
+    expect(periodLabel('month', now)).toBe('October 2026');
+    expect(periodLabel('year', now)).toBe('2026');
+    expect(periodLabel('fiveYears', now)).toBe('2022 – 2026');
+    expect(periodLabel('all', now)).toBe('All time');
+  });
+
+  it('period totals = sum of amt per currency over the filtered personal expenses', () => {
+    const isMe = makeIsMe('Chirag');
+    const mine = (o: Partial<Expense>) => mkExp({ paid: 'Chirag', splitters: ['Chirag'], currency: '₹', ...o });
+    const all = [mine({ id: 'a', date: '2026-10-02', amt: 1500 }), mine({ id: 'b', date: '2026-10-20', amt: 250.5 }), mine({ id: 'c', date: '2026-03-01', amt: 1000 }), mine({ id: 'd', date: '2026-10-05', amt: 40, currency: '$' })];
+    expect(personalSpendByCurrency(filterByPeriod(all, 'month', now), isMe, '₹')).toEqual({ '₹': 1750.5, $: 40 });
+    expect(personalSpendByCurrency(filterByPeriod(all, 'year', now), isMe, '₹')).toEqual({ '₹': 2750.5, $: 40 });
   });
 });
