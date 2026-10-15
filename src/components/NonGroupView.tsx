@@ -284,12 +284,13 @@ export const NonGroupView: React.FC<NonGroupViewProps> = ({
       ev.preventDefault();
       add();
     };
-    window.dispatchEvent(new CustomEvent('divido:nongroup-person', { detail: { open: false } }));
+    // personal: true → header swaps "Non-Group" for my DP + "You".
+    window.dispatchEvent(new CustomEvent('divido:nongroup-person', { detail: { open: false, personal: true } }));
     window.addEventListener('popstate', onPop);
     window.addEventListener('divido:header-back', onHeaderBack);
     window.addEventListener('divido:add-expense', onAddExpense);
     return () => {
-      window.dispatchEvent(new CustomEvent('divido:nongroup-person', { detail: { open: false } }));
+      window.dispatchEvent(new CustomEvent('divido:nongroup-person', { detail: { open: false, personal: false } }));
       window.removeEventListener('popstate', onPop);
       window.removeEventListener('divido:header-back', onHeaderBack);
       window.removeEventListener('divido:add-expense', onAddExpense);
@@ -414,20 +415,6 @@ export const NonGroupView: React.FC<NonGroupViewProps> = ({
   if (personalMode) {
     return (
       <div className="content-width-limit" style={{ paddingTop: '4px' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '14px' }}>
-          <img
-            src="/divido_laughing_cat_mascot_1778063273427.png"
-            alt=""
-            style={{ width: '40px', height: '40px', borderRadius: '50%', objectFit: 'cover', border: '2px solid #FFFFFF', flexShrink: 0 }}
-          />
-          <div style={{ minWidth: 0 }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-              <span style={{ fontSize: '17px', fontWeight: 700, color: '#0F172A' }}>You</span>
-            </div>
-            <div style={{ fontSize: '12px', color: '#94A3B8' }}>Only you can see these expenses.</div>
-          </div>
-        </div>
-
         {/* Summary card: period picker + total for that period. */}
         {(() => {
           const lines = Object.entries(periodSpend).filter(([, v]) => v > 0.004);

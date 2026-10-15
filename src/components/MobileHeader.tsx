@@ -268,8 +268,14 @@ export const MobileHeader: React.FC<MobileHeaderProps> = ({
   const isHomeStyle = true;
   // Non-Group: is a person's screen open? (NonGroupView announces it.)
   const [nonGroupPersonOpen, setNonGroupPersonOpen] = React.useState(false);
+  // Non-Group: is the personal ("You") screen open? Header then shows my DP + "You".
+  const [nonGroupPersonalOpen, setNonGroupPersonalOpen] = React.useState(false);
   React.useEffect(() => {
-    const on = (e: Event) => setNonGroupPersonOpen(!!(e as CustomEvent).detail?.open);
+    const on = (e: Event) => {
+      const d = (e as CustomEvent).detail;
+      setNonGroupPersonOpen(!!d?.open);
+      setNonGroupPersonalOpen(!!d?.personal);
+    };
     window.addEventListener('divido:nongroup-person', on);
     return () => window.removeEventListener('divido:nongroup-person', on);
   }, []);
@@ -391,7 +397,7 @@ export const MobileHeader: React.FC<MobileHeaderProps> = ({
                 width: '38px',
                 height: '38px',
                 borderRadius: '50%',
-                background: selectedId === 'STANDALONE' ? '#F5F3FF' : 'var(--nav-bg)',
+                background: selectedId === 'STANDALONE' ? (nonGroupPersonalOpen ? '#FFEBE0' : '#F5F3FF') : 'var(--nav-bg)',
                 color: 'var(--purple-text)',
                 display: 'flex',
                 alignItems: 'center',
@@ -404,7 +410,13 @@ export const MobileHeader: React.FC<MobileHeaderProps> = ({
                 cursor: selectedId === 'STANDALONE' ? 'default' : 'pointer',
               }}
             >
-              {selectedId === 'STANDALONE' ? (
+              {selectedId === 'STANDALONE' && nonGroupPersonalOpen ? (
+                userMetadata[me]?.profilePhoto ? (
+                  <img src={userMetadata[me].profilePhoto} style={{ width: '100%', height: '100%', objectFit: 'cover' }} alt="" />
+                ) : (
+                  <span style={{ color: '#E65100' }}>{(me || 'Y').charAt(0).toUpperCase()}</span>
+                )
+              ) : selectedId === 'STANDALONE' ? (
                 // Same person-with-heart icon as the Non-Group card on Home.
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#6D28D9" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
                   <path d="M8 7a4 4 0 1 0 8 0a4 4 0 0 0 -8 0" />
@@ -527,7 +539,7 @@ export const MobileHeader: React.FC<MobileHeaderProps> = ({
                       width: '100%',
                       display: 'inline-block',
                     }}>
-                      {displayGroupName}
+                      {selectedId === 'STANDALONE' && nonGroupPersonalOpen ? 'You' : displayGroupName}
                     </span>
                   </h1>
                 </>
