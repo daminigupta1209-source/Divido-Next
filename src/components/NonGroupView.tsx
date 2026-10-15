@@ -483,11 +483,11 @@ export const NonGroupView: React.FC<NonGroupViewProps> = ({
 
         {/* Add button. */}
         {onAddPersonal && (
-          <div style={{ marginBottom: '14px' }}>
+          <div style={{ marginBottom: '14px', display: 'flex', justifyContent: 'center' }}>
             <button
               type="button"
               onClick={() => onAddPersonal()}
-              style={{ width: '100%', background: '#059669', color: '#FFFFFF', border: 'none', borderRadius: '14px', padding: '12px', fontSize: '14px', fontWeight: 600, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px', boxShadow: '0 2px 8px rgba(5,150,105,0.25)' }}
+              style={{ background: '#059669', color: '#FFFFFF', border: 'none', borderRadius: '14px', padding: '11px 22px', fontSize: '14px', fontWeight: 600, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px', boxShadow: '0 2px 8px rgba(5,150,105,0.25)' }}
             >
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.6" strokeLinecap="round" aria-hidden="true"><line x1="12" y1="5" x2="12" y2="19" /><line x1="5" y1="12" x2="19" y2="12" /></svg>
               Add personal expense
