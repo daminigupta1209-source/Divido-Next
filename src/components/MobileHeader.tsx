@@ -155,14 +155,15 @@ export const MobileHeader: React.FC<MobileHeaderProps> = ({
       .filter(Boolean);
     return names.some((nm) => t === nm + ' left' || t === nm + ' joined' || t === nm + ' rejoined' || t === nm + ' was removed');
   };
-  // Expenses I added myself are already known to me: listed, but not badged.
+  // Expenses I added myself are already known to me: hidden from Updates.
   const isAddedByMe = (addedBy: string | undefined): boolean => {
     const clean = (x: string) => x.replace(/\s*\(me\)$/i, '').replace(/\s*\(Left\)$/i, '').trim().toLowerCase();
     return !!addedBy && clean(addedBy) === clean(me);
   };
-  // Updates Log rows: expenses added + membership notes (minus my own).
+  // Updates rows: expenses others added + membership notes (minus my own).
   const visibleUpdates = () =>
-    buildGroupUpdates(expenses, selectedId).filter((u) => u.kind === 'expense' || !isAboutMe(u.log.title));
+    buildGroupUpdates(expenses, selectedId).filter((u) =>
+      u.kind === 'expense' ? !isAddedByMe(u.log.addedBy) : !isAboutMe(u.log.title));
   // A shared "direct" thread reads as "with <other person>" instead of its
   // internal "Me & Them" name.
   const directOther = (() => {
@@ -689,7 +690,7 @@ export const MobileHeader: React.FC<MobileHeaderProps> = ({
                   </svg>
                   {(() => {
                     const unseenCount = visibleUpdates()
-                      .filter((u) => logTime(u.log) > bellSeenAt && !(u.kind === 'expense' && isAddedByMe(u.log.addedBy)))
+                      .filter((u) => logTime(u.log) > bellSeenAt)
                       .length;
                     if (unseenCount > 0) {
                       return (
@@ -785,7 +786,7 @@ export const MobileHeader: React.FC<MobileHeaderProps> = ({
                           </svg>
                         </button>
                         <h2  style={{ margin: 0, fontSize: '19px', fontWeight: 600, letterSpacing: '-0.3px', color: '#1E293B' }}>
-                          Updates Log 🔔
+                          Updates
                         </h2>
                       </div>
 

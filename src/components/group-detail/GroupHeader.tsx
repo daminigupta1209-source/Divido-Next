@@ -98,14 +98,15 @@ export const GroupHeader: React.FC<GroupHeaderProps> = ({
       .filter(Boolean);
     return names.some((nm) => t === nm + ' left' || t === nm + ' joined' || t === nm + ' rejoined' || t === nm + ' was removed');
   };
-  // Expenses I added myself are already known to me: listed, but not badged.
+  // Expenses I added myself are already known to me: hidden from Updates.
   const isAddedByMe = (addedBy: string | undefined): boolean => {
     const clean = (x: string) => x.replace(/\s*\(me\)$/i, '').replace(/\s*\(Left\)$/i, '').trim().toLowerCase();
     return !!addedBy && clean(addedBy) === clean(me);
   };
-  // Updates Log rows: expenses added + membership notes (minus my own).
+  // Updates rows: expenses others added + membership notes (minus my own).
   const visibleUpdates = () =>
-    buildGroupUpdates(expenses, selectedId).filter((u) => u.kind === 'expense' || !isAboutMe(u.log.title));
+    buildGroupUpdates(expenses, selectedId).filter((u) =>
+      u.kind === 'expense' ? !isAddedByMe(u.log.addedBy) : !isAboutMe(u.log.title));
   const [editingDate, setEditingDate] = React.useState(false);
   const uploadInputRef = React.useRef<HTMLInputElement>(null);
   const [selectedPhoto, setSelectedPhoto] = React.useState<string | null>(null);
@@ -389,7 +390,7 @@ export const GroupHeader: React.FC<GroupHeaderProps> = ({
                   </svg>
                   {(() => {
                     const unseenCount = visibleUpdates()
-                      .filter((u) => logTime(u.log) > bellSeenAt && !(u.kind === 'expense' && isAddedByMe(u.log.addedBy)))
+                      .filter((u) => logTime(u.log) > bellSeenAt)
                       .length;
                     if (unseenCount > 0) {
                       return (
@@ -462,7 +463,7 @@ export const GroupHeader: React.FC<GroupHeaderProps> = ({
                       }}
                     >
                       <div style={{ fontSize: '11px', fontWeight: 600, color: '#475569', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '8px', borderBottom: '1px solid #F1F5F9', paddingBottom: '6px', textAlign: 'left' }}>
-                        Updates Log 🔔
+                        Updates
                       </div>
                       {updates.length === 0 ? (
                         <div style={{ padding: '16px 8px', fontSize: '12px', color: '#94A3B8', textAlign: 'center' }}>
