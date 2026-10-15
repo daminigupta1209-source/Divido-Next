@@ -486,8 +486,9 @@ export const NonGroupView: React.FC<NonGroupViewProps> = ({
           </div>
         )}
 
-        {/* Add button. */}
-        {onAddPersonal && (
+        {/* Add button — only before the first personal expense; after that the
+            bottom "+ Expense" adds a personal one on this screen. */}
+        {onAddPersonal && personalExps.length === 0 && (
           <div style={{ marginBottom: '14px', display: 'flex', justifyContent: 'center' }}>
             <button
               type="button"
