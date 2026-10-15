@@ -3,6 +3,7 @@ import { Group, Expense, UserMetadata } from '../../lib/types';
 import { BalanceActionCard } from '../BalanceActionCard';
 import { buildPeopleSuggestions, balancesByIdentity, getPersonKey, isValidEmail, buildNameEmailResolver, upiFor, withoutEmailTag, uniqueProfileName, shown } from '../../lib/identity';
 import { FullScreenAddFriend } from '../FullScreenAddFriend';
+import { getPublicOrigin } from '../../lib/publicUrl';
 
 interface GroupMemberListProps {
   selectedGroup: Group;
@@ -293,7 +294,7 @@ export const GroupMemberList: React.FC<GroupMemberListProps> = ({
       if (leftSet.has(key)) {
         // Revive a past member via the same "Invite again" path.
         if (onReinviteMember) {
-          const inviteUrl = `${window.location.origin}/?joinGroupId=${selectedGroup.id}&rejoinName=${encodeURIComponent(nm)}`;
+          const inviteUrl = `${getPublicOrigin()}/?joinGroupId=${selectedGroup.id}&rejoinName=${encodeURIComponent(nm)}`;
           onReinviteMember(nm, inviteUrl, true); // silent: just reactivate to pending, no share sheet
         }
         markJustAdded(nm);
@@ -906,7 +907,7 @@ export const GroupMemberList: React.FC<GroupMemberListProps> = ({
                         if (onRemindMember) {
                           onRemindMember(m);
                         } else {
-                          const inviteLink = `${window.location.origin}/?joinGroupId=${selectedId}`;
+                          const inviteLink = `${getPublicOrigin()}/?joinGroupId=${selectedId}`;
                           await navigator.clipboard.writeText(inviteLink);
                           alert(`Invite link for "${shown(m)}" copied to clipboard! 📋`);
                         }
@@ -1114,7 +1115,7 @@ export const GroupMemberList: React.FC<GroupMemberListProps> = ({
                         <button
                           onClick={async (e) => {
                             e.stopPropagation();
-                            const inviteUrl = `${window.location.origin}/?joinGroupId=${selectedGroup.id}&rejoinName=${encodeURIComponent(cleanName)}`;
+                            const inviteUrl = `${getPublicOrigin()}/?joinGroupId=${selectedGroup.id}&rejoinName=${encodeURIComponent(cleanName)}`;
                             if (onReinviteMember) {
                               onReinviteMember(cleanName, inviteUrl);
                             } else {

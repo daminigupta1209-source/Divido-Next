@@ -1,4 +1,5 @@
 import { supabase } from './supabaseClient';
+import { getPublicOrigin } from './publicUrl';
 
 // ─────────────────────────────────────────────────────────────────────────
 // Splitwise OAuth (authorization-code flow) + import API client.
@@ -98,7 +99,7 @@ export function isSplitwiseConfigured(): boolean {
 function getRedirectUri(): string {
   const configured = import.meta.env.VITE_SPLITWISE_REDIRECT_URI;
   if (configured) return configured;
-  return `${window.location.origin}/splitwise-callback`;
+  return `${getPublicOrigin()}/splitwise-callback`;
 }
 
 function buildAuthorizeUrl(state: string): string {
@@ -264,6 +265,8 @@ export function subscribeNativeCallback(handler: (result: SplitwiseCallbackResul
       const { App } = await import('@capacitor/app');
       if (unsubscribed) return;
       listenerHandle = await App.addListener('appUrlOpen', ({ url }) => {
+        // The same scheme also carries Google sign-in (see googleSignIn.ts).
+        if (!url.startsWith(`${NATIVE_URL_SCHEME}://${NATIVE_CALLBACK_HOST}`)) return;
         handler(parseCallback(url));
         import('@capacitor/browser')
           .then(({ Browser }) => Browser.close())

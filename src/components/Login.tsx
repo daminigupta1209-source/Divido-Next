@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { supabase } from '../lib/supabaseClient';
+import { signInWithGoogle } from '../lib/googleSignIn';
 
 interface LoginProps {
   onLoginSuccess: (name: string) => void;
@@ -53,18 +53,11 @@ export const Login: React.FC<LoginProps> = ({ onLoginSuccess, currentTheme, invi
       const _params = new URL(window.location.href).searchParams;
       const _invite = _params.get('invite');
       const _join = _params.get('joinGroupId');
-      const cleanRedirect = window.location.origin + window.location.pathname + (_invite ? `?invite=${encodeURIComponent(_invite)}` : _join ? `?joinGroupId=${_join}` : '');
-      const { error } = await supabase.auth.signInWithOAuth({
-        provider: 'google',
-        options: {
-          redirectTo: cleanRedirect,
-          // Always show Google's account picker instead of silently reusing the
-          // active Google session — so a signed-out/deleted user can pick a
-          // different account and always sees which one they're logging in with.
-          queryParams: { prompt: 'select_account' },
-        },
-      });
-      if (error) throw error;
+      // signInWithGoogle always passes prompt=select_account, so a
+      // signed-out/deleted user can pick a different account and always sees
+      // which one they're logging in with. On native it opens the system
+      // browser tab and returns via the app's deep link.
+      await signInWithGoogle(_invite ? `?invite=${encodeURIComponent(_invite)}` : _join ? `?joinGroupId=${_join}` : '');
     } catch (err: any) {
       console.error('Google OAuth error:', err);
       setErrorMsg(err.message || 'Could not authenticate using Google.');

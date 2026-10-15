@@ -2,6 +2,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import { Group, UserMetadata } from '../lib/types';
 import { escManager } from '../lib/escManager';
 import { buildPeopleSuggestions, isValidEmail, shown } from '../lib/identity';
+import { getPublicOrigin } from '../lib/publicUrl';
 
 interface AddFriendModalProps {
   setShowAddFriendModal: (show: boolean) => void;
@@ -49,7 +50,7 @@ export const AddFriendModal: React.FC<AddFriendModalProps> = ({
   );
 
   const getInviteLink = () =>
-    customRejoinLink || `${window.location.origin}/?joinGroupId=${selectedId || 'STANDALONE'}`;
+    customRejoinLink || `${getPublicOrigin()}/?joinGroupId=${selectedId || 'STANDALONE'}`;
 
   const getInviteMessage = () => {
     if (customRejoinLink) {

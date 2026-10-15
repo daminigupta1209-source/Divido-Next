@@ -3,6 +3,7 @@ import { shown } from '../lib/identity';
 import { Group, Expense } from '../lib/types';
 import { escManager } from '../lib/escManager';
 import { ShareGrid } from './ShareGrid';
+import { getPublicOrigin } from '../lib/publicUrl';
 
 export interface UnregisteredMemberShare {
   name: string;
@@ -94,7 +95,7 @@ export const PostExpenseShareSheet: React.FC<PostExpenseShareSheetProps> = ({
   const currencySymbol = expense.currency || group?.currency || '₹';
 
   const groupParam = group?.id && group.id !== 'STANDALONE' ? `?joinGroupId=${group.id}` : '';
-  const inviteLink = `${window.location.origin}/${groupParam}`;
+  const inviteLink = `${getPublicOrigin()}/${groupParam}`;
 
   const generateShareText = () => {
     const guestNames = unregisteredShares.map(s => s.name).join(', ');

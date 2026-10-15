@@ -4,9 +4,13 @@ import './index.css'
 import App from './App.tsx'
 import { ErrorBoundary } from './components/ErrorBoundary'
 import { initMonitoring } from './lib/monitoring'
+import { initNativeAuthCallback } from './lib/googleSignIn'
 
 // Crash alerts (no-op until VITE_SENTRY_DSN is set).
 initMonitoring();
+
+// Native app: finish Google sign-in when the auth deep link opens the app.
+initNativeAuthCallback();
 
 // Build marker — check the console to confirm which version is actually loaded
 // (helps tell a fresh deploy apart from a stale service-worker cache).

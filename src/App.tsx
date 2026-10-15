@@ -1,6 +1,8 @@
 import React, { useState, useEffect, useLayoutEffect, useRef } from 'react';
 import { Login } from './components/Login';
 import { supabase } from './lib/supabaseClient';
+import { signInWithGoogle } from './lib/googleSignIn';
+import { getPublicOrigin } from './lib/publicUrl';
 import { Sidebar } from './components/Sidebar';
 import { GroupDetail } from './components/GroupDetail';
 import { NonGroupView } from './components/NonGroupView';
@@ -225,7 +227,7 @@ function App() {
   // Prefer the phone's native share sheet (all apps open directly). Only fall
   // back to the in-app share popup when the device has no Web Share (desktop).
   const openGroupShareLink = async () => {
-    const link = `${window.location.origin}/?joinGroupId=${selectedId || 'STANDALONE'}`;
+    const link = `${getPublicOrigin()}/?joinGroupId=${selectedId || 'STANDALONE'}`;
     const grp = groups.find((g) => String(g.id) === String(selectedId));
     const grpName = grp?.name;
     if (typeof navigator !== 'undefined' && (navigator as any).share) {
@@ -1595,7 +1597,7 @@ function App() {
         }
       }
     }
-    const link = `${window.location.origin}/?joinGroupId=${gid}`;
+    const link = `${getPublicOrigin()}/?joinGroupId=${gid}`;
     const shareText = `Open our shared expenses on Divido 💸`;
     // Prefer the phone's native share sheet (WhatsApp, etc.) with the FULL link.
     if (typeof navigator !== 'undefined' && (navigator as any).share) {
@@ -4015,12 +4017,11 @@ function App() {
   // up after sign-in. `invite` (multi-group) and `joinGroupId` (legacy
   // single-group) are mutually exclusive; `invite` wins if somehow both are
   // present.
-  const buildOAuthRedirectUrl = () => {
+  const buildOAuthReturnSuffix = () => {
     const params = new URL(window.location.href).searchParams;
     const invite = params.get('invite');
     const join = params.get('joinGroupId');
-    const suffix = invite ? `?invite=${encodeURIComponent(invite)}` : join ? `?joinGroupId=${join}` : '';
-    return window.location.origin + window.location.pathname + suffix;
+    return invite ? `?invite=${encodeURIComponent(invite)}` : join ? `?joinGroupId=${join}` : '';
   };
 
   // InviteLandingCard's "Continue with Google" (signed-out mode): same OAuth
@@ -4031,13 +4032,7 @@ function App() {
   // fast path only.
   const inviteSignIn = async () => {
     try {
-      await supabase.auth.signInWithOAuth({
-        provider: 'google',
-        options: {
-          redirectTo: buildOAuthRedirectUrl(),
-          queryParams: { prompt: 'select_account' },
-        },
-      });
+      await signInWithGoogle(buildOAuthReturnSuffix());
     } catch (err) {
       console.error('Invite sign-in failed:', err);
     }
@@ -4305,14 +4300,7 @@ function App() {
             ts: Date.now(),
           }));
         } catch { /* storage full — non-fatal */ }
-        const cleanRedirect = buildOAuthRedirectUrl();
-        await supabase.auth.signInWithOAuth({
-          provider: 'google',
-          options: {
-            redirectTo: cleanRedirect,
-            queryParams: { prompt: 'select_account' },
-          },
-        });
+        await signInWithGoogle(buildOAuthReturnSuffix());
         setSubmittingLinkRequest(false);
         return;
       }
@@ -4682,7 +4670,7 @@ function App() {
             onInviteToGroup={async (g, names) => {
               // Home-screen "Invite" for a group's not-yet-joined members. Same
               // link + native share sheet as the in-group Remind action.
-              const inviteLink = `${window.location.origin}/?joinGroupId=${g.id}`;
+              const inviteLink = `${getPublicOrigin()}/?joinGroupId=${g.id}`;
               const shareText = groupInviteMessage(names, g.name);
               if (typeof navigator !== 'undefined' && (navigator as any).share) {
                 try {
@@ -4722,7 +4710,7 @@ function App() {
                   fallbackGroupId = String(s.group.id);
                 }
               }
-              const { url, coveredGroupIds } = buildPersonInviteLink(window.location.origin, spots, fallbackGroupId);
+              const { url, coveredGroupIds } = buildPersonInviteLink(getPublicOrigin(), spots, fallbackGroupId);
               const groupNameById = new Map(person.spots.map((s) => [String(s.group.id), s.group.name || '']));
               const groupNames = coveredGroupIds.map((gid) => groupNameById.get(gid) || '');
               const shareText = personInviteMessage(person.name, groupNames);
@@ -4918,7 +4906,7 @@ function App() {
               const shareText = `Hey ${clean}! Just a reminder to settle up on Divido 💸`;
               if (typeof navigator !== 'undefined' && (navigator as any).share) {
                 try {
-                  await (navigator as any).share({ title: 'Settle up on Divido', text: shareText, url: window.location.origin });
+                  await (navigator as any).share({ title: 'Settle up on Divido', text: shareText, url: getPublicOrigin() });
                 } catch { /* dismissed */ }
               }
             }}
@@ -5119,7 +5107,7 @@ function App() {
               });
 
               const grpName = selectedGroup?.name;
-              const inviteLink = `${window.location.origin}/?joinGroupId=${selectedId}`;
+              const inviteLink = `${getPublicOrigin()}/?joinGroupId=${selectedId}`;
               const shareText = `Hey ${shown(memberName)}! Join ${grpName ? `"${grpName}"` : 'my group'} on Divido to split expenses 💸`;
 
               // Mobile: open the phone's own share sheet directly (all apps),
@@ -5225,7 +5213,7 @@ function App() {
               });
 
               const grpName = selectedGroup?.name;
-              const inviteLink = `${window.location.origin}/?joinGroupId=${selectedId}`;
+              const inviteLink = `${getPublicOrigin()}/?joinGroupId=${selectedId}`;
               const shareText = `Hey! Join ${grpName ? `"${grpName}"` : 'our group'} on Divido to split expenses 💸`;
 
               if (typeof navigator !== 'undefined' && (navigator as any).share) {
@@ -5962,11 +5950,7 @@ function App() {
                       try {
                         localStorage.setItem('divido_pending_join', JSON.stringify({ groupId: linkRequestGroup.id, ts: Date.now() }));
                       } catch { /* storage full — non-fatal */ }
-                      const cleanRedirect = buildOAuthRedirectUrl();
-                      await supabase.auth.signInWithOAuth({
-                        provider: 'google',
-                        options: { redirectTo: cleanRedirect, queryParams: { prompt: 'select_account' } },
-                      });
+                      await signInWithGoogle(buildOAuthReturnSuffix());
                       setSubmittingLinkRequest(false);
                       return;
                     }
