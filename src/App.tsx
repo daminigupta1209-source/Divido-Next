@@ -6679,7 +6679,7 @@ function App() {
               style={{
                 fontSize: '10px',
                 fontWeight: 700,
-                color: 'var(--g)',
+                color: '#475569',
                 marginTop: '2px',
                 whiteSpace: 'nowrap'
               }}
