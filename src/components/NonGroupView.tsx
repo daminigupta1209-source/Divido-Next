@@ -417,7 +417,6 @@ export const NonGroupView: React.FC<NonGroupViewProps> = ({
           <div style={{ minWidth: 0 }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
               <span style={{ fontSize: '17px', fontWeight: 700, color: '#0F172A' }}>You</span>
-              <span style={{ background: '#FEF3C7', color: '#B45309', borderRadius: '999px', padding: '1px 8px', fontSize: '10.5px', fontWeight: 700 }}>Personal</span>
             </div>
             <div style={{ fontSize: '12px', color: '#94A3B8' }}>Only you can see these expenses.</div>
           </div>
@@ -867,7 +866,6 @@ export const NonGroupView: React.FC<NonGroupViewProps> = ({
                 <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', gap: '4px' }}>
                   <div style={{ display: 'flex', alignItems: 'baseline', gap: '6px', minWidth: 0 }}>
                     <h3 style={{ fontSize: '16px', fontWeight: 500, color: '#2E2A25', margin: 0 }}>You</h3>
-                    <span style={{ background: '#FEF3C7', color: '#B45309', borderRadius: '999px', padding: '1px 8px', fontSize: '10.5px', fontWeight: 700 }}>Personal</span>
                   </div>
                   {personalSubtitle && <span style={{ fontSize: '12.5px', fontWeight: 400, color: '#64748B' }}>{personalSubtitle}</span>}
                 </div>
