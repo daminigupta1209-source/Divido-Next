@@ -1,5 +1,15 @@
 apply plugin: 'com.android.application'
 
+// Release signing: android/keystore.properties (local, gitignored) or the
+// DIVIDO_* env vars (CI). Without either, release builds are left unsigned.
+def keystoreProps = new Properties()
+def keystorePropsFile = rootProject.file('keystore.properties')
+if (keystorePropsFile.exists()) {
+    keystorePropsFile.withInputStream { keystoreProps.load(it) }
+}
+def signingValue = { String prop, String env -> keystoreProps.getProperty(prop) ?: System.getenv(env) }
+def releaseStoreFile = signingValue('storeFile', 'DIVIDO_KEYSTORE_PATH')
+
 android {
     namespace = "com.dividosplit.app"
     compileSdk = rootProject.ext.compileSdkVersion
@@ -7,8 +17,9 @@ android {
         applicationId "com.dividosplit.app"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
-        versionCode 1
-        versionName "1.0"
+        // Play needs a higher versionCode on every upload; CI passes -PversionCode.
+        versionCode((project.findProperty('versionCode') ?: '1') as Integer)
+        versionName((project.findProperty('versionName') ?: '0.1.0') as String)
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         aaptOptions {
              // Files and dirs to omit from the packaged assets dir, modified to accommodate modern web apps.
@@ -16,8 +27,21 @@ android {
             ignoreAssetsPattern = '!.svn:!.git:!.ds_store:!*.scc:.*:!CVS:!thumbs.db:!picasa.ini:!*~'
         }
     }
+    signingConfigs {
+        release {
+            if (releaseStoreFile) {
+                storeFile file(releaseStoreFile)
+                storePassword signingValue('storePassword', 'DIVIDO_KEYSTORE_PASSWORD')
+                keyAlias signingValue('keyAlias', 'DIVIDO_KEY_ALIAS')
+                keyPassword signingValue('keyPassword', 'DIVIDO_KEY_PASSWORD')
+            }
+        }
+    }
     buildTypes {
         release {
+            if (releaseStoreFile) {
+                signingConfig signingConfigs.release
+            }
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
         }

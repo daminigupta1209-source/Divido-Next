@@ -1,0 +1,82 @@
+# Builds a signed Android App Bundle (.aab) for Google Play.
+# Run it from GitHub → Actions → "Android release" → Run workflow (or push an
+# `android-v*` tag), then download the `divido-aab` artifact and upload it to
+# Play Console → Testing → Internal / Closed testing.
+#
+# Repo secrets needed (Settings → Secrets and variables → Actions):
+#   ANDROID_KEYSTORE_BASE64, ANDROID_KEYSTORE_PASSWORD, ANDROID_KEY_ALIAS,
+#   ANDROID_KEY_PASSWORD, and the same VITE_* values the web app is built with.
+name: Android release
+
+on:
+  workflow_dispatch:
+    inputs:
+      versionName:
+        description: 'Version shown to testers (e.g. 0.1.0)'
+        required: true
+        default: '0.1.0'
+  push:
+    tags: ['android-v*']
+
+jobs:
+  bundle:
+    runs-on: ubuntu-latest
+    env:
+      VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
+      VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
+      VITE_GEMINI_API_KEY: ${{ secrets.VITE_GEMINI_API_KEY }}
+      VITE_SPLITWISE_CLIENT_ID: ${{ secrets.VITE_SPLITWISE_CLIENT_ID }}
+      VITE_SPLITWISE_REDIRECT_URI: ${{ secrets.VITE_SPLITWISE_REDIRECT_URI }}
+      VITE_SENTRY_DSN: ${{ secrets.VITE_SENTRY_DSN }}
+      VITE_PUBLIC_APP_URL: ${{ secrets.VITE_PUBLIC_APP_URL }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Check required secrets
+        run: |
+          missing=""
+          for v in VITE_SUPABASE_URL VITE_SUPABASE_ANON_KEY; do
+            [ -n "${!v}" ] || missing="$missing $v"
+          done
+          [ -n "${{ secrets.ANDROID_KEYSTORE_BASE64 }}" ] || missing="$missing ANDROID_KEYSTORE_BASE64"
+          if [ -n "$missing" ]; then echo "::error::Missing secrets:$missing"; exit 1; fi
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - run: npm run build
+
+      # Capacitor 8 / Android Gradle Plugin need JDK 21.
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+          cache: gradle
+      - run: npx cap sync android
+
+      - name: Decode keystore
+        run: echo "${{ secrets.ANDROID_KEYSTORE_BASE64 }}" | base64 -d > "$RUNNER_TEMP/divido-release.jks"
+
+      - name: Build signed bundle
+        working-directory: android
+        env:
+          DIVIDO_KEYSTORE_PATH: ${{ runner.temp }}/divido-release.jks
+          DIVIDO_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          DIVIDO_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+          DIVIDO_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+          VERSION_NAME: ${{ inputs.versionName }}
+        run: |
+          chmod +x gradlew
+          # Tag runs: android-v0.2.0 → 0.2.0
+          [ -n "$VERSION_NAME" ] || VERSION_NAME="${GITHUB_REF_NAME#android-v}"
+          ./gradlew bundleRelease --no-daemon \
+            -PversionCode=${{ github.run_number }} \
+            -PversionName="$VERSION_NAME"
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: divido-aab
+          path: android/app/build/outputs/bundle/release/app-release.aab
+          if-no-files-found: error
