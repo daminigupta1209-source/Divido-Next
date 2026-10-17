@@ -279,7 +279,7 @@ export const NonGroupView: React.FC<NonGroupViewProps> = ({
     const onSharePersonEv = () => {
       if (onSharePerson) onSharePerson(profilePerson, profilePersonThread.current);
     };
-    window.dispatchEvent(new CustomEvent('divido:nongroup-person', { detail: { open: !!onSharePerson, name: shown(profilePerson), email: people.find((x) => x.name.toLowerCase() === profilePerson.toLowerCase())?.email || '', avatar: memberAvatars?.[profilePerson] || memberAvatars?.[cleanName(profilePerson)] || '', avatarBg: AVATAR_BG[(cleanName(profilePerson).charCodeAt(0) || 0) % AVATAR_BG.length] } }));
+    window.dispatchEvent(new CustomEvent('divido:nongroup-person', { detail: { open: !!onSharePerson, name: shown(profilePerson), email: people.find((x) => x.name.toLowerCase() === profilePerson.toLowerCase())?.email || '', avatar: avatarFor(profilePerson, people.find((x) => x.name.toLowerCase() === profilePerson.toLowerCase())?.email), avatarBg: AVATAR_BG[(cleanName(profilePerson).charCodeAt(0) || 0) % AVATAR_BG.length] } }));
     window.addEventListener('divido:share-person', onSharePersonEv);
     window.addEventListener('popstate', onPop);
     window.addEventListener('divido:header-back', onHeaderBack);
@@ -397,8 +397,10 @@ export const NonGroupView: React.FC<NonGroupViewProps> = ({
     );
   const showPersonalRow = !balFilter && personalMatchesSearch;
 
-  const Avatar: React.FC<{ name: string; size?: number }> = ({ name, size = 38 }) => {
-    const url = memberAvatars?.[name] || memberAvatars?.[cleanName(name)];
+  // Pictures are stored by email (member_avatars); name is the fallback.
+  const avatarFor = (name: string, email?: string) => (email && memberAvatars?.[email.trim().toLowerCase()]) || memberAvatars?.[name] || memberAvatars?.[cleanName(name)] || '';
+  const Avatar: React.FC<{ name: string; email?: string; size?: number }> = ({ name, email, size = 38 }) => {
+    const url = avatarFor(name, email);
     if (url) {
       return (
         <img
@@ -861,7 +863,7 @@ export const NonGroupView: React.FC<NonGroupViewProps> = ({
                   onClick={() => { setShowSharePicker(false); onSharePerson?.(p.name, p.directGroupId); }}
                   style={{ display: 'flex', alignItems: 'center', gap: '12px', width: '100%', padding: '10px 4px', background: 'none', border: 'none', borderBottom: '1px solid #F1F5F9', cursor: 'pointer', textAlign: 'left' }}
                 >
-                  <Avatar name={p.name} size={34} />
+                  <Avatar name={p.name} email={p.email} size={34} />
                   <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', gap: '2px' }}>
                     <span style={{ fontSize: '14px', fontWeight: 500, color: '#2E2A25', textTransform: 'capitalize', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{shown(p.name)}</span>
                     {p.email && <span style={{ fontSize: '12px', color: '#94A3B8', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{p.email}</span>}
@@ -984,7 +986,7 @@ export const NonGroupView: React.FC<NonGroupViewProps> = ({
                       style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '16px', cursor: 'pointer' }}
                     >
                       <div style={{ flexShrink: 0 }}>
-                        <Avatar name={p.name} size={40} />
+                        <Avatar name={p.name} email={p.email} size={40} />
                       </div>
                       <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', gap: '4px' }}>
                         <div style={{ display: 'flex', alignItems: 'baseline', gap: '6px', minWidth: 0 }}>
