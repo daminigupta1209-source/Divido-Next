@@ -180,7 +180,8 @@ export const NonGroupView: React.FC<NonGroupViewProps> = ({
   // Bottom toggle on the front page: Settle | Photos (swipe left/right).
   const [activeTab, setActiveTab] = React.useState<'settle' | 'photos'>('settle');
   // Which person's full profile page is open (tapping their DP/avatar).
-  const [profilePerson, setProfilePerson] = React.useState<string | null>(null);
+  // Remembered for this tab so a refresh stays on that person's screen.
+  const [profilePerson, setProfilePerson] = React.useState<string | null>(() => { try { return sessionStorage.getItem('dv_ng_person') || null; } catch { return null; } });
   // "You" pinned row — self-only (personal) expenses screen. Mutually
   // exclusive with profilePerson (entering one clears the other).
   // Remembered for this tab so a refresh stays on the You screen.
@@ -260,7 +261,9 @@ export const NonGroupView: React.FC<NonGroupViewProps> = ({
   // leaving the non-group screen entirely.
   React.useEffect(() => {
     if (!profilePerson) return;
-    window.history.pushState({ dividoNonGroupProfile: true }, '');
+    try { sessionStorage.setItem('dv_ng_person', profilePerson); } catch { /* ignore */ }
+    // After a refresh the entry is already there; don't stack a second one.
+    if (!(window.history.state && window.history.state.dividoNonGroupProfile)) window.history.pushState({ dividoNonGroupProfile: true }, '');
     const onPop = () => setProfilePerson(null);
     // The top-bar back arrow asks first; while a person is open it closes
     // them (pops the entry pushed above) instead of leaving Non-Group.
@@ -282,6 +285,7 @@ export const NonGroupView: React.FC<NonGroupViewProps> = ({
     window.addEventListener('divido:header-back', onHeaderBack);
     window.addEventListener('divido:add-expense', onAddExpense);
     return () => {
+      try { sessionStorage.removeItem('dv_ng_person'); } catch { /* ignore */ }
       window.dispatchEvent(new CustomEvent('divido:nongroup-person', { detail: { open: false } }));
       window.removeEventListener('divido:share-person', onSharePersonEv);
       window.removeEventListener('popstate', onPop);
