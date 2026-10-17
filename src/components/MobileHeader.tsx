@@ -270,11 +270,14 @@ export const MobileHeader: React.FC<MobileHeaderProps> = ({
   const [nonGroupPersonOpen, setNonGroupPersonOpen] = React.useState(false);
   // Non-Group: is the personal ("You") screen open? Header then shows my DP + "You".
   const [nonGroupPersonalOpen, setNonGroupPersonalOpen] = React.useState(false);
+  // Non-Group: name of the open person (header reads 'With <name>').
+  const [nonGroupPersonName, setNonGroupPersonName] = React.useState('');
   React.useEffect(() => {
     const on = (e: Event) => {
       const d = (e as CustomEvent).detail;
       setNonGroupPersonOpen(!!d?.open);
       setNonGroupPersonalOpen(!!d?.personal);
+      setNonGroupPersonName(typeof d?.name === 'string' ? d.name : '');
     };
     window.addEventListener('divido:nongroup-person', on);
     return () => window.removeEventListener('divido:nongroup-person', on);
@@ -539,7 +542,7 @@ export const MobileHeader: React.FC<MobileHeaderProps> = ({
                       width: '100%',
                       display: 'inline-block',
                     }}>
-                      {selectedId === 'STANDALONE' && nonGroupPersonalOpen ? 'You' : displayGroupName}
+                      {selectedId === 'STANDALONE' && nonGroupPersonalOpen ? 'You' : selectedId === 'STANDALONE' && nonGroupPersonName ? `With ${nonGroupPersonName}` : displayGroupName}
                     </span>
                   </h1>
                 </>

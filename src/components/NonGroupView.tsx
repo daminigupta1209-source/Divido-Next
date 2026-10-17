@@ -279,7 +279,7 @@ export const NonGroupView: React.FC<NonGroupViewProps> = ({
     const onSharePersonEv = () => {
       if (onSharePerson) onSharePerson(profilePerson, profilePersonThread.current);
     };
-    window.dispatchEvent(new CustomEvent('divido:nongroup-person', { detail: { open: !!onSharePerson } }));
+    window.dispatchEvent(new CustomEvent('divido:nongroup-person', { detail: { open: !!onSharePerson, name: shown(profilePerson) } }));
     window.addEventListener('divido:share-person', onSharePersonEv);
     window.addEventListener('popstate', onPop);
     window.addEventListener('divido:header-back', onHeaderBack);
@@ -657,7 +657,6 @@ export const NonGroupView: React.FC<NonGroupViewProps> = ({
             <div style={{ position: 'absolute', left: 0, border: '2px solid #FFFFFF', borderRadius: '50%' }}><Avatar name={me} size={52} /></div>
             <div style={{ position: 'absolute', left: '24px', border: '2px solid #FFFFFF', borderRadius: '50%' }}><Avatar name={profilePerson} size={52} /></div>
           </div>
-          <div style={{ fontSize: '17px', fontWeight: 700, color: '#0F172A' }}>You &amp; {profilePerson}</div>
           <div style={{ fontSize: '12px', color: '#94A3B8', display: 'flex', alignItems: 'center', gap: '6px', justifyContent: 'center', flexWrap: 'wrap', marginTop: '2px' }}>
             {p?.email && <span>{p.email}</span>}
           </div>
