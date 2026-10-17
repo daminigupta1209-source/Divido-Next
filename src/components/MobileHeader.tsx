@@ -907,7 +907,8 @@ export const MobileHeader: React.FC<MobileHeaderProps> = ({
                       if (setAnalyticsGroupId) setAnalyticsGroupId(selectedId);
                       setView('analytics');
                     }}
-                    onShareLink={() => {
+                    // The You (personal) page is only mine: nothing to share.
+                    onShareLink={nonGroupPersonalOpen ? undefined : () => {
                       setMobileShowGroupOptionsMenu(false);
                       if (selectedId === 'STANDALONE') window.dispatchEvent(new Event('divido:nongroup-share'));
                       else if (onInviteFriend) onInviteFriend();

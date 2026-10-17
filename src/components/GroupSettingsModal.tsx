@@ -160,6 +160,7 @@ export const GroupSettingsModal: React.FC<GroupSettingsModalProps> = ({
             Export Data
           </button>
 
+          {onShareLink && (
           <button
             onClick={() => { handleClose(); onShareLink?.(); }}
             style={{
@@ -189,6 +190,7 @@ export const GroupSettingsModal: React.FC<GroupSettingsModalProps> = ({
             </svg>
             Share Link
           </button>
+          )}
 
           {onNewGroup && (
             <button
