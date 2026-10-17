@@ -479,7 +479,7 @@ export const NonGroupView: React.FC<NonGroupViewProps> = ({
                 aria-expanded={periodMenuOpen}
                 aria-label={`Spending period: ${pillLabel}. Change period`}
                 onClick={() => (periodMenuOpen ? closeMenu() : setPeriodMenuOpen(true))}
-                style={{ width: '100%', background: '#9A8FB8', color: '#FFFFFF', border: 'none', borderRadius: '14px', padding: '6px 14px', boxShadow: '0 6px 16px rgba(0,0,0,0.06)', cursor: 'pointer', textAlign: 'center', fontFamily: 'inherit' }}
+                style={{ width: '100%', background: '#857AA6', color: '#FFFFFF', border: 'none', borderRadius: '14px', padding: '6px 14px', boxShadow: '0 6px 16px rgba(0,0,0,0.06)', cursor: 'pointer', textAlign: 'center', fontFamily: 'inherit' }}
               >
                 <div style={{ fontSize: '11px', fontWeight: 500, display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
                   Spent · {pillLabel}
