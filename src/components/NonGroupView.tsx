@@ -651,17 +651,6 @@ export const NonGroupView: React.FC<NonGroupViewProps> = ({
     return (
       <div className="content-width-limit" style={{ paddingTop: '4px' }}>
 
-        {/* Pair header — you & them */}
-        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center', marginBottom: '14px' }}>
-          <div style={{ display: 'flex', position: 'relative', width: '76px', height: '52px', marginBottom: '6px' }}>
-            <div style={{ position: 'absolute', left: 0, border: '2px solid #FFFFFF', borderRadius: '50%' }}><Avatar name={me} size={52} /></div>
-            <div style={{ position: 'absolute', left: '24px', border: '2px solid #FFFFFF', borderRadius: '50%' }}><Avatar name={profilePerson} size={52} /></div>
-          </div>
-          <div style={{ fontSize: '12px', color: '#94A3B8', display: 'flex', alignItems: 'center', gap: '6px', justifyContent: 'center', flexWrap: 'wrap', marginTop: '2px' }}>
-            {p?.email && <span>{p.email}</span>}
-          </div>
-        </div>
-
         {/* Net balance card — tap for the summary, with "Settle up" inside */}
         <NetBalanceTiles
           style={{ marginBottom: '14px' }}

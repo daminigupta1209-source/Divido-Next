@@ -517,7 +517,7 @@ export const MobileHeader: React.FC<MobileHeaderProps> = ({
                   <h1
 
                     style={{
-                      fontSize: selectedId === 'STANDALONE' ? (nonGroupPersonName && !nonGroupPersonalOpen ? '16px' : '18px') : '20px',
+                      fontSize: selectedId === 'STANDALONE' ? '18px' : '20px',
                       fontWeight: 600,
                       letterSpacing: '-0.5px',
                       cursor: selectedId === 'STANDALONE' ? (nonGroupPersonName && !nonGroupPersonalOpen ? 'pointer' : 'default') : 'pointer',
@@ -547,7 +547,7 @@ export const MobileHeader: React.FC<MobileHeaderProps> = ({
                       width: '100%',
                       display: 'inline-block',
                     }}>
-                      {selectedId === 'STANDALONE' && nonGroupPersonalOpen ? 'You' : selectedId === 'STANDALONE' && nonGroupPersonName ? `With ${nonGroupPersonName.split(' ')[0]}` : displayGroupName}
+                      {selectedId === 'STANDALONE' && nonGroupPersonalOpen ? 'You' : selectedId === 'STANDALONE' && nonGroupPersonName ? (<><span style={{ fontSize: '13px', fontWeight: 400, color: '#64748B', marginRight: '5px', letterSpacing: 0 }}>with</span>{nonGroupPersonName.split(' ')[0]}</>) : displayGroupName}
                     </span>
                   </h1>
                   {showPersonCard && selectedId === 'STANDALONE' && nonGroupPersonName && createPortal(
