@@ -272,12 +272,17 @@ export const MobileHeader: React.FC<MobileHeaderProps> = ({
   const [nonGroupPersonalOpen, setNonGroupPersonalOpen] = React.useState(false);
   // Non-Group: name of the open person (header reads 'With <name>').
   const [nonGroupPersonName, setNonGroupPersonName] = React.useState('');
+  const [nonGroupPersonEmail, setNonGroupPersonEmail] = React.useState('');
+  // Tapping 'With <first name>' shows the full name + email.
+  const [showPersonCard, setShowPersonCard] = React.useState(false);
   React.useEffect(() => {
     const on = (e: Event) => {
       const d = (e as CustomEvent).detail;
       setNonGroupPersonOpen(!!d?.open);
       setNonGroupPersonalOpen(!!d?.personal);
       setNonGroupPersonName(typeof d?.name === 'string' ? d.name : '');
+      setNonGroupPersonEmail(typeof d?.email === 'string' ? d.email : '');
+      setShowPersonCard(false);
     };
     window.addEventListener('divido:nongroup-person', on);
     return () => window.removeEventListener('divido:nongroup-person', on);
@@ -512,10 +517,10 @@ export const MobileHeader: React.FC<MobileHeaderProps> = ({
                   <h1
 
                     style={{
-                      fontSize: selectedId === 'STANDALONE' ? '18px' : '20px',
+                      fontSize: selectedId === 'STANDALONE' ? (nonGroupPersonName && !nonGroupPersonalOpen ? '16px' : '18px') : '20px',
                       fontWeight: 600,
                       letterSpacing: '-0.5px',
-                      cursor: selectedId === 'STANDALONE' ? 'default' : 'pointer',
+                      cursor: selectedId === 'STANDALONE' ? (nonGroupPersonName && !nonGroupPersonalOpen ? 'pointer' : 'default') : 'pointer',
                       display: 'flex',
                       alignItems: 'center',
                       gap: '6px',
@@ -527,7 +532,7 @@ export const MobileHeader: React.FC<MobileHeaderProps> = ({
                       overflow: 'hidden'
                     }}
                     onClick={() => {
-                      if (selectedId === 'STANDALONE') return;
+                      if (selectedId === 'STANDALONE') { if (nonGroupPersonName && !nonGroupPersonalOpen) setShowPersonCard(true); return; }
                       if (amIPastMember) { onRequestRejoin && selectedGroup && onRequestRejoin(selectedGroup.id); return; }
                       if (onEditGroup && selectedGroup) {
                         onEditGroup(selectedGroup.id);
@@ -542,9 +547,19 @@ export const MobileHeader: React.FC<MobileHeaderProps> = ({
                       width: '100%',
                       display: 'inline-block',
                     }}>
-                      {selectedId === 'STANDALONE' && nonGroupPersonalOpen ? 'You' : selectedId === 'STANDALONE' && nonGroupPersonName ? `With ${nonGroupPersonName}` : displayGroupName}
+                      {selectedId === 'STANDALONE' && nonGroupPersonalOpen ? 'You' : selectedId === 'STANDALONE' && nonGroupPersonName ? `With ${nonGroupPersonName.split(' ')[0]}` : displayGroupName}
                     </span>
                   </h1>
+                  {showPersonCard && selectedId === 'STANDALONE' && nonGroupPersonName && createPortal(
+                    <div onClick={() => setShowPersonCard(false)} style={{ position: 'fixed', inset: 0, zIndex: 10000, background: 'rgba(15,23,42,0.35)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '16px' }}>
+                      <div onClick={(e) => e.stopPropagation()} style={{ background: '#FFFFFF', borderRadius: '18px', padding: '20px 22px', width: '100%', maxWidth: '320px', textAlign: 'center', boxShadow: '0 12px 32px rgba(15,23,42,0.18)', position: 'relative' }}>
+                        <button type="button" aria-label="Close" onClick={() => setShowPersonCard(false)} style={{ position: 'absolute', top: '10px', right: '10px', background: 'none', border: 'none', fontSize: '18px', color: '#94A3B8', cursor: 'pointer' }}>✕</button>
+                        <div style={{ fontSize: '17px', fontWeight: 600, color: '#0F172A', textTransform: 'capitalize', wordBreak: 'break-word' }}>{nonGroupPersonName}</div>
+                        {nonGroupPersonEmail && <div style={{ fontSize: '13px', color: '#64748B', marginTop: '4px', wordBreak: 'break-all' }}>{nonGroupPersonEmail}</div>}
+                      </div>
+                    </div>,
+                    document.body
+                  )}
                 </>
               )}
             </div>
