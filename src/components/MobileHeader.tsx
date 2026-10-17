@@ -273,6 +273,8 @@ export const MobileHeader: React.FC<MobileHeaderProps> = ({
   // Non-Group: name of the open person (header reads 'With <name>').
   const [nonGroupPersonName, setNonGroupPersonName] = React.useState('');
   const [nonGroupPersonEmail, setNonGroupPersonEmail] = React.useState('');
+  // Open person's DP (or initial on their colour) replaces the Non-Group icon.
+  const [nonGroupPersonAvatar, setNonGroupPersonAvatar] = React.useState<{ url: string; bg: string }>({ url: '', bg: '' });
   // Tapping 'With <first name>' shows the full name + email.
   const [showPersonCard, setShowPersonCard] = React.useState(false);
   React.useEffect(() => {
@@ -282,6 +284,7 @@ export const MobileHeader: React.FC<MobileHeaderProps> = ({
       setNonGroupPersonalOpen(!!d?.personal);
       setNonGroupPersonName(typeof d?.name === 'string' ? d.name : '');
       setNonGroupPersonEmail(typeof d?.email === 'string' ? d.email : '');
+      setNonGroupPersonAvatar({ url: typeof d?.avatar === 'string' ? d.avatar : '', bg: typeof d?.avatarBg === 'string' ? d.avatarBg : '' });
       setShowPersonCard(false);
     };
     window.addEventListener('divido:nongroup-person', on);
@@ -423,6 +426,12 @@ export const MobileHeader: React.FC<MobileHeaderProps> = ({
                   <img src={userMetadata[me].profilePhoto} style={{ width: '100%', height: '100%', objectFit: 'cover' }} alt="" />
                 ) : (
                   <span style={{ color: '#E65100' }}>{(me || 'Y').charAt(0).toUpperCase()}</span>
+                )
+              ) : selectedId === 'STANDALONE' && nonGroupPersonName ? (
+                nonGroupPersonAvatar.url ? (
+                  <img src={nonGroupPersonAvatar.url} style={{ width: '100%', height: '100%', objectFit: 'cover' }} alt="" />
+                ) : (
+                  <span style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', background: nonGroupPersonAvatar.bg || '#8B5CF6', color: '#FFFFFF' }}>{nonGroupPersonName.charAt(0).toUpperCase()}</span>
                 )
               ) : selectedId === 'STANDALONE' ? (
                 // Same person-with-heart icon as the Non-Group card on Home.

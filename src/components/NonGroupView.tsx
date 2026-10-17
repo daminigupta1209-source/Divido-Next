@@ -279,7 +279,7 @@ export const NonGroupView: React.FC<NonGroupViewProps> = ({
     const onSharePersonEv = () => {
       if (onSharePerson) onSharePerson(profilePerson, profilePersonThread.current);
     };
-    window.dispatchEvent(new CustomEvent('divido:nongroup-person', { detail: { open: !!onSharePerson, name: shown(profilePerson), email: people.find((x) => x.name.toLowerCase() === profilePerson.toLowerCase())?.email || '' } }));
+    window.dispatchEvent(new CustomEvent('divido:nongroup-person', { detail: { open: !!onSharePerson, name: shown(profilePerson), email: people.find((x) => x.name.toLowerCase() === profilePerson.toLowerCase())?.email || '', avatar: memberAvatars?.[profilePerson] || memberAvatars?.[cleanName(profilePerson)] || '', avatarBg: AVATAR_BG[(cleanName(profilePerson).charCodeAt(0) || 0) % AVATAR_BG.length] } }));
     window.addEventListener('divido:share-person', onSharePersonEv);
     window.addEventListener('popstate', onPop);
     window.addEventListener('divido:header-back', onHeaderBack);
