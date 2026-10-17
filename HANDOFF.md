@@ -1,5 +1,36 @@
 # Divido-Next Handoff
 
+## Latest — Oct 1–17 2026 (Damini + Chirag in parallel)
+
+**Workflow now:** two developers push to `main`. Before every push: `git pull --rebase` → `npm run build` → `npm test` → push only if green (CI build check in `.github/workflows/build-check.yml`). Damini's changes are committed locally and pushed only when she says **"release"** (urgent live fixes excepted) — 37 pushes in one day had stranded a phone on a start-up error.
+
+### Permanent member IDs (Damini, Oct 4) — plan in `docs/permanent-id-plan.md`
+- Step 1 SQL `api/expense_member_ids.sql` (run, 13/13 keyed): expenses get `paid_key`, `splitter_keys`, `shares_by_key`, filled by trigger `dv_fill_expense_keys`.
+- Step 2: app dual-writes keys alongside names (`deriveKeyColumns`). Step 3a: `expensesView` memo (App) re-labels each expense's people from their member key → renames show everywhere. Step 4: `applyRename` updates only the `group_members` row; `markPendingRename` stops sync re-inserting the old name.
+- Same-name-different-email stored as hidden "Name (emailpart)"; `shown()` (global registry via `setDisplayGroups`) strips it on every screen/alert/export. Look-alike payers get their email on a second line under "X paid · date" (`lookalikeEmail`).
+- Suggestions/add-member dedupe and block by **email**, not name.
+
+### UI (Damini, Oct 4)
+- One header search per screen (Home, Groups, Non-Group, All balances, inside group replacing share icon) matching name/email/group/**amounts** (`matchesAmount` in utils). Old search bars, funnels and Settle dropdowns removed.
+- `NetBalanceTiles`: Pay / Collect tiles + "+N" open `BalanceSummarySheet` (All/Pay/Collect, ✕, Settle up) and filter the list behind. All balances filters directly (no sheet). Settle hint line "You have N friends to pay · Settle up below" (italic, red/green, centred); grey filter chips.
+- Removed: quick "+" on Settle/friend cards, Invite + "N yet to join" on home cards. Floating orange "Scan bill" pill inside groups.
+- Type scale for cards: names 16/500, "You pay/collect" 12.5/400, emails 12/400; home group DP 40px; activity titles 500.
+- Signed-out invite link → normal Login with "You've been invited to a group" note.
+
+### Start-up safety + crash alerts (Damini)
+- `index.html`: failed app script retried once with `?r=timestamp`; "Try again" clears SW + caches; failures saved to `localStorage.dv_startup_errors`. `public/sw.js` precaches/falls back with `cache:'reload'`.
+- **Sentry** (`src/lib/monitoring.ts`, wired in `main.tsx` + ErrorBoundary): OFF until `VITE_SENTRY_DSN` is set in Vercel. **PENDING:** user to finish Sentry account/DSN, then redeploy and send a test error (reminder set for Oct 20).
+
+### Chirag's work (Oct 4–16)
+- **Duplicate-names merge feature REMOVED** (cb6bda0) — banner, review screen, `mergePeople`, `findDuplicatePeople`. Duplicate-GROUP merge kept. Auto-link of email-less pending members still in App.
+- DB: `api/unique_member_email.sql` — one active seat per email per group (partial unique index); match/guest-link flows adjusted. Sync race fixes (stale passes skipped; another member's rename no longer duplicates a row; renamed members don't appear under Left).
+- UPI: pay-by-UPI-ID is primary, dead `upi://` links dropped, QR buttons on settle rows / Settle tab / All balances, copy UPI + amount fallbacks.
+- Non-Group: options sheet, CSV export incl. non-group; **personal expenses** ("You" row, self-only STANDALONE expense, zero balance effect, counted in Analytics) with summary card, spend pill + period/custom range.
+- "Updates" panel (renamed; hides my own expenses). Native Google sign-in via deep link.
+
+**Open:** Sentry DSN; offered but not done — Activities meta text (11px) to new scale, shrink Scan pill on scroll, home redesign previews, protect `main` in GitHub settings.
+
+
 ## Latest session — Join/Rejoin Streamlining, Analytics Gestures, Settle & UI Polish (Sep 30 2026)
 
 - **Direct Join & Rejoin (No Extra Popups / Modals):**
