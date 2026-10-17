@@ -183,7 +183,8 @@ export const NonGroupView: React.FC<NonGroupViewProps> = ({
   const [profilePerson, setProfilePerson] = React.useState<string | null>(null);
   // "You" pinned row — self-only (personal) expenses screen. Mutually
   // exclusive with profilePerson (entering one clears the other).
-  const [personalMode, setPersonalMode] = React.useState(false);
+  // Remembered for this tab so a refresh stays on the You screen.
+  const [personalMode, setPersonalMode] = React.useState(() => { try { return sessionStorage.getItem('dv_personal_open') === '1'; } catch { return false; } });
   const [showFrontNetSheet, setShowFrontNetSheet] = React.useState(false);
   // Shared-thread id of the open person (set while rendering their screen).
   const profilePersonThread = React.useRef<string | undefined>(undefined);
@@ -299,7 +300,9 @@ export const NonGroupView: React.FC<NonGroupViewProps> = ({
   onAddPersonalRef.current = onAddPersonal;
   React.useEffect(() => {
     if (!personalMode) return;
-    window.history.pushState({ dividoPersonalExpenses: true }, '');
+    try { sessionStorage.setItem('dv_personal_open', '1'); } catch { /* ignore */ }
+    // After a refresh the entry is already there; don't stack a second one.
+    if (!(window.history.state && window.history.state.dividoPersonalExpenses)) window.history.pushState({ dividoPersonalExpenses: true }, '');
     const onPop = () => setPersonalMode(false);
     const onHeaderBack = (ev: Event) => { ev.preventDefault(); window.history.back(); };
     // Bottom "+ Expense" while personal expenses are open → log a new one.
@@ -315,6 +318,7 @@ export const NonGroupView: React.FC<NonGroupViewProps> = ({
     window.addEventListener('divido:header-back', onHeaderBack);
     window.addEventListener('divido:add-expense', onAddExpense);
     return () => {
+      try { sessionStorage.removeItem('dv_personal_open'); } catch { /* ignore */ }
       window.dispatchEvent(new CustomEvent('divido:nongroup-person', { detail: { open: false, personal: false } }));
       window.removeEventListener('popstate', onPop);
       window.removeEventListener('divido:header-back', onHeaderBack);
