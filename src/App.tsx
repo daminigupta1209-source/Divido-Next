@@ -724,8 +724,25 @@ function App() {
           sessionStorage.setItem('divido_ui_state', JSON.stringify(ui));
         } catch {}
       } else if (st && (st.dividoNonGroupProfile || st.dividoPersonalExpenses)) {
-        // Back onto a Non-Group sub-screen's own entry (a menu or modal above
-        // it closed): the sub-screen stays open and nothing needs pushing.
+        // Back onto a Non-Group sub-screen's own entry: the sub-screen stays
+        // open, and whatever was open above it (notifications, menu, a modal)
+        // closes. Nothing is pushed.
+        setShowExpModal(false);
+        setShowSettleModal(false);
+        setShowAddFriendModal(false);
+        setShowGroupSettleList(false);
+        setShowMembersHealth(false);
+        setQrModalData(null);
+        setNetPayablePopup(null);
+        setNetReceivablePopup(null);
+        setShowConvertModalId(null);
+        setShowNotifPanel(false);
+        setMobileShowGroupOptionsMenu(false);
+        setEditingSettle(null);
+        setGlobalSettleData(null);
+        setShowSplitwiseImport(false);
+        setSamePersonPrompt(null);
+        setConfirmState({ show: false });
         return;
       } else {
         const currentUi = getUiState();

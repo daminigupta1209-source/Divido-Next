@@ -193,6 +193,21 @@ export const MobileHeader: React.FC<MobileHeaderProps> = ({
   }, [headerRenaming]);
 
   const [showMobileBellMenu, setShowMobileBellMenu] = React.useState(false);
+  // The bell panel gets its own history entry (a copy of the current one), so
+  // a back-swipe closes the panel first instead of the screen underneath.
+  React.useEffect(() => {
+    if (!showMobileBellMenu) return;
+    window.history.pushState({ ...(window.history.state || {}), dvBell: true }, '');
+    let popped = false;
+    const onPop = () => { popped = true; setShowMobileBellMenu(false); };
+    window.addEventListener('popstate', onPop);
+    return () => {
+      window.removeEventListener('popstate', onPop);
+      // Closed by a tap: drop the entry, unless a tap inside opened another
+      // screen (which pushed its own entry on top).
+      if (!popped) setTimeout(() => { if (window.history.state?.dvBell) window.history.back(); }, 0);
+    };
+  }, [showMobileBellMenu]);
 
   React.useEffect(() => {
     const handleGlobalClick = () => {
