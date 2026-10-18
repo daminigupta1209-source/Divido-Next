@@ -5571,8 +5571,8 @@ function App() {
       {/* Floating "Scan bill" pill inside a group — same spot and look as the
           home "+ Group" pill; opens the add-expense screen straight into the
           bill scanner for this group. */}
-      {view === 'detail' && selectedId && selectedId !== 'STANDALONE' && !isPhotoViewerOpen && !showExpModal
-        && !(selectedGroup && isPastMemberOf(selectedGroup as Group, me)) && (
+      {view === 'detail' && selectedId && !isPhotoViewerOpen && !showExpModal
+        && !(selectedId !== 'STANDALONE' && selectedGroup && isPastMemberOf(selectedGroup as Group, me)) && (
         <button
           onClick={() => addExpenseFromNav(true)}
           aria-label="Scan bill"
