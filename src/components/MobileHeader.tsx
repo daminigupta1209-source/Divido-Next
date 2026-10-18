@@ -373,10 +373,50 @@ export const MobileHeader: React.FC<MobileHeaderProps> = ({
     );
   };
 
+  // One full-width search bar for every screen: while it's open the picture,
+  // title and right-side icons step aside so there's room to type.
+  const isGroupDetail = view === 'detail' && !!selectedGroup;
+  const isNgSearch = isGroupDetail && selectedId === 'STANDALONE';
+  const searchOpen = isGroupDetail
+    ? (isNgSearch ? nonGroupSearch != null : isHeaderSearchActive)
+    : (isHeaderSearchActive && (view === 'summary' || view === 'gallery' || view === 'friends' || view === 'groups'));
+  const searchValue = isNgSearch ? (nonGroupSearch || '') : searchQuery;
+  const setSearchValue = (v: string) => { if (isNgSearch) setNonGroupSearch(v); else setSearchQuery(v); };
+  const closeSearch = () => { if (isNgSearch) setNonGroupSearch(null); else { setIsHeaderSearchActive(false); setSearchQuery(''); } };
+  const searchPlaceholder = isGroupDetail
+    ? (isNgSearch ? 'Search people, amounts…' : 'Search this group…')
+    : view === 'gallery' ? 'Search photos…' : view === 'friends' ? 'Search people, amounts…' : view === 'groups' ? 'Search groups…' : 'Search groups, amounts…';
+
   return (
     <div className={`mobile-header-bar ${isHomeStyle ? 'mobile-header-bar--home' : ''}`} style={{ transform: headerHidden ? 'translateY(-110%)' : 'translateY(0)', transition: 'transform 0.28s cubic-bezier(0.4, 0, 0.2, 1)' }}>
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: '100%', position: 'relative', height: '40px' }}>
-        {view === 'detail' && selectedGroup ? (
+        {searchOpen ? (
+          <div onClick={(e) => e.stopPropagation()} style={{ display: 'flex', alignItems: 'center', width: '100%', height: '100%', gap: '10px' }}>
+            <button type="button" aria-label="Close search" onClick={closeSearch} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '4px', margin: '0 -2px 0 -6px', display: 'flex', alignItems: 'center', flexShrink: 0 }}>
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#475569" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="15 18 9 12 15 6" /></svg>
+            </button>
+            <div style={{ flex: 1, minWidth: 0, display: 'flex', alignItems: 'center', borderBottom: '2px solid #10B981', height: '34px' }}>
+              <input
+                type="search"
+                autoComplete="off"
+                autoCorrect="off"
+                spellCheck="false"
+                data-1p-ignore
+                data-lpignore="true"
+                autoFocus
+                placeholder={searchPlaceholder}
+                value={searchValue}
+                onChange={(e) => setSearchValue(e.target.value)}
+                onKeyDown={(e) => { if (e.key === 'Escape') closeSearch(); }}
+                className="header-search-input"
+                style={{ flex: 1, minWidth: 0, background: 'transparent', border: 'none', borderRadius: 0, outline: 'none', boxShadow: 'none', fontSize: '16px', fontWeight: 500, height: '32px', padding: 0, margin: 0, color: '#0F172A', fontFamily: 'inherit' }}
+              />
+              <button type="button" aria-label={searchValue ? 'Clear search' : 'Close search'} onClick={() => (searchValue ? setSearchValue('') : closeSearch())} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '4px', display: 'flex', alignItems: 'center', flexShrink: 0 }}>
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#94A3B8" strokeWidth="2.5" strokeLinecap="round"><path d="M18 6 6 18M6 6l12 12" /></svg>
+              </button>
+            </div>
+          </div>
+        ) : view === 'detail' && selectedGroup ? (
           <div style={{ display: 'flex', alignItems: 'center', width: '100%', height: '100%', gap: '10px' }}>
             <button
               onClick={() => {
