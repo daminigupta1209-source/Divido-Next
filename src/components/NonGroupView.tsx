@@ -264,7 +264,9 @@ export const NonGroupView: React.FC<NonGroupViewProps> = ({
     try { sessionStorage.setItem('dv_ng_person', profilePerson); } catch { /* ignore */ }
     // After a refresh the entry is already there; don't stack a second one.
     if (!(window.history.state && window.history.state.dividoNonGroupProfile)) window.history.pushState({ dividoNonGroupProfile: true }, '');
-    const onPop = () => setProfilePerson(null);
+    // Landing back ON this screen's entry (e.g. a menu above it closed) must
+    // not close the person; only stepping back past it does.
+    const onPop = (e: PopStateEvent) => { if (e.state && e.state.dividoNonGroupProfile) return; setProfilePerson(null); };
     // The top-bar back arrow asks first; while a person is open it closes
     // them (pops the entry pushed above) instead of leaving Non-Group.
     const onHeaderBack = (ev: Event) => { ev.preventDefault(); window.history.back(); };
@@ -307,7 +309,7 @@ export const NonGroupView: React.FC<NonGroupViewProps> = ({
     try { sessionStorage.setItem('dv_personal_open', '1'); } catch { /* ignore */ }
     // After a refresh the entry is already there; don't stack a second one.
     if (!(window.history.state && window.history.state.dividoPersonalExpenses)) window.history.pushState({ dividoPersonalExpenses: true }, '');
-    const onPop = () => setPersonalMode(false);
+    const onPop = (e: PopStateEvent) => { if (e.state && e.state.dividoPersonalExpenses) return; setPersonalMode(false); };
     const onHeaderBack = (ev: Event) => { ev.preventDefault(); window.history.back(); };
     // Bottom "+ Expense" while personal expenses are open → log a new one.
     const onAddExpense = (ev: Event) => {

@@ -723,6 +723,10 @@ function App() {
         try {
           sessionStorage.setItem('divido_ui_state', JSON.stringify(ui));
         } catch {}
+      } else if (st && (st.dividoNonGroupProfile || st.dividoPersonalExpenses)) {
+        // Back onto a Non-Group sub-screen's own entry (a menu or modal above
+        // it closed): the sub-screen stays open and nothing needs pushing.
+        return;
       } else {
         const currentUi = getUiState();
         window.history.pushState({ _divido: true, uiState: currentUi }, '');
@@ -735,7 +739,11 @@ function App() {
     window.addEventListener('popstate', onPopState);
 
     // Seed initial state
-    if (!window.history.state?._divido) {
+    // (Not over a Non-Group sub-screen's own entry: this effect re-runs when a
+    // menu opens, and overwriting that entry made closing the menu also close
+    // the person / You screen.)
+    const hs = window.history.state;
+    if (!hs?._divido && !hs?.dividoNonGroupProfile && !hs?.dividoPersonalExpenses) {
       const initialUi = getUiState();
       window.history.replaceState({ _divido: true, uiState: initialUi }, '');
       try {
@@ -843,6 +851,15 @@ function App() {
         try { sessionStorage.setItem('divido_ui_state', JSON.stringify(currentUi)); } catch {}
         return;
       }
+    }
+
+    // Sitting on a Non-Group sub-screen's own entry with nothing open on top
+    // (e.g. right after a refresh): adopt that entry instead of stacking a new
+    // one, keeping its marker so back / menu-close behave.
+    if (!cur?._divido && (cur?.dividoNonGroupProfile || cur?.dividoPersonalExpenses) && overlayCount(currentUi) === 0) {
+      window.history.replaceState({ ...cur, _divido: true, uiState: currentUi }, '');
+      try { sessionStorage.setItem('divido_ui_state', JSON.stringify(currentUi)); } catch {}
+      return;
     }
 
     window.history.pushState({ _divido: true, uiState: currentUi }, '');
