@@ -386,6 +386,22 @@ export const MobileHeader: React.FC<MobileHeaderProps> = ({
   const searchPlaceholder = isGroupDetail
     ? (isNgSearch ? 'Search people, amounts…' : 'Search this group…')
     : view === 'gallery' ? 'Search photos…' : view === 'friends' ? 'Search people, amounts…' : view === 'groups' ? 'Search groups…' : 'Search groups, amounts…';
+  // Open search gets its own history entry (a copy of the current one), so a
+  // back-swipe closes the search like the ← button, instead of leaving the screen.
+  const closeSearchRef = React.useRef(closeSearch);
+  closeSearchRef.current = closeSearch;
+  React.useEffect(() => {
+    if (!searchOpen) return;
+    window.history.pushState({ ...(window.history.state || {}), dvSearch: true }, '');
+    let popped = false;
+    const onPop = () => { popped = true; closeSearchRef.current(); };
+    window.addEventListener('popstate', onPop);
+    return () => {
+      window.removeEventListener('popstate', onPop);
+      // Closed with ← / ✕: drop the entry, unless something opened on top.
+      if (!popped) setTimeout(() => { if (window.history.state?.dvSearch) window.history.back(); }, 0);
+    };
+  }, [searchOpen]);
 
   return (
     <div className={`mobile-header-bar ${isHomeStyle ? 'mobile-header-bar--home' : ''}`} style={{ transform: headerHidden ? 'translateY(-110%)' : 'translateY(0)', transition: 'transform 0.28s cubic-bezier(0.4, 0, 0.2, 1)' }}>
