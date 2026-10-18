@@ -924,7 +924,7 @@ export const NonGroupView: React.FC<NonGroupViewProps> = ({
         </div>
       )}
 
-      {/* Settle / Photos toggle (swipeable) — matches the home Groups/Activities tabs */}
+      {/* Friends / Photos toggle (swipeable) — matches the home Groups/Activities tabs */}
       <div style={{ marginBottom: '14px', marginTop: '4px' }}>
         <div
           style={{
@@ -936,7 +936,7 @@ export const NonGroupView: React.FC<NonGroupViewProps> = ({
             gap: '2px',
           }}
         >
-          {([{ id: 'settle', label: 'Settle' }, { id: 'photos', label: 'Photos' }] as const).map((tab) => {
+          {([{ id: 'settle', label: 'Friends' }, { id: 'photos', label: 'Photos' }] as const).map((tab) => {
             const isActive = tab.id === activeTab;
             return (
               <button
