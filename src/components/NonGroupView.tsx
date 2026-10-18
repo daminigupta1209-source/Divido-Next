@@ -179,6 +179,9 @@ export const NonGroupView: React.FC<NonGroupViewProps> = ({
 }) => {
   // Bottom toggle on the front page: Settle | Photos (swipe left/right).
   const [activeTab, setActiveTab] = React.useState<'settle' | 'photos'>('settle');
+  // Inside a person's screen: their Activities | Photos.
+  const [personTab, setPersonTab] = React.useState<'activity' | 'photos'>('activity');
+  const personSwipeX = React.useRef<{ x: number; y: number } | null>(null);
   // Which person's full profile page is open (tapping their DP/avatar).
   // Remembered for this tab so a refresh stays on that person's screen.
   const [profilePerson, setProfilePerson] = React.useState<string | null>(() => { try { return sessionStorage.getItem('dv_ng_person') || null; } catch { return null; } });
@@ -256,6 +259,8 @@ export const NonGroupView: React.FC<NonGroupViewProps> = ({
     () => personalSpendByCurrency(periodExps, isMe, defaultCurrency),
     [periodExps, isMe, defaultCurrency]
   );
+
+  React.useEffect(() => { setPersonTab('activity'); }, [profilePerson]);
 
   // Phone/browser back closes the open profile (returns to the list) instead of
   // leaving the non-group screen entirely.
@@ -653,7 +658,20 @@ export const NonGroupView: React.FC<NonGroupViewProps> = ({
       // Newest date first so each month heading appears once.
       .sort((a, b) => String(b.date || '').localeCompare(String(a.date || '')) || (b.timestamp || 0) - (a.timestamp || 0));
     return (
-      <div className="content-width-limit" style={{ paddingTop: '4px' }}>
+      <div
+        className="content-width-limit"
+        style={{ paddingTop: '4px', minHeight: '70vh' }}
+        onTouchStart={(e) => { personSwipeX.current = { x: e.touches[0].clientX, y: e.touches[0].clientY }; }}
+        onTouchEnd={(e) => {
+          const st = personSwipeX.current;
+          personSwipeX.current = null;
+          if (!st) return;
+          const dx = e.changedTouches[0].clientX - st.x;
+          const dy = e.changedTouches[0].clientY - st.y;
+          if (Math.abs(dx) < 50 || Math.abs(dx) < Math.abs(dy)) return;
+          setPersonTab(dx < 0 ? 'photos' : 'activity');
+        }}
+      >
 
         {/* Net balance card — tap for the summary, with "Settle up" inside */}
         <NetBalanceTiles
@@ -667,9 +685,37 @@ export const NonGroupView: React.FC<NonGroupViewProps> = ({
           summaryAction={{ label: 'Settle up', onClick: () => onSettlePerson(profilePerson, p?.directGroupId) }}
         />
 
-        {/* Settle = tap the balance card; Invite = share icon in the header. */}
-        <div style={{ height: '6px' }} />
+        {/* Activities / Photos toggle (swipeable) — like the group page */}
+        <div style={{ display: 'flex', background: '#F1F5F9', border: '1px solid #E2E8F0', borderRadius: '999px', padding: '3px', gap: '2px', margin: '4px 0 14px' }}>
+          {([{ id: 'activity', label: 'Activities' }, { id: 'photos', label: 'Photos' }] as const).map((tab) => {
+            const on = tab.id === personTab;
+            return (
+              <button
+                key={tab.id}
+                type="button"
+                onClick={() => setPersonTab(tab.id)}
+                style={{ flex: 1, border: 'none', background: on ? '#FFFFFF' : 'transparent', color: on ? '#0F172A' : '#64748B', fontWeight: on ? 700 : 600, fontSize: '14px', borderRadius: '999px', padding: '7px 0', cursor: 'pointer', boxShadow: on ? '0 2px 6px rgba(0,0,0,0.08)' : 'none', transition: '0.2s all ease' }}
+              >
+                {tab.label}
+              </button>
+            );
+          })}
+        </div>
 
+        {personTab === 'photos' ? (() => {
+          const theirPhotos = theirExps.flatMap((e) => (e.attachments || []).map((url) => ({ url, exp: e })));
+          return theirPhotos.length === 0 ? (
+            <p style={{ fontSize: '13px', color: '#94A3B8', textAlign: 'center', padding: '24px 0' }}>No photos yet. Attach a receipt to an expense with {shown(profilePerson)} and it'll appear here.</p>
+          ) : (
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(88px, 1fr))', gap: '8px' }}>
+              {theirPhotos.map((ph, i) => (
+                <div key={`${ph.exp.id}-${i}`} onClick={() => onOpenExpense(ph.exp)} style={{ position: 'relative', aspectRatio: '1', borderRadius: '10px', overflow: 'hidden', cursor: 'pointer', border: '1px solid #E2E8F0' }}>
+                  <img src={ph.url} alt={ph.exp.title} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                </div>
+              ))}
+            </div>
+          );
+        })() : (
         <div style={{ display: 'flex', flexDirection: 'column' }}>
           {(() => {
             let lastKey = '';
@@ -736,6 +782,7 @@ export const NonGroupView: React.FC<NonGroupViewProps> = ({
             )
           )}
         </div>
+        )}
       </div>
     );
   }
