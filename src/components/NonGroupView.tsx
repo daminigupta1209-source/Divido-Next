@@ -178,7 +178,7 @@ export const NonGroupView: React.FC<NonGroupViewProps> = ({
   searchQuery = '',
 }) => {
   // Bottom toggle on the front page: Settle | Photos (swipe left/right).
-  const [activeTab, setActiveTab] = React.useState<'settle' | 'photos'>('settle');
+  const [activeTab, setActiveTab] = React.useState<'activity' | 'photos'>('activity');
   // Which person's full profile page is open (tapping their DP/avatar).
   // Remembered for this tab so a refresh stays on that person's screen.
   const [profilePerson, setProfilePerson] = React.useState<string | null>(() => { try { return sessionStorage.getItem('dv_ng_person') || null; } catch { return null; } });
@@ -783,7 +783,7 @@ export const NonGroupView: React.FC<NonGroupViewProps> = ({
     // Horizontal swipe only (ignore vertical scrolls).
     if (Math.abs(dx) < 50 || Math.abs(dx) < Math.abs(dy)) return;
     if (dx < 0) setActiveTab('photos');
-    else setActiveTab('settle');
+    else setActiveTab('activity');
   };
 
   return (
@@ -823,9 +823,9 @@ export const NonGroupView: React.FC<NonGroupViewProps> = ({
           payLines={frontPayLines}
           collectLines={frontCollectLines}
           active={balFilter}
-          onSummaryFilter={(f) => { setBalFilter(f === 'all' ? null : f); setActiveTab('settle'); }}
-          onPayClick={() => { setBalFilter((f) => (f === 'pay' ? null : 'pay')); setActiveTab('settle'); }}
-          onCollectClick={() => { setBalFilter((f) => (f === 'collect' ? null : 'collect')); setActiveTab('settle'); }}
+          onSummaryFilter={(f) => setBalFilter(f === 'all' ? null : f)}
+          onPayClick={() => setBalFilter((f) => (f === 'pay' ? null : 'pay'))}
+          onCollectClick={() => setBalFilter((f) => (f === 'collect' ? null : 'collect'))}
         />
         {balFilter && (
           <button
@@ -877,48 +877,8 @@ export const NonGroupView: React.FC<NonGroupViewProps> = ({
         </div>
       )}
 
-      {/* Settle / Photos toggle (swipeable) — matches the home Groups/Activities tabs */}
-      <div style={{ marginBottom: '14px', marginTop: '4px' }}>
-        <div
-          style={{
-            display: 'flex',
-            background: '#F1F5F9',
-            border: '1px solid #E2E8F0',
-            borderRadius: '999px',
-            padding: '3px',
-            gap: '2px',
-          }}
-        >
-          {([{ id: 'settle', label: 'Settle' }, { id: 'photos', label: 'Photos' }] as const).map((tab) => {
-            const isActive = tab.id === activeTab;
-            return (
-              <button
-                key={tab.id}
-                onClick={() => setActiveTab(tab.id)}
-                style={{
-                  flex: 1,
-                  position: 'relative',
-                  border: 'none',
-                  background: isActive ? '#FFFFFF' : 'transparent',
-                  color: isActive ? '#0F172A' : '#64748B',
-                  fontWeight: isActive ? 700 : 600,
-                  fontSize: '14px',
-                  borderRadius: '999px',
-                  padding: '7px 0',
-                  cursor: 'pointer',
-                  boxShadow: isActive ? '0 2px 6px rgba(0,0,0,0.08)' : 'none',
-                  transition: '0.2s all ease',
-                }}
-              >
-                {tab.label}
-              </button>
-            );
-          })}
-        </div>
-      </div>
-
-      <div style={{ minHeight: '80px' }}>
-        {activeTab === 'settle' ? (
+      {/* People: You + everyone I share non-group expenses with */}
+      <div style={{ marginBottom: '18px' }}>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
             {showPersonalRow && (
               <div
@@ -1022,6 +982,89 @@ export const NonGroupView: React.FC<NonGroupViewProps> = ({
                 })}
               </>
             )}
+          </div>
+      </div>
+
+      {/* Activities / Photos toggle (swipeable) — like the group page */}
+      <div style={{ marginBottom: '14px', marginTop: '4px' }}>
+        <div
+          style={{
+            display: 'flex',
+            background: '#F1F5F9',
+            border: '1px solid #E2E8F0',
+            borderRadius: '999px',
+            padding: '3px',
+            gap: '2px',
+          }}
+        >
+          {([{ id: 'activity', label: 'Activities' }, { id: 'photos', label: 'Photos' }] as const).map((tab) => {
+            const isActive = tab.id === activeTab;
+            return (
+              <button
+                key={tab.id}
+                onClick={() => setActiveTab(tab.id)}
+                style={{
+                  flex: 1,
+                  position: 'relative',
+                  border: 'none',
+                  background: isActive ? '#FFFFFF' : 'transparent',
+                  color: isActive ? '#0F172A' : '#64748B',
+                  fontWeight: isActive ? 700 : 600,
+                  fontSize: '14px',
+                  borderRadius: '999px',
+                  padding: '7px 0',
+                  cursor: 'pointer',
+                  boxShadow: isActive ? '0 2px 6px rgba(0,0,0,0.08)' : 'none',
+                  transition: '0.2s all ease',
+                }}
+              >
+                {tab.label}
+              </button>
+            );
+          })}
+        </div>
+      </div>
+
+      <div style={{ minHeight: '80px' }}>
+        {activeTab === 'activity' ? (
+          <div style={{ display: 'flex', flexDirection: 'column' }}>
+            {(() => {
+              const sorted = [...nonGroupExps].sort((a, b) => String(b.date || '').localeCompare(String(a.date || '')) || (b.timestamp || 0) - (a.timestamp || 0));
+              const list = searchLower
+                ? sorted.filter((e) => (e.title || '').toLowerCase().includes(searchLower) || (e.splitters || []).some((n) => cleanName(n).toLowerCase().includes(searchLower)) || cleanName(e.paid || '').toLowerCase().includes(searchLower) || matchesAmount(searchLower, [[e.currency || defaultCurrency, Number(e.amt) || 0]]))
+                : sorted;
+              if (list.length === 0) {
+                return <p style={{ fontSize: '13px', color: '#94A3B8', textAlign: 'center', padding: '24px 0' }}>{searchLower ? `Nothing matches "${searchQuery.trim()}".` : 'No activities yet.'}</p>;
+              }
+              let lastKey = '';
+              const rows: React.ReactNode[] = [];
+              list.forEach((e) => {
+                const { key, label } = getMonthYearKey(e.date, e.id);
+                if (key !== lastKey) {
+                  lastKey = key;
+                  rows.push(<div key={`amh-${key}`} style={{ fontSize: '11px', fontWeight: 700, letterSpacing: '0.5px', color: '#94A3B8', margin: '8px 2px 8px' }}>{label}</div>);
+                }
+                const curr = e.currency || defaultCurrency;
+                const iPaid = isMe(e.paid);
+                const isSettlement = (e.title || '').includes('Settlement') || (e.title || '').includes('Payment Recorded') || e.category === '💸' || e.category === '✅' || e.category === '🤝';
+                const cleanTitle = isSettlement ? 'Settlement' : (e.title || '').replace(/\s*💎\s*$/, '').trim();
+                const emoji = isSettlement ? '💸' : (getEmoji(e.title) || '⚡');
+                // Who it was with: the other person, or "Personal" for self-only.
+                const others = [cleanName(e.paid || ''), ...(e.splitters || []).map((n) => cleanName(n))].filter((n) => n && !isMe(n));
+                const withWho = others.length ? shown(others[0]) : 'Personal';
+                rows.push(
+                  <div key={e.id} className="hover-up-mini" onClick={() => onOpenExpense(e)} style={{ display: 'flex', alignItems: 'center', gap: '12px', background: '#FFFFFF', border: '0.5px solid #EFE7DC', borderRadius: '14px', padding: '12px 14px', boxShadow: '0 2px 10px rgba(0,0,0,0.03)', cursor: 'pointer', marginBottom: '12px' }}>
+                    <div style={{ width: '34px', height: '34px', borderRadius: '50%', background: '#F1EFE8', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '15px', flexShrink: 0 }}>{emoji}</div>
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <div style={{ fontSize: '14px', fontWeight: 500, color: '#0F172A', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{cleanTitle}</div>
+                      <div style={{ fontSize: '11px', color: '#94A3B8', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', textTransform: 'none' }}>{iPaid ? 'You paid' : `${shown(cleanName(e.paid))} paid`} · <span style={{ textTransform: 'capitalize' }}>{withWho}</span> · {formatDate(e.date)}</div>
+                    </div>
+                    <span style={{ fontSize: '14px', fontWeight: 600, color: '#0F172A', flexShrink: 0 }}>{curr} {formatExactAmount(Number(e.amt) || 0)}</span>
+                  </div>
+                );
+              });
+              return rows;
+            })()}
           </div>
         ) : photos.length === 0 ? (
           <p style={{ fontSize: '13px', color: '#94A3B8', textAlign: 'center', padding: '24px 0' }}>
