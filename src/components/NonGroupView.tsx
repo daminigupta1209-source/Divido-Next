@@ -406,6 +406,15 @@ export const NonGroupView: React.FC<NonGroupViewProps> = ({
 
   // Pictures are stored by email (member_avatars); name is the fallback.
   const avatarFor = (name: string, email?: string) => (email && memberAvatars?.[email.trim().toLowerCase()]) || memberAvatars?.[name] || memberAvatars?.[cleanName(name)] || '';
+  // Pictures load a moment after a refresh: re-send the open person's DP to
+  // the header once it arrives (the open-screen effect only sends it once).
+  const openPersonEmail = profilePerson ? people.find((x) => x.name.toLowerCase() === profilePerson.toLowerCase())?.email || '' : '';
+  const openPersonAvatar = profilePerson ? avatarFor(profilePerson, openPersonEmail) : '';
+  React.useEffect(() => {
+    if (!profilePerson || !openPersonAvatar) return;
+    window.dispatchEvent(new CustomEvent('divido:nongroup-person', { detail: { open: !!onSharePerson, name: shown(profilePerson), email: openPersonEmail, avatar: openPersonAvatar, avatarBg: AVATAR_BG[(cleanName(profilePerson).charCodeAt(0) || 0) % AVATAR_BG.length] } }));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [profilePerson, openPersonAvatar, openPersonEmail]);
   const Avatar: React.FC<{ name: string; email?: string; size?: number }> = ({ name, email, size = 38 }) => {
     const url = avatarFor(name, email);
     if (url) {
