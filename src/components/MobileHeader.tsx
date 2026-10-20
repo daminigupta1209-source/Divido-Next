@@ -1097,7 +1097,12 @@ export const MobileHeader: React.FC<MobileHeaderProps> = ({
                   }}
                 >
                   <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                    {view === 'summary' && `Hi ${me}!`}
+                    {/* Home greeting opens your Profile. */}
+                    {view === 'summary' && (
+                      <span role="button" aria-label="Open profile" onClick={() => setView('profile')} style={{ cursor: 'pointer' }}>
+                        {`Hi ${me}!`}
+                      </span>
+                    )}
                     {view === 'groups' && 'Your Groups'}
                     {view === 'friends' && 'All balances'}
                     {view === 'activity' && 'All Activities'}
