@@ -1639,7 +1639,11 @@ function App() {
       try {
         await (navigator as any).share({ title: 'Divido — shared expenses', text: shareText, url: link });
         return;
-      } catch { /* user dismissed, or share unavailable — fall through to copy */ }
+      } catch (err) {
+        // Dismissed the sheet (back-swipe / tap outside): do nothing. Only a
+        // real share failure falls through to copying the link.
+        if ((err as { name?: string })?.name === 'AbortError') return;
+      }
     }
     // Desktop / no share support: copy the link and show it.
     try { await navigator.clipboard.writeText(link); alert('Invite link copied:\n\n' + link); } catch { alert(link); }
