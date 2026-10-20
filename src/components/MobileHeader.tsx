@@ -290,8 +290,18 @@ export const MobileHeader: React.FC<MobileHeaderProps> = ({
   const [nonGroupPersonEmail, setNonGroupPersonEmail] = React.useState('');
   // Open person's DP (or initial on their colour) replaces the Non-Group icon.
   const [nonGroupPersonAvatar, setNonGroupPersonAvatar] = React.useState<{ url: string; bg: string }>({ url: '', bg: '' });
-  // Tapping 'With <first name>' shows the full name + email.
+  // Shared-thread status of the open person (details page chip).
+  const [nonGroupPersonStatus, setNonGroupPersonStatus] = React.useState<'private' | 'pending' | 'joined'>('private');
+  // Tapping 'With <first name>' opens a details page (like Edit Group).
   const [showPersonCard, setShowPersonCard] = React.useState(false);
+  // Phone back closes the details page (back onto the person's screen).
+  React.useEffect(() => {
+    if (!showPersonCard) return;
+    window.history.pushState({ dividoNonGroupProfile: true, dividoPersonDetails: true }, '');
+    const onPop = () => setShowPersonCard(false);
+    window.addEventListener('popstate', onPop);
+    return () => window.removeEventListener('popstate', onPop);
+  }, [showPersonCard]);
   React.useEffect(() => {
     const on = (e: Event) => {
       const d = (e as CustomEvent).detail;
@@ -300,7 +310,8 @@ export const MobileHeader: React.FC<MobileHeaderProps> = ({
       setNonGroupPersonName(typeof d?.name === 'string' ? d.name : '');
       setNonGroupPersonEmail(typeof d?.email === 'string' ? d.email : '');
       setNonGroupPersonAvatar({ url: typeof d?.avatar === 'string' ? d.avatar : '', bg: typeof d?.avatarBg === 'string' ? d.avatarBg : '' });
-      setShowPersonCard(false);
+      setNonGroupPersonStatus(d?.status === 'joined' || d?.status === 'pending' ? d.status : 'private');
+      if (!d?.name) setShowPersonCard(false);
     };
     window.addEventListener('divido:nongroup-person', on);
     return () => window.removeEventListener('divido:nongroup-person', on);
@@ -631,13 +642,67 @@ export const MobileHeader: React.FC<MobileHeaderProps> = ({
                     </span>
                   </h1>
                   {showPersonCard && selectedId === 'STANDALONE' && nonGroupPersonName && createPortal(
-                    <div onClick={() => setShowPersonCard(false)} style={{ position: 'fixed', inset: 0, zIndex: 10000, background: 'rgba(15,23,42,0.35)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '16px' }}>
-                      <div onClick={(e) => e.stopPropagation()} style={{ background: '#FFFFFF', borderRadius: '18px', padding: '20px 22px', width: '100%', maxWidth: '320px', textAlign: 'center', boxShadow: '0 12px 32px rgba(15,23,42,0.18)', position: 'relative' }}>
-                        <button type="button" aria-label="Close" onClick={() => setShowPersonCard(false)} style={{ position: 'absolute', top: '10px', right: '10px', background: 'none', border: 'none', fontSize: '18px', color: '#94A3B8', cursor: 'pointer' }}>✕</button>
-                        <div style={{ fontSize: '17px', fontWeight: 600, color: '#0F172A', textTransform: 'capitalize', wordBreak: 'break-word' }}>{nonGroupPersonName}</div>
-                        {nonGroupPersonEmail && <div style={{ fontSize: '13px', color: '#64748B', marginTop: '4px', wordBreak: 'break-all' }}>{nonGroupPersonEmail}</div>}
-                      </div>
-                    </div>,
+                    // Read-only details page, laid out like Edit Group: the
+                    // person (no editable name/currency in Non-Group) + who's in it.
+                    (() => {
+                      const label: React.CSSProperties = { display: 'block', fontSize: '12px', fontWeight: 850, color: 'var(--g)', marginBottom: '8px', textTransform: 'uppercase', letterSpacing: '0.8px' };
+                      const chip = (text: string, c: string, bg: string) => (
+                        <span style={{ fontSize: '10px', fontWeight: 600, color: c, background: bg, padding: '2px 9px', borderRadius: '999px', flexShrink: 0 }}>{text}</span>
+                      );
+                      const theirChip = nonGroupPersonStatus === 'joined'
+                        ? chip('Joined', '#059669', '#D1FAE5')
+                        : nonGroupPersonStatus === 'pending'
+                          ? chip('Invited', '#B45309', '#FEF3C7')
+                          : chip('Not shared', '#64748B', '#F1F5F9');
+                      const firstName = nonGroupPersonName.split(' ')[0];
+                      const row: React.CSSProperties = { display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '10px', padding: '13px 16px' };
+                      return (
+                        <div style={{ position: 'fixed', inset: 0, zIndex: 10000, background: 'var(--bg)', overflowY: 'auto', padding: '20px 16px calc(24px + env(safe-area-inset-bottom))', boxSizing: 'border-box', display: 'flex', flexDirection: 'column', gap: '22px' }}>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                            <button type="button" aria-label="Back" onClick={() => window.history.back()} style={{ background: 'none', border: 'none', color: 'var(--t)', cursor: 'pointer', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: '32px', height: '32px', marginLeft: '-6px', padding: 0 }}>
+                              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.8" strokeLinecap="round" strokeLinejoin="round" style={{ width: '18px', height: '18px' }}><polyline points="15 18 9 12 15 6" /></svg>
+                            </button>
+                            <h1 style={{ fontSize: '20px', fontWeight: 600, color: 'var(--t)', margin: 0 }}>Details</h1>
+                          </div>
+
+                          <div>
+                            <label style={label}>Name</label>
+                            <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
+                              <div style={{ width: '54px', height: '54px', borderRadius: '50%', overflow: 'hidden', flexShrink: 0, background: nonGroupPersonAvatar.bg || '#8B5CF6', color: '#FFFFFF', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '22px', fontWeight: 600 }}>
+                                {nonGroupPersonAvatar.url
+                                  ? <img src={nonGroupPersonAvatar.url} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                                  : nonGroupPersonName.charAt(0).toUpperCase()}
+                              </div>
+                              <div style={{ flex: 1, minWidth: 0, minHeight: '54px', borderRadius: '16px', background: '#FFFFFF', border: '1.5px solid var(--border)', padding: '8px 16px', boxSizing: 'border-box', display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
+                                <div style={{ fontSize: '16px', fontWeight: 700, color: 'var(--t)', textTransform: 'capitalize', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{nonGroupPersonName}</div>
+                                {nonGroupPersonEmail && <div style={{ fontSize: '12px', color: '#64748B', marginTop: '2px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{nonGroupPersonEmail}</div>}
+                              </div>
+                            </div>
+                          </div>
+
+                          <div>
+                            <label style={label}>Friends</label>
+                            <div style={{ borderRadius: '16px', background: '#FFFFFF', border: '1.5px solid var(--border)', overflow: 'hidden' }}>
+                              <div style={{ ...row, borderBottom: '1px solid #F1F5F9' }}>
+                                <span style={{ fontSize: '14px', fontWeight: 600, color: 'var(--t)' }}>You</span>
+                                {chip('You', '#7C3AED', '#EDE9FE')}
+                              </div>
+                              <div style={row}>
+                                <span style={{ fontSize: '14px', fontWeight: 600, color: 'var(--t)', textTransform: 'capitalize', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{nonGroupPersonName}</span>
+                                {theirChip}
+                              </div>
+                            </div>
+                            {nonGroupPersonStatus !== 'joined' && (
+                              <p style={{ fontSize: '12px', color: '#94A3B8', margin: '8px 2px 0' }}>
+                                {nonGroupPersonStatus === 'pending'
+                                  ? `${firstName} hasn't opened your link yet.`
+                                  : `Only you can see these. Use Share to invite ${firstName}.`}
+                              </p>
+                            )}
+                          </div>
+                        </div>
+                      );
+                    })(),
                     document.body
                   )}
                 </>

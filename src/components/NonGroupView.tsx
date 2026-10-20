@@ -295,7 +295,7 @@ export const NonGroupView: React.FC<NonGroupViewProps> = ({
     const onSharePersonEv = () => {
       if (onSharePerson) onSharePerson(profilePerson, profilePersonThread.current);
     };
-    window.dispatchEvent(new CustomEvent('divido:nongroup-person', { detail: { open: !!onSharePerson, name: shown(profilePerson), email: people.find((x) => x.name.toLowerCase() === profilePerson.toLowerCase())?.email || '', avatar: avatarFor(profilePerson, people.find((x) => x.name.toLowerCase() === profilePerson.toLowerCase())?.email), avatarBg: AVATAR_BG[(cleanName(profilePerson).charCodeAt(0) || 0) % AVATAR_BG.length] } }));
+    window.dispatchEvent(new CustomEvent('divido:nongroup-person', { detail: { open: !!onSharePerson, name: shown(profilePerson), email: people.find((x) => x.name.toLowerCase() === profilePerson.toLowerCase())?.email || '', avatar: avatarFor(profilePerson, people.find((x) => x.name.toLowerCase() === profilePerson.toLowerCase())?.email), avatarBg: AVATAR_BG[(cleanName(profilePerson).charCodeAt(0) || 0) % AVATAR_BG.length], status: personStatus(profilePerson) } }));
     window.addEventListener('divido:share-person', onSharePersonEv);
     window.addEventListener('popstate', onPop);
     window.addEventListener('divido:header-back', onHeaderBack);
@@ -424,6 +424,14 @@ export const NonGroupView: React.FC<NonGroupViewProps> = ({
     );
   const showPersonalRow = !balFilter && personalMatchesSearch;
 
+  // Header details page chip: no shared thread yet → 'private'; shared but
+  // not claimed → 'pending'; claimed → 'joined'.
+  const personStatus = (name: string): 'private' | 'pending' | 'joined' => {
+    const p = people.find((x) => x.name.toLowerCase() === name.toLowerCase());
+    if (!p?.directGroupId) return 'private';
+    return p.pending ? 'pending' : 'joined';
+  };
+
   // Pictures are stored by email (member_avatars); name is the fallback.
   const avatarFor = (name: string, email?: string) => (email && memberAvatars?.[email.trim().toLowerCase()]) || memberAvatars?.[name] || memberAvatars?.[cleanName(name)] || '';
   // Pictures load a moment after a refresh: re-send the open person's DP to
@@ -432,7 +440,7 @@ export const NonGroupView: React.FC<NonGroupViewProps> = ({
   const openPersonAvatar = profilePerson ? avatarFor(profilePerson, openPersonEmail) : '';
   React.useEffect(() => {
     if (!profilePerson || !openPersonAvatar) return;
-    window.dispatchEvent(new CustomEvent('divido:nongroup-person', { detail: { open: !!onSharePerson, name: shown(profilePerson), email: openPersonEmail, avatar: openPersonAvatar, avatarBg: AVATAR_BG[(cleanName(profilePerson).charCodeAt(0) || 0) % AVATAR_BG.length] } }));
+    window.dispatchEvent(new CustomEvent('divido:nongroup-person', { detail: { open: !!onSharePerson, name: shown(profilePerson), email: openPersonEmail, avatar: openPersonAvatar, avatarBg: AVATAR_BG[(cleanName(profilePerson).charCodeAt(0) || 0) % AVATAR_BG.length], status: personStatus(profilePerson) } }));
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [profilePerson, openPersonAvatar, openPersonEmail]);
   const Avatar: React.FC<{ name: string; email?: string; size?: number }> = ({ name, email, size = 38 }) => {
