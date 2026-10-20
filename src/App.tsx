@@ -4947,6 +4947,27 @@ function App() {
             onClearAll={clearAllNonGroup}
             onCleanupEmpty={cleanupEmptyThreads}
             onDeletePerson={deletePersonNonGroup}
+            onRequestDeletePerson={({ name, balanceText, onSettle, onDelete }) => {
+              // Same rule as groups: a live balance can't just be deleted away.
+              // The only way out is Settle up; once it's zero, Delete is allowed.
+              if (balanceText) {
+                setBalanceCard({
+                  title: `Delete Non-Group with ${name}?`,
+                  desc: `You still have ${balanceText} here. Settle up before deleting.`,
+                  primaryLabel: 'Settle up →',
+                  primaryColor: '#10B981',
+                  onPrimary: () => { setBalanceCard(null); onSettle(); },
+                });
+                return;
+              }
+              setConfirmState({
+                show: true,
+                title: 'Delete Non-Group?',
+                desc: `Delete all expenses with ${name}? This can't be undone.`,
+                type: 'danger',
+                onConfirm: () => { onDelete(); setConfirmState({ show: false }); },
+              });
+            }}
             onSharePerson={(name) => { sharePersonNonGroupBeta(name, ''); }}
             onRemindPerson={async (name) => {
               const clean = name.replace(/\s*\(Left\)$/i, '').trim();

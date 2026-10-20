@@ -33,6 +33,9 @@ interface NonGroupViewProps {
   onClearAll?: () => void;
   onCleanupEmpty?: () => void;
   onDeletePerson?: (name: string, directGroupId?: string) => void;
+  // Options sheet → "Delete Non-Group" on a person's screen. balanceText is ''
+  // when settled; otherwise the parent blocks the delete behind Settle up.
+  onRequestDeletePerson?: (req: { name: string; balanceText: string; onSettle: () => void; onDelete: () => void }) => void;
   // Header search text: filters the people list by name, email or expense name.
   searchQuery?: string;
 }
@@ -174,6 +177,7 @@ export const NonGroupView: React.FC<NonGroupViewProps> = ({
   onClearAll,
   onCleanupEmpty,
   onDeletePerson,
+  onRequestDeletePerson,
   onSharePerson,
   searchQuery = '',
 }) => {
@@ -374,6 +378,15 @@ export const NonGroupView: React.FC<NonGroupViewProps> = ({
     return () => window.removeEventListener('divido:nongroup-share', on);
   }, [profilePerson, onSharePerson]);
 
+  // Options sheet → "Delete Non-Group": the open person's request is rebuilt
+  // every render (below), so the listener always sees the current balance.
+  const deleteRequestRef = React.useRef<(() => void) | null>(null);
+  React.useEffect(() => {
+    const on = () => deleteRequestRef.current?.();
+    window.addEventListener('divido:nongroup-delete', on);
+    return () => window.removeEventListener('divido:nongroup-delete', on);
+  }, []);
+
   const searchLower = searchQuery.trim().toLowerCase();
   const [balFilter, setBalFilter] = React.useState<'pay' | 'collect' | null>(null);
   const shownPeople = React.useMemo(() => {
@@ -463,6 +476,9 @@ export const NonGroupView: React.FC<NonGroupViewProps> = ({
     const color = lines[0].amount > 0 ? '#047857' : '#B91C1C';
     return { text, color };
   };
+
+  // Only a person's screen (set below) offers Delete.
+  deleteRequestRef.current = null;
 
   // ── Personal (self-only) expenses — tap the pinned "You" row ────────────────
   if (personalMode) {
@@ -667,6 +683,19 @@ export const NonGroupView: React.FC<NonGroupViewProps> = ({
     })
       // Newest date first so each month heading appears once.
       .sort((a, b) => String(b.date || '').localeCompare(String(a.date || '')) || (b.timestamp || 0) - (a.timestamp || 0));
+    const deleteThread = () => {
+      if (!onDeletePerson) return;
+      (p?.aliases || [profilePerson]).forEach((a, i) => onDeletePerson(a, i === 0 ? p?.directGroupId : undefined));
+      setProfilePerson(null);
+    };
+    deleteRequestRef.current = onRequestDeletePerson && onDeletePerson
+      ? () => onRequestDeletePerson({
+          name: shown(profilePerson),
+          balanceText: lines.map((l) => `${l.curr}${formatExactAmount(Math.abs(l.amount))} to ${l.amount < 0 ? 'pay' : 'collect'}`).join(', '),
+          onSettle: () => onSettlePerson(profilePerson, p?.directGroupId),
+          onDelete: deleteThread,
+        })
+      : null;
     return (
       <div
         className="content-width-limit"
@@ -781,10 +810,7 @@ export const NonGroupView: React.FC<NonGroupViewProps> = ({
               <button
                 type="button"
                 onClick={() => {
-                  if (window.confirm(`Delete all expenses with ${profilePerson}? This can't be undone.`)) {
-                    (p?.aliases || [profilePerson]).forEach((a, i) => onDeletePerson(a, i === 0 ? p?.directGroupId : undefined));
-                    setProfilePerson(null);
-                  }
+                  if (window.confirm(`Delete all expenses with ${profilePerson}? This can't be undone.`)) deleteThread();
                 }}
                 style={{ display: 'block', margin: '8px auto 2px', background: 'none', border: 'none', color: '#94A3B8', fontSize: '11.5px', fontWeight: 500, cursor: 'pointer', textAlign: 'center' }}
                 onMouseEnter={(ev) => (ev.currentTarget.style.color = '#EF4444')}

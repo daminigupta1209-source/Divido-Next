@@ -1005,6 +1005,11 @@ export const MobileHeader: React.FC<MobileHeaderProps> = ({
                       if (setAnalyticsGroupId) setAnalyticsGroupId(selectedId);
                       setView('analytics');
                     }}
+                    // Only with a person's screen open (never the whole bucket).
+                    onDeleteNonGroup={selectedId === 'STANDALONE' && nonGroupPersonName && !nonGroupPersonalOpen ? () => {
+                      setMobileShowGroupOptionsMenu(false);
+                      window.dispatchEvent(new Event('divido:nongroup-delete'));
+                    } : undefined}
                     // The You (personal) page is only mine: nothing to share.
                     onShareLink={nonGroupPersonalOpen ? undefined : () => {
                       setMobileShowGroupOptionsMenu(false);

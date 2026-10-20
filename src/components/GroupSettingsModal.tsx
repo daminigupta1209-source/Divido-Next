@@ -20,6 +20,8 @@ interface GroupSettingsModalProps {
   // Non-Group is a bucket, not a real group: no Leave/Delete (that would wipe
   // every non-group expense).
   isNonGroup?: boolean;
+  // Non-Group with one person open: delete that thread (settle-up gated).
+  onDeleteNonGroup?: () => void;
 }
 
 export const GroupSettingsModal: React.FC<GroupSettingsModalProps> = ({
@@ -37,6 +39,7 @@ export const GroupSettingsModal: React.FC<GroupSettingsModalProps> = ({
   onNewGroup,
   userMetadata = {},
   isNonGroup = false,
+  onDeleteNonGroup,
 }) => {
   const [isVisible, setIsVisible] = useState(false);
 
@@ -248,6 +251,37 @@ export const GroupSettingsModal: React.FC<GroupSettingsModalProps> = ({
                 <line x1="21" y1="12" x2="9" y2="12" />
               </svg>
               {isActiveMember ? (activeMembersCount > 1 ? 'Leave Group' : 'Delete Group') : 'Delete Group for Me'}
+            </button>
+          )}
+
+          {isNonGroup && onDeleteNonGroup && (
+            <button
+              onClick={() => { handleClose(); onDeleteNonGroup(); }}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'flex-start',
+                gap: '12px',
+                padding: '12px 8px',
+                background: 'transparent',
+                border: 'none',
+                cursor: 'pointer',
+                fontSize: '13px',
+                fontWeight: 500,
+                color: '#EF4444',
+                transition: 'background-color 0.15s',
+                marginTop: '8px',
+              }}
+              onMouseEnter={(e) => (e.currentTarget.style.background = '#FEF2F2')}
+              onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}
+            >
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ width: '18px', height: '18px', color: '#EF4444' }}>
+                <polyline points="3 6 5 6 21 6" />
+                <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6" />
+                <path d="M10 11v6M14 11v6" />
+                <path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2" />
+              </svg>
+              Delete Non-Group
             </button>
           )}
 
