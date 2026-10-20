@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
-import { computeNonGroupPeople, makeIsMe } from './nonGroupPeople';
-import { Expense } from './types';
+import { buildDirectThreads, computeNonGroupPeople, makeIsMe } from './nonGroupPeople';
+import { Expense, Group } from './types';
 
 const mkExp = (o: Partial<Expense>): Expense =>
   ({ id: 'e', gId: 'STANDALONE', title: 't', amt: 0, paid: '', date: '2026-01-01', mode: 'Equally', splitters: [], ...o } as unknown as Expense);
@@ -71,5 +71,19 @@ describe('computeNonGroupPeople (same email, different names)', () => {
     const out = computeNonGroupPeople(exps, [], makeIsMe('Chirag'), getBal);
     expect(out.map((p) => p.name)).toEqual(['Damini Gupta', 'Rahul']);
     expect(out.find((p) => p.name === 'Rahul')!.count).toBe(2);
+  });
+});
+
+describe('buildDirectThreads (joiner kept the sharer-typed name)', () => {
+  it('finds MY spot by email and reports it as myName, the sharer as otherName', () => {
+    const g = {
+      id: 'T1', name: 'Damini & Swami Chinmayanand', currency: '₹', isDirect: true,
+      members: ['Damini', 'Swami Chinmayanand'], pendingMembers: [],
+      memberIdentities: { Damini: 'damini@example.com', 'Swami Chinmayanand': 'chirag@example.com' },
+    } as unknown as Group;
+    const [t] = buildDirectThreads([g], 'Chirag', 'Chirag Gupta', 'chirag@example.com');
+    expect(t.otherName).toBe('Damini');
+    expect(t.myName).toBe('Swami Chinmayanand');
+    expect(t.pending).toBe(false);
   });
 });

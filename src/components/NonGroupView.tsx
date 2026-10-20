@@ -2,7 +2,7 @@ import React from 'react';
 import { shown } from '../lib/identity';
 import { NetBalanceTiles } from './NetBalanceTiles';
 import type { Expense } from '../lib/types';
-import { computeNonGroupPeople } from '../lib/nonGroupPeople';
+import { computeNonGroupPeople, type DirectThread } from '../lib/nonGroupPeople';
 import { getPersonalExpenses, personalSpendByCurrency, filterByPeriod, periodLabel, filterByDayRange, customRangeLabel, todayDayKey, type SpendPeriod } from '../lib/personalExpenses';
 import { formatDate, getEmoji, formatExactAmount, getMonthYearKey, matchesAmount } from '../lib/utils';
 import { NonGroupPhotoUpload, type NonGroupPhoto } from './NonGroupPhotoUpload';
@@ -20,10 +20,10 @@ interface NonGroupViewProps {
   // Hidden 2-person "direct" groups = shared non-group threads. Their expenses
   // are shown here alongside plain STANDALONE ones so a person never disappears
   // from this screen after being shared/invited.
-  directThreads?: { groupId: string; otherName: string; email: string; pending: boolean }[];
+  directThreads?: DirectThread[];
   onBack: () => void;
   onOpenExpense: (exp: Expense) => void;
-  onSettlePerson: (name: string, directGroupId?: string) => void;
+  onSettlePerson: (name: string, directGroupId?: string, email?: string) => void;
   onRemindPerson?: (name: string) => void;
   onAddWithPerson?: (name: string, directGroupId?: string) => void;
   onAddPersonal?: () => void;
@@ -205,6 +205,10 @@ export const NonGroupView: React.FC<NonGroupViewProps> = ({
   const touchStartY = React.useRef<number | null>(null);
 
   const meLower = cleanName(me).toLowerCase();
+  // My name inside each shared thread (the sharer's label for me, e.g.
+  // "Swami Chinmayanand"), so those expenses read "You paid", not a stranger.
+  // Keyed by string: directThreads is a fresh array on every App render.
+  const myThreadNamesKey = directThreads.map((t) => cleanName(t.myName || '').toLowerCase()).filter(Boolean).join('|');
 
   const isMe = React.useCallback(
     (name: string) => {
@@ -213,9 +217,10 @@ export const NonGroupView: React.FC<NonGroupViewProps> = ({
       if (c === 'you' || c === meLower) return true;
       if (userName && c === cleanName(userName).toLowerCase()) return true;
       if (c.startsWith(meLower + ' ') || c.endsWith(' ' + meLower)) return true;
+      if (myThreadNamesKey && myThreadNamesKey.split('|').includes(c)) return true;
       return false;
     },
-    [meLower, userName]
+    [meLower, userName, myThreadNamesKey]
   );
 
   // Personal (self-only) expenses — paid by me, split only with me.
@@ -732,7 +737,7 @@ export const NonGroupView: React.FC<NonGroupViewProps> = ({
       ? () => onRequestDeletePerson({
           name: shown(profilePerson),
           balanceText: lines.map((l) => `${l.curr}${formatExactAmount(Math.abs(l.amount))} to ${l.amount < 0 ? 'pay' : 'collect'}`).join(', '),
-          onSettle: () => onSettlePerson(profilePerson, p?.directGroupId),
+          onSettle: () => onSettlePerson(profilePerson, p?.directGroupId, p?.email),
           onDelete: deleteThread,
         })
       : null;
@@ -761,7 +766,7 @@ export const NonGroupView: React.FC<NonGroupViewProps> = ({
           collectMore={personCollectLines.length - 1}
           payLines={personPayLines}
           collectLines={personCollectLines}
-          summaryAction={{ label: 'Settle up', onClick: () => onSettlePerson(profilePerson, p?.directGroupId) }}
+          summaryAction={{ label: 'Settle up', onClick: () => onSettlePerson(profilePerson, p?.directGroupId, p?.email) }}
         />
 
         {/* Activities / Photos toggle (swipeable) — like the group page */}

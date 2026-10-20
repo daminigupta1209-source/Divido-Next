@@ -6,7 +6,9 @@ import type { Expense, Group } from './types';
 // name / email in a shared thread — the card then said "Settled up" while the
 // screen showed a real balance.
 
-export type DirectThread = { groupId: string; otherName: string; email: string; pending: boolean };
+// myName: MY member name in this thread (matched by name or email). In a shared
+// thread it's the sharer's label for me, which can differ from my own name.
+export type DirectThread = { groupId: string; otherName: string; email: string; pending: boolean; myName?: string };
 
 export type NonGroupPerson = {
   name: string;
@@ -57,11 +59,13 @@ export const buildDirectThreads = (groups: Group[], me: string, userName?: strin
       };
       const otherRaw = (g.members || []).find((m) => cleanName(m) && !isMe(m)) || '';
       const other = cleanName(otherRaw);
+      const myRaw = (g.members || []).find((m) => cleanName(m) && isMe(m)) || '';
       return {
         groupId: String(g.id),
         otherName: other,
         email: (g.memberIdentities?.[otherRaw] || '').includes('@') ? g.memberIdentities![otherRaw] : '',
         pending: (g.pendingMembers || []).some((pm) => cleanName(pm).toLowerCase() === other.toLowerCase()),
+        myName: cleanName(myRaw),
       };
     })
     .filter((t) => t.otherName);

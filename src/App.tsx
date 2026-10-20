@@ -339,7 +339,7 @@ function App() {
     return false;
   };
 
-  const setGlobalSettleDataSecure = (data: { name: string; gId?: string | number | null } | null) => {
+  const setGlobalSettleDataSecure = (data: GlobalSettleData | null) => {
     if (data && checkPastMemberAndShowRejoin(true)) return;
     setGlobalSettleData(data);
   };
@@ -4489,7 +4489,10 @@ function App() {
           .filter((m: any) => m.id !== p.id && /\(Left\)\s*$/i.test(String(m.name)) &&
             (String(m.user_email || '').toLowerCase() === myEm || String(m.invite_email || '').toLowerCase() === myEm))
           .map((m: any) => m.id);
-        if (profileName && profileName.toLowerCase() !== p.name.toLowerCase()) {
+        // A shared 2-person Non-Group thread KEEPS the sharer's chosen name
+        // (same rule as claimInviteSpot): renaming desynced the expense name
+        // strings, so the sharer's balance / Settle up / Delete broke.
+        if (!linkRequestGroup.is_direct && profileName && profileName.toLowerCase() !== p.name.toLowerCase()) {
           const taken = new Set((mems || [])
             .filter((m: any) => m.id !== p.id && !ownLeftIds.includes(m.id))
             .map((m: any) => String(m.name).replace(/\s*\(Left\)$/i, '').trim().toLowerCase()));
@@ -4537,7 +4540,10 @@ function App() {
         {
           const existing = localStorage.getItem('divido_username');
           const hasRealName = !!existing && !['You', 'Guest', 'undefined', ''].includes(existing.trim());
-          if (!hasRealName) { localStorage.setItem('divido_username', claimName); setUserName(claimName); }
+          // In a shared thread claimName is the sharer's label for you, not
+          // your name — prefer your own profile name for the account.
+          const ownName = linkRequestGroup.is_direct && profileName ? profileName : claimName;
+          if (!hasRealName) { localStorage.setItem('divido_username', ownName); setUserName(ownName); }
         }
         localStorage.setItem('divido_authenticated', 'true');
         localStorage.setItem(`divido_identity_${linkRequestGroup.id}`, claimName);
@@ -4969,7 +4975,10 @@ function App() {
             onBack={() => { setSelectedId(null); setView('summary'); }}
             searchQuery={nonGroupSearch || ''}
             onOpenExpense={(exp) => { setEditingExpenseSecure(exp); setShowExpModalSecure(true); }}
-            onSettlePerson={(name, directGroupId) => setGlobalSettleDataSecure({ name: name.replace(/\s*\(Left\)$/i, '').trim(), gId: directGroupId || 'STANDALONE' })}
+            // A person's balance spans plain Non-Group AND their shared thread, so
+            // settle across both (by email inside the thread, where their name
+            // can differ). Settling only one bucket left an empty settle screen.
+            onSettlePerson={(name, _directGroupId, email) => setGlobalSettleDataSecure({ name: name.replace(/\s*\(Left\)$/i, '').trim(), groups: ['Non-Group'], identity: email || undefined })}
             onAddWithPerson={(name, directGroupId) => quickAddExpenseWithFriend(name, directGroupId)}
             onAddPersonal={() => openPersonalExpense()}
             onAddPhoto={(photo, person) => (person
@@ -6347,7 +6356,9 @@ function App() {
                   globalSettleData.gId === 'STANDALONE'
                     ? 'Non-Group'
                     : groups.find((g) => String(g.id) === String(globalSettleData.gId))?.name || 'group'
-                }` : 'Breakdown across all shared groups'}
+                }` : globalSettleData.groups?.length === 1 && globalSettleData.groups[0] === 'Non-Group'
+                  ? 'Breakdown for Non-Group'
+                  : 'Breakdown across all shared groups'}
               </p>
             </div>
 
