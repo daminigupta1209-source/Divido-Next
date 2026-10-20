@@ -54,6 +54,23 @@ export const GroupGallery: React.FC<GroupGalleryProps> = ({
     }
   }, [activePhotoIndex, onPhotoViewerChange]);
 
+  // Phone back closes the open photo, not the whole group. Opening pushes a
+  // copy of the current entry (same group + tab, so App's back handler keeps
+  // the screen as is); popping it closes the viewer.
+  const photoViewerOpen = activePhotoIndex !== null;
+  React.useEffect(() => {
+    if (!photoViewerOpen) return;
+    window.history.pushState({ ...(window.history.state || {}), dividoPhotoViewer: true }, '');
+    const onPop = () => setActivePhotoIndex(null);
+    window.addEventListener('popstate', onPop);
+    return () => window.removeEventListener('popstate', onPop);
+  }, [photoViewerOpen]);
+  // ✕ / tap outside: go back through that entry so none is left behind.
+  const closePhotoViewer = () => {
+    if (window.history.state?.dividoPhotoViewer) window.history.back();
+    else setActivePhotoIndex(null);
+  };
+
   // Filter states
   const [localSearchQuery, setLocalSearchQuery] = useState('');
   const [localShowFilters, setLocalShowFilters] = useState(false);
@@ -497,10 +514,10 @@ export const GroupGallery: React.FC<GroupGalleryProps> = ({
             padding: '24px',
             animation: 'fadeIn 0.2s ease-out',
           }}
-          onClick={() => setActivePhotoIndex(null)}
+          onClick={closePhotoViewer}
         >
           <button
-            onClick={() => setActivePhotoIndex(null)}
+            onClick={closePhotoViewer}
             style={{
               position: 'absolute', top: '24px', right: '24px',
               background: '#F1F5F9', border: 'none', color: '#475569', fontSize: '20px', cursor: 'pointer',
