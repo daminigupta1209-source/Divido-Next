@@ -5,6 +5,7 @@ import type { Expense } from '../lib/types';
 import { computeNonGroupPeople } from '../lib/nonGroupPeople';
 import { getPersonalExpenses, personalSpendByCurrency, filterByPeriod, periodLabel, filterByDayRange, customRangeLabel, todayDayKey, type SpendPeriod } from '../lib/personalExpenses';
 import { formatDate, getEmoji, formatExactAmount, getMonthYearKey, matchesAmount } from '../lib/utils';
+import { NonGroupPhotoUpload, type NonGroupPhoto } from './NonGroupPhotoUpload';
 
 interface NonGroupViewProps {
   expenses: Expense[];
@@ -26,6 +27,9 @@ interface NonGroupViewProps {
   onRemindPerson?: (name: string) => void;
   onAddWithPerson?: (name: string, directGroupId?: string) => void;
   onAddPersonal?: () => void;
+  // Photos tab upload. With a person → their thread; without → a personal
+  // ("You") entry, which the expense form can still split with a friend.
+  onAddPhoto?: (photo: NonGroupPhoto, person?: { name: string; directGroupId?: string }) => void;
   onSharePerson?: (name: string, directGroupId?: string) => void;
   // How many backed-up non-group expenses aren't present locally (for restore).
   backupMissingCount?: number;
@@ -172,6 +176,7 @@ export const NonGroupView: React.FC<NonGroupViewProps> = ({
   onSettlePerson,
   onAddWithPerson,
   onAddPersonal,
+  onAddPhoto,
   backupMissingCount = 0,
   onRestoreBackup,
   onClearAll,
@@ -743,10 +748,15 @@ export const NonGroupView: React.FC<NonGroupViewProps> = ({
 
         {personTab === 'photos' ? (() => {
           const theirPhotos = theirExps.flatMap((e) => (e.attachments || []).map((url) => ({ url, exp: e })));
+          const addTheirPhoto = (photo: NonGroupPhoto) => onAddPhoto?.(photo, { name: profilePerson, directGroupId: profilePersonThread.current });
           return theirPhotos.length === 0 ? (
-            <p style={{ fontSize: '13px', color: '#94A3B8', textAlign: 'center', padding: '24px 0' }}>No photos yet. Attach a receipt to an expense with {shown(profilePerson)} and it'll appear here.</p>
+            <div style={{ textAlign: 'center', padding: '24px 0' }}>
+              {onAddPhoto && <NonGroupPhotoUpload variant="button" onSave={addTheirPhoto} />}
+              <p style={{ fontSize: '13px', color: '#94A3B8', margin: '14px 0 0' }}>No photos yet. Upload one, or attach a receipt to an expense with {shown(profilePerson)}.</p>
+            </div>
           ) : (
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(88px, 1fr))', gap: '8px' }}>
+              {onAddPhoto && <NonGroupPhotoUpload variant="tile" onSave={addTheirPhoto} />}
               {theirPhotos.map((ph, i) => (
                 <div key={`${ph.exp.id}-${i}`} onClick={() => onOpenExpense(ph.exp)} style={{ position: 'relative', aspectRatio: '1', borderRadius: '10px', overflow: 'hidden', cursor: 'pointer', border: '1px solid #E2E8F0' }}>
                   <img src={ph.url} alt={ph.exp.title} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
@@ -1110,11 +1120,15 @@ export const NonGroupView: React.FC<NonGroupViewProps> = ({
             )}
           </div>
         ) : photos.length === 0 ? (
-          <p style={{ fontSize: '13px', color: '#94A3B8', textAlign: 'center', padding: '24px 0' }}>
-            No receipts yet. Attach a photo to a non-group expense and it'll appear here.
-          </p>
+          <div style={{ textAlign: 'center', padding: '24px 0' }}>
+            {onAddPhoto && <NonGroupPhotoUpload variant="button" onSave={(photo) => onAddPhoto(photo)} />}
+            <p style={{ fontSize: '13px', color: '#94A3B8', margin: '14px 0 0' }}>
+              No receipts yet. Upload one, or attach a photo to a non-group expense.
+            </p>
+          </div>
         ) : (
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(88px, 1fr))', gap: '8px' }}>
+            {onAddPhoto && <NonGroupPhotoUpload variant="tile" onSave={(photo) => onAddPhoto(photo)} />}
             {photos.map((ph, i) => (
               <div
                 key={`${ph.exp.id}-${i}`}

@@ -6,6 +6,7 @@ import { getPublicOrigin } from './lib/publicUrl';
 import { Sidebar } from './components/Sidebar';
 import { GroupDetail } from './components/GroupDetail';
 import { NonGroupView } from './components/NonGroupView';
+import type { NonGroupPhoto } from './components/NonGroupPhotoUpload';
 import { GroupsView } from './components/GroupsView';
 import { CreateGroupView } from './components/CreateGroupView';
 import { SettleAmountInput } from './components/SettleAmountInput';
@@ -3814,7 +3815,10 @@ function App() {
   // Quick "add expense with a friend" from the Balances list — opens the expense
   // form prefilled as a Non-Group (standalone) expense split between me + friend,
   // so there's no group/typing step.
-  const quickAddExpenseWithFriend = (friendName: string, directGroupId?: string) => {
+  // With a photo (Non-Group Photos tab upload) the draft carries it as the
+  // receipt; saveOnly drops it straight into the gallery as a 0-amount entry
+  // instead of opening the form (same as a group's "Save to Gallery").
+  const quickAddExpenseWithFriend = (friendName: string, directGroupId?: string, photo?: NonGroupPhoto) => {
     if (!requireSignInToCreate()) return;
     const clean = friendName.replace(/\s*\(Left\)$/i, '').trim();
     if (!clean) return;
@@ -3847,9 +3851,7 @@ function App() {
           (dg.members || []).find((m) => cln(m).toLowerCase().split(' ')[0] === meFirst);
         if (match) myInGroup = cln(match);
       }
-      setSelectedId(dg.id);
-      setView('detail');
-      setEditingExpenseSecure({
+      const draft = {
         id: 'temp-' + Date.now(),
         gId: dg.id,
         title: '',
@@ -3857,11 +3859,15 @@ function App() {
         date: new Date().toISOString().split('T')[0],
         splitters: (dg.members || []).map(cln),
         paid: myInGroup,
-      } as any);
+      } as any;
+      if (photo?.saveOnly) { saveNonGroupGalleryPhoto(draft, photo, dg.currency); return; }
+      setSelectedId(dg.id);
+      setView('detail');
+      setEditingExpenseSecure(withPhoto(draft, photo));
       setShowExpModalSecure(true);
       return;
     }
-    setEditingExpenseSecure({
+    const draft = {
       id: 'temp-' + Date.now(),
       gId: 'STANDALONE',
       title: '',
@@ -3869,16 +3875,37 @@ function App() {
       date: new Date().toISOString().split('T')[0],
       splitters: [me, clean],
       paid: me,
-    } as any);
+    } as any;
+    if (photo?.saveOnly) { saveNonGroupGalleryPhoto(draft, photo); return; }
+    setEditingExpenseSecure(withPhoto(draft, photo));
     setShowExpModalSecure(true);
+  };
+
+  const withPhoto = (draft: any, photo?: NonGroupPhoto) =>
+    photo ? { ...draft, title: photo.caption.trim(), attachments: [photo.url] } : draft;
+  // 0-amount photo entry: shows in the Photos tabs, never moves a balance.
+  const saveNonGroupGalleryPhoto = (draft: any, photo: NonGroupPhoto, currency?: string) => {
+    const entry: Expense = {
+      ...draft,
+      id: 'photo-' + Date.now(),
+      timestamp: Date.now(),
+      title: photo.caption.trim() || 'Photo',
+      currency: currency || myDefaultCurrency,
+      category: '🖼️',
+      attachments: [photo.url],
+      tags: ['Gallery'],
+      mode: 'Equally',
+      shares: {},
+    };
+    setExpenses((prev) => [entry, ...prev]);
   };
 
   // Personal (self-only) expense — WhatsApp "message yourself" pattern. Mirrors
   // quickAddExpenseWithFriend's STANDALONE branch exactly, minus the friend.
-  const openPersonalExpense = () => {
+  const openPersonalExpense = (photo?: NonGroupPhoto) => {
     if (!requireSignInToCreate()) return;
     setAutoOpenScanner(false);
-    setEditingExpenseSecure({
+    const draft = {
       id: 'temp-' + Date.now(),
       gId: 'STANDALONE',
       title: '',
@@ -3886,7 +3913,9 @@ function App() {
       date: new Date().toISOString().split('T')[0],
       splitters: [me],
       paid: me,
-    } as any);
+    } as any;
+    if (photo?.saveOnly) { saveNonGroupGalleryPhoto(draft, photo); return; }
+    setEditingExpenseSecure(withPhoto(draft, photo));
     setShowExpModalSecure(true);
   };
 
@@ -4942,7 +4971,10 @@ function App() {
             onOpenExpense={(exp) => { setEditingExpenseSecure(exp); setShowExpModalSecure(true); }}
             onSettlePerson={(name, directGroupId) => setGlobalSettleDataSecure({ name: name.replace(/\s*\(Left\)$/i, '').trim(), gId: directGroupId || 'STANDALONE' })}
             onAddWithPerson={(name, directGroupId) => quickAddExpenseWithFriend(name, directGroupId)}
-            onAddPersonal={openPersonalExpense}
+            onAddPersonal={() => openPersonalExpense()}
+            onAddPhoto={(photo, person) => (person
+              ? quickAddExpenseWithFriend(person.name, person.directGroupId, photo)
+              : openPersonalExpense(photo))}
             backupMissingCount={(() => {
               const ids = new Set(expenses.map((e) => String(e.id)));
               return nonGroupBackup.filter((e) => e && String(e.gId) === 'STANDALONE' && !ids.has(String(e.id))).length;
