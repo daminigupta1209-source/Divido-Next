@@ -22,3 +22,54 @@ describe('computeNonGroupPeople (self-only expenses)', () => {
     expect(out[0].name).toBe('Rahul');
   });
 });
+
+describe('computeNonGroupPeople (same email, different names)', () => {
+  const EM = 'damini@example.com';
+  // Per-name STANDALONE balances (person's net: negative = they owe me).
+  const balances: Record<string, Record<string, number>> = {
+    'Damini Gupta': { '₹': 50 },
+    'Damini Guptaaa': { '₹': -750 },
+    Dee: { '₹': 750 },
+  };
+  const getBal = (_g: string | number, n: string) => balances[n] || {};
+
+  it('merges names sharing an email into one person and sums their balances', () => {
+    const exps = [
+      mkExp({ id: 'a', timestamp: 1, paid: 'Chirag', splitters: ['Chirag', 'Damini Gupta'], otherEmail: EM }),
+      mkExp({ id: 'b', timestamp: 3, paid: 'Damini Guptaaa', splitters: ['Chirag', 'Damini Guptaaa'], otherEmail: EM }),
+      mkExp({ id: 'c', timestamp: 2, paid: 'Chirag', splitters: ['Chirag', 'Dee'], otherEmail: EM }),
+    ];
+    const out = computeNonGroupPeople(exps, [], makeIsMe('Chirag'), getBal);
+    expect(out.length).toBe(1);
+    expect(out[0].email).toBe(EM);
+    expect(out[0].aliases.sort()).toEqual(['Damini Gupta', 'Damini Guptaaa', 'Dee']);
+    expect(out[0].bal['₹']).toBe(50);
+    expect(out[0].count).toBe(3);
+    // No shared thread → the newest expense's name is shown.
+    expect(out[0].name).toBe('Damini Guptaaa');
+  });
+
+  it('prefers the shared-thread name and counts the thread balance once', () => {
+    const exps = [
+      mkExp({ id: 'a', timestamp: 9, paid: 'Chirag', splitters: ['Chirag', 'Damini Guptaaa'], otherEmail: EM }),
+      mkExp({ id: 't', gId: 'G1', timestamp: 1, paid: 'Chirag', splitters: ['Chirag', 'Damini Gupta'] }),
+    ];
+    const threads = [{ groupId: 'G1', otherName: 'Damini Gupta', email: EM, pending: false }];
+    const out = computeNonGroupPeople(exps, threads, makeIsMe('Chirag'), (g, n) => (g === 'G1' ? { '₹': 100 } : getBal(g, n)));
+    expect(out.length).toBe(1);
+    expect(out[0].name).toBe('Damini Gupta');
+    expect(out[0].directGroupId).toBe('G1');
+    expect(out[0].bal['₹']).toBe(100 - 750);
+  });
+
+  it('keeps people with different emails separate, and a name with no email joins its emailed sighting', () => {
+    const exps = [
+      mkExp({ id: 'a', timestamp: 1, paid: 'Chirag', splitters: ['Chirag', 'Rahul'], otherEmail: 'rahul@example.com' }),
+      mkExp({ id: 'b', timestamp: 2, paid: 'Chirag', splitters: ['Chirag', 'Rahul'] }),
+      mkExp({ id: 'c', timestamp: 3, paid: 'Chirag', splitters: ['Chirag', 'Damini Gupta'], otherEmail: EM }),
+    ];
+    const out = computeNonGroupPeople(exps, [], makeIsMe('Chirag'), getBal);
+    expect(out.map((p) => p.name)).toEqual(['Damini Gupta', 'Rahul']);
+    expect(out.find((p) => p.name === 'Rahul')!.count).toBe(2);
+  });
+});

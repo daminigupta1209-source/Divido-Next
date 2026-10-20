@@ -10,6 +10,9 @@ export type DirectThread = { groupId: string; otherName: string; email: string; 
 
 export type NonGroupPerson = {
   name: string;
+  // Every (cleaned) name this person appears under — more than one when the
+  // same email was saved with different names ("Damini Gupta" / "Damini Guptaaa").
+  aliases: string[];
   email: string;
   pending: boolean;
   directGroupId?: string;
@@ -72,6 +75,11 @@ const expenseInvolves = (e: Expense, lowerName: string) => {
 // One entry per OTHER person. Balance is combined across both buckets (their
 // plain STANDALONE net + their net in a shared direct thread) via the canonical
 // engine — never hand-rolled.
+//
+// A person is identified by email when one is known, else by name — so the
+// same email saved under different names collapses into ONE entry whose
+// balance sums every alias. Shown name: the shared-thread name if any (that's
+// the linked account), else the name on the newest expense, else the most-used.
 export const computeNonGroupPeople = (
   expenses: Expense[],
   directThreads: DirectThread[],
@@ -80,49 +88,75 @@ export const computeNonGroupPeople = (
 ): NonGroupPerson[] => {
   const directGroupIds = new Set(directThreads.map((t) => String(t.groupId)));
   const nonGroupExps = expenses.filter((e) => e && !e.isDeleted && (String(e.gId) === 'STANDALONE' || directGroupIds.has(String(e.gId))));
+  const standaloneExps = expenses.filter((e) => e && String(e.gId) === 'STANDALONE' && !e.isDeleted);
 
-  type P = { name: string; email: string; standalone: boolean; directGroupId?: string; otherNameInGroup?: string; pending: boolean };
-  const byName = new Map<string, P>();
+  // Per distinct name (lowercased): how it was seen.
+  type N = { name: string; email: string; standalone: boolean; lastTs: number; uses: number; threads: DirectThread[]; pending: boolean };
+  const byName = new Map<string, N>();
+  const getN = (c: string): N => {
+    const key = c.toLowerCase();
+    let n = byName.get(key);
+    if (!n) { n = { name: c, email: '', standalone: false, lastTs: -1, uses: 0, threads: [], pending: false }; byName.set(key, n); }
+    return n;
+  };
   // Seed shared (direct) threads first so pending/email are captured.
   directThreads.forEach((t) => {
     const c = cleanName(t.otherName);
     if (!c || isMe(c)) return;
-    const key = c.toLowerCase();
-    const ex = byName.get(key);
-    if (ex) {
-      ex.directGroupId = String(t.groupId);
-      ex.otherNameInGroup = t.otherName;
-      ex.pending = ex.pending || t.pending;
-      if (!ex.email && t.email) ex.email = t.email;
-    } else {
-      byName.set(key, { name: c, email: t.email || '', standalone: false, directGroupId: String(t.groupId), otherNameInGroup: t.otherName, pending: t.pending });
-    }
+    const n = getN(c);
+    n.threads.push(t);
+    n.pending = n.pending || t.pending;
+    if (!n.email && t.email) n.email = t.email.trim().toLowerCase();
   });
   // Add plain STANDALONE participants.
-  expenses
-    .filter((e) => e && String(e.gId) === 'STANDALONE' && !e.isDeleted)
-    .forEach((e) => {
-      const names = new Set<string>();
-      if (e.paid) names.add(e.paid);
-      (e.splitters || []).forEach((s) => names.add(s));
-      const otherEmail = (e.otherEmail || '').trim().toLowerCase();
-      names.forEach((raw) => {
-        const c = cleanName(raw);
-        if (!c || isMe(c)) return;
-        const key = c.toLowerCase();
-        const ex = byName.get(key);
-        if (ex) { ex.standalone = true; if (!ex.email && otherEmail.includes('@')) ex.email = otherEmail; }
-        else byName.set(key, { name: c, email: otherEmail.includes('@') ? otherEmail : '', standalone: true, pending: false });
-      });
+  standaloneExps.forEach((e) => {
+    const others = new Set<string>();
+    if (e.paid) others.add(cleanName(e.paid));
+    (e.splitters || []).forEach((s) => others.add(cleanName(s)));
+    const otherNames = Array.from(others).filter((c) => c && !isMe(c));
+    // otherEmail only identifies the counterpart on a true 2-person split.
+    const otherEmail = (e.otherEmail || '').trim().toLowerCase();
+    const emailForThis = otherNames.length === 1 && otherEmail.includes('@') ? otherEmail : '';
+    const ts = e.timestamp || 0;
+    otherNames.forEach((c) => {
+      const n = getN(c);
+      n.standalone = true;
+      n.uses += 1;
+      if (ts > n.lastTs) n.lastTs = ts;
+      if (!n.email && emailForThis) n.email = emailForThis;
     });
-  return Array.from(byName.values())
-    .map((p) => {
-      const key = p.name.toLowerCase();
+  });
+
+  // Group names into people: by email when known, else by the name itself.
+  // Each name lands in exactly one person, so no balance is counted twice.
+  const people = new Map<string, N[]>();
+  byName.forEach((n, key) => {
+    const pKey = n.email ? `email:${n.email}` : `name:${key}`;
+    const list = people.get(pKey);
+    if (list) list.push(n); else people.set(pKey, [n]);
+  });
+
+  return Array.from(people.values())
+    .map((names) => {
+      const threaded = names.find((n) => n.threads.length > 0);
+      const shownN = threaded || names.slice().sort((a, b) => b.lastTs - a.lastTs || b.uses - a.uses || a.name.localeCompare(b.name))[0];
+      const aliasKeys = new Set(names.map((n) => n.name.toLowerCase()));
       const bal: Record<string, number> = {};
-      if (p.standalone) Object.entries(getMemberBalance('STANDALONE', p.name)).forEach(([c, v]) => { bal[c] = (bal[c] || 0) + v; });
-      if (p.directGroupId && p.otherNameInGroup) Object.entries(getMemberBalance(p.directGroupId, p.otherNameInGroup)).forEach(([c, v]) => { bal[c] = (bal[c] || 0) + v; });
-      const count = nonGroupExps.filter((e) => expenseInvolves(e, key)).length;
-      return { name: p.name, email: p.email, pending: p.pending, directGroupId: p.directGroupId, bal, count };
+      const add = (b: Record<string, number>) => Object.entries(b).forEach(([c, v]) => { bal[c] = (bal[c] || 0) + v; });
+      names.forEach((n) => {
+        if (n.standalone) add(getMemberBalance('STANDALONE', n.name));
+        n.threads.forEach((t) => add(getMemberBalance(t.groupId, t.otherName)));
+      });
+      const count = nonGroupExps.filter((e) => Array.from(aliasKeys).some((k) => expenseInvolves(e, k))).length;
+      return {
+        name: shownN.name,
+        aliases: names.map((n) => n.name),
+        email: names.find((n) => n.email)?.email || '',
+        pending: names.some((n) => n.pending),
+        directGroupId: threaded ? String(threaded.threads[0].groupId) : undefined,
+        bal,
+        count,
+      };
     })
     // Hide empty leftovers: a person with no expenses AND no balance (e.g. a
     // stray/abandoned direct thread) shouldn't clutter the list.

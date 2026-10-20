@@ -384,9 +384,11 @@ export const NonGroupView: React.FC<NonGroupViewProps> = ({
     return byBal.filter((p) => {
       if (p.name.toLowerCase().includes(searchLower) || p.email.toLowerCase().includes(searchLower)) return true;
       if (matchesAmount(searchLower, Object.entries(p.bal))) return true;
-      if (nonGroupExps.some((e) => expenseInvolves(e, p.name.toLowerCase()) && matchesAmount(searchLower, [[e.currency || '₹', e.amt || 0]]))) return true;
-      const key = p.name.toLowerCase();
-      return nonGroupExps.some((e) => expenseInvolves(e, key) && (e.title || '').toLowerCase().includes(searchLower));
+      const keys = p.aliases.map((a) => a.toLowerCase());
+      if (keys.some((k) => k.includes(searchLower))) return true;
+      const theirs = nonGroupExps.filter((e) => keys.some((k) => expenseInvolves(e, k)));
+      if (theirs.some((e) => matchesAmount(searchLower, [[e.currency || '₹', e.amt || 0]]))) return true;
+      return theirs.some((e) => (e.title || '').toLowerCase().includes(searchLower));
     });
   }, [people, searchLower, nonGroupExps, expenseInvolves, balFilter]);
 
@@ -657,12 +659,11 @@ export const NonGroupView: React.FC<NonGroupViewProps> = ({
     const hasBal = lines.length > 0;
     const personPayLines = lines.filter((l) => l.amount < 0);
     const personCollectLines = lines.filter((l) => l.amount > 0);
-    const pLower = profilePerson.toLowerCase();
+    // All names this person was saved under (same email ⇒ same person).
+    const aliasLower = new Set((p?.aliases || [profilePerson]).map((a) => a.toLowerCase()));
     const theirExps = nonGroupExps.filter((e) => {
-      const names = new Set<string>();
-      if (e.paid) names.add(cleanName(e.paid).toLowerCase());
-      (e.splitters || []).forEach((s) => names.add(cleanName(s).toLowerCase()));
-      return names.has(pLower);
+      if (e.paid && aliasLower.has(cleanName(e.paid).toLowerCase())) return true;
+      return (e.splitters || []).some((s) => aliasLower.has(cleanName(s).toLowerCase()));
     })
       // Newest date first so each month heading appears once.
       .sort((a, b) => String(b.date || '').localeCompare(String(a.date || '')) || (b.timestamp || 0) - (a.timestamp || 0));
@@ -780,7 +781,10 @@ export const NonGroupView: React.FC<NonGroupViewProps> = ({
               <button
                 type="button"
                 onClick={() => {
-                  if (window.confirm(`Delete all expenses with ${profilePerson}? This can't be undone.`)) { onDeletePerson(profilePerson, p?.directGroupId); setProfilePerson(null); }
+                  if (window.confirm(`Delete all expenses with ${profilePerson}? This can't be undone.`)) {
+                    (p?.aliases || [profilePerson]).forEach((a, i) => onDeletePerson(a, i === 0 ? p?.directGroupId : undefined));
+                    setProfilePerson(null);
+                  }
                 }}
                 style={{ display: 'block', margin: '8px auto 2px', background: 'none', border: 'none', color: '#94A3B8', fontSize: '11.5px', fontWeight: 500, cursor: 'pointer', textAlign: 'center' }}
                 onMouseEnter={(ev) => (ev.currentTarget.style.color = '#EF4444')}
