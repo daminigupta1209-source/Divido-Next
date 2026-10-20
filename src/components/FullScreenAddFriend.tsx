@@ -1,4 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { isValidEmail, dismissPerson, dismissedPersonKey } from '../lib/identity';
 
 interface FriendSelection {
@@ -197,7 +198,9 @@ export const FullScreenAddFriend: React.FC<FullScreenAddFriendProps> = ({
     setEmailVal(''); setEmailErr('');
   };
 
-  return (
+  // Portaled to <body>: opened from inside the expense form, a parent's
+  // stacking context let later form rows (the date pill) paint over it.
+  return createPortal(
     <div style={{ position: 'fixed', inset: 0, background: 'var(--bg)', zIndex: 10001, overflowY: 'auto', padding: '20px 16px calc(24px + env(safe-area-inset-bottom))', boxSizing: 'border-box', display: 'flex', flexDirection: 'column', gap: '22px' }}>
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '16px' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
@@ -483,6 +486,7 @@ export const FullScreenAddFriend: React.FC<FullScreenAddFriendProps> = ({
           Add {selectedFriends.length} {selectedFriends.length === 1 ? 'friend' : 'friends'}
         </button>
       )}
-    </div>
+    </div>,
+    document.body
   );
 };
