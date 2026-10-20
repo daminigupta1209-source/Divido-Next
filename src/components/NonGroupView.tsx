@@ -370,6 +370,33 @@ export const NonGroupView: React.FC<NonGroupViewProps> = ({
     [expenses, directThreads, isMe, getMemberBalance]
   );
 
+  // "Yet to join" banner — same idea as the home one (lib/joinProgress skips
+  // direct threads, so Non-Group counts its own). Joined = claimed the shared
+  // link; everyone else (invited, or never shared) is yet to join.
+  const ngJoinPending = React.useMemo(() => people.filter((p) => !(p.directGroupId && !p.pending)), [people]);
+  const ngJoinedN = people.length - ngJoinPending.length;
+  const NG_JOIN_SNOOZE_KEY = 'divido_ng_join_snooze';
+  const [ngJoinSnooze, setNgJoinSnooze] = React.useState<{ until: number; count: number } | null>(() => {
+    try { return JSON.parse(localStorage.getItem(NG_JOIN_SNOOZE_KEY) || 'null'); } catch { return null; }
+  });
+  // × hides it for a week, unless MORE people become yet-to-join.
+  const ngJoinSnoozed = !!ngJoinSnooze && Date.now() < ngJoinSnooze.until && ngJoinPending.length <= ngJoinSnooze.count;
+  const showNgJoinBanner = !!onSharePerson && ngJoinPending.length > 0 && !ngJoinSnoozed;
+  const dismissNgJoinBanner = () => {
+    const s = { until: Date.now() + 7 * 86400000, count: ngJoinPending.length };
+    setNgJoinSnooze(s);
+    try { localStorage.setItem(NG_JOIN_SNOOZE_KEY, JSON.stringify(s)); } catch { /* storage unavailable */ }
+  };
+  const [showNgJoinSheet, setShowNgJoinSheet] = React.useState(false);
+  // Per-row "Shared ✓" for 2s after tapping Invite (like the home sheet).
+  const [ngInvited, setNgInvited] = React.useState<Record<string, boolean>>({});
+  const inviteNgPerson = (name: string, directGroupId?: string) => {
+    if (!onSharePerson) return;
+    onSharePerson(name, directGroupId);
+    setNgInvited((prev) => ({ ...prev, [name]: true }));
+    setTimeout(() => setNgInvited((prev) => { const next = { ...prev }; delete next[name]; return next; }), 2000);
+  };
+
   // Options sheet → "Share Link": with a person open, share them directly (same
   // as the header share icon); otherwise pick who to share with.
   const [showSharePicker, setShowSharePicker] = React.useState(false);
@@ -911,6 +938,93 @@ export const NonGroupView: React.FC<NonGroupViewProps> = ({
           >
             Restore
           </button>
+        </div>
+      )}
+
+      {/* Yet-to-join banner — same look as the home one. */}
+      {showNgJoinBanner && (() => {
+        const pendingN = ngJoinPending.length;
+        const totalN = Math.max(people.length, 1);
+        const pct = Math.round((ngJoinedN / totalN) * 100);
+        const sub = pendingN <= 2 && ngJoinedN > 0 ? `Almost there — ${pendingN} to go!` : `${ngJoinedN} of ${people.length} joined`;
+        return (
+          <div
+            className="card shadow-sm hover-up-mini"
+            onClick={() => setShowNgJoinSheet(true)}
+            style={{ background: 'var(--w)', border: '1.5px solid var(--bg)', borderRadius: '18px', padding: '10px 12px 10px 10px', marginBottom: '16px', display: 'flex', alignItems: 'center', gap: '12px', boxShadow: '0 4px 14px rgba(0, 0, 0, 0.02)', animation: 'fadeIn 0.4s ease-out', cursor: 'pointer' }}
+          >
+            <div style={{ width: '36px', height: '36px', borderRadius: '50%', background: 'linear-gradient(135deg, #A78BFA 0%, #7C3AED 100%)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, fontSize: '17px' }}>🎯</div>
+            <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', gap: '6px' }}>
+              <span style={{ fontSize: '13px', fontWeight: 600, color: 'var(--t)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', letterSpacing: '-0.1px' }}>
+                {pendingN} friend{pendingN === 1 ? '' : 's'} yet to join
+              </span>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <div role="progressbar" aria-valuenow={pct} aria-valuemin={0} aria-valuemax={100} aria-label="Friends joined" style={{ flex: 1, height: '6px', borderRadius: '999px', background: '#EDE9FE', overflow: 'hidden' }}>
+                  <div style={{ width: `${pct}%`, height: '100%', borderRadius: '999px', background: 'linear-gradient(90deg, #34D399, #059669)', transition: 'width 0.6s ease' }} />
+                </div>
+                <span style={{ fontSize: '11px', fontWeight: 500, color: 'var(--g)', whiteSpace: 'nowrap', flexShrink: 0 }}>{sub}</span>
+              </div>
+            </div>
+            <span style={{ color: '#7C3AED', fontSize: '12.5px', fontWeight: 700, whiteSpace: 'nowrap', flexShrink: 0 }}>Invite →</span>
+            <span
+              onClick={(e) => { e.stopPropagation(); dismissNgJoinBanner(); }}
+              style={{ color: '#94A3B8', fontSize: '18px', fontWeight: 600, cursor: 'pointer', lineHeight: 1, padding: '2px 4px', flexShrink: 0 }}
+              title="Dismiss"
+            >
+              ×
+            </span>
+          </div>
+        );
+      })()}
+
+      {showNgJoinSheet && (
+        <div
+          onClick={() => setShowNgJoinSheet(false)}
+          style={{ position: 'fixed', inset: 0, background: 'rgba(15,23,42,0.45)', zIndex: 10001, display: 'flex', alignItems: 'flex-end', justifyContent: 'center' }}
+        >
+          <div
+            onClick={(e) => e.stopPropagation()}
+            style={{ width: '100%', maxWidth: '480px', background: '#FFFFFF', borderRadius: '24px 24px 0 0', padding: '14px 18px calc(20px + env(safe-area-inset-bottom))', boxSizing: 'border-box', maxHeight: '85vh', overflowY: 'auto' }}
+          >
+            <div style={{ position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'flex-end', minHeight: '24px', marginBottom: '6px' }}>
+              <div style={{ width: '40px', height: '4px', borderRadius: '999px', background: '#E2E8F0', position: 'absolute', left: '50%', transform: 'translateX(-50%)', top: '2px' }} />
+              <button type="button" onClick={() => setShowNgJoinSheet(false)} aria-label="Close" style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '4px', margin: '-4px -4px 0 0', color: '#94A3B8', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, zIndex: 1 }}>
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" /></svg>
+              </button>
+            </div>
+            <div style={{ fontSize: '17px', fontWeight: 700, color: '#0F172A', marginBottom: '2px' }}>Get everyone in</div>
+            <div style={{ fontSize: '13px', fontWeight: 500, color: '#64748B', marginBottom: '14px' }}>
+              {ngJoinPending.length} friend{ngJoinPending.length === 1 ? '' : 's'} yet to join
+            </div>
+            {ngJoinPending.length === 0 ? (
+              <div style={{ fontSize: '14px', color: '#94A3B8', textAlign: 'center', padding: '12px 0' }}>Everyone's in! 🎉</div>
+            ) : (
+              <div style={{ display: 'flex', flexDirection: 'column' }}>
+                {ngJoinPending.map((p, idx) => {
+                  const invited = !!ngInvited[p.name];
+                  return (
+                    <div key={p.name} style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '12px 0', borderBottom: idx < ngJoinPending.length - 1 ? '1px solid #F1F5F9' : 'none' }}>
+                      <Avatar name={p.name} email={p.email} size={38} />
+                      <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', gap: '2px' }}>
+                        <span style={{ fontSize: '15px', fontWeight: 600, color: '#0F172A', textTransform: 'capitalize', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{shown(p.name)}</span>
+                        <span style={{ fontSize: '12px', fontWeight: 500, color: p.email ? '#64748B' : '#B8AEA2', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{p.email || 'No email'}</span>
+                        <span style={{ fontSize: '12px', fontWeight: 500, color: '#94A3B8' }}>{p.directGroupId ? "Invited · hasn't opened the link" : 'Not shared yet'}</span>
+                      </div>
+                      <button
+                        type="button"
+                        aria-label={`Invite ${shown(p.name)}`}
+                        disabled={invited}
+                        onClick={() => inviteNgPerson(p.name, p.directGroupId)}
+                        style={{ flexShrink: 0, background: invited ? '#D1FAE5' : '#7C3AED', color: invited ? '#047857' : '#FFFFFF', border: 'none', borderRadius: '999px', padding: '7px 14px', fontSize: '13px', fontWeight: 600, cursor: invited ? 'default' : 'pointer' }}
+                      >
+                        {invited ? 'Shared ✓' : 'Invite'}
+                      </button>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </div>
         </div>
       )}
 
