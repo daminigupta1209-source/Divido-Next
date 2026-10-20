@@ -47,4 +47,15 @@ describe('revertGroupConversions', () => {
     const { expenses: next } = revertGroupConversions(expenses, 'g1');
     expect(next.find((e) => e.id === 'y')!.amt).toBe(50);
   });
+
+  it('Non-Group: restores snapshotted expenses that live in a shared direct thread', () => {
+    const expenses = [
+      exp({ id: 'c1', gId: 'STANDALONE', date: '2026-09-02', isConversion: true, fromCurr: 'ALL', toCurr: '₹', snapshot: JSON.stringify([{ id: 'd', amt: 20, currency: '$' }]) }),
+      exp({ id: 'd', gId: 'direct-1', amt: 1670, currency: '₹' }), // converted $20
+    ];
+    const { expenses: next } = revertGroupConversions(expenses, 'STANDALONE');
+    const d = next.find((e) => e.id === 'd')!;
+    expect(d.amt).toBe(20);
+    expect(d.currency).toBe('$');
+  });
 });

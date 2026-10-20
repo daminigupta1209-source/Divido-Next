@@ -38,7 +38,9 @@ export const revertGroupConversions = (
   const next = expenses
     .filter((e) => !(isThisGroup(e) && e.isConversion))
     .map((e) => {
-      if (isThisGroup(e) && originalById[String(e.id)]) {
+      // Keyed by the snapshot's ids, not the log's group: a Non-Group
+      // conversion also covers expenses in its shared direct threads.
+      if (!e.isConversion && originalById[String(e.id)]) {
         const o = originalById[String(e.id)];
         return { ...e, amt: o.amt, currency: o.currency, shares: o.shares };
       }

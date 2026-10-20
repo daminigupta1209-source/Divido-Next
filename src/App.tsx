@@ -5700,6 +5700,8 @@ function App() {
           expenses={expensesView}
           setExpenses={setExpenses}
           me={me}
+          // Non-Group shows its shared direct threads too; convert those as well.
+          extraGroupIds={String(showConvertModalId) === 'STANDALONE' ? buildDirectThreads(groups, me, userName, userEmail).map((t) => String(t.groupId)) : undefined}
         />
       )}
 

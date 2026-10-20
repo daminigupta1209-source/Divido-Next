@@ -14,6 +14,9 @@ interface CurrencyConverterModalProps {
   expenses: Expense[];
   setExpenses: React.Dispatch<React.SetStateAction<Expense[]>>;
   me: string;
+  // Extra group ids whose expenses belong to this one (Non-Group: its shared
+  // direct threads). The conversion log itself stays under group.id.
+  extraGroupIds?: string[];
 }
 
 interface ManualRateRowProps {
@@ -103,7 +106,12 @@ export const CurrencyConverterModal: React.FC<CurrencyConverterModalProps> = ({
   expenses,
   setExpenses,
   me,
+  extraGroupIds,
 }) => {
+  const scopeIds = useMemo(
+    () => new Set([String(group.id), ...(extraGroupIds || []).map(String)]),
+    [group.id, extraGroupIds]
+  );
   const [targetCurr, setTargetCurr] = useState(group.currency === '₹' ? '$' : '₹');
   const [sourceCurr, setSourceCurr] = useState<string>('ALL');
   const [isConverting, setIsConverting] = useState(false);
@@ -113,7 +121,7 @@ export const CurrencyConverterModal: React.FC<CurrencyConverterModalProps> = ({
   const [isManual, setIsManual] = useState(false);
 
   const detectedCurrs = useMemo(() => {
-    const groupExpenses = expenses.filter((e) => String(e.gId) === String(group.id) && !e.isConversion);
+    const groupExpenses = expenses.filter((e) => scopeIds.has(String(e.gId)) && !e.isConversion);
     // Also include each expense's ORIGINAL currency. An already-converted group's
     // expenses now read as the target currency, but a re-conversion reverts them
     // to their originals FIRST — so the rate fetch must cover those originals too,
@@ -141,7 +149,7 @@ export const CurrencyConverterModal: React.FC<CurrencyConverterModalProps> = ({
       .filter((c) => c && c.trim() && c !== 'undefined');
     const unique = [...new Set(activeInFeed)];
     return unique.length > 0 ? unique : [group.currency];
-  }, [expenses, group]);
+  }, [expenses, group, scopeIds]);
 
   const activeCurrsForFetch = useMemo(() => {
     if (sourceCurr === 'ALL') return detectedCurrs;
@@ -206,7 +214,8 @@ export const CurrencyConverterModal: React.FC<CurrencyConverterModalProps> = ({
     await new Promise((r) => setTimeout(r, 800));
 
     const gid = String(group.id);
-    const isThisGroup = (e: Expense) => String(e.gId) === gid;
+    // Logs live under group.id; the expenses they convert may span scopeIds.
+    const isThisGroup = (e: Expense) => (e.isConversion ? String(e.gId) === gid : scopeIds.has(String(e.gId)));
 
     // 1. Reconstruct the TRUE ORIGINAL amounts. Every prior conversion stored a
     // snapshot of the state before it ran; processing them oldest-first and
