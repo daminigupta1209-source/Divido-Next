@@ -5920,11 +5920,58 @@ function App() {
             >
               ×
             </button>
+            {!(claimConfirmTarget && linkRequestGroup.is_direct) && (
             <h3 className="nunito" style={{ fontSize: '18px', fontWeight: 900, color: '#0F172A', margin: '0 0 6px 0', padding: '0 36px', boxSizing: 'border-box', lineHeight: 1.35, wordBreak: 'break-word' }}>
               {linkRequestRejoinMode ? 'Rejoin' : 'Join'} "{linkRequestGroup.name}"?
             </h3>
+            )}
 
-            {claimConfirmTarget ? (() => {
+            {claimConfirmTarget && linkRequestGroup.is_direct ? (() => {
+              // Shared Non-Group link: the thread is named "<sharer> & <friend>"
+              // (see sharePersonNonGroupBeta). Keep it to one plain sentence.
+              const threadName = String(linkRequestGroup.name || '');
+              const suffix = ` & ${claimConfirmTarget.name}`;
+              const sharer = threadName.endsWith(suffix) ? threadName.slice(0, -suffix.length) : '';
+              const sharerFirst = titleCaseName(sharer.replace(/\s*\(me\)$/i, '').trim()).split(' ')[0] || 'A friend';
+              return (
+                <div style={{ padding: '10px 0 2px' }}>
+                  <div style={{ width: '56px', height: '56px', borderRadius: '50%', background: '#FCE7F3', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '4px auto 14px', fontSize: '22px', fontWeight: 700, color: '#DB2777' }}>
+                    {sharerFirst.charAt(0).toUpperCase()}
+                  </div>
+                  <p className="nunito" style={{ fontSize: '18px', fontWeight: 900, color: '#0F172A', margin: '0 0 6px 0', padding: '0 24px', lineHeight: 1.35 }}>
+                    {sharerFirst} shared expenses with you
+                  </p>
+                  <p style={{ fontSize: '13px', color: '#64748B', margin: '0 0 22px 0' }}>
+                    Join to see and settle up.
+                  </p>
+                  <button
+                    disabled={submittingLinkRequest}
+                    onClick={() => {
+                      const target = claimConfirmTarget;
+                      setClaimConfirmTarget(null); setClaimConfirmAuto(false);
+                      runClaimPlaceholder(target);
+                    }}
+                    style={{ width: '100%', padding: '13px', borderRadius: '14px', border: 'none', background: '#16A34A', color: '#FFFFFF', fontWeight: 600, fontSize: '14px', cursor: 'pointer', boxShadow: '0 4px 12px rgba(22, 163, 74, 0.3)' }}
+                  >
+                    Join
+                  </button>
+                  <button
+                    type="button"
+                    disabled={submittingLinkRequest}
+                    onClick={() => {
+                      const spot = claimConfirmTarget;
+                      const wasAuto = claimConfirmAuto;
+                      setClaimConfirmTarget(null);
+                      setClaimConfirmAuto(false);
+                      if (wasAuto && spot && linkRequestGroup) notifyNotMe(spot, linkRequestGroup);
+                    }}
+                    style={{ marginTop: '12px', background: 'none', border: 'none', color: '#64748B', fontSize: '13px', fontWeight: 600, cursor: 'pointer', textDecoration: 'underline' }}
+                  >
+                    Not me
+                  </button>
+                </div>
+              );
+            })() : claimConfirmTarget ? (() => {
               const confirmName = titleCaseName(claimConfirmTarget.name.replace(' (Left)', ''));
               // Show the actual signed-in Gmail address when we already know it
               // (returning users, or after the Google sign-in round-trip); a
