@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { buildDirectThreads, computeNonGroupPeople, makeIsMe } from './nonGroupPeople';
+import { buildDirectThreads, computeNonGroupPeople, makeIsMe, resolveNonGroupFriendKey, nonGroupFriendsFromExpenses, isNonGroupFriendKey } from './nonGroupPeople';
 import { Expense, Group } from './types';
 
 const mkExp = (o: Partial<Expense>): Expense =>
@@ -97,5 +97,31 @@ describe('makeIsMe with a known full name', () => {
   });
   it('still guesses from the first name when the full name is unknown', () => {
     expect(makeIsMe('Chirag')('Chirag Gupta')).toBe(true);
+  });
+});
+
+describe('Non-Group friend ids', () => {
+  const isMe = makeIsMe('Damini', 'Damini Investment');
+  const ex = (over: Record<string, unknown>) => ({ id: String(Math.random()), gId: 'STANDALONE', title: 't', amt: 10, paid: 'Damini', date: '2026-10-01', mode: 'Equally', splitters: ['Damini', 'Ravi'], ...over }) as any;
+  it('reuses the id already used with that email', () => {
+    const exps = [ex({ otherKey: 'ngp-a', otherEmail: 'ravi@x.com' })];
+    expect(resolveNonGroupFriendKey(exps, { name: 'Ravi Kumar', email: 'ravi@x.com' }, isMe)).toBe('ngp-a');
+  });
+  it('reuses the single id used with that name when no email', () => {
+    const exps = [ex({ otherKey: 'ngp-a' })];
+    expect(resolveNonGroupFriendKey(exps, { name: 'Ravi' }, isMe)).toBe('ngp-a');
+  });
+  it('gives a new id for a new email, even with the same name', () => {
+    const exps = [ex({ otherKey: 'ngp-a', otherEmail: 'ravi@x.com' })];
+    const k = resolveNonGroupFriendKey(exps, { name: 'Ravi', email: 'ravi2@x.com' }, isMe);
+    expect(k).not.toBe('ngp-a');
+    expect(isNonGroupFriendKey(k)).toBe(true);
+  });
+  it('keeps the id a pick already carries', () => {
+    expect(resolveNonGroupFriendKey([], { name: 'Ravi', identity: 'ngp-z' }, isMe)).toBe('ngp-z');
+  });
+  it('lists one friend per id with the newest name', () => {
+    const exps = [ex({ otherKey: 'ngp-a', timestamp: 1 }), ex({ otherKey: 'ngp-a', timestamp: 2, splitters: ['Damini', 'Ravi K'] })];
+    expect(nonGroupFriendsFromExpenses(exps, isMe)).toEqual([{ name: 'Ravi K', email: '', key: 'ngp-a' }]);
   });
 });

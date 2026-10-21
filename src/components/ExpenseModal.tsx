@@ -18,6 +18,7 @@ import { StyledDropdown } from './StyledDropdown';
 import { CameraCaptureModal } from './CameraCaptureModal';
 import { FullScreenAddFriend } from './FullScreenAddFriend';
 import { buildPeopleSuggestions, pickerParts } from '../lib/identity';
+import { makeIsMe, nonGroupFriendsFromExpenses, resolveNonGroupFriendKey } from '../lib/nonGroupPeople';
 
 // Borderless trigger — the wrapping div already provides the pill/border/shadow.
 const emInlineBtnStyle: React.CSSProperties = { border: '1.5px solid #EAEFF4', background: 'var(--w, #fff)', boxShadow: '0 1px 3px rgba(0,0,0,0.03)', borderRadius: '19px', height: '38px', width: '100%', fontSize: '12px', fontWeight: 600, color: '#1E293B', padding: '0 16px' };
@@ -146,6 +147,7 @@ export const ExpenseModal: React.FC<ExpenseModalProps> = ({
     setFriendPickerSearch,
     friendPickerEmail,
     setFriendPickerEmail,
+    setFriendPickerKey,
     apiError,
     openScanner,
     handleScanComplete,
@@ -272,6 +274,7 @@ export const ExpenseModal: React.FC<ExpenseModalProps> = ({
   const switchToJustMe = () => {
     setSelectedSplitters([me]);
     setFriendPickerEmail('');
+    setFriendPickerKey('');
     setHighlightAddFriend(false);
     setPayer(me);
     setSplitMode('Equally');
@@ -1282,18 +1285,25 @@ export const ExpenseModal: React.FC<ExpenseModalProps> = ({
                   <FullScreenAddFriend
                     isOpen={showFriendPickerPopup}
                     singleSelect
-                    requireEmail
                     myEmail={myEmail}
                     onClose={() => setShowFriendPickerPopup(false)}
                     existingMembers={[me]}
                     myName={me}
-                    suggestions={buildPeopleSuggestions(groups, null, [me], me, myEmail)}
+                    suggestions={(() => {
+                      // Group people plus my existing Non-Group friends (with their
+                      // permanent id), so picking one reuses the same person.
+                      const base = buildPeopleSuggestions(groups, null, [me], me, myEmail);
+                      const ng = nonGroupFriendsFromExpenses(expenses, makeIsMe(me)).filter((f) =>
+                        !base.some((b) => (f.email && b.email && b.email.toLowerCase() === f.email) || (!f.email && !b.email && b.name.toLowerCase() === f.name.toLowerCase())));
+                      return [...ng.map((f) => ({ name: f.name, email: f.email, identity: f.key })), ...base];
+                    })()}
                     memberAvatars={memberAvatars}
                     onAddFriends={(friends) => {
                       const picked = friends[0];
                       if (picked) {
                         setSelectedSplitters([me, picked.name]);
                         setFriendPickerEmail(picked.email && picked.email.trim().includes('@') ? picked.email.trim() : '');
+                        setFriendPickerKey(resolveNonGroupFriendKey(expenses, picked, makeIsMe(me)));
                       }
                       setJustMeChosen(false);
                       setFriendPickerSearch('');

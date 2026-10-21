@@ -1,4 +1,4 @@
-# Non-Group by email — plan
+# Non-Group identity (like groups) — plan
 
 **Goal:** plain Non-Group expenses identify people by **email**, the way groups
 already do, so look-alike names, renames and "is this me?" guesses stop
@@ -22,23 +22,28 @@ same person split into several cards; sharing created a second, empty thread
 
 ## Target
 
-Every plain Non-Group expense stores:
+Same model as groups: every Non-Group friend gets a **permanent id** the moment
+they're added (, "ngp-…", like a member's ). **Email
+stays optional**, as in groups; it's only required when a second friend uses a
+name I already have (same rule as groups). Every plain Non-Group expense stores:
 
-- `myEmail` — the account that created it (who "me" is in this expense)
-- `otherEmail` — the friend (required for a 2-person split; already exists)
+-  — the friend's id (always, for a 2-person split)
+-  — the friend's email, if known
+-  — the account that wrote it (who "me" is)
 
-People on the Non-Group screen are grouped by `otherEmail`; "is me" is decided
-by `myEmail === my account email`, with names only as a fallback for old rows.
+People are grouped by  (then email, then name for old rows); "is me" by
+. When the friend joins via the share link, their id links to the
+account, like claiming a group spot.
 
 ## Steps
 
-1. **Pick-a-friend asks for email (UI).**
-   The Non-Group friend picker (`FullScreenAddFriend`, single-select) requires an
-   email for a *new* name, same as Add member in a group. Picking a known person
-   fills it from `buildPeopleSuggestions`. Self-only ("Just me") needs none.
-   Files: `FullScreenAddFriend.tsx`, `ExpenseModal.tsx`, `useExpenseForm.ts`.
+1. **Friend ids at pick time (UI) — DONE 2026-10-21.**
+   Picker suggestions include my existing Non-Group friends (with their id).
+   Picking one reuses the id; a new person gets a new id
+   (). Email optional; required only on a same-name
+   clash; my own email is refused.
 
-2. **Save both emails on every Non-Group expense (write path).**
+2. **Save id + emails on every Non-Group expense (write path) — DONE (modal).**
    `useExpenseForm` save: set `otherEmail` (exists) and new `myEmail`.
    Also `quickAddExpenseWithFriend`, `openPersonalExpense`, scan-bill and
    Splitwise import. Add `myEmail` to `types.ts` and the cloud backup payload.

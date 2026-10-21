@@ -170,3 +170,54 @@ export const computeNonGroupPeople = (
     .filter((p) => p.count > 0 || Object.values(p.bal).some((v) => Math.abs(v) > 0.01))
     .sort((a, b) => a.name.localeCompare(b.name));
 };
+
+// ── Permanent Non-Group friend IDs ──────────────────────────────────────────
+// Like a group member's member_key: every Non-Group friend gets an id the
+// moment they're added, saved on each expense as `otherKey`. Email stays
+// optional, exactly as in groups.
+export const genNonGroupFriendKey = (): string =>
+  'ngp-' + ((typeof crypto !== 'undefined' && (crypto as any).randomUUID)
+    ? (crypto as any).randomUUID()
+    : `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 10)}`);
+
+export const isNonGroupFriendKey = (v?: string): boolean => !!v && v.startsWith('ngp-');
+
+export type NonGroupFriend = { name: string; email: string; key: string };
+
+// The friends I already have in plain Non-Group, one per id (newest name/email
+// wins). Only expenses that carry an id count.
+export const nonGroupFriendsFromExpenses = (expenses: Expense[], isMe: (n: string) => boolean): NonGroupFriend[] => {
+  const byKey = new Map<string, NonGroupFriend & { ts: number }>();
+  expenses.forEach((e) => {
+    if (!e || e.isDeleted || String(e.gId) !== 'STANDALONE' || !isNonGroupFriendKey(e.otherKey)) return;
+    const other = [e.paid, ...(e.splitters || [])].map((n) => cleanName(n || '')).find((n) => n && !isMe(n));
+    if (!other) return;
+    const ts = e.timestamp || 0;
+    const cur = byKey.get(e.otherKey!);
+    if (!cur || ts >= cur.ts) {
+      byKey.set(e.otherKey!, { name: other, email: (e.otherEmail || cur?.email || '').toLowerCase(), key: e.otherKey!, ts });
+    }
+  });
+  return Array.from(byKey.values()).map(({ ts: _ts, ...f }) => f);
+};
+
+// Which id a picked friend gets: their own id if the pick carried one; else the
+// id already used with that email; else the ONE id used with that exact name
+// (several → ambiguous, new id); else a brand-new id.
+export const resolveNonGroupFriendKey = (
+  expenses: Expense[],
+  picked: { name: string; email?: string; identity?: string },
+  isMe: (n: string) => boolean,
+): string => {
+  if (isNonGroupFriendKey(picked.identity)) return picked.identity!;
+  const friends = nonGroupFriendsFromExpenses(expenses, isMe);
+  const em = (picked.email || '').trim().toLowerCase();
+  if (em.includes('@')) {
+    const byEmail = friends.find((f) => f.email === em);
+    if (byEmail) return byEmail.key;
+    return genNonGroupFriendKey();
+  }
+  const nm = cleanName(picked.name).toLowerCase();
+  const byName = friends.filter((f) => f.name.toLowerCase() === nm && !f.email);
+  return byName.length === 1 ? byName[0].key : genNonGroupFriendKey();
+};

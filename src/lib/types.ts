@@ -81,6 +81,9 @@ export interface Expense {
   // Non-group (STANDALONE) only: the account that wrote it (= "me" on this
   // expense). With otherEmail, people are told apart by email, not by name.
   myEmail?: string;
+  // Non-group (STANDALONE) only: the friend's permanent id ("ngp-…"), like a
+  // group member's member_key. Email stays optional.
+  otherKey?: string;
   // Name (as written on this expense) → group_members.member_key it referred
   // to when written. See fillPartyKeys in lib/identity.
   partyKeys?: Record<string, string>;

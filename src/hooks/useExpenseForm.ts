@@ -258,6 +258,8 @@ export function useExpenseForm({
   const [friendPickerSearch, setFriendPickerSearch] = useState<string>('');
   // Non-group: optional email captured when picking/adding the other person.
   const [friendPickerEmail, setFriendPickerEmail] = useState<string>(editingExpense?.otherEmail || '');
+  // Non-Group friend's permanent id (set when a friend is picked).
+  const [friendPickerKey, setFriendPickerKey] = useState<string>(editingExpense?.otherKey || '');
   const [apiError, setApiError] = useState<string | null>(null);
 
   const openScanner = () => {
@@ -543,6 +545,10 @@ export function useExpenseForm({
           localGId === 'STANDALONE' && !isSelfOnlySave && friendPickerEmail.trim().includes('@')
             ? friendPickerEmail.trim().toLowerCase()
             : (localGId === 'STANDALONE' && !isSelfOnlySave ? editingExpense?.otherEmail : undefined),
+        otherKey:
+          localGId === 'STANDALONE' && !isSelfOnlySave
+            ? (friendPickerKey || editingExpense?.otherKey || undefined)
+            : undefined,
         myEmail:
           localGId === 'STANDALONE'
             ? ((editingExpense && !isTemporaryNewExpense && editingExpense.myEmail) || (myEmail || '').trim().toLowerCase() || undefined)
@@ -979,6 +985,8 @@ export function useExpenseForm({
     setFriendPickerSearch,
     friendPickerEmail,
     setFriendPickerEmail,
+    friendPickerKey,
+    setFriendPickerKey,
     apiError,
     setApiError,
     openScanner,
