@@ -112,6 +112,8 @@ export interface GlobalSettleData {
   gId?: string | number | null;
   identity?: string;
   groups?: string[];
+  // Plain Non-Group: the friend's permanent ids (otherKey) to settle.
+  keys?: string[];
   balances?: Record<string, number>;
 }
 

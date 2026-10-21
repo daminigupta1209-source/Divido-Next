@@ -133,7 +133,7 @@ export const FriendsView: React.FC<FriendsViewProps> = ({
     const compute = async () => {
       setIsCalculatingFriends(true);
       const masterBal: Record<string, Record<string, number>> = {};
-      const idMeta: Record<string, { name: string; groups: Set<string> }> = {};
+      const idMeta: Record<string, { name: string; groups: Set<string>; keys?: Set<string> }> = {};
       const bumpBal = (id: string, name: string, groupName: string | null, curr: string, delta: number) => {
         if (!masterBal[id]) masterBal[id] = {};
         masterBal[id][curr] = (masterBal[id][curr] || 0) + delta;
@@ -232,8 +232,25 @@ export const FriendsView: React.FC<FriendsViewProps> = ({
         return em && em.toLowerCase() !== selfEmail && !myKeys.has(em.toLowerCase()) ? em : nm;
       };
 
+      // A friend id's email (from any of their expenses), so an expense without
+      // the email (e.g. a settlement) still lands on the same person.
+      const emailOfKey: Record<string, string> = {};
+      standaloneExps.forEach((e) => {
+        const k = e.otherKey || '';
+        const m = (e.otherEmail || '').trim().toLowerCase();
+        if (k.startsWith('ngp-') && m.includes('@') && !emailOfKey[k]) emailOfKey[k] = m;
+      });
       standaloneExps.forEach((e) => {
         const c = e.currency || '₹';
+        // The friend's email or permanent id decides who this is (two friends
+        // with the same name stay apart); older expenses fall back to the name.
+        const fid = (e.otherKey || '').startsWith('ngp-') ? e.otherKey! : '';
+        const em = ((e.otherEmail || '').trim().toLowerCase()) || (fid ? emailOfKey[fid] || '' : '');
+        const idFor = (nm: string) => {
+          const id = em.includes('@') && em !== selfEmail ? em : fid || standaloneId(nm);
+          if (fid) { if (!idMeta[id]) idMeta[id] = { name: nm, groups: new Set() }; (idMeta[id].keys ||= new Set()).add(fid); }
+          return id;
+        };
         const splitters = e.splitters || [e.paid];
         const amount = e.amt || 0;
 
@@ -246,7 +263,7 @@ export const FriendsView: React.FC<FriendsViewProps> = ({
                 : e.mode === 'Unequally'
                 ? parseFloat(e.shares?.[m]?.toString() || '0')
                 : (amount * parseFloat(e.shares?.[m]?.toString() || '0')) / 100;
-            bumpBal(standaloneId(m), m, 'Non-Group', c, otherShare);
+            bumpBal(idFor(m), m, 'Non-Group', c, otherShare);
           });
         } else if (splitters.includes(me)) {
           const payer = e.paid;
@@ -256,7 +273,7 @@ export const FriendsView: React.FC<FriendsViewProps> = ({
               : e.mode === 'Unequally'
               ? parseFloat(e.shares?.[me]?.toString() || '0')
               : (amount * parseFloat(e.shares?.[me]?.toString() || '0')) / 100;
-          bumpBal(standaloneId(payer), payer, 'Non-Group', c, -myShare);
+          bumpBal(idFor(payer), payer, 'Non-Group', c, -myShare);
         }
       });
 
@@ -264,6 +281,8 @@ export const FriendsView: React.FC<FriendsViewProps> = ({
         id,
         name: idMeta[id]?.name || id,
         groups: idMeta[id] ? Array.from(idMeta[id].groups) : [],
+        // Plain Non-Group friend ids behind this person (for Settle up).
+        keys: idMeta[id]?.keys ? Array.from(idMeta[id].keys!) : [],
         bals,
       }));
       const dupNameCount: Record<string, number> = {};
@@ -658,7 +677,7 @@ export const FriendsView: React.FC<FriendsViewProps> = ({
           return (
             <div
               key={f.id}
-              onClick={() => { if (active) setGlobalSettleData({ name: f.name, identity: f.id, groups: f.groups, balances: activeBals }); }}
+              onClick={() => { if (active) setGlobalSettleData({ name: f.name, identity: f.id, groups: f.groups, balances: activeBals, ...((f as { keys?: string[] }).keys?.length ? { keys: (f as { keys?: string[] }).keys } : {}) }); }}
               style={{
                 padding: '16px',
                 marginBottom: '12px',

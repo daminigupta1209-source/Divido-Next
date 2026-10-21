@@ -23,20 +23,20 @@ interface NonGroupViewProps {
   directThreads?: DirectThread[];
   onBack: () => void;
   onOpenExpense: (exp: Expense) => void;
-  onSettlePerson: (name: string, directGroupId?: string, email?: string) => void;
+  onSettlePerson: (name: string, directGroupId?: string, email?: string, keys?: string[]) => void;
   onRemindPerson?: (name: string) => void;
-  onAddWithPerson?: (name: string, directGroupId?: string) => void;
+  onAddWithPerson?: (name: string, directGroupId?: string, keys?: string[]) => void;
   onAddPersonal?: () => void;
   // Photos tab upload. With a person → their thread; without → a personal
   // ("You") entry, which the expense form can still split with a friend.
-  onAddPhoto?: (photo: NonGroupPhoto, person?: { name: string; directGroupId?: string }) => void;
-  onSharePerson?: (name: string, directGroupId?: string) => void;
+  onAddPhoto?: (photo: NonGroupPhoto, person?: { name: string; directGroupId?: string; keys?: string[] }) => void;
+  onSharePerson?: (name: string, directGroupId?: string, keys?: string[]) => void;
   // How many backed-up non-group expenses aren't present locally (for restore).
   backupMissingCount?: number;
   onRestoreBackup?: () => void;
   onClearAll?: () => void;
   onCleanupEmpty?: () => void;
-  onDeletePerson?: (name: string, directGroupId?: string) => void;
+  onDeletePerson?: (name: string, directGroupId?: string, keys?: string[]) => void;
   // Options sheet → "Delete Non-Group" on a person's screen. balanceText is ''
   // when settled; otherwise the parent blocks the delete behind Settle up.
   onRequestDeletePerson?: (req: { name: string; balanceText: string; onSettle: () => void; onDelete: () => void }) => void;
@@ -299,11 +299,11 @@ export const NonGroupView: React.FC<NonGroupViewProps> = ({
       if (!onAddWithPerson) return;
       ev.preventDefault();
       const t = profilePersonThread.current;
-      onAddWithPerson(profilePerson, t);
+      onAddWithPerson(profilePerson, t, profileKeys);
     };
     // Header share icon (shown only while a person is open) → invite them.
     const onSharePersonEv = () => {
-      if (onSharePerson) onSharePerson(profilePerson, profilePersonThread.current);
+      if (onSharePerson) onSharePerson(profilePerson, profilePersonThread.current, profileKeys);
     };
     window.dispatchEvent(new CustomEvent('divido:nongroup-person', { detail: { open: !!onSharePerson, name: shown(profilePerson), email: people.find((x) => x.name.toLowerCase() === profilePerson.toLowerCase())?.email || '', avatar: avatarFor(profilePerson, people.find((x) => x.name.toLowerCase() === profilePerson.toLowerCase())?.email), avatarBg: AVATAR_BG[(cleanName(profilePerson).charCodeAt(0) || 0) % AVATAR_BG.length], status: personStatus(profilePerson) } }));
     window.addEventListener('divido:share-person', onSharePersonEv);
@@ -413,7 +413,7 @@ export const NonGroupView: React.FC<NonGroupViewProps> = ({
   React.useEffect(() => {
     const on = () => {
       if (!onSharePerson) return;
-      if (profilePerson) onSharePerson(profilePerson, profilePersonThread.current);
+      if (profilePerson) onSharePerson(profilePerson, profilePersonThread.current, profileKeys);
       else setShowSharePicker(true);
     };
     window.addEventListener('divido:nongroup-share', on);
@@ -740,14 +740,14 @@ export const NonGroupView: React.FC<NonGroupViewProps> = ({
       .sort((a, b) => String(b.date || '').localeCompare(String(a.date || '')) || (b.timestamp || 0) - (a.timestamp || 0));
     const deleteThread = () => {
       if (!onDeletePerson) return;
-      (p?.aliases || [profilePerson]).forEach((a, i) => onDeletePerson(a, i === 0 ? p?.directGroupId : undefined));
+      (p?.aliases || [profilePerson]).forEach((a, i) => onDeletePerson(a, i === 0 ? p?.directGroupId : undefined, p?.keys));
       setProfilePerson(null);
     };
     deleteRequestRef.current = onRequestDeletePerson && onDeletePerson
       ? () => onRequestDeletePerson({
           name: shown(profilePerson),
           balanceText: lines.map((l) => `${l.curr}${formatExactAmount(Math.abs(l.amount))} to ${l.amount < 0 ? 'pay' : 'collect'}`).join(', '),
-          onSettle: () => onSettlePerson(profilePerson, p?.directGroupId, p?.email),
+          onSettle: () => onSettlePerson(profilePerson, p?.directGroupId, p?.email, p?.keys),
           onDelete: deleteThread,
         })
       : null;
@@ -776,7 +776,7 @@ export const NonGroupView: React.FC<NonGroupViewProps> = ({
           collectMore={personCollectLines.length - 1}
           payLines={personPayLines}
           collectLines={personCollectLines}
-          summaryAction={{ label: 'Settle up', onClick: () => onSettlePerson(profilePerson, p?.directGroupId, p?.email) }}
+          summaryAction={{ label: 'Settle up', onClick: () => onSettlePerson(profilePerson, p?.directGroupId, p?.email, p?.keys) }}
         />
 
         {/* Activities / Photos toggle (swipeable) — like the group page */}
@@ -798,7 +798,7 @@ export const NonGroupView: React.FC<NonGroupViewProps> = ({
 
         {personTab === 'photos' ? (() => {
           const theirPhotos = theirExps.flatMap((e) => (e.attachments || []).map((url) => ({ url, exp: e })));
-          const addTheirPhoto = (photo: NonGroupPhoto) => onAddPhoto?.(photo, { name: profilePerson, directGroupId: profilePersonThread.current });
+          const addTheirPhoto = (photo: NonGroupPhoto) => onAddPhoto?.(photo, { name: profilePerson, directGroupId: profilePersonThread.current, keys: p?.keys });
           return theirPhotos.length === 0 ? (
             <div style={{ textAlign: 'center', padding: '24px 0' }}>
               {onAddPhoto && <NonGroupPhotoUpload variant="button" onSave={addTheirPhoto} />}
@@ -1095,7 +1095,7 @@ export const NonGroupView: React.FC<NonGroupViewProps> = ({
                 <button
                   key={(p.keys && p.keys[0]) || p.name}
                   type="button"
-                  onClick={() => { setShowSharePicker(false); onSharePerson?.(p.name, p.directGroupId); }}
+                  onClick={() => { setShowSharePicker(false); onSharePerson?.(p.name, p.directGroupId, p.keys); }}
                   style={{ display: 'flex', alignItems: 'center', gap: '12px', width: '100%', padding: '10px 4px', background: 'none', border: 'none', borderBottom: '1px solid #F1F5F9', cursor: 'pointer', textAlign: 'left' }}
                 >
                   <Avatar name={p.name} email={p.email} size={34} />
@@ -1235,7 +1235,7 @@ export const NonGroupView: React.FC<NonGroupViewProps> = ({
                       {onAddWithPerson && (
                         <button
                           type="button"
-                          onClick={(ev) => { ev.stopPropagation(); onAddWithPerson(p.name, p.directGroupId); }}
+                          onClick={(ev) => { ev.stopPropagation(); onAddWithPerson(p.name, p.directGroupId, p.keys); }}
                           title={`Add expense with ${shown(p.name)}`}
                           style={{ flexShrink: 0, width: '30px', height: '30px', borderRadius: '50%', background: '#059669', color: '#FFFFFF', border: 'none', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', padding: 0, boxShadow: '0 2px 6px rgba(5,150,105,0.25)' }}
                         >

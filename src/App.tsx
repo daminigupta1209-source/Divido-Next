@@ -120,7 +120,7 @@ import { InstallPrompt } from './components/InstallPrompt';
 import { useExportCSV } from './hooks/useExportCSV';
 import { AppNotification, fetchNotifications, markAllNotificationsRead, subscribeNotifications, clearAllNotifications, pushNotification } from './lib/notifications';
 import { calculateNextOccurrenceDate, simplifyMultiCurrencyDebts, computeRawPairwiseTransactions, memberNetBalances } from './lib/calculations';
-import { buildDirectThreads, makeIsMe, standaloneInKeySpace, STANDALONE_BY_KEY } from './lib/nonGroupPeople';
+import { buildDirectThreads, makeIsMe, standaloneInKeySpace, STANDALONE_BY_KEY, resolveNonGroupFriendKey, isNonGroupFriendKey } from './lib/nonGroupPeople';
 import { isPersonalExpense, getPersonalExpenses } from './lib/personalExpenses';
 import {
   consumeOAuthState,
@@ -1586,7 +1586,7 @@ function App() {
   // 2-person "direct" thread written to the cloud immediately, then open the
   // invite link. Identity-first (email-keyed) so balances/names resolve on both
   // sides and the friend auto-claims by email.
-  const sharePersonNonGroupBeta = async (personName: string, otherEmail: string, knownGroupId?: string) => {
+  const sharePersonNonGroupBeta = async (personName: string, otherEmail: string, knownGroupId?: string, friendKeys?: string[]) => {
     if (!requireSignInToCreate()) return;
     const clean = (personName || '').replace(/\s*\(Left\)$/i, '').trim();
     if (!clean) return;
@@ -1594,9 +1594,10 @@ function App() {
     // .com silently broke the invite-email match).
     const em = (otherEmail || '').trim().toLowerCase().replace(/[\s.]+$/, '');
     const cl = clean.toLowerCase();
-    const involves = (e: Expense) =>
+    // An expense with a friend id belongs to exactly that friend; older ones by name.
+    const involves = (e: Expense) => (isNonGroupFriendKey(e.otherKey) ? (friendKeys || []).includes(e.otherKey!) : (
       (e.paid || '').replace(/\s*\(Left\)$/i, '').trim().toLowerCase() === cl ||
-      (e.splitters || []).some((s) => (s || '').replace(/\s*\(Left\)$/i, '').trim().toLowerCase() === cl);
+      (e.splitters || []).some((s) => (s || '').replace(/\s*\(Left\)$/i, '').trim().toLowerCase() === cl)));
     // Reuse their existing shared thread: the one the person screen already
     // knows, else one holding their email, else one with their name. Matching by
     // name alone missed the thread once they had joined under another name, so a
@@ -1658,12 +1659,13 @@ function App() {
 
   // Delete a whole non-group thread with one person: all STANDALONE expenses
   // involving them, plus their leftover shared "direct" thread (local + cloud).
-  const deletePersonNonGroup = async (personName: string, directGroupId?: string) => {
+  const deletePersonNonGroup = async (personName: string, directGroupId?: string, friendKeys?: string[]) => {
     const cl = (personName || '').replace(/\s*\(Left\)$/i, '').trim().toLowerCase();
     if (!cl) return;
-    const involves = (e: Expense) =>
+    // An expense with a friend id belongs to exactly that friend; older ones by name.
+    const involves = (e: Expense) => (isNonGroupFriendKey(e.otherKey) ? (friendKeys || []).includes(e.otherKey!) :
       (e.paid || '').replace(/\s*\(Left\)$/i, '').trim().toLowerCase() === cl ||
-      (e.splitters || []).some((s) => (s || '').replace(/\s*\(Left\)$/i, '').trim().toLowerCase() === cl);
+      (e.splitters || []).some((s) => (s || '').replace(/\s*\(Left\)$/i, '').trim().toLowerCase() === cl));
     setExpenses((prev) => prev.filter((e) => {
       if (String(e.gId) === 'STANDALONE' && involves(e)) return false;
       if (directGroupId && String(e.gId) === String(directGroupId)) return false;
@@ -2052,6 +2054,10 @@ function App() {
         try { const claim = localStorage.getItem(`divido_identity_${g.id}`); if (claim) myG = claim; } catch { /* ignore */ }
         const myKey = getPersonKey(g, myG);
         const mKey = (globalSettleData.identity && !isStandalone) ? globalSettleData.identity : getPersonKey(g, m);
+        // Plain Non-Group: the friend's permanent ids (same-named friends stay
+        // apart). Their id-tagged expenses settle by id, older ones by name.
+        const settleKeys: string[] = isStandalone ? (globalSettleData.keys || []) : [];
+        const mKeys = new Set<string>([mKey, ...settleKeys]);
         const groupExps = expenses.filter((e) => String(e.gId) === String(g.id) && !e.isDeleted);
         const members = isStandalone
           ? Array.from(new Set([
@@ -2077,7 +2083,8 @@ function App() {
         // Run the engine in identity space: each name on an expense resolves
         // through its recorded member_key (then the roster), so renamed or
         // re-claimed people keep one ledger. Same path as balancesByIdentity.
-        const { expenses: keyedExps, keyToName } = toIdentitySpace(g, groupExps);
+        const { expenses: identityExps, keyToName } = toIdentitySpace(g, groupExps);
+        const keyedExps = settleKeys.length ? standaloneInKeySpace(identityExps, makeIsMe(me, userName)) : identityExps;
         const effectiveMembers = Array.from(new Set([
           myKey,
           ...keyedExps.reduce((acc, e) => {
@@ -2090,22 +2097,22 @@ function App() {
         const groupPlan = useSimplify
           ? simplifyMultiCurrencyDebts(effectiveMembers, keyedExps, g.currency || '₹')
           : computeRawPairwiseTransactions(effectiveMembers, keyedExps, g.currency || '₹');
-        const nameOf = (k: string) => keyToName[k] ?? (k === myKey ? myG : k);
+        const nameOf = (k: string) => (settleKeys.includes(k) ? baseName : keyToName[k] ?? (k === myKey ? myG : k));
 
         // 2. Find transactions involving me and m
         const relevantExps = groupExps.filter((_, i) => {
           const ke = keyedExps[i];
           const splitterKeys = ke.splitters || [];
           return (
-            (ke.paid === myKey && splitterKeys.includes(mKey)) ||
-            (ke.paid === mKey && splitterKeys.includes(myKey))
+            (ke.paid === myKey && splitterKeys.some((k) => mKeys.has(k))) ||
+            (mKeys.has(ke.paid) && splitterKeys.includes(myKey))
           );
         });
 
         groupPlan.forEach((t) => {
           const fromKey = t.from;
           const toKey = t.to;
-          const involvesUs = (fromKey === myKey && toKey === mKey) || (fromKey === mKey && toKey === myKey);
+          const involvesUs = (fromKey === myKey && mKeys.has(toKey)) || (mKeys.has(fromKey) && toKey === myKey);
 
           if (involvesUs) {
             Object.entries(t.balances).forEach(([curr, val]) => {
@@ -2143,6 +2150,9 @@ function App() {
                   // Write-off is only offered on lines where I'm OWED (see UI).
                   mode: 'settle',
                   summary: `${currencyExps.length || relevantExps.length} activities • ${summary}`,
+                  // Friend id this line settles (plain Non-Group), so the payment
+                  // lands on the right friend's balance.
+                  otherKey: settleKeys.includes(fromKey) ? fromKey : settleKeys.includes(toKey) ? toKey : undefined,
                 });
               }
             });
@@ -2153,7 +2163,7 @@ function App() {
     } else {
       setLocalSettleEdits([]);
     }
-  }, [globalSettleData, groups, expenses, me]);
+  }, [globalSettleData, groups, expenses, me, userName]);
 
 
 
@@ -2171,7 +2181,7 @@ function App() {
           // and given a deterministic id (matches performWriteOff) so two devices /
           // a double-tap converge to one row instead of double-cancelling.
           return {
-            id: `writeoff-${String(it.gId)}-${it.paidBy}-${it.receivedBy}-${it.curr}-${today}`,
+            id: `writeoff-${String(it.gId)}-${it.paidBy}-${it.receivedBy}-${it.curr}-${today}${it.otherKey ? `-${it.otherKey}` : ''}`,
             gId: it.gId,
             title: 'Written off',
             amt,
@@ -2183,13 +2193,14 @@ function App() {
             category: '',
             mode: 'Equally' as const,
             shares: {},
+            ...(it.otherKey ? { otherKey: it.otherKey } : {}),
           };
         }
         return {
           // Deterministic id so two devices (or a double-tap) recording the SAME
           // settlement converge to ONE row (amount is in the key, so two genuinely
           // different same-day payments stay distinct; exact duplicates collapse).
-          id: `settle-${String(it.gId)}-${it.paidBy}-${it.receivedBy}-${it.curr}-${Math.round(amt * 100)}-${today}`,
+          id: `settle-${String(it.gId)}-${it.paidBy}-${it.receivedBy}-${it.curr}-${Math.round(amt * 100)}-${today}${it.otherKey ? `-${it.otherKey}` : ''}`,
           gId: it.gId,
           title: `✅ Settlement: ${it.paidBy} paid ${it.receivedBy}`,
           amt,
@@ -2201,6 +2212,7 @@ function App() {
           category: '✅',
           mode: 'Equally' as const,
           shares: {},
+          ...(it.otherKey ? { otherKey: it.otherKey } : {}),
         };
       });
     // Functional update: never write a stale `expenses` array here — a realtime
@@ -3832,7 +3844,7 @@ function App() {
   // With a photo (Non-Group Photos tab upload) the draft carries it as the
   // receipt; saveOnly drops it straight into the gallery as a 0-amount entry
   // instead of opening the form (same as a group's "Save to Gallery").
-  const quickAddExpenseWithFriend = (friendName: string, directGroupId?: string, photo?: NonGroupPhoto) => {
+  const quickAddExpenseWithFriend = (friendName: string, directGroupId?: string, photo?: NonGroupPhoto, friendKeys?: string[]) => {
     if (!requireSignInToCreate()) return;
     const clean = friendName.replace(/\s*\(Left\)$/i, '').trim();
     if (!clean) return;
@@ -3889,6 +3901,9 @@ function App() {
       date: new Date().toISOString().split('T')[0],
       splitters: [me, clean],
       paid: me,
+      // Same friend as the card that was tapped (their permanent id).
+      otherKey: friendKeys?.[0] || resolveNonGroupFriendKey(expenses, { name: clean }, makeIsMe(me, userName)),
+      myEmail: (userEmail || '').trim().toLowerCase() || undefined,
     } as any;
     if (photo?.saveOnly) { saveNonGroupGalleryPhoto(draft, photo); return; }
     setEditingExpenseSecure(withPhoto(draft, photo));
@@ -4992,11 +5007,11 @@ function App() {
             // A person's balance spans plain Non-Group AND their shared thread, so
             // settle across both (by email inside the thread, where their name
             // can differ). Settling only one bucket left an empty settle screen.
-            onSettlePerson={(name, _directGroupId, email) => setGlobalSettleDataSecure({ name: name.replace(/\s*\(Left\)$/i, '').trim(), groups: ['Non-Group'], identity: email || undefined })}
-            onAddWithPerson={(name, directGroupId) => quickAddExpenseWithFriend(name, directGroupId)}
+            onSettlePerson={(name, _directGroupId, email, keys) => setGlobalSettleDataSecure({ name: name.replace(/\s*\(Left\)$/i, '').trim(), groups: ['Non-Group'], identity: email || undefined, ...(keys?.length ? { keys } : {}) })}
+            onAddWithPerson={(name, directGroupId, keys) => quickAddExpenseWithFriend(name, directGroupId, undefined, keys)}
             onAddPersonal={() => openPersonalExpense()}
             onAddPhoto={(photo, person) => (person
-              ? quickAddExpenseWithFriend(person.name, person.directGroupId, photo)
+              ? quickAddExpenseWithFriend(person.name, person.directGroupId, photo, person.keys)
               : openPersonalExpense(photo))}
             backupMissingCount={(() => {
               const ids = new Set(expenses.map((e) => String(e.id)));
@@ -5027,7 +5042,7 @@ function App() {
                 onConfirm: () => { onDelete(); setConfirmState({ show: false }); },
               });
             }}
-            onSharePerson={(name, threadId) => { sharePersonNonGroupBeta(name, '', threadId); }}
+            onSharePerson={(name, threadId, keys) => { sharePersonNonGroupBeta(name, '', threadId, keys); }}
             onRemindPerson={async (name) => {
               const clean = name.replace(/\s*\(Left\)$/i, '').trim();
               // In-app reminder (fire-and-forget so it doesn't consume the tap's
