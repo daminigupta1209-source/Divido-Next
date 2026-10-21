@@ -1,7 +1,7 @@
 # Non-Group identity (like groups) — plan
 
-**Goal:** plain Non-Group expenses identify people by **email**, the way groups
-already do, so look-alike names, renames and "is this me?" guesses stop
+**Goal:** plain Non-Group expenses identify people by a **permanent id** (plus
+email when known), the way groups already do, so look-alike names, renames and "is this me?" guesses stop
 breaking balances, Settle up, Delete and sharing.
 
 **Owner note:** Chirag is actively changing Non-Group (share links, claim card,
@@ -23,16 +23,16 @@ same person split into several cards; sharing created a second, empty thread
 ## Target
 
 Same model as groups: every Non-Group friend gets a **permanent id** the moment
-they're added (, "ngp-…", like a member's ). **Email
+they're added (`otherKey`, "ngp-…", like a member's `member_key`). **Email
 stays optional**, as in groups; it's only required when a second friend uses a
 name I already have (same rule as groups). Every plain Non-Group expense stores:
 
--  — the friend's id (always, for a 2-person split)
--  — the friend's email, if known
--  — the account that wrote it (who "me" is)
+- `otherKey` — the friend's id (always, for a 2-person split)
+- `otherEmail` — the friend's email, if known
+- `myEmail` — the account that wrote it (who "me" is)
 
-People are grouped by  (then email, then name for old rows); "is me" by
-. When the friend joins via the share link, their id links to the
+People are grouped by `otherKey` (then email, then name for old rows); "is me" by
+`myEmail`. When the friend joins via the share link, their id links to the
 account, like claiming a group spot.
 
 ## Steps
@@ -40,7 +40,7 @@ account, like claiming a group spot.
 1. **Friend ids at pick time (UI) — DONE 2026-10-21.**
    Picker suggestions include my existing Non-Group friends (with their id).
    Picking one reuses the id; a new person gets a new id
-   (). Email optional; required only on a same-name
+   (`resolveNonGroupFriendKey`). Email optional; required only on a same-name
    clash; my own email is refused.
 
 2. **Save id + emails on every Non-Group expense (write path) — DONE (modal).**
