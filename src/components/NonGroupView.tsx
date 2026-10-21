@@ -194,6 +194,9 @@ export const NonGroupView: React.FC<NonGroupViewProps> = ({
   // Which person's full profile page is open (tapping their DP/avatar).
   // Remembered for this tab so a refresh stays on that person's screen.
   const [profilePerson, setProfilePerson] = React.useState<string | null>(() => { try { return sessionStorage.getItem('dv_ng_person') || null; } catch { return null; } });
+  // The open person's friend ids, so two friends with the same name open their
+  // own screens (the name alone can't tell them apart).
+  const [profileKeys, setProfileKeys] = React.useState<string[]>(() => { try { return (sessionStorage.getItem('dv_ng_person_keys') || '').split(',').filter(Boolean); } catch { return []; } });
   // "You" pinned row — self-only (personal) expenses screen. Mutually
   // exclusive with profilePerson (entering one clears the other).
   // Remembered for this tab so a refresh stays on the You screen.
@@ -282,7 +285,7 @@ export const NonGroupView: React.FC<NonGroupViewProps> = ({
   // leaving the non-group screen entirely.
   React.useEffect(() => {
     if (!profilePerson) return;
-    try { sessionStorage.setItem('dv_ng_person', profilePerson); } catch { /* ignore */ }
+    try { sessionStorage.setItem('dv_ng_person', profilePerson); sessionStorage.setItem('dv_ng_person_keys', profileKeys.join(',')); } catch { /* ignore */ }
     // After a refresh the entry is already there; don't stack a second one.
     if (!(window.history.state && window.history.state.dividoNonGroupProfile)) window.history.pushState({ dividoNonGroupProfile: true }, '');
     // Landing back ON this screen's entry (e.g. a menu above it closed) must
@@ -716,7 +719,9 @@ export const NonGroupView: React.FC<NonGroupViewProps> = ({
 
   // ── Person profile (tap the DP) ──────────────────────────────────────────────
   if (profilePerson) {
-    const p = people.find((x) => x.name.toLowerCase() === profilePerson.toLowerCase());
+    const p = (profileKeys.length ? people.find((x) => (x.keys || []).some((k) => profileKeys.includes(k))) : undefined)
+      || people.find((x) => x.name.toLowerCase() === profilePerson.toLowerCase() && !(x.keys || []).length)
+      || people.find((x) => x.name.toLowerCase() === profilePerson.toLowerCase());
     profilePersonThread.current = p?.directGroupId;
     const lines = p ? myPerspective(p.bal) : [];
     const hasBal = lines.length > 0;
@@ -724,7 +729,10 @@ export const NonGroupView: React.FC<NonGroupViewProps> = ({
     const personCollectLines = lines.filter((l) => l.amount > 0);
     // All names this person was saved under (same email ⇒ same person).
     const aliasLower = new Set((p?.aliases || [profilePerson]).map((a) => a.toLowerCase()));
+    const theirKeys = new Set(p?.keys || []);
     const theirExps = nonGroupExps.filter((e) => {
+      // An expense with a friend id belongs to exactly that friend.
+      if (String(e.gId) === 'STANDALONE' && e.otherKey && e.otherKey.startsWith('ngp-')) return theirKeys.has(e.otherKey);
       if (e.paid && aliasLower.has(cleanName(e.paid).toLowerCase())) return true;
       return (e.splitters || []).some((s) => aliasLower.has(cleanName(s).toLowerCase()));
     })
@@ -1010,7 +1018,7 @@ export const NonGroupView: React.FC<NonGroupViewProps> = ({
                 {ngJoinPending.map((p, idx) => {
                   const invited = !!ngInvited[p.name];
                   return (
-                    <div key={p.name} style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '12px 0', borderBottom: idx < ngJoinPending.length - 1 ? '1px solid #F1F5F9' : 'none' }}>
+                    <div key={(p.keys && p.keys[0]) || p.name} style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '12px 0', borderBottom: idx < ngJoinPending.length - 1 ? '1px solid #F1F5F9' : 'none' }}>
                       <Avatar name={p.name} email={p.email} size={38} />
                       <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', gap: '2px' }}>
                         <span style={{ fontSize: '15px', fontWeight: 600, color: '#0F172A', textTransform: 'capitalize', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{shown(p.name)}</span>
@@ -1085,7 +1093,7 @@ export const NonGroupView: React.FC<NonGroupViewProps> = ({
             ) : (
               people.map((p) => (
                 <button
-                  key={p.name}
+                  key={(p.keys && p.keys[0]) || p.name}
                   type="button"
                   onClick={() => { setShowSharePicker(false); onSharePerson?.(p.name, p.directGroupId); }}
                   style={{ display: 'flex', alignItems: 'center', gap: '12px', width: '100%', padding: '10px 4px', background: 'none', border: 'none', borderBottom: '1px solid #F1F5F9', cursor: 'pointer', textAlign: 'left' }}
@@ -1203,13 +1211,13 @@ export const NonGroupView: React.FC<NonGroupViewProps> = ({
                 const b = balanceText(p.bal);
                 return (
                   <div
-                    key={p.name}
+                    key={(p.keys && p.keys[0]) || p.name}
                     style={{ background: '#FFFFFF', border: '0.5px solid #EFE7DC', borderRadius: '20px', boxShadow: '0 2px 10px rgba(0,0,0,0.04)', overflow: 'hidden' }}
                   >
                     {/* Tap the card to open this person's screen */}
                     <div
                       className="hover-up-mini"
-                      onClick={() => { setPersonalMode(false); setProfilePerson(p.name); }}
+                      onClick={() => { setPersonalMode(false); setProfileKeys(p.keys || []); setProfilePerson(p.name); }}
                       style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '16px', cursor: 'pointer' }}
                     >
                       <div style={{ flexShrink: 0 }}>

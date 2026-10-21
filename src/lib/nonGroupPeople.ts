@@ -21,6 +21,8 @@ export type NonGroupPerson = {
   // The PERSON's net position per currency: negative = they owe me.
   bal: Record<string, number>;
   count: number;
+  // Friend ids (plain Non-Group) behind this person; empty for older entries.
+  keys?: string[];
 };
 
 type GetMemberBalance = (groupId: string | number, memberName: string) => Record<string, number>;
@@ -94,75 +96,85 @@ export const computeNonGroupPeople = (
   getMemberBalance: GetMemberBalance,
 ): NonGroupPerson[] => {
   const directGroupIds = new Set(directThreads.map((t) => String(t.groupId)));
-  const nonGroupExps = expenses.filter((e) => e && !e.isDeleted && (String(e.gId) === 'STANDALONE' || directGroupIds.has(String(e.gId))));
   const standaloneExps = expenses.filter((e) => e && String(e.gId) === 'STANDALONE' && !e.isDeleted);
+  const threadExps = expenses.filter((e) => e && !e.isDeleted && directGroupIds.has(String(e.gId)));
 
-  // Per distinct name (lowercased): how it was seen.
-  type N = { name: string; email: string; standalone: boolean; lastTs: number; uses: number; threads: DirectThread[]; pending: boolean };
-  const byName = new Map<string, N>();
-  const getN = (c: string): N => {
-    const key = c.toLowerCase();
-    let n = byName.get(key);
-    if (!n) { n = { name: c, email: '', standalone: false, lastTs: -1, uses: 0, threads: [], pending: false }; byName.set(key, n); }
+  // One entry per friend id (plain Non-Group expenses that carry otherKey) and
+  // one per distinct name (older expenses without an id, and shared threads).
+  type N = { name: string; email: string; key?: string; standalone: boolean; lastTs: number; uses: number; threads: DirectThread[]; pending: boolean; count: number };
+  const entries = new Map<string, N>();
+  const get = (id: string, name: string, key?: string): N => {
+    let n = entries.get(id);
+    if (!n) { n = { name, email: '', key, standalone: false, lastTs: -1, uses: 0, threads: [], pending: false, count: 0 }; entries.set(id, n); }
     return n;
   };
   // Seed shared (direct) threads first so pending/email are captured.
   directThreads.forEach((t) => {
     const c = cleanName(t.otherName);
     if (!c || isMe(c)) return;
-    const n = getN(c);
+    const n = get(`name:${c.toLowerCase()}`, c);
     n.threads.push(t);
     n.pending = n.pending || t.pending;
     if (!n.email && t.email) n.email = t.email.trim().toLowerCase();
+    n.count += threadExps.filter((e) => String(e.gId) === String(t.groupId) && expenseInvolves(e, cleanName(t.otherName).toLowerCase())).length;
   });
-  // Add plain STANDALONE participants.
+  // Plain Non-Group participants: by friend id when the expense has one.
   standaloneExps.forEach((e) => {
     const others = new Set<string>();
     if (e.paid) others.add(cleanName(e.paid));
-    (e.splitters || []).forEach((s) => others.add(cleanName(s)));
+    (e.splitters || []).forEach((sp) => others.add(cleanName(sp)));
     const otherNames = Array.from(others).filter((c) => c && !isMe(c));
-    // otherEmail only identifies the counterpart on a true 2-person split.
+    // otherEmail / otherKey only identify the counterpart on a true 2-person split.
     const otherEmail = (e.otherEmail || '').trim().toLowerCase();
     const emailForThis = otherNames.length === 1 && otherEmail.includes('@') ? otherEmail : '';
+    const keyForThis = otherNames.length === 1 && isNonGroupFriendKey(e.otherKey) ? e.otherKey! : '';
     const ts = e.timestamp || 0;
     otherNames.forEach((c) => {
-      const n = getN(c);
+      const n = keyForThis ? get(`key:${keyForThis}`, c, keyForThis) : get(`name:${c.toLowerCase()}`, c);
       n.standalone = true;
       n.uses += 1;
-      if (ts > n.lastTs) n.lastTs = ts;
-      if (!n.email && emailForThis) n.email = emailForThis;
+      n.count += 1;
+      if (ts >= n.lastTs) { n.lastTs = ts; if (keyForThis) n.name = c; }
+      if (emailForThis && (!n.email || keyForThis)) n.email = emailForThis;
     });
   });
 
-  // Group names into people: by email when known, else by the name itself.
-  // Each name lands in exactly one person, so no balance is counted twice.
+  // Group entries into people. Same email → one person. A name-only entry joins
+  // the ONE friend id with that name (no clash of emails); else it stands alone.
+  const keyed = Array.from(entries.values()).filter((n) => n.key);
   const people = new Map<string, N[]>();
-  byName.forEach((n, key) => {
-    const pKey = n.email ? `email:${n.email}` : `name:${key}`;
-    const list = people.get(pKey);
-    if (list) list.push(n); else people.set(pKey, [n]);
+  const push = (pk: string, n: N) => { const l = people.get(pk); if (l) l.push(n); else people.set(pk, [n]); };
+  keyed.forEach((n) => push(n.email ? `email:${n.email}` : `key:${n.key}`, n));
+  entries.forEach((n) => {
+    if (n.key) return;
+    if (n.email) { push(`email:${n.email}`, n); return; }
+    const same = keyed.filter((k) => k.name.toLowerCase() === n.name.toLowerCase());
+    if (same.length === 1) push(same[0].email ? `email:${same[0].email}` : `key:${same[0].key}`, n);
+    else push(`name:${n.name.toLowerCase()}`, n);
   });
 
   return Array.from(people.values())
-    .map((names) => {
-      const threaded = names.find((n) => n.threads.length > 0);
-      const shownN = threaded || names.slice().sort((a, b) => b.lastTs - a.lastTs || b.uses - a.uses || a.name.localeCompare(b.name))[0];
-      const aliasKeys = new Set(names.map((n) => n.name.toLowerCase()));
+    .map((list) => {
+      const threaded = list.find((n) => n.threads.length > 0);
+      const shownN = threaded || list.slice().sort((a, b) => b.lastTs - a.lastTs || b.uses - a.uses || a.name.localeCompare(b.name))[0];
       const bal: Record<string, number> = {};
       const add = (b: Record<string, number>) => Object.entries(b).forEach(([c, v]) => { bal[c] = (bal[c] || 0) + v; });
-      names.forEach((n) => {
-        if (n.standalone) add(getMemberBalance('STANDALONE', n.name));
+      list.forEach((n) => {
+        // Plain Non-Group balances are read from the friend-id ledger: an id
+        // entry by its id, an older name-only entry by its name (only the
+        // expenses without an id are under names there, so nothing doubles).
+        if (n.standalone) add(getMemberBalance(STANDALONE_BY_KEY, n.key || n.name));
         n.threads.forEach((t) => add(getMemberBalance(t.groupId, t.otherName)));
       });
-      const count = nonGroupExps.filter((e) => Array.from(aliasKeys).some((k) => expenseInvolves(e, k))).length;
       return {
         name: shownN.name,
-        aliases: names.map((n) => n.name),
-        email: names.find((n) => n.email)?.email || '',
-        pending: names.some((n) => n.pending),
+        aliases: Array.from(new Set(list.map((n) => n.name))),
+        email: list.find((n) => n.email)?.email || '',
+        pending: list.some((n) => n.pending),
         directGroupId: threaded ? String(threaded.threads[0].groupId) : undefined,
+        keys: list.map((n) => n.key).filter((k): k is string => !!k),
         bal,
-        count,
+        count: list.reduce((sum, n) => sum + n.count, 0),
       };
     })
     // Hide empty leftovers: a person with no expenses AND no balance (e.g. a
@@ -170,6 +182,28 @@ export const computeNonGroupPeople = (
     .filter((p) => p.count > 0 || Object.values(p.bal).some((v) => Math.abs(v) > 0.01))
     .sort((a, b) => a.name.localeCompare(b.name));
 };
+
+// Balance bucket for plain Non-Group, computed with each friend's id in place of
+// their name (see standaloneInKeySpace). The plain 'STANDALONE' bucket stays
+// name-based for screens that still read by name.
+export const STANDALONE_BY_KEY = 'STANDALONE_BY_KEY';
+
+// Plain Non-Group expenses with the friend's name swapped for their id, so the
+// balance engine keeps two same-named friends apart. Expenses without an id are
+// unchanged (still by name).
+export const standaloneInKeySpace = (exps: Expense[], isMe: (n: string) => boolean): Expense[] =>
+  exps.map((e) => {
+    if (!isNonGroupFriendKey(e.otherKey)) return e;
+    const names = Array.from(new Set([e.paid, ...(e.splitters || [])].map((n) => cleanName(n || '')))).filter((n) => n && !isMe(n));
+    if (names.length !== 1) return e;
+    const other = names[0].toLowerCase();
+    const k = e.otherKey!;
+    const swap = (n: string) => (cleanName(n || '').toLowerCase() === other ? k : n);
+    const shares = e.shares
+      ? Object.fromEntries(Object.entries(e.shares).map(([n, v]) => [swap(n), v]))
+      : e.shares;
+    return { ...e, paid: swap(e.paid), splitters: (e.splitters || []).map(swap), shares };
+  });
 
 // ── Permanent Non-Group friend IDs ──────────────────────────────────────────
 // Like a group member's member_key: every Non-Group friend gets an id the

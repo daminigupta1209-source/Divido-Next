@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { buildDirectThreads, computeNonGroupPeople, makeIsMe, resolveNonGroupFriendKey, nonGroupFriendsFromExpenses, isNonGroupFriendKey } from './nonGroupPeople';
+import { buildDirectThreads, computeNonGroupPeople, makeIsMe, resolveNonGroupFriendKey, nonGroupFriendsFromExpenses, isNonGroupFriendKey, standaloneInKeySpace } from './nonGroupPeople';
 import { Expense, Group } from './types';
 
 const mkExp = (o: Partial<Expense>): Expense =>
@@ -123,5 +123,30 @@ describe('Non-Group friend ids', () => {
   it('lists one friend per id with the newest name', () => {
     const exps = [ex({ otherKey: 'ngp-a', timestamp: 1 }), ex({ otherKey: 'ngp-a', timestamp: 2, splitters: ['Damini', 'Ravi K'] })];
     expect(nonGroupFriendsFromExpenses(exps, isMe)).toEqual([{ name: 'Ravi K', email: '', key: 'ngp-a' }]);
+  });
+});
+
+describe('Non-Group people by friend id (step 3)', () => {
+  const isMe = makeIsMe('Damini', 'Damini Investment');
+  const ex = (over: Record<string, unknown>) => ({ id: String(Math.random()), gId: 'STANDALONE', title: 't', amt: 10, paid: 'Damini', date: '2026-10-01', mode: 'Equally', splitters: ['Damini', 'Neha'], ...over }) as any;
+  it('keeps two friends with the same name apart', () => {
+    const exps = [ex({ otherKey: 'ngp-1', otherEmail: 'n1@x.com' }), ex({ otherKey: 'ngp-2', otherEmail: 'n2@x.com' })];
+    const bal: Record<string, Record<string, number>> = { 'ngp-1': { '₹': -5 }, 'ngp-2': { '₹': -7 } };
+    const out = computeNonGroupPeople(exps, [], isMe, (_g, n) => bal[n] || {});
+    expect(out).toHaveLength(2);
+    expect(out.map((p) => p.bal['₹']).sort((a, b) => a - b)).toEqual([-7, -5]);
+    expect(out.map((p) => p.keys).sort()).toEqual([['ngp-1'], ['ngp-2']]);
+  });
+  it('folds an older name-only expense into the one friend with that name', () => {
+    const exps = [ex({ otherKey: 'ngp-1' }), ex({})];
+    const out = computeNonGroupPeople(exps, [], isMe, () => ({}));
+    expect(out).toHaveLength(1);
+    expect(out[0].count).toBe(2);
+  });
+  it('swaps the friend name for their id in the balance ledger', () => {
+    const [e] = standaloneInKeySpace([ex({ otherKey: 'ngp-1', paid: 'Neha', shares: { Neha: 5, Damini: 5 } })], isMe);
+    expect(e.paid).toBe('ngp-1');
+    expect(e.splitters).toEqual(['Damini', 'ngp-1']);
+    expect(e.shares).toEqual({ 'ngp-1': 5, Damini: 5 });
   });
 });

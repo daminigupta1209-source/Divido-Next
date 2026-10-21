@@ -120,7 +120,7 @@ import { InstallPrompt } from './components/InstallPrompt';
 import { useExportCSV } from './hooks/useExportCSV';
 import { AppNotification, fetchNotifications, markAllNotificationsRead, subscribeNotifications, clearAllNotifications, pushNotification } from './lib/notifications';
 import { calculateNextOccurrenceDate, simplifyMultiCurrencyDebts, computeRawPairwiseTransactions, memberNetBalances } from './lib/calculations';
-import { buildDirectThreads, makeIsMe } from './lib/nonGroupPeople';
+import { buildDirectThreads, makeIsMe, standaloneInKeySpace, STANDALONE_BY_KEY } from './lib/nonGroupPeople';
 import { isPersonalExpense, getPersonalExpenses } from './lib/personalExpenses';
 import {
   consumeOAuthState,
@@ -3527,6 +3527,14 @@ function App() {
       defaultCurrency: '₹',
       gId: 'STANDALONE'
     });
+    // Same, with each friend's permanent id in place of their name, so two
+    // same-named Non-Group friends keep separate balances (Non-Group list).
+    batchData.push({
+      members: [],
+      expenses: standaloneInKeySpace(expensesByGroup['STANDALONE'] || [], makeIsMe(me, userName)),
+      defaultCurrency: '₹',
+      gId: STANDALONE_BY_KEY
+    });
 
     setIsCalculatingBalances(true);
     asyncBatchNetBalances(batchData).then((map) => {
@@ -3536,7 +3544,7 @@ function App() {
       console.error('Failed to compute balances in worker', err);
       setIsCalculatingBalances(false);
     });
-  }, [groups, expenses]);
+  }, [groups, expenses, me, userName]);
 
   const getMemberBalance = React.useCallback((groupId: string | number | null, memberName: string) => {
     const gId = String(groupId || 'STANDALONE');
@@ -3544,7 +3552,7 @@ function App() {
     if (!groupBals) return {};
 
     // Standalone has no per-group roster/identities — keep the plain name lookup.
-    const g = gId === 'STANDALONE' ? null : groups.find((x) => String(x.id) === gId);
+    const g = gId === 'STANDALONE' || gId === STANDALONE_BY_KEY ? null : groups.find((x) => String(x.id) === gId);
     if (!g) return groupBals[memberName] || {};
 
     // Balances are computed per person KEY (see batchData above), so every
