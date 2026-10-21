@@ -87,3 +87,15 @@ describe('buildDirectThreads (joiner kept the sharer-typed name)', () => {
     expect(t.pending).toBe(false);
   });
 });
+
+describe('makeIsMe with a known full name', () => {
+  it('does not treat a friend who shares my first name as me', () => {
+    const isMe = makeIsMe('Damini', 'Damini Investment');
+    expect(isMe('Damini')).toBe(true);
+    expect(isMe('Damini Investment')).toBe(true);
+    expect(isMe('Damini Gupta')).toBe(false);
+  });
+  it('still guesses from the first name when the full name is unknown', () => {
+    expect(makeIsMe('Chirag')('Chirag Gupta')).toBe(true);
+  });
+});

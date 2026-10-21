@@ -35,7 +35,10 @@ export const makeIsMe = (me: string, userName?: string) => {
     if (!c) return false;
     if (c === 'you' || c === meLower) return true;
     if (fullLower && c === fullLower) return true;
-    if (c.startsWith(meLower + ' ') || c.endsWith(' ' + meLower)) return true;
+    // First-name guess only when my full name is unknown: with it known, a
+    // friend who shares my first name ("Damini Gupta" for "Damini …") is
+    // someone else and must not be hidden as me.
+    if (!fullLower && (c.startsWith(meLower + ' ') || c.endsWith(' ' + meLower))) return true;
     return false;
   };
 };
