@@ -120,7 +120,7 @@ import { InstallPrompt } from './components/InstallPrompt';
 import { useExportCSV } from './hooks/useExportCSV';
 import { AppNotification, fetchNotifications, markAllNotificationsRead, subscribeNotifications, clearAllNotifications, pushNotification } from './lib/notifications';
 import { calculateNextOccurrenceDate, simplifyMultiCurrencyDebts, computeRawPairwiseTransactions, memberNetBalances } from './lib/calculations';
-import { buildDirectThreads, makeIsMe, standaloneInKeySpace, STANDALONE_BY_KEY, resolveNonGroupFriendKey, isNonGroupFriendKey } from './lib/nonGroupPeople';
+import { buildDirectThreads, makeIsMe, standaloneInKeySpace, STANDALONE_BY_KEY, resolveNonGroupFriendKey, isNonGroupFriendKey, backfillNonGroupKeys } from './lib/nonGroupPeople';
 import { isPersonalExpense, getPersonalExpenses } from './lib/personalExpenses';
 import {
   consumeOAuthState,
@@ -1892,6 +1892,15 @@ function App() {
   useEffect(() => {
     try { sessionStorage.removeItem('divido_chunk_reloaded'); } catch {}
   }, []);
+
+  // Older plain Non-Group expenses get their friend's permanent id (and my
+  // email) once it's clear who they're with — see backfillNonGroupKeys.
+  useEffect(() => {
+    const isMeFn = makeIsMe(me, userName);
+    if (backfillNonGroupKeys(expenses, isMeFn, userEmail) === expenses) return;
+    setExpenses((prev) => backfillNonGroupKeys(prev, isMeFn, userEmail));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [expenses, me, userName, userEmail]);
 
   // Whenever groups change, refresh avatars for everyone in them (plus me).
   useEffect(() => {

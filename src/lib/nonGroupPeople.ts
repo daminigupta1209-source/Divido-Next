@@ -255,3 +255,59 @@ export const resolveNonGroupFriendKey = (
   const byName = friends.filter((f) => f.name.toLowerCase() === nm && !f.email);
   return byName.length === 1 ? byName[0].key : genNonGroupFriendKey();
 };
+
+// ── Step 5: give older plain Non-Group expenses a friend id ─────────────────
+// Runs on the phone (STANDALONE expenses are local). Only 2-person expenses
+// without an id are touched, and only when it's clear who the friend is:
+//   * with an email → the id already used with that email, else one new id per
+//     email (same email = same friend);
+//   * no email → the ONE id already used with that name; if no id has that name
+//     yet, one new id shared by all of that name's older expenses (they were
+//     already one card); if two or more ids share the name → left alone.
+// Also fills myEmail. Idempotent: returns the same array when nothing changes.
+export const backfillNonGroupKeys = (
+  expenses: Expense[],
+  isMe: (n: string) => boolean,
+  myEmail?: string,
+): Expense[] => {
+  const me = (myEmail || '').trim().toLowerCase();
+  const friends = nonGroupFriendsFromExpenses(expenses, isMe);
+  const keyByEmail = new Map<string, string>();
+  friends.forEach((f) => { if (f.email && !keyByEmail.has(f.email)) keyByEmail.set(f.email, f.key); });
+  const keysByName = new Map<string, Set<string>>();
+  friends.forEach((f) => {
+    const n = f.name.toLowerCase();
+    if (!keysByName.has(n)) keysByName.set(n, new Set());
+    keysByName.get(n)!.add(f.key);
+  });
+  const newKeyForName = new Map<string, string>();
+  let changed = false;
+  const out = expenses.map((e) => {
+    if (!e || e.isDeleted || String(e.gId) !== 'STANDALONE') return e;
+    let next = e;
+    if (!e.myEmail && me.includes('@')) next = { ...next, myEmail: me };
+    if (!isNonGroupFriendKey(e.otherKey)) {
+      const others = Array.from(new Set([e.paid, ...(e.splitters || [])].map((n) => cleanName(n || '')))).filter((n) => n && !isMe(n));
+      if (others.length === 1) {
+        const nm = others[0].toLowerCase();
+        const em = (e.otherEmail || '').trim().toLowerCase();
+        let key = '';
+        if (em.includes('@') && em !== me) {
+          key = keyByEmail.get(em) || '';
+          if (!key) { key = genNonGroupFriendKey(); keyByEmail.set(em, key); }
+        } else if (!em) {
+          const named = keysByName.get(nm);
+          if (named && named.size === 1) key = Array.from(named)[0];
+          else if (!named || named.size === 0) {
+            key = newKeyForName.get(nm) || genNonGroupFriendKey();
+            newKeyForName.set(nm, key);
+          }
+        }
+        if (key) next = { ...next, otherKey: key };
+      }
+    }
+    if (next !== e) changed = true;
+    return next;
+  });
+  return changed ? out : expenses;
+};

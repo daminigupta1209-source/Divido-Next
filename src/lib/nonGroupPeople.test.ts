@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { buildDirectThreads, computeNonGroupPeople, makeIsMe, resolveNonGroupFriendKey, nonGroupFriendsFromExpenses, isNonGroupFriendKey, standaloneInKeySpace } from './nonGroupPeople';
+import { buildDirectThreads, computeNonGroupPeople, makeIsMe, resolveNonGroupFriendKey, nonGroupFriendsFromExpenses, isNonGroupFriendKey, standaloneInKeySpace, backfillNonGroupKeys } from './nonGroupPeople';
 import { Expense, Group } from './types';
 
 const mkExp = (o: Partial<Expense>): Expense =>
@@ -148,5 +148,29 @@ describe('Non-Group people by friend id (step 3)', () => {
     expect(e.paid).toBe('ngp-1');
     expect(e.splitters).toEqual(['Damini', 'ngp-1']);
     expect(e.shares).toEqual({ 'ngp-1': 5, Damini: 5 });
+  });
+});
+
+describe('backfillNonGroupKeys (step 5)', () => {
+  const isMe = makeIsMe('Damini', 'Damini Investment');
+  const ex = (over: Record<string, unknown>) => ({ id: String(Math.random()), gId: 'STANDALONE', title: 't', amt: 10, paid: 'Damini', date: '2026-10-01', mode: 'Equally', splitters: ['Damini', 'Ravi'], ...over }) as any;
+  it('gives all older expenses of one name the same new id, and fills myEmail', () => {
+    const out = backfillNonGroupKeys([ex({}), ex({})], isMe, 'me@x.com');
+    expect(out[0].otherKey).toMatch(/^ngp-/);
+    expect(out[1].otherKey).toBe(out[0].otherKey);
+    expect(out[0].myEmail).toBe('me@x.com');
+  });
+  it('joins the one friend id that already has that name or email', () => {
+    const out = backfillNonGroupKeys([ex({ otherKey: 'ngp-a' }), ex({}), ex({ splitters: ['Damini', 'Ravi K'], otherEmail: 'r@x.com' }), ex({ splitters: ['Damini', 'Ravi K'], otherKey: 'ngp-b', otherEmail: 'r@x.com' })], isMe);
+    expect(out[1].otherKey).toBe('ngp-a');
+    expect(out[2].otherKey).toBe('ngp-b');
+  });
+  it('leaves a name alone when two friends already share it', () => {
+    const out = backfillNonGroupKeys([ex({ otherKey: 'ngp-a' }), ex({ otherKey: 'ngp-b' }), ex({})], isMe);
+    expect(out[2].otherKey).toBeUndefined();
+  });
+  it('changes nothing when every expense already has an id', () => {
+    const exps = [ex({ otherKey: 'ngp-a', myEmail: 'me@x.com' })];
+    expect(backfillNonGroupKeys(exps, isMe, 'me@x.com')).toBe(exps);
   });
 });
