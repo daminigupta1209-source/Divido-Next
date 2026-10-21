@@ -1586,7 +1586,7 @@ function App() {
   // 2-person "direct" thread written to the cloud immediately, then open the
   // invite link. Identity-first (email-keyed) so balances/names resolve on both
   // sides and the friend auto-claims by email.
-  const sharePersonNonGroupBeta = async (personName: string, otherEmail: string) => {
+  const sharePersonNonGroupBeta = async (personName: string, otherEmail: string, knownGroupId?: string) => {
     if (!requireSignInToCreate()) return;
     const clean = (personName || '').replace(/\s*\(Left\)$/i, '').trim();
     if (!clean) return;
@@ -1597,9 +1597,15 @@ function App() {
     const involves = (e: Expense) =>
       (e.paid || '').replace(/\s*\(Left\)$/i, '').trim().toLowerCase() === cl ||
       (e.splitters || []).some((s) => (s || '').replace(/\s*\(Left\)$/i, '').trim().toLowerCase() === cl);
-    let gid: string | number | undefined = groups.find(
-      (g) => g.isDirect && (g.members || []).some((m) => (m || '').replace(/\s*\(Left\)$/i, '').trim().toLowerCase() === cl)
-    )?.id;
+    // Reuse their existing shared thread: the one the person screen already
+    // knows, else one holding their email, else one with their name. Matching by
+    // name alone missed the thread once they had joined under another name, so a
+    // second, empty thread got created and the link pointed at that one.
+    const direct = groups.filter((g) => g.isDirect);
+    let gid: string | number | undefined =
+      (knownGroupId ? direct.find((g) => String(g.id) === String(knownGroupId))?.id : undefined) ??
+      (em.includes('@') ? direct.find((g) => Object.values(g.memberIdentities || {}).some((v) => String(v || '').toLowerCase() === em))?.id : undefined) ??
+      direct.find((g) => (g.members || []).some((m) => (m || '').replace(/\s*\(Left\)$/i, '').trim().toLowerCase() === cl))?.id;
     if (!gid) {
       // No email needed: the private link's single open spot is claimed by whoever
       // opens it. If an email IS known, we still set it (nicer auto-match).
@@ -5013,7 +5019,7 @@ function App() {
                 onConfirm: () => { onDelete(); setConfirmState({ show: false }); },
               });
             }}
-            onSharePerson={(name) => { sharePersonNonGroupBeta(name, ''); }}
+            onSharePerson={(name, threadId) => { sharePersonNonGroupBeta(name, '', threadId); }}
             onRemindPerson={async (name) => {
               const clean = name.replace(/\s*\(Left\)$/i, '').trim();
               // In-app reminder (fire-and-forget so it doesn't consume the tap's
