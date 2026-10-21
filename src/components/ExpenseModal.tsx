@@ -1282,6 +1282,8 @@ export const ExpenseModal: React.FC<ExpenseModalProps> = ({
                   <FullScreenAddFriend
                     isOpen={showFriendPickerPopup}
                     singleSelect
+                    requireEmail
+                    myEmail={myEmail}
                     onClose={() => setShowFriendPickerPopup(false)}
                     existingMembers={[me]}
                     myName={me}

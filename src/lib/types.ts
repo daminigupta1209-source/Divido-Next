@@ -78,6 +78,9 @@ export interface Expense {
   // Non-group (STANDALONE) only: the other person's email, captured optionally
   // when they're added, so the card can later be shared / settled with them.
   otherEmail?: string;
+  // Non-group (STANDALONE) only: the account that wrote it (= "me" on this
+  // expense). With otherEmail, people are told apart by email, not by name.
+  myEmail?: string;
   // Name (as written on this expense) → group_members.member_key it referred
   // to when written. See fillPartyKeys in lib/identity.
   partyKeys?: Record<string, string>;

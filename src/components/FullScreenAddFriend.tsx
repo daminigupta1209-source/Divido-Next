@@ -20,6 +20,10 @@ interface FullScreenAddFriendProps {
   // other), so picking a person commits immediately and closes — no ticking
   // several friends, no separate "Add N friends" confirm step.
   singleSelect?: boolean;
+  // Non-Group: a new person always needs an email (email is their identity).
+  requireEmail?: boolean;
+  // My own email, so a new person can't be added with it.
+  myEmail?: string;
   title?: string;
   // Profile photos keyed by lowercase email (shared member_avatars table).
   memberAvatars?: Record<string, string>;
@@ -50,6 +54,8 @@ export const FullScreenAddFriend: React.FC<FullScreenAddFriendProps> = ({
   myName,
   suggestions,
   singleSelect = false,
+  requireEmail = false,
+  myEmail,
   title = 'Add friend',
   memberAvatars,
   existingEmails,
@@ -107,8 +113,10 @@ export const FullScreenAddFriend: React.FC<FullScreenAddFriendProps> = ({
     ? `"${qRaw}" is your own name here. Add their email so Divido can tell the two of you apart, otherwise your balances would get mixed up.`
     : inGroupClash
     ? `There is already a "${qRaw}" in this group. Add the new person's email so their balances stay separate.`
-    : `You already have a friend called "${qRaw}". Add the new person's email so Divido knows it's someone else.`;
-  const needsEmail = inGroupClash || sameNameSugs.length > 0;
+    : sameNameSugs.length > 0
+    ? `You already have a friend called "${qRaw}". Add the new person's email so Divido knows it's someone else.`
+    : `Add ${qRaw}'s email so Divido always knows who this is, even if two friends share a name.`;
+  const needsEmail = requireEmail || inGroupClash || sameNameSugs.length > 0;
   const canAddNew = qRaw.length > 0;
 
   const norm = (s: string) => s.trim().toLowerCase();
@@ -137,6 +145,7 @@ export const FullScreenAddFriend: React.FC<FullScreenAddFriendProps> = ({
   const newPersonError = (em: string): string => {
     if (em && !isValidEmail(em)) return 'Enter a valid email';
     if (needsEmail && !em) return `Email needed: ${needsEmailReason}`;
+    if (em && myEmail && norm(em) === norm(myEmail)) return "That's your own email";
     if (em) {
       const e = norm(em);
       if (sameNameSugs.some((s) => s.email && norm(s.email) === e)) {
