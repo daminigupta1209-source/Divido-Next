@@ -216,7 +216,9 @@ export const NonGroupView: React.FC<NonGroupViewProps> = ({
       if (!c) return false;
       if (c === 'you' || c === meLower) return true;
       if (userName && c === cleanName(userName).toLowerCase()) return true;
-      if (c.startsWith(meLower + ' ') || c.endsWith(' ' + meLower)) return true;
+      // First-name guess only when my full name is unknown (else "Damini Gupta"
+      // on a "Damini …" account would be hidden as me).
+      if (!userName && (c.startsWith(meLower + ' ') || c.endsWith(' ' + meLower))) return true;
       if (myThreadNamesKey && myThreadNamesKey.split('|').includes(c)) return true;
       return false;
     },
