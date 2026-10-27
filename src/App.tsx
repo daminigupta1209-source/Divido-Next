@@ -1218,10 +1218,6 @@ function App() {
   // Convert-currency modal on the Settle All page, triggered from the header icon.
   const [showFriendsConvert, setShowFriendsConvert] = useState(false);
 
-  const handleOpenPayablePopup = (friendName: string, amt: number, curr: string) => {
-    setNetPayablePopup({ friendName, amt, curr });
-  };
-
   const handleOpenReceivablePopup = (friendName: string, amt: number, curr: string) => {
     // Build the reminder message. For an INR debt with a UPI id set, add the UPI ID
     // + amount on their own lines for "Pay UPI ID". No upi:// link: UPI apps
@@ -6722,10 +6718,7 @@ function App() {
                   const displayAmtStr = absoluteAmt >= 1000000 ? formatCompactAmount(absoluteAmt) : absoluteAmt.toFixed(2);
                   isOwed = netVal < 0;
 
-                  if (isOwed) {
-                    buttonText = `Settle All Net (Pay ${curr}${displayAmtStr})`;
-                    clickHandler = () => handleOpenPayablePopup(friendName, absoluteAmt, curr);
-                  } else {
+                  if (!isOwed) {
                     buttonText = `Settle All Net (Send Reminder)`;
                     clickHandler = () => handleOpenReceivablePopup(friendName, absoluteAmt, curr);
                   }
@@ -6754,10 +6747,14 @@ function App() {
                   );
                 }
 
-                if (!hasActiveBalances) {
+                // When I owe, only "Mark as Settled" — no Pay Now here (paying
+                // lives on the settle cards). When I'm owed, Send Reminder stays.
+                if (!hasActiveBalances || isOwed) {
                   return (
                     <div>
                       <button
+                        type="button"
+                        id="global-settle-submit-btn"
                         className="hover-up"
                         style={{
                           width: '100%',
@@ -6814,7 +6811,7 @@ function App() {
                       }}
                       onClick={clickHandler}
                     >
-                      {isOwed ? 'Pay Now' : 'Send Reminder'}
+                      Send Reminder
                     </button>
                   </div>
                 );
