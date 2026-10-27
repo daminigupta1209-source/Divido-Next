@@ -1,5 +1,6 @@
 import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
+import { Capacitor } from '@capacitor/core'
 import './index.css'
 import App from './App.tsx'
 import { ErrorBoundary } from './components/ErrorBoundary'
@@ -67,7 +68,9 @@ createRoot(document.getElementById('root')!).render(
 
 // Register the service worker for offline support + faster loads. Uses
 // network-first for pages, so new deploys still reach users promptly.
-if ('serviceWorker' in navigator) {
+// Skipped in the Android/iOS app: its files ship inside the app and updates come
+// through the store, so the offline cache and "New version" bar don't apply.
+if ('serviceWorker' in navigator && !Capacitor.isNativePlatform()) {
   // When a freshly-deployed service worker takes control, DON'T silently reload
   // (that used to wipe whatever the user was typing in a modal). Instead show a
   // small "New version — tap to reload" bar and let them choose when. Skipped on

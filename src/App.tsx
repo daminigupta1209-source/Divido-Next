@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useLayoutEffect, useRef } from 'react';
+import { Capacitor } from '@capacitor/core';
 import { Login } from './components/Login';
 import { supabase } from './lib/supabaseClient';
 import { signInWithGoogle } from './lib/googleSignIn';
@@ -775,6 +776,37 @@ function App() {
     showGroupSettleList, showMembersHealth, qrModalData, netPayablePopup, netReceivablePopup, showConvertModalId,
     showNotifPanel, mobileShowGroupOptionsMenu, editingSettle, globalSettleData, showFriendsList, showSplitwiseImport, samePersonPrompt, analyticsGroupId, confirmState
   ]);
+
+  // Android hardware Back (native app only). Registering a listener turns off
+  // Capacitor's default, which closed the app whenever there was no history
+  // entry left — including on Profile / All balances / Activity / Analytics,
+  // because bottom-nav tab switches replace history instead of pushing. Now:
+  // step back like a back-swipe when there's history; otherwise go Home; on
+  // Home, minimize (Android's usual root behaviour) rather than kill the app.
+  const nativeBackRef = useRef<(canGoBack: boolean) => void>(() => {});
+  nativeBackRef.current = (canGoBack: boolean) => {
+    if (canGoBack) { window.history.back(); return; }
+    if (view !== 'summary' || selectedId != null) {
+      isNavigatingHistory.current = true;
+      setView('summary');
+      setSelectedId(null);
+      const homeUi = { ...getUiState(), view: 'summary', selectedId: null };
+      window.history.replaceState({ _divido: true, uiState: homeUi }, '');
+      try { sessionStorage.setItem('divido_ui_state', JSON.stringify(homeUi)); } catch {}
+      return;
+    }
+    import('@capacitor/app').then(({ App }) => App.minimizeApp()).catch(() => {});
+  };
+  useEffect(() => {
+    if (!Capacitor.isNativePlatform()) return;
+    let cancelled = false;
+    let handle: { remove: () => Promise<void> } | null = null;
+    import('@capacitor/app')
+      .then(({ App }) => App.addListener('backButton', ({ canGoBack }) => nativeBackRef.current(canGoBack)))
+      .then((h) => { if (cancelled) h.remove(); else handle = h; })
+      .catch(() => { /* plugin unavailable — keep Capacitor's default */ });
+    return () => { cancelled = true; handle?.remove(); };
+  }, []);
 
   // 2. Watch for user changes and push states
   useEffect(() => {

@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { Capacitor } from '@capacitor/core';
 
 // A lightweight, dismissible "install this app" banner.
 //   * Android/Chrome: captures the browser's beforeinstallprompt event and fires
@@ -12,6 +13,8 @@ const DISMISS_KEY = 'divido_install_dismissed_at';
 const DISMISS_DAYS = 14;
 
 const isStandalone = () =>
+  // The Android/iOS app is already installed — never offer to install it.
+  Capacitor.isNativePlatform() ||
   window.matchMedia?.('(display-mode: standalone)').matches ||
   // iOS Safari exposes this non-standard flag when launched from the home screen
   (navigator as any).standalone === true;
