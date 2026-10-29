@@ -4,6 +4,7 @@ import { Group, Expense } from '../lib/types';
 import { calculateNextOccurrenceDate } from '../lib/calculations';
 import { getEmoji, parseExpenseId, genExpenseId } from '../lib/utils';
 import { canonicalRosterName, currentMemberName } from '../lib/identity';
+import { callAi } from '../lib/aiProxy';
 
 export interface UseExpenseFormProps {
   setShowExpModal: (show: boolean) => void;
@@ -363,26 +364,8 @@ export function useExpenseForm({
     const controller = new AbortController();
     const handler = setTimeout(async () => {
       try {
-        const apiKey = import.meta.env.VITE_GEMINI_API_KEY;
-        if (!apiKey) return;
-
-        const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-lite:generateContent?key=${apiKey}`, {
-          method: 'POST',
-          signal: controller.signal,
-          headers: {
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify({
-            contents: [{
-              parts: [{
-                text: `Analyze the description of an expense and return EXACTLY ONE suitable emoji icon that represents it. Do not write any other text or explanation. Only return the emoji. Description: "${title}"`
-              }]
-            }]
-          })
-        });
-        const data = await response.json();
-        if (!response.ok) return;
-        const emoji = data.candidates?.[0]?.content?.parts?.[0]?.text?.trim();
+        // Through the authenticated proxy (api/scan.js); signed out → throws, no emoji.
+        const { emoji } = await callAi<{ emoji?: string }>({ kind: 'emoji', title }, controller.signal);
         if (emoji && emoji.length > 0 && emoji.length <= 4) {
           setOverrideEmoji(emoji);
         }

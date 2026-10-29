@@ -24,7 +24,7 @@ Android SDK is needed.
    | `ANDROID_KEY_ALIAS` | `divido` |
    | `ANDROID_KEY_PASSWORD` | key password (same as keystore unless you chose otherwise) |
    | `VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY` | required, same as `.env` |
-   | `VITE_GEMINI_API_KEY`, `VITE_SPLITWISE_CLIENT_ID`, `VITE_SPLITWISE_REDIRECT_URI`, `VITE_SENTRY_DSN`, `VITE_PUBLIC_APP_URL` | optional, same as `.env` |
+   | `VITE_SPLITWISE_CLIENT_ID`, `VITE_SPLITWISE_REDIRECT_URI`, `VITE_SENTRY_DSN`, `VITE_PUBLIC_APP_URL` | optional, same as `.env` |
 
 3. **Play Console**: create the app (package `com.dividosplit.app`), keep
    *Play App Signing* on (default), and use `store-assets/play-icon-512.png`

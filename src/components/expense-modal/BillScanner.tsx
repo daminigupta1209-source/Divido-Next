@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import Tesseract from 'tesseract.js';
 import { downscaleImageFile } from '../../lib/imageUtils';
+import { callAi } from '../../lib/aiProxy';
 
 interface BillScannerProps {
   showScannerModal: boolean;
@@ -440,7 +441,7 @@ export const BillScanner: React.FC<BillScannerProps> = ({
   // readable while staying small.
   const prepareScanImage = (file: File): Promise<string> => downscaleImageFile(file, 1600, 0.85);
 
-  const runGeminiScan = (file: File, apiKey: string) => {
+  const runGeminiScan = (file: File) => {
     setScanProgress(10);
     setScannerStatus('AI Scanner: Preparing image...');
     prepareScanImage(file)
@@ -453,72 +454,32 @@ export const BillScanner: React.FC<BillScannerProps> = ({
       setScanProgress(40);
       setScannerStatus('AI Scanner: Analyzing receipt structure with Gemini...');
 
-      const geminiPayload = {
-        contents: [
-          {
-            parts: [
-              {
-                text: `First, analyze if this image is a valid receipt, invoice, bill, payment confirmation screen, or UPI payment screenshot.
-If it is NOT a receipt/bill/payment screen (for example, if it is a phone home screen, a selfie, a landscape, or arbitrary text), return a JSON object with a key 'error' explaining that the image is not a receipt. Do not populate 'title', 'amount', or 'notes' in this case.
-
-If it IS a valid receipt/bill, extract:
-1. The merchant or store name (in Title Case, clean and short, e.g. 'McDonald's').
-2. The grand total amount (as a clean number, e.g. 1250.50 or 55.00).
-3. A brief summary of items as notes (e.g. 'Masala Dosa, Cold Coffee').
-
-Return the output strictly as a JSON object. Do not include markdown formatting or extra text. Examples:
-If not a receipt: {"error": "This image appears to be a phone screen, not a receipt."}
-If a valid receipt: {"title": "Sunrise Foods", "amount": 5445.30, "notes": "Grocery items, snacks"}`,
-              },
-              {
-                inlineData: {
-                  mimeType: mimeType,
-                  data: base64Data,
-                },
-              },
-            ],
-          },
-        ],
-        generationConfig: {
-          responseMimeType: 'application/json',
-        },
-      };
-
       setScanProgress(70);
       setScannerStatus('AI Scanner: Extracting merchant name, total, and notes...');
 
-      fetch(
-        `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`,
-        {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify(geminiPayload),
-        }
-      )
-        .then((res) => {
-          if (!res.ok) throw new Error(`Gemini API error: Status ${res.status}`);
-          return res.json();
-        })
-        .then((data) => {
-          const text = data?.candidates?.[0]?.content?.parts?.[0]?.text;
-          if (!text) throw new Error('Empty response from Gemini API');
-          const parsed = JSON.parse(text.trim());
-          if (parsed.error) {
+      // Prompt + Gemini key live server-side (api/scan.js); no session → throws
+      // and we fall back to local OCR below.
+      callAi<{ title?: string; amount?: number | string; notes?: string; error?: string }>({
+        kind: 'receipt',
+        image: base64Data,
+        mimeType,
+      })
+        .then((parsed) => {
+          const scanErr = parsed.error;
+          if (scanErr) {
             setTimeout(() => {
               setScanFile(null);
               setScanPreview(null);
               setScanProgress(0);
               setScannerStatus('');
-              setScanError(parsed.error);
+              setScanError(scanErr);
             }, 800);
             return;
           }
           setScanProgress(90);
           setScannerStatus('AI Scanner: Finalizing extraction data...');
           const titleVal = parsed.title || 'Scanned Receipt 📄';
-          const amountVal = parseFloat(parsed.amount) || 0;
+          const amountVal = parseFloat(String(parsed.amount ?? '')) || 0;
           const notesVal = parsed.notes || '';
 
           setScanProgress(100);
@@ -641,16 +602,9 @@ If a valid receipt: {"title": "Sunrise Foods", "amount": 5445.30, "notes": "Groc
     // extra big data URL is what tipped lower-RAM phones into "low memory".
     setScanPreview(null);
 
-    // Prefer a locally-saved key, else the build-time env key. No hard-coded
-    // fallback — an invalid key just causes 401s. With no key we skip Gemini
-    // and go straight to local OCR.
-    const savedApiKey = localStorage.getItem('divido_gemini_api_key');
-    const apiKey = savedApiKey || import.meta.env.VITE_GEMINI_API_KEY || '';
-    if (apiKey) {
-      runGeminiScan(file, apiKey);
-    } else {
-      runLocalTesseractOCR(file);
-    }
+    // Gemini runs behind the authenticated proxy; on any failure (offline,
+    // signed out, quota) runGeminiScan falls back to local OCR.
+    runGeminiScan(file);
   };
 
   if (!showScannerModal) return null;
