@@ -147,7 +147,7 @@ const sessionEmailForInvite = (session: { user?: { email?: string | null } | nul
   const email = session?.user?.email || '';
   if (email) return email;
   try {
-    if (localStorage.getItem('divido_e2e_testing') === 'true' && localStorage.getItem('divido_force_logged_out') !== 'true') {
+    if (import.meta.env.DEV && localStorage.getItem('divido_e2e_testing') === 'true' && localStorage.getItem('divido_force_logged_out') !== 'true') {
       return localStorage.getItem('divido_mock_email') || 'e2e-test-guest@divido.app';
     }
   } catch { /* storage unavailable */ }
@@ -392,7 +392,7 @@ function App() {
   });
   const [showDeleteAccountModal, setShowDeleteAccountModal] = useState<boolean>(false);
   const [userEmail, setUserEmail] = useState<string>(() => {
-    if (localStorage.getItem('divido_e2e_testing') === 'true' && localStorage.getItem('divido_force_logged_out') !== 'true') {
+    if (import.meta.env.DEV && localStorage.getItem('divido_e2e_testing') === 'true' && localStorage.getItem('divido_force_logged_out') !== 'true') {
       return localStorage.getItem('divido_mock_email') || 'e2e-test-guest@divido.app';
     }
     return localStorage.getItem('divido_email') || '';
@@ -1973,7 +1973,7 @@ function App() {
         setIsAuthenticated(true);
         localStorage.setItem('divido_authenticated', 'true');
       } else {
-        if (localStorage.getItem('divido_e2e_testing') === 'true' && localStorage.getItem('divido_force_logged_out') !== 'true') {
+        if (import.meta.env.DEV && localStorage.getItem('divido_e2e_testing') === 'true' && localStorage.getItem('divido_force_logged_out') !== 'true') {
           setIsAuthenticated(true);
           setUserEmail(localStorage.getItem('divido_mock_email') || 'e2e-test-guest@divido.app');
         } else {
@@ -2018,7 +2018,7 @@ function App() {
         }
         setIsAuthenticated(true);
         localStorage.setItem('divido_authenticated', 'true');
-      } else if (localStorage.getItem('divido_e2e_testing') === 'true' && localStorage.getItem('divido_force_logged_out') !== 'true') {
+      } else if (import.meta.env.DEV && localStorage.getItem('divido_e2e_testing') === 'true' && localStorage.getItem('divido_force_logged_out') !== 'true') {
         setIsAuthenticated(true);
         setUserEmail(localStorage.getItem('divido_mock_email') || 'e2e-test-guest@divido.app');
       } else {
@@ -2212,13 +2212,18 @@ function App() {
       .filter((it) => it.selected && it.amt > 0)
       .map((it) => {
         const amt = parseFloat(it.amt) || 0;
+        // Outstanding before this payment, in paise. In the id so a double-tap or
+        // the other device (same outstanding) converges to one row, while a later
+        // same-day payment (outstanding has moved) gets its own row instead of
+        // overwriting the first - which brought paid debt back.
+        const owedPaise = Math.round((parseFloat(it.maxAmt) || amt) * 100);
         if (it.mode === 'writeoff') {
           // Write-off = forgive what they owe me. Recorded like a settlement so
           // the balance closes, but titled "Written off", excluded from Analytics,
           // and given a deterministic id (matches performWriteOff) so two devices /
           // a double-tap converge to one row instead of double-cancelling.
           return {
-            id: `writeoff-${String(it.gId)}-${it.paidBy}-${it.receivedBy}-${it.curr}-${today}${it.otherKey ? `-${it.otherKey}` : ''}`,
+            id: `writeoff-${String(it.gId)}-${it.paidBy}-${it.receivedBy}-${it.curr}-${Math.round(amt * 100)}-${owedPaise}-${today}${it.otherKey ? `-${it.otherKey}` : ''}`,
             gId: it.gId,
             title: 'Written off',
             amt,
@@ -2235,9 +2240,9 @@ function App() {
         }
         return {
           // Deterministic id so two devices (or a double-tap) recording the SAME
-          // settlement converge to ONE row (amount is in the key, so two genuinely
-          // different same-day payments stay distinct; exact duplicates collapse).
-          id: `settle-${String(it.gId)}-${it.paidBy}-${it.receivedBy}-${it.curr}-${Math.round(amt * 100)}-${today}${it.otherKey ? `-${it.otherKey}` : ''}`,
+          // settlement converge to ONE row (amount + outstanding are in the key, so
+          // two genuinely different same-day payments stay distinct).
+          id: `settle-${String(it.gId)}-${it.paidBy}-${it.receivedBy}-${it.curr}-${Math.round(amt * 100)}-${owedPaise}-${today}${it.otherKey ? `-${it.otherKey}` : ''}`,
           gId: it.gId,
           title: `✅ Settlement: ${it.paidBy} paid ${it.receivedBy}`,
           amt,
@@ -3254,7 +3259,9 @@ function App() {
           // Deterministic id so two devices (or a double-tap) writing off the
           // SAME person/currency on the same day converge to ONE row instead of
           // creating duplicate cancelling entries that double-reverse the balance.
-          id: `writeoff-${String(groupId)}-${payerKey}-${receiverKey}-${curr}-${today}`,
+          // The amount (= the whole outstanding) is in the key so a second
+          // write-off later that day is its own row, not an overwrite of the first.
+          id: `writeoff-${String(groupId)}-${payerKey}-${receiverKey}-${curr}-${Math.round(absVal * 100)}-${today}`,
           timestamp: Date.now(),
           gId: groupId,
           title: 'Written off',
@@ -3302,7 +3309,7 @@ function App() {
           if (!checkIfDemoMode() && isAuthenticated) {
             try {
               const { data: { session } } = await supabase.auth.getSession();
-              const myEmail = session?.user?.email || (localStorage.getItem('divido_e2e_testing') === 'true' ? localStorage.getItem('divido_mock_email') || 'e2e-test-guest@divido.app' : null);
+              const myEmail = session?.user?.email || (import.meta.env.DEV && localStorage.getItem('divido_e2e_testing') === 'true' ? localStorage.getItem('divido_mock_email') || 'e2e-test-guest@divido.app' : null);
               if (myEmail) {
                 await supabase
                   .from('group_members')
@@ -4438,7 +4445,7 @@ function App() {
     claimInProgressRef.current = true;
     try {
       const { data: { session } } = await supabase.auth.getSession();
-      const myEmail = session?.user?.email || (localStorage.getItem('divido_e2e_testing') === 'true' ? localStorage.getItem('divido_mock_email') || 'e2e-test-guest@divido.app' : null);
+      const myEmail = session?.user?.email || (import.meta.env.DEV && localStorage.getItem('divido_e2e_testing') === 'true' ? localStorage.getItem('divido_mock_email') || 'e2e-test-guest@divido.app' : null);
 
       const activeEmail = myEmail;
       if (!activeEmail) {
@@ -6180,7 +6187,7 @@ function App() {
                   setSubmittingLinkRequest(true);
                   try {
                     const { data: { session } } = await supabase.auth.getSession();
-                    const myEmail = session?.user?.email || (localStorage.getItem('divido_e2e_testing') === 'true' ? localStorage.getItem('divido_mock_email') || 'e2e-test-guest@divido.app' : null);
+                    const myEmail = session?.user?.email || (import.meta.env.DEV && localStorage.getItem('divido_e2e_testing') === 'true' ? localStorage.getItem('divido_mock_email') || 'e2e-test-guest@divido.app' : null);
                     if (!myEmail) {
                       // Not signed in yet — save the invite intent and go to Google.
                       // On return the claim card reappears so they can join as new.
@@ -7497,7 +7504,7 @@ function App() {
                 if (selectedId && selectedId !== 'STANDALONE') {
                   try {
                     const { data: { session } } = await supabase.auth.getSession();
-                    const myEmail = session?.user?.email || (localStorage.getItem('divido_e2e_testing') === 'true' ? localStorage.getItem('divido_mock_email') || 'e2e-test-guest@divido.app' : null);
+                    const myEmail = session?.user?.email || (import.meta.env.DEV && localStorage.getItem('divido_e2e_testing') === 'true' ? localStorage.getItem('divido_mock_email') || 'e2e-test-guest@divido.app' : null);
 
                     const searchName = me + ' (Left)';
                     const { data: matched } = await supabase

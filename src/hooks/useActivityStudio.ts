@@ -1,7 +1,7 @@
 ﻿import { useState, useEffect, useMemo } from 'react';
 import { shown } from '../lib/identity';
 import { Group, Expense } from '../lib/types';
-import { getEmoji, parseExpenseId } from '../lib/utils';
+import { escapeHtml, getEmoji, parseExpenseId } from '../lib/utils';
 
 export interface UseActivityStudioProps {
   expenses: Expense[];
@@ -131,7 +131,7 @@ export function useActivityStudio({
     const headers = ['Date', 'Title', 'Category', 'Paid By', 'Split Mode', 'Split Members', 'Total Amount', 'Currency'].join(',');
     const rows = sorted.map((e) => {
       const isSettlement = e.title?.includes('💸 Settlement') || e.title?.includes('✅ Settlement') || e.title?.includes('🤝 Settlement') || e.category === '💸' || e.category === '✅' || e.category === '🤝' || e.title?.toLowerCase().includes('settlement') || e.title === 'Payment Recorded';
-      const category = e.category || getEmoji(e.title) || (isSettlement ? 'âœ…' : 'ðŸ“„');
+      const category = e.category || getEmoji(e.title) || (isSettlement ? '✅' : '📄');
       
       const escapedTitle = `"${e.title.replace(/"/g, '""')}"`;
       const escapedCategory = `"${category.replace(/"/g, '""')}"`;
@@ -149,7 +149,7 @@ export function useActivityStudio({
         escapedSplitMode,
         escapedSplitters,
         e.amt.toFixed(2),
-        e.currency || 'â‚¹'
+        e.currency || '₹'
       ].join(',');
     });
     
@@ -168,7 +168,7 @@ export function useActivityStudio({
   const handleExportPDF = () => {
     const printWindow = window.open('', '_blank');
     if (!printWindow) {
-      alert('Popup blocker prevented opening the print report! ðŸ›‘ Please allow popups for this site.');
+      alert('Popup blocker prevented opening the print report! 🛑 Please allow popups for this site.');
       return;
     }
 
@@ -176,6 +176,7 @@ export function useActivityStudio({
       <!DOCTYPE html>
       <html>
         <head>
+          <meta charset="utf-8">
           <title>Divido Global Activities Statement</title>
           <style>
             body { font-family: 'Nunito', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; padding: 30px; color: #1E293B; background-color: #FFFFFF; }
@@ -201,10 +202,10 @@ export function useActivityStudio({
           <div class="header-container">
             <div>
               <h1>Divido Statement</h1>
-              <div class="meta-info">Global Activities Ledger â€¢ Generated on <strong>${new Date().toLocaleDateString()}</strong></div>
+              <div class="meta-info">Global Activities Ledger • Generated on <strong>${new Date().toLocaleDateString()}</strong></div>
             </div>
             <div style="text-align: right;" class="meta-info">
-              User: <strong>${me}</strong><br>
+              User: <strong>${escapeHtml(shown(me))}</strong><br>
               Total Records: <strong>${sorted.length}</strong>
             </div>
           </div>
@@ -225,16 +226,16 @@ export function useActivityStudio({
                 const isSettlement = e.title?.includes('💸 Settlement') || e.title?.includes('✅ Settlement') || e.title?.includes('🤝 Settlement') || e.category === '💸' || e.category === '✅' || e.category === '🤝' || e.title?.toLowerCase().includes('settlement') || e.title === 'Payment Recorded';
                 return `
                   <tr>
-                    <td>${e.date}</td>
+                    <td>${escapeHtml(e.date)}</td>
                     <td>
                       <span class="badge ${isSettlement ? 'badge-settle' : 'badge-expense'}">
-                        ${isSettlement ? 'Settlement âœ…' : 'Expense ðŸ’¸'}
+                        ${isSettlement ? 'Settlement ✅' : 'Expense 💸'}
                       </span>
                     </td>
-                    <td>${e.title}</td>
-                    <td>${shown(e.paid)}</td>
-                    <td>${e.mode || 'Equally'}</td>
-                    <td class="amt">${e.currency || 'â‚¹'}${e.amt.toFixed(2)}</td>
+                    <td>${escapeHtml(e.title)}</td>
+                    <td>${escapeHtml(shown(e.paid))}</td>
+                    <td>${escapeHtml(e.mode || 'Equally')}</td>
+                    <td class="amt">${escapeHtml(e.currency || '₹')}${e.amt.toFixed(2)}</td>
                   </tr>
                 `;
               }).join('')}

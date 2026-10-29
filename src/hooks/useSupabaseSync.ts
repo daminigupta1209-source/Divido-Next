@@ -5,6 +5,7 @@ import { checkIfDemoMode } from '../lib/demoMode';
 import { isLegacyRenameLog, titleCaseName } from '../lib/utils';
 import { rowToExpenseFields, expenseToRow, diffExpenseRow } from '../lib/expenseSchema';
 import { dropShadowedLeftRows } from '../lib/identity';
+import { reportError } from '../lib/monitoring';
 
 // Fresh hidden person id for a new name-only member, so two people who share a
 // name in different groups stay separate. Signed-in members are left null and
@@ -276,13 +277,25 @@ export function useSupabaseSync({
         let groupIds: any[] = [];
         let memberRecords: any[] = [];
 
-        const resolvedEmail = session?.user?.email || (localStorage.getItem('divido_e2e_testing') === 'true' ? localStorage.getItem('divido_mock_email') : null);
+        const resolvedEmail = session?.user?.email || (import.meta.env.DEV && localStorage.getItem('divido_e2e_testing') === 'true' ? localStorage.getItem('divido_mock_email') : null);
         if (resolvedEmail) {
           // 1. Fetch group memberships for this user
-          const { data: userMems } = await supabase
+          const { data: userMems, error: memsErr } = await supabase
             .from('group_members')
             .select('group_id, groups(*)')
             .eq('user_email', resolvedEmail);
+
+          // A failed fetch is NOT "member of no groups". Treating it as empty
+          // dropped every group expense locally, and the expense pass then
+          // deleted them from the cloud. Keep the cached data, as below (:373).
+          if (memsErr || !userMems) {
+            console.error('Failed to load group memberships; keeping cached data:', memsErr);
+            reportError(memsErr ?? new Error('group_members returned no data'), { where: 'sync.loadMemberships' });
+            if (loadSeq !== loadSeqRef.current) return;
+            initialLoadDoneRef.current = true;
+            setIsInitialLoadDone(true);
+            return;
+          }
 
           if (userMems) {
             memberRecords = userMems;
@@ -300,12 +313,22 @@ export function useSupabaseSync({
           const isValidDbId = !!inviteGroupId && inviteGroupId !== 'STANDALONE';
 
           if (isValidDbId) {
-            const { data: gp } = await supabase
+            const { data: gp, error: gpErr } = await supabase
               .from('groups')
               .select('*')
               .eq('id', inviteGroupId)
               .single();
-            
+
+            // PGRST116 = no such row (deleted / not visible): a real "none".
+            // Any other error is a failed fetch - keep cached data.
+            if (gpErr && gpErr.code !== 'PGRST116') {
+              console.error('Failed to load invite group; keeping cached data:', gpErr);
+              if (loadSeq !== loadSeqRef.current) return;
+              initialLoadDoneRef.current = true;
+              setIsInitialLoadDone(true);
+              return;
+            }
+
             if (gp) {
               groupIds = [gp.id];
               memberRecords = [{ group_id: gp.id, groups: gp }];
@@ -881,7 +904,7 @@ export function useSupabaseSync({
         const { data: { session } } = await supabase.auth.getSession();
         let userEmail = session?.user?.email;
 
-        if (!userEmail && localStorage.getItem('divido_e2e_testing') === 'true') {
+        if (!userEmail && import.meta.env.DEV && localStorage.getItem('divido_e2e_testing') === 'true') {
           userEmail = localStorage.getItem('divido_mock_email') || 'e2e-test-guest@divido.app';
         }
 
@@ -1140,13 +1163,9 @@ export function useSupabaseSync({
 
           const syncedGroups = uniqueNextGroups.filter(g => g.name.trim() !== '' && !g.pendingSync);
           commitGroupBaseline(syncedGroups);
-
-          // An expense baseline written by a mid-pass load is fresher than this
-          // pass's (possibly stale) expenses snapshot - keep it in that case.
-          if (baselineGenRef.current === genAtStart) {
-            prevExpensesRef.current = nextExpenses;
-            localStorage.setItem('divido_last_synced_expenses', JSON.stringify(nextExpenses));
-          }
+          // The expense baseline is owned by the expense pass. This pass only
+          // remaps gIds locally and uploads no expenses, so writing ALL local
+          // expenses as "synced" here hid unsent ones from the expense pass.
 
           // Apply as functional updates against the LATEST state: this pass awaited
           // network calls, so `curr`/`expenses` may be stale and a plain set would
@@ -1180,6 +1199,10 @@ export function useSupabaseSync({
               latest.map((e) => (idRemap.has(String(e.gId)) ? { ...e, gId: idRemap.get(String(e.gId)) } : e))
             );
             setSelectedId((cur) => (cur != null && idRemap.has(String(cur)) ? idRemap.get(String(cur)) : cur));
+          } else {
+            // A group just reached the cloud. Its expenses were held back (FK) and
+            // the expense pass doesn't watch `groups` - re-run it so they upload.
+            setExpenses((latest) => [...latest]);
           }
         } else {
           commitGroupBaseline(groups.filter(g => g.name.trim() !== '' && !g.pendingSync));
@@ -1221,12 +1244,11 @@ export function useSupabaseSync({
         const prev = prevExpensesRef.current;
         const curr = expenses;
 
-        // Skip syncing if we are loading initial data
-        if (!initialLoadDoneRef.current) {
-          prevExpensesRef.current = curr;
-          localStorage.setItem('divido_last_synced_expenses', JSON.stringify(curr));
-          return;
-        }
+        // Skip syncing if we are loading initial data. Leave the baseline alone:
+        // the load diffs against it to tell offline adds/edits from remote
+        // deletes, and copying local state in here made it drop them. The load
+        // sets the baseline itself once it has the cloud rows.
+        if (!initialLoadDoneRef.current) return;
 
         // 1. Find deleted expenses
         // Index once: the per-row lookups below were O(n^2) over the whole ledger.
@@ -1311,6 +1333,9 @@ export function useSupabaseSync({
               // foreign key. It syncs on the next pass once the group row exists.
               const grpForExpense = groups.find(gr => String(gr.id) === String(updatedExpense.gId));
               if (grpForExpense && grpForExpense.pendingSync) {
+                // Keep it out of the baseline, or it counts as synced and the
+                // next pass never sends it.
+                failedExpenseIds.add(String(updatedExpense.id));
                 continue;
               }
 

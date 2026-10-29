@@ -22,6 +22,17 @@ export const genExpenseId = (): string =>
     ? (crypto as any).randomUUID()
     : `eid-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 10)}`;
 
+// Escape text for HTML built as a string (the print/PDF report windows). Those
+// windows share the app's origin, so an expense title or member name written
+// raw could run script with the user's session.
+export const escapeHtml = (v: unknown): string =>
+  String(v ?? '')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+
 // Normalize an ALL-CAPS display name to Title Case ("VANDANA GUPTA" ->
 // "Vandana Gupta"). Google accounts often hand back shouty all-caps names.
 // Only touches names that are entirely uppercase — intentional casing

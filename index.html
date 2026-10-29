@@ -117,8 +117,10 @@
         });
         function check() {
           if (drawn()) {
-            // Started fine: allow a future rescue in this session again.
-            try { sessionStorage.removeItem('dv_rescued'); } catch (e) {}
+            // Started fine. Keep dv_rescued set: clearing it here let a chunk
+            // that keeps failing (ad blocker, CDN 403) re-arm the rescue on
+            // every load -> wipe + reload every few seconds (the Sep 27 storm).
+            // Once per session; "Try again" clears it explicitly.
             return true;
           }
           return false;

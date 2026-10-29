@@ -275,8 +275,19 @@ export const CurrencyConverterModal: React.FC<CurrencyConverterModalProps> = ({
         const newAmt = Math.round(e.amt * r * 100) / 100;
         let ns = e.shares;
         if (e.mode === 'Unequally' && e.shares) {
-          ns = {};
-          Object.entries(e.shares).forEach(([m, s]) => { (ns as Record<string, number>)[m] = Math.round((s as number) * r * 100) / 100; });
+          // Exact shares, in paise. Rounding each one alone let them drift off the
+          // new total by a paisa per expense, so the group stopped summing to zero.
+          // The remainder goes to the largest share (only when they matched before).
+          const entries = Object.entries(e.shares) as [string, number][];
+          const sharePaise = entries.map(([m, s]) => [m, Math.round(s * r * 100)] as [string, number]);
+          const matchedTotal = Math.abs(entries.reduce((sum, [, s]) => sum + s, 0) - e.amt) < 0.005;
+          if (matchedTotal && sharePaise.length > 0) {
+            const drift = Math.round(newAmt * 100) - sharePaise.reduce((sum, [, p]) => sum + p, 0);
+            let big = 0;
+            sharePaise.forEach(([, p], i) => { if (p > sharePaise[big][1]) big = i; });
+            sharePaise[big][1] += drift;
+          }
+          ns = Object.fromEntries(sharePaise.map(([m, p]) => [m, p / 100]));
         }
         finalById[String(e.id)] = { amt: newAmt, currency: targetCurr, shares: ns };
       } else {

@@ -1,7 +1,7 @@
 import { useState, useEffect, useMemo } from 'react';
 import { Group, Expense, UserMetadata } from '../lib/types';
 import { balancesByIdentity, getPersonKey, shown } from '../lib/identity';
-import { getEmoji, matchesAmount } from '../lib/utils';
+import { escapeHtml, getEmoji, matchesAmount } from '../lib/utils';
 
 export interface UseGroupDetailFormProps {
   selectedId: string | number | null;
@@ -168,19 +168,20 @@ export function useGroupDetailForm({
     const formatBalance = (bal: Record<string, number>) => {
       const entries = Object.entries(bal).filter(([_, v]) => Math.abs(v) > 0.01);
       if (entries.length === 0) return 'Fully Settled';
-      return entries.map(([curr, val]) => `${curr}${val.toFixed(2)}`).join(', ');
+      return entries.map(([curr, val]) => `${escapeHtml(curr)}${val.toFixed(2)}`).join(', ');
     };
 
     const formatSettleBalance = (bal: Record<string, number>) => {
       return Object.entries(bal)
-        .map(([curr, val]) => `${curr}${val.toFixed(2)}`)
+        .map(([curr, val]) => `${escapeHtml(curr)}${val.toFixed(2)}`)
         .join(', ');
     };
 
     const html = `
       <html>
         <head>
-          <title>${selectedGroup.name} Expense Report</title>
+          <meta charset="utf-8">
+          <title>${escapeHtml(selectedGroup.name)} Expense Report</title>
           <style>
             body {
               font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
@@ -283,13 +284,13 @@ export function useGroupDetailForm({
         <body>
           <div class="header">
             <div>
-              <div class="header-title">🏘️ ${selectedGroup.name}</div>
+              <div class="header-title">🏘️ ${escapeHtml(selectedGroup.name)}</div>
               <div class="meta">Report Generated: ${new Date().toLocaleDateString()}</div>
             </div>
             <div style="text-align: right;">
               <div style="font-size: 14px; font-weight: 800; color: #1E3A8A;">Total Group Spend</div>
               <div style="font-size: 24px; font-weight: 900; color: #1E293B;">
-                ${baseCurrency}${groupExpenses.reduce((sum, e) => sum + (e.title.includes('✅ Settlement') ? 0 : e.amt), 0).toFixed(2)}
+                ${escapeHtml(baseCurrency)}${groupExpenses.reduce((sum, e) => sum + (e.title.includes('✅ Settlement') ? 0 : e.amt), 0).toFixed(2)}
               </div>
             </div>
           </div>
@@ -311,7 +312,7 @@ export function useGroupDetailForm({
                   const cl = isOwedVal ? 'positive' : isOweVal ? 'negative' : 'settled';
                   return `
                     <tr>
-                      <td style="font-weight: 700;">${shown(m.name)}</td>
+                      <td style="font-weight: 700;">${escapeHtml(shown(m.name))}</td>
                       <td class="${cl}">${balStr}</td>
                     </tr>
                   `;
@@ -333,7 +334,7 @@ export function useGroupDetailForm({
               return `
                 <div class="due-card">
                   <div>
-                    <strong>${shown(t.from)}</strong> pays <strong>${shown(t.to)}</strong>
+                    <strong>${escapeHtml(shown(t.from))}</strong> pays <strong>${escapeHtml(shown(t.to))}</strong>
                   </div>
                   <div style="font-weight: 900; color: ${color};">
                     ${formatSettleBalance(t.balances)}
@@ -367,12 +368,12 @@ export function useGroupDetailForm({
                     : `${e.mode || 'Equally'} (${splitters.map(shown).join(', ')})`;
                   return `
                     <tr>
-                      <td style="color: #64748B; white-space: nowrap;">${e.date}</td>
-                      <td style="font-weight: 600;">${e.title}</td>
-                      <td>${shown(e.paid)}</td>
-                      <td style="color: #64748B; font-size: 11px;">${splitText}</td>
+                      <td style="color: #64748B; white-space: nowrap;">${escapeHtml(e.date)}</td>
+                      <td style="font-weight: 600;">${escapeHtml(e.title)}</td>
+                      <td>${escapeHtml(shown(e.paid))}</td>
+                      <td style="color: #64748B; font-size: 11px;">${escapeHtml(splitText)}</td>
                       <td style="text-align: right; font-weight: 700; ${isSettle ? 'color: #10B981;' : ''}">
-                        ${e.currency || baseCurrency}${e.amt.toFixed(2)}
+                        ${escapeHtml(e.currency || baseCurrency)}${e.amt.toFixed(2)}
                       </td>
                     </tr>
                   `;
