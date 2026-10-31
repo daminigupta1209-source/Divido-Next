@@ -1176,7 +1176,8 @@ export const MobileHeader: React.FC<MobileHeaderProps> = ({
                       <>
                         Analytics
                         {selectedGroup && (
-                          <span style={{ fontSize: '13px', fontWeight: 500, color: '#94A3B8', paddingLeft: '8px', marginLeft: '8px', borderLeft: '1.5px solid #E2E8F0' }}>
+                          // Group name on its own line under the title so it isn't squeezed out by the title
+                          <span style={{ display: 'block', fontSize: '12px', fontWeight: 500, color: '#94A3B8', letterSpacing: 0, lineHeight: 1.3, marginTop: '1px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                             {selectedGroup.name}
                           </span>
                         )}
