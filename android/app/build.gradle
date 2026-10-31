@@ -11,10 +11,10 @@ def signingValue = { String prop, String env -> keystoreProps.getProperty(prop) 
 def releaseStoreFile = signingValue('storeFile', 'DIVIDO_KEYSTORE_PATH')
 
 android {
-    namespace = "com.dividosplit.app"
+    namespace = "com.fussky.app"
     compileSdk = rootProject.ext.compileSdkVersion
     defaultConfig {
-        applicationId "com.dividosplit.app"
+        applicationId "com.fussky.app"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
         // Play needs a higher versionCode on every upload; CI passes -PversionCode.

@@ -1,4 +1,4 @@
-package com.dividosplit.app;
+package com.fussky.app;
 
 import com.getcapacitor.BridgeActivity;
 

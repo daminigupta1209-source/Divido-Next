@@ -76,7 +76,7 @@ describe('parseCallback', () => {
   });
 
   it('extracts code/state from a native custom-scheme bounce URL', () => {
-    const url = 'com.dividosplit.app://splitwise-callback?code=xyz789&state=uuid-2.n';
+    const url = 'com.fussky.app://splitwise-callback?code=xyz789&state=uuid-2.n';
     expect(parseCallback(url)).toEqual({ code: 'xyz789', state: 'uuid-2.n', error: null });
   });
 
@@ -93,7 +93,7 @@ describe('parseCallback', () => {
 describe('buildNativeBounceUrl', () => {
   it('builds the custom-scheme URL the callback page redirects to on native', () => {
     expect(buildNativeBounceUrl('code123', 'uuid-5.n')).toBe(
-      'com.dividosplit.app://splitwise-callback?code=code123&state=uuid-5.n'
+      'com.fussky.app://splitwise-callback?code=code123&state=uuid-5.n'
     );
   });
 

@@ -9,7 +9,7 @@ import { getPublicOrigin } from './publicUrl';
 // Native: Splitwise doesn't allow custom-scheme redirect URIs, so we open the
 // SAME https callback page inside an in-app browser (@capacitor/browser),
 // which "bounces" (see buildNativeBounceUrl) to the app's custom URL scheme
-// (com.dividosplit.app://splitwise-callback) that Android/iOS route back to
+// (com.fussky.app://splitwise-callback) that Android/iOS route back to
 // MainActivity; @capacitor/app's `appUrlOpen` delivers that URL to JS.
 //
 // A signed, single-use `state` nonce (CSRF/mixup protection) is minted per
@@ -18,7 +18,7 @@ import { getPublicOrigin } from './publicUrl';
 // ─────────────────────────────────────────────────────────────────────────
 
 const SPLITWISE_AUTHORIZE_URL = 'https://www.splitwise.com/oauth/authorize';
-const NATIVE_URL_SCHEME = 'com.dividosplit.app';
+const NATIVE_URL_SCHEME = 'com.fussky.app';
 const NATIVE_CALLBACK_HOST = 'splitwise-callback';
 const OAUTH_STORAGE_KEY = 'divido_splitwise_oauth';
 const OAUTH_STATE_TTL_MS = 10 * 60 * 1000; // 10 minutes

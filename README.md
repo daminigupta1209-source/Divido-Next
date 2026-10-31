@@ -121,7 +121,7 @@ the SPA itself (`vercel.json` rewrites it to `index.html`).
 **Native (Android/iOS):**
 1. An in-app browser (`@capacitor/browser`) opens the Splitwise authorize screen.
 2. Splitwise redirects to the same `https://<host>/splitwise-callback` page (Splitwise doesn't support custom URL scheme redirects).
-3. That page bounces to the app's custom URL scheme, `com.dividosplit.app://splitwise-callback`.
+3. That page bounces to the app's custom URL scheme, `com.fussky.app://splitwise-callback`.
 4. The OS routes the custom-scheme URL back into the app, where `@capacitor/app`'s `appUrlOpen` listener delivers it to JS and closes the in-app browser.
 5. If the OS doesn't fire that redirect automatically, the callback page shows an "Open Fussky" fallback button.
 

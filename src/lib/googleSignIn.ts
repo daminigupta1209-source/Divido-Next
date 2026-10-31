@@ -11,15 +11,15 @@ import { isNativeApp } from './publicUrl';
 // Supabase for the authorize URL without redirecting (skipBrowserRedirect),
 // open it in the system browser tab (@capacitor/browser — Custom Tabs /
 // SFSafariViewController, which Google allows), and have Supabase redirect to
-// the app's custom scheme (com.dividosplit.app://auth-callback). Android/iOS
+// the app's custom scheme (com.fussky.app://auth-callback). Android/iOS
 // route that back to the app; @capacitor/app delivers it as `appUrlOpen`.
 //
-// `com.dividosplit.app://auth-callback` must be in Supabase → Authentication →
+// `com.fussky.app://auth-callback` must be in Supabase → Authentication →
 // URL Configuration → Redirect URLs, otherwise Supabase falls back to the Site
 // URL and the user lands on the website inside the browser tab.
 // ─────────────────────────────────────────────────────────────────────────
 
-const NATIVE_AUTH_CALLBACK = 'com.dividosplit.app://auth-callback';
+const NATIVE_AUTH_CALLBACK = 'com.fussky.app://auth-callback';
 // Where to land after a native sign-in (path + invite query). Kept in
 // localStorage rather than on the redirect URL so the Supabase allow-list
 // entry can stay an exact match.
