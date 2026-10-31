@@ -4,7 +4,7 @@
     <meta charset="UTF-8" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-    <title>Divido Split</title>
+    <title>Fussky</title>
     <link rel="manifest" href="/manifest.json" />
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -17,7 +17,7 @@
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-    <meta name="apple-mobile-web-app-title" content="Divido" />
+    <meta name="apple-mobile-web-app-title" content="Fussky" />
     <link rel="apple-touch-icon" href="/divido_laughing_cat_mascot_1778063273427.png" />
   </head>
   <body>
@@ -27,7 +27,7 @@
       // After a deploy, a phone holding an old cached copy can ask for JS files
       // that no longer exist and get stuck on a white screen. Instead:
       //  * a missing file triggers an immediate one-time rescue (clear the
-      //    offline cache + reload), shown as "Updating Divido..." not white;
+      //    offline cache + reload), shown as "Updating Fussky..." not white;
       //  * if nothing has drawn after 3s with an error, or 8s without one, the
       //    same rescue runs;
       //  * if it is still blank after the rescue, show the error so the user
@@ -45,7 +45,7 @@
           r.setAttribute('data-dv-overlay', '1');
           r.innerHTML = '<div style="min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;font-family:sans-serif;color:#475569;background:#F8FAFC">' +
             '<div style="width:32px;height:32px;border-radius:50%;border:3px solid rgba(16,185,129,0.25);border-top-color:#10B981;animation:dvspin 0.8s linear infinite"></div>' +
-            '<p style="margin-top:14px;font-size:14px">Updating Divido…</p>' +
+            '<p style="margin-top:14px;font-size:14px">Updating Fussky…</p>' +
             '<style>@keyframes dvspin{to{transform:rotate(360deg)}}</style></div>';
         }
         function showError() {
@@ -59,7 +59,7 @@
           if (!r) return;
           r.setAttribute('data-dv-overlay', '1');
           r.innerHTML = '<div style="padding:24px;font-family:sans-serif;color:#1E293B">' +
-            '<h3>Divido could not start</h3>' +
+            '<h3>Fussky could not start</h3>' +
             '<p style="font-size:13px;color:#64748B">Please send a screenshot of this screen.</p>' +
             '<pre style="white-space:pre-wrap;font-size:12px;background:#F1F5F9;padding:12px;border-radius:8px"></pre>' +
             '<button id="dv-retry" style="padding:10px 16px;border:0;border-radius:8px;background:#10B981;color:#fff">Try again</button></div>';

@@ -1,4 +1,4 @@
-// Divido service worker — makes the app open and work offline while still
+// Fussky service worker — makes the app open and work offline while still
 // picking up new deploys quickly.
 //
 // Strategy:

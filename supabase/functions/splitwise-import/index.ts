@@ -1,12 +1,12 @@
 // Supabase Edge Function: splitwise-import
 // -----------------------------------------
 // Server-side proxy for the Splitwise OAuth2 + REST API, used to import a
-// user's Splitwise groups/expenses into Divido.
+// user's Splitwise groups/expenses into Fussky.
 //
 // Why this must live server-side: exchanging an OAuth authorization code
 // requires the Splitwise `client_secret`, which must NEVER ship in the
 // frontend bundle. The client calls this function instead; it verifies the
-// caller's Supabase JWT (so only signed-in Divido users can use it), then
+// caller's Supabase JWT (so only signed-in Fussky users can use it), then
 // talks to Splitwise on the caller's behalf. The resulting Splitwise access
 // token is returned to the caller for the lifetime of the import flow only —
 // this function never stores or logs it.
@@ -269,7 +269,7 @@ Deno.serve(async (req: Request) => {
     // Identify the caller from their JWT (scoped, non-privileged client). We
     // don't need an admin client here — this function never touches the
     // database, it only proxies Splitwise's API for an already-authenticated
-    // Divido user.
+    // Fussky user.
     const userClient = createClient(supabaseUrl, anonKey, {
       global: { headers: { Authorization: authHeader } },
     });

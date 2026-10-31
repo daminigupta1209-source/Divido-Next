@@ -158,7 +158,7 @@ export function useActivityStudio({
     const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
     link.setAttribute('href', url);
-    link.setAttribute('download', `Divido_Global_Activities_Report.csv`);
+    link.setAttribute('download', `Fussky_Global_Activities_Report.csv`);
     link.style.visibility = 'hidden';
     document.body.appendChild(link);
     link.click();
@@ -177,7 +177,7 @@ export function useActivityStudio({
       <html>
         <head>
           <meta charset="utf-8">
-          <title>Divido Global Activities Statement</title>
+          <title>Fussky Global Activities Statement</title>
           <style>
             body { font-family: 'Nunito', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; padding: 30px; color: #1E293B; background-color: #FFFFFF; }
             h1 { font-size: 26px; font-weight: 900; margin: 0 0 4px 0; color: #4F46E5; }
@@ -201,7 +201,7 @@ export function useActivityStudio({
         <body>
           <div class="header-container">
             <div>
-              <h1>Divido Statement</h1>
+              <h1>Fussky Statement</h1>
               <div class="meta-info">Global Activities Ledger • Generated on <strong>${new Date().toLocaleDateString()}</strong></div>
             </div>
             <div style="text-align: right;" class="meta-info">

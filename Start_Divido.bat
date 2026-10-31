@@ -1,8 +1,8 @@
 @echo off
-title Divido - DO NOT CLOSE THIS WINDOW
+title Fussky - DO NOT CLOSE THIS WINDOW
 color 0A
 echo ====================================================
-echo   DIVIDO IS STARTING...
+echo   FUSSKY IS STARTING...
 echo ====================================================
 echo.
 echo   !! DO NOT CLOSE THIS WINDOW !!

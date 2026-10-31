@@ -74,7 +74,7 @@ export default defineConfig([
 
 ## Import from Splitwise
 
-Divido can import a user's Splitwise groups, group expenses, and 1:1 friend
+Fussky can import a user's Splitwise groups, group expenses, and 1:1 friend
 expenses via OAuth2. The Splitwise `client_secret` is only ever handled
 server-side, by the `splitwise-import` Supabase Edge Function (see
 [`supabase/functions/splitwise-import/README.md`](supabase/functions/splitwise-import/README.md)
@@ -123,7 +123,7 @@ the SPA itself (`vercel.json` rewrites it to `index.html`).
 2. Splitwise redirects to the same `https://<host>/splitwise-callback` page (Splitwise doesn't support custom URL scheme redirects).
 3. That page bounces to the app's custom URL scheme, `com.dividosplit.app://splitwise-callback`.
 4. The OS routes the custom-scheme URL back into the app, where `@capacitor/app`'s `appUrlOpen` listener delivers it to JS and closes the in-app browser.
-5. If the OS doesn't fire that redirect automatically, the callback page shows an "Open Divido" fallback button.
+5. If the OS doesn't fire that redirect automatically, the callback page shows an "Open Fussky" fallback button.
 
 ### 5. Native setup
 
@@ -142,9 +142,9 @@ into `ios/App/CapApp-SPM/Package.swift`, which breaks an Xcode build. Re-run
 
 ### 6. Data notes
 
-- The Splitwise access token is never stored (not on the server, not in Divido's database) — it's held in memory for the duration of the import session only.
-- Imported Splitwise groups sync like any normal Divido group.
+- The Splitwise access token is never stored (not on the server, not in Fussky's database) — it's held in memory for the duration of the import session only.
+- Imported Splitwise groups sync like any normal Fussky group.
 - Friend (non-group) expenses are imported into the private **Non-Group** list and are never shared with anyone.
 - Re-importing is idempotent: existing records (tracked via `sw_`-prefixed ids) are updated in place rather than duplicated.
 - Expenses with more than one payer are either split automatically, or flagged for manual review with a ⚠️ marker in their notes.
-- Splitwise groups that share a name with an existing Divido group must be merged or renamed manually before/after import.
+- Splitwise groups that share a name with an existing Fussky group must be merged or renamed manually before/after import.

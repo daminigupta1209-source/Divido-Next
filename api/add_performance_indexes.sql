@@ -1,5 +1,5 @@
 -- ============================================================
--- Performance indexes for Divido.
+-- Performance indexes for Fussky.
 --
 -- These speed up the most common lookups the app makes:
 --   * "which members are in this group?"      -> group_members(group_id)

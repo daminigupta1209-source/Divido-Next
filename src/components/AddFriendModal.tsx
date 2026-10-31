@@ -54,9 +54,9 @@ export const AddFriendModal: React.FC<AddFriendModalProps> = ({
 
   const getInviteMessage = () => {
     if (customRejoinLink) {
-      return `Hey! Rejoin the group ${selectedGroup ? `"${selectedGroup.name}"` : 'our group'} on Divido 💸\n${customRejoinLink}`;
+      return `Hey! Rejoin the group ${selectedGroup ? `"${selectedGroup.name}"` : 'our group'} on Fussky 💸\n${customRejoinLink}`;
     }
-    return `Hey! Join ${selectedGroup ? `"${selectedGroup.name}"` : 'my group'} on Divido to split expenses 💸\n${getInviteLink()}`;
+    return `Hey! Join ${selectedGroup ? `"${selectedGroup.name}"` : 'my group'} on Fussky to split expenses 💸\n${getInviteLink()}`;
   };
 
   const handleAddName = async (rawName?: string) => {
@@ -129,11 +129,11 @@ export const AddFriendModal: React.FC<AddFriendModalProps> = ({
   const canNativeShare = typeof navigator !== 'undefined' && !!(navigator as any).share;
   const handleNativeShare = async () => {
     const shareText = customRejoinLink
-      ? `Hey! Rejoin the group ${selectedGroup ? `"${selectedGroup.name}"` : 'our group'} on Divido 💸`
-      : `Hey! Join ${selectedGroup ? `"${selectedGroup.name}"` : 'my group'} on Divido to split expenses 💸`;
+      ? `Hey! Rejoin the group ${selectedGroup ? `"${selectedGroup.name}"` : 'our group'} on Fussky 💸`
+      : `Hey! Join ${selectedGroup ? `"${selectedGroup.name}"` : 'my group'} on Fussky to split expenses 💸`;
     try {
       await (navigator as any).share({
-        title: selectedGroup ? `Join "${selectedGroup.name}" on Divido` : 'Join my group on Divido',
+        title: selectedGroup ? `Join "${selectedGroup.name}" on Fussky` : 'Join my group on Fussky',
         text: shareText,
         url: getInviteLink(),
       });
@@ -189,7 +189,7 @@ export const AddFriendModal: React.FC<AddFriendModalProps> = ({
     {
       label: 'Email',
       bg: '#F97316',
-      action: () => window.open(`mailto:?subject=Join me on Divido&body=${encodedMsg}`, '_blank'),
+      action: () => window.open(`mailto:?subject=Join me on Fussky&body=${encodedMsg}`, '_blank'),
       icon: (
         <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
           <rect x="2" y="4" width="20" height="16" rx="2"/>

@@ -105,7 +105,7 @@ export const PostExpenseShareSheet: React.FC<PostExpenseShareSheetProps> = ({
       : `${currencySymbol}${totalOwedByGuests.toFixed(2)} total share`;
 
     const groupNameStr = group?.name && group.name !== 'Non-Group' ? ` to ${group.name}` : '';
-    return `Hey ${guestNames}! Added "${expense.title}" (${amountText}) on Divido 💸\nJoin our group${groupNameStr} to track & settle:\n${inviteLink}`;
+    return `Hey ${guestNames}! Added "${expense.title}" (${amountText}) on Fussky 💸\nJoin our group${groupNameStr} to track & settle:\n${inviteLink}`;
   };
 
   const shareText = generateShareText();
@@ -115,7 +115,7 @@ export const PostExpenseShareSheet: React.FC<PostExpenseShareSheetProps> = ({
   const handleNativeShare = async () => {
     try {
       await (navigator as any).share({
-        title: group?.name ? `Join "${group.name}" on Divido` : 'Join Divido',
+        title: group?.name ? `Join "${group.name}" on Fussky` : 'Join Fussky',
         text: shareText,
         url: inviteLink,
       });
@@ -131,8 +131,8 @@ export const PostExpenseShareSheet: React.FC<PostExpenseShareSheetProps> = ({
   };
 
   const unregisteredText = unregisteredShares.length === 1
-    ? `${shown(unregisteredShares[0].name)} is not on Divido yet`
-    : `${unregisteredShares.length} members are not on Divido yet`;
+    ? `${shown(unregisteredShares[0].name)} is not on Fussky yet`
+    : `${unregisteredShares.length} members are not on Fussky yet`;
 
   return (
     <>

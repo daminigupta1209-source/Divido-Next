@@ -15,7 +15,7 @@ initNativeAuthCallback();
 
 // Build marker — check the console to confirm which version is actually loaded
 // (helps tell a fresh deploy apart from a stale service-worker cache).
-if (import.meta.env.DEV) console.log('[Divido] build 2026-08-20-cache-v3');
+if (import.meta.env.DEV) console.log('[Fussky] build 2026-08-20-cache-v3');
 
 // One-time local reset for the permanent-group-id migration. The old model
 // stored groups/expenses with temporary float ids that no longer fit the new
@@ -42,7 +42,7 @@ try {
 // pick up the current files instead of failing.
 window.addEventListener('vite:preloadError', (ev) => {
   // Shared one-time rescue from index.html: clears the stale offline copy
-  // (a plain reload could serve it again) and shows "Updating Divido...".
+  // (a plain reload could serve it again) and shows "Updating Fussky...".
   const rescue = (window as unknown as { __dvRescue?: () => boolean }).__dvRescue;
   if (rescue && rescue()) { ev.preventDefault(); return; }
   try {

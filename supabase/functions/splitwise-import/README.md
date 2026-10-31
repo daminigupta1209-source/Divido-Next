@@ -4,7 +4,7 @@ Server-side proxy for the Splitwise OAuth2 + REST API, used by the "Import
 from Splitwise" flow. Required because exchanging an OAuth authorization code
 needs the Splitwise `client_secret`, which must never live in the frontend.
 The client calls this function via `supabase.functions.invoke('splitwise-import', { body: ... })`
-after verifying the caller is signed in to Divido; it never persists or logs
+after verifying the caller is signed in to Fussky; it never persists or logs
 the Splitwise access token or client secret.
 
 ## Deploy (one-time)
@@ -41,7 +41,7 @@ Splitwise apps are registered with exactly **one** OAuth redirect URL. Use:
 https://<host>/splitwise-callback
 ```
 
-where `<host>` is the Divido web app's host (e.g. your production domain, or a
+where `<host>` is the Fussky web app's host (e.g. your production domain, or a
 tunnel/preview host during development — whichever one is registered in the
 Splitwise app settings at the time). The client must send this same URL back
 as `redirectUri` in the `exchange` request below, since Splitwise validates it
@@ -54,7 +54,7 @@ and a JSON body containing an `action` field. All responses are JSON.
 
 Common failure responses (any action):
 - `401 { error: "Missing authorization header" }` — no `Authorization` header sent.
-- `401 { error: "Invalid or expired session" }` — the Divido JWT didn't resolve to a user.
+- `401 { error: "Invalid or expired session" }` — the Fussky JWT didn't resolve to a user.
 - `500 { error: "Splitwise integration is not configured on the server" }` — secrets unset.
 - `400 { error: "Invalid JSON body" }` — body isn't valid JSON.
 - `400 { error: "Unknown action: <action>" }` — unrecognized/missing `action`.

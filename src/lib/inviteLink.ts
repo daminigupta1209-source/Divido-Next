@@ -92,7 +92,7 @@ const joinGroupNames = (names: string[]): string => {
 // becomes "your group".
 export const personInviteMessage = (name: string, groupNames: string[]): string => {
   const cleaned = groupNames.map((n) => n || 'your group');
-  return `Hey ${shown(name)}! Join ${joinGroupNames(cleaned)} on Divido to split expenses 💸`;
+  return `Hey ${shown(name)}! Join ${joinGroupNames(cleaned)} on Fussky to split expenses 💸`;
 };
 
 // "Hey Rahul!", "Hey Rahul & Priya!", "Hey Rahul, Priya & Amit!" for up to 3
@@ -106,8 +106,8 @@ export const groupCardGreeting = (names: string[]): string => {
 
 // Full share text for a group card's "Invite"/"Remind" action. For <=3
 // pending names this reproduces the exact wording used today (see
-// onInviteToGroup in src/App.tsx): "Hey <names>! Join "<name>" on Divido to
+// onInviteToGroup in src/App.tsx): "Hey <names>! Join "<name>" on Fussky to
 // split expenses 💸", falling back to "my group" (no quotes) for an unnamed
 // group. Beyond 3 names the greeting collapses to "Hey everyone!".
 export const groupInviteMessage = (names: string[], groupName: string): string =>
-  `${groupCardGreeting(names)} Join ${groupName ? `"${groupName}"` : 'my group'} on Divido to split expenses 💸`;
+  `${groupCardGreeting(names)} Join ${groupName ? `"${groupName}"` : 'my group'} on Fussky to split expenses 💸`;

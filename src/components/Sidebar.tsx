@@ -218,7 +218,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
             textAlign: 'center',
           }}
         >
-          Divido <span style={{ color: '#F59E0B' }}>✨</span>
+          Fussky <span style={{ color: '#F59E0B' }}>✨</span>
         </div>
       </div>
 

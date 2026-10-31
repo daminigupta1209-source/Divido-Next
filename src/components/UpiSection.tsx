@@ -199,7 +199,7 @@ export const UpiSection: React.FC<UpiSectionProps> = ({
     if (!verifyCanvasRef.current || !(localUpi || '').trim()) return;
 
     if (verificationStep === 'awaiting_action') {
-      const upiLink = buildUpiLink({ pa: localUpi || '', pn: userName || '', am: 1, tn: 'Divido Verify' });
+      const upiLink = buildUpiLink({ pa: localUpi || '', pn: userName || '', am: 1, tn: 'Fussky Verify' });
       QRCode.toCanvas(
         verifyCanvasRef.current,
         upiLink,
@@ -674,7 +674,7 @@ export const UpiSection: React.FC<UpiSectionProps> = ({
                   onClick={() => {
                     if (navigator.share) {
                       navigator.share({
-                        title: `Pay ${userName || ''} on Divido`,
+                        title: `Pay ${userName || ''} on Fussky`,
                         // No upi:// link: UPI apps decline link-launched payments to a personal UPI ID.
                         text: `Here is my UPI ID: ${localUpi || ''}\nPay me in GPay or any UPI app → Pay UPI ID.`,
                       }).catch(console.error);

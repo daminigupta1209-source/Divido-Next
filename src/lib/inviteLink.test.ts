@@ -117,29 +117,29 @@ describe('buildPersonInviteLink', () => {
 
 describe('personInviteMessage', () => {
   it('names a single group', () => {
-    expect(personInviteMessage('Priya', ['Goa Trip'])).toBe('Hey Priya! Join Goa Trip on Divido to split expenses 💸');
+    expect(personInviteMessage('Priya', ['Goa Trip'])).toBe('Hey Priya! Join Goa Trip on Fussky to split expenses 💸');
   });
 
   it('joins two groups with "&"', () => {
     expect(personInviteMessage('Priya', ['Goa Trip', 'Flat 402'])).toBe(
-      'Hey Priya! Join Goa Trip & Flat 402 on Divido to split expenses 💸',
+      'Hey Priya! Join Goa Trip & Flat 402 on Fussky to split expenses 💸',
     );
   });
 
   it('names the first two and counts the rest for three groups', () => {
     expect(personInviteMessage('Priya', ['Goa Trip', 'Flat 402', 'Office Lunch'])).toBe(
-      'Hey Priya! Join Goa Trip, Flat 402 & 1 more on Divido to split expenses 💸',
+      'Hey Priya! Join Goa Trip, Flat 402 & 1 more on Fussky to split expenses 💸',
     );
   });
 
   it('names the first two and counts the rest for five groups', () => {
     expect(personInviteMessage('Priya', ['Goa Trip', 'Flat 402', 'A', 'B', 'C'])).toBe(
-      'Hey Priya! Join Goa Trip, Flat 402 & 3 more on Divido to split expenses 💸',
+      'Hey Priya! Join Goa Trip, Flat 402 & 3 more on Fussky to split expenses 💸',
     );
   });
 
   it('falls back to "your group" for an empty group name', () => {
-    expect(personInviteMessage('Priya', [''])).toBe('Hey Priya! Join your group on Divido to split expenses 💸');
+    expect(personInviteMessage('Priya', [''])).toBe('Hey Priya! Join your group on Fussky to split expenses 💸');
   });
 });
 
@@ -175,7 +175,7 @@ describe('groupInviteMessage', () => {
   };
   const legacyMessage = (names: string[], groupName: string): string => {
     const who = legacyJoinNames(names);
-    return `Hey${who ? ` ${who}` : ''}! Join ${groupName ? `"${groupName}"` : 'my group'} on Divido to split expenses 💸`;
+    return `Hey${who ? ` ${who}` : ''}! Join ${groupName ? `"${groupName}"` : 'my group'} on Fussky to split expenses 💸`;
   };
 
   it.each([[[]], [['Rahul']], [['Rahul', 'Priya']], [['Rahul', 'Priya', 'Amit']]])(
@@ -186,7 +186,7 @@ describe('groupInviteMessage', () => {
   );
 
   it('quotes a named group and uses "my group" (no quotes) when unnamed', () => {
-    expect(groupInviteMessage(['Rahul'], 'Goa Trip')).toBe('Hey Rahul! Join "Goa Trip" on Divido to split expenses 💸');
-    expect(groupInviteMessage(['Rahul'], '')).toBe('Hey Rahul! Join my group on Divido to split expenses 💸');
+    expect(groupInviteMessage(['Rahul'], 'Goa Trip')).toBe('Hey Rahul! Join "Goa Trip" on Fussky to split expenses 💸');
+    expect(groupInviteMessage(['Rahul'], '')).toBe('Hey Rahul! Join my group on Fussky to split expenses 💸');
   });
 });

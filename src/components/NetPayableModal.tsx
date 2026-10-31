@@ -391,7 +391,7 @@ export const NetPayableModal: React.FC<NetPayableModalProps> = ({
                     </div>
 
                     {/* Scan alternative: a QR scanned INSIDE the UPI app is an in-app
-                        payment, not a link launched from Divido. On one phone: save the
+                        payment, not a link launched from Fussky. On one phone: save the
                         image, then GPay → Scan → gallery. */}
                     <button
                       onClick={() => setShowQr((s) => !s)}

@@ -81,7 +81,7 @@ export const NetReceivableModal: React.FC<NetReceivableModalProps> = ({
     if (popupData) {
       // Keep the message clean; the UPI ID + amount are appended to the shared
       // payload on their own lines (see shareMessage below).
-      const msg = `Hey ${popupData.friendName}, just a quick reminder to settle our net balance of ${popupData.curr}${popupData.amt.toFixed(2)}${inrNote} on Divido. Thank you!`;
+      const msg = `Hey ${popupData.friendName}, just a quick reminder to settle our net balance of ${popupData.curr}${popupData.amt.toFixed(2)}${inrNote} on Fussky. Thank you!`;
       setReminderText(msg);
     }
   }, [popupData, inrNote]);
@@ -90,7 +90,7 @@ export const NetReceivableModal: React.FC<NetReceivableModalProps> = ({
     if (!popupData || !remPopupUpi || remPopupEditing) return;
     const canvas = reminderCanvasRef.current;
     if (canvas) {
-      const upiLink = buildUpiLink({ pa: remPopupUpi, pn: me, am: upiAmt, tn: 'Divido Settle' });
+      const upiLink = buildUpiLink({ pa: remPopupUpi, pn: me, am: upiAmt, tn: 'Fussky Settle' });
 
       QRCode.toCanvas(
         canvas,

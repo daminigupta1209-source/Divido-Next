@@ -47,11 +47,11 @@ interface RowState {
   rawGroup?: RawSplitwiseGroup;
   memberCount: number | null;
   ticked: boolean;
-  // An existing Divido Group already holds sw_-prefixed expenses under this
+  // An existing Fussky Group already holds sw_-prefixed expenses under this
   // exact name — re-importing should update it, not duplicate it.
   alreadyImported: boolean;
   reuseGroupId?: string | number;
-  // Set only when NOT alreadyImported: a different existing Divido group
+  // Set only when NOT alreadyImported: a different existing Fussky group
   // happens to share this (normalized) name, so the user must resolve it.
   matchedExistingGroup?: Group;
   resolution: 'merge' | 'rename' | null;
@@ -123,7 +123,7 @@ function buildRows(
 }
 
 // True while the row's collision is still unresolved: ticked, not already
-// imported, its name matches an existing Divido group, and either no choice
+// imported, its name matches an existing Fussky group, and either no choice
 // has been made yet or the chosen rename still collides with another group.
 function isRowUnresolved(row: RowState, existingGroups: Group[]): boolean {
   if (!row.ticked || row.alreadyImported || !row.matchedExistingGroup) return false;
@@ -521,7 +521,7 @@ export const SplitwiseImportModal: React.FC<SplitwiseImportModalProps> = ({
                 <div style={{ fontSize: '40px' }}>🔗</div>
                 <div style={{ fontSize: '15px', fontWeight: 700, color: '#1E293B' }}>Connect your Splitwise account</div>
                 <div style={{ fontSize: '13px', color: '#64748B', maxWidth: '320px' }}>
-                  Bring your Splitwise groups and expenses into Divido. You choose exactly what gets imported.
+                  Bring your Splitwise groups and expenses into Fussky. You choose exactly what gets imported.
                 </div>
                 <button onClick={handleConnect} style={ctaButtonBaseStyle}>Connect to Splitwise</button>
                 {connectError && <div style={{ fontSize: '12px', color: '#EF4444', fontWeight: 600 }}>{connectError}</div>}

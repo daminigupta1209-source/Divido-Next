@@ -56,7 +56,7 @@ export const UPIQRModal: React.FC<UPIQRModalProps> = ({
     const canvas = canvasRef.current;
     if (canvas) {
       // Standard UPI Payment URI Format
-      const upiLink = buildUpiLink({ pa: localUpi, pn: payeeName, am: amount, tn: 'Divido Settle' });
+      const upiLink = buildUpiLink({ pa: localUpi, pn: payeeName, am: amount, tn: 'Fussky Settle' });
 
       QRCode.toCanvas(
         canvas,
@@ -123,12 +123,12 @@ export const UPIQRModal: React.FC<UPIQRModalProps> = ({
   const handleCopy = () => copy('upi-inline', localUpi.trim());
 
   const handleShareRequest = async () => {
-    const shareText = `Hi! Please pay ${currency}${amount.toFixed(2)} to settle our dues on Divido.\n\nPay in GPay or any UPI app → Pay UPI ID:\nUPI ID: ${localUpi.trim()}\nAmount: ${currency}${amount.toFixed(2)}`;
+    const shareText = `Hi! Please pay ${currency}${amount.toFixed(2)} to settle our dues on Fussky.\n\nPay in GPay or any UPI app → Pay UPI ID:\nUPI ID: ${localUpi.trim()}\nAmount: ${currency}${amount.toFixed(2)}`;
     
     if (navigator.share) {
       try {
         await navigator.share({
-          title: 'Divido Payment Settlement Request',
+          title: 'Fussky Payment Settlement Request',
           text: shareText,
         });
       } catch (err) {

@@ -1,8 +1,8 @@
 /**
- * Pure Splitwise -> Divido import mapper.
+ * Pure Splitwise -> Fussky import mapper.
  *
  * Takes raw Splitwise API payloads (a group + its expenses, or a set of
- * "friends" / non-group expenses) and produces Divido `Group`/`Expense`
+ * "friends" / non-group expenses) and produces Fussky `Group`/`Expense`
  * objects, ready to be handed to the same code paths as `handleCreateGroup`
  * and the sync layer. Has no React/Supabase dependency so it can be unit
  * tested in isolation — see splitwiseImport.test.ts.
@@ -191,7 +191,7 @@ export function mapSplitwiseImport(input: SplitwiseImportInput): SplitwiseImport
 
     const category = resolveCategoryEmoji(e.category?.name, description);
     // Friends (non-group) threads always model both people as splitters —
-    // even one whose owed_share happens to be 0 — so the Divido side stays
+    // even one whose owed_share happens to be 0 — so the Fussky side stays
     // "me + them" instead of silently dropping a zero-share participant.
     const splitters = extractSplitters(e, nameFor, target.kind === 'friends');
 

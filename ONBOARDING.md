@@ -1,4 +1,4 @@
-# Divido — Onboarding / Session Handoff
+# Fussky — Onboarding / Session Handoff
 
 A React + TypeScript + Vite bill-splitting app (like Splitwise), with a Supabase backend.
 

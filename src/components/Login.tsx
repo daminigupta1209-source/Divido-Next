@@ -185,11 +185,11 @@ export const Login: React.FC<LoginProps> = ({ onLoginSuccess, currentTheme, invi
               height: '100%',
               objectFit: 'cover',
             }}
-            alt="Divido Mascot"
+            alt="Fussky Mascot"
           />
         </div>
 
-        <h2 className="suno-title">Welcome to Divido</h2>
+        <h2 className="suno-title">Welcome to Fussky</h2>
         <p style={{ fontSize: '14px', color: '#64748B', marginBottom: inviteCount ? '18px' : '32px', lineHeight: '1.5' }}>
           Manage groups, split expenses, and track balances.
         </p>

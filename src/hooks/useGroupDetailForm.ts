@@ -383,7 +383,7 @@ export function useGroupDetailForm({
           </div>
 
           <div style="text-align: center; margin-top: 50px; font-size: 10px; color: #94A3B8; font-weight: 700; letter-spacing: 1px;">
-            GENERATED WITH DIVIDO BILL SPLITTER ⚡
+            GENERATED WITH FUSSKY BILL SPLITTER ⚡
           </div>
 
           <script>

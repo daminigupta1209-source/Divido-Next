@@ -1,8 +1,8 @@
 @echo off
-title Divido - Release
+title Fussky - Release
 color 0B
 echo ====================================================
-echo   RELEASING DIVIDO...
+echo   RELEASING FUSSKY...
 echo ====================================================
 echo.
 set PATH=%PATH%;C:\Program Files\nodejs;C:\Program Files\Git\cmd
@@ -30,7 +30,7 @@ if errorlevel 1 goto fail
 color 0A
 echo.
 echo ====================================================
-echo   DONE! Divido will be live in about 2 minutes.
+echo   DONE! Fussky will be live in about 2 minutes.
 echo ====================================================
 pause
 exit /b 0

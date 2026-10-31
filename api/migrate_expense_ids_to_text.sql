@@ -1,4 +1,4 @@
--- Divido — permanent expense IDs (Stage: fix expense temp-id -> DB-id race)
+-- Fussky — permanent expense IDs (Stage: fix expense temp-id -> DB-id race)
 -- Changes expenses.id from a database-assigned number to client-generated text,
 -- IN PLACE (no data reset — existing rows keep their id as text "5", etc.).
 --

@@ -110,12 +110,12 @@ export const FullScreenAddFriend: React.FC<FullScreenAddFriendProps> = ({
   const clashesWithMe = !!myName && myName.replace(/s*(me)$/i, '').trim().toLowerCase() === q;
   // Plain-language reason shown whenever an email is required.
   const needsEmailReason = clashesWithMe
-    ? `"${qRaw}" is your own name here. Add their email so Divido can tell the two of you apart, otherwise your balances would get mixed up.`
+    ? `"${qRaw}" is your own name here. Add their email so Fussky can tell the two of you apart, otherwise your balances would get mixed up.`
     : inGroupClash
     ? `There is already a "${qRaw}" in this group. Add the new person's email so their balances stay separate.`
     : sameNameSugs.length > 0
-    ? `You already have a friend called "${qRaw}". Add the new person's email so Divido knows it's someone else.`
-    : `Add ${qRaw}'s email so Divido always knows who this is, even if two friends share a name.`;
+    ? `You already have a friend called "${qRaw}". Add the new person's email so Fussky knows it's someone else.`
+    : `Add ${qRaw}'s email so Fussky always knows who this is, even if two friends share a name.`;
   const needsEmail = requireEmail || inGroupClash || sameNameSugs.length > 0;
   const canAddNew = qRaw.length > 0;
 

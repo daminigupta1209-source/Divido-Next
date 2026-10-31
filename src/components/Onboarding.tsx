@@ -69,7 +69,7 @@ export const Onboarding: React.FC<OnboardingProps> = ({
             marginBottom: '8px',
           }}
         >
-          Welcome to Divido <span style={{ color: '#F59E0B' }}>✨</span>
+          Welcome to Fussky <span style={{ color: '#F59E0B' }}>✨</span>
         </h2>
         <p
           style={{

@@ -22,7 +22,7 @@ function safeLazy<T extends React.ComponentType<any>>(
 ) {
   return React.lazy(() =>
     factory().catch((err) => {
-      console.error('[Divido] Lazy chunk load failed:', err);
+      console.error('[Fussky] Lazy chunk load failed:', err);
       const msg = err?.message || '';
       const isChunkError =
         msg.includes('dynamically imported module') ||
@@ -236,8 +236,8 @@ function App() {
     if (typeof navigator !== 'undefined' && (navigator as any).share) {
       try {
         await (navigator as any).share({
-          title: grpName ? `Join "${grpName}" on Divido` : 'Join my group on Divido',
-          text: `Hey! Join ${grpName ? `"${grpName}"` : 'my group'} on Divido to split expenses 💸`,
+          title: grpName ? `Join "${grpName}" on Fussky` : 'Join my group on Fussky',
+          text: `Hey! Join ${grpName ? `"${grpName}"` : 'my group'} on Fussky to split expenses 💸`,
           url: link,
         });
         return;
@@ -1224,7 +1224,7 @@ function App() {
     // decline link-launched payments to a personal UPI ID (every variant tested fails).
     const myUpi = (localStorage.getItem('divido_global_upi_id') || userMetadata[me]?.upiId || '').trim();
     const isINR = curr === '₹';
-    const baseMsg = `Hey ${friendName}, just a quick reminder to settle our net balance of ${curr}${amt.toFixed(2)} on Divido. Thank you!`;
+    const baseMsg = `Hey ${friendName}, just a quick reminder to settle our net balance of ${curr}${amt.toFixed(2)} on Fussky. Thank you!`;
     const shareMessage = (myUpi && isINR)
       ? `${baseMsg}\n\nPay in GPay or any UPI app → Pay UPI ID:\nUPI ID: ${myUpi}\nAmount: ₹${amt.toFixed(2)}`
       : myUpi
@@ -1252,7 +1252,7 @@ function App() {
     // to no-op and only the second to work).
     if (nativeShare) {
       try {
-        (navigator as any).share({ title: 'Divido reminder', text: shareMessage }).catch(() => {});
+        (navigator as any).share({ title: 'Fussky reminder', text: shareMessage }).catch(() => {});
       } catch { /* older browsers */ }
     }
 
@@ -1669,11 +1669,11 @@ function App() {
       }
     }
     const link = `${getPublicOrigin()}/?joinGroupId=${gid}`;
-    const shareText = `Open our shared expenses on Divido 💸`;
+    const shareText = `Open our shared expenses on Fussky 💸`;
     // Prefer the phone's native share sheet (WhatsApp, etc.) with the FULL link.
     if (typeof navigator !== 'undefined' && (navigator as any).share) {
       try {
-        await (navigator as any).share({ title: 'Divido — shared expenses', text: shareText, url: link });
+        await (navigator as any).share({ title: 'Fussky — shared expenses', text: shareText, url: link });
         return;
       } catch (err) {
         // Dismissed the sheet (back-swipe / tap outside): do nothing. Only a
@@ -4154,7 +4154,7 @@ function App() {
             border: '4px solid rgba(99, 102, 241, 0.2)', borderTopColor: '#6366F1',
             animation: 'spin 0.8s linear infinite',
           }} />
-          <div style={{ fontSize: '14px', fontWeight: 700, opacity: 0.7 }}>Returning to Divido…</div>
+          <div style={{ fontSize: '14px', fontWeight: 700, opacity: 0.7 }}>Returning to Fussky…</div>
           <a
             href={bounceUrl}
             style={{
@@ -4163,7 +4163,7 @@ function App() {
               textDecoration: 'none',
             }}
           >
-            Open Divido
+            Open Fussky
           </a>
           <style>{`@keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }`}</style>
         </div>
@@ -4400,7 +4400,7 @@ function App() {
   }
 
   // Fresh sign-in with no cached data yet: show a friendly branded splash (the
-  // Divido cat) until the first cloud load finishes — so users never see an
+  // Fussky cat) until the first cloud load finishes — so users never see an
   // empty "Your Groups" and get scared. Returning users with cached groups skip
   // this entirely (groups.length > 0). 5s safety timeout so it can't hang.
   // Never over a pending join card — it is the destination, and hiding it
@@ -4841,7 +4841,7 @@ function App() {
               if (typeof navigator !== 'undefined' && (navigator as any).share) {
                 try {
                   await (navigator as any).share({
-                    title: g.name ? `Join "${g.name}" on Divido` : 'Join my group on Divido',
+                    title: g.name ? `Join "${g.name}" on Fussky` : 'Join my group on Fussky',
                     text: shareText,
                     url: inviteLink,
                   });
@@ -4881,8 +4881,8 @@ function App() {
               const groupNames = coveredGroupIds.map((gid) => groupNameById.get(gid) || '');
               const shareText = personInviteMessage(person.name, groupNames);
               const shareTitle = coveredGroupIds.length > 1
-                ? 'Join my groups on Divido'
-                : `Join ${groupNames[0] || 'my group'} on Divido`;
+                ? 'Join my groups on Fussky'
+                : `Join ${groupNames[0] || 'my group'} on Fussky`;
               if (typeof navigator !== 'undefined' && (navigator as any).share) {
                 try {
                   await (navigator as any).share({ title: shareTitle, text: shareText, url });
@@ -5097,10 +5097,10 @@ function App() {
                 body: 'You have a pending balance to settle',
                 groupId: null,
               });
-              const shareText = `Hey ${clean}! Just a reminder to settle up on Divido 💸`;
+              const shareText = `Hey ${clean}! Just a reminder to settle up on Fussky 💸`;
               if (typeof navigator !== 'undefined' && (navigator as any).share) {
                 try {
-                  await (navigator as any).share({ title: 'Settle up on Divido', text: shareText, url: getPublicOrigin() });
+                  await (navigator as any).share({ title: 'Settle up on Fussky', text: shareText, url: getPublicOrigin() });
                 } catch { /* dismissed */ }
               }
             }}
@@ -5302,14 +5302,14 @@ function App() {
 
               const grpName = selectedGroup?.name;
               const inviteLink = `${getPublicOrigin()}/?joinGroupId=${selectedId}`;
-              const shareText = `Hey ${shown(memberName)}! Join ${grpName ? `"${grpName}"` : 'my group'} on Divido to split expenses 💸`;
+              const shareText = `Hey ${shown(memberName)}! Join ${grpName ? `"${grpName}"` : 'my group'} on Fussky to split expenses 💸`;
 
               // Mobile: open the phone's own share sheet directly (all apps),
               // no in-app card. Runs inside the tap, so the browser permits it.
               if (typeof navigator !== 'undefined' && (navigator as any).share) {
                 try {
                   await (navigator as any).share({
-                    title: grpName ? `Join "${grpName}" on Divido` : 'Join my group on Divido',
+                    title: grpName ? `Join "${grpName}" on Fussky` : 'Join my group on Fussky',
                     text: shareText,
                     url: inviteLink,
                   });
@@ -5325,7 +5325,7 @@ function App() {
             }}
             onReinviteMember={async (memberName: string, inviteUrl: string, silent?: boolean) => {
               const grpName = selectedGroup?.name;
-              const shareText = `Hey ${shown(memberName)}! Rejoin ${grpName ? `"${grpName}"` : 'our group'} on Divido 💸`;
+              const shareText = `Hey ${shown(memberName)}! Rejoin ${grpName ? `"${grpName}"` : 'our group'} on Fussky 💸`;
               // `silent` (re-add from the friend list) just reactivates them to
               // pending — no share sheet, no rejoin-link fallback popup.
               const nativeShare = !silent && typeof navigator !== 'undefined' && (navigator as any).share;
@@ -5335,7 +5335,7 @@ function App() {
               if (nativeShare) {
                 try {
                   await (navigator as any).share({
-                    title: grpName ? `Rejoin "${grpName}" on Divido` : 'Rejoin my group on Divido',
+                    title: grpName ? `Rejoin "${grpName}" on Fussky` : 'Rejoin my group on Fussky',
                     text: shareText,
                     url: inviteUrl,
                   });
@@ -5408,12 +5408,12 @@ function App() {
 
               const grpName = selectedGroup?.name;
               const inviteLink = `${getPublicOrigin()}/?joinGroupId=${selectedId}`;
-              const shareText = `Hey! Join ${grpName ? `"${grpName}"` : 'our group'} on Divido to split expenses 💸`;
+              const shareText = `Hey! Join ${grpName ? `"${grpName}"` : 'our group'} on Fussky to split expenses 💸`;
 
               if (typeof navigator !== 'undefined' && (navigator as any).share) {
                 try {
                   await (navigator as any).share({
-                    title: grpName ? `Join "${grpName}" on Divido` : 'Join my group on Divido',
+                    title: grpName ? `Join "${grpName}" on Fussky` : 'Join my group on Fussky',
                     text: shareText,
                     url: inviteLink,
                   });

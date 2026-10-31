@@ -4,7 +4,7 @@
 // What gets reported:
 //   * any uncaught error / promise rejection while the app runs,
 //   * React render crashes (ErrorBoundary calls reportError),
-//   * start-up failures ("Divido could not start"): those happen before this
+//   * start-up failures ("Fussky could not start"): those happen before this
 //     code can load, so index.html saves them in localStorage and they are
 //     sent here the next time the app does start.
 // No personal data: no emails, names, amounts or IP addresses are attached.
@@ -21,7 +21,7 @@ export const initMonitoring = (): void => {
       environment: 'production',
       // Errors only — no performance tracing or session replay.
       tracesSampleRate: 0,
-      // Noise from browser extensions / flaky networks, not Divido bugs.
+      // Noise from browser extensions / flaky networks, not Fussky bugs.
       ignoreErrors: ['ResizeObserver loop', 'Non-Error promise rejection captured', 'Load failed', 'NetworkError when attempting to fetch resource'],
     });
     enabled = true;
@@ -44,7 +44,7 @@ const sendSavedStartupErrors = (): void => {
     localStorage.removeItem('dv_startup_errors');
     const list = JSON.parse(raw) as Array<{ at: string; errors: string[] }>;
     list.slice(-5).forEach((entry) => {
-      Sentry.captureMessage('Divido could not start', {
+      Sentry.captureMessage('Fussky could not start', {
         level: 'error',
         extra: { at: entry.at, errors: entry.errors },
       });

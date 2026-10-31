@@ -7,7 +7,7 @@
 -- Run these ONE AT A TIME in the Supabase SQL Editor. Read step 1 before
 -- deleting anything — you decide which row to remove.
 --
--- Replace the email below with the Google account you sign into Divido with.
+-- Replace the email below with the Google account you sign into Fussky with.
 
 -- ───────────────────────────────────────────────────────────────────────────
 -- STEP 1 — INSPECT: list your groups with how many members and expenses each

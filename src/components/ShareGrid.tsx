@@ -70,7 +70,7 @@ export const ShareGrid: React.FC<ShareGridProps> = ({ message, url, copyValue })
     {
       label: 'Email',
       bg: '#F97316',
-      action: () => window.open(`mailto:?subject=Divido reminder&body=${encodedMsg}`, '_blank'),
+      action: () => window.open(`mailto:?subject=Fussky reminder&body=${encodedMsg}`, '_blank'),
       icon: (
         <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
           <rect x="2" y="4" width="20" height="16" rx="2"/>

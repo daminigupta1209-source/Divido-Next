@@ -103,10 +103,10 @@ export const InstallPrompt: React.FC = () => {
     >
       <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
         <div style={{ width: '40px', height: '40px', borderRadius: '12px', overflow: 'hidden', flexShrink: 0, border: '2px solid #FEF3C7', background: '#fff' }}>
-          <img src="/divido_laughing_cat_mascot_1778063273427.png" alt="Divido" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+          <img src="/divido_laughing_cat_mascot_1778063273427.png" alt="Fussky" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
         </div>
         <div style={{ flex: 1, minWidth: 0 }}>
-          <div style={{ fontSize: '14px', fontWeight: 600, color: '#0F172A' }}>Install Divido</div>
+          <div style={{ fontSize: '14px', fontWeight: 600, color: '#0F172A' }}>Install Fussky</div>
           <div style={{ fontSize: '12px', color: '#64748B', fontWeight: 600 }}>Add it to your home screen for a faster, app-like experience.</div>
         </div>
         <button

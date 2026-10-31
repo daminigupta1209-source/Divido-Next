@@ -1,4 +1,4 @@
--- Divido Production Setup and Security Configuration
+-- Fussky Production Setup and Security Configuration
 -- Paste and run this script in your Supabase SQL Editor.
 
 -- 1. Create groups table

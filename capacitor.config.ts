@@ -2,7 +2,7 @@ import type { CapacitorConfig } from '@capacitor/cli';
 
 const config: CapacitorConfig = {
   appId: 'com.dividosplit.app',
-  appName: 'Divido',
+  appName: 'Fussky',
   webDir: 'dist',
   server: {
     androidScheme: 'https'

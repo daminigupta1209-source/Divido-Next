@@ -1,4 +1,4 @@
--- Divido — Stage 1: permanent group IDs
+-- Fussky — Stage 1: permanent group IDs
 -- Migrates group ids from database-assigned numbers to client-generated
 -- permanent text (UUID) ids, and does a FRESH RESET of test data.
 --

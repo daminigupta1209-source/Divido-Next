@@ -23,7 +23,7 @@ export class ErrorBoundary extends Component<Props, State> {
   }
 
   componentDidCatch(error: Error, info: unknown) {
-    console.error('[Divido] Unhandled render error:', error, info);
+    console.error('[Fussky] Unhandled render error:', error, info);
     reportError(error, { where: 'render', info: String((info as { componentStack?: string })?.componentStack || '').slice(0, 2000) });
 
     const msg = error?.message || '';
@@ -74,7 +74,7 @@ export class ErrorBoundary extends Component<Props, State> {
           New Version Available
         </h1>
         <p style={{ fontSize: '14px', color: '#64748B', margin: '0 0 24px', maxWidth: '320px' }}>
-          Divido was updated. Tap below to refresh and load the latest version.
+          Fussky was updated. Tap below to refresh and load the latest version.
         </p>
         {this.state.error && (
           <pre style={{ whiteSpace: 'pre-wrap', fontSize: '11px', color: '#64748B', background: '#F1F5F9', padding: '10px', borderRadius: '8px', maxWidth: '320px', margin: '0 0 16px', textAlign: 'left' }}>

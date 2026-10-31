@@ -1172,7 +1172,7 @@ export const MobileHeader: React.FC<MobileHeaderProps> = ({
                     {view === 'groups' && 'Your Groups'}
                     {view === 'friends' && 'All balances'}
                     {view === 'activity' && 'All Activities'}
-                    {view === 'analytics' && (analyticsGroupId === null || analyticsGroupId === 'ALL' ? 'Global Analytics' : (
+                    {view === 'analytics' && (analyticsGroupId === null || analyticsGroupId === 'ALL' ? 'Analytics' : (
                       <>
                         Analytics
                         {selectedGroup && (

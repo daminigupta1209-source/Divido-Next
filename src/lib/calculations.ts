@@ -1,5 +1,5 @@
 /**
- * Divido Calculation Engine
+ * Fussky Calculation Engine
  * Handles multi-currency debt simplification and recurrence date math.
  */
 
