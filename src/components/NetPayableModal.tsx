@@ -1,7 +1,5 @@
-import React, { useState, useEffect, useMemo, useRef } from 'react';
-import QRCode from 'qrcode';
+import React, { useState, useEffect, useMemo } from 'react';
 import { escManager } from '../lib/escManager';
-import { buildUpiLink } from '../lib/upi';
 import { useCopyFeedback } from '../hooks/useCopyFeedback';
 import { toCurrencyCode } from '../lib/utils';
 import { Group } from '../lib/types';
@@ -41,8 +39,6 @@ export const NetPayableModal: React.FC<NetPayableModalProps> = ({
   const [ratesError, setRatesError] = useState(false);
   const [awaitingConfirm, setAwaitingConfirm] = useState(false);
   const { copiedKey: copiedField, copy: copyField, reset: resetCopied } = useCopyFeedback();
-  const [showQr, setShowQr] = useState(false);
-  const qrCanvasRef = useRef<HTMLCanvasElement | null>(null);
 
   // The user's own primary currency: explicit profile default, else browser locale, else ₹.
   const getPrimaryCurrency = (): string => {
@@ -85,7 +81,6 @@ export const NetPayableModal: React.FC<NetPayableModalProps> = ({
       setPayPopupUpi(existingUpi);
       setPayPopupEditing(!existingUpi);
       setAwaitingConfirm(false);
-      setShowQr(false);
       resetCopied();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -124,35 +119,7 @@ export const NetPayableModal: React.FC<NetPayableModalProps> = ({
     return unregister;
   }, [popupData, onClose]);
 
-  // Draw the payee's UPI QR (INR amount prefilled) when the scan option is open.
-  const qrAmt = inrEquivalent !== null ? inrEquivalent.toFixed(2) : null;
-  useEffect(() => {
-    const canvas = qrCanvasRef.current;
-    const upi = payPopupUpi.trim();
-    if (!showQr || !awaitingConfirm || !canvas || !popupData || !qrAmt || !upi.includes('@')) return;
-    QRCode.toCanvas(
-      canvas,
-      buildUpiLink({ pa: upi, pn: popupData.friendName, am: qrAmt }),
-      { width: 168, margin: 2, color: { dark: '#1E293B', light: '#FFFFFF' } },
-      (err) => {
-        if (err) console.error('Error generating pay QR:', err);
-      }
-    );
-  }, [showQr, awaitingConfirm, payPopupUpi, popupData, qrAmt]);
-
   if (!popupData) return null;
-
-  // Save the QR as a PNG so it can be picked from the gallery in the UPI app's scanner.
-  const saveQrImage = () => {
-    const canvas = qrCanvasRef.current;
-    if (!canvas) return;
-    const a = document.createElement('a');
-    a.href = canvas.toDataURL('image/png');
-    a.download = `pay-${popupData.friendName.replace(/[^\w-]+/g, '_')}-qr.png`;
-    document.body.appendChild(a);
-    a.click();
-    a.remove();
-  };
 
   // Pay-by-UPI-ID is the PRIMARY path: GPay, Amazon Pay & co. decline
   // link-launched payments to a personal UPI ID ("exceeded bank limit"), but the
@@ -389,31 +356,6 @@ export const NetPayableModal: React.FC<NetPayableModalProps> = ({
                         {copiedField === 'amt' ? '✓ Copied' : `📋 ₹${inrEquivalent.toFixed(2)}`}
                       </button>
                     </div>
-
-                    {/* Scan alternative: a QR scanned INSIDE the UPI app is an in-app
-                        payment, not a link launched from Fussky. On one phone: save the
-                        image, then GPay → Scan → gallery. */}
-                    <button
-                      onClick={() => setShowQr((s) => !s)}
-                      style={{ background: 'none', border: 'none', color: 'var(--g)', fontSize: '11px', fontWeight: 600, cursor: 'pointer', textDecoration: 'underline', padding: '2px', alignSelf: 'center' }}
-                    >
-                      {showQr ? 'Hide QR' : 'Or scan a QR instead'}
-                    </button>
-                    {showQr && (
-                      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '6px' }}>
-                        <canvas ref={qrCanvasRef} style={{ borderRadius: '10px', background: 'white' }} />
-                        <button
-                          className="press-anim"
-                          onClick={saveQrImage}
-                          style={{ ...chipStyle, background: 'var(--w)' }}
-                        >
-                          ⬇ Save QR image
-                        </button>
-                        <span style={{ fontSize: '10.5px', fontWeight: 600, color: 'var(--g)', textAlign: 'center', lineHeight: 1.4 }}>
-                          In GPay: Scan any QR → gallery icon → pick the saved image
-                        </span>
-                      </div>
-                    )}
                   </div>
                 )}
                 <button

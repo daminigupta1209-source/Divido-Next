@@ -25,7 +25,6 @@ interface SettleModalProps {
   setUserMetadata: (meta: Record<string, UserMetadata>) => void;
   showCurrPickerId: string | null;
   setShowCurrPickerId: (id: string | null) => void;
-  onShowQR: (payee: string, amt: number, curr: string) => void;
 }
 
 export const SettleModal: React.FC<SettleModalProps> = ({
@@ -43,7 +42,6 @@ export const SettleModal: React.FC<SettleModalProps> = ({
   setUserMetadata,
   showCurrPickerId,
   setShowCurrPickerId,
-  onShowQR,
 }) => {
   const settleGroup = editingSettle
     ? (editingSettle.gId === 'STANDALONE'
@@ -569,26 +567,6 @@ export const SettleModal: React.FC<SettleModalProps> = ({
                             title={`Copy ${upi}, then paste it in your UPI app's "Pay UPI ID"${isDirectINR ? '' : ` (converted from ${t.currency}${t.amount.toFixed(2)})`}`}
                           >
                             {copiedField === `${idx}-upi` ? '✓ ID copied' : `⚡ Pay ₹${finalUpiAmt.toFixed(2)}`}
-                          </button>
-                        )}
-                        {canUpiPay && (
-                          // QR is INR-only like the link, so pass the converted ₹ amount.
-                          <button
-                            className="press-anim"
-                            onClick={() => onShowQR(t.to, Number(finalUpiAmt.toFixed(2)), '₹')}
-                            title="Show UPI QR — scan it from another phone, or from inside your UPI app"
-                            style={{
-                              padding: '10px 12px',
-                              background: 'var(--w)',
-                              color: '#0284C7',
-                              borderRadius: '12px',
-                              fontSize: '11px',
-                              fontWeight: 600,
-                              border: '1.5px solid #B0E5FC',
-                              cursor: 'pointer',
-                            }}
-                          >
-                            QR
                           </button>
                         )}
                         <button

@@ -1,7 +1,4 @@
 import React, { useState, useEffect, useRef } from 'react';
-import QRCode from 'qrcode';
-import jsQR from 'jsqr';
-import { buildUpiLink } from '../lib/upi';
 import { useCopyFeedback } from '../hooks/useCopyFeedback';
 
 interface UpiSectionProps {
@@ -11,7 +8,6 @@ interface UpiSectionProps {
   setUserMetadata: (m: Record<string, any>) => void;
   me: string;
   userName: string;
-  isMobile: boolean;
   handleKeyDown: (e: React.KeyboardEvent<HTMLInputElement>) => void;
 }
 
@@ -22,18 +18,13 @@ export const UpiSection: React.FC<UpiSectionProps> = ({
   setUserMetadata,
   me,
   userName,
-  isMobile,
   handleKeyDown,
 }) => {
   const [upiError, setUpiError] = useState<string | null>(null);
-  const [verificationStep, setVerificationStep] = useState<'idle' | 'awaiting_action' | 'verifying' | 'confirm_resolved' | 'confirm_qr' | 'show_qr'>('idle');
-  const [qrPreviewUrl, setQrPreviewUrl] = useState<string | null>(null);
-  const [qrExtractedUpi, setQrExtractedUpi] = useState<string>('');
+  const [verificationStep, setVerificationStep] = useState<'idle' | 'awaiting_action' | 'verifying' | 'confirm_resolved'>('idle');
   const isVerified = !!userMetadata[me]?.upiVerified && userMetadata[me]?.upiId === localUpi.trim();
 
   const upiInputRef = useRef<HTMLInputElement>(null);
-  const verifyCanvasRef = useRef<HTMLCanvasElement | null>(null);
-  const qrUploadRef = useRef<HTMLInputElement>(null);
   // On mobile we open the phone's own UPI app chooser and wait for the user to
   // come back. This stamps when they left; the visibility handler uses it to
   // start verification only after a genuine round-trip to a UPI app.
@@ -43,61 +34,6 @@ export const UpiSection: React.FC<UpiSectionProps> = ({
   const validateUpi = (upi: string) => {
     if (!upi) return true;
     return /^[\w.\-_]+@[\w\-]+$/.test(upi);
-  };
-
-  const handleQRUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-
-    const reader = new FileReader();
-    reader.onload = (event) => {
-      const img = new Image();
-      img.onload = () => {
-        const canvas = document.createElement('canvas');
-        canvas.width = img.width;
-        canvas.height = img.height;
-        const ctx = canvas.getContext('2d', { willReadFrequently: true });
-        if (!ctx) {
-          setUpiError('Could not process image.');
-          return;
-        }
-        ctx.drawImage(img, 0, 0, img.width, img.height);
-        const imageData = ctx.getImageData(0, 0, img.width, img.height);
-        const code = jsQR(imageData.data, imageData.width, imageData.height, {
-          inversionAttempts: 'attemptBoth',
-        });
-        
-        let pa = null;
-        if (code) {
-          const rawData = code.data || '';
-          if (rawData.includes('upi://pay')) {
-            const urlParams = new URLSearchParams(rawData.split('?')[1] || '');
-            pa = urlParams.get('pa');
-          } else if (validateUpi(rawData.trim())) {
-            pa = rawData.trim();
-          }
-        }
-
-        setQrPreviewUrl(event.target?.result as string);
-        setVerificationStep('confirm_qr');
-
-        if (pa && validateUpi(pa)) {
-          setQrExtractedUpi(pa);
-          setUpiError(null);
-        } else if (code) {
-          setQrExtractedUpi('');
-          setUpiError('Could not find a valid UPI ID. Please enter it manually.');
-        } else {
-          setQrExtractedUpi('');
-          setUpiError('Could not read QR code. Please enter it manually.');
-        }
-      };
-      img.src = event.target?.result as string;
-    };
-    reader.readAsDataURL(file);
-    
-    // reset input so same file can be uploaded again if needed
-    if (qrUploadRef.current) qrUploadRef.current.value = '';
   };
 
   useEffect(() => {
@@ -176,7 +112,7 @@ export const UpiSection: React.FC<UpiSectionProps> = ({
         setVerificationStep('verifying');
         return;
       }
-      // Desktop QR flow: the modal is open waiting, advance it.
+      // The modal is open waiting, advance it.
       if (verificationStep === 'awaiting_action') {
         setVerificationStep('verifying');
       }
@@ -194,40 +130,6 @@ export const UpiSection: React.FC<UpiSectionProps> = ({
       return () => clearTimeout(timer);
     }
   }, [verificationStep]);
-
-  useEffect(() => {
-    if (!verifyCanvasRef.current || !(localUpi || '').trim()) return;
-
-    if (verificationStep === 'awaiting_action') {
-      const upiLink = buildUpiLink({ pa: localUpi || '', pn: userName || '', am: 1, tn: 'Fussky Verify' });
-      QRCode.toCanvas(
-        verifyCanvasRef.current,
-        upiLink,
-        {
-          width: 120,
-          margin: 1,
-          color: {
-            dark: '#2E2A25',
-            light: '#FFFFFF'
-          }
-        }
-      );
-    } else if (verificationStep === 'show_qr') {
-      const upiLink = buildUpiLink({ pa: localUpi || '', pn: userName || '' });
-      QRCode.toCanvas(
-        verifyCanvasRef.current,
-        upiLink,
-        {
-          width: 200,
-          margin: 1.5,
-          color: {
-            dark: '#1E293B',
-            light: '#FFFFFF'
-          }
-        }
-      );
-    }
-  }, [verificationStep, localUpi, userName]);
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
@@ -309,38 +211,22 @@ export const UpiSection: React.FC<UpiSectionProps> = ({
               </button>
             )}
           </div>
-          {!isVerified && (
-            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px', alignSelf: 'center', marginTop: '6px' }}>
-              <span style={{ fontSize: '11px', color: '#94A3B8', fontWeight: 500, textTransform: 'uppercase', letterSpacing: '0.5px' }}>or</span>
-              <button
-                type="button"
-                onClick={() => qrUploadRef.current?.click()}
-                style={{
-                  background: 'none',
-                  border: 'none',
-                  color: '#1877F2',
-                  fontSize: '13px',
-                  fontWeight: 600,
-                  cursor: 'pointer',
-                  padding: 0,
-                  transition: 'color 0.2s',
-                  textDecoration: 'underline',
-                }}
-                onMouseEnter={(e) => e.currentTarget.style.color = '#166FE5'}
-                onMouseLeave={(e) => e.currentTarget.style.color = '#1877F2'}
-              >
-                Upload Your QR Code
-              </button>
-            </div>
-          )}
         </div>
-
-        <input type="file" accept="image/*" ref={qrUploadRef} style={{ display: 'none' }} onChange={handleQRUpload} />
 
         {(localUpi || '').trim() && !upiError && isVerified && (
           <button
             type="button"
-            onClick={() => setVerificationStep('show_qr')}
+            onClick={() => {
+              if (navigator.share) {
+                navigator.share({
+                  title: `Pay ${userName || ''} on Fussky`,
+                  // No upi:// link: UPI apps decline link-launched payments to a personal UPI ID.
+                  text: `Here is my UPI ID: ${localUpi || ''}\nPay me in GPay or any UPI app → Pay UPI ID.`,
+                }).catch(console.error);
+              } else {
+                copy('share-upi', (localUpi || '').trim());
+              }
+            }}
             style={{
               width: '100%',
               display: 'flex',
@@ -360,7 +246,7 @@ export const UpiSection: React.FC<UpiSectionProps> = ({
             onMouseEnter={(e) => e.currentTarget.style.background = '#FFEDD5'}
             onMouseLeave={(e) => e.currentTarget.style.background = '#FFF7ED'}
           >
-            Your QR Code
+            {copiedKey === 'share-upi' ? '✓ UPI ID copied' : 'Share my UPI ID'}
           </button>
         )}
       </div>
@@ -430,10 +316,8 @@ export const UpiSection: React.FC<UpiSectionProps> = ({
 
             {verificationStep === 'awaiting_action' && (
               <div style={{ display: 'flex', flexDirection: 'column', gap: '14px', alignItems: 'center', textAlign: 'center' }}>
-                {isMobile ? (
-                  <>
-                    {/* No ₹1 upi:// link here: UPI apps decline link-launched payments to a
-                        personal UPI ID. "Pay UPI ID" in the app shows the registered name. */}
+                {/* No ₹1 upi:// link here: UPI apps decline link-launched payments to a
+                    personal UPI ID. "Pay UPI ID" in the app shows the registered name. */}
                     <p style={{ fontSize: '13px', color: '#64748B', fontWeight: 600, margin: 0, lineHeight: 1.5 }}>
                       Copy your UPI ID, then in GPay or any UPI app go to <strong style={{ color: '#2E2A25' }}>Pay UPI ID</strong> and paste it. It shows the name registered with your bank. <strong style={{color:'#EF4444'}}>Don't pay</strong> — just check the name and come back.
                     </p>
@@ -460,17 +344,6 @@ export const UpiSection: React.FC<UpiSectionProps> = ({
                     >
                       {copiedKey === 'verify-upi' ? '✓ UPI ID copied — now open GPay' : 'Copy my UPI ID'}
                     </button>
-                  </>
-                ) : (
-                  <>
-                    <p style={{ fontSize: '12px', color: '#64748B', fontWeight: 700, margin: 0, lineHeight: 1.4 }}>
-                      Scan this QR code using GPay/PhonePe to see the registered bank name on your phone.
-                    </p>
-                    <div style={{ display: 'flex', justifyContent: 'center', margin: '8px 0', background: '#F8FAFC', padding: '16px', borderRadius: '16px', border: '1px solid #E2E8F0' }}>
-                      <canvas ref={verifyCanvasRef} style={{ background: '#FFFFFF', padding: '8px', borderRadius: '8px', border: '1px solid #E2E8F0' }} />
-                    </div>
-                  </>
-                )}
 
                 <button
                   type="button"
@@ -565,169 +438,6 @@ export const UpiSection: React.FC<UpiSectionProps> = ({
                     No, Cancel
                   </button>
                 </div>
-              </div>
-            )}
-
-            {verificationStep === 'confirm_qr' && (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', textAlign: 'center', alignItems: 'center' }}>
-                <div style={{ fontSize: '13px', color: '#475569', fontWeight: 700, lineHeight: 1.4 }}>
-                  Confirm extracted details
-                </div>
-                {qrPreviewUrl && (
-                  <div style={{ width: '100%', maxWidth: '200px', height: '140px', overflow: 'hidden', borderRadius: '12px', border: '1px solid #E2E8F0', background: '#F8FAFC' }}>
-                    <img src={qrPreviewUrl} alt="QR Preview" style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
-                  </div>
-                )}
-                <input
-                  type="text"
-                  placeholder="Enter UPI ID from image"
-                  value={qrExtractedUpi}
-                  onChange={(e) => {
-                    setQrExtractedUpi(e.target.value);
-                    setUpiError(null);
-                  }}
-                  style={{
-                    width: '100%',
-                    padding: '12px',
-                    borderRadius: '12px',
-                    border: '1.5px solid #E2E8F0',
-                    fontSize: '14px',
-                    fontWeight: 600,
-                    textAlign: 'center',
-                    outline: 'none',
-                    color: '#2E2A25',
-                  }}
-                />
-                {upiError && (
-                  <div style={{ fontSize: '11px', color: '#EF4444', fontWeight: 700 }}>
-                    {upiError}
-                  </div>
-                )}
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', width: '100%' }}>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      const finalUpi = qrExtractedUpi.trim();
-                      if (validateUpi(finalUpi)) {
-                        setLocalUpi(finalUpi);
-                        setUserMetadata({ ...userMetadata, [me]: { ...userMetadata[me], upiId: finalUpi, upiVerified: true } });
-                        setVerificationStep('idle');
-                        setUpiError(null);
-                        setQrPreviewUrl(null);
-                      } else {
-                        setUpiError('Invalid UPI ID format');
-                      }
-                    }}
-                    style={{
-                      width: '100%',
-                      fontSize: '14px',
-                      fontWeight: 600,
-                      background: '#10B981',
-                      color: 'white',
-                      border: 'none',
-                      padding: '12px',
-                      borderRadius: '14px',
-                      cursor: 'pointer',
-                      boxShadow: '0 4px 6px -1px rgba(16, 185, 129, 0.2)'
-                    }}
-                  >
-                    Confirm & Verify
-                  </button>
-                </div>
-              </div>
-            )}
-
-            {verificationStep === 'show_qr' && (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', textAlign: 'center', alignItems: 'center' }}>
-                <div style={{ fontSize: '18px', color: '#1E293B', fontWeight: 700, lineHeight: 1.4 }}>
-                  My Receiving QR
-                </div>
-                <div style={{ fontSize: '13px', color: '#64748B', fontWeight: 600, marginBottom: '8px' }}>
-                  Scan to pay {userName} directly.
-                </div>
-                <div
-                  style={{ display: 'flex', justifyContent: 'center', background: '#FFFFFF', padding: '16px', borderRadius: '24px', border: '1px solid #E2E8F0', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.05)', cursor: 'pointer' }}
-                  onClick={() => qrUploadRef.current?.click()}
-                  title="Tap to upload different QR"
-                >
-                  <canvas ref={verifyCanvasRef} />
-                </div>
-                <div
-                  style={{
-                    fontSize: '12px',
-                    fontWeight: 700,
-                    marginTop: '-6px',
-                    background: 'linear-gradient(135deg, #8B5CF6, #EC4899, #F59E0B)',
-                    WebkitBackgroundClip: 'text',
-                    WebkitTextFillColor: 'transparent',
-                    display: 'inline-block',
-                    textAlign: 'center'
-                  }}
-                >
-                  ✨ Tap QR to upload a different image
-                </div>
-                <div style={{ fontSize: '14px', fontWeight: 600, color: '#334155', background: '#F8FAFC', padding: '8px 16px', borderRadius: '8px', border: '1px dashed #CBD5E1', width: '100%', boxSizing: 'border-box' }}>
-                  {localUpi || ''}
-                </div>
-                <button
-                  type="button"
-                  onClick={() => {
-                    if (navigator.share) {
-                      navigator.share({
-                        title: `Pay ${userName || ''} on Fussky`,
-                        // No upi:// link: UPI apps decline link-launched payments to a personal UPI ID.
-                        text: `Here is my UPI ID: ${localUpi || ''}\nPay me in GPay or any UPI app → Pay UPI ID.`,
-                      }).catch(console.error);
-                    } else {
-                      copy('share-upi', (localUpi || '').trim());
-                    }
-                  }}
-                  style={{
-                    width: '100%',
-                    marginTop: '8px',
-                    fontSize: '14px',
-                    fontWeight: 600,
-                    background: '#1877F2',
-                    color: 'white',
-                    border: 'none',
-                    padding: '12px',
-                    borderRadius: '14px',
-                    cursor: 'pointer',
-                    boxShadow: '0 4px 6px -1px rgba(24, 119, 242, 0.2)',
-                    transition: 'all 0.2s ease'
-                  }}
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.transform = 'scale(1.02)';
-                    e.currentTarget.style.background = '#166FE5';
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.transform = 'scale(1)';
-                    e.currentTarget.style.background = '#1877F2';
-                  }}
-                >
-                  {copiedKey === 'share-upi' ? '✓ UPI ID copied' : 'Share my UPI ID'}
-                </button>
-                <button
-                  type="button"
-                  onClick={() => {
-                    if (window.confirm("Are you sure you want to remove your UPI ID?")) {
-                      setLocalUpi('');
-                      setVerificationStep('idle');
-                    }
-                  }}
-                  style={{
-                    fontSize: '13px',
-                    fontWeight: 600,
-                    color: '#EF4444',
-                    background: 'transparent',
-                    border: 'none',
-                    cursor: 'pointer',
-                    marginTop: '4px',
-                    padding: '8px'
-                  }}
-                >
-                  Remove QR Code
-                </button>
               </div>
             )}
           </div>

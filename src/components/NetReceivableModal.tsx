@@ -1,10 +1,7 @@
-import React, { useState, useEffect, useRef } from 'react';
-import QRCode from 'qrcode';
+import React, { useState, useEffect } from 'react';
 import { escManager } from '../lib/escManager';
 import { ShareGrid } from './ShareGrid';
 import { toCurrencyCode } from '../lib/utils';
-import { buildUpiLink } from '../lib/upi';
-import { useCopyFeedback } from '../hooks/useCopyFeedback';
 
 interface NetReceivableModalProps {
   popupData: { friendName: string; amt: number; curr: string } | null;
@@ -27,10 +24,7 @@ export const NetReceivableModal: React.FC<NetReceivableModalProps> = ({
   const [remPopupEditing, setRemPopupEditing] = useState(false);
   const [showOnboarding, setShowOnboarding] = useState(false);
   const [reminderText, setReminderText] = useState('');
-  const [showQr, setShowQr] = useState(false);
   const [rates, setRates] = useState<Record<string, number>>({});
-  const reminderCanvasRef = useRef<HTMLCanvasElement | null>(null);
-  const { copiedKey, copy } = useCopyFeedback();
 
   // UPI is an INR-only rail. For a non-INR debt, convert to the INR equivalent
   // (rates fetched with INR base, so rates[CODE] = units of CODE per 1 INR).
@@ -87,30 +81,6 @@ export const NetReceivableModal: React.FC<NetReceivableModalProps> = ({
   }, [popupData, inrNote]);
 
   useEffect(() => {
-    if (!popupData || !remPopupUpi || remPopupEditing) return;
-    const canvas = reminderCanvasRef.current;
-    if (canvas) {
-      const upiLink = buildUpiLink({ pa: remPopupUpi, pn: me, am: upiAmt, tn: 'Fussky Settle' });
-
-      QRCode.toCanvas(
-        canvas,
-        upiLink,
-        {
-          width: 132,
-          margin: 1,
-          color: {
-            dark: '#1E293B',
-            light: '#FFFFFF',
-          },
-        },
-        (err) => {
-          if (err) console.error('Error generating reminder QR:', err);
-        }
-      );
-    }
-  }, [popupData, remPopupUpi, remPopupEditing, me, showQr, upiAmt]);
-
-  useEffect(() => {
     if (!popupData) return;
     const unregister = escManager.register(() => {
       onClose();
@@ -126,20 +96,6 @@ export const NetReceivableModal: React.FC<NetReceivableModalProps> = ({
   const shareMessage = remPopupUpi.trim()
     ? `${reminderText}\n\nPay in GPay or any UPI app → Pay UPI ID:\nUPI ID: ${remPopupUpi.trim()}\nAmount: ₹${upiAmt}`
     : reminderText;
-  const copyChipStyle: React.CSSProperties = {
-    padding: '3px 8px',
-    background: 'white',
-    border: '1px solid #E2E8F0',
-    borderRadius: '8px',
-    fontSize: '10.5px',
-    fontWeight: 600,
-    color: 'var(--t)',
-    cursor: 'pointer',
-    maxWidth: '150px',
-    overflow: 'hidden',
-    textOverflow: 'ellipsis',
-    whiteSpace: 'nowrap',
-  };
 
   return (
     <div
@@ -181,7 +137,7 @@ export const NetReceivableModal: React.FC<NetReceivableModalProps> = ({
           Send Reminder to {popupData.friendName}
         </h3>
         {remPopupEditing ? (
-          /* Link UPI first (needed for pay link + QR) */
+          /* Link UPI first (included in the shared message) */
           <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', marginBottom: '18px', background: 'var(--bg)', padding: '16px', borderRadius: '16px', border: '2px dashed var(--b)' }}>
             <span style={{ fontSize: '12px', fontWeight: 600, color: 'var(--t)' }}>
               Link your UPI ID to receive payments
@@ -237,13 +193,11 @@ export const NetReceivableModal: React.FC<NetReceivableModalProps> = ({
             {/* Primary: share the reminder via apps (same grid as the invite modal) */}
             <ShareGrid message={shareMessage} copyValue={shareMessage} />
 
-             {remPopupUpi ? (
-              <button
-                onClick={() => setShowQr((s) => !s)}
-                style={{ background: 'none', border: 'none', color: 'var(--g)', fontSize: '11px', fontWeight: 600, cursor: 'pointer', marginBottom: showQr ? '10px' : '14px', textDecoration: 'underline' }}
-              >
-                {showQr ? 'Hide QR code' : 'Show QR code'}
-              </button>
+            {remPopupUpi ? (
+              <div style={{ fontSize: '11px', fontWeight: 600, color: '#64748B', marginBottom: '14px' }}>
+                UPI ID in message: <span style={{ color: 'var(--t)' }}>{remPopupUpi}</span>{' '}
+                <span onClick={() => setRemPopupEditing(true)} style={{ cursor: 'pointer' }} title="Edit UPI ID">✏️</span>
+              </div>
             ) : (
               <button
                 onClick={() => setRemPopupEditing(true)}
@@ -260,38 +214,8 @@ export const NetReceivableModal: React.FC<NetReceivableModalProps> = ({
                   margin: '12px auto'
                 }}
               >
-                Link UPI ID to enable QR payments
+                Link UPI ID to include it in the reminder
               </button>
-            )}
-
-            {showQr && (
-              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', marginBottom: '16px' }}>
-                <div style={{ background: '#F8FAFC', padding: '14px 16px', borderRadius: '16px', border: '1px solid #EEF2F6', display: 'inline-flex', flexDirection: 'column', alignItems: 'center', gap: '8px' }}>
-                  <canvas ref={reminderCanvasRef} style={{ borderRadius: '10px', background: 'white' }} />
-                  <div style={{ fontSize: '12px', fontWeight: 600, color: 'var(--t)' }}>
-                    Scan to pay ₹{upiAmt}{!debtIsINR ? ` (${popupData.curr}${popupData.amt.toFixed(2)})` : ''}
-                  </div>
-                  <div style={{ fontSize: '10.5px', fontWeight: 600, color: 'var(--g)', display: 'flex', alignItems: 'center', gap: '6px' }}>
-                    <button
-                      className="press-anim"
-                      onClick={() => copy('upi', remPopupUpi.trim())}
-                      style={copyChipStyle}
-                      title="Copy UPI ID"
-                    >
-                      {copiedKey === 'upi' ? '✓ Copied' : `📋 ${remPopupUpi}`}
-                    </button>
-                    <button
-                      className="press-anim"
-                      onClick={() => copy('amt', upiAmt)}
-                      style={copyChipStyle}
-                      title="Copy amount"
-                    >
-                      {copiedKey === 'amt' ? '✓ Copied' : `📋 ₹${upiAmt}`}
-                    </button>
-                    <span onClick={() => setRemPopupEditing(true)} style={{ cursor: 'pointer', fontSize: '11px' }} title="Edit UPI ID">✏️</span>
-                  </div>
-                </div>
-              </div>
             )}
           </>
         )}

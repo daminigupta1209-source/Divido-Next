@@ -41,7 +41,6 @@ export const Profile: React.FC<ProfileProps> = ({
     return localStorage.getItem('divido_global_upi_id') || userMetadata[me]?.upiId || '';
   });
   const [showCurrencyPicker, setShowCurrencyPicker] = useState(false);
-  const [isMobile, setIsMobile] = useState(false);
   const [manualRates, setManualRates] = useState(false);
   
   const [highlightSignin, setHighlightSignin] = useState(false);
@@ -60,10 +59,6 @@ export const Profile: React.FC<ProfileProps> = ({
   }, []);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
-
-  useEffect(() => {
-    setIsMobile(/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent));
-  }, []);
 
   const defaultCurrency = userMetadata[me]?.defaultCurrency || '₹';
   const currencyInfo = worldCurrencies.find((c) => c.s === defaultCurrency);
@@ -271,7 +266,6 @@ export const Profile: React.FC<ProfileProps> = ({
               setUserMetadata={setUserMetadata}
               me={me}
               userName={userName}
-              isMobile={isMobile}
               handleKeyDown={handleKeyDown}
             />
           </div>

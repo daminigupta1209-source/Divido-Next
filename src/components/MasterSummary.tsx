@@ -44,7 +44,6 @@ interface MasterSummaryProps {
   setGlobalSettleData: (data: GlobalSettleData | null) => void;
   userMetadata: Record<string, UserMetadata>;
   setUserMetadata: (meta: Record<string, UserMetadata>) => void;
-  onShowQR: (payee: string, amt: number, curr: string) => void;
   // Filter state props
   timeFilter?: 'all' | '30' | '90' | '365';
   setTimeFilter?: (v: 'all' | '30' | '90' | '365') => void;
@@ -94,7 +93,6 @@ export const MasterSummary: React.FC<MasterSummaryProps> = ({
   setGlobalSettleData,
   userMetadata,
   setUserMetadata,
-  onShowQR,
   searchNonce,
   searchQuery = '',
   setSearchQuery = () => {},

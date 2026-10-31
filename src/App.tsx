@@ -50,9 +50,8 @@ const Analytics = safeLazy(() => import('./components/Analytics').then((m) => ({
 const ActivityStudio = safeLazy(() => import('./components/ActivityStudio').then((m) => ({ default: m.ActivityStudio })));
 const Profile = safeLazy(() => import('./components/Profile').then((m) => ({ default: m.Profile })));
 const ExpenseModal = safeLazy(() => import('./components/ExpenseModal').then((m) => ({ default: m.ExpenseModal })));
-// QR modals pull in the qrcode library — keep it out of the main bundle by
-// loading these only when a user actually opens a payment/QR popup.
-const UPIQRModal = safeLazy(() => import('./components/UPIQRModal').then((m) => ({ default: m.UPIQRModal })));
+// The reminder modal is lazy — keep it out of the main bundle by loading it
+// only when a user actually opens it.
 const NetReceivableModal = safeLazy(() => import('./components/NetReceivableModal').then((m) => ({ default: m.NetReceivableModal })));
 const SplitwiseImportModal = safeLazy(() => import('./components/SplitwiseImportModal').then((m) => ({ default: m.SplitwiseImportModal })));
 
@@ -69,7 +68,6 @@ if (typeof window !== 'undefined') {
       () => import('./components/ActivityStudio'),
       () => import('./components/Profile'),
       () => import('./components/ExpenseModal'),
-      () => import('./components/UPIQRModal'),
       () => import('./components/NetReceivableModal'),
       () => import('./components/SplitwiseImportModal'),
       () => import('./components/expense-modal/BillScanner'),
@@ -97,7 +95,7 @@ import { CurrencySetupModal } from './components/CurrencySetupModal';
 import { GroupGallery } from './components/GroupGallery';
 import { checkIfDemoMode } from './lib/demoMode';
 import { ensureArray, ensureObject, isLegacyRenameLog, formatCompactAmount, genGroupId, genExpenseId, titleCaseName } from './lib/utils';
-import { getPersonKey, toIdentitySpace, findDuplicateGroups, setSyncedDismissedPeople, buildNameEmailResolver, upiFor, fillPartyKeys, deriveKeyColumns, sameShareMap, memberNamesByKey, applyKeyNames, setDisplayGroups, shown, uniqueProfileName, dropShadowedLeftRows, isPastMemberOf } from './lib/identity';
+import { getPersonKey, toIdentitySpace, findDuplicateGroups, setSyncedDismissedPeople, buildNameEmailResolver, fillPartyKeys, deriveKeyColumns, sameShareMap, memberNamesByKey, applyKeyNames, setDisplayGroups, shown, uniqueProfileName, dropShadowedLeftRows, isPastMemberOf } from './lib/identity';
 import { groupActivityTimestamp } from './lib/joinProgress';
 import { parseInviteParam, buildPersonInviteLink, personInviteMessage, groupInviteMessage, type InviteSpot } from './lib/inviteLink';
 import {
@@ -257,7 +255,6 @@ function App() {
   const [localSettleEdits, setLocalSettleEdits] = useState<any[]>([]);
   // Row index whose amount box should shake (user tried to exceed the max).
   const [settleShakeIdx, setSettleShakeIdx] = useState<number | null>(null);
-  const [qrModalData, setQrModalData] = useState<{ payee: string; amt: number; currency: string; requestFrom?: string; identity?: string } | null>(() => initialSavedState?.qrModalData || null);
   const [netPayablePopup, setNetPayablePopup] = useState<{ friendName: string; amt: number; curr: string } | null>(() => initialSavedState?.netPayablePopup || null);
   const [netReceivablePopup, setNetReceivablePopup] = useState<{ friendName: string; amt: number; curr: string } | null>(() => initialSavedState?.netReceivablePopup || null);
   const [isGroupsExpanded, setIsGroupsExpanded] = useState<boolean>(false);
@@ -643,7 +640,6 @@ function App() {
     showAddFriendModal,
     showGroupSettleList,
     showMembersHealth,
-    qrModalData,
     netPayablePopup,
     netReceivablePopup,
     showConvertModalId,
@@ -676,7 +672,7 @@ function App() {
       const anyOverlayOpen =
         showExpModal || showSettleModal || showAddFriendModal || showGroupSettleList ||
         showMembersHealth || showNotifPanel || mobileShowGroupOptionsMenu || showSplitwiseImport ||
-        !!qrModalData || !!netPayablePopup || !!netReceivablePopup || !!showConvertModalId || !!editingSettle || !!globalSettleData ||
+        !!netPayablePopup || !!netReceivablePopup || !!showConvertModalId || !!editingSettle || !!globalSettleData ||
         !!(confirmState && confirmState.show) || !!samePersonPrompt;
       // A back-swipe from a top-level bottom-nav screen (All balances, All
       // Activities, Global Analytics, Profile) goes to the Home screen (groups),
@@ -707,7 +703,6 @@ function App() {
         setShowAddFriendModal(!!ui.showAddFriendModal);
         setShowGroupSettleList(!!ui.showGroupSettleList);
         setShowMembersHealth(!!ui.showMembersHealth);
-        setQrModalData(ui.qrModalData || null);
         setNetPayablePopup(ui.netPayablePopup || null);
         setNetReceivablePopup(ui.netReceivablePopup || null);
         setShowConvertModalId(ui.showConvertModalId || null);
@@ -734,7 +729,6 @@ function App() {
         setShowAddFriendModal(false);
         setShowGroupSettleList(false);
         setShowMembersHealth(false);
-        setQrModalData(null);
         setNetPayablePopup(null);
         setNetReceivablePopup(null);
         setShowConvertModalId(null);
@@ -773,7 +767,7 @@ function App() {
     return () => window.removeEventListener('popstate', onPopState);
   }, [
     view, selectedId, groupDetailTab, showExpModal, showSettleModal, showAddFriendModal,
-    showGroupSettleList, showMembersHealth, qrModalData, netPayablePopup, netReceivablePopup, showConvertModalId,
+    showGroupSettleList, showMembersHealth, netPayablePopup, netReceivablePopup, showConvertModalId,
     showNotifPanel, mobileShowGroupOptionsMenu, editingSettle, globalSettleData, showFriendsList, showSplitwiseImport, samePersonPrompt, analyticsGroupId, confirmState
   ]);
 
@@ -824,7 +818,7 @@ function App() {
     const overlayCount = (ui: any) => [
       ui.showExpModal, ui.showSettleModal, ui.showAddFriendModal, ui.showGroupSettleList,
       ui.showMembersHealth, ui.showNotifPanel, ui.mobileShowGroupOptionsMenu,
-      !!ui.qrModalData, !!ui.netPayablePopup, !!ui.netReceivablePopup, !!ui.showConvertModalId, !!ui.editingSettle, !!ui.globalSettleData,
+      !!ui.netPayablePopup, !!ui.netReceivablePopup, !!ui.showConvertModalId, !!ui.editingSettle, !!ui.globalSettleData,
       !!(ui.confirmState && ui.confirmState.show),
       ui.showFriendsList, ui.showSplitwiseImport,
     ].filter(Boolean).length;
@@ -845,7 +839,6 @@ function App() {
         prev.showAddFriendModal !== currentUi.showAddFriendModal ||
         prev.showGroupSettleList !== currentUi.showGroupSettleList ||
         prev.showMembersHealth !== currentUi.showMembersHealth ||
-        JSON.stringify(prev.qrModalData) !== JSON.stringify(currentUi.qrModalData) ||
         JSON.stringify(prev.netPayablePopup) !== JSON.stringify(currentUi.netPayablePopup) ||
         JSON.stringify(prev.netReceivablePopup) !== JSON.stringify(currentUi.netReceivablePopup) ||
         prev.showConvertModalId !== currentUi.showConvertModalId ||
@@ -918,7 +911,7 @@ function App() {
     } catch {}
   }, [
     view, selectedId, groupDetailTab, showExpModal, showSettleModal, showAddFriendModal,
-    showGroupSettleList, showMembersHealth, qrModalData, showConvertModalId,
+    showGroupSettleList, showMembersHealth, showConvertModalId,
     showNotifPanel, mobileShowGroupOptionsMenu, editingSettle, globalSettleData, showFriendsList, showSplitwiseImport, samePersonPrompt, analyticsGroupId, confirmState
   ]);
 
@@ -1265,7 +1258,7 @@ function App() {
       currency: curr,
     });
 
-    // Desktop / no native share: fall back to the in-app reminder card (with QR).
+    // Desktop / no native share: fall back to the in-app reminder card.
     if (!nativeShare) {
       setNetReceivablePopup({ friendName, amt, curr });
     }
@@ -1767,9 +1760,6 @@ function App() {
     });
     return changed ? out : expenses;
   }, [expenses, groups]);
-  // Name -> email resolver so pay/QR screens read the RIGHT person's synced UPI
-  // (money — never key UPI by raw display name).
-  const nameToEmailUpi = React.useMemo(() => buildNameEmailResolver(groups), [groups]);
 
   // Merge one accidental duplicate group into another: move the dropped group's
   // expenses onto the kept group, union members/identities, then delete the
@@ -4819,7 +4809,6 @@ function App() {
             setGlobalSettleData={setGlobalSettleData}
             userMetadata={userMetadata}
             setUserMetadata={setUserMetadata}
-            onShowQR={(payee, amt, curr) => setQrModalData({ payee, amt, currency: curr })}
             searchNonce={homeSearchNonce}
             searchQuery={globalSearchQuery}
             setSearchQuery={setGlobalSearchQuery}
@@ -4931,7 +4920,6 @@ function App() {
             showConvertModal={showFriendsConvert}
             setShowConvertModal={setShowFriendsConvert}
             onQuickAddExpense={quickAddExpenseWithFriend}
-            onShowQR={(payee, amt, curr, identity) => setQrModalData({ payee, amt, currency: curr, identity })}
           />
         ) : view === 'analytics' ? (
           <Analytics
@@ -5136,7 +5124,6 @@ function App() {
             setUserMetadata={setUserMetadata}
             deleteExpense={deleteExpenseSecure}
             onDeleteGroup={handleDeleteGroup}
-            onShowQR={(payee, amt, curr) => setQrModalData({ payee, amt, currency: curr })}
             setGlobalSettleData={setGlobalSettleDataSecure}
             showSettleModal={showSettleModal}
             setShowSettleModal={setShowSettleModalSecure}
@@ -6970,37 +6957,6 @@ function App() {
         />
       )}
 
-      {qrModalData && (
-        <React.Suspense fallback={null}>
-          <UPIQRModal
-            show={!!qrModalData}
-            onClose={() => setQrModalData(null)}
-            payeeName={qrModalData.payee}
-            upiId={upiFor(userMetadata, (n) => {
-              // All balances passes the payee's exact email (two friends can share
-              // a name, and selectedGroup may be unrelated there).
-              if (qrModalData.identity?.includes('@')) return qrModalData.identity;
-              // From a group balance, that group pins the payee's exact email;
-              // fall back to the cross-group resolver only if it can't.
-              const k = getPersonKey(selectedGroup, n);
-              return typeof k === 'string' && k.includes('@') ? k : nameToEmailUpi(n);
-            }, qrModalData.payee) || ''}
-            amount={qrModalData.amt}
-            currency={qrModalData.currency}
-            requestFrom={qrModalData.requestFrom}
-            onSaveUpi={(newUpi) => {
-              setUserMetadata((prev) => ({
-                ...prev,
-                [qrModalData.payee]: {
-                  ...prev[qrModalData.payee],
-                  upiId: newUpi,
-                },
-              }));
-            }}
-          />
-        </React.Suspense>
-      )}
-
       <CurrencySetupModal
         show={false}
         suggested={myDefaultCurrency}
@@ -7474,7 +7430,6 @@ function App() {
         setUserMetadata={setUserMetadata}
         showCurrPickerId={showCurrPickerId}
         setShowCurrPickerId={setShowCurrPickerId}
-        onShowQR={(payee, amt, curr) => setQrModalData({ payee, amt, currency: curr })}
       />
 
       {showRejoinRequestModal && (() => {
