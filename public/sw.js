@@ -89,7 +89,11 @@ self.addEventListener('fetch', (event) => {
           }
           return res;
         })
-        .catch(() => caches.match('/index.html'))
+        // No cached index (first visit, or the cache was cleared): hand the
+        // original request back to the browser rather than resolving with
+        // nothing, which Chrome shows as "This site can't be reached
+        // ERR_FAILED" even when the site is up.
+        .catch(() => caches.match('/index.html').then((cached) => cached || fetch(req)))
     );
     return;
   }
