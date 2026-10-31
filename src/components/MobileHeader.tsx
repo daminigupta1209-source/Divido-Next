@@ -638,7 +638,8 @@ export const MobileHeader: React.FC<MobileHeaderProps> = ({
                       width: '100%',
                       display: 'inline-block',
                     }}>
-                      {selectedId === 'STANDALONE' && nonGroupPersonalOpen ? 'You' : selectedId === 'STANDALONE' && nonGroupPersonName ? (<><span style={{ fontSize: '13px', fontWeight: 400, color: '#64748B', marginRight: '5px', letterSpacing: 0 }}>with</span>{nonGroupPersonName.split(' ')[0]}</>) : displayGroupName}
+                      {/* "with" sits on its own line above the name so the name gets the full width next to the header icons */}
+                      {selectedId === 'STANDALONE' && nonGroupPersonalOpen ? 'You' : selectedId === 'STANDALONE' && nonGroupPersonName ? (<><span style={{ display: 'block', fontSize: '12px', fontWeight: 500, color: '#64748B', letterSpacing: 0, lineHeight: 1.2, marginBottom: '1px' }}>with</span>{nonGroupPersonName.split(' ')[0]}</>) : displayGroupName}
                     </span>
                   </h1>
                   {showPersonCard && selectedId === 'STANDALONE' && nonGroupPersonName && createPortal(
