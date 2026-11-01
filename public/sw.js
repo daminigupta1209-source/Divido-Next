@@ -20,6 +20,7 @@
 const BUILD_ID = '__BUILD_ID__';
 const CACHE = 'divido-cache-' + BUILD_ID;
 const CORE = ['/index.html', '/manifest.json'];
+const STATIC_PAGES = ['/privacy', '/delete-account'];
 
 // Precache the shell: core files plus every hashed /assets/*.js and *.css that
 // index.html references, so the entry bundle is guaranteed present offline.
@@ -73,6 +74,9 @@ self.addEventListener('fetch', (event) => {
   // offline. No stale '/' fallback — that was what served an old page pointing
   // at chunks that were no longer cached, causing the offline reload loop.
   if (req.mode === 'navigate') {
+    // Standalone legal pages aren't the app: let the browser load them, or the
+    // cache.put below would store them as the offline index.
+    if (STATIC_PAGES.includes(new URL(req.url).pathname.replace(/\.html$/, ''))) return;
     event.respondWith(
       // `cache: 'no-store'` bypasses the browser's OWN HTTP cache so a reload
       // always pulls the truly-latest index (with the newest asset hashes),

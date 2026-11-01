@@ -71,7 +71,15 @@ Deno.serve(async (req: Request) => {
         .from('notifications')
         .delete()
         .eq('recipient_email', user.email);
+
+      // Personal (non-group) expenses and the profile photo are keyed by email
+      // too; the public deletion page promises they go.
+      await adminClient.from('nongroup_backups').delete().eq('user_email', user.email);
+      await adminClient.from('member_avatars').delete().eq('email', user.email);
     }
+
+    // Profile row (name, UPI ID, photo, budgets, preferences).
+    await adminClient.from('profiles').delete().eq('id', user.id);
 
     // 4. Permanently delete the auth identity.
     const { error: delErr } = await adminClient.auth.admin.deleteUser(user.id);

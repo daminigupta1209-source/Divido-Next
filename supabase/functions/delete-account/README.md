@@ -33,6 +33,9 @@ the app safely falls back to the previous soft-delete (unlink data + sign out).
 
 1. Verifies the caller's JWT to identify exactly who is calling.
 2. Detaches that user's `group_members` rows (keeps shared group history intact).
-3. Calls `auth.admin.deleteUser(user.id)` to erase the identity.
+3. Deletes their `notifications`, `nongroup_backups`, `member_avatars` and `profiles` rows.
+4. Calls `auth.admin.deleteUser(user.id)` to erase the identity.
+
+The public page at `/delete-account` describes this behaviour; keep the two in sync.
 
 Only ever deletes the caller — the JWT scopes it to that one user.
