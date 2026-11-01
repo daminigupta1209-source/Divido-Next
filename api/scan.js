@@ -15,7 +15,7 @@ import { createClient } from '@supabase/supabase-js';
 const GEMINI_URL = (model) =>
   `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`;
 
-const DEFAULT_APP_ORIGIN = 'https://divido-next.vercel.app';
+const DEFAULT_APP_ORIGINS = ['https://www.fussky.com', 'https://fussky.com', 'https://divido-next.vercel.app'];
 // Capacitor WebView origins (Android uses https://localhost, iOS capacitor://localhost).
 const NATIVE_ORIGINS = ['https://localhost', 'capacitor://localhost'];
 
@@ -36,7 +36,7 @@ function allowedOrigins() {
     .split(',')
     .map((o) => o.trim().replace(/\/+$/, ''))
     .filter(Boolean);
-  return new Set([DEFAULT_APP_ORIGIN, ...configured, ...extra, ...NATIVE_ORIGINS]);
+  return new Set([...DEFAULT_APP_ORIGINS, ...configured, ...extra, ...NATIVE_ORIGINS]);
 }
 
 /** Same deployment (incl. Vercel previews) or an allowlisted origin. */
