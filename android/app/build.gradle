@@ -42,8 +42,13 @@ android {
             if (releaseStoreFile) {
                 signingConfig signingConfigs.release
             }
-            minifyEnabled false
-            proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
+            // R8: shrink, optimize and obfuscate (Play Console "DEX code optimization").
+            // Capacitor ships consumer keep rules for plugins; app-specific rules go
+            // in proguard-rules.pro. The R8 mapping file is bundled into the AAB, so
+            // Play deobfuscates crash stack traces automatically.
+            minifyEnabled true
+            shrinkResources true
+            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
         }
     }
 }

@@ -14,8 +14,13 @@
 
 # Uncomment this to preserve the line number information for
 # debugging stack traces.
-#-keepattributes SourceFile,LineNumberTable
+-keepattributes SourceFile,LineNumberTable
 
 # If you keep the line number information, uncomment this to
 # hide the original source file name.
-#-renamesourcefileattribute SourceFile
+-renamesourcefileattribute SourceFile
+
+# Capacitor's JS<->native bridge is called from the WebView.
+-keepclassmembers class * {
+    @android.webkit.JavascriptInterface <methods>;
+}
