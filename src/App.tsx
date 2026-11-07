@@ -4809,6 +4809,7 @@ function App() {
             setGlobalSettleData={setGlobalSettleData}
             userMetadata={userMetadata}
             setUserMetadata={setUserMetadata}
+            myDefaultCurrency={myDefaultCurrency}
             searchNonce={homeSearchNonce}
             searchQuery={globalSearchQuery}
             setSearchQuery={setGlobalSearchQuery}
@@ -4929,6 +4930,7 @@ function App() {
             userMetadata={userMetadata}
             setUserMetadata={setUserMetadata}
             initialGroupId={analyticsGroupId}
+            displayCurrency={myDefaultCurrency}
             onBack={() => {
               if (analyticsGroupId) {
                 setSelectedId(analyticsGroupId);

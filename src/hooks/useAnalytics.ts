@@ -1,6 +1,6 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useCallback } from 'react';
 import { Group, Expense } from '../lib/types';
-import { getEmoji } from '../lib/utils';
+import { getEmoji, toCurrencyCode } from '../lib/utils';
 import { escManager } from '../lib/escManager';
 
 export interface UseAnalyticsProps {
@@ -10,6 +10,8 @@ export interface UseAnalyticsProps {
   userMetadata: Record<string, any>;
   setUserMetadata: (m: Record<string, any>) => void;
   initialGroupId?: string | number | null;
+  /** The user's default currency (App's myDefaultCurrency). */
+  displayCurrency: string;
 }
 
 export interface AnalyticsDetail {
@@ -66,6 +68,7 @@ export function useAnalytics({
   userMetadata,
   setUserMetadata,
   initialGroupId,
+  displayCurrency,
 }: UseAnalyticsProps) {
   const [selectedGroupId, setSelectedGroupId] = useState<string | number>('ALL');
   const [showGroupDropdown, setShowGroupDropdown] = useState(false);
@@ -78,7 +81,23 @@ export function useAnalytics({
 
   const [timeframe, setTimeframe] = useState<'month' | '30days' | 'overall'>('month');
 
-  const filteredExpenses = useMemo(() => {
+  // Currency handling — mirrors the home screen, which keeps every currency in
+  // its own bucket and never converts. Analytics therefore sums ONE currency at
+  // a time (never "€ + $" into one number) and lets the user switch between the
+  // currencies present. An expense's currency is its own, else its group's,
+  // else the user's default (same fallback chain as App's balance engine).
+  const defaultCode = toCurrencyCode(displayCurrency);
+  const groupById = useMemo(() => new Map(groups.map((g) => [String(g.id), g])), [groups]);
+  const rawCurrencyOf = useCallback(
+    (e: Expense) => e.currency || groupById.get(String(e.gId))?.currency || displayCurrency,
+    [groupById, displayCurrency]
+  );
+  const currencyCodeOf = useCallback((e: Expense) => toCurrencyCode(rawCurrencyOf(e)), [rawCurrencyOf]);
+
+  const [currencyChoice, setCurrencyChoice] = useState<string | null>(null);
+  useEffect(() => { setCurrencyChoice(null); }, [selectedGroupId]);
+
+  const scopeExpenses = useMemo(() => {
     const base = selectedGroupId === 'ALL' ? expenses : expenses.filter((e) => String(e.gId) === String(selectedGroupId));
     const now = new Date();
     return base.filter((e) => {
@@ -106,6 +125,50 @@ export function useAnalytics({
       return true;
     });
   }, [expenses, selectedGroupId, timeframe]);
+
+  // Currencies present in the current scope, most-used first.
+  const currencyOptions = useMemo(() => {
+    const byCode: Record<string, { code: string; symbol: string; count: number }> = {};
+    scopeExpenses.forEach((e) => {
+      const code = currencyCodeOf(e);
+      if (!byCode[code]) {
+        byCode[code] = { code, symbol: code === defaultCode ? displayCurrency : rawCurrencyOf(e), count: 0 };
+      }
+      byCode[code].count += 1;
+    });
+    return Object.values(byCode).sort((a, b) => b.count - a.count);
+  }, [scopeExpenses, currencyCodeOf, rawCurrencyOf, defaultCode, displayCurrency]);
+
+  // Auto pick: the selected group's own currency, else the user's default,
+  // else whichever currency this scope actually uses most.
+  const activeCurrencyCode = useMemo(() => {
+    const has = (code: string) => currencyOptions.some((o) => o.code === code);
+    if (currencyChoice && has(currencyChoice)) return currencyChoice;
+    const sel = selectedGroupId !== 'ALL' ? groupById.get(String(selectedGroupId)) : undefined;
+    if (sel?.currency && has(toCurrencyCode(sel.currency))) return toCurrencyCode(sel.currency);
+    if (has(defaultCode) || currencyOptions.length === 0) return defaultCode;
+    return currencyOptions[0].code;
+  }, [currencyChoice, currencyOptions, selectedGroupId, groupById, defaultCode]);
+
+  const currencySymbol =
+    currencyOptions.find((o) => o.code === activeCurrencyCode)?.symbol ?? displayCurrency;
+
+  // Expenses in other currencies left out of the totals (not converted).
+  const excludedCount = useMemo(
+    () => currencyOptions.filter((o) => o.code !== activeCurrencyCode).reduce((n, o) => n + o.count, 0),
+    [currencyOptions, activeCurrencyCode]
+  );
+
+  const filteredExpenses = useMemo(
+    () => scopeExpenses.filter((e) => currencyCodeOf(e) === activeCurrencyCode),
+    [scopeExpenses, currencyCodeOf, activeCurrencyCode]
+  );
+
+  // "AED 4,000" / "kr 50" read better spaced; "$4,000" / "₹4,000" don't.
+  const formatMoney = useCallback(
+    (n: number | string, sym: string = currencySymbol) => `${sym}${/[A-Za-z]$/.test(sym) ? ' ' : ''}${n}`,
+    [currencySymbol]
+  );
 
   const [analyticsDetail, setAnalyticsDetail] = useState<AnalyticsDetail | null>(null);
   const [hoveredCategory, setHoveredCategory] = useState<string | null>(null);
@@ -142,13 +205,17 @@ export function useAnalytics({
 
   const monthlySpendingByCategory = useMemo(() => {
     const currentMonthKey = new Date().toISOString().slice(0, 7);
-    const thisMonthExpenses = filteredExpenses.filter((e) => e.date.startsWith(currentMonthKey));
+    // Budgets are entered in the user's default currency, so only that
+    // currency's spending counts toward them (whatever currency is on screen).
+    const thisMonthExpenses = scopeExpenses.filter(
+      (e) => e.date.startsWith(currentMonthKey) && currencyCodeOf(e) === defaultCode
+    );
     return thisMonthExpenses.reduce<Record<string, number>>((acc, e) => {
       const emoji = e.category || getEmoji(e.title) || '⚡';
       acc[emoji] = (acc[emoji] || 0) + ((Number(e.amt) || 0));
       return acc;
     }, {});
-  }, [filteredExpenses]);
+  }, [scopeExpenses, currencyCodeOf, defaultCode]);
 
   const totalSpentVal = useMemo(() => {
     return filteredExpenses.reduce((acc, e) => acc + ((Number(e.amt) || 0)), 0);
@@ -266,7 +333,7 @@ export function useAnalytics({
     if (filteredExpenses.length > 0) {
        const largestExpense = [...filteredExpenses].sort((a, b) => (Number(b.amt) || 0) - (Number(a.amt) || 0))[0];
        if (largestExpense && largestExpense.amt > (avgExpense * 1.5)) {
-          insights.push(`Your largest expense is ${largestExpense.title} at ₹${largestExpense.amt}.`);
+          insights.push(`Your largest expense is ${largestExpense.title} at ${formatMoney(largestExpense.amt)}.`);
        }
     }
 
@@ -275,7 +342,7 @@ export function useAnalytics({
     }
 
     if (filteredExpenses.length > 3) {
-      insights.push(`Your typical cost per bill is ₹${avgExpense.toFixed(0)} across ${filteredExpenses.length} transactions.`);
+      insights.push(`Your typical cost per bill is ${formatMoney(avgExpense.toFixed(0))} across ${filteredExpenses.length} transactions.`);
     }
 
     if (insights.length < 3 && filteredExpenses.length > 0) {
@@ -283,7 +350,7 @@ export function useAnalytics({
     }
 
     if (insights.length < 3 && filteredExpenses.length > 0) {
-      insights.push(`Average transaction size is ₹${avgExpense.toFixed(0)}.`);
+      insights.push(`Average transaction size is ${formatMoney(avgExpense.toFixed(0))}.`);
     }
 
     if (insights.length < 3 && filteredExpenses.length > 0) {
@@ -302,7 +369,7 @@ export function useAnalytics({
     }
 
     return insights;
-  }, [categoryList, totalSpentVal, filteredExpenses, mostActiveGroup, avgExpense, initialGroupId]);
+  }, [categoryList, totalSpentVal, filteredExpenses, mostActiveGroup, avgExpense, initialGroupId, formatMoney]);
 
   return {
     selectedGroupId,
@@ -337,5 +404,13 @@ export function useAnalytics({
     timeframe,
     setTimeframe,
     dynamicInsights,
+    currencySymbol,
+    currencyOptions,
+    activeCurrencyCode,
+    setCurrencyChoice,
+    excludedCount,
+    currencyCodeOf,
+    rawCurrencyOf,
+    formatMoney,
   };
 }

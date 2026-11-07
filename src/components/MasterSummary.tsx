@@ -2,7 +2,7 @@ import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { shown } from '../lib/identity';
 import { NetBalanceTiles } from './NetBalanceTiles';
 import { BalanceDisplay } from './BalanceDisplay';
-import { getEmoji, GROUP_COLORS, formatExactAmount, parseExpenseId, matchesAmount } from '../lib/utils';
+import { getEmoji, GROUP_COLORS, formatExactAmount, parseExpenseId, matchesAmount, toCurrencyCode } from '../lib/utils';
 import { StyledDropdown } from './StyledDropdown';
 
 // Pill-style trigger for the compact filter dropdowns (matches the old selects).
@@ -44,6 +44,8 @@ interface MasterSummaryProps {
   setGlobalSettleData: (data: GlobalSettleData | null) => void;
   userMetadata: Record<string, UserMetadata>;
   setUserMetadata: (meta: Record<string, UserMetadata>) => void;
+  /** The user's default currency (App's myDefaultCurrency). */
+  myDefaultCurrency?: string;
   // Filter state props
   timeFilter?: 'all' | '30' | '90' | '365';
   setTimeFilter?: (v: 'all' | '30' | '90' | '365') => void;
@@ -93,6 +95,7 @@ export const MasterSummary: React.FC<MasterSummaryProps> = ({
   setGlobalSettleData,
   userMetadata,
   setUserMetadata,
+  myDefaultCurrency: myDefaultCurrencyProp,
   searchNonce,
   searchQuery = '',
   setSearchQuery = () => {},
@@ -318,7 +321,8 @@ export const MasterSummary: React.FC<MasterSummaryProps> = ({
   // All-time personal (self-only) spend, shown when the Non-Group card has no
   // outstanding balance so "Settled up" isn't misleading about solo spending.
   const isMeHome = useMemo(() => makeIsMe(me, userName), [me, userName]);
-  const personalSpendHome = useMemo(() => personalSpendByCurrency(expenses, isMeHome, '₹'), [expenses, isMeHome]);
+  const homeCurrency = myDefaultCurrencyProp || userMetadata[me]?.defaultCurrency || '₹';
+  const personalSpendHome = useMemo(() => personalSpendByCurrency(expenses, isMeHome, homeCurrency), [expenses, isMeHome, homeCurrency]);
 
   const netBalances = useMemo(() => {
     const nb: Record<string, number> = {};
@@ -463,7 +467,14 @@ export const MasterSummary: React.FC<MasterSummaryProps> = ({
     if (budgetEntries.length === 0) return [];
 
     const currentMonthKey = new Date().toISOString().slice(0, 7);
-    const thisMonthExpenses = expenses.filter((e) => e.date.startsWith(currentMonthKey));
+    // Budgets are in the user's default currency; only count spending in it
+    // (an expense's currency falls back to its group's, as in the balance engine).
+    const homeCode = toCurrencyCode(homeCurrency);
+    const currOf = (e: Expense) =>
+      e.currency || groups.find((g) => String(g.id) === String(e.gId))?.currency || homeCurrency;
+    const thisMonthExpenses = expenses.filter(
+      (e) => e.date.startsWith(currentMonthKey) && toCurrencyCode(currOf(e)) === homeCode
+    );
     const spentByCategory = thisMonthExpenses.reduce<Record<string, number>>((acc, e) => {
       const emoji = e.category || getEmoji(e.title) || '⚡';
       acc[emoji] = (acc[emoji] || 0) + ((Number(e.amt) || 0));
@@ -734,7 +745,7 @@ export const MasterSummary: React.FC<MasterSummaryProps> = ({
                 Budget Exceeded
               </span>
               <span style={{ fontSize: '13px', color: '#BE123C', fontWeight: 500 }}>
-                {exceededBudgets.map(b => `${b.emoji} ${b.label}: ₹${b.spent.toFixed(0)}`).join(', ')}
+                {exceededBudgets.map(b => `${b.emoji} ${b.label}: ${homeCurrency}${/[A-Za-z]$/.test(homeCurrency) ? ' ' : ''}${b.spent.toFixed(0)}`).join(', ')}
               </span>
             </div>
           </div>
@@ -974,7 +985,7 @@ export const MasterSummary: React.FC<MasterSummaryProps> = ({
                     if (personalLines.length === 0) {
                       return <span style={{ fontSize: '12.5px', fontWeight: 400, color: '#94A3B8' }}>Settled up</span>;
                     }
-                    const primary = personalLines.find(([c]) => c === '₹') || personalLines[0];
+                    const primary = personalLines.find(([c]) => c === homeCurrency) || personalLines[0];
                     const more = personalLines.length - 1;
                     return (
                       <span style={{ fontSize: '12.5px', fontWeight: 400, color: '#64748B' }}>

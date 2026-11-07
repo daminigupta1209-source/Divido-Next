@@ -11,6 +11,8 @@ interface AnalyticsProps {
   setUserMetadata: (m: Record<string, any>) => void;
   initialGroupId?: string | number | null;
   onBack?: () => void;
+  /** The user's default currency (App's myDefaultCurrency). */
+  displayCurrency: string;
 }
 
 interface AnalyticsDetail {
@@ -199,7 +201,7 @@ const InsightCarousel = ({ insights }: { insights: string[] }) => {
   );
 };
 
-export const Analytics: React.FC<AnalyticsProps> = ({ expenses, groups, me, userMetadata, setUserMetadata, initialGroupId, onBack }) => {
+export const Analytics: React.FC<AnalyticsProps> = ({ expenses, groups, me, userMetadata, setUserMetadata, initialGroupId, onBack, displayCurrency }) => {
   const {
     selectedGroupId,
     setSelectedGroupId,
@@ -233,6 +235,14 @@ export const Analytics: React.FC<AnalyticsProps> = ({ expenses, groups, me, user
     timeframe,
     setTimeframe,
     dynamicInsights,
+    currencySymbol,
+    currencyOptions,
+    activeCurrencyCode,
+    setCurrencyChoice,
+    excludedCount,
+    currencyCodeOf,
+    rawCurrencyOf,
+    formatMoney,
   } = useAnalytics({
     expenses,
     groups,
@@ -240,7 +250,10 @@ export const Analytics: React.FC<AnalyticsProps> = ({ expenses, groups, me, user
     userMetadata,
     setUserMetadata,
     initialGroupId,
+    displayCurrency,
   });
+  // Prefix for every amount on this page: "$", "€", or "AED " (spaced).
+  const sym = formatMoney('');
 
   const [showByGroup, setShowByGroup] = useState<boolean>(selectedGroupId === 'ALL');
 
@@ -316,6 +329,8 @@ export const Analytics: React.FC<AnalyticsProps> = ({ expenses, groups, me, user
           ? expenses.filter((e) => !e.isDeleted && isNonGroup(e))
           : expenses.filter((e) => !e.isDeleted && String(e.gId) === String(selectedGroupId));
       return base.filter((e: Expense) => {
+        // One currency per chart: never stack € onto a $ cumulative line.
+        if (currencyCodeOf(e) !== activeCurrencyCode) return false;
         const t = e.title || '';
         return !(
           e.paid === 'SYSTEM' ||
@@ -324,7 +339,7 @@ export const Analytics: React.FC<AnalyticsProps> = ({ expenses, groups, me, user
           t === 'Written off' || e.notes === 'Written off'
         );
       });
-    }, [expenses, selectedGroupId, groups]);
+    }, [expenses, selectedGroupId, groups, currencyCodeOf, activeCurrencyCode]);
 
     const allDailyData = useMemo(() => {
       const sorted = [...baseExpenses].sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
@@ -470,7 +485,7 @@ export const Analytics: React.FC<AnalyticsProps> = ({ expenses, groups, me, user
                   animation: 'fadeIn 0.2s ease-out', fontFamily: 'system-ui, sans-serif'
                 }}
               >
-                <span style={{ color: '#10B981' }}>₹{chartData[hoveredBar].cumulative}</span>
+                <span style={{ color: '#10B981' }}>{sym}{chartData[hoveredBar].cumulative}</span>
                 {' '}
                 <span style={{ color: '#64748B', fontSize: '10.5px' }}>
                   {chartData[hoveredBar].dateObj.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
@@ -540,9 +555,9 @@ export const Analytics: React.FC<AnalyticsProps> = ({ expenses, groups, me, user
                 boxSizing: 'border-box'
               }}
             >
-              <div style={{ position: 'absolute', left: '8px', top: '15px', fontSize: '11px', color: '#64748B', fontFamily: 'system-ui, sans-serif' }}>₹{formatY(maxCumAmt)}</div>
-              <div style={{ position: 'absolute', left: '8px', top: '90px', fontSize: '11px', color: '#64748B', fontFamily: 'system-ui, sans-serif', transform: 'translateY(-50%)' }}>₹{formatY((maxCumAmt + minCumAmt) / 2)}</div>
-              <div style={{ position: 'absolute', left: '8px', top: '165px', fontSize: '11px', color: '#64748B', fontFamily: 'system-ui, sans-serif', transform: 'translateY(-100%)' }}>₹{formatY(minCumAmt)}</div>
+              <div style={{ position: 'absolute', left: '8px', top: '15px', fontSize: '11px', color: '#64748B', fontFamily: 'system-ui, sans-serif' }}>{sym}{formatY(maxCumAmt)}</div>
+              <div style={{ position: 'absolute', left: '8px', top: '90px', fontSize: '11px', color: '#64748B', fontFamily: 'system-ui, sans-serif', transform: 'translateY(-50%)' }}>{sym}{formatY((maxCumAmt + minCumAmt) / 2)}</div>
+              <div style={{ position: 'absolute', left: '8px', top: '165px', fontSize: '11px', color: '#64748B', fontFamily: 'system-ui, sans-serif', transform: 'translateY(-100%)' }}>{sym}{formatY(minCumAmt)}</div>
               
               <div style={{ position: 'absolute', left: '45px', right: '0', top: '15px', height: '1px', background: '#E2E8F0' }} />
               <div style={{ position: 'absolute', left: '45px', right: '0', top: '90px', height: '1px', background: '#E2E8F0' }} />
@@ -714,12 +729,47 @@ export const Analytics: React.FC<AnalyticsProps> = ({ expenses, groups, me, user
         </div>
       </div>
 
+      {currencyOptions.length > 1 && (
+        <div style={{ marginTop: '-8px', marginBottom: '16px' }}>
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px', alignItems: 'center' }}>
+            <span style={{ fontSize: '11px', fontWeight: 600, color: '#64748B', marginRight: '2px' }}>Currency</span>
+            {currencyOptions.map((o) => {
+              const isActive = o.code === activeCurrencyCode;
+              return (
+                <button
+                  key={o.code}
+                  onClick={() => setCurrencyChoice(o.code)}
+                  aria-pressed={isActive}
+                  style={{
+                    border: isActive ? '1.5px solid var(--purple-text)' : '1.5px solid #E2E8F0',
+                    background: isActive ? 'var(--w)' : 'transparent',
+                    color: isActive ? 'var(--purple-text)' : '#64748B',
+                    fontWeight: 600,
+                    fontSize: '11px',
+                    padding: '4px 10px',
+                    borderRadius: '14px',
+                    cursor: 'pointer',
+                  }}
+                >
+                  {o.symbol === o.code ? o.code : `${o.symbol} ${o.code}`}
+                </button>
+              );
+            })}
+          </div>
+          {excludedCount > 0 && (
+            <p style={{ fontSize: '11px', color: '#94A3B8', margin: '6px 0 0' }}>
+              Showing {currencySymbol} expenses only. {excludedCount} {excludedCount === 1 ? 'expense' : 'expenses'} in other currencies {excludedCount === 1 ? "isn't" : "aren't"} included (amounts aren't converted).
+            </p>
+          )}
+        </div>
+      )}
+
       <InsightCarousel insights={dynamicInsights} />
 
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '14px', marginBottom: '32px' }}>
         <MiniMetric
           label="Total Spent"
-          value={`₹${totalSpentVal.toLocaleString()}`}
+          value={`${sym}${totalSpentVal.toLocaleString()}`}
           color="#10B981"
           sub="Sum of all bills added"
           onClick={() =>
@@ -727,7 +777,7 @@ export const Analytics: React.FC<AnalyticsProps> = ({ expenses, groups, me, user
               title: 'Total Spent Log',
               items: filteredExpenses.map((e) => ({
                 text: e.title,
-                val: `₹${e.amt}`,
+                val: `${sym}${e.amt}`,
                 sub: (() => { const g = groups.find((gr) => gr.id === e.gId); return (!g || g.isDirect) ? 'Non-Group' : g.name; })(),
               })),
             })
@@ -744,7 +794,7 @@ export const Analytics: React.FC<AnalyticsProps> = ({ expenses, groups, me, user
                 title: 'Active Groups',
                 items: groupList.map((g) => ({
                   text: g.name,
-                  val: `₹${g.amount}`,
+                  val: `${sym}${g.amount}`,
                 })),
               })
             }
@@ -752,15 +802,15 @@ export const Analytics: React.FC<AnalyticsProps> = ({ expenses, groups, me, user
         ) : (
           <MiniMetric
             label="Expected"
-            value={`₹${monthlyProjected.toLocaleString()}`}
+            value={`${sym}${monthlyProjected.toLocaleString()}`}
             color="#EF4444"
             sub="Estimated month-end spending"
             onClick={() =>
               setAnalyticsDetail({
                 title: 'Expected End',
                 items: [
-                  { text: 'Current Rate', val: `₹${totalSpentVal.toLocaleString()}` },
-                  { text: 'Projected End', val: `₹${monthlyProjected.toLocaleString()}` },
+                  { text: 'Current Rate', val: `${sym}${totalSpentVal.toLocaleString()}` },
+                  { text: 'Projected End', val: `${sym}${monthlyProjected.toLocaleString()}` },
                   { text: 'Logic', val: 'Based on your weekly speed' },
                 ],
               })
@@ -769,7 +819,7 @@ export const Analytics: React.FC<AnalyticsProps> = ({ expenses, groups, me, user
         )}
         <MiniMetric
           label="Avg. Expense"
-          value={`₹${avgExpense.toFixed(0)}`}
+          value={`${sym}${avgExpense.toFixed(0)}`}
           color="#6366F1"
           sub="Average cost per bill"
           onClick={() =>
@@ -777,7 +827,7 @@ export const Analytics: React.FC<AnalyticsProps> = ({ expenses, groups, me, user
               title: 'Bill Stats',
               items: [
                 { text: 'Total Count', val: filteredExpenses.length },
-                { text: 'Typical Bill', val: `₹${avgExpense.toFixed(0)}` },
+                { text: 'Typical Bill', val: `${sym}${avgExpense.toFixed(0)}` },
               ],
             })
           }
@@ -793,7 +843,7 @@ export const Analytics: React.FC<AnalyticsProps> = ({ expenses, groups, me, user
               const topGrp = groupList[0];
               setAnalyticsDetail({
                 title: `Top Group: ${topGrp.name}`,
-                items: topGrp.items.map((e) => ({ text: e.title, val: `₹${e.amt}` })),
+                items: topGrp.items.map((e) => ({ text: e.title, val: `${sym}${e.amt}` })),
               });
             }}
           />
@@ -808,7 +858,7 @@ export const Analytics: React.FC<AnalyticsProps> = ({ expenses, groups, me, user
               const topCat = categoryList[0];
               setAnalyticsDetail({
                 title: `Top Category: ${topCat.name}`,
-                items: topCat.items.map((e) => ({ text: e.title, val: `₹${e.amt}` })),
+                items: topCat.items.map((e) => ({ text: e.title, val: `${sym}${e.amt}` })),
               });
             }}
           />
@@ -908,7 +958,7 @@ export const Analytics: React.FC<AnalyticsProps> = ({ expenses, groups, me, user
                           {hoveredCategory}
                         </span>
                         <span style={{ fontSize: '14px', fontWeight: 600, color: '#1F2937', marginTop: '2px' }}>
-                          ₹{activeSlices.find(s => s.name === hoveredCategory)?.amount?.toLocaleString(undefined, { maximumFractionDigits: 0 }) ?? '0'}
+                          {sym}{activeSlices.find(s => s.name === hoveredCategory)?.amount?.toLocaleString(undefined, { maximumFractionDigits: 0 }) ?? '0'}
                         </span>
                         <span style={{ fontSize: '9px', fontWeight: 600, color: activeSlices.find(s => s.name === hoveredCategory)?.color || '#000' }}>
                           {activeSlices.find(s => s.name === hoveredCategory)?.pct?.toFixed(0) ?? '0'}%
@@ -918,7 +968,7 @@ export const Analytics: React.FC<AnalyticsProps> = ({ expenses, groups, me, user
                       <>
                         <span style={{ fontSize: '8px', fontWeight: 600, color: 'var(--g)' }}>TOTAL SPENT</span>
                         <span style={{ fontSize: '15px', fontWeight: 600, color: '#1F2937', marginTop: '2px' }}>
-                          ₹{totalSpentVal.toLocaleString(undefined, { maximumFractionDigits: 0 })}
+                          {sym}{totalSpentVal.toLocaleString(undefined, { maximumFractionDigits: 0 })}
                         </span>
                       </>
                     )}
@@ -941,7 +991,7 @@ export const Analytics: React.FC<AnalyticsProps> = ({ expenses, groups, me, user
                           items: item.items.map((e) => ({
                             text: e.title,
                             icon: getEmoji(e.title),
-                            val: `₹${e.amt}`,
+                            val: `${sym}${e.amt}`,
                             sub: showByGroup ? (new Date(e.date).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })) : (() => { const g = groups.find((gr) => gr.id === e.gId); return (!g || g.isDirect) ? 'Non-Group' : g.name; })(),
                           })),
                         })
@@ -978,7 +1028,7 @@ export const Analytics: React.FC<AnalyticsProps> = ({ expenses, groups, me, user
                           {item.name}
                         </span>
                         <span style={{ fontSize: '13px', fontWeight: 600, color: 'var(--t)' }}>
-                          ₹{item.amount.toLocaleString(undefined, { maximumFractionDigits: 0 })}
+                          {sym}{item.amount.toLocaleString(undefined, { maximumFractionDigits: 0 })}
                         </span>
                       </div>
                       <div style={{ width: '100%', height: '6px', background: '#F1F5F9', borderRadius: '4px', overflow: 'hidden', paddingLeft: showByGroup ? '12px' : '0' }}>
@@ -1015,7 +1065,17 @@ export const Analytics: React.FC<AnalyticsProps> = ({ expenses, groups, me, user
               .map((g) => {
                 const gExps = expenses.filter((e) => String(e.gId) === String(g.id));
                 const count = gExps.length;
-                const gTotal = gExps.reduce((acc, e) => acc + ((Number(e.amt) || 0)), 0);
+                // Per-currency totals (like the home screen) — never summed across currencies.
+                const gTotals: Record<string, { symbol: string; total: number }> = {};
+                gExps.forEach((e) => {
+                  const code = currencyCodeOf(e);
+                  if (!gTotals[code]) gTotals[code] = { symbol: rawCurrencyOf(e), total: 0 };
+                  gTotals[code].total += Number(e.amt) || 0;
+                });
+                const gTotalText = Object.values(gTotals)
+                  .sort((a, b) => b.total - a.total)
+                  .map((t) => formatMoney(t.total.toLocaleString(), t.symbol))
+                  .join(' · ') || formatMoney(0, g.currency || displayCurrency);
                 return (
                   <div
                     key={g.id}
@@ -1024,7 +1084,7 @@ export const Analytics: React.FC<AnalyticsProps> = ({ expenses, groups, me, user
                       setAnalyticsDetail({
                         title: `${g.name} Health Stats`,
                         items: [
-                          { text: 'Total Spent', icon: '💸', val: `₹${gTotal.toLocaleString()}` },
+                          { text: 'Total Spent', icon: '💸', val: gTotalText },
                           { text: 'Event Count', icon: '📈', val: count },
                           { text: 'Member Count', icon: '👤', val: g.members.length },
                         ],
@@ -1138,7 +1198,7 @@ export const Analytics: React.FC<AnalyticsProps> = ({ expenses, groups, me, user
               const spentAmt = monthlySpendingByCategory[emoji] || 0;
               const percent = budgetAmt > 0 ? Math.min(100, (spentAmt / budgetAmt) * 100) : 0;
               const isExceeded = budgetAmt > 0 && spentAmt > budgetAmt;
-              const defaultCurrency = userMetadata[me]?.defaultCurrency || '₹';
+              const defaultCurrency = displayCurrency;
               
               let progressColor = '#10B981';
               if (percent >= 70 && percent < 100) progressColor = '#F59E0B';
