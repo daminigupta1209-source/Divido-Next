@@ -1,0 +1,12 @@
+[
+  {
+    "relation": ["delegate_permission/common.handle_all_urls"],
+    "target": {
+      "namespace": "android_app",
+      "package_name": "com.fussky.app",
+      "sha256_cert_fingerprints": [
+        "9B:35:BC:04:90:14:AC:22:61:12:F7:C3:87:F9:2B:85:53:A2:B9:B9:0F:20:57:74:11:5E:F5:00:92:DD:10:B6"
+      ]
+    }
+  }
+]

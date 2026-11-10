@@ -6,12 +6,16 @@ import App from './App.tsx'
 import { ErrorBoundary } from './components/ErrorBoundary'
 import { initMonitoring } from './lib/monitoring'
 import { initNativeAuthCallback } from './lib/googleSignIn'
+import { initNativeInviteLinks } from './lib/inviteDeepLink'
 
 // Crash alerts (no-op until VITE_SENTRY_DSN is set).
 initMonitoring();
 
 // Native app: finish Google sign-in when the auth deep link opens the app.
 initNativeAuthCallback();
+
+// Native app: shared fussky.com invite links open here (Android App Links).
+initNativeInviteLinks();
 
 // Build marker — check the console to confirm which version is actually loaded
 // (helps tell a fresh deploy apart from a stale service-worker cache).
