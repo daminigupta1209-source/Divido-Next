@@ -4,7 +4,7 @@ import { ShareGrid } from './ShareGrid';
 import { toCurrencyCode } from '../lib/utils';
 
 interface NetReceivableModalProps {
-  popupData: { friendName: string; amt: number; curr: string } | null;
+  popupData: { friendName: string; amt: number; curr: string; link?: string } | null;
   onClose: () => void;
   me: string;
   userMetadata: Record<string, any>;
@@ -75,7 +75,7 @@ export const NetReceivableModal: React.FC<NetReceivableModalProps> = ({
     if (popupData) {
       // Keep the message clean; the UPI ID + amount are appended to the shared
       // payload on their own lines (see shareMessage below).
-      const msg = `Hey ${popupData.friendName}, just a quick reminder to settle our net balance of ${popupData.curr}${popupData.amt.toFixed(2)}${inrNote} on Fussky. Thank you!`;
+      const msg = `Hey ${popupData.friendName}, just a quick reminder to settle our net balance of ${popupData.curr}${popupData.amt.toFixed(2)}${inrNote} on Fussky. Thank you!${popupData.link ? `\n\nSee the details: ${popupData.link}` : ''}`;
       setReminderText(msg);
     }
   }, [popupData, inrNote]);

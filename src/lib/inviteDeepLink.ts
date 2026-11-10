@@ -8,7 +8,8 @@ import { isNativeApp } from './publicUrl';
 // ─────────────────────────────────────────────────────────────────────────
 
 const APP_LINK_HOSTS = ['www.fussky.com', 'fussky.com'];
-const INVITE_PARAMS = ['joinGroupId', 'invite'];
+// `open` = reminder link to the Non-Group screen.
+const INVITE_PARAMS = ['joinGroupId', 'invite', 'open'];
 // A launch URL survives in-app reloads (e.g. after Google sign-in), so
 // remember the one we've handled or we'd bounce back into the invite.
 const HANDLED_KEY = 'fussky_handled_app_link';

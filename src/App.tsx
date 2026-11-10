@@ -4,6 +4,7 @@ import { Login } from './components/Login';
 import { supabase } from './lib/supabaseClient';
 import { signInWithGoogle } from './lib/googleSignIn';
 import { getPublicOrigin } from './lib/publicUrl';
+import { buildReminderLink, NON_GROUP_OPEN_PARAM } from './lib/reminderLink';
 import { Sidebar } from './components/Sidebar';
 import { GroupDetail } from './components/GroupDetail';
 import { NonGroupView } from './components/NonGroupView';
@@ -165,6 +166,11 @@ const pageDescriptions: Record<string, string> = {
 const getSavedUiState = () => {
   try {
     const urlParams = new URLSearchParams(window.location.search);
+    // Reminder link for Non-Group balances: open the Non-Group screen (the
+    // param is dropped from the URL after mount, see below).
+    if (urlParams.get('open') === NON_GROUP_OPEN_PARAM) {
+      return { view: 'detail', selectedId: 'STANDALONE' };
+    }
     const param = urlParams.get('joinGroupId');
     if (param && param !== 'STANDALONE') {
       const storedGroups = localStorage.getItem('divido_groups');
@@ -256,7 +262,7 @@ function App() {
   // Row index whose amount box should shake (user tried to exceed the max).
   const [settleShakeIdx, setSettleShakeIdx] = useState<number | null>(null);
   const [netPayablePopup, setNetPayablePopup] = useState<{ friendName: string; amt: number; curr: string } | null>(() => initialSavedState?.netPayablePopup || null);
-  const [netReceivablePopup, setNetReceivablePopup] = useState<{ friendName: string; amt: number; curr: string } | null>(() => initialSavedState?.netReceivablePopup || null);
+  const [netReceivablePopup, setNetReceivablePopup] = useState<{ friendName: string; amt: number; curr: string; link?: string } | null>(() => initialSavedState?.netReceivablePopup || null);
   const [isGroupsExpanded, setIsGroupsExpanded] = useState<boolean>(false);
 
   // "Pending UPI payment" — when the user taps Proceed to Pay we launch the UPI
@@ -575,6 +581,18 @@ function App() {
   // only (not view), so tapping "Settle" — which changes the tab but not the
   // selected group — is left alone; but leaving to home and re-entering the
   // group resets it, instead of re-showing the Settle page.
+  // A Non-Group reminder link (?open=nongroup) has done its job once the
+  // initial state picked it up; drop it so a reload doesn't keep forcing it.
+  useEffect(() => {
+    try {
+      const params = new URLSearchParams(window.location.search);
+      if (params.get('open') !== NON_GROUP_OPEN_PARAM) return;
+      params.delete('open');
+      const qs = params.toString();
+      window.history.replaceState(window.history.state, '', window.location.pathname + (qs ? `?${qs}` : ''));
+    } catch { /* ignore */ }
+  }, []);
+
   const prevSelectedIdRef = React.useRef(selectedId);
   useEffect(() => {
     if (prevSelectedIdRef.current !== selectedId) {
@@ -1211,13 +1229,14 @@ function App() {
   // Convert-currency modal on the Settle All page, triggered from the header icon.
   const [showFriendsConvert, setShowFriendsConvert] = useState(false);
 
-  const handleOpenReceivablePopup = (friendName: string, amt: number, curr: string) => {
+  const handleOpenReceivablePopup = (friendName: string, amt: number, curr: string, link: string) => {
     // Build the reminder message. For an INR debt with a UPI id set, add the UPI ID
     // + amount on their own lines for "Pay UPI ID". No upi:// link: UPI apps
     // decline link-launched payments to a personal UPI ID (every variant tested fails).
+    // `link` opens the group's (or Non-Group's) Activities on Fussky.
     const myUpi = (localStorage.getItem('divido_global_upi_id') || userMetadata[me]?.upiId || '').trim();
     const isINR = curr === '₹';
-    const baseMsg = `Hey ${friendName}, just a quick reminder to settle our net balance of ${curr}${amt.toFixed(2)} on Fussky. Thank you!`;
+    const baseMsg = `Hey ${friendName}, just a quick reminder to settle our net balance of ${curr}${amt.toFixed(2)} on Fussky. Thank you!\n\nSee the details: ${link}`;
     const shareMessage = (myUpi && isINR)
       ? `${baseMsg}\n\nPay in GPay or any UPI app → Pay UPI ID:\nUPI ID: ${myUpi}\nAmount: ₹${amt.toFixed(2)}`
       : myUpi
@@ -1260,7 +1279,7 @@ function App() {
 
     // Desktop / no native share: fall back to the in-app reminder card.
     if (!nativeShare) {
-      setNetReceivablePopup({ friendName, amt, curr });
+      setNetReceivablePopup({ friendName, amt, curr, link });
     }
   };
 
@@ -6743,7 +6762,13 @@ function App() {
 
                   if (!isOwed) {
                     buttonText = `Settle All Net (Send Reminder)`;
-                    clickHandler = () => handleOpenReceivablePopup(friendName, absoluteAmt, curr);
+                    const reminderLink = buildReminderLink(
+                      getPublicOrigin(),
+                      localSettleEdits
+                        .filter((it) => it.selected)
+                        .map((it) => ({ gId: it.gId, nonGroup: it.gName === 'Non-Group' })),
+                    );
+                    clickHandler = () => handleOpenReceivablePopup(friendName, absoluteAmt, curr, reminderLink);
                   }
                 }
 
