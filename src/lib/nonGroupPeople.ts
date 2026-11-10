@@ -256,6 +256,81 @@ export const resolveNonGroupFriendKey = (
   return byName.length === 1 ? byName[0].key : genNonGroupFriendKey();
 };
 
+// ── My old name on plain Non-Group expenses ─────────────────────────────────
+// Plain Non-Group expenses live on this phone and name me by NAME. Renaming my
+// profile rewrites every real group (applyRename) but not these, so after
+// "Swami" → "Chirag" an old expense reads "Swami paid, Lekshmy owes": two
+// strangers, me on none of it — a stray "Swami" card, and Lekshmy's screen
+// empty (her friend id is only honoured on a 2-person expense).
+// An "orphan" is such an expense: mine (myEmail) yet nobody on it is me. My old
+// name is certainly on it; these helpers find it and put my current name back.
+
+const SKIP_NAMES = new Set(['', 'system']);
+const orphanNames = (e: Expense, isMe: (n: string) => boolean, myEmail: string): string[] | null => {
+  if (!e || e.isDeleted || String(e.gId) !== 'STANDALONE') return null;
+  if ((e.myEmail || '').trim().toLowerCase() !== myEmail) return null;
+  const names = Array.from(new Set([e.paid, ...(e.splitters || [])].map((n) => cleanName(n || ''))))
+    .filter((n) => !SKIP_NAMES.has(n.toLowerCase()));
+  if (names.length === 0 || names.some((n) => isMe(n))) return null;
+  return names;
+};
+
+// My old names on orphans, in order of certainty:
+//   1. names this phone remembers I used (pastNames);
+//   2. else a name alone on an orphan (a 1-person expense can only be me);
+//   3. else the ONE name on every orphan (I'm on all of them; friends differ).
+// [] when it can't be told (e.g. a single orphan with me + one friend).
+export const inferMyOldNames = (
+  expenses: Expense[],
+  isMe: (n: string) => boolean,
+  myEmail: string | undefined,
+  pastNames: string[],
+): string[] => {
+  const em = (myEmail || '').trim().toLowerCase();
+  if (!em.includes('@')) return [];
+  const orphans = expenses.map((e) => orphanNames(e, isMe, em)).filter((n): n is string[] => !!n);
+  if (orphans.length === 0) return [];
+  const all = Array.from(new Set(orphans.flat()));
+  const past = new Set(pastNames.map((n) => cleanName(n).toLowerCase()).filter(Boolean));
+  const fromPast = all.filter((n) => past.has(n.toLowerCase()));
+  if (fromPast.length) return fromPast;
+  const alone = Array.from(new Set(orphans.filter((o) => o.length === 1).map((o) => o[0])));
+  if (alone.length) return alone;
+  const onEvery = all.filter((n) => orphans.every((o) => o.includes(n)));
+  return onEvery.length === 1 ? onEvery : [];
+};
+
+// Rewrite my old names to newName on orphans only (expenses that already have
+// me on them are left alone, so a friend who shares an old name of mine is
+// safe there). Same array back when nothing changes.
+export const renameMeInStandalone = (
+  expenses: Expense[],
+  isMe: (n: string) => boolean,
+  myEmail: string | undefined,
+  oldNames: string[],
+  newName: string,
+): Expense[] => {
+  const em = (myEmail || '').trim().toLowerCase();
+  const olds = new Set(oldNames.map((n) => cleanName(n).toLowerCase()).filter(Boolean));
+  if (!em.includes('@') || olds.size === 0 || !cleanName(newName)) return expenses;
+  const isOld = (n: string) => olds.has(cleanName(n || '').toLowerCase());
+  let changed = false;
+  const out = expenses.map((e) => {
+    const names = orphanNames(e, isMe, em);
+    if (!names || !names.some(isOld)) return e;
+    changed = true;
+    const swap = (n: string) => (isOld(n) ? newName : n);
+    let shares = e.shares;
+    if (shares) {
+      const next: Record<string, number> = {};
+      Object.entries(shares).forEach(([n, v]) => { const k = swap(n); next[k] = (next[k] || 0) + (Number(v) || 0); });
+      shares = next;
+    }
+    return { ...e, paid: swap(e.paid), splitters: Array.from(new Set((e.splitters || []).map(swap))), shares };
+  });
+  return changed ? out : expenses;
+};
+
 // ── Step 5: give older plain Non-Group expenses a friend id ─────────────────
 // Runs on the phone (STANDALONE expenses are local). Only 2-person expenses
 // without an id are touched, and only when it's clear who the friend is:

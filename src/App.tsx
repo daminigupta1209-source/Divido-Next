@@ -119,7 +119,7 @@ import { InstallPrompt } from './components/InstallPrompt';
 import { useExportCSV } from './hooks/useExportCSV';
 import { AppNotification, fetchNotifications, markAllNotificationsRead, subscribeNotifications, clearAllNotifications, pushNotification } from './lib/notifications';
 import { calculateNextOccurrenceDate, simplifyMultiCurrencyDebts, computeRawPairwiseTransactions, memberNetBalances } from './lib/calculations';
-import { buildDirectThreads, makeIsMe, standaloneInKeySpace, STANDALONE_BY_KEY, resolveNonGroupFriendKey, isNonGroupFriendKey, backfillNonGroupKeys } from './lib/nonGroupPeople';
+import { buildDirectThreads, makeIsMe, standaloneInKeySpace, STANDALONE_BY_KEY, resolveNonGroupFriendKey, isNonGroupFriendKey, backfillNonGroupKeys, inferMyOldNames, renameMeInStandalone } from './lib/nonGroupPeople';
 import { isPersonalExpense, getPersonalExpenses } from './lib/personalExpenses';
 import {
   consumeOAuthState,
@@ -1910,6 +1910,33 @@ function App() {
   useEffect(() => {
     try { sessionStorage.removeItem('divido_chunk_reloaded'); } catch {}
   }, []);
+
+  // Renaming my profile rewrites real groups but not plain Non-Group expenses
+  // (they're on this phone, by name), so remember every name I've had and put
+  // my current one back on old expenses that no longer have me on them — see
+  // renameMeInStandalone. Runs before the friend-id backfill below so a stray
+  // old name of mine never gets a friend id of its own.
+  useEffect(() => {
+    if (!userEmail || ['', 'You', 'Guest', 'User', 'undefined'].includes(userName.trim())) return;
+    let past: string[] = [];
+    try {
+      past = JSON.parse(localStorage.getItem('divido_past_names') || '[]');
+      if (!Array.isArray(past)) past = [];
+      const last = (localStorage.getItem('divido_name_last') || '').trim();
+      if (last && last.toLowerCase() !== userName.trim().toLowerCase()) {
+        past = Array.from(new Set([...past, last, last.split(' ')[0]]));
+        localStorage.setItem('divido_past_names', JSON.stringify(past));
+      }
+      localStorage.setItem('divido_name_last', userName.trim());
+    } catch { /* storage unavailable */ }
+    // STANDALONE names me by first name (`me` outside a group).
+    const first = userName.trim().split(' ')[0];
+    const isMeFn = makeIsMe(first, userName);
+    const olds = inferMyOldNames(expenses, isMeFn, userEmail, past);
+    if (!olds.length) return;
+    setExpenses((prev) => renameMeInStandalone(prev, isMeFn, userEmail, olds, first));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [expenses, userName, userEmail]);
 
   // Older plain Non-Group expenses get their friend's permanent id (and my
   // email) once it's clear who they're with — see backfillNonGroupKeys.

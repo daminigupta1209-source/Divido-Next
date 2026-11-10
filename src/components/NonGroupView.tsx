@@ -708,9 +708,22 @@ export const NonGroupView: React.FC<NonGroupViewProps> = ({
             return rows;
           })()}
           {personalExps.length > 0 && periodExps.length === 0 && (
-            <p style={{ fontSize: '13px', color: '#94A3B8', textAlign: 'center', padding: '16px 0' }}>
-              No personal expenses in {currentPeriodLabel}.
-            </p>
+            // The "You" row on Non-Group shows the ALL-TIME total, so an empty
+            // period here looks like the expenses vanished — offer the way back.
+            <div style={{ textAlign: 'center', padding: '16px 0' }}>
+              <p style={{ fontSize: '13px', color: '#94A3B8', margin: 0 }}>
+                No personal expenses in {currentPeriodLabel}.
+              </p>
+              {spendPeriod !== 'all' && (
+                <button
+                  type="button"
+                  onClick={() => setSpendPeriod('all')}
+                  style={{ marginTop: '10px', background: 'transparent', border: '1px solid #E2E8F0', borderRadius: '10px', padding: '7px 14px', fontSize: '13px', fontWeight: 600, color: '#059669', cursor: 'pointer' }}
+                >
+                  Show all time ({personalExps.length})
+                </button>
+              )}
+            </div>
           )}
         </div>
       </div>
@@ -731,8 +744,14 @@ export const NonGroupView: React.FC<NonGroupViewProps> = ({
     const aliasLower = new Set((p?.aliases || [profilePerson]).map((a) => a.toLowerCase()));
     const theirKeys = new Set(p?.keys || []);
     const theirExps = nonGroupExps.filter((e) => {
-      // An expense with a friend id belongs to exactly that friend.
-      if (String(e.gId) === 'STANDALONE' && e.otherKey && e.otherKey.startsWith('ngp-')) return theirKeys.has(e.otherKey);
+      // An expense with a friend id belongs to exactly that friend — but only
+      // on a 2-person split, the same rule the balance engine uses
+      // (computeNonGroupPeople); otherwise the balance counts it by name and
+      // the list must too, or the screen shows a balance with no activity.
+      if (String(e.gId) === 'STANDALONE' && e.otherKey && e.otherKey.startsWith('ngp-')) {
+        const others = new Set([e.paid, ...(e.splitters || [])].map((n) => cleanName(n || '').toLowerCase()).filter((n) => n && !isMe(n)));
+        if (others.size === 1) return theirKeys.has(e.otherKey);
+      }
       if (e.paid && aliasLower.has(cleanName(e.paid).toLowerCase())) return true;
       return (e.splitters || []).some((s) => aliasLower.has(cleanName(s).toLowerCase()));
     })

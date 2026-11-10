@@ -1,9 +1,64 @@
 import { describe, it, expect } from 'vitest';
-import { buildDirectThreads, computeNonGroupPeople, makeIsMe, resolveNonGroupFriendKey, nonGroupFriendsFromExpenses, isNonGroupFriendKey, standaloneInKeySpace, backfillNonGroupKeys } from './nonGroupPeople';
+import { buildDirectThreads, computeNonGroupPeople, makeIsMe, resolveNonGroupFriendKey, nonGroupFriendsFromExpenses, isNonGroupFriendKey, standaloneInKeySpace, backfillNonGroupKeys, inferMyOldNames, renameMeInStandalone } from './nonGroupPeople';
 import { Expense, Group } from './types';
 
 const mkExp = (o: Partial<Expense>): Expense =>
   ({ id: 'e', gId: 'STANDALONE', title: 't', amt: 0, paid: '', date: '2026-01-01', mode: 'Equally', splitters: [], ...o } as unknown as Expense);
+
+// Renamed my profile "Swami Chinmayanand" → "Chirag Gupta": plain Non-Group
+// expenses (local, by name) kept "Swami", making a stray "Swami" card and an
+// empty Lekshmy screen.
+describe('my old name on plain Non-Group expenses', () => {
+  const EM = 'me@example.com';
+  const isMe = makeIsMe('Chirag', 'Chirag Gupta');
+  const personal = mkExp({ id: 'p', amt: 15715, paid: 'Swami', splitters: ['Swami'], myEmail: EM, otherKey: 'ngp-stray' });
+  const forLek = mkExp({ id: 'l', amt: 15715, paid: 'Swami', splitters: ['Lekshmy'], myEmail: EM, otherKey: 'ngp-lek' });
+  const fine = mkExp({ id: 'f', amt: 100, paid: 'Chirag', splitters: ['Chirag', 'Swami'], myEmail: EM });
+
+  it('infers the old name from a 1-person expense (only I can be alone on one)', () => {
+    expect(inferMyOldNames([personal, forLek, fine], isMe, EM, [])).toEqual(['Swami']);
+  });
+
+  it('cannot tell from a single me + friend expense unless the name is remembered', () => {
+    expect(inferMyOldNames([forLek], isMe, EM, [])).toEqual([]);
+    expect(inferMyOldNames([forLek], isMe, EM, ['Swami Chinmayanand', 'Swami'])).toEqual(['Swami']);
+  });
+
+  it('takes the one name on every orphan when friends differ', () => {
+    const forRaj = mkExp({ id: 'r', paid: 'Raj', splitters: ['Swami', 'Raj'], myEmail: EM });
+    expect(inferMyOldNames([forLek, forRaj], isMe, EM, [])).toEqual(['Swami']);
+  });
+
+  it('ignores expenses written by another account', () => {
+    expect(inferMyOldNames([{ ...personal, myEmail: 'x@y.com' }], isMe, EM, [])).toEqual([]);
+  });
+
+  it('rewrites only orphans; an expense that already has me keeps a friend "Swami"', () => {
+    const out = renameMeInStandalone([personal, forLek, fine], isMe, EM, ['Swami'], 'Chirag');
+    expect(out[0]).toMatchObject({ paid: 'Chirag', splitters: ['Chirag'] });
+    expect(out[1]).toMatchObject({ paid: 'Chirag', splitters: ['Lekshmy'], otherKey: 'ngp-lek' });
+    expect(out[2]).toBe(fine);
+  });
+
+  it('merges shares when two old spellings collapse into one name', () => {
+    const e = mkExp({ paid: 'Swami', splitters: ['Swami', 'Swami Chinmayanand', 'Lekshmy'], shares: { Swami: 10, 'Swami Chinmayanand': 5, Lekshmy: 15 }, myEmail: EM });
+    const [out] = renameMeInStandalone([e], isMe, EM, ['Swami', 'Swami Chinmayanand'], 'Chirag');
+    expect(out.splitters).toEqual(['Chirag', 'Lekshmy']);
+    expect(out.shares).toEqual({ Chirag: 15, Lekshmy: 15 });
+  });
+
+  it('returns the same array when nothing changes', () => {
+    const arr = [fine];
+    expect(renameMeInStandalone(arr, isMe, EM, ['Swami'], 'Chirag')).toBe(arr);
+  });
+
+  it('after the rewrite there is one Lekshmy (by her id) and no Swami card', () => {
+    const fixed = renameMeInStandalone([personal, forLek], isMe, EM, ['Swami'], 'Chirag');
+    const people = computeNonGroupPeople(fixed, [], isMe, () => ({}));
+    expect(people.map((p) => p.name)).toEqual(['Lekshmy']);
+    expect(people[0].keys).toEqual(['ngp-lek']);
+  });
+});
 
 describe('computeNonGroupPeople (self-only expenses)', () => {
   it('returns [] when the only STANDALONE expense is self-only', () => {
